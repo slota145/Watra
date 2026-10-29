@@ -961,6 +961,7 @@ func _build_yard() -> void:
 	# kuźnia pod wiatą obok szopy: piec z miechem, kowadło, beczka do hartowania i skrzynia na gotową broń;
 	# dach znika, gdy gracz wejdzie pod wiatę (_process_forge_roof)
 	_forge_roof = _prop("forge_shed", FORGE_ROOF_BASE)
+	_forge_roof.set_meta("no_occlusion", true)  # dach wiaty gaśnie sam (_process_forge_roof)
 	for post: String in FORGE_POSTS:
 		_prop(post, FORGE_ROOF_BASE + FORGE_POSTS[post], Vector2(8, 4))
 	_prop("forge_furnace", FORGE["furnace"], Vector2(24, 8))

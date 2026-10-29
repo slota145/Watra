@@ -862,6 +862,41 @@ func _summon_guards(count: int) -> void:
 		get_parent().add_child(ally)
 
 
+## Sylwetka postaci prześwitująca przez zasłony (drzewa, namioty - Occlusion): kopia bieżącej klatki
+## rysowana nad wszystkim jednolitym, półprzezroczystym kolorem. Pojawia się i gaśnie płynnie.
+const SILHOUETTE_SHADER := preload("res://shaders/silhouette.gdshader")
+var _silhouette: Sprite2D
+var _occluded := false
+
+
+func set_occluded(occluded: bool) -> void:
+	_occluded = occluded
+
+
+func _update_silhouette(delta: float) -> void:
+	if _silhouette == null:
+		_silhouette = Sprite2D.new()
+		var material := ShaderMaterial.new()
+		material.shader = SILHOUETTE_SHADER
+		_silhouette.material = material
+		_silhouette.z_index = 60
+		_silhouette.modulate.a = 0.0
+		add_child(_silhouette)
+	var target := 1.0 if _occluded and not is_dead else 0.0
+	_silhouette.modulate.a = move_toward(_silhouette.modulate.a, target, delta * 5.0)
+	_silhouette.visible = _silhouette.modulate.a > 0.0
+	if not _silhouette.visible:
+		return
+	_silhouette.texture = sprite.texture
+	_silhouette.hframes = sprite.hframes
+	_silhouette.vframes = sprite.vframes
+	_silhouette.frame = sprite.frame
+	_silhouette.flip_h = sprite.flip_h
+	_silhouette.offset = sprite.offset
+	_silhouette.position = sprite.position
+	_silhouette.scale = sprite.scale
+
+
 ## Lecznica w osadzie: za palisadą zdrowie i mana wracają szybciej (ułamek maksimum na sekundę).
 func _village_regen() -> float:
 	var settlement := get_tree().get_first_node_in_group("settlement") as Settlement
@@ -1763,6 +1798,7 @@ func _update_animation(delta: float) -> void:
 		_anim_time = 0.0
 	sprite.frame = HeroRig.frame_index(anim, _dir_row, frame)
 	_update_held_weapon(anim, frame)
+	_update_silhouette(delta)
 
 
 ## Broń w dłoni poza atakiem: chwyt i kąt z danych postaci (HeroRig), odbite dla kierunków

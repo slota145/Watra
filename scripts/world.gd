@@ -432,6 +432,11 @@ func _ready() -> void:
 	if zone == "forest":
 		_soft_textures = FOREST_GROUND
 	_soft_ground = SoftGround.attach(ground, _soft_corners, _soft_low_corners, _soft_levels, _soft_textures)
+	# wysokie rekwizyty znikają, gdy gracz wejdzie za nie
+	var occlusion := Occlusion.new()
+	occlusion.name = "Occlusion"
+	add_child(occlusion)
+	occlusion.setup(entities, player)
 
 	var world_rect := Rect2i(Vector2i.ZERO, map_size * TILE)
 	player.position = _spawn_point
