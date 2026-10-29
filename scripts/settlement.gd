@@ -388,6 +388,12 @@ const LINES_MARKET: Array[String] = [
 	"Za dwa miedziaki oddam taniej, bo dla uchodźców.",
 ]
 const LINES_WATER: Array[String] = ["Woda dla obozu...", "Ciężkie to wiadro.", "Studnia nas wszystkich żywi."]
+const LINES_SWEEPER: Array[String] = ["Błoto i błoto... Kto to wszystko naniósł?", "Wycieraj buty, wędrowcze!"]
+const LINES_DRUNK: Array[String] = ["Hik!", "Jeszcze jeden kufelek... hik!", "Gdzie ja mieszkam?",
+		"Ja nie piłem, ja tylko... hik!", "Gobliny? Dawać je tu! Hik!"]
+const LINES_CHEER: Array[String] = ["Hurra!", "Niech żyje bohater!", "Wiwat!", "Pokonany! Słyszeliście?!", "Chwała!"]
+## Święto po pokonaniu bossa: jak długo wiszą girlandy (s).
+const CELEBRATION_TIME := 600.0
 
 ## Zagroda ze świniami (kafelki układu): prostokąt ogrodzenia, w nim szałas, koryto i błoto.
 const PIG_PEN := Rect2(50.8, 13.8, 4.4, 5.6)
@@ -438,6 +444,10 @@ var _refugee_tents: Array[Node] = []
 var _smith: Npc
 var _traveler: Npc
 var _tax_timer := TAX_TIME
+var _celebration: Array[Node] = []
+var _celebration_left := 0.0
+var _fireworks := 0
+var _firework_timer := 0.0
 var _rotation_timer := MERCHANT_ROTATION
 ## Wieże palisady (na platformach stają łucznicy z koszar).
 var _tower_sprites: Array[Sprite2D] = []
@@ -473,6 +483,10 @@ func build(origin: Vector2i, ground: TileMapLayer, floors: Node2D, entities: Nod
 	_build_training_dummy()
 	_build_decorations()
 	_build_npcs()
+	set_process(true)
+	if Engine.has_meta("celebrate"):
+		Engine.remove_meta("celebrate")
+		celebrate.call_deferred()
 
 
 ## Czy komórka (w kafelkach świata) należy do terenu osady (z polem pod koszary).
@@ -620,6 +634,10 @@ func _build_palisade() -> void:
 		sprite.frame = rng.randi() % 2
 		sprite.flip_h = tower.x > rect.get_center().x
 		_tower_sprites.append(sprite)
+		var lookout := TowerArcher.new()
+		lookout.sheet = _npc_sheet("guard")
+		lookout.position = Vector2(0, TOWER_PLATFORM)
+		sprite.add_child(lookout)
 	_build_gates(gate_ends)
 	if not broken_points.is_empty():
 		var middle: Vector2 = broken_points[broken_points.size() / 2]
@@ -1040,6 +1058,20 @@ func _build_life() -> void:
 	gardener.work_period = 1.3
 	_entities.add_child(gardener)
 
+	# przed karczmą zamiata gospodyni, a z karczmy zatacza się pijak
+	var sweeper := _npc("sweeper", Vector2(17.4, 21.4), Npc.Role.WORKER, LINES_SWEEPER, Vector2.RIGHT)
+	sweeper.work_gentle = true
+	sweeper.work_effect = "dust"
+	sweeper.work_effect_offset = Vector2(12, -2)
+	sweeper.work_period = 0.9
+	_entities.add_child(sweeper)
+	var drunk := _npc("villager_brown", Vector2.ZERO, Npc.Role.CARRIER, LINES_DRUNK)
+	drunk.path = _path([Vector2(19.3, 19.2), Vector2(21.0, 21.6), Vector2(24.2, 22.3), Vector2(23.0, 21.0),
+			Vector2(25.6, 21.9), Vector2(20.6, 20.6), Vector2(19.3, 19.2)])
+	drunk.drunk = true
+	drunk.wait_time = 4.0
+	_entities.add_child(drunk)
+
 	# kąciki pracy: kowal hartuje w beczce, ostrzałka i węgiel; przy studni wiadro
 	_prop("quench_barrel", Vector2(23.2, 33.0), Vector2(10, 4))
 	_prop("grindstone", Vector2(24.6, 32.8), Vector2(14, 4))
@@ -1093,6 +1125,54 @@ func _build_pig_pen() -> void:
 		pig.position = Vector2(randf_range(inside.position.x, inside.end.x), randf_range(inside.position.y, inside.end.y))
 		_entities.add_child(pig)
 	map_markers.append({"position": _px(pen.get_center()), "color": Color("e8a0a0"), "size": 2.0})
+
+
+# ---------------------------------------------------------------- święto
+## Boss pokonany: na placu zawisają girlandy, mieszkańcy wiwatują i podskakują, nad placem strzelają
+## iskry. Pokonany w innej krainie - świętujemy po powrocie (Engine meta "celebrate").
+func celebrate() -> void:
+	for node in _celebration:
+		if is_instance_valid(node):
+			node.queue_free()
+	_celebration.clear()
+	for i in 4:
+		var spot := PLAZA + Vector2.from_angle(TAU * i / 4.0 + 0.4) * (PLAZA_RADIUS + 1.4)
+		var flags := _prop(["bunting", "garland"][i % 2], spot)
+		_celebration.append(_body_of(flags))
+	_celebration_left = CELEBRATION_TIME
+	for node in _entities.get_children():
+		var npc := node as Npc
+		if npc == null or npc.role == Npc.Role.WANDER:
+			continue
+		var delay := randf_range(0.0, 1.5)
+		var tween := npc.create_tween()
+		tween.tween_interval(delay)
+		tween.tween_callback(func() -> void:
+			if randf() < 0.5:
+				npc.say(LINES_CHEER.pick_random()))
+		for hop in 3:
+			tween.tween_property(npc.sprite, "position:y", npc.sprite.position.y - 4.0, 0.12)
+			tween.tween_property(npc.sprite, "position:y", npc.sprite.position.y, 0.12)
+	_fireworks = 14
+
+
+func _process_celebration(delta: float) -> void:
+	if _celebration_left <= 0.0:
+		return
+	_celebration_left -= delta
+	if _fireworks > 0:
+		_firework_timer -= delta
+		if _firework_timer <= 0.0:
+			_firework_timer = randf_range(0.6, 1.4)
+			_fireworks -= 1
+			var at := _px(PLAZA) + Vector2(randf_range(-60, 60), randf_range(-90, -50))
+			SkillEffects.spark(_entities, at, Color.from_hsv(randf(), 0.6, 1.0), 16)
+			Sfx.play_at("explosion", at, -18.0)
+	if _celebration_left <= 0.0:
+		for node in _celebration:
+			if is_instance_valid(node):
+				node.queue_free()
+		_celebration.clear()
 
 
 # ---------------------------------------------------------------- budowle bez wnętrza
@@ -1508,6 +1588,7 @@ func _process(delta: float) -> void:
 			break  # słownik budów właśnie się zmienił
 	if project_state("barracks") == "built":
 		_process_drill(delta)
+	_process_celebration(delta)
 	if project_state("houses") == "built":
 		_tax_timer -= delta
 		if _tax_timer <= 0.0:
@@ -1635,13 +1716,14 @@ func _dirt(cell: Vector2i) -> void:
 
 func _build_barracks() -> void:
 	var nodes: Array[Node] = _projects["barracks"]["nodes"]
-	# łucznicy z koszar na wieżach palisady
+	# wartownicy na wieżach palisady zamieniają się w łuczników z koszar
 	for i in _tower_sprites.size():
-		var archer := TowerArcher.new()
-		archer.sheet = load("res://assets/npc/%s.png" % ["soldier_a", "soldier_b", "soldier_c", "soldier_a"][i % 4])
-		archer.position = Vector2(0, TOWER_PLATFORM)
-		_tower_sprites[i].add_child(archer)
-		nodes.append(archer)
+		for archer in _tower_sprites[i].get_children():
+			if archer is TowerArcher:
+				archer.can_shoot = true
+				archer.sheet = _npc_sheet(["soldier_a", "soldier_b", "soldier_c", "soldier_a"][i % 4])
+				if archer.is_node_ready():
+					archer.get_child(0).texture = archer.sheet
 	if not buildings.has("barracks"):
 		_add_building("barracks", BARRACKS_POS, BARRACKS_SIZE, BARRACKS_COLOR, null)
 		# wnętrze: prycze i stojaki na broń
@@ -2137,6 +2219,10 @@ func _glow(pos: Vector2, color: Color, size: Vector2) -> void:
 	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	glow.material = mat
 	_floors.add_child(glow)
+
+
+func _npc_sheet(sheet: String) -> Texture2D:
+	return load("res://assets/npc/%s.png" % sheet)
 
 
 func _npc(sheet: String, tile_pos: Vector2, role: Npc.Role, lines: Array[String], facing := Vector2.DOWN) -> Npc:

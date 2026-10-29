@@ -1111,10 +1111,17 @@ static func _corner_mask(cell_corners: Array, value: int) -> int:
 ## Ścieżki i bruk placu osady stawiane są pełnymi kafelkami - tu dobieramy przejścia Wang na ich brzegach
 ## (jak przy drodze przez las): narożnik jest drogą (brukiem), gdy stykają się w nim co najmniej dwie takie
 ## komórki. Reszta podwórek dostaje runo jak w lesie: płaty ciemniejszej trawy i kwiatów.
+## Ziemia i bruk osady do dobierania przejść (narastająco - patrz _blend_settlement_ground).
+var _blend_dirt := {}
+var _blend_cobble := {}
+
+
 func _blend_settlement_ground() -> void:
 	var area := Rect2i(_settlement.origin_tile, Settlement.SIZE).grow(2)
-	var dirt := {}
-	var cobble := {}
+	# komórki ziemi i bruku zbieramy narastająco: po pierwszym dobraniu przejść brzegi są już kafelkami
+	# przejść (nie pełnymi), więc liczone od nowa kurczyłyby plac i ścieżki z każdą budową
+	var dirt := _blend_dirt
+	var cobble := _blend_cobble
 	for y in range(area.position.y, area.end.y):
 		for x in range(area.position.x, area.end.x):
 			var cell := Vector2i(x, y)

@@ -223,7 +223,8 @@ static func register(recipe: Dictionary, id := "") -> String:
 	for stat: String in affixes:
 		var value: float = affixes[stat]
 		if _step(stat) > 0.0:
-			stats[stat] = float(stats.get(stat, 0.0)) + value
+			# zaokrąglenie usuwa szum sumy (0.5 + 0.2 = 0.7000000000000001) - po zapisie i odczycie to samo
+			stats[stat] = snappedf(float(stats.get(stat, 0.0)) + value, 0.0001)
 		else:
 			stats[stat] = int(stats.get(stat, 0)) + int(value)
 	item["stats"] = stats

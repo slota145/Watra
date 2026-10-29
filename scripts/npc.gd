@@ -48,6 +48,15 @@ var seat_facing := Vector2.RIGHT
 ## IDLE: siedzi (np. przy ognisku) - postać niżej, bez rozglądania się za daleko.
 var seated := false
 
+## Pijak (CARRIER bez towaru): zatacza się po drodze.
+var drunk := false
+## Czy pozdrawia przechodzącego obok gracza.
+var greets := true
+const GREETINGS: Array[String] = ["Witaj, wędrowcze!", "Dobrze cię widzieć całego!", "Niech ci się darzy!",
+		"Wróciłeś! Chwała niebiosom.", "Dzień dobry!", "Uważaj na siebie za palisadą."]
+const GREET_DISTANCE := 40.0
+var _greet_cooldown := 0.0
+
 ## WANDER: obszar zabawy (piksele świata), towarzysz zabawy w berka i czy to ten goni.
 var wander_area := Rect2()
 var chase: Npc
@@ -351,6 +360,10 @@ func _process_carrier(delta: float) -> void:
 		_path_index += _direction
 		return
 	position += to_target.normalized() * step
+	if drunk:
+		# zatacza się: chwieje na boki i zbacza z drogi
+		position += to_target.normalized().orthogonal() * sin(_anim * 0.9) * 0.6
+		sprite.rotation = sin(_anim * 0.7) * 0.14
 	facing = to_target.normalized()
 	_anim += delta * WALK_FPS
 	_set_frame(_row_for(facing), int(_anim) % 4)
@@ -415,6 +428,13 @@ func _note() -> void:
 
 
 func _process_talk(delta: float) -> void:
+	_greet_cooldown -= delta
+	if greets and role != Role.WANDER and not drunk and _greet_cooldown <= 0.0 and not bubble.visible \
+			and _player_distance() < GREET_DISTANCE:
+		_greet_cooldown = randf_range(60.0, 120.0)
+		if randf() < 0.5:
+			say(GREETINGS.pick_random())
+			return
 	if lines.is_empty():
 		return
 	_talk_timer -= delta

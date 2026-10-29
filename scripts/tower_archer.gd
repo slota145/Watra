@@ -3,7 +3,8 @@ extends Node2D
 ## Łucznik z koszar na wieży palisady: stoi na platformie, rozgląda się, a gdy potwór podejdzie
 ## pod osadę (w zasięgu RANGE), strzela do niego co SHOT_TIME. Obrażenia rosną z poziomem gracza,
 ## żeby straż przydawała się przez całą grę - ale nie zastąpi walki (to wsparcie przy bramach).
-## Zwierzyny nie rusza.
+## Zwierzyny nie rusza. Zanim staną koszary, na wieży stoi tylko wartownik (can_shoot = false), który
+## rozgląda się i przechadza po platformie.
 
 const RANGE := 210.0
 const SHOT_TIME := 1.6
@@ -11,6 +12,9 @@ const ARROW := preload("res://assets/projectiles/arrow.png")
 const ARROW_SPEED := 320.0
 
 var sheet: Texture2D
+var can_shoot := false
+var _walk := 0.0
+var _anim := 0.0
 var _sprite: Sprite2D
 var _timer := 0.0
 var _look_timer := 0.0
@@ -34,8 +38,19 @@ func _process(delta: float) -> void:
 	_look_timer -= delta
 	if _look_timer <= 0.0:
 		_look_timer = randf_range(2.0, 5.0)
-		_face([Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT].pick_random())
-	if _timer > 0.0:
+		# przechadza się po platformie (kilka pikseli w bok) albo rozgląda
+		if randf() < 0.4:
+			_walk = randf_range(-6.0, 6.0) - _sprite.position.x
+		else:
+			_face([Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT].pick_random())
+	if absf(_walk) > 0.1:
+		var step := signf(_walk) * minf(absf(_walk), 10.0 * delta)
+		_sprite.position.x += step
+		_walk -= step
+		_anim += delta * 6.0
+		_sprite.flip_h = step < 0.0
+		_sprite.frame = 2 * 4 + int(_anim) % 4
+	if not can_shoot or _timer > 0.0:
 		return
 	_timer = SHOT_TIME
 	var target := _find_target()

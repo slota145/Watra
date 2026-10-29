@@ -346,6 +346,13 @@ func _die() -> void:
 	remove_from_group("enemies")
 	$CollisionShape2D.set_deferred("disabled", true)
 	died.emit(self)
+	# pokonany boss - osada świętuje (od razu albo po powrocie do Goblińskiego Lasu)
+	if self is Boss:
+		var settlement := get_tree().get_first_node_in_group("settlement")
+		if settlement != null:
+			settlement.celebrate()
+		else:
+			Engine.set_meta("celebrate", true)
 	Sfx.play_at("enemy_die", global_position)
 	_spawn_poof()
 	_drop_loot()
