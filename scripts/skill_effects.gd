@@ -101,6 +101,55 @@ static func shockwave(parent: Node, origin: Vector2, radius: float, color: Color
 	spark(parent, origin + Vector2(0, -6), color, 12)
 
 
+## Pęknięcia ziemi po potężnym uderzeniu: rozgałęzione szczeliny od środka, płasko na ziemi,
+## widoczne `life` sekund (ostatnia trzecia - gasną).
+static func ground_crack(parent: Node, origin: Vector2, radius: float, life := 3.0) -> void:
+	var crack := GroundCrack.new()
+	crack.radius = radius
+	crack.life = life
+	parent.add_child(crack)
+	crack.global_position = origin
+
+
+class GroundCrack:
+	extends Node2D
+	var radius := 40.0
+	var life := 3.0
+	var _t := 0.0
+	var _lines: Array[PackedVector2Array] = []
+
+	func _ready() -> void:
+		var count := 9
+		for i in count:
+			var a := TAU * i / count + randf_range(-0.25, 0.25)
+			var p := Vector2.ZERO
+			var line := PackedVector2Array([p])
+			var length := radius * randf_range(0.55, 1.0)
+			var steps := 5
+			for k in steps:
+				p += Vector2.from_angle(a + randf_range(-0.45, 0.45)) * length / steps
+				line.append(Vector2(p.x, p.y * 0.55))
+				# odgałęzienie
+				if k == 2 and randf() < 0.6:
+					var b := p + Vector2.from_angle(a + randf_range(0.6, 1.1) * (1 if randf() < 0.5 else -1)) * length * 0.3
+					_lines.append(PackedVector2Array([Vector2(p.x, p.y * 0.55), Vector2(b.x, b.y * 0.55)]))
+			_lines.append(line)
+
+	func _process(delta: float) -> void:
+		_t += delta
+		if _t >= life:
+			queue_free()
+		queue_redraw()
+
+	func _draw() -> void:
+		var alpha := clampf((life - _t) / (life / 3.0), 0.0, 1.0)
+		for line in _lines:
+			draw_polyline(line, Color(0.12, 0.08, 0.05, 0.75 * alpha), 2.0)
+			draw_polyline(line, Color(0.55, 0.42, 0.3, 0.35 * alpha), 1.0)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.55))
+		draw_circle(Vector2.ZERO, radius * 0.25, Color(0.1, 0.07, 0.04, 0.35 * alpha))
+
+
 ## Fala wody: stożek przetaczającej się wody z pianą na czole i rozbryzgiem kropel.
 static func tide(parent: Node, origin: Vector2, angle: float, half_arc: float, radius: float, echo := false) -> void:
 	var wave := TideWave.new()

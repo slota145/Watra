@@ -140,6 +140,8 @@ func _cancel_attack() -> void:
 	_attack = ""
 	_attack_stage = ""
 	sprite.position = Vector2.ZERO
+	sprite.scale = Vector2.ONE
+	sprite.self_modulate = Color.WHITE
 	_remove_telegraph()
 
 
@@ -206,6 +208,72 @@ func _burst(pos: Vector2, color: Color, amount: int, power: float) -> void:
 	p.emitting = true
 	get_parent().add_child(p)
 	p.finished.connect(p.queue_free)
+
+
+# ---------------------------------------------------------------- efekty ataków
+## Pęknięcia ziemi pod uderzeniem - zostają chwilę na podłożu (pod postaciami) i gasną.
+func _ground_crack(pos: Vector2, radius: float, life := 3.0) -> void:
+	var layer := get_tree().get_first_node_in_group("floor_layer")
+	SkillEffects.ground_crack(layer if layer != null else get_parent(), pos, radius, life)
+
+
+## Odłamki ziemi i kamieni podrzucone uderzeniem (spadają z grawitacją).
+func _debris(pos: Vector2, amount: int, power: float, color := Color(0.42, 0.33, 0.24)) -> void:
+	var p := CPUParticles2D.new()
+	p.global_position = pos
+	p.one_shot = true
+	p.explosiveness = 0.95
+	p.amount = amount
+	p.lifetime = 0.9
+	p.spread = 70.0
+	p.direction = Vector2.UP
+	p.initial_velocity_min = power * 0.5
+	p.initial_velocity_max = power
+	p.gravity = Vector2(0, 420)
+	p.angular_velocity_min = -360.0
+	p.angular_velocity_max = 360.0
+	p.scale_amount_min = 2.0
+	p.scale_amount_max = 4.5
+	var ramp := Gradient.new()
+	ramp.colors = PackedColorArray([color.lightened(0.15), color.darkened(0.35)])
+	p.color_ramp = ramp
+	p.z_index = 3
+	p.emitting = true
+	get_parent().add_child(p)
+	p.finished.connect(p.queue_free)
+
+
+## Powidok sylwetki w ruchu (skok, szarża) - przezroczysta kopia bieżącej klatki gasnąca w miejscu.
+func _afterimage(tint := Color(1.0, 0.4, 0.3, 0.55)) -> void:
+	var ghost := Sprite2D.new()
+	ghost.texture = sprite.texture
+	ghost.hframes = sprite.hframes
+	ghost.vframes = sprite.vframes
+	ghost.frame = sprite.frame
+	ghost.flip_h = sprite.flip_h
+	ghost.offset = sprite.offset
+	ghost.global_position = sprite.global_position
+	ghost.modulate = tint
+	ghost.z_index = 1
+	get_parent().add_child(ghost)
+	var tween := ghost.create_tween()
+	tween.tween_property(ghost, "modulate:a", 0.0, 0.28)
+	tween.tween_callback(ghost.queue_free)
+
+
+## Przyczajenie przed atakiem: sylwetka przysiada (spłaszcza się) i czerwienieje, potem wyrzut.
+func _wind_up(time: float, squash := Vector2(1.12, 0.88)) -> void:
+	var tween := sprite.create_tween().set_parallel()
+	tween.tween_property(sprite, "scale", squash, time).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(sprite, "self_modulate", Color(1.0, 0.8, 0.76), time)
+
+
+## Moment uderzenia: rozciągnięcie w górę i powrót do normy, kolor wraca.
+func _snap(stretch := Vector2(0.86, 1.18)) -> void:
+	sprite.self_modulate = Color.WHITE
+	var tween := sprite.create_tween()
+	tween.tween_property(sprite, "scale", stretch, 0.06)
+	tween.tween_property(sprite, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _face(target: Vector2) -> void:

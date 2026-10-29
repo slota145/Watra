@@ -29,17 +29,17 @@
  },
  "wolf": {
   "cell": [
-   42,
-   45
+   33,
+   35
   ],
-  "offset_y": -18.5
+  "offset_y": -14.5
  },
  "warg": {
   "cell": [
-   60,
-   54
+   48,
+   43
   ],
-  "offset_y": -23.0
+  "offset_y": -18.5
  },
  "alpha_wolf": {
   "cell": [

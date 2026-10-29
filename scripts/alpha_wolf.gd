@@ -19,6 +19,7 @@ const CLEAVE_TELEGRAPH := 0.7
 var _leap_from := Vector2.ZERO
 var _leap_to := Vector2.ZERO
 var _leap_t := 0.0
+var _ghost_time := 0.0
 
 
 func _ready() -> void:
@@ -35,12 +36,16 @@ func _choose_attack(to_player: Vector2) -> bool:
 	var distance := to_player.length()
 	if distance < 64.0:
 		_start_attack("cleave", CLEAVE_TELEGRAPH)
+		_wind_up(CLEAVE_TELEGRAPH * 0.8, Vector2(1.08, 0.92))
+		Sfx.play_at("claw", global_position, -6.0)
 		var telegraph := _show_telegraph(Telegraph.Shape.CONE, global_position, to_player.angle(), CLEAVE_TELEGRAPH)
 		telegraph.radius = cleave_radius
 		telegraph.half_arc = deg_to_rad(cleave_arc_degrees / 2.0)
 	elif distance < pounce_range:
 		_leap_to = _player.global_position
 		_start_attack("pounce", POUNCE_TELEGRAPH)
+		_wind_up(POUNCE_TELEGRAPH * 0.9, Vector2(1.16, 0.82))
+		Sfx.play_at("werewolf_howl", global_position, -10.0)
 		var telegraph := _show_telegraph(Telegraph.Shape.CIRCLE, _leap_to, 0.0, POUNCE_TELEGRAPH)
 		telegraph.radius = pounce_radius
 	else:
@@ -56,6 +61,11 @@ func _update_attack(delta: float) -> void:
 			if _stage_timer <= 0.0:
 				_leap_from = global_position
 				_leap_t = 0.0
+				_ghost_time = 0.0
+				# wybicie: kurz spod łap, wyrzut sylwetki
+				_snap(Vector2(0.82, 1.22))
+				_burst(global_position, Color(0.55, 0.48, 0.38), 14, 70.0)
+				Sfx.play_at("dash", global_position, -4.0)
 				_set_stage("act", LEAP_TIME + 0.2)
 		["pounce", "act"]:
 			# lot łukiem nad przeszkodami - cel to miejsce, gdzie stał gracz
@@ -63,21 +73,45 @@ func _update_attack(delta: float) -> void:
 			_leap_t = minf(1.0, _leap_t + delta / LEAP_TIME)
 			global_position = _leap_from.lerp(_leap_to, _leap_t)
 			sprite.position.y = -sin(_leap_t * PI) * LEAP_HEIGHT
+			_ghost_time -= delta
+			if _ghost_time <= 0.0:
+				_ghost_time = 0.045
+				_afterimage(Color(0.9, 0.25, 0.2, 0.5))
 			if _leap_t >= 1.0:
 				sprite.position.y = 0.0
+				# lądowanie: fala uderzeniowa, pęknięcia, odłamki, mocne trzęsienie
 				if _player_in_telegraph():
-					_hurt_player(pounce_damage, 200.0)
-				_shake_camera(5.0)
+					_hurt_player(pounce_damage, 260.0)
+					SkillEffects.claw(get_parent(), _player.global_position + Vector2(0, -14), -1.0 if sprite.flip_h else 1.0, 30.0, Color(1.0, 0.3, 0.25))
+				_shake_camera(9.0)
+				_snap(Vector2(1.25, 0.8))
+				SkillEffects.shockwave(get_parent(), global_position, pounce_radius * 1.2, Color(0.9, 0.35, 0.25))
+				_ground_crack(global_position, pounce_radius * 0.9)
+				_debris(global_position, 18, 170.0)
 				_burst(global_position, Color(0.45, 0.4, 0.35), 24, 120.0)
+				Sfx.play_at("hit_heavy", global_position)
+				Sfx.play_at("shockwave", global_position, -6.0)
 				_remove_telegraph()
 				_set_stage("recover", 0.5)
 		["cleave", "telegraph"]:
 			velocity = Vector2.ZERO
 			if _stage_timer <= 0.0:
+				var angle := _telegraph.rotation
 				if _player_in_telegraph():
-					_hurt_player(cleave_damage, 160.0)
-				var tip := global_position + Vector2.from_angle(_telegraph.rotation) * cleave_radius * 0.6
+					_hurt_player(cleave_damage, 200.0)
+				var tip := global_position + Vector2.from_angle(angle) * cleave_radius * 0.6
+				# rozszarpanie: fala cięcia po stożku, dwa krzyżujące się ślady pazurów, rzut do przodu
+				SkillEffects.crescent(get_parent(), global_position + Vector2(0, -8), angle, deg_to_rad(cleave_arc_degrees / 2.0), cleave_radius)
+				SkillEffects.claw(get_parent(), tip + Vector2(0, -10), -1.0, 40.0, Color(1.0, 0.25, 0.2))
+				SkillEffects.claw(get_parent(), tip + Vector2(6, -6), 1.0, 34.0, Color(1.0, 0.85, 0.8))
 				_burst(tip + Vector2(0, -8), Color(0.85, 0.15, 0.15), 18, 90.0)
+				_snap(Vector2(1.18, 0.88))
+				var lunge := sprite.create_tween()
+				lunge.tween_property(sprite, "position", Vector2.from_angle(angle) * 10.0, 0.07)
+				lunge.tween_property(sprite, "position", Vector2.ZERO, 0.2)
+				_shake_camera(5.0)
+				Sfx.play_at("big_slash", global_position, -4.0)
+				Sfx.play_at("claw", global_position)
 				_remove_telegraph()
 				_set_stage("recover", 0.5)
 		[_, "recover"]:

@@ -26,6 +26,9 @@ DIR = "south-east"
 ## PixelLab narysował stan "Siedzi" goblina na całe płótno, tak wysoko jak stojącego (38 vs 36 px) - siedzący
 ## wychodził większy niż po wstaniu. Sylwetkę siedzenia zmniejszamy, zostawiając ją opartą o ziemię.
 SIT_SCALE = 0.75
+## Stworzenia mniejsze niż wychodzą z PixelLab (mnożnik do SCALE): wilki i wargi zlewały się w stadzie w jedną
+## plamę, były większe od goblinów. Wilk Alfa zostaje duży - ma się wyróżniać.
+SIZE = {"wolf": 0.78, "warg": 0.8}
 
 
 def _open(path):
@@ -74,11 +77,12 @@ def build(name, rows, out_name=None):
     sheet = Image.new("RGBA", (cell_w * columns, cell_h * len(rows)))
     for r, c, img, feet in placed:
         sheet.alpha_composite(img, (int(c * cell_w + half - img.width / 2.0), int(r * cell_h + feet_y - feet)))
-    small = shrink(sheet, cell_w, cell_h)
+    scale = SCALE * SIZE.get(out_name or name, 1.0)
+    small = shrink(sheet, cell_w, cell_h, scale)
     os.makedirs(OUT, exist_ok=True)
     small.save(os.path.join(OUT, (out_name or name) + ".png"))
-    w, h = round(cell_w * SCALE), round(cell_h * SCALE)
-    return {"cell": [w, h], "offset_y": -(round(feet_y * SCALE) - h / 2.0)}
+    w, h = round(cell_w * scale), round(cell_h * scale)
+    return {"cell": [w, h], "offset_y": -(round(feet_y * scale) - h / 2.0)}
 
 
 def _sitting(img):
@@ -91,10 +95,10 @@ def _sitting(img):
     return out
 
 
-def shrink(sheet, cell_w, cell_h):
+def shrink(sheet, cell_w, cell_h, scale=SCALE):
     """Zmniejszenie komórka po komórce (hero_sheets._shrink działa na kwadratowych komórkach)."""
     cols, rows = sheet.width // cell_w, sheet.height // cell_h
-    out_w, out_h = round(cell_w * SCALE), round(cell_h * SCALE)
+    out_w, out_h = round(cell_w * scale), round(cell_h * scale)
     out = Image.new("RGBA", (out_w * cols, out_h * rows))
     for r in range(rows):
         for c in range(cols):

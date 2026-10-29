@@ -32,17 +32,17 @@ gold_min = 2
 gold_max = 6
 heart_drop_chance = 0.0
 pelt_drop_chance = 0.8
-hurt_height = 14
+hurt_height = 11
 
 [node name="Shadow" type="Sprite2D" parent="."]
 position = Vector2(0, -1)
-scale = Vector2(3.4, 1.6)
+scale = Vector2(2.7, 1.3)
 texture = ExtResource("3_shadow")
 
 [node name="Sprite" type="Sprite2D" parent="."]
 material = SubResource("ShaderMaterial_flash")
 texture = ExtResource("2_sheet")
-offset = Vector2(0, -23)
+offset = Vector2(0, -18.5)
 hframes = 4
 vframes = 3
 
