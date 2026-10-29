@@ -142,6 +142,10 @@ func connect_player(player: Player) -> void:
 	player.inventory.changed.connect(_update_quick_slots)
 	player.item_picked.connect(loot_feed.show_item)
 	quest_tracker.setup(player)
+	# dymek z opisem i porównaniem łupu leżącego na ziemi - na wierzchu HUD (nad oknami się chowa)
+	var ground_tooltip := GroundTooltip.new()
+	add_child(ground_tooltip)
+	ground_tooltip.setup(player)
 	# ekwipunek otwiera się pod minimapą, dokładnie na śledzonych zadaniach - chowamy je na ten czas
 	# (w drzewie HUD tracker i tak leży pod oknami, więc nie przechwyci myszy)
 	inventory_window.visibility_changed.connect(func() -> void: quest_tracker.visible = not inventory_window.visible)

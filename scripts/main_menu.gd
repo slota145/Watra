@@ -23,6 +23,7 @@ var _hero_previews: Array = []
 
 
 func _ready() -> void:
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animacje menu idą w _process
 	Sfx.stop_ambient()
 	theme = UiStyle.make_menu_theme()
 

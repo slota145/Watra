@@ -84,6 +84,13 @@ var _stun_marker: StunMarker
 @onready var sprite: Sprite2D = $Sprite
 
 
+
+## Ruch w _physics_process (60 razy na sekundę) - interpolacja fizyki wygładza go do klatek obrazu
+## (np. monitor 240 Hz). Reszta świata ma ją wyłączoną (World), bo porusza się w _process.
+func _init() -> void:
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
+
+
 func _ready() -> void:
 	add_to_group("enemies")
 	health = max_health

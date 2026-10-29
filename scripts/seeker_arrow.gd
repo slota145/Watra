@@ -29,6 +29,13 @@ var _sprite: Sprite2D
 var _done := false
 
 
+
+## Ruch w _physics_process (60 razy na sekundę) - interpolacja fizyki wygładza go do klatek obrazu
+## (np. monitor 240 Hz). Reszta świata ma ją wyłączoną (World), bo porusza się w _process.
+func _init() -> void:
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
+
+
 func _ready() -> void:
 	_sprite = Sprite2D.new()
 	_sprite.texture = TEXTURE

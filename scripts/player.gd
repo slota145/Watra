@@ -191,6 +191,13 @@ var bags: Array[String] = ["", "", "", "", ""]
 @onready var slash: Sprite2D = $Pivot/Slash
 
 
+
+## Ruch w _physics_process (60 razy na sekundę) - interpolacja fizyki wygładza go do klatek obrazu
+## (np. monitor 240 Hz). Reszta świata ma ją wyłączoną (World), bo porusza się w _process.
+func _init() -> void:
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
+
+
 func _ready() -> void:
 	add_to_group("player")
 	Items.worn = equipment
@@ -432,15 +439,18 @@ func use_item(id: String) -> bool:
 
 
 ## Zakłada przedmiot z danego slotu ekwipunku; poprzedni wraca do plecaka.
-func equip_from_inventory(index: int) -> void:
+## `slot` - konkretne miejsce na postaci (przeciąganie); puste = pierwsze wolne pasujące.
+func equip_from_inventory(index: int, slot := "") -> void:
 	var data: Dictionary = inventory.slots[index]
-	if data.is_empty() or not Items.is_equippable(data["id"]):
+	if data.is_empty() or not Items.is_equippable(data["id"]) or (slot != "" and not equipment.fits(slot, data["id"])):
 		return
 	_cancel_attack()
 	var taken := inventory.take_one(index)
-	var previous := equipment.equip(taken["id"], taken["enchant"])
+	var previous := equipment.equip_to(slot, taken["id"], taken["enchant"]) if slot != "" 			else equipment.equip(taken["id"], taken["enchant"])
 	if not previous.is_empty():
-		inventory.add_item(previous["id"], 1, previous["enchant"])
+		# zdjęty przedmiot wraca na zwolnione miejsce w plecaku
+		if not inventory.put(index, previous["id"], previous["enchant"]):
+			inventory.add_item(previous["id"], 1, previous["enchant"])
 
 
 ## Zakłada sakwę / plecak z ekwipunku w pierwsze wolne miejsce na torby.
@@ -489,16 +499,19 @@ func inventory_capacity() -> int:
 
 
 ## Zdejmuje przedmiot z postaci do plecaka.
-func unequip(slot: String) -> void:
+## `index` - kratka plecaka, do której trafi zdjęty przedmiot (przeciąganie); zajęta albo -1 = pierwsza wolna.
+func unequip(slot: String, index := -1) -> void:
 	var id := equipment.get_item(slot)
 	if id == "":
 		return
-	if not inventory.can_add(id, 1):
+	var free := index >= 0 and index < inventory.slots.size() and inventory.slots[index].is_empty()
+	if not free and not inventory.can_add(id, 1):
 		DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -10), "Ekwipunek pełny!", Color(1, 0.4, 0.4), 8)
 		return
 	_cancel_attack()
 	var removed := equipment.unequip(slot)
-	inventory.add_item(removed["id"], 1, removed["enchant"])
+	if not (free and inventory.put(index, removed["id"], removed["enchant"])):
+		inventory.add_item(removed["id"], 1, removed["enchant"])
 
 
 ## Przerywa zamach (np. przy zmianie broni).
@@ -766,6 +779,7 @@ func load_save_data(data: Dictionary) -> void:
 	inventory.load_save_data(data.get("inventory", []))
 	var pos: Array = data.get("position", [spawn_point.x, spawn_point.y])
 	global_position = Vector2(pos[0], pos[1])
+	reset_physics_interpolation()  # skok, nie ruch - bez smugi przez ekran
 	_last_max_health = stats.max_health()
 	_last_max_mana = stats.max_mana()
 	health = clampi(int(data.get("health", _last_max_health)), 1, _last_max_health)
@@ -1611,6 +1625,7 @@ func _die() -> void:
 
 func _respawn() -> void:
 	global_position = spawn_point
+	reset_physics_interpolation()
 	health = stats.max_health()
 	mana = stats.max_mana()
 	is_dead = false

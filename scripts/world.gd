@@ -377,6 +377,9 @@ func _ready() -> void:
 	_noise.seed = _rng.randi()
 	_noise.frequency = 0.07
 	add_to_group("world")
+	# interpolacja fizyki tylko dla tego, co rusza się w _physics_process (gracz, wrogowie, łup, pociski -
+	# włączają ją sami); reszta świata (mieszkańcy, orły, tweeny) porusza się w _process
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	floors.add_to_group("floor_layer")
 	ground.add_to_group("ground_layer")
 	Sfx.set_ambient_zone(zone)
@@ -417,6 +420,7 @@ func _ready() -> void:
 		player.camera.reset_smoothing()
 	if zone == "forest":
 		_update_resource_piles()
+	player.reset_physics_interpolation()  # gracz przeniesiony na start / przybycie, nie przeszedł tam
 	Game.end_transition()
 
 
@@ -1478,6 +1482,7 @@ func teleport_to(shrine_id: String) -> void:
 		_travel(target_zone, "shrine:" + shrine_id)
 		return
 	player.global_position = _zone_shrines[shrine_id] + Vector2(0, 20)
+	player.reset_physics_interpolation()
 	player.camera.reset_smoothing()
 
 

@@ -35,6 +35,7 @@ var hero := "wojciech"
 
 
 func _ready() -> void:
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # wygaszanie ekranu (tween) w _process
 	_migrate_legacy_save()
 
 

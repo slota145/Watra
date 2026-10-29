@@ -62,6 +62,22 @@ func equip(id: String, enchant := 0) -> Dictionary:
 	return previous
 
 
+## Zakłada przedmiot w konkretne miejsce (np. drugi pierścień) i zwraca poprzedni ({} - pusto albo
+## przedmiot nie pasuje do tego miejsca; wtedy nic się nie zmienia - sprawdź fits()).
+func equip_to(slot: String, id: String, enchant := 0) -> Dictionary:
+	if not fits(slot, id):
+		return {}
+	var previous: Dictionary = items[slot]
+	items[slot] = {"id": id, "enchant": enchant}
+	changed.emit()
+	return previous
+
+
+## Czy przedmiot pasuje do miejsca na postaci.
+func fits(slot: String, id: String) -> bool:
+	return SLOT_TYPES.get(slot, "") != "" and SLOT_TYPES[slot] == Items.get_data(id).get("slot", "")
+
+
 ## Zdejmuje przedmiot z miejsca i zwraca go ({} jeśli było puste).
 func unequip(slot: String) -> Dictionary:
 	var previous: Dictionary = items.get(slot, {})

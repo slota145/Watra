@@ -6,7 +6,8 @@ extends PanelContainer
 ## PPM na przedmiocie w plecaku - użyj albo załóż, PPM na założonym - zdejmij (tak samo torby).
 ## Przy otwartym oknie zaklinania PPM wkłada przedmiot (albo kamień) do tego okna.
 ## Poziom zaklęcia widać w rogu kratki; znika po najechaniu myszką, żeby odsłonić ikonę.
-## Przedmioty w plecaku można przeciągać między kratkami (zamiana albo łączenie stosów), a upuszczone
+## Przedmioty w plecaku można przeciągać między kratkami (zamiana albo łączenie stosów), na postać
+## (zakładanie w wybrane miejsce), z postaci do plecaka, do okna magazynu i z powrotem, a upuszczone
 ## na koszu - wyrzucić (cenne po potwierdzeniu). Przycisk obok kosza sortuje plecak.
 
 signal enchant_requested
@@ -234,6 +235,7 @@ func _make_gear_slot(parent: Node, slot_name: String) -> Array:
 	var slot := _make_slot_panel(parent)
 	slot.add_theme_stylebox_override("panel", UiStyle.panel(Color(0.2, 0.17, 0.14), UiStyle.BORDER, 0))
 	slot.gui_input.connect(_on_gear_input.bind(slot_name))
+	slot.set_drag_forwarding(_drag_from_gear.bind(slot_name), _can_drop_on_gear.bind(slot_name), _drop_on_gear.bind(slot_name))
 	var placeholder := UiStyle.label(SLOT_LABELS[slot_name], 6, Color(0.55, 0.5, 0.42))
 	placeholder.set_anchors_preset(Control.PRESET_FULL_RECT)
 	placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -298,36 +300,63 @@ func _can_rearrange() -> bool:
 	return _player != null and not (enchant_window != null and enchant_window.is_busy())
 
 
+## Dane przeciągania (wspólne z oknem magazynu): {"inventory": Inventory, "index": int} - kratka plecaka
+## albo magazynu; {"gear_slot": String} - miejsce na postaci.
 func _drag_from_bag(_at: Vector2, index: int) -> Variant:
 	if not _can_rearrange() or _player.inventory.slots[index].is_empty():
 		return null
-	var preview := TextureRect.new()
-	preview.texture = _icons[index].texture
-	preview.modulate.a = 0.8
-	preview.position = -BAG_SLOT_SIZE / 2.0
-	var holder := Control.new()  # ikona pod kursorem, wyśrodkowana
-	holder.add_child(preview)
-	_slots[index].set_drag_preview(holder)
+	_slots[index].set_drag_preview(UiStyle.drag_preview(_icons[index].texture))
 	Sfx.play("ui_click")
-	return {"inventory_slot": index}
+	return {"inventory": _player.inventory, "index": index}
+
+
+func _drag_from_gear(_at: Vector2, slot_name: String) -> Variant:
+	var id := _player.equipment.get_item(slot_name)
+	if not _can_rearrange() or id == "":
+		return null
+	_gear[slot_name][0].set_drag_preview(UiStyle.drag_preview(Items.get_data(id)["icon"]))
+	Sfx.play("ui_click")
+	return {"gear_slot": slot_name}
 
 
 func _can_drop_on_bag(_at: Vector2, data: Variant) -> bool:
-	return data is Dictionary and data.has("inventory_slot") and _can_rearrange()
+	return data is Dictionary and (data.has("inventory") or data.has("gear_slot")) and _can_rearrange()
 
 
+## Na kratkę plecaka: przestawienie w plecaku, przedmiot z magazynu albo zdjęcie z postaci (na wolną
+## kratkę; na przedmiot pasujący do tego miejsca - zamiana).
 func _drop_on_bag(_at: Vector2, data: Variant, index: int) -> void:
-	_player.inventory.move(data["inventory_slot"], index)
+	if data.has("gear_slot"):
+		var target: Dictionary = _player.inventory.slots[index]
+		if not target.is_empty() and _player.equipment.fits(data["gear_slot"], target["id"]):
+			_player.equip_from_inventory(index, data["gear_slot"])
+		else:
+			_player.unequip(data["gear_slot"], index)
+	elif data["inventory"].transfer(data["index"], _player.inventory, index) == 0:
+		Sfx.play("ui_error")
+		return
+	Sfx.play("pickup")
+
+
+func _can_drop_on_gear(_at: Vector2, data: Variant, slot_name: String) -> bool:
+	if not (data is Dictionary and data.get("inventory") == _player.inventory and _can_rearrange()):
+		return false
+	var item: Dictionary = _player.inventory.slots[data["index"]]
+	return not item.is_empty() and _player.equipment.fits(slot_name, item["id"])
+
+
+func _drop_on_gear(_at: Vector2, data: Variant, slot_name: String) -> void:
+	_player.equip_from_inventory(data["index"], slot_name)
 	Sfx.play("pickup")
 
 
 func _can_drop_on_trash(_at: Vector2, data: Variant) -> bool:
-	return _can_drop_on_bag(_at, data)
+	return data is Dictionary and data.get("inventory") == _player.inventory and _can_rearrange()
 
 
 ## Zwykłe przedmioty znikają od razu; magiczne i lepsze oraz zaklęte - po potwierdzeniu.
 func _drop_on_trash(_at: Vector2, data: Variant) -> void:
-	var index: int = data["inventory_slot"]
+	var index: int = data["index"]
 	var slot: Dictionary = _player.inventory.slots[index]
 	if slot.is_empty():
 		return

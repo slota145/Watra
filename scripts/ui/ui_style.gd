@@ -50,6 +50,18 @@ static func center_icon(rect: TextureRect, size := 16.0) -> TextureRect:
 	return rect
 
 
+## Podgląd przeciąganego przedmiotu: półprzezroczysta ikona 16 px wyśrodkowana pod kursorem.
+static func drag_preview(texture: Texture2D) -> Control:
+	var icon := fit_icon(TextureRect.new())
+	icon.texture = texture
+	icon.size = Vector2(16, 16)
+	icon.position = -icon.size / 2.0
+	icon.modulate.a = 0.8
+	var holder := Control.new()
+	holder.add_child(icon)
+	return holder
+
+
 ## Ikona 64 px na przycisku w polu `size` px.
 static func fit_button_icon(button: Button, size := 16) -> void:
 	button.expand_icon = true

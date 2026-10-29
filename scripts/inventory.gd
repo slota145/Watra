@@ -130,6 +130,36 @@ func move(from: int, to: int) -> void:
 	changed.emit()
 
 
+## Przenosi stos do innego ekwipunku (plecak <-> magazyn): na wskazane miejsce, jeśli jest wolne,
+## inaczej jak move_slot_to (dopełnia stosy, potem pierwsze wolne). W tym samym ekwipunku - move().
+## Zwraca liczbę przeniesionych sztuk.
+func transfer(index: int, target: Inventory, to_index := -1) -> int:
+	var slot := slots[index]
+	if slot.is_empty():
+		return 0
+	if target == self:
+		move(index, to_index)
+		return int(slot["count"])
+	if to_index >= 0 and to_index < target.slots.size() and target.slots[to_index].is_empty():
+		target.slots[to_index] = slot.duplicate()
+		slots[index] = {}
+		target.changed.emit()
+		changed.emit()
+		return int(target.slots[to_index]["count"])
+	return move_slot_to(index, target)
+
+
+## Kładzie pojedynczy przedmiot na wskazanym miejscu, jeśli jest wolne (zdejmowanie z postaci w wybraną kratkę).
+func put(index: int, id: String, enchant := 0) -> bool:
+	if index < 0 or index >= slots.size() or not slots[index].is_empty():
+		return false
+	slots[index] = {"id": id, "count": 1}
+	if enchant > 0:
+		slots[index]["enchant"] = enchant
+	changed.emit()
+	return true
+
+
 ## Wyrzuca cały stos z miejsca.
 func discard(index: int) -> void:
 	if slots[index].is_empty():

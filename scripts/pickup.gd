@@ -21,8 +21,16 @@ var _retry_at := 0.0
 @onready var sprite: Sprite2D = $Sprite
 
 
+
+## Ruch w _physics_process (60 razy na sekundę) - interpolacja fizyki wygładza go do klatek obrazu
+## (np. monitor 240 Hz). Reszta świata ma ją wyłączoną (World), bo porusza się w _process.
+func _init() -> void:
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
+
+
 func _ready() -> void:
 	_player = get_tree().get_first_node_in_group("player")
+	add_to_group("pickups")  # dymek łupu na ziemi (GroundTooltip)
 	sprite.texture = Items.GOLD_ICON if item_id == "gold" else Items.get_data(item_id)["icon"]
 	# ikony mają 64 px - na ziemi leżą w rozmiarze 16 px (moneta 10 px)
 	sprite.scale = Vector2.ONE * (10.0 if item_id == "gold" else 16.0) / sprite.texture.get_width()
@@ -35,8 +43,9 @@ func _ready() -> void:
 
 	# wyskok z ciała wroga w losową stronę
 	var target := position + Vector2(randf_range(-16, 16), randf_range(-8, 10))
-	create_tween().tween_property(self, "position", target, 0.4).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
-	var hop := create_tween()
+	# tweeny w tempie fizyki - łup ma interpolację fizyki
+	create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).tween_property(self, "position", target, 0.4) 			.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	var hop := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	hop.tween_property(sprite, "position:y", -14.0, 0.2).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
 	hop.tween_property(sprite, "position:y", -3.0, 0.2).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
 	hop.tween_callback(func() -> void: _can_collect = true)

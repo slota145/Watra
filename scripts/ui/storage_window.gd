@@ -1,7 +1,8 @@
 class_name StorageWindow
 extends PanelContainer
 ## Magazyn osady: po lewej plecak gracza, po prawej magazyn (40 miejsc).
-## Kliknięcie przedmiotu przenosi cały stos na drugą stronę. Zamyka się,
+## Kliknięcie przedmiotu przenosi cały stos na drugą stronę; można go też przeciągnąć na wybraną kratkę
+## (także z okna ekwipunku i do niego - ten sam format danych przeciągania). Zamyka się,
 ## gdy gracz odejdzie od magazyniera. Magazynier może dobudować regały (rozbudowa za złoto).
 
 ## Rozbudowa: ile miejsc ma magazyn na start, ile dochodzi z jednym regałem i ile najwięcej.
@@ -29,7 +30,7 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
 	box.add_child(UiStyle.title("Magazyn osady"))
-	var hint := UiStyle.label("Kliknij przedmiot, aby przenieść cały stos na drugą stronę.", 7, UiStyle.DIM_COLOR)
+	var hint := UiStyle.label("Kliknij przedmiot, aby przenieść cały stos na drugą stronę, albo przeciągnij go na wybraną kratkę.", 7, UiStyle.DIM_COLOR)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(hint)
 
@@ -107,6 +108,7 @@ func _fill(grid: GridContainer, from: Inventory, to: Inventory) -> void:
 		slot.custom_minimum_size = SLOT_SIZE
 		slot.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.SLOT_BG, UiStyle.SLOT_BORDER, 0))
 		grid.add_child(slot)
+		slot.set_drag_forwarding(_drag.bind(from, i, slot), _can_drop, _drop.bind(from, i))
 		if data.is_empty():
 			continue
 		var enchant: int = data.get("enchant", 0)
@@ -129,9 +131,30 @@ func _fill(grid: GridContainer, from: Inventory, to: Inventory) -> void:
 		slot.add_child(corner)
 
 
+func _drag(_at: Vector2, from: Inventory, index: int, slot: Panel) -> Variant:
+	if from.slots[index].is_empty():
+		return null
+	slot.set_drag_preview(UiStyle.drag_preview(Items.get_data(from.slots[index]["id"])["icon"]))
+	Sfx.play("ui_click")
+	return {"inventory": from, "index": index}
+
+
+func _can_drop(_at: Vector2, data: Variant) -> bool:
+	return data is Dictionary and data.get("inventory") in [_player.inventory, _player.storage]
+
+
+func _drop(_at: Vector2, data: Variant, target: Inventory, index: int) -> void:
+	if data["inventory"].transfer(data["index"], target, index) > 0:
+		Sfx.play("deposit")
+	else:
+		Sfx.play("ui_error")
+
+
 func _on_slot_input(event: InputEvent, from: Inventory, index: int, to: Inventory) -> void:
 	var mouse := event as InputEventMouseButton
-	if mouse != null and mouse.pressed and mouse.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT]:
+	# lewy - przy puszczeniu (wciśnięcie może rozpocząć przeciąganie), prawy - od razu
+	if mouse != null and (mouse.button_index == MOUSE_BUTTON_LEFT and not mouse.pressed
+			or mouse.button_index == MOUSE_BUTTON_RIGHT and mouse.pressed):
 		if from.move_slot_to(index, to) > 0:
 			Sfx.play("deposit")
 		else:

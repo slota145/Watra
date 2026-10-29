@@ -70,6 +70,7 @@ func _physics_process(delta: float) -> void:
 			if position.distance_to(home) < 4.0 or _return_time > RETURN_TIMEOUT:
 				if position.distance_to(home) >= 4.0:
 					position = home
+					reset_physics_interpolation()
 					appear()
 				state = State.IDLE
 				health = max_health

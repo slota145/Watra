@@ -89,6 +89,7 @@ func _update_attack(delta: float) -> void:
 				# pojawia się za plecami gracza i od razu tnie
 				var behind: Vector2 = -_player._facing_vector()
 				global_position = _player.global_position + behind * 44.0
+				reset_physics_interpolation()
 				_smoke(global_position)
 				_dir = (_player.global_position - global_position).normalized()
 				_face(_player.global_position)
