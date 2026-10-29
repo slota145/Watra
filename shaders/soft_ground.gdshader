@@ -29,6 +29,10 @@ uniform float dither_width = 0.0;
 // lekki cień rzucany na niższy teren tuż za brzegiem (kolor, krycie w alfie)
 uniform vec4 shadow_color : source_color = vec4(0.0, 0.0, 0.0, 0.0);
 uniform float shadow_width = 0.0;
+// skarpa nad wodą: pod brzegiem terenu (patrząc w dół ekranu) pas ziemnej ściany o wysokości face_height px
+uniform float face_height = 0.0;
+uniform vec4 face_top : source_color = vec4(0.47, 0.33, 0.2, 1.0);
+uniform vec4 face_bottom : source_color = vec4(0.22, 0.15, 0.1, 1.0);
 // woda: tekstura faluje (przesunięcie o piksel-dwa w rytm fal) i przesuwają się po niej błyski
 uniform bool animate = false;
 
@@ -114,6 +118,27 @@ void fragment() {
 		COLOR = c;
 	} else if (v >= 0.5 - dither_width && mod(p.x + p.y - 1.0, 2.0) < 0.5) {
 		COLOR = c;
+	} else if (face_height > 0.0 && (level(p - vec2(0.0, face_height)) >= 0.5 || level(p - vec2(0.0, face_height * 0.5)) >= 0.5)) {
+		// ściana skarpy: jak głęboko pod krawędzią terenu leży piksel (0 = tuż pod trawą)
+		float d = face_height;
+		for (float i = 1.0; i <= 12.0; i += 1.0) {
+			if (i > face_height) {
+				break;
+			}
+			if (level(p - vec2(0.0, i)) >= 0.5) {
+				d = i;
+				break;
+			}
+		}
+		float t = d / face_height;
+		vec3 earth = mix(face_top.rgb, face_bottom.rgb, t);
+		// warstwy ziemi i kamyki z szumu
+		float n = texture(noise_tex, vec2(p.x / 23.0, p.y / 7.0)).r;
+		earth *= 0.88 + n * 0.24;
+		if (d >= face_height - 1.0) {
+			earth = face_bottom.rgb * 0.7;  // linia styku z wodą
+		}
+		COLOR = vec4(earth, 1.0);
 	} else if (v >= 0.5 - shadow_width) {
 		COLOR = vec4(shadow_color.rgb, shadow_color.a);
 	} else {

@@ -20,7 +20,6 @@ const TILE := 16
 ## kafelek o masce narożników mask (NW<<3 | NE<<2 | SW<<1 | SE, bit = górny teren) leży
 ## w kolumnie mask % 4 i rzędzie WANG_ROW + 4 * zestaw + mask / 4.
 const SOIL_ROW := 7
-const ROOTS_ROW := 10
 const WANG_ROW := 11
 enum Ground { SOIL, MOSS, LEAVES, PATH }
 ## Kolejność zestawów Wang w atlasie i pierwszeństwo przy spotkaniu dwóch terenów w jednej komórce.
@@ -43,6 +42,9 @@ const TALL_TREES: Array[Texture2D] = [preload("res://assets/ancient/v2_tall_0.pn
 		preload("res://assets/ancient/v2_tall_2.png"), preload("res://assets/ancient/v2_tall_3.png")]
 ## Część drzew w głębi lasu to wysokie drzewa (reszta - zwykłe dęby i sosny, które można ścinać).
 const TALL_CHANCE := 0.4
+## Jak głęboko pod podstawą pnia sięgają korzenie na grafice (px).
+const GIANT_ROOTS := 24.0
+const TALL_ROOTS := 8.0
 const FOREST_EXTRAS: Array[Texture2D] = [preload("res://assets/ancient/v2_boulder.png"), preload("res://assets/ancient/v2_mossy_rocks.png"),
 		preload("res://assets/ancient/v2_roots.png"), preload("res://assets/ancient/v2_fallen_trunk.png"),
 		preload("res://assets/ancient/v2_mushroom_ring.png"), preload("res://assets/ancient/v2_ferns.png"),
@@ -261,8 +263,6 @@ func _cell_tile(cell: Vector2i, n: float, rng: RandomNumberGenerator) -> Vector2
 		bit >>= 1
 	if kind == Ground.SOIL:
 		# czysta ściółka: czasem wystające korzenie, poza tym jeden z trzech wariantów ziemi
-		if n > 0.25 and rng.randf() < 0.25:
-			return Vector2i(rng.randi() % 4, ROOTS_ROW)
 		return Vector2i(0, WANG_ROW + 4 * (rng.randi() % WANG_SET.size()))
 	var row := WANG_ROW + 4 * int(WANG_SET[kind]) + mask / 4
 	return Vector2i(mask % 4, row)
@@ -347,6 +347,8 @@ func _plant(rng: RandomNumberGenerator, cell: Vector2i, oak_chance: float, spaci
 		_mark(cell, 1, 1)
 		var tall := _prop(TALL_TREES[rng.randi() % TALL_TREES.size()], w._cell_to_world(cell), Vector2(14, 7))
 		tall.flip_h = rng.randf() < 0.5
+		_raise_sort(tall, TALL_ROOTS)
+		_moss_spots.append(Vector2(cell) + Vector2(0.5, 0.5))
 		w._map_props[cell] = MAP_OAK
 		return
 	w._try_place(OAK if oak else PINE, cell, spacing)
@@ -361,9 +363,20 @@ func _giant_tree(rng: RandomNumberGenerator, cell: Vector2i) -> void:
 	_moss_spots.append(Vector2(cell) + Vector2(0.5, 0.5))
 	var sprite: Sprite2D = _prop(GIANT_TREES[rng.randi() % GIANT_TREES.size()], w._cell_to_world(cell), Vector2(34, 12))
 	sprite.flip_h = rng.randf() < 0.5
+	_raise_sort(sprite, GIANT_ROOTS)
 	for dy in range(-1, 1):
 		for dx in range(-1, 2):
 			w._map_props[cell + Vector2i(dx, dy)] = MAP_GIANT
+
+
+## Korzenie drzewa rozchodzą się poniżej pnia - punkt sortowania (i kolizja) podniesione do podstawy pnia,
+## żeby rzeczy stojące przed pniem (na korzeniach) rysowały się przed drzewem, a nie za nim.
+func _raise_sort(sprite: Sprite2D, roots: float) -> void:
+	var body := sprite.get_parent() as Node2D
+	if body == null or not body is StaticBody2D:
+		return
+	body.position.y -= roots
+	sprite.offset.y += roots
 
 
 func _free_area(cell: Vector2i, rx: int, ry: int) -> bool:

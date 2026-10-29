@@ -236,15 +236,11 @@ const REEDS_TEXTURE := preload("res://assets/swamp/v2_reeds.png")
 const LILY_TEXTURE := preload("res://assets/swamp/v2_lilies.png")
 ## Skarpy rzeki: kamienie, korzenie i kłody przy wodzie; most i kładki z desek (Rozlewiska po przeróbce).
 const BANK_ROCKS := preload("res://assets/swamp/v2_rocks.png")
-const BANK_ROOTS := preload("res://assets/swamp/v2_roots.png")
-const BANK_LOG := preload("res://assets/swamp/v2_log.png")
 const DECK_TEXTURE := preload("res://assets/swamp/v2_deck48.png")
 const WALK_H := preload("res://assets/swamp/v2_walk_h.png")
 const WALK_V := preload("res://assets/swamp/v2_walk_v.png")
 const BRIDGE_RAIL_V2 := preload("res://assets/swamp/v2_rail.png")
 const BRIDGE_POST_V2 := preload("res://assets/swamp/v2_post.png")
-const BRIDGE_END_L := preload("res://assets/swamp/v2_abutment_l.png")
-const BRIDGE_END_R := preload("res://assets/swamp/v2_abutment_r.png")
 const WATER_PILLAR := preload("res://assets/swamp/v2_pillar.png")
 const SIGNPOST_TEXTURE := preload("res://assets/swamp/signpost.png")
 ## Wioska żaboludzi: ile chat i gromad na brzegach, mieszkańcy, wódz i wystrój.
@@ -1964,7 +1960,10 @@ func _swamp_soft_corners(corner_levels: Dictionary, lawn: Dictionary) -> void:
 		for x in map_size.x + 1:
 			var corner := Vector2i(x, y)
 			var level: int = corner_levels.get(corner, 0)
-			var in_marsh := ((Vector2(corner) - _swamp_center) / _swamp_radii).length() < 1.15
+			var in_marsh := _in_marsh(corner)
+			if in_marsh and level >= 2:
+				_soft_corners[corner] = "w_shallow"
+				continue
 			if level == 3 or level == 2 and not in_marsh:
 				_soft_corners[corner] = "w_deep"
 				continue
@@ -2011,22 +2010,26 @@ func _place_swamp_props() -> void:
 				elif r < 0.25:
 					_water_plant(REEDS_TEXTURE, 2, cell, true)
 				continue
-			if kind == "bank" and _next_to_water(cell):
-				# skarpa nad wodą: kamienie, korzenie, kłoda wpadająca do wody, kępy trzciny
-				if r < 0.05:
+			if kind == "bank":
+				# trawiasta skarpa: tuż przy wodzie nic (skarpa ma być czysta), dalej kamienie, kępy trzciny,
+				# drzewa dopiero z dala od wody (korona nie wisi nad nią)
+				if _near_water(cell, 1):
+					continue
+				if r < 0.03:
 					_water_plant(BANK_ROCKS, 2, cell, false)
-					continue
-				if r < 0.07:
-					_water_plant(BANK_ROOTS, 1, cell, false)
-					continue
-				if r < 0.08:
-					_water_plant(BANK_LOG, 1, cell, true)
-					continue
-			if kind == "mud" or kind == "bank":
+				elif r < 0.08:
+					_water_plant(REEDS_TEXTURE, 2, cell, true)
+				elif r < 0.11 and not _near_water(cell, 3):
+					_try_place(_random_tree(), cell, 1)
+				continue
+			if kind == "mud":
 				if r < 0.14:
 					_water_plant(CATTAIL_TEXTURE if r < 0.07 else REEDS_TEXTURE, 3 if r < 0.07 else 2, cell, true)
 				elif r < 0.17:
-					_try_place(MANGROVE if kind == "mud" else _random_tree(), cell, 1)
+					_try_place(MANGROVE, cell, 1)
+				continue
+			if _near_water(cell, 3):
+				_maybe_decor(cell, 0.05)
 				continue
 			if edge_dist < border_thickness:
 				if _rng.randf() < 0.9 - edge_dist * 0.12:
@@ -2048,10 +2051,12 @@ func _place_swamp_props() -> void:
 				_maybe_decor(cell, 0.07)
 
 
-func _next_to_water(cell: Vector2i) -> bool:
-	for dir: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
-		if _water.get(cell + dir, "") in ["deep", "shallow"]:
-			return true
+## Czy w promieniu `radius` kafelków jest woda (rzeka, rozlewisko).
+func _near_water(cell: Vector2i, radius: int) -> bool:
+	for dy in range(-radius, radius + 1):
+		for dx in range(-radius, radius + 1):
+			if _water.get(cell + Vector2i(dx, dy), "") in ["deep", "shallow"]:
+				return true
 	return false
 
 
@@ -2071,7 +2076,7 @@ func _water_plant(texture: Texture2D, frames: int, cell: Vector2i, upright: bool
 
 
 ## Drewniany most nad nurtem: pokład z desek w poprzek (pod postaciami), poręcze z obu stron, słupy na końcach
-## i co kilka metrów, kamienne przyczółki na brzegach i pale w wodzie pod przednią krawędzią.
+## i co kilka metrów i pale w wodzie pod przednią krawędzią.
 func _build_bridge(cross: Vector2) -> void:
 	var y0 := floori(cross.y) - 1
 	var x_from := floori(cross.x - SWAMP_RIVER_SHALLOW) - 1
@@ -2121,13 +2126,7 @@ func _build_bridge(cross: Vector2) -> void:
 			post.offset = Vector2(0, -BRIDGE_POST_V2.get_height() / 2.0 + 1.0)
 			post.position = Vector2(left.x + px, edge_y + 1.0)
 			entities.add_child(post)
-	# przyczółki z kamieni na brzegach i pale w wodzie pod przednią krawędzią
-	for end: Array in [[BRIDGE_END_L, left + Vector2(-10, 52)], [BRIDGE_END_R, left + Vector2(length + 10, 52)]]:
-		var stones := Sprite2D.new()
-		stones.texture = end[0]
-		stones.offset = Vector2(0, -(end[0] as Texture2D).get_height() / 2.0 + 1.0)
-		stones.position = end[1]
-		entities.add_child(stones)
+	# pale w wodzie pod przednią krawędzią
 	var px := 24.0
 	while px < length - 16.0:
 		var pillar := Sprite2D.new()
@@ -2147,6 +2146,23 @@ func _build_bridge(cross: Vector2) -> void:
 		body.add_child(shape)
 
 
+## Woda, do której nie da się wejść: głębia i płycizna rzeki (poza mostem); bagno rozlewiska i uroczyska -
+## można brodzić.
+func _blocks_walking(cell: Vector2i) -> bool:
+	var kind: String = _water.get(cell, "")
+	if _bridge_cells.has(cell) or not kind in ["deep", "shallow"]:
+		return false
+	if kind == "deep":
+		return true
+	return not _in_marsh(cell)
+
+
+func _in_marsh(cell: Vector2i) -> bool:
+	if ((Vector2(cell) - _swamp_center) / _swamp_radii).length() < 1.15:
+		return true
+	return _grove != null and _grove.contains(cell)
+
+
 ## Kolizja głębokiej wody (poza mostem) - na osobnej warstwie, żeby pociski leciały nad rzeką.
 func _build_water_collision() -> void:
 	var body := StaticBody2D.new()
@@ -2156,7 +2172,7 @@ func _build_water_collision() -> void:
 	for y in map_size.y:
 		var run_start := -1
 		for x in map_size.x + 1:
-			var deep: bool = x < map_size.x and _water.get(Vector2i(x, y), "") == "deep" and not _bridge_cells.has(Vector2i(x, y))
+			var deep: bool = x < map_size.x and _blocks_walking(Vector2i(x, y))
 			if deep and run_start < 0:
 				run_start = x
 			elif not deep and run_start >= 0:

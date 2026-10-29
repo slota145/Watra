@@ -68,8 +68,8 @@ const STYLES := {
 			"shadow": Color(0.25, 0.27, 0.3, 0.6), "shadow_width": 0.035},
 	# rozlewiska: woda jest najniższym terenem, a trawa nawisa nad nią skarpą - poszarpany brzeg z ciemnym
 	# obrysem i szeroki cień pod skarpą na wodzie; woda faluje i błyska (animate)
-	"grass": {"rim": Color(0.07, 0.18, 0.06, 1.0), "rim_width": 0.05, "noise": 0.3, "fine": 0.16,
-			"shadow": Color(0.02, 0.07, 0.12, 0.6), "shadow_width": 0.15},
+	"grass": {"rim": Color(0.07, 0.18, 0.06, 1.0), "rim_width": 0.05, "noise": 0.26, "fine": 0.12,
+			"shadow": Color(0.02, 0.07, 0.12, 0.55), "shadow_width": 0.08, "face": 8.0},
 	"w_mud": {"rim": Color(0.14, 0.08, 0.04, 0.7), "rim_width": 0.035, "noise": 0.42, "fine": 0.15,
 			"shadow": Color(0.02, 0.07, 0.07, 0.45), "shadow_width": 0.07},
 	"w_shallow": {"dither": 0.05, "noise": 0.5, "animate": true},
@@ -291,6 +291,7 @@ func _material(kind: String, field: Image, corner_count: Vector2i, full: bool, l
 	material.set_shader_parameter("shadow_color", style.get("shadow", Color(0, 0, 0, 0)))
 	material.set_shader_parameter("shadow_width", style.get("shadow_width", 0.0))
 	material.set_shader_parameter("animate", style.get("animate", false))
+	material.set_shader_parameter("face_height", style.get("face", 0.0))
 	return material
 
 

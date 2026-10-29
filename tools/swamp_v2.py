@@ -14,16 +14,13 @@ OUT = os.path.join(ROOT, "assets", "swamp")
 
 # nazwa: (paczka, [klatki], docelowy dłuższy bok najwyższej klatki) - kilka klatek = pasek wyrównany do dołu
 STRIPS = {
-    "v2_cattails": ("bank", [0, 1, 8], 28),
-    "v2_reeds": ("bank", [8, 1], 24),
+    # bez klatki 1 - pałki na brązowej łacie błota wyglądały na wodzie jak wklejony kwadrat
+    "v2_cattails": ("bank", [0, 8, 0], 36),
+    "v2_reeds": ("bank", [8, 0], 30),
     "v2_lilies": ("bank", [2, 3, 9], 16),
     "v2_rocks": ("bank", [4, 5], 20),
-    "v2_log": ("bank", [6], 30),
-    "v2_roots": ("bank", [7], 22),
     "v2_rail": ("bridge", [2], 24),
     "v2_post": ("bridge", [4], 16),
-    "v2_abutment_l": ("bridge", [5], 40),
-    "v2_abutment_r": ("bridge", [6], 40),
     "v2_pillar": ("bridge", [7], 18),
     "v2_lantern": ("bridge", [12], 30),
     "v2_fish_basket": ("bridge", [13], 14),
@@ -37,10 +34,30 @@ def _load(pack, frame):
     return Image.open(path).convert("RGBA") if os.path.exists(path) else None
 
 
+def _no_base(img):
+    """Rośliny wodne bez szarej/błotnistej podstawy narysowanej pod nimi przez PixelLab (dolna piąta część
+    grafiki: piksele mało nasycone albo ciemnobrązowe) - stoją wprost w wodzie gry."""
+    import colorsys
+    img = img.copy()
+    box = img.getbbox()
+    px = img.load()
+    for y in range(box[3] - (box[3] - box[1]) // 5, box[3]):
+        for x in range(box[0], box[2]):
+            r, g, b, a = px[x, y]
+            if not a:
+                continue
+            h, sat, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+            if sat < 0.25 or (0.03 < h < 0.14 and v < 0.45):
+                px[x, y] = (0, 0, 0, 0)
+    return img
+
+
 def strip(name, pack, frames, size):
     images = [_load(pack, f) for f in frames]
     if not all(images):
         return
+    if name in ("v2_cattails", "v2_reeds"):
+        images = [_no_base(img) for img in images]
     largest = max(max(b[2] - b[0], b[3] - b[1]) for b in (img.getbbox() for img in images))
     scale = min(1.0, size / largest)
     cells = []
