@@ -24,7 +24,11 @@ $tests = @(
     @("test_save_roundtrip.gd", $false), @("test_pal.gd", $false), @("test_audio.gd", $false), @("balance_sim.gd", $false),
     @("test_village.gd", $true), @("test_ui.gd", $true), @("test_pan.gd", $true)
 )
-if ($Bench) { $tests += ,@("bench_combat.gd", $false) }
+if ($Bench) {
+    $tests += ,@("bench_combat.gd", $false)
+    # tester-gracz: każda kraina po 90 s gry
+    foreach ($zone in @("forest", "swamp", "mountains", "ancient")) { $tests += ,@("playtest_bot.gd", $false, $zone) }
+}
 
 Write-Host "Import zasobów..."
 $p = Start-Process $Godot -ArgumentList "--path", $project, "--headless", "--import" -PassThru -NoNewWindow `
@@ -37,12 +41,15 @@ foreach ($t in $tests) {
     $args = @("--path", $project)
     if ($t[1]) { $args += @("--resolution", "1280x720") } else { $args += "--headless" }
     $args += @("-s", (Join-Path $PSScriptRoot $name))
+    if ($t.Count -gt 2) { $args += @("--", $t[2], "90"); $name = "$name ($($t[2]))" }
+    $log = $name -replace "[^A-Za-z0-9_.]", "_"
     $p = Start-Process $Godot -ArgumentList $args -PassThru -NoNewWindow `
-        -RedirectStandardOutput "$out\$name.out.txt" -RedirectStandardError "$out\$name.err.txt"
-    $timeout = if ($name -like "bench*") { 600000 } else { 180000 }
+        -RedirectStandardOutput "$out\$log.out.txt" -RedirectStandardError "$out\$log.err.txt"
+    $timeout = if ($name -like "bench*" -or $name -like "playtest*") { 600000 } else { 180000 }
     if (-not $p.WaitForExit($timeout)) { $p.Kill(); Write-Host "[CZAS] $name" -ForegroundColor Red; $failed++; continue }
-    $lines = Get-Content "$out\$name.out.txt" -Encoding UTF8
-    $errors = Get-Content "$out\$name.err.txt" -Encoding UTF8 | Select-String "SCRIPT ERROR|Parse Error"
+    $lines = Get-Content "$out\$log.out.txt" -Encoding UTF8
+    # błędy skryptów i zgłaszane przez silnik pomyłki (zwolnione obiekty w listach, błędne wywołania)
+    $errors = Get-Content "$out\$log.err.txt" -Encoding UTF8 | Select-String "SCRIPT ERROR|Parse Error|Attempted to|Error calling"
     $bad = $lines | Select-String "^FAIL|BLAD|: BLAD"
     $good = ($lines | Select-String "^OK|: OK|WYNIK: OK|^===").Count
     if ($errors -or $bad -or $good -eq 0) {
@@ -53,6 +60,7 @@ foreach ($t in $tests) {
     } else {
         Write-Host "[OK]   $name ($good)" -ForegroundColor Green
         if ($name -like "bench*") { $lines | Select-String "^===" | ForEach-Object { Write-Host "    $_" } }
+        if ($name -like "playtest*") { $lines | Select-String "^kraina" | ForEach-Object { Write-Host "    $_" } }
     }
 }
 Write-Host ""

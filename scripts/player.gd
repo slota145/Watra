@@ -1373,7 +1373,13 @@ func _use_combo() -> void:
 			_cast_wave(level)
 
 
+## Kierunek celowania dla testera-bota (tests/playtest_bot.gd) zamiast myszy; zero - mysz.
+var aim_override := Vector2.ZERO
+
+
 func _aim_direction() -> Vector2:
+	if aim_override != Vector2.ZERO:
+		return aim_override.normalized()
 	var aim := get_global_mouse_position() - body_center()
 	return aim.normalized() if aim != Vector2.ZERO else _facing_vector()
 

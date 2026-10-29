@@ -157,12 +157,16 @@ func _process_dragonflies(delta: float) -> void:
 	if _dragonfly_check > 0.0:
 		return
 	_dragonfly_check = 0.7
-	for fly in _dragonflies.duplicate():
+	# lista budowana od nowa - zwolnionej ważki nie da się usunąć z listy typowanej (erase)
+	var kept: Array[Node2D] = []
+	for fly in _dragonflies:
 		if not is_instance_valid(fly):
-			_dragonflies.erase(fly)
-		elif fly.global_position.distance_to(_player.global_position) > 420.0:
-			_dragonflies.erase(fly)
+			continue
+		if fly.global_position.distance_to(_player.global_position) > 420.0:
 			fly.queue_free()
+		else:
+			kept.append(fly)
+	_dragonflies = kept
 	if _dragonflies.size() >= DRAGONFLIES_MAX:
 		return
 	var spot := random_water_near(_player.global_position, 2.0, 12.0, 12)

@@ -72,7 +72,7 @@ func _physics_process(delta: float) -> void:
 		_spawn_timer = spawn_stagger
 		_spawn_treant(_to_spawn)
 		return
-	_treants.assign(_treants.filter(func(t: Node) -> bool: return is_instance_valid(t) and t.state != State.DEAD))
+	_treants.assign(_treants.filter(func(t) -> bool: return is_instance_valid(t) and t.state != State.DEAD))
 	# cała fala pokonana - drzewo budzi następną (o ile jeszcze ma siły)
 	if _treants.is_empty() and waves_done < max_waves:
 		waves_done += 1

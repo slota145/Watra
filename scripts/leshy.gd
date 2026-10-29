@@ -34,7 +34,7 @@ func aggro() -> void:
 
 func _choose_attack(to_player: Vector2) -> bool:
 	var distance := to_player.length()
-	_adds.assign(_adds.filter(func(a: Node) -> bool: return is_instance_valid(a) and a.state != State.DEAD))
+	_adds.assign(_adds.filter(func(a) -> bool: return is_instance_valid(a) and a.state != State.DEAD))
 	var roll := randf()
 	_dir = to_player.normalized()
 	if _adds.size() < max_adds and roll < 0.25:
