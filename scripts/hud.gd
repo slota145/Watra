@@ -35,6 +35,10 @@ var board_window: BoardWindow
 var sage_window: SageWindow
 ## Wykuwanie magicznych i rzadkich przedmiotów u kowala.
 var forge_window: ForgeWindow
+var offer_window: OfferWindow
+## Aktywne premie z osady (posiłek, błogosławieństwo, łaźnia) pod paskami - nazwa i minuty do końca.
+var _boon_box: VBoxContainer
+var _boon_time := 0.0
 var _player: Player
 ## id mikstury -> etykieta z liczbą sztuk
 var _quick_counts := {}
@@ -108,6 +112,16 @@ func _ready() -> void:
 	forge_window.name = "ForgeWindow"
 	add_child(forge_window)
 	move_child(forge_window, sage_window.get_index() + 1)
+	offer_window = OfferWindow.new()
+	offer_window.name = "OfferWindow"
+	add_child(offer_window)
+	move_child(offer_window, forge_window.get_index() + 1)
+	_boon_box = VBoxContainer.new()
+	_boon_box.position = Vector2(6, 76)
+	_boon_box.add_theme_constant_override("separation", 0)
+	_boon_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_boon_box)
+	move_child(_boon_box, quick_slots.get_index() + 1)
 	death_label.visible = false
 	level_up_label.visible = false
 	intro_label.visible = false
@@ -162,6 +176,10 @@ func connect_player(player: Player) -> void:
 	npc_dialog.sage_requested.connect(sage_window.open)
 	forge_window.setup(player)
 	npc_dialog.forge_requested.connect(forge_window.open)
+	offer_window.setup(player)
+	npc_dialog.offers_requested.connect(offer_window.open)
+	player.boons.changed.connect(_update_boons)
+	_update_boons()
 	quest_tracker.area_requested.connect(show_quest_area)
 	quest_journal.area_requested.connect(show_quest_area)
 	player.quests.quest_ready.connect(_on_quest_ready)
@@ -480,6 +498,23 @@ func _build_icon_bar() -> void:
 		_icon_buttons.append([button, window])
 
 
+## Lista aktywnych premii z osady: "Gulasz myśliwski 14 min" w kolorze grupy.
+func _update_boons() -> void:
+	if _boon_box == null or _player == null:
+		return
+	for child in _boon_box.get_children():
+		child.queue_free()
+	for group: String in _player.boons.active:
+		var entry: Dictionary = _player.boons.active[group]
+		var data: Dictionary = Boons.DEFS[entry["id"]]
+		var label := UiStyle.label("%s %d min" % [data["name"], ceili(float(entry["left"]) / 60.0)], 7, Boons.GROUP_COLORS[group])
+		label.add_theme_color_override("font_outline_color", Color(0.05, 0.05, 0.08))
+		label.add_theme_constant_override("outline_size", 3)
+		label.tooltip_text = "%s: %s" % [Boons.GROUP_NAMES[group], data["description"]]
+		label.mouse_filter = Control.MOUSE_FILTER_PASS
+		_boon_box.add_child(label)
+
+
 func _build_quick_slots() -> void:
 	for entry: Array in QUICK_SLOTS:
 		var item := Items.get_data(entry[0])
@@ -570,10 +605,14 @@ LPM zaraz potem: %s (%s)" % [Skills.get_data(combo_id)["name"], Skills.mana_cost
 const BOSS_BAR_DISTANCE := 450.0
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	# przyciemnienie slotu umiejętności, gdy się odnawia albo brakuje many
 	if _player == null or _skill_slot == null:
 		return
+	_boon_time -= delta
+	if _boon_time <= 0.0:
+		_boon_time = 5.0
+		_update_boons()
 	_update_boss_bar()
 	# podświetlenie ikon otwartych okien
 	for entry: Array in _icon_buttons:

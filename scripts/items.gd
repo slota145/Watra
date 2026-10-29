@@ -301,42 +301,66 @@ const DATA := {
 		"sell_price": 8,
 		"use": {"mana": 40},
 	},
+	"greater_health_potion": {
+		"name": "Wielka mikstura życia",
+		"description": "Warzona przez zielarkę z lecznicy Ostoi. Przywraca 150 punktów zdrowia.",
+		"icon": preload("res://assets/items/greater_health_potion.png"),
+		"price": 70,
+		"sell_price": 25,
+		"use": {"health": 150},
+	},
+	"greater_mana_potion": {
+		"name": "Wielka mikstura many",
+		"description": "Warzona przez zielarkę z lecznicy Ostoi. Przywraca 120 punktów many.",
+		"icon": preload("res://assets/items/greater_mana_potion.png"),
+		"price": 60,
+		"sell_price": 22,
+		"use": {"mana": 120},
+	},
+	"guard_horn": {
+		"name": "Róg straży",
+		"description": "Mosiężny róg z herbem Ostoi. Zadęty przyzywa dwóch żołnierzy z koszar, którzy przez 30 sekund walczą u twojego boku.",
+		"icon": preload("res://assets/items/guard_horn.png"),
+		"price": 150,
+		"sell_price": 40,
+		"use": {"guards": 2},
+	},
 
 	# ---------------------------------------------------------------- kamienie zaklinające
 	"weapon_stone": {
 		"name": "Kamień zaklinania broni", "short_name": "Kamień broni", "description": "Czerwony kamień. Zaklina broń od +1 do +15.",
-		"icon": preload("res://assets/items/weapon_stone.png"), "sell_price": 6, "stone": {"category": "weapon", "perfect": false},
+		"icon": preload("res://assets/items/weapon_stone.png"), "price": 60, "sell_price": 6, "stone": {"category": "weapon", "perfect": false},
 	},
 	"weapon_stone_perfect": {
 		"name": "Doskonały kamień zaklinania broni", "short_name": "Doskonały kamień broni", "description": "Rzadki i jasny. Zaklina przedmioty z +15 na poziomy I-V.",
-		"icon": preload("res://assets/items/weapon_stone_perfect.png"), "sell_price": 40, "stone": {"category": "weapon", "perfect": true},
+		"icon": preload("res://assets/items/weapon_stone_perfect.png"), "price": 600, "sell_price": 40, "stone": {"category": "weapon", "perfect": true},
 	},
 	"armor_stone": {
 		"name": "Kamień zaklinania zbroi", "short_name": "Kamień zbroi", "description": "Niebieski kamień. Zaklina zbroję od +1 do +15.",
-		"icon": preload("res://assets/items/armor_stone.png"), "sell_price": 6, "stone": {"category": "armor", "perfect": false},
+		"icon": preload("res://assets/items/armor_stone.png"), "price": 60, "sell_price": 6, "stone": {"category": "armor", "perfect": false},
 	},
 	"armor_stone_perfect": {
 		"name": "Doskonały kamień zaklinania zbroi", "short_name": "Doskonały kamień zbroi", "description": "Rzadki i jasny. Zaklina przedmioty z +15 na poziomy I-V.",
-		"icon": preload("res://assets/items/armor_stone_perfect.png"), "sell_price": 40, "stone": {"category": "armor", "perfect": true},
+		"icon": preload("res://assets/items/armor_stone_perfect.png"), "price": 600, "sell_price": 40, "stone": {"category": "armor", "perfect": true},
 	},
 	"jewelry_stone": {
 		"name": "Kamień zaklinania biżuterii", "short_name": "Kamień biżuterii", "description": "Fioletowy kamień. Zaklina biżuterię od +1 do +15.",
-		"icon": preload("res://assets/items/jewelry_stone.png"), "sell_price": 6, "stone": {"category": "jewelry", "perfect": false},
+		"icon": preload("res://assets/items/jewelry_stone.png"), "price": 60, "sell_price": 6, "stone": {"category": "jewelry", "perfect": false},
 	},
 	"jewelry_stone_perfect": {
 		"name": "Doskonały kamień zaklinania biżuterii", "short_name": "Doskonały kamień biżuterii", "description": "Rzadki i jasny. Zaklina przedmioty z +15 na poziomy I-V.",
-		"icon": preload("res://assets/items/jewelry_stone_perfect.png"), "sell_price": 40, "stone": {"category": "jewelry", "perfect": true},
+		"icon": preload("res://assets/items/jewelry_stone_perfect.png"), "price": 600, "sell_price": 40, "stone": {"category": "jewelry", "perfect": true},
 	},
 
 	"blessed_stone": {
 		"name": "Uświęcony kamień",
 		"description": "Złoty i ciepły w dłoni. Zebrane razem gwarantują zaklęcie: 100 szt. na III, 200 na IV, 300 na V.",
-		"icon": preload("res://assets/items/blessed_stone.png"), "sell_price": 2, "enchant_aid": "blessed",
+		"icon": preload("res://assets/items/blessed_stone.png"), "price": 12, "sell_price": 2, "enchant_aid": "blessed",
 	},
 	"mercy_stone": {
 		"name": "Kamień miłosierdzia",
 		"description": "Lazurowa kula. Zebrane razem chronią przed utratą poziomu przy nieudanym zaklęciu: 10 szt. przy III, 20 przy IV, 30 przy V.",
-		"icon": preload("res://assets/items/mercy_stone.png"), "sell_price": 3, "enchant_aid": "mercy",
+		"icon": preload("res://assets/items/mercy_stone.png"), "price": 25, "sell_price": 3, "enchant_aid": "mercy",
 	},
 	# ---------------------------------------------------------------- legendarne (łup z bossów)
 	"ring_gruzlog": {

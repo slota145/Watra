@@ -81,7 +81,9 @@ const CHIMNEYS := {"tavern": Vector2(193, 4), "chief_house": Vector2(27, 4), "sm
 		"lodge": Vector2(136, 4), "sage_hut": Vector2(17, 6), "guild": Vector2(168, 4)}
 const BUILDING_NAMES := {"tavern": "Karczma", "chief_house": "Dom sołtysa", "warehouse": "Magazyn",
 		"smithy": "Kuźnia", "shop": "Sklep", "barracks": "Koszary", "lodge": "Chatka myśliwych",
-		"sage_hut": "Chata mędrca", "guild": "Gildia poszukiwaczy przygód"}
+		"sage_hut": "Chata mędrca", "guild": "Gildia poszukiwaczy przygód", "infirmary": "Lecznica zielarki",
+		"chapel": "Kaplica", "houses": "Chaty osadników", "market": "Targowisko", "bathhouse": "Łaźnia",
+		"armory": "Warsztat płatnerza"}
 ## Koszary za południową bramą i chatka myśliwych za palisadą na północnym wschodzie.
 const BARRACKS_POS := Vector2i(38, 43)
 const BARRACKS_SIZE := Vector2i(12, 7)
@@ -97,6 +99,9 @@ const GUILD_POS := Vector2i(18, 43)
 const GUILD_SIZE := Vector2i(12, 7)
 const GUILD_COLOR := Color("a82e40")
 const CONSTRUCTION_STAGES := 4
+const INFIRMARY_REGEN := 0.03
+## Wysokość platformy wieży palisady nad jej podstawą (piksele) - tam stoi łucznik.
+const TOWER_PLATFORM := -44.0
 ## Zadanie sołtysa, po którym można u niego zlecać budowy.
 const UNLOCK_QUEST := "village_help"
 ## Budowy zlecane u sołtysa (okno budowy): miejsce, koszt w surowcach (z plecaka i magazynu),
@@ -104,7 +109,7 @@ const UNLOCK_QUEST := "village_help"
 const PROJECTS := {
 	"barracks": {"pos": BARRACKS_POS, "size": BARRACKS_SIZE, "color": BARRACKS_COLOR,
 			"time": 180.0, "art": "construction", "cost": {"wood": 150, "stone": 150},
-			"description": "Za południową bramą. Ostoja dostanie własnych żołnierzy - ćwiczą na placu i przy kukłach.",
+			"description": "Za południową bramą. Ostoja dostanie własnych żołnierzy - ćwiczą na placu, a łucznicy obsadzą wieże palisady i strzelają do potworów pod osadą.",
 			"start_line": "Zaczynamy budowę koszar! Zajrzyj za południową bramę.",
 			"done_line": "Koszary gotowe! Ostoja ma wreszcie własne wojsko!",
 			"banner": "Koszary zbudowane!
@@ -128,7 +133,60 @@ Trzech myśliwych rusza na łowy"},
 			"start_line": "Budujemy gildię poszukiwaczy przygód! Przy drodze od południowej bramy.",
 			"done_line": "Gildia otwarta! Poszukiwacze przygód już oblegają tablicę ogłoszeń.",
 			"banner": "Gildia poszukiwaczy przygód zbudowana!\nTablica ogłoszeń czeka na zlecenia"},
+	# budowle bez wnętrza (grafika z zewnątrz) - "fit": plac budowy dopasowany do ich rozmiaru
+	"infirmary": {"pos": Vector2i(1, 28), "size": Vector2i(5, 4), "color": Color("4f8a4a"), "fit": true,
+			"time": 150.0, "art": "construction_lodge", "cost": {"wood": 120, "stone": 80},
+			"description": "Za zachodnią palisadą. Za palisadą szybciej odzyskasz zdrowie i manę (3% na sekundę), a zielarka sprzeda wielkie mikstury.",
+			"start_line": "Budujemy lecznicę! Za zachodnią bramą, na południe od drogi.",
+			"done_line": "Lecznica gotowa. Ranni wreszcie mają gdzie leżeć.",
+			"banner": "Lecznica zielarki zbudowana!\nW osadzie szybciej wracasz do sił"},
+	"chapel": {"pos": Vector2i(6, 45), "size": Vector2i(5, 4), "color": Color("b8a46a"), "fit": true,
+			"time": 180.0, "art": "construction_lodge", "cost": {"wood": 100, "stone": 150},
+			"description": "Na południowym zachodzie, za palisadą. Kapłan za datek udzieli błogosławieństwa: +10% doświadczenia albo +5% obrażeń na 20 minut.",
+			"start_line": "Stawiamy kaplicę! Na południowym zachodzie, za palisadą.",
+			"done_line": "Kaplica stoi. Ludzie znów mają gdzie się modlić.",
+			"banner": "Kaplica zbudowana!\nKapłan udziela błogosławieństw"},
+	"houses": {"pos": Vector2i(38, 34), "size": Vector2i(8, 4), "color": Color("9a7a4a"), "fit": true,
+			"time": 200.0, "art": "construction_lodge", "cost": {"wood": 200, "stone": 100},
+			"description": "W obozie uchodźców. Namioty zamienią się w chaty, a wdzięczni osadnicy co 5 minut wpłacą trochę złota.",
+			"start_line": "Budujemy chaty dla uchodźców! Koniec spania pod płótnem.",
+			"done_line": "Chaty gotowe! Uchodźcy mają wreszcie dach nad głową.",
+			"banner": "Chaty osadników zbudowane!\nOsadnicy dzielą się zarobkiem"},
+	"market": {"pos": Vector2i(47, 25), "size": Vector2i(6, 3), "color": Color("c28a3a"), "fit": true,
+			"time": 140.0, "art": "construction_lodge", "cost": {"wood": 150, "stone": 50},
+			"description": "Przy sklepie. Zjedzie się wędrowny kupiec z rzadkim towarem - doskonałymi kamieniami, wielkimi miksturami - zmienianym co 10 minut.",
+			"start_line": "Szykujemy miejsce na targowisko! Obok sklepu.",
+			"done_line": "Targowisko gotowe! Już ktoś zajechał wozem.",
+			"banner": "Targowisko zbudowane!\nWędrowny kupiec rozłożył towar"},
+	"bathhouse": {"pos": Vector2i(59, 30), "size": Vector2i(5, 4), "color": Color("6a8aa8"), "fit": true,
+			"time": 140.0, "art": "construction_lodge", "cost": {"wood": 120, "stone": 60},
+			"description": "Za wschodnią palisadą. Po odpoczynku w karczmie będziesz Wypoczęty: +2 zdrowia i +1 many na sekundę, +5% szybkości ruchu przez 10 minut.",
+			"start_line": "Budujemy łaźnię! Za wschodnią palisadą.",
+			"done_line": "Łaźnia gotowa. Gorąca woda czeka!",
+			"banner": "Łaźnia zbudowana!\nPo odpoczynku jesteś Wypoczęty"},
+	"armory": {"pos": Vector2i(23, 25), "size": Vector2i(4, 3), "color": Color("5a5f75"), "fit": true,
+			"time": 160.0, "art": "construction_lodge", "cost": {"wood": 80, "stone": 120, "iron_ore": 20},
+			"description": "Obok kuźni. Kowal nauczy się przekuwać przedmioty: za złoto i rudę żelaza wylosuje na nowo jedną premię.",
+			"start_line": "Rozbudowujemy kuźnię o warsztat płatnerza!",
+			"done_line": "Warsztat gotowy. Kowal już ostrzy narzędzia.",
+			"banner": "Warsztat płatnerza zbudowany!\nKowal przekuwa przedmioty"},
 }
+## Podatek osadników (gdy stoją chaty): co tyle sekund i ile złota (rośnie z poziomem postaci).
+const TAX_TIME := 300.0
+const TAX_GOLD := 15
+const TAX_PER_LEVEL := 4
+## Wędrowny kupiec: co tyle sekund nowy towar, ile pozycji i z czego losuje.
+const MERCHANT_ROTATION := 600.0
+const MERCHANT_STOCK := 5
+const MERCHANT_POOL: Array[String] = ["greater_health_potion", "greater_mana_potion", "weapon_stone", "armor_stone",
+		"jewelry_stone", "weapon_stone_perfect", "armor_stone_perfect", "jewelry_stone_perfect", "blessed_stone",
+		"mercy_stone", "backpack", "guard_horn"]
+const LINES_HERBALIST: Array[String] = ["Rana się goi, gdy się ją czyści.", "Rumianek, babka, krwawnik - na wszystko coś rośnie.",
+		"Leż spokojnie, zaraz zmienię opatrunek."]
+const LINES_PRIEST: Array[String] = ["Światło nie opuściło Ostoi.", "Módlmy się za tych, którzy nie dotarli.",
+		"Każdy, kto tu przychodzi, jest bezpieczny."]
+const LINES_TRAVELER: Array[String] = ["Towary z dalekich krain!", "Takie kamienie tylko u mnie!",
+		"Za tydzień ruszam dalej - kupuj, póki jestem!"]
 ## Plac ćwiczeń (kukły) tuż obok koszar i plac musztry przed nimi - środki w kafelkach.
 const TRAINING_YARD := Vector2(55.4, 46.4)
 const DRILL_SQUARE := Vector2(45.0, 53.6)
@@ -374,6 +432,15 @@ var _planks := 1
 var _textures := {}
 ## Miejsca zajęte przez rekwizyty (kafelki układu) - ozdoby omijają je, ścieżki, budynki i drzwi.
 var _spots: Array[Vector2] = []
+## Namioty obozu uchodźców (znikają, gdy staną chaty), kowal (przekuwanie z warsztatem płatnerza),
+## wędrowny kupiec targowiska i liczniki podatku i nowego towaru.
+var _refugee_tents: Array[Node] = []
+var _smith: Npc
+var _traveler: Npc
+var _tax_timer := TAX_TIME
+var _rotation_timer := MERCHANT_ROTATION
+## Wieże palisady (na platformach stają łucznicy z koszar).
+var _tower_sprites: Array[Sprite2D] = []
 var _chief: Npc
 ## Węzły placu budowy i koszar (usuwane / dodawane przy zmianie stanu).
 var _butcher_rack: Sprite2D
@@ -411,6 +478,13 @@ func build(origin: Vector2i, ground: TileMapLayer, floors: Node2D, entities: Nod
 ## Czy komórka (w kafelkach świata) należy do terenu osady (z polem pod koszary).
 func has_cell(cell: Vector2i) -> bool:
 	return Rect2i(origin_tile, SIZE).has_point(cell)
+
+
+## Lecznica: za palisadą zdrowie i mana wracają o INFIRMARY_REGEN maksimum na sekundę.
+func regen_bonus(world_pos: Vector2) -> float:
+	if project_state("infirmary") != "built":
+		return 0.0
+	return INFIRMARY_REGEN if is_inside_palisade(Vector2i((world_pos / TILE).floor())) else 0.0
 
 
 ## Czy komórka (w kafelkach świata) leży za palisadą.
@@ -545,6 +619,7 @@ func _build_palisade() -> void:
 		var sprite := _prop("palisade_tower", (tower / TILE - Vector2(origin_tile)) / SCALE, Vector2(44, 10), 2)
 		sprite.frame = rng.randi() % 2
 		sprite.flip_h = tower.x > rect.get_center().x
+		_tower_sprites.append(sprite)
 	_build_gates(gate_ends)
 	if not broken_points.is_empty():
 		var middle: Vector2 = broken_points[broken_points.size() / 2]
@@ -899,8 +974,8 @@ func _build_life() -> void:
 	_entities.add_child(shopper)
 
 	# obóz uchodźców przy ognisku: namioty, szałas, wóz z dobytkiem, posłania, kociołek
-	_prop("refugee_tent_0", Vector2(40.2, 36.6), Vector2(36, 8))
-	_prop("refugee_tent_1", Vector2(44.0, 36.9), Vector2(36, 8))
+	for tent: Array in [["refugee_tent_0", Vector2(40.2, 36.6)], ["refugee_tent_1", Vector2(44.0, 36.9)]]:
+		_refugee_tents.append(_body_of(_prop(tent[0], tent[1], Vector2(36, 8))))
 	_prop("lean_to", Vector2(42.0, 39.4), Vector2(30, 6))
 	_prop("covered_wagon", Vector2(45.4, 39.7), Vector2(44, 8))
 	_prop("bedroll_open", Vector2(36.0, 36.3))
@@ -1020,6 +1095,141 @@ func _build_pig_pen() -> void:
 	map_markers.append({"position": _px(pen.get_center()), "color": Color("e8a0a0"), "size": 2.0})
 
 
+# ---------------------------------------------------------------- budowle bez wnętrza
+## Budowla z zewnątrz: grafika stoi na środku dolnej krawędzi miejsca budowy, z kolizją ścian.
+func _exterior(project: String, texture_name: String, collision: Vector2) -> Vector2:
+	var data: Dictionary = PROJECTS[project]
+	var base := Vector2(data["pos"]) + Vector2(data["size"].x / 2.0, data["size"].y)
+	var nodes: Array[Node] = _projects[project]["nodes"]
+	nodes.append(_body_of(_prop(texture_name, base, collision)))
+	_trample(base + Vector2(0, 0.9), Vector2(data["size"].x / 2.0 + 0.6, 1.2))
+	map_cells.erase(_marker_cell(project))
+	return base
+
+
+func _extra(project: String, texture_name: String, tile_pos: Vector2, collision := Vector2.ZERO) -> Sprite2D:
+	var sprite := _prop(texture_name, tile_pos, collision)
+	_projects[project]["nodes"].append(_body_of(sprite))
+	return sprite
+
+
+func _extra_npc(project: String, npc: Npc) -> Npc:
+	_entities.add_child(npc)
+	_projects[project]["nodes"].append(npc)
+	return npc
+
+
+## Lecznica: ranni na pryczach przed wejściem, suszarnia ziół, zielarka z wielkimi miksturami.
+func _build_infirmary() -> void:
+	var base := _exterior("infirmary", "infirmary", Vector2(88, 14))
+	_extra("infirmary", "cot_wounded_0", base + Vector2(-2.0, 1.4), Vector2(26, 6))
+	_extra("infirmary", "cot_wounded_1", base + Vector2(0.4, 1.6), Vector2(26, 6))
+	_extra("infirmary", "herb_rack", base + Vector2(3.0, 0.6), Vector2(24, 5))
+	_extra("infirmary", "mortar_table", base + Vector2(2.8, 2.0), Vector2(18, 5))
+	var herbalist := _npc("herbalist", base + Vector2(1.8, 1.9), Npc.Role.IDLE, LINES_HERBALIST, Vector2.LEFT)
+	herbalist.display_name = "Zielarka Jadwiga"
+	herbalist.trade_greeting = "Mikstury z ziół zbieranych o świcie. Pomogą, gdy zrobi się gorąco."
+	herbalist.shop_sells.assign(["greater_health_potion", "greater_mana_potion", "health_potion", "mana_potion"])
+	_extra_npc("infirmary", herbalist)
+	map_markers.append({"position": _px(base), "color": Color("6fdc7a"), "size": 2.0})
+
+
+## Kaplica: kapłan z błogosławieństwami przed wejściem, świeczniki, skrzynka na datki, modlący się.
+func _build_chapel() -> void:
+	var base := _exterior("chapel", "chapel", Vector2(88, 14))
+	for side in [-1.0, 1.0]:
+		_extra("chapel", "candle_stand", base + Vector2(2.3 * side, 0.6), Vector2(6, 3))
+		_glow(_px(base + Vector2(2.3 * side, 0.0)), Color(1.0, 0.85, 0.5, 0.3), Vector2(30, 26))
+	_extra("chapel", "offering_box", base + Vector2(1.2, 1.1), Vector2(8, 4))
+	var priest := _npc("priest", base + Vector2(0, 1.3), Npc.Role.IDLE, LINES_PRIEST, Vector2.DOWN)
+	priest.display_name = "Ojciec Bogumił"
+	priest.services.assign(["blessing"])
+	priest.dialog_greeting = "Witaj, dziecko. Za skromny datek pomodlę się za twoją drogę."
+	priest.looks_around = false
+	_extra_npc("chapel", priest)
+	for spot: Array in [["villager_red", base + Vector2(-0.8, 2.7)], ["refugee_old", base + Vector2(0.9, 2.8)]]:
+		var praying := _npc(spot[0], spot[1], Npc.Role.IDLE, LINES_PRIEST, Vector2.UP)
+		praying.seated = true
+		praying.looks_around = false
+		_extra_npc("chapel", praying)
+	map_markers.append({"position": _px(base), "color": Color("ffe9a0"), "size": 2.0})
+
+
+## Chaty osadników w miejscu namiotów obozu uchodźców (i podatek co TAX_TIME).
+func _build_houses() -> void:
+	for tent in _refugee_tents:
+		if is_instance_valid(tent):
+			tent.queue_free()
+	_refugee_tents.clear()
+	_extra("houses", "cottage_0", Vector2(40.3, 36.8), Vector2(48, 10))
+	_extra("houses", "cottage_1", Vector2(44.2, 37.1), Vector2(48, 10))
+	_tax_timer = TAX_TIME
+
+
+func _collect_tax() -> void:
+	var gold := TAX_GOLD + TAX_PER_LEVEL * (_player.stats.level - 1)
+	_player.stats.add_gold(gold)
+	Sfx.play("coins")
+	DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -16),
+			"+%d zł od osadników" % gold, Color(1.0, 0.85, 0.3), 8)
+
+
+## Targowisko: wóz wędrownego kupca, skrzynie z egzotycznym towarem i dywany - towar zmienia się co 10 minut.
+func _build_market() -> void:
+	map_cells.erase(_marker_cell("market"))
+	_extra("market", "covered_wagon", Vector2(49.0, 27.6), Vector2(44, 8))
+	_extra("market", "exotic_crate", Vector2(51.9, 27.9), Vector2(14, 4))
+	_extra("market", "carpets", Vector2(52.8, 27.4), Vector2(14, 4))
+	_trample(Vector2(50.4, 27.6), Vector2(3.2, 1.3))
+	_traveler = _npc("traveling_merchant", Vector2(51.2, 28.6), Npc.Role.IDLE, LINES_TRAVELER, Vector2.DOWN)
+	_traveler.display_name = "Wędrowny kupiec Hasan"
+	_traveler.trade_greeting = "Najlepszy towar po tej stronie gór! Co dziesięć minut coś nowego."
+	_extra_npc("market", _traveler)
+	_restock_traveler()
+	map_markers.append({"position": _px(Vector2(50.4, 27.6)), "color": MAP_MERCHANT, "size": 2.0})
+
+
+func _restock_traveler() -> void:
+	var pool := MERCHANT_POOL.duplicate()
+	pool.shuffle()
+	_traveler.shop_sells.assign(pool.slice(0, MERCHANT_STOCK))
+	_traveler.say("Nowy towar! Podejdź, obejrzyj!")
+
+
+## Łaźnia: balia i ręczniki przed wejściem, para nad dachem. Wypoczynek po odpoczynku w karczmie (on_rest).
+func _build_bathhouse() -> void:
+	var base := _exterior("bathhouse", "bathhouse", Vector2(82, 14))
+	_extra("bathhouse", "bath_tub", base + Vector2(-2.4, 1.2), Vector2(24, 6))
+	_extra("bathhouse", "towel_rack", base + Vector2(2.4, 1.0), Vector2(22, 4))
+	_extra("bathhouse", "kindling", base + Vector2(2.9, 2.0))
+	var steam := CPUParticles2D.new()
+	steam.position = _px(base) + Vector2(4, -84)
+	steam.amount = 10
+	steam.lifetime = 2.6
+	steam.direction = Vector2.UP
+	steam.spread = 20.0
+	steam.initial_velocity_min = 6.0
+	steam.initial_velocity_max = 12.0
+	steam.gravity = Vector2(2, -3)
+	steam.scale_amount_min = 2.0
+	steam.scale_amount_max = 4.0
+	steam.color = Color(1, 1, 1, 0.35)
+	steam.z_index = 30
+	_entities.add_child(steam)
+	_projects["bathhouse"]["nodes"].append(steam)
+
+
+## Warsztat płatnerza obok kuźni: stojaki z bronią i zbrojami, kowal uczy się przekuwania.
+func _build_armory() -> void:
+	map_cells.erase(_marker_cell("armory"))
+	_extra("armory", "weapon_rack", Vector2(23.8, 27.4), Vector2(20, 5))
+	_extra("armory", "arms_bundle", Vector2(25.4, 27.6), Vector2(14, 4))
+	_extra("armory", "mail_bundle", Vector2(26.5, 27.7))
+	_trample(Vector2(25.0, 27.4), Vector2(2.2, 1.0))
+	if _smith != null and not "reforge" in _smith.services:
+		_smith.services.append("reforge")
+
+
 # ---------------------------------------------------------------- mieszkańcy
 func _build_npcs() -> void:
 	# tragarze desek: magazyn -> naprawiana palisada
@@ -1062,6 +1272,7 @@ func _build_npcs() -> void:
 		_entities.add_child(npc)
 
 	var smith := _npc("smith", Vector2(20.9, 32.6), Npc.Role.WORKER, LINES_SMITH, Vector2.RIGHT)
+	_smith = smith
 	smith.work_effect = "sparks"
 	smith.work_effect_offset = Vector2(20, -14)
 	smith.work_period = 0.65
@@ -1103,7 +1314,7 @@ func _build_npcs() -> void:
 	var barkeep := _npc("barkeep", _in("tavern", Vector2(2.6, 2.3)), Npc.Role.IDLE, LINES_BARKEEP)
 	barkeep.looks_around = false
 	barkeep.display_name = "Karczmarz Wacław"
-	barkeep.services.assign(["rest"])
+	barkeep.services.assign(["rest", "meals"])
 	barkeep.dialog_greeting = "Witaj w Ostoi! Zmęczony? Za 25 złota przenocujesz w jednym z moich pokoi - wyśpisz się, a rano las wokół osady będzie jak nowy."
 	_entities.add_child(barkeep)
 
@@ -1234,6 +1445,8 @@ func project_progress(project: String) -> float:
 
 ## Odpoczynek w karczmie - przez noc cieśle kończą budowy.
 func on_rest() -> void:
+	if project_state("bathhouse") == "built":
+		_player.boons.grant("rested")
 	for project: String in _projects:
 		if _projects[project]["state"] == "building":
 			_projects[project]["left"] = 0.0
@@ -1295,6 +1508,16 @@ func _process(delta: float) -> void:
 			break  # słownik budów właśnie się zmienił
 	if project_state("barracks") == "built":
 		_process_drill(delta)
+	if project_state("houses") == "built":
+		_tax_timer -= delta
+		if _tax_timer <= 0.0:
+			_tax_timer = TAX_TIME
+			_collect_tax()
+	if project_state("market") == "built" and _traveler != null:
+		_rotation_timer -= delta
+		if _rotation_timer <= 0.0:
+			_rotation_timer = MERCHANT_ROTATION
+			_restock_traveler()
 
 
 ## Plac budowy: rusztowanie w 4 etapach, stos desek i kamieni, cieśle i tragarz desek.
@@ -1309,6 +1532,9 @@ func _build_construction_site(project: String) -> void:
 	site.centered = false
 	# plac budowy ma grafikę w dawnej skali - rozciągamy go do rozmiaru budynku
 	site.scale = Vector2.ONE * SCALE
+	if data.get("fit", false):
+		var frame := Vector2(site.texture.get_width() / float(CONSTRUCTION_STAGES), site.texture.get_height())
+		site.scale = Vector2(size) * SCALE * TILE / frame
 	site.offset = Vector2(0, -size.y * TILE)
 	site.position = _px(Vector2(pos + Vector2i(0, size.y)))
 	_entities.add_child(site)
@@ -1409,6 +1635,13 @@ func _dirt(cell: Vector2i) -> void:
 
 func _build_barracks() -> void:
 	var nodes: Array[Node] = _projects["barracks"]["nodes"]
+	# łucznicy z koszar na wieżach palisady
+	for i in _tower_sprites.size():
+		var archer := TowerArcher.new()
+		archer.sheet = load("res://assets/npc/%s.png" % ["soldier_a", "soldier_b", "soldier_c", "soldier_a"][i % 4])
+		archer.position = Vector2(0, TOWER_PLATFORM)
+		_tower_sprites[i].add_child(archer)
+		nodes.append(archer)
 	if not buildings.has("barracks"):
 		_add_building("barracks", BARRACKS_POS, BARRACKS_SIZE, BARRACKS_COLOR, null)
 		# wnętrze: prycze i stojaki na broń
@@ -1458,6 +1691,9 @@ func _build_barracks() -> void:
 			_drill_home.append(soldier.position)
 	_sergeant = _npc("sergeant", Vector2(48.8, 53.4), Npc.Role.IDLE, [], Vector2.LEFT)
 	_sergeant.looks_around = false
+	_sergeant.display_name = "Sierżant Bolko"
+	_sergeant.shop_sells.assign(["guard_horn"])
+	_sergeant.trade_greeting = "Zadmij w róg, a moi chłopcy przybiegną. Tylko nie nadużywaj!"
 	_entities.add_child(_sergeant)
 	nodes.append(_sergeant)
 	_drill_step = 0
@@ -1561,7 +1797,7 @@ func _build_sage_hut() -> void:
 	var sage := _npc("sage", _in("sage_hut", Vector2(4.0, 3.55)), Npc.Role.IDLE, LINES_SAGE, Vector2.DOWN)
 	sage.looks_around = false
 	sage.display_name = "Mędrzec Teodor"
-	sage.services.assign(["disenchant"])
+	sage.services.assign(["disenchant", "bestiary"])
 	sage.dialog_greeting = "Zaklęcia to nie wieczność, młody wędrowcze. Za drobną opłatą zdejmę czar z twojego oręża i oddam ci kamienie, które go utrzymywały."
 	_entities.add_child(sage)
 	nodes.append(sage)

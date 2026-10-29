@@ -242,6 +242,25 @@ static func register(recipe: Dictionary, id := "") -> String:
 	return id
 
 
+## Przekuwanie u kowala (warsztat płatnerza): jedna losowa premia przedmiotu losowana od nowa (nowy tier
+## i wartość wg poziomu i jakości przedmiotu - jak przy łupie). Zwraca {"id": nowe id, "stat": premia,
+## "before": stara wartość, "after": nowa} albo {} (brak premii / legenda).
+static func reforge(id: String) -> Dictionary:
+	var data := Items.get_data(id)
+	var recipe: Dictionary = data.get("recipe", {}).duplicate(true)
+	if recipe.is_empty() or recipe["quality"] == LEGENDARY or recipe["affixes"].is_empty():
+		return {}
+	var stat: String = recipe["affixes"].keys().pick_random()
+	var before: float = recipe["affixes"][stat]
+	var tier := roll_tier(int(recipe["level"]), recipe["quality"])
+	var span := tier_range(stat, tier)
+	var step := _step(stat)
+	recipe["affixes"][stat] = snappedf(randf_range(span[0], span[1]), step) if step > 0.0 else randi_range(span[0], span[1])
+	recipe["tiers"][stat] = tier
+	var new_id := register(recipe)
+	return {"id": new_id, "stat": stat, "before": before, "after": recipe["affixes"][stat]}
+
+
 static func is_generated(id: String) -> bool:
 	return id.begins_with(PREFIX)
 

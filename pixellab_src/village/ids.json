@@ -41,7 +41,11 @@
   "child_b": "11840fd2-f2be-4a39-894c-bbf5b48edbb2",
   "bard": "d6c10aee-a880-46f4-bf77-a7b93772389b",
   "gardener": "9f998261-abb7-4572-bdff-16eccfd431b1",
-  "woodcutter": "48e4d220-bd68-465b-ae8e-f0adcbe6e00c"
+  "woodcutter": "48e4d220-bd68-465b-ae8e-f0adcbe6e00c",
+  "priest": "a7e49907-ebf5-47a4-9106-cbf669a7fcd9",
+  "herbalist": "91efabfa-9d9b-4945-9982-833196832304",
+  "traveling_merchant": "15076a34-a91b-4720-af9f-b29ed85d9b1f",
+  "sweeper": "9d3eb4d2-9bad-4f96-828d-9744c979c69c"
  },
  "buildings_small": {
   "tavern": "1b6cb0ae-e397-4460-a5de-ece7dca5dbc0",
@@ -76,7 +80,13 @@
   "palisade_gate_parts": "e0b24737-0f42-4b9f-b908-7672b6b11b70",
   "camp_big": "dc22e363-306c-4654-b5da-30b89e51c269",
   "camp_small": "e1a6ad58-77c8-459e-aa99-c6a84bb6ff54",
-  "fences": "e9e25a21-edca-4dad-b944-22752c3bcecf"
+  "fences": "e9e25a21-edca-4dad-b944-22752c3bcecf",
+  "b_infirmary": "e7a637ad-a7fb-4ca3-9d92-0c5f6831e143",
+  "b_chapel": "ca7e74be-8fd9-43eb-a53d-5be56658a932",
+  "b_bathhouse": "ef6bba8e-7728-46be-a07e-3b81a11c6d5b",
+  "b_cottage": "bcb311c1-0e4b-40b7-8a06-8a8fc5af5521",
+  "props3": "4c62c63a-abb0-411f-8873-3538bcfdab46",
+  "icons3": "c76defaa-0011-494b-a8ca-ed92ed706710"
  },
  "props": {
   "stable": "b66fc970-6c38-495c-a17b-43d079a09650",

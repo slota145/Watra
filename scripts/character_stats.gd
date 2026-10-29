@@ -47,6 +47,12 @@ var xp := 0
 var unspent_points := 0
 var gold := 0
 var attributes := {"vitality": 0, "strength": 0, "dexterity": 0, "intelligence": 0}
+## Premie z osady (posiłki, błogosławieństwa) - ustawiane przez gracza.
+var boons: Boons:
+	set(value):
+		boons = value
+		boons.changed.connect(changed.emit)
+
 ## Założone przedmioty - ustawiane przez gracza.
 var equipment: Equipment:
 	set(value):
@@ -55,7 +61,8 @@ var equipment: Equipment:
 
 
 func max_health() -> int:
-	return base_health + (level - 1) * HEALTH_PER_LEVEL + attribute("vitality") * HEALTH_PER_VITALITY + int(_bonus("health"))
+	var flat := base_health + (level - 1) * HEALTH_PER_LEVEL + attribute("vitality") * HEALTH_PER_VITALITY + int(_bonus("health"))
+	return roundi(flat * (1.0 + _bonus("health_percent")))
 
 
 func max_mana() -> int:
@@ -180,7 +187,8 @@ func attribute(id: String) -> int:
 
 
 func _bonus(stat: String) -> float:
-	return equipment.bonus(stat) if equipment != null else 0.0
+	var total := equipment.bonus(stat) if equipment != null else 0.0
+	return total + (boons.bonus(stat) if boons != null else 0.0)
 
 
 ## Premia do obrażeń z atrybutu pasującego do broni oraz z przedmiotów. Kieł Gruzłoga

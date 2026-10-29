@@ -1,0 +1,36 @@
+{
+  "group_id": "74143602-b8ff-453b-8ce1-be4ef1d35f18",
+  "states": [
+    {
+      "character": {
+        "id": "15076a34-a91b-4720-af9f-b29ed85d9b1f",
+        "name": "Idle",
+        "prompt": "exotic traveling merchant with turban, colorful purple and gold robes, curled mustache, big backpack, empty hands",
+        "size": {
+          "width": 48,
+          "height": 48
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-29T16:54:15.014641+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-29T17:04:47.650313"
+}

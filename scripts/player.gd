@@ -178,6 +178,8 @@ var _last_max_mana := 0
 @onready var skills: SkillBook = $SkillBook
 @onready var quests: QuestLog = $QuestLog
 @onready var storage: Inventory = $Storage
+## Premie z osady (posiłki, błogosławieństwa, łaźnia, bestiariusz).
+var boons := Boons.new()
 
 ## Plecak bez toreb i miejsca na torby (sakwy, plecaki) pod ekwipunkiem.
 const BASE_INVENTORY := 20
@@ -203,6 +205,9 @@ func _ready() -> void:
 	Items.worn = equipment
 	legendary = LegendaryEffects.new(self)
 	add_child(legendary)
+	boons.name = "Boons"
+	add_child(boons)
+	stats.boons = boons
 	spawn_point = position
 	set_hero(Game.hero)
 	stats.equipment = equipment
@@ -419,6 +424,11 @@ func use_item(id: String) -> bool:
 			Sfx.play("ui_error")
 			DamageNumber.spawn_text(get_parent(), text_pos, refusal, Color(1, 0.5, 0.5), 8)
 			return false
+		inventory.remove_item(id, 1)
+		return true
+
+	if effect.has("guards"):
+		_summon_guards(int(effect["guards"]))
 		inventory.remove_item(id, 1)
 		return true
 
@@ -739,6 +749,7 @@ func get_save_data() -> Dictionary:
 		"quests": quests.get_save_data(),
 		"storage": storage.get_save_data(),
 		"bags": bags.duplicate(),
+		"boons": boons.get_save_data(),
 		"generated_items": Loot.export_used(_owned_ids()),
 		"hero": hero,
 	}
@@ -775,6 +786,7 @@ func load_save_data(data: Dictionary) -> void:
 		quests.load_save_data(data["quests"])
 	if data.has("storage"):
 		storage.load_save_data(data["storage"])
+	boons.load_save_data(data.get("boons", {}))
 	stats.load_save_data(data.get("stats", {}))
 	inventory.load_save_data(data.get("inventory", []))
 	var pos: Array = data.get("position", [spawn_point.x, spawn_point.y])
@@ -816,7 +828,8 @@ func _regenerate_mana(delta: float) -> void:
 	if mana >= max_mp:
 		return
 	var before := int(mana)
-	var rate := mana_regen + skills.regen("mana_regen", stats.weapon_type()) + stats.mana_regen()
+	var rate := mana_regen + skills.regen("mana_regen", stats.weapon_type()) + stats.mana_regen() \
+			+ max_mp * _village_regen()
 	mana = minf(mana + rate * delta, max_mp)
 	if int(mana) != before:
 		mana_changed.emit(int(mana), max_mp)
@@ -824,7 +837,8 @@ func _regenerate_mana(delta: float) -> void:
 
 ## Regeneracja zdrowia z umiejętności pasywnych założonej broni i z przedmiotów.
 func _regenerate_health(delta: float) -> void:
-	var rate := skills.regen("health_regen", stats.weapon_type()) + stats.health_regen()
+	var rate := skills.regen("health_regen", stats.weapon_type()) + stats.health_regen() \
+			+ stats.max_health() * _village_regen()
 	if rate <= 0.0 or health >= stats.max_health():
 		_health_regen_progress = 0.0
 		return
@@ -834,6 +848,24 @@ func _regenerate_health(delta: float) -> void:
 		_health_regen_progress -= gained
 		health = mini(health + gained, stats.max_health())
 		health_changed.emit(health, stats.max_health())
+
+
+## Róg straży: żołnierze Ostoi pojawiają się po obu stronach postaci i walczą przez chwilę.
+func _summon_guards(count: int) -> void:
+	Sfx.play("barracks")
+	for i in count:
+		var ally := SoldierAlly.new()
+		ally.player = self
+		ally.sheet = load("res://assets/npc/%s.png" % ["soldier_a", "soldier_b", "soldier_c"][i % 3])
+		ally.position = global_position + Vector2(-26.0 if i % 2 == 0 else 26.0, 4.0 + 6.0 * (i / 2))
+		ally.set("_side", -1.0 if i % 2 == 0 else 1.0)
+		get_parent().add_child(ally)
+
+
+## Lecznica w osadzie: za palisadą zdrowie i mana wracają szybciej (ułamek maksimum na sekundę).
+func _village_regen() -> float:
+	var settlement := get_tree().get_first_node_in_group("settlement") as Settlement
+	return settlement.regen_bonus(global_position) if settlement != null else 0.0
 
 
 func _emit_resources() -> void:
@@ -1388,7 +1420,7 @@ func roll_damage(multiplier: float) -> int:
 func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: float) -> void:
 	if enemy.state == Goblin.State.DEAD:
 		return
-	amount = roundi(amount * legendary.damage_multiplier() * stats.damage_multiplier())
+	amount = roundi(amount * legendary.damage_multiplier() * stats.damage_multiplier() * boons.damage_multiplier(enemy))
 	var critical := randf() < stats.crit_chance()
 	if critical:
 		amount = roundi(amount * stats.crit_multiplier())

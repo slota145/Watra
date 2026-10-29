@@ -32,7 +32,19 @@ PROPS = {
     "sleeping_cat": ("fences", 6, 14), "resting_dog": ("fences", 7, 20), "slops_bucket": ("fences", 9, 12),
     "pig_sign": ("fences", 11, 20), "turnips": ("fences", 12, 14), "pitchfork": ("fences", 13, 22),
     "water_bucket": ("fences", 15, 12),
+    # budowle z menu sołtysa (z zewnątrz) i ich otoczenie
+    "infirmary": ("b_infirmary", 1, 112), "chapel": ("b_chapel", 2, 112), "bathhouse": ("b_bathhouse", 1, 104),
+    "cottage_0": ("b_cottage", 0, 64), "cottage_1": ("b_cottage", 2, 64),
+    "cot_wounded_0": ("props3", 0, 30), "cot_wounded_1": ("props3", 1, 30), "cot_empty": ("props3", 2, 30),
+    "herb_rack": ("props3", 3, 30), "mortar_table": ("props3", 4, 24), "candle_stand": ("props3", 5, 22),
+    "offering_box": ("props3", 6, 14), "bath_tub": ("props3", 7, 28), "towel_rack": ("props3", 8, 26),
+    "bunting": ("props3", 9, 48), "garland": ("props3", 10, 48), "exotic_crate": ("props3", 11, 20),
+    "carpets": ("props3", 12, 22), "altar": ("props3", 13, 26), "pillow_bench": ("props3", 14, 30),
+    "kindling": ("props3", 15, 16),
 }
+# ikony 64x64 (assets/items/<nazwa>.png) z paczki icons3
+ICONS = ["guard_horn", "meal_stew", "meal_roast", "meal_broth", "bless_wisdom", "bless_might", "rested",
+         "greater_health_potion", "greater_mana_potion", "reforge", "bestiary", "tax_pouch"]
 PIGS = ["pig_pink", "pig_spotted"]
 
 
@@ -76,8 +88,16 @@ def notes():
     sheet.save(os.path.join(OUT, "note.png"))
 
 
+def icons():
+    for i, name in enumerate(ICONS):
+        path = os.path.join(SRC, "icons3", "frame_%d.png" % i)
+        if os.path.exists(path):
+            Image.open(path).convert("RGBA").save(os.path.join(ROOT, "assets", "items", name + ".png"))
+
+
 def main():
     props()
+    icons()
     pigs()
     notes()
 

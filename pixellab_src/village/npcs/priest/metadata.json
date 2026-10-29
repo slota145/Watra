@@ -1,0 +1,46 @@
+{
+  "group_id": "166941e5-2bb2-4398-af0c-254a8abbe310",
+  "states": [
+    {
+      "character": {
+        "id": "a7e49907-ebf5-47a4-9106-cbf669a7fcd9",
+        "name": "Idle",
+        "prompt": "kind old medieval village priest with grey hair, simple brown monk robe with rope belt and wooden pendant, empty hands",
+        "size": {
+          "width": 48,
+          "height": 48
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-29T16:54:14.555343+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "work": {
+            "east": [
+              "Idle/animations/work/east/frame_000.png",
+              "Idle/animations/work/east/frame_001.png",
+              "Idle/animations/work/east/frame_002.png",
+              "Idle/animations/work/east/frame_003.png",
+              "Idle/animations/work/east/frame_004.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-29T17:04:44.348017"
+}

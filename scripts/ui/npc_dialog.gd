@@ -10,6 +10,9 @@ signal build_requested
 signal board_requested
 signal sage_requested
 signal forge_requested
+## Usługi z listą ofert (OfferWindow): "meals", "blessing", "bestiary".
+signal offers_requested(kind: String, npc: Npc)
+const OFFER_SERVICES := {"meals": "Kuchnia", "blessing": "Błogosławieństwo", "bestiary": "Bestiariusz", "reforge": "Przekuwanie"}
 
 const REST_PRICE := 25
 
@@ -98,6 +101,8 @@ func _refresh() -> void:
 				_buttons.add_child(_button("Wykuwanie", _forge))
 			"disenchant":
 				_buttons.add_child(_button("Odczarowanie", _sage))
+			"meals", "blessing", "bestiary", "reforge":
+				_buttons.add_child(_button(OFFER_SERVICES[service], _offers.bind(service)))
 			"build":
 				# plany budowy dopiero po zadaniu sołtysa z prośbą o pomoc
 				var settlement := get_tree().get_first_node_in_group("settlement") as Settlement
@@ -172,6 +177,12 @@ func _turn_in() -> void:
 		Sfx.play("quest_done")
 		DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -14),
 				"+%d zł  +%d exp" % [quest["gold"], quest["xp"]], Color(1.0, 0.85, 0.3), 10)
+
+
+func _offers(kind: String) -> void:
+	var npc := _npc
+	close()
+	offers_requested.emit(kind, npc)
 
 
 func _rest() -> void:
