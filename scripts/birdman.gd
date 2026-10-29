@@ -29,7 +29,6 @@ var _leap_hit := false
 func _ready() -> void:
 	super()
 	equipment_drop_chance = 0.08
-	loot_level = 3
 	hurt_radius = 8.0
 	map_color = BIRD_COLOR
 	quest_kind = "birdman"

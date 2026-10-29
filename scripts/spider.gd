@@ -21,7 +21,6 @@ const TURN_SPEED := 10.0
 func _ready() -> void:
 	super()
 	equipment_drop_chance = 0.0 if kind == "spiderling" else 0.06
-	loot_level = 3
 	hurt_radius = 4.0 if kind == "spiderling" else 7.0
 	map_color = SPIDER_COLOR
 	quest_kind = "spider"

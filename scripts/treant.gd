@@ -12,7 +12,6 @@ const TREANT_COLOR := Color(0.45, 0.7, 0.35)
 func _ready() -> void:
 	super()
 	equipment_drop_chance = 0.06
-	loot_level = 3
 	hurt_radius = 10.0
 	map_color = TREANT_COLOR
 	quest_kind = "treant"

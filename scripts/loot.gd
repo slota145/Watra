@@ -154,6 +154,20 @@ static func random_drop(loot_level: int, quality_bonus := 0.0, min_quality := ""
 	return generate(base_for(ItemBases.LINES.keys().pick_random(), item_level), quality, item_level)
 
 
+## Łup z potwora o danym poziomie (Levels): przedmiot z poziomem potwora -1 ... +2.
+static func drop_at_level(level: int, quality_bonus := 0.0, min_quality := "", level_bonus := 0) -> String:
+	var quality := roll_quality(quality_bonus)
+	if min_quality == RARE or (min_quality == MAGIC and quality == COMMON):
+		quality = min_quality
+	var item_level := clampi(Levels.item_level(level) + level_bonus, 1, MAX_ITEM_LEVEL)
+	return generate(base_for(ItemBases.LINES.keys().pick_random(), item_level), quality, item_level)
+
+
+## Legendarny łup z bossa o danym poziomie.
+static func legendary_at_level(base: String, level: int) -> String:
+	return generate(base, LEGENDARY, clampi(Levels.item_level(level) + 2, 1, MAX_ITEM_LEVEL))
+
+
 ## Legendarny łup z bossa: jego unikalny przedmiot z poziomem i premiami.
 static func legendary(base: String, loot_level: int) -> String:
 	return generate(base, LEGENDARY, roll_item_level(loot_level, BOSS_LEVEL_BONUS))

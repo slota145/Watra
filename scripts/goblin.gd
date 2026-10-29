@@ -34,15 +34,13 @@ const DRILL_PERIOD := 1.6
 @export var gold_min := 1
 @export var gold_max := 4
 @export_range(0.0, 1.0) var heart_drop_chance := 0.3
-## Kamienie zaklinające: zwykłe częściej, doskonałe rzadko.
+## Kamienie zaklinające: szanse wynikają z poziomu potwora (Levels.stone_chances), a to jest ich mnożnik
+## względem zwykłego potwora (0,1 = x1; 0 - nie wypadają wcale, np. pajączki).
 @export_range(0.0, 1.0) var stone_drop_chance := 0.1
-@export_range(0.0, 1.0) var perfect_stone_drop_chance := 0.015
-## Uświęcone kamienie i kamienie miłosierdzia - potrzeba ich dużo, więc wypadają częściej.
-@export_range(0.0, 1.0) var blessed_stone_drop_chance := 0.15
-@export_range(0.0, 1.0) var mercy_stone_drop_chance := 0.08
-## Ekwipunek (zwykły, magiczny albo rzadki - Loot) i poziom łupu: 1 - las, 2 - rozlewiska, 3 - bossowie.
+## Ekwipunek (zwykły, magiczny albo rzadki - Loot) z poziomem potwora.
 @export_range(0.0, 1.0) var equipment_drop_chance := 0.04
-@export var loot_level := 1
+## Poziom potwora (Levels) - ustawia świat przed dodaniem do sceny; 0 = domyślny poziom krainy.
+var level := 0
 
 ## Ładowane przy użyciu, nie przez preload - unika cyklicznych zależności (Wolf dziedziczy po Goblin).
 const PICKUP_PATH := "res://scenes/pickup.tscn"
@@ -97,6 +95,7 @@ func _init() -> void:
 
 func _ready() -> void:
 	add_to_group("enemies")
+	_apply_level()
 	health = max_health
 	home = position
 	_wander_target = position
@@ -105,6 +104,27 @@ func _ready() -> void:
 	_player = get_tree().get_first_node_in_group("player")
 	if sitting:
 		sprite.flip_h = look_at_point.x < position.x
+
+
+## Statystyki z krzywej zwykłego potwora na poziomie tego potwora (Levels) razy siła typu względem zwykłego
+## potwora jego krainy: zdrowie, obrażenia (wszystkie liczbowe właściwości "*damage" - także ataków bossów
+## i pocisków), doświadczenie i złoto. Bossowie mają zdrowie w granicach Levels.BOSS_HEALTH.
+func _apply_level() -> void:
+	if level <= 0:
+		level = Levels.zone_default
+	var ref := Levels.reference_of(scene_file_path)
+	var strength: float = max_health / ref[0]
+	if self is Boss:
+		strength = clampf(strength, Levels.BOSS_HEALTH.x, Levels.BOSS_HEALTH.y)
+	max_health = maxi(1, roundi(Levels.health(level) * strength))
+	for property in get_property_list():
+		var key: String = property["name"]
+		if key.ends_with("damage") and property["type"] == TYPE_INT and get(key) > 0:
+			set(key, maxi(1, roundi(Levels.damage(level) * get(key) / ref[1])))
+	xp_reward = roundi(Levels.xp(level) * xp_reward / ref[2])
+	var gold: float = Levels.gold(level) / ref[3]
+	gold_min = roundi(gold_min * gold)
+	gold_max = maxi(gold_min, roundi(gold_max * gold))
 
 
 func hurt_center() -> Vector2:
@@ -357,7 +377,7 @@ func _die() -> void:
 	_spawn_poof()
 	_drop_loot()
 	if _player != null:
-		var xp := roundi(xp_reward * _player.stats.xp_multiplier())
+		var xp := roundi(xp_reward * _player.stats.xp_multiplier() * Levels.xp_fraction(_player.stats.level, level))
 		_player.stats.add_xp(xp)
 		DamageNumber.spawn_text(get_parent(), hurt_center() + Vector2(0, -8), "+%d exp" % xp, XP_COLOR, 8)
 	var tween := create_tween().set_parallel()
@@ -382,17 +402,20 @@ func _drop_loot() -> void:
 		_spawn_pickup("gold", share)
 	if randf() < heart_drop_chance:
 		_spawn_pickup("goblin_heart", 1)
+	# kamienie wg poziomu potwora (Levels); stone_drop_chance sceny to mnożnik (0 - nie wypadają wcale)
 	var stone_category: String = ["weapon", "armor", "jewelry"].pick_random()
-	if randf() < perfect_stone_drop_chance:
+	var chances := Levels.stone_chances(level)
+	var stone_scale := stone_drop_chance / 0.1
+	if randf() < chances[1] * stone_scale:
 		_spawn_pickup(Enchanting.stone_id(stone_category, true), 1)
-	elif randf() < stone_drop_chance:
+	elif randf() < chances[0] * stone_scale:
 		_spawn_pickup(Enchanting.stone_id(stone_category, false), 1)
-	if randf() < blessed_stone_drop_chance:
+	if randf() < chances[2] * stone_scale:
 		_spawn_pickup("blessed_stone", randi_range(1, 3))
-	if randf() < mercy_stone_drop_chance:
+	if randf() < chances[3] * stone_scale:
 		_spawn_pickup("mercy_stone", randi_range(1, 2))
 	if randf() < equipment_drop_chance:
-		_spawn_pickup(Loot.random_drop(loot_level), 1)
+		_spawn_pickup(Loot.drop_at_level(level), 1)
 
 
 func _spawn_pickup(item_id: String, amount: int) -> void:

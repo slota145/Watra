@@ -430,6 +430,9 @@ func _ready() -> void:
 	floors.add_to_group("floor_layer")
 	ground.add_to_group("ground_layer")
 	Sfx.set_ambient_zone(zone)
+	# potwory bez poziomu od świata (przywołane przez bossów) - środek zakresu krainy
+	var levels: Array = Levels.ZONES.get(zone, [1, 1, 1])
+	Levels.zone_default = roundi((levels[0] + levels[1]) / 2.0)
 
 	if zone == "swamp":
 		_generate_swamp()
@@ -969,6 +972,27 @@ func _add_goblin_spawn(spawn: Dictionary) -> void:
 	_spawn_goblin(spawn)
 
 
+## Poziom potwora (Levels): wg odległości od wejścia krainy (w lesie - od Ostoi) do najdalszego zakątka;
+## bossowie mają poziom bossów krainy.
+func _spawn_level(spawn: Dictionary, boss: bool) -> int:
+	if boss:
+		return Levels.boss_level(zone)
+	var start := _level_origin()
+	var tile: Vector2 = spawn["position"] / TILE
+	var far := 0.0
+	for corner in [Vector2.ZERO, Vector2(map_size.x, 0), Vector2(0, map_size.y), Vector2(map_size)]:
+		far = maxf(far, start.distance_to(corner))
+	# najbliższe siedliska zaczynają się ok. 40% drogi do najdalszego zakątka (wokół wejścia jest pusto),
+	# więc skala biegnie od tego miejsca
+	return Levels.level_at(zone, (tile.distance_to(start) / far - 0.4) / 0.42)
+
+
+func _level_origin() -> Vector2:
+	if zone == "forest":
+		return Vector2(_settlement_area.position) + Vector2(Settlement.SIZE) / 2.0
+	return _road[0] if not _road.is_empty() else Vector2(map_size) / 2.0
+
+
 ## `spawn` opisuje miejsce potwora (goblina albo wilka) - te same dane służą potem do odrodzenia.
 func _spawn_goblin(spawn: Dictionary) -> Goblin:
 	var kind: String = spawn.get("type", "goblin")
@@ -981,6 +1005,9 @@ func _spawn_goblin(spawn: Dictionary) -> Goblin:
 			"satyr": SATYR, "satyr_piper": SATYR_PIPER, "satyr_brute": SATYR_BRUTE,
 			"storm_eagle": STORM_EAGLE, "drowner": DROWNER, "wisp": WISP, "rusalka": RUSALKA, "wodnik": WODNIK}[kind]
 	var goblin: Goblin = scene.instantiate()
+	if not spawn.has("level"):
+		spawn["level"] = _spawn_level(spawn, goblin is Boss)
+	goblin.level = spawn["level"]
 	goblin.position = spawn["position"]
 	goblin.sitting = spawn["sitting"]
 	goblin.drilling = spawn.get("drill", false)

@@ -285,19 +285,22 @@ func _face(target: Vector2) -> void:
 func _drop_loot() -> void:
 	for i in gold_coins:
 		_spawn_pickup("gold", randi_range(gold_min, gold_max))
-	for i in 3:
+	# kamienie: zwykłe zawsze, doskonały i wspierające - jak u zwykłych potworów dopiero od wyższych poziomów
+	for i in 2:
 		_spawn_pickup(Enchanting.stone_id(["weapon", "armor", "jewelry"].pick_random(), false), 1)
-	_spawn_pickup(Enchanting.stone_id(["weapon", "armor", "jewelry"].pick_random(), true), 1)
-	_spawn_pickup("blessed_stone", randi_range(15, 25))
-	_spawn_pickup("mercy_stone", randi_range(4, 8))
+	if level >= 18:
+		_spawn_pickup(Enchanting.stone_id(["weapon", "armor", "jewelry"].pick_random(), true), 1)
+	if level >= 14:
+		_spawn_pickup("blessed_stone", randi_range(10, 18))
+		_spawn_pickup("mercy_stone", randi_range(3, 6))
 	_drop_trophies()
-	# dwa przedmioty: pierwszy co najmniej magiczny, drugi z dużą szansą na rzadki
+	# dwa przedmioty z poziomu bossa: pierwszy co najmniej magiczny, drugi z dużą szansą na rzadki
 	# (w trybie deweloperskim oba rzadkie)
-	_spawn_pickup(Loot.random_drop(3, 0.1, Loot.RARE if _dev_mode() else Loot.MAGIC, Loot.BOSS_LEVEL_BONUS), 1)
-	_spawn_pickup(Loot.random_drop(3, 0.2, Loot.RARE if _dev_mode() else "", Loot.BOSS_LEVEL_BONUS), 1)
+	_spawn_pickup(Loot.drop_at_level(level, 0.1, Loot.RARE if _dev_mode() else Loot.MAGIC, 2), 1)
+	_spawn_pickup(Loot.drop_at_level(level, 0.2, Loot.RARE if _dev_mode() else "", 2), 1)
 	for id in legendary_drops:
 		if _dev_mode() or randf() < legendary_drop_chance:
-			_spawn_pickup(Loot.legendary(id, 3), 1)
+			_spawn_pickup(Loot.legendary_at_level(id, level), 1)
 
 
 ## Tryb deweloperski gwarantuje cały możliwy łup bossa.

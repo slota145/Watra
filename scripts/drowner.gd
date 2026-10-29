@@ -25,7 +25,6 @@ var _calm := 0.0
 func _ready() -> void:
 	super()
 	equipment_drop_chance = 0.07
-	loot_level = 2
 	hurt_radius = 8.0
 	map_color = DROWNED_COLOR
 	quest_kind = "drowner"

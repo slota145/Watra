@@ -18,7 +18,6 @@ const FROG_COLOR := Color(0.45, 0.85, 0.35)
 func _ready() -> void:
 	super()
 	equipment_drop_chance = 0.07
-	loot_level = 2
 	hurt_radius = 8.0
 	map_color = FROG_COLOR
 	quest_kind = "frogman"

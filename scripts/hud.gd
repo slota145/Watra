@@ -631,7 +631,7 @@ func _update_boss_bar() -> void:
 			break
 	boss_bar.visible = fighting != null
 	if fighting:
-		boss_name_label.text = fighting.boss_name
+		boss_name_label.text = "%s  (poz. %d)" % [fighting.boss_name, fighting.level]
 		boss_health.max_value = fighting.max_health
 		boss_health.value = maxi(fighting.health, 0)
 

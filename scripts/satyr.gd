@@ -10,7 +10,6 @@ const SATYR_COLOR := Color(0.78, 0.42, 0.85)
 func _ready() -> void:
 	super()
 	equipment_drop_chance = 0.1
-	loot_level = 3
 	hurt_radius = 8.0
 	heart_drop_chance = 0.0
 	map_color = SATYR_COLOR

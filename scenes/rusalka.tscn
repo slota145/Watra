@@ -32,7 +32,6 @@ gold_min = 6
 gold_max = 12
 heart_drop_chance = 0.0
 stone_drop_chance = 0.14
-blessed_stone_drop_chance = 0.2
 hurt_height = 15
 
 [node name="Shadow" type="Sprite2D" parent="."]
