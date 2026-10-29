@@ -47,7 +47,23 @@ def main():
             tile = ImageEnhance.Brightness(ImageEnhance.Color(tile).enhance(saturation)).enhance(brightness)
             tile.save(os.path.join(OUT, kind + ".png"))
     _flowers_on_grass()
+    _gravel()
     print("podłoże lasu:", sorted(os.listdir(OUT)))
+
+
+def _gravel():
+    """Żwir placu i głównej drogi osady: piarg z gór (alpine) ocieplony w stronę ubitej ziemi lasu -
+    gra kładzie go zamiast bruku (World.FOREST_GROUND["cobble"])."""
+    scree = os.path.join(ROOT, "assets", "mountains", "ground", "scree.png")
+    if not os.path.exists(scree):
+        return
+    img = Image.open(scree).convert("RGBA")
+    px = img.load()
+    for y in range(img.height):
+        for x in range(img.width):
+            r, g, b, a = px[x, y]
+            px[x, y] = (min(255, int(r * 1.10)), int(g * 0.98), int(b * 0.82), a)
+    ImageEnhance.Brightness(img).enhance(0.95).save(os.path.join(OUT, "gravel.png"))
 
 
 def _flowers_on_grass():

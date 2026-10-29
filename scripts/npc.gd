@@ -8,13 +8,15 @@ extends Node2D
 ## - PATRON: gość karczmy - wychodzi po ścieżce do stolika, siada z kufelkiem, pije i wraca.
 ## - WANDER: biega po wyznaczonym obszarze (dzieci); z `chase` bawi się w berka - goni drugie dziecko,
 ##   a po złapaniu role się zamieniają (uciekający ucieka od goniącego).
+## - CYCLE: chodzi w kółko między stanowiskami pracy (kowal: piec -> kowadło -> beczka -> skrzynia), na każdym
+##   pracuje albo stoi chwilę, z efektem i dźwiękiem, i niesie dalej to, co tam przygotował (rozgrzany pręt, ostrze).
 ## Stojący mogą też siedzieć (seated - np. uchodźcy przy ognisku).
 ## Stojący mogą też maszerować na komendę (musztra - march_to).
 ## Każdy, kto ma towar (shop_sells), handluje po naciśnięciu E - także kowal czy myśliwy przy pracy.
 ## NPC z zadaniem (quest_id albo łańcuch quest_chain - kolejne zadania po wykonaniu poprzednich) ma nad głową znacznik: złote "!" (do przyjęcia),
 ## szare "?" (w toku) albo złote "?" (do odebrania nagrody), a E otwiera rozmowę.
 
-enum Role { IDLE, WORKER, CARRIER, MERCHANT, PATRON, WANDER }
+enum Role { IDLE, WORKER, CARRIER, MERCHANT, PATRON, WANDER, CYCLE }
 
 const WALK_FPS := 7.0
 const SPEED := 30.0
@@ -48,6 +50,12 @@ var seat_facing := Vector2.RIGHT
 ## IDLE: siedzi (np. przy ognisku) - postać niżej, bez rozglądania się za daleko.
 var seated := false
 
+## CYCLE: stanowiska - {"pos": piksele, "facing", "time": s, "work": praca narzędziem (uderzenia),
+## "effect": "sparks"/"steam"/"fire" (przy uderzeniu albo po dojściu), "sound", "carry": Texture2D niesiona dalej albo null}.
+var stations: Array = []
+var _station := 0
+var _at_station := false
+
 ## Pijak (CARRIER bez towaru): zatacza się po drodze.
 var drunk := false
 ## Czy pozdrawia przechodzącego obok gracza.
@@ -56,6 +64,7 @@ const GREETINGS: Array[String] = ["Witaj, wędrowcze!", "Dobrze cię widzieć ca
 		"Wróciłeś! Chwała niebiosom.", "Dzień dobry!", "Uważaj na siebie za palisadą."]
 const GREET_DISTANCE := 40.0
 var _greet_cooldown := 0.0
+var _drunk_time := 0.0
 
 ## WANDER: obszar zabawy (piksele świata), towarzysz zabawy w berka i czy to ten goni.
 var wander_area := Rect2()
@@ -163,6 +172,10 @@ func _ready() -> void:
 		Role.WANDER:
 			_wander_target = position
 			_wait = randf_range(0.0, 2.0)
+		Role.CYCLE:
+			position = stations[0]["pos"]
+			_at_station = true
+			_wait = randf_range(0.5, 2.0)
 
 
 func _process(delta: float) -> void:
@@ -173,6 +186,8 @@ func _process(delta: float) -> void:
 			_process_worker(delta)
 		Role.WANDER:
 			_process_wander(delta)
+		Role.CYCLE:
+			_process_cycle(delta)
 		_:
 			_process_idle(delta)
 	_process_talk(delta)
@@ -253,7 +268,8 @@ func _update_quest_marker(delta: float) -> void:
 			_quest_marker.add_theme_color_override("font_color", QUEST_GOLD)
 	_marker_time += delta
 	# dymek z mową przesuwa znacznik wyżej, żeby się nie nakładały
-	var top := -52.0 if bubble.visible else -42.0
+	# nad głową, a przy dymku nad dymkiem (znacznik nie wchodzi na postać)
+	var top := bubble.position.y - 20.0 if bubble.visible else -54.0
 	_quest_marker.position = Vector2(-10, top + sin(_marker_time * 3.0) * 1.5).round()
 
 
@@ -332,7 +348,7 @@ func _process_carrier(delta: float) -> void:
 		return
 	var target := path[_path_index]
 	var to_target := target - position
-	var step := SPEED * (0.8 if _carrying else 1.0) * delta
+	var step := SPEED * (0.8 if _carrying else 1.0) * (0.55 if drunk else 1.0) * delta
 	if to_target.length() <= step:
 		position = target
 		if _direction == 1 and _path_index == path.size() - 1:
@@ -361,9 +377,12 @@ func _process_carrier(delta: float) -> void:
 		return
 	position += to_target.normalized() * step
 	if drunk:
-		# zatacza się: chwieje na boki i zbacza z drogi
-		position += to_target.normalized().orthogonal() * sin(_anim * 0.9) * 0.6
-		sprite.rotation = sin(_anim * 0.7) * 0.14
+		# zatacza się powoli: kołysze na boki wokół drogi i lekko przechyla
+		_drunk_time += delta
+		var sway := to_target.normalized().orthogonal() * sin(_drunk_time * 0.9) * 4.0
+		sprite.position.x = sway.x
+		sprite.position.y = _sprite_y + sway.y * 0.5
+		sprite.rotation = sin(_drunk_time * 0.7 + 0.5) * 0.06
 	facing = to_target.normalized()
 	_anim += delta * WALK_FPS
 	_set_frame(_row_for(facing), int(_anim) % 4)
@@ -408,6 +427,62 @@ func _process_wander(delta: float) -> void:
 	facing = to_target.normalized()
 	_anim += delta * WALK_FPS * 1.4
 	_set_frame(_row_for(facing), int(_anim) % 4)
+
+
+func _process_cycle(delta: float) -> void:
+	var station: Dictionary = stations[_station]
+	if _at_station:
+		_wait -= delta
+		facing = station.get("facing", facing)
+		if station.get("work", false):
+			_work_time += delta
+			var t := fmod(_work_time, work_period) / work_period
+			var frame := 0 if t < 0.55 else 1
+			if frame == 1 and _last_work_frame != 1:
+				_cycle_effect(station)
+			_last_work_frame = frame
+			sprite.flip_h = facing.x < 0.0
+			_set_frame(ROW_WORK, frame)
+		else:
+			_set_frame(_row_for(facing), 0)
+		if _wait <= 0.0:
+			_at_station = false
+			var carry: Texture2D = station.get("carry")
+			carried.texture = carry
+			carried.visible = carry != null
+			_station = (_station + 1) % stations.size()
+		return
+	var target: Vector2 = station["pos"]
+	var to_target := target - position
+	var step := SPEED * delta
+	if to_target.length() <= step:
+		position = target
+		_at_station = true
+		_wait = float(station.get("time", 2.0))
+		_work_time = 0.0
+		if not station.get("work", false):
+			_cycle_effect(station)
+		return
+	position += to_target.normalized() * step
+	facing = to_target.normalized()
+	_anim += delta * WALK_FPS
+	_set_frame(_row_for(facing), int(_anim) % 4)
+	move_child(carried, 1 if _row_for(facing) == ROW_UP else 2)
+	carried.position = carried_offset + Vector2(4.0 * (-1.0 if sprite.flip_h else 1.0), -1 if int(_anim) % 2 else 0)
+
+
+## Efekt i dźwięk stanowiska: iskry przy kowadle, para przy beczce, buchnięcie żaru przy piecu.
+func _cycle_effect(station: Dictionary) -> void:
+	var kind: String = station.get("effect", "")
+	if kind != "":
+		var p := _make_effect(kind)
+		var side := -1.0 if facing.x < 0.0 else 1.0
+		p.position = Vector2(14.0 * side, -10.0)
+		add_child(p)
+		p.emitting = true
+		get_tree().create_timer(2.0).timeout.connect(p.queue_free)
+	if station.get("sound", "") != "":
+		Sfx.play_at(station["sound"], global_position, -4.0)
 
 
 ## Nutka unosząca się nad grajkiem (grafika - czcionka nie ma znaku nuty).
@@ -509,6 +584,27 @@ func _make_effect(kind: String) -> CPUParticles2D:
 	p.explosiveness = 1.0
 	p.lifetime = 0.4
 	p.direction = Vector2.UP
+	if kind == "steam":
+		p.amount = 14
+		p.lifetime = 1.4
+		p.explosiveness = 0.6
+		p.spread = 30.0
+		p.initial_velocity_min = 10.0
+		p.initial_velocity_max = 22.0
+		p.gravity = Vector2(0, -12)
+		p.scale_amount_min = 2.0
+		p.scale_amount_max = 4.0
+		p.color = Color(1, 1, 1, 0.55)
+		return p
+	if kind == "fire":
+		p.amount = 12
+		p.lifetime = 0.7
+		p.spread = 40.0
+		p.initial_velocity_min = 20.0
+		p.initial_velocity_max = 45.0
+		p.gravity = Vector2(0, -30)
+		p.color = Color(1.0, 0.6, 0.2)
+		return p
 	if kind == "straw":
 		p.amount = 8
 		p.spread = 80.0

@@ -86,7 +86,9 @@
   "b_bathhouse": "ef6bba8e-7728-46be-a07e-3b81a11c6d5b",
   "b_cottage": "bcb311c1-0e4b-40b7-8a06-8a8fc5af5521",
   "props3": "4c62c63a-abb0-411f-8873-3538bcfdab46",
-  "icons3": "c76defaa-0011-494b-a8ca-ed92ed706710"
+  "icons3": "c76defaa-0011-494b-a8ca-ed92ed706710",
+  "forge_roof": "b6562ac9-11bc-4ea0-91ab-b9662bf13ae8",
+  "forge_garden": "09b7bd02-a4e2-487a-b683-0db616d44ba2"
  },
  "props": {
   "stable": "b66fc970-6c38-495c-a17b-43d079a09650",

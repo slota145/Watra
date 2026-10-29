@@ -292,7 +292,8 @@ var _soft_textures := {}
 const FOREST_GROUND := {
 	"grass": preload("res://assets/forest/ground/grass.png"), "road": preload("res://assets/forest/ground/road.png"),
 	"dark": preload("res://assets/forest/ground/dark.png"), "flowers": preload("res://assets/forest/ground/flowers.png"),
-	"cobble": preload("res://assets/forest/ground/cobble.png"),
+	# bruk osady kładziemy jako żwir (plac, główna droga, kuźnia)
+	"cobble": preload("res://assets/forest/ground/gravel.png"),
 }
 var _rng := RandomNumberGenerator.new()
 var _noise := FastNoiseLite.new()
