@@ -1,0 +1,53 @@
+{
+  "group_id": "3a74c54c-866b-4ae4-85b8-52b99374bfab",
+  "states": [
+    {
+      "character": {
+        "id": "76901a58-b1f4-4f52-9206-340dd426f8f5",
+        "name": "Idle",
+        "prompt": "goblin chief warlord boss, large green goblin with a crown made of bones and teeth, wolf pelt cloak, spiked iron shoulder plates, war paint, wielding a huge jagged cleaver",
+        "size": {
+          "width": 72,
+          "height": 72
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-27T20:22:53.791608+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "slam": {
+            "south-east": [
+              "Idle/animations/slam/south-east/frame_000.png",
+              "Idle/animations/slam/south-east/frame_001.png",
+              "Idle/animations/slam/south-east/frame_002.png",
+              "Idle/animations/slam/south-east/frame_003.png"
+            ]
+          },
+          "walk": {
+            "south-east": [
+              "Idle/animations/walk/south-east/frame_000.png",
+              "Idle/animations/walk/south-east/frame_001.png",
+              "Idle/animations/walk/south-east/frame_002.png",
+              "Idle/animations/walk/south-east/frame_003.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-27T20:38:58.680750"
+}

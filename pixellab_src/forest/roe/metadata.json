@@ -1,0 +1,54 @@
+{
+  "group_id": "f156d851-b1c1-4ab3-be91-19888349e8ee",
+  "states": [
+    {
+      "character": {
+        "id": "549507ca-41a7-4352-b05b-92fb56faa255",
+        "name": "Idle",
+        "prompt": "small roe deer doe standing on all four legs, light brown coat, slender legs, big ears, no antlers",
+        "size": {
+          "width": 56,
+          "height": 56
+        },
+        "template_id": "horse",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-27T20:22:59.608032+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "eat": {
+            "south-east": [
+              "Idle/animations/eat/south-east/frame_000.png",
+              "Idle/animations/eat/south-east/frame_001.png",
+              "Idle/animations/eat/south-east/frame_002.png",
+              "Idle/animations/eat/south-east/frame_003.png",
+              "Idle/animations/eat/south-east/frame_004.png"
+            ]
+          },
+          "run": {
+            "south-east": [
+              "Idle/animations/run/south-east/frame_000.png",
+              "Idle/animations/run/south-east/frame_001.png",
+              "Idle/animations/run/south-east/frame_002.png",
+              "Idle/animations/run/south-east/frame_003.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-27T20:39:04.621395"
+}

@@ -1,0 +1,61 @@
+{
+  "group_id": "51f37cb3-d875-46aa-9997-f2c97e7dec31",
+  "states": [
+    {
+      "character": {
+        "id": "845d42d3-675d-4ec7-aa78-ff9db13f15fc",
+        "name": "Idle",
+        "prompt": "satyr warrior: humanoid with curved ram horns, goat legs with hooves, furry brown lower body, bare muscular chest, pointed ears and beard, holding a wooden club",
+        "size": {
+          "width": 44,
+          "height": 44
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-27T21:42:14.616318+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "walk": {
+            "south-east": [
+              "Idle/animations/walk/south-east/frame_000.png",
+              "Idle/animations/walk/south-east/frame_001.png",
+              "Idle/animations/walk/south-east/frame_002.png",
+              "Idle/animations/walk/south-east/frame_003.png"
+            ]
+          },
+          "attack": {
+            "south-east": [
+              "Idle/animations/attack/south-east/frame_000.png",
+              "Idle/animations/attack/south-east/frame_001.png",
+              "Idle/animations/attack/south-east/frame_002.png",
+              "Idle/animations/attack/south-east/frame_003.png"
+            ]
+          },
+          "dance": {
+            "south-east": [
+              "Idle/animations/dance/south-east/frame_000.png",
+              "Idle/animations/dance/south-east/frame_001.png",
+              "Idle/animations/dance/south-east/frame_002.png",
+              "Idle/animations/dance/south-east/frame_003.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-28T00:54:37.095525"
+}

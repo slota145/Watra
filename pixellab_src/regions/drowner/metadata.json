@@ -1,0 +1,61 @@
+{
+  "group_id": "5c3d61f2-0b2f-4520-b874-ecefa2cfcf7a",
+  "states": [
+    {
+      "character": {
+        "id": "83cc22e4-3d9c-4214-86dd-137c794eaf75",
+        "name": "Idle",
+        "prompt": "drowner (utopiec): pale bluish-green drowned man creature with long webbed claws, stringy black hair covered in water weeds, sunken glowing eyes, torn rags",
+        "size": {
+          "width": 44,
+          "height": 44
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-27T21:42:07.360474+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "attack": {
+            "south-east": [
+              "Idle/animations/attack/south-east/frame_000.png",
+              "Idle/animations/attack/south-east/frame_001.png",
+              "Idle/animations/attack/south-east/frame_002.png",
+              "Idle/animations/attack/south-east/frame_003.png"
+            ]
+          },
+          "walk": {
+            "south-east": [
+              "Idle/animations/walk/south-east/frame_000.png",
+              "Idle/animations/walk/south-east/frame_001.png",
+              "Idle/animations/walk/south-east/frame_002.png",
+              "Idle/animations/walk/south-east/frame_003.png"
+            ]
+          },
+          "emerge": {
+            "south-east": [
+              "Idle/animations/emerge/south-east/frame_000.png",
+              "Idle/animations/emerge/south-east/frame_001.png",
+              "Idle/animations/emerge/south-east/frame_002.png",
+              "Idle/animations/emerge/south-east/frame_003.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-28T00:54:26.646145"
+}

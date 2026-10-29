@@ -1,0 +1,1606 @@
+class_name Settlement
+extends Node
+## Osada Ostoja - ostatnie schronienie ludzi przed hordami potworów, które zalały świat.
+## Otoczona owalną palisadą z trzema bramami (zachód, wschód, południe), z karczmą
+## (z dwoma pokojami gościnnymi i stolikami przed wejściem), domem sołtysa, magazynem,
+## kuźnią z daszkiem nad kowadłem i sklepem ze stajnią. Mieszkańcy pracują: tragarze noszą
+## deski do naprawianej palisady, beczki do karczmy i towar z wozu do sklepu, kowal kuje,
+## myśliwy oprawia skóry, a goście karczmy wychodzą czasem na piwo.
+## Przy magazynie rosną stosy drewna i kamienia - im więcej ich złożono, tym są większe.
+## Za południową bramą jest miejsce na koszary: po zadaniach sołtysa powstaje tam plac budowy,
+## a potem koszary z żołnierzami ćwiczącymi na kukłach (na udeptanym placu obok) i musztrą przed budynkiem.
+## Na północnym wschodzie, za palisadą, powstaje chatka myśliwych: trzej myśliwi chodzą na
+## polowania do łowisk (po jednym na róg mapy), znoszą zwierzynę, oprawiają ją, wędzą mięso,
+## wyrabiają strzały, ćwiczą strzelanie do tarczy i odnoszą skóry i mięso do magazynu.
+## Na północnym zachodzie, na uboczu za palisadą, może stanąć chata mędrca: izba pełna ksiąg,
+## mędrzec czytający przy pulpicie, a wokół kocioł z wywarem, luneta, grządka ziół i runy.
+## Na południowym zachodzie, przy drodze od południowej bramy, gildia poszukiwaczy przygód:
+## przed nią tablica ogłoszeń (czytają ją poszukiwacze), proporce, pochodnie i ława.
+## Obok placu ćwiczeń stoi nieśmiertelna kukła treningowa (TrainingDummy) z licznikiem obrażeń.
+## Potwory nie wchodzą na teren osady (bezpieczna strefa).
+##
+## Wszystkie pozycje w układzie poniżej są w kafelkach układu względem lewego górnego rogu osady.
+## Osada urosła razem z postaciami: kafelek układu ma w świecie SCALE kafelków (i SCALE razy
+## większe budynki), dlatego wszystko przeliczamy przez _px() (piksele) albo _cell() (kafelki świata).
+
+const SCALE := 1.375
+## Rozmiar osady w kafelkach układu i w kafelkach świata (LAYOUT_SIZE * SCALE w górę).
+const LAYOUT_SIZE := Vector2i(66, 56)
+const SIZE := Vector2i(91, 77)
+const TILE := 16
+## Palisada to zaokrąglony owal (superelipsa) z lekkim falowaniem: środek i półosie w kafelkach.
+const CENTER := Vector2(33.0, 23.0)
+const RADII := Vector2(25.0, 18.0)
+const ROUNDNESS := 3.0
+## Wiersz, którym droga przecina osadę (środek bramy zachodniej i wschodniej).
+const ROAD_ROW := 22.8
+## Bramy: zachodnia/wschodnia zajmują wiersze 21-24, południowa kolumny 31-34.
+const GATE_ROWS := Vector2i(21, 24)
+const GATE_COLUMNS := Vector2i(31, 34)
+## Fragment wschodniej palisady w naprawie (wiersze).
+const BROKEN_ROWS := Vector2i(27, 30)
+
+const NPC_SCENE := preload("res://scenes/npc.tscn")
+const CAMPFIRE := preload("res://scenes/props/campfire.tscn")
+const SHRINE := preload("res://scenes/props/shrine.tscn")
+const OAK := preload("res://scenes/props/tree_oak.tscn")
+const BUSH := preload("res://scenes/props/bush.tscn")
+
+## Runo Goblińskiego Lasu (World.FOREST_WANG_ROW): pełny kafelek drogi i warianty czystej łąki.
+## Brzegi ścieżek wygładza potem World._blend_settlement_ground (przejścia Wang).
+const DIRT_TILES: Array[Vector2i] = [Vector2i(3, 30)]
+const YARD_TILES: Array[Vector2i] = [Vector2i(0, 23), Vector2i(0, 27), Vector2i(0, 31)]
+## Bruk placu przed domem sołtysa (pełny kafelek zestawu World.COBBLE_WANG_ROW); brzegi jak ścieżki.
+const COBBLE_TILE := Vector2i(3, 58)
+const MAP_COBBLE := Color("8a8a86")
+
+const MAP_DIRT := Color("9c7b52")
+const MAP_YARD := Color("6f8a40")
+const MAP_PALISADE := Color("3a2215")
+const MAP_MERCHANT := Color("f2c94c")
+const MAP_CHIEF := Color("ffd86b")
+
+## nazwa: [pozycja (kafelki), rozmiar (kafelki), kolor na mapie, komin (piksele) albo null]
+const BUILDINGS := {
+	"tavern": [Vector2i(13, 11), Vector2i(12, 7), Color("a83e30"), Vector2(148, 6)],
+	"chief_house": [Vector2i(28, 9), Vector2i(8, 6), Color("43608a"), Vector2(100, 6)],
+	"warehouse": [Vector2i(42, 10), Vector2i(8, 6), Color("86603a"), null],
+	"smithy": [Vector2i(12, 27), Vector2i(7, 6), Color("4b4f63"), Vector2(88, 6)],
+	"shop": [Vector2i(40, 27), Vector2i(8, 6), Color("2f6f73"), null],
+}
+## Wylot komina na grafice dachu (piksele od lewego górnego rogu).
+const CHIMNEYS := {"tavern": Vector2(193, 4), "chief_house": Vector2(27, 4), "smithy": Vector2(129, 4),
+		"lodge": Vector2(136, 4), "sage_hut": Vector2(17, 6), "guild": Vector2(168, 4)}
+const BUILDING_NAMES := {"tavern": "Karczma", "chief_house": "Dom sołtysa", "warehouse": "Magazyn",
+		"smithy": "Kuźnia", "shop": "Sklep", "barracks": "Koszary", "lodge": "Chatka myśliwych",
+		"sage_hut": "Chata mędrca", "guild": "Gildia poszukiwaczy przygód"}
+## Koszary za południową bramą i chatka myśliwych za palisadą na północnym wschodzie.
+const BARRACKS_POS := Vector2i(38, 43)
+const BARRACKS_SIZE := Vector2i(12, 7)
+const BARRACKS_COLOR := Color("6e5640")
+const LODGE_POS := Vector2i(56, 2)
+const LODGE_SIZE := Vector2i(8, 6)
+const LODGE_COLOR := Color("5d6b34")
+## Chata mędrca na uboczu (północny zachód) i gildia przy drodze od południowej bramy.
+const SAGE_POS := Vector2i(1, 2)
+const SAGE_SIZE := Vector2i(8, 6)
+const SAGE_COLOR := Color("54407a")
+const GUILD_POS := Vector2i(18, 43)
+const GUILD_SIZE := Vector2i(12, 7)
+const GUILD_COLOR := Color("a82e40")
+const CONSTRUCTION_STAGES := 4
+## Zadanie sołtysa, po którym można u niego zlecać budowy.
+const UNLOCK_QUEST := "village_help"
+## Budowy zlecane u sołtysa (okno budowy): miejsce, koszt w surowcach (z plecaka i magazynu),
+## czas budowy (odpoczynek w karczmie kończy ją od razu).
+const PROJECTS := {
+	"barracks": {"pos": BARRACKS_POS, "size": BARRACKS_SIZE, "color": BARRACKS_COLOR,
+			"time": 180.0, "art": "construction", "cost": {"wood": 150, "stone": 150},
+			"description": "Za południową bramą. Ostoja dostanie własnych żołnierzy - ćwiczą na placu i przy kukłach.",
+			"start_line": "Zaczynamy budowę koszar! Zajrzyj za południową bramę.",
+			"done_line": "Koszary gotowe! Ostoja ma wreszcie własne wojsko!",
+			"banner": "Koszary zbudowane!
+Ostoja ma własne wojsko"},
+	"lodge": {"pos": LODGE_POS, "size": LODGE_SIZE, "color": LODGE_COLOR,
+			"time": 150.0, "art": "construction_lodge", "cost": {"wood": 100, "stone": 50},
+			"description": "Za palisadą na północnym wschodzie. Trzech myśliwych poluje i znosi do magazynu skóry i mięso.",
+			"start_line": "Budujemy chatkę myśliwych! Za palisadą, na północnym wschodzie.",
+			"done_line": "Chatka myśliwych gotowa! Będzie co jeść i czym handlować.",
+			"banner": "Chatka myśliwych zbudowana!
+Trzech myśliwych rusza na łowy"},
+	"sage_hut": {"pos": SAGE_POS, "size": SAGE_SIZE, "color": SAGE_COLOR,
+			"time": 160.0, "art": "construction_sage", "cost": {"wood": 120, "stone": 60},
+			"description": "Na uboczu za palisadą, na północnym zachodzie. Zamieszka w niej mędrzec ze swoimi księgami.",
+			"start_line": "Stawiamy chatę dla mędrca! Na uboczu, za palisadą od północnego zachodu.",
+			"done_line": "Chata mędrca gotowa. Ponoć już ślęczy nad księgami.",
+			"banner": "Chata mędrca zbudowana!\nMędrzec zgłębia swoje księgi"},
+	"guild": {"pos": GUILD_POS, "size": GUILD_SIZE, "color": GUILD_COLOR,
+			"time": 220.0, "art": "construction_guild", "cost": {"wood": 200, "stone": 200},
+			"description": "Przy drodze od południowej bramy. Siedziba poszukiwaczy przygód z tablicą ogłoszeń przed wejściem.",
+			"start_line": "Budujemy gildię poszukiwaczy przygód! Przy drodze od południowej bramy.",
+			"done_line": "Gildia otwarta! Poszukiwacze przygód już oblegają tablicę ogłoszeń.",
+			"banner": "Gildia poszukiwaczy przygód zbudowana!\nTablica ogłoszeń czeka na zlecenia"},
+}
+## Plac ćwiczeń (kukły) tuż obok koszar i plac musztry przed nimi - środki w kafelkach.
+const TRAINING_YARD := Vector2(55.4, 46.4)
+const DRILL_SQUARE := Vector2(45.0, 53.6)
+## Nieśmiertelna kukła do ćwiczeń i testów - obok placu ćwiczeń (stoi od początku gry).
+const PRACTICE_DUMMY := Vector2(55.0, 51.6)
+const TRAINING_DUMMY := preload("res://scenes/training_dummy.tscn")
+## Miejsca przy chatce myśliwych (kafelki osady).
+const LODGE_SPOTS := {
+	"door": Vector2(60.0, 8.9),
+	"butcher_rack": Vector2(62.4, 10.9), "butcher": Vector2(61.2, 11.1),
+	"hide_rack": Vector2(57.6, 11.6), "hide": Vector2(58.8, 11.8),
+	"bench_table": Vector2(63.4, 13.6), "bench": Vector2(62.2, 13.8),
+	"shoot": Vector2(60.8, 16.3), "target": Vector2(65.0, 16.3),
+	"smokehouse": Vector2(54.4, 7.6), "smoke": Vector2(55.8, 7.9),
+	"warehouse": Vector2(46.1, 15.2),
+}
+## Ścieżka od drzwi chatki do wschodniej bramy (kafelki osady).
+const LODGE_PATH: Array[Vector2] = [Vector2(60.0, 8.9), Vector2(60.2, 14.0), Vector2(59.2, 19.0), Vector2(58.4, 22.8)]
+const HUNTER_SCENE := preload("res://scenes/hunter.tscn")
+const HUNTER_SHEETS := ["hunter_b", "hunter_c", "hunter_d"]
+
+## Pokoje gościnne w karczmie - ściany działowe w pikselach dawnej karczmy 192x112 (TAVERN_BASE);
+## w grze skalowane do rozmiaru podłogi. Te same liczby rysuje tools/village_art.py (ROOM_*).
+## Te same liczby rysuje tools/village_art.py (ROOM_X, ROOM_SPLIT_Y, ROOM_DOORS).
+const TAVERN_ROOM_WALLS: Array[Rect2] = [
+	Rect2(136, 0, 4, 40), Rect2(136, 58, 4, 26), Rect2(136, 102, 4, 5), Rect2(140, 64, 48, 10),
+]
+const TAVERN_BASE := Vector2(192, 112)
+
+## Ścieżki z ubitej ziemi: [punkty (kafelki), promień, czy także poza palisadą].
+const PATHS := [
+	[[Vector2(-2, 23.5), Vector2(68, 23.5)], 1.5, false],  # droga przez osadę
+	[[Vector2(33, 24), Vector2(33.5, 29), Vector2(32.6, 35), Vector2(33, 41)], 1.2, false],
+	[[Vector2(33, 40), Vector2(33.2, 46), Vector2(35.5, 50.9), Vector2(45, 50.9)], 1.1, true],  # do koszar
+	[[Vector2(15.5, 34.6), Vector2(22, 35.2), Vector2(28, 34.4), Vector2(33, 34.8), Vector2(39, 34.3), Vector2(44.5, 34.6)], 1.0, false],
+	[[Vector2(19, 18), Vector2(19.2, 22)], 1.0, false],
+	[[Vector2(32, 15), Vector2(32, 18)], 1.0, false],
+	[[Vector2(46, 16), Vector2(45.5, 19), Vector2(44.5, 22)], 1.0, false],
+	[[Vector2(51.5, 24), Vector2(54.6, 26.5), Vector2(55.3, 29.5)], 0.9, false],
+]
+## Placyk przed domem sołtysa z kapliczką odrodzenia.
+const PLAZA := Vector2(32.0, 18.6)
+const PLAZA_RADIUS := 2.6
+
+const LINES_GUARD: Array[String] = [
+	"Trzymaj się blisko palisady, wędrowcze.",
+	"Z wieży widać ich ogniska. Coraz bliżej...",
+	"Póki stoją te mury, jest nadzieja.",
+	"Wczoraj odparliśmy trzy szturmy.",
+	"Gobliny to dopiero przednia straż. Za nimi idzie coś gorszego.",
+	"Karawana powinna niedługo przejechać. Pilnuj drogi.",
+]
+const LINES_PLANKS: Array[String] = [
+	"Te deski same się nie przyniosą!",
+	"Wschodnia ściana znów puszcza...",
+	"Jeszcze jedna i odpocznę. Chyba.",
+]
+const LINES_BARRELS: Array[String] = [
+	"Ludzie muszą mieć co pić. I w co wierzyć.",
+	"Ciężka ta beczka jak goblińskie grzechy.",
+	"Karczmarz krzyczy, że piwo się kończy.",
+]
+const LINES_UNLOADER: Array[String] = [
+	"Wóz pełny, a sklep pusty. Do roboty!",
+	"Worki z mąką, skrzynie z mieczami... co jeszcze?",
+	"Kupiec mówi, że to ostatni wóz z południa.",
+]
+const LINES_SMITH: Array[String] = [
+	"Każdy miecz to jedno życie więcej.",
+	"Żelaza mało, a potworów coraz więcej.",
+	"Nie przeszkadzaj, ostrze stygnie!",
+	"Dobrze, że mam wreszcie dach nad kowadłem.",
+]
+const LINES_HUNTER: Array[String] = [
+	"Potwory wypłoszyły całą zwierzynę.",
+	"Widziałem w lesie ślady większe niż goblińskie. Dużo większe.",
+	"Na południowym wschodzie wyją wilki. Las jest tam ciemny jak noc.",
+	"Przynieś mi wilcze skóry, a dobrze zapłacę.",
+	"Ze skór będą płaszcze na zimę. Jeśli dożyjemy.",
+	"Na północnym wschodzie i południowym zachodzie pasą się jelenie, sarny i dziki. Podchodź cicho!",
+	"Skóry jeleni i dzików skupię od ręki. A poroże to dopiero trofeum!",
+]
+const LINES_BUILDER: Array[String] = [
+	"Ta dziura sama się nie załata.",
+	"Dawajcie te deski, szybciej!",
+]
+const LINES_MERCHANT: Array[String] = [
+	"Mikstury! Kto dziś walczy, ten jutro żyje!",
+	"Serca goblinów? Alchemicy zapłacą krocie.",
+	"Złoto nic nie znaczy, gdy świat płonie... ale biorę.",
+]
+const LINES_BARKEEP: Array[String] = [
+	"Siadaj, zjedz coś. Las nigdzie nie ucieknie.",
+	"Dawniej grali tu bardowie. Teraz tylko wiatr.",
+	"Pokoje na górze... znaczy z tyłu. Czyste, prawie.",
+]
+const LINES_PATRON: Array[String] = [
+	"Za Ostoję! Hep!",
+	"Jeszcze jeden kufelek i idę na gobliny.",
+	"Dobre to piwo. Lepsze niż wczorajsze.",
+	"Słyszałeś, co wyje nocą w lesie?",
+]
+const LINES_STOREKEEPER: Array[String] = [
+	"Każda kłoda się przyda. Palisada sama się nie załata.",
+	"Policzyłem wszystko dwa razy. Niczego nie brakuje.",
+	"Kamień trzymam z lewej, drewno z prawej. Porządek musi być.",
+]
+const LINES_CHIEF: Array[String] = [
+	"Ostoja przetrwa, jeśli każdy dołoży swoją cegiełkę.",
+	"Potrzebujemy żołnierzy, nie tylko murów.",
+	"Spójrz na tych ludzi. Dla nich warto walczyć.",
+]
+const LINES_CHIEF_BUILT: Array[String] = [
+	"Koszary stoją! Wreszcie mamy własne wojsko.",
+	"Słyszysz musztrę? Najpiękniejszy dźwięk od lat.",
+]
+const LINES_CONSTRUCTION: Array[String] = [
+	"Jeszcze trochę i będzie gotowe!",
+	"Podaj młotek! Nie ten, ten drugi!",
+	"Krzywo? Nie krzywo, tylko po góralsku.",
+]
+const LINES_TRAINER: Array[String] = [
+	"Raz! Dwa! Raz! Dwa!",
+	"Ta kukła wygląda jak mój teść.",
+	"Jeszcze sto cięć i odpoczynek.",
+]
+const LINES_SERGEANT: Array[String] = ["Baczność!", "W lewo zwrot!", "Naprzód marsz!", "W tył zwrot!", "Naprzód marsz!", "W lewo zwrot!"]
+const LINES_SAGE: Array[String] = [
+	"Hmm... ciekawe, bardzo ciekawe...",
+	"Gwiazdy mówią o nadchodzącej burzy.",
+	"Ta księga ma trzysta lat. Albo czterysta.",
+	"Cisza, proszę. Myśli lubią spokój.",
+	"Gdzie ja położyłem okulary...",
+]
+const LINES_CLERK: Array[String] = [
+	"Gildia przyjmuje każdego, kto ma odwagę.",
+	"Nowe zlecenia wiszą na tablicy przed wejściem.",
+	"Nazwisko? Miejsce urodzenia? Ulubiona broń?",
+]
+const LINES_ADVENTURER: Array[String] = [
+	"Patrz, nagroda za łeb wodza goblinów!",
+	"Ktoś widział żaboludzi bliżej mostu?",
+	"Ja biorę to z wilkami. Ty bierz bagna.",
+	"Kiedyś to ja będę na liście gończym... jako łowca!",
+	"Tu piszą, że płacą w złocie. Prawdziwym złocie!",
+]
+const LINES_LODGE_HUNTER: Array[String] = [
+	"Ciii... zwierzyna ma lepszy słuch niż ty.",
+	"Dziś na kolację będzie dziczyzna!",
+	"Strzała musi lecieć prosto jak myśl.",
+	"Dym z wędzarni czuć aż w karczmie.",
+	"Jeleń z północnego wschodu? Taki okaz trafia się raz na rok.",
+]
+const LINES_ARMS: Array[String] = [
+	"Nowe miecze dla koszar, prosto z kuźni!",
+	"Kolczugi ciężkie, ale chłopaki się ucieszą.",
+]
+const LINES_VILLAGER: Array[String] = [
+	"Słyszałeś? Upadło kolejne miasto na południu.",
+	"Mówią, że na północy z ziemi wstają umarli.",
+	"Wilkołaki porwały kupców z Brzeziny...",
+	"Dzieci boją się zasnąć.",
+	"Musimy się trzymać razem, inaczej zginiemy.",
+	"Pamiętam, jak ten las był bezpieczny...",
+	"Dziękujemy, że walczysz za nas.",
+]
+
+## Stosy surowców przy magazynie (drewno w lewej kolumnie, kamień w prawej)
+## i ile surowca przypada na jeden poziom stosu.
+const WOOD_PILE_SPOTS: Array[Vector2] = [Vector2(38.2, 16.2), Vector2(38.2, 14.2), Vector2(38.2, 12.2)]
+const STONE_PILE_SPOTS: Array[Vector2] = [Vector2(40.5, 16.2), Vector2(40.5, 14.2), Vector2(40.5, 12.2)]
+const PILE_PER_STAGE := 10
+const PILE_STAGES := 4
+
+var origin_tile := Vector2i.ZERO
+## Obszar osady (z miejscem na koszary) w pikselach świata.
+var rect := Rect2()
+var spawn_point := Vector2.ZERO
+## Kolory komórek na mapie i znaczniki (ołtarz, kupiec, sołtys).
+var map_cells := {}
+var map_markers: Array[Dictionary] = []
+var buildings := {}
+## Stan koszar: "none" (puste pole), "building" (plac budowy) albo "built".
+## Budowy: id -> {"state": "building"/"built", "left": sekundy, "nodes": węzły do usunięcia, "sprite": rusztowanie}.
+var _projects := {}
+## Tablica ogłoszeń przed gildią (później dostanie zlecenia).
+var notice_board: Sprite2D
+## Szlaki z bram do łowisk (piksele świata; 0 - prawy górny róg, 1 - lewy dolny) i obszary łowisk.
+var hunting_routes: Array = [[], []]
+var hunting_areas: Array[Rect2] = []
+
+var _ground: TileMapLayer
+var _floors: Node2D
+var _entities: Node2D
+var _player: Player
+var _rng: RandomNumberGenerator
+var _inside := {}
+var _plank_pile: Sprite2D
+var _wood_piles: Array[Sprite2D] = []
+var _stone_piles: Array[Sprite2D] = []
+var _planks := 1
+var _textures := {}
+## Miejsca zajęte przez rekwizyty (kafelki układu) - ozdoby omijają je, ścieżki, budynki i drzwi.
+var _spots: Array[Vector2] = []
+var _chief: Npc
+## Węzły placu budowy i koszar (usuwane / dodawane przy zmianie stanu).
+var _butcher_rack: Sprite2D
+var _archery_target: Sprite2D
+var _hunters: Array[Npc] = []
+var _corner_taken: Array[bool] = [false, false]
+var _drill: Array[Npc] = []
+var _drill_home: Array[Vector2] = []
+var _sergeant: Npc
+var _drill_step := 0
+var _drill_timer := 0.0
+
+
+func build(origin: Vector2i, ground: TileMapLayer, floors: Node2D, entities: Node2D, player: Player, rng: RandomNumberGenerator) -> void:
+	origin_tile = origin
+	rect = Rect2(Vector2(origin * TILE), Vector2(SIZE * TILE))
+	_ground = ground
+	_floors = floors
+	_entities = entities
+	_player = player
+	_rng = rng
+	add_to_group("settlement")
+	set_process(false)
+
+	_build_ground()
+	_build_palisade()
+	_build_buildings()
+	_build_interiors()
+	_build_yard()
+	_build_training_dummy()
+	_build_decorations()
+	_build_npcs()
+
+
+## Czy komórka (w kafelkach świata) należy do terenu osady (z polem pod koszary).
+func has_cell(cell: Vector2i) -> bool:
+	return Rect2i(origin_tile, SIZE).has_point(cell)
+
+
+## Czy komórka (w kafelkach świata) leży za palisadą.
+func is_inside_palisade(cell: Vector2i) -> bool:
+	return _inside.has(cell - origin_tile)
+
+
+# ---------------------------------------------------------------- teren i palisada
+## Odległość od środka w "promieniach" palisady: < 1 w środku, > 1 na zewnątrz.
+## `tile_pos` w kafelkach świata względem lewego górnego rogu osady.
+static func outline_distance(tile_pos: Vector2) -> float:
+	var d := (tile_pos / SCALE - CENTER) / RADII
+	var r := pow(pow(absf(d.x), ROUNDNESS) + pow(absf(d.y), ROUNDNESS), 1.0 / ROUNDNESS)
+	var angle := atan2(d.y, d.x)
+	# lekkie falowanie, żeby owal nie był idealny
+	return r / (1.0 + 0.025 * sin(3.0 * angle + 0.7) + 0.015 * sin(5.0 * angle + 2.1))
+
+
+func _build_ground() -> void:
+	for y in SIZE.y:
+		for x in SIZE.x:
+			if outline_distance(Vector2(x + 0.5, y + 0.5)) < 1.0:
+				_inside[Vector2i(x, y)] = true
+	for y in SIZE.y:
+		for x in SIZE.x:
+			var cell := Vector2i(x, y)
+			var inside := _inside.has(cell)
+			var on_path := _on_path(Vector2(x + 0.5, y + 0.5) / SCALE, inside)
+			if not inside and not on_path:
+				continue
+			var tile: Vector2i = DIRT_TILES.pick_random() if on_path else YARD_TILES.pick_random()
+			var cobble := inside and (Vector2(x + 0.5, y + 0.5) / SCALE).distance_to(PLAZA) <= PLAZA_RADIUS + 0.9
+			if cobble:
+				tile = COBBLE_TILE
+			_ground.set_cell(origin_tile + cell, 0, tile)
+			map_cells[origin_tile + cell] = MAP_COBBLE if cobble else MAP_DIRT if on_path else MAP_YARD
+
+
+func _on_path(point: Vector2, inside: bool) -> bool:
+	if inside and point.distance_to(PLAZA) <= PLAZA_RADIUS:
+		return true
+	for path: Array in PATHS:
+		if not inside and not path[2]:
+			continue
+		var points: Array = path[0]
+		for i in points.size() - 1:
+			var closest := Geometry2D.get_closest_point_to_segment(point, points[i], points[i + 1])
+			if closest.distance_to(point) <= path[1]:
+				return true
+	return false
+
+
+func _is_gate(cell: Vector2i) -> bool:
+	var p := _layout(cell)
+	if p.y >= GATE_ROWS.x and p.y < GATE_ROWS.y + 1:
+		return true
+	return p.y > CENTER.y and p.x >= GATE_COLUMNS.x and p.x < GATE_COLUMNS.y + 1
+
+
+## Środek komórki świata (względem osady) w kafelkach układu.
+func _layout(cell: Vector2i) -> Vector2:
+	return (Vector2(cell) + Vector2(0.5, 0.5)) / SCALE
+
+
+func _build_palisade() -> void:
+	var body := StaticBody2D.new()
+	body.position = rect.position
+	_entities.add_child(body)
+	for cell: Vector2i in _inside:
+		var edge := false
+		for dir: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+			if not _inside.has(cell + dir):
+				edge = true
+				break
+		if not edge or _is_gate(cell):
+			continue
+		var p := _layout(cell)
+		var broken := p.x > CENTER.x and p.y >= BROKEN_ROWS.x and p.y < BROKEN_ROWS.y + 1
+		# palisada to pas z powtarzającym się wzorem pali - kolumnę wycinamy wg pozycji, sąsiednie pasują do siebie
+		var stake := _prop("palisade_broken" if broken else "palisade", (Vector2(cell) + Vector2(0.5, 0.95)) / SCALE)
+		if stake.texture.get_width() > TILE:
+			stake.region_enabled = true
+			stake.region_rect = Rect2(posmod((origin_tile.x + cell.x) * TILE, stake.texture.get_width()), 0, TILE, stake.texture.get_height())
+		map_cells[origin_tile + cell] = MAP_PALISADE
+		var shape := CollisionShape2D.new()
+		var box := RectangleShape2D.new()
+		box.size = Vector2(16, 10)
+		shape.shape = box
+		shape.position = Vector2(cell * TILE) + Vector2(8, 9)
+		body.add_child(shape)
+
+
+# ---------------------------------------------------------------- budynki
+func _build_buildings() -> void:
+	for id: String in BUILDINGS:
+		var data: Array = BUILDINGS[id]
+		_add_building(id, data[0], data[1], data[2], data[3])
+	var tavern: Building = buildings["tavern"]
+	var room_scale := tavern.size_px / TAVERN_BASE
+	for wall in TAVERN_ROOM_WALLS:
+		tavern.add_wall(Rect2(wall.position * room_scale, wall.size * room_scale))
+
+
+func _add_building(id: String, pos: Vector2i, size: Vector2i, map_color: Color, chimney: Variant) -> Building:
+	# budynek ma rozmiar swojej grafiki: stoi pośrodku przydzielonego pola, frontem na jego dolnej krawędzi
+	var floor_texture := _tex(id + "_floor")
+	var footprint := Vector2(size) * TILE * SCALE
+	var building := Building.new()
+	building.position = _px(Vector2(pos)) + Vector2(roundf((footprint.x - floor_texture.get_width()) / 2.0),
+			footprint.y - floor_texture.get_height())
+	_floors.add_child(building)
+	building.setup(BUILDING_NAMES[id], floor_texture, _tex(id + "_roof"), _entities, _player)
+	# komin na grafice dachu z PixelLab (CHIMNEYS); `chimney` mówi tylko, czy budynek dymi
+	if chimney != null and CHIMNEYS.has(id):
+		building.add_chimney_smoke(CHIMNEYS[id])
+	buildings[id] = building
+	var first := _cell(Vector2(pos))
+	var last := _cell(Vector2(pos + size) - Vector2(0.01, 0.01))
+	for y in range(first.y, last.y + 1):
+		for x in range(first.x, last.x + 1):
+			map_cells[Vector2i(x, y)] = map_color
+	return building
+
+
+## Pozycja w kafelkach osady względem lewego górnego rogu budynku. `local` jest w kafelkach dawnego
+## budynku (rozmiar z BUILDINGS / PROJECTS) - przeliczamy ją proporcjonalnie na podłogę obecnej grafiki.
+func _in(id: String, local: Vector2) -> Vector2:
+	var data: Array = [PROJECTS[id]["pos"], PROJECTS[id]["size"]] if PROJECTS.has(id) else BUILDINGS[id]
+	if not buildings.has(id):
+		return Vector2(data[0]) + local
+	var building: Building = buildings[id]
+	var px := building.position + local / Vector2(data[1]) * building.size_px
+	return (px / TILE - Vector2(origin_tile)) / SCALE
+
+
+## Wyposażenie wnętrz.
+func _build_interiors() -> void:
+	# karczma: sala z ladą i stołami, z tyłu dwa pokoje gościnne
+	_prop("counter", _in("tavern", Vector2(2.6, 3.1)), Vector2(48, 6))
+	for p in [Vector2(0.9, 2.0), Vector2(7.6, 2.0), Vector2(7.6, 2.9)]:
+		_prop("barrel", _in("tavern", p), Vector2(10, 5))
+	for p in [Vector2(2.0, 6.2), Vector2(6.6, 4.4)]:
+		_prop("table", _in("tavern", p), Vector2(24, 6))
+		_prop("stool", _in("tavern", p + Vector2(-1.1, 0.3)))
+		_prop("stool", _in("tavern", p + Vector2(1.1, 0.3)))
+	for room_bottom in [3.85, 6.62]:
+		_prop("bed", _in("tavern", Vector2(11.05, room_bottom)), Vector2(18, 22))
+		_prop("chest", _in("tavern", Vector2(9.5, room_bottom)), Vector2(14, 5))
+
+	# dom sołtysa
+	_prop("table", _in("chief_house", Vector2(2.4, 4.2)), Vector2(24, 6))
+	_prop("stool", _in("chief_house", Vector2(1.3, 4.5)))
+	_prop("shelf", _in("chief_house", Vector2(5.9, 2.4)))
+	_prop("chest", _in("chief_house", Vector2(6.4, 5.4)), Vector2(14, 5))
+
+	# magazyn
+	for p in [Vector2(0.9, 2.0), Vector2(1.8, 2.0), Vector2(0.9, 3.0), Vector2(0.9, 5.4)]:
+		_prop("crate", _in("warehouse", p), Vector2(12, 5))
+	for p in [Vector2(6.9, 2.0), Vector2(6.0, 2.0), Vector2(6.9, 3.0), Vector2(6.9, 5.4)]:
+		_prop("barrel", _in("warehouse", p), Vector2(10, 5))
+	var stock := _prop("plank_pile", _in("warehouse", Vector2(2.2, 5.5)), Vector2(24, 5), 4)
+	stock.frame = 3
+
+	# kuźnia
+	_prop("forge", _in("smithy", Vector2(1.8, 2.7)), Vector2(24, 8))
+	_glow(_px(_in("smithy", Vector2(1.8, 2.1))), Color(1, 0.5, 0.15, 0.4), Vector2(60, 40))
+	_prop("weapon_rack", _in("smithy", Vector2(5.3, 2.5)), Vector2(20, 5))
+	_prop("barrel", _in("smithy", Vector2(5.6, 5.4)), Vector2(10, 5))
+
+	# sklep
+	_prop("shelf", _in("shop", Vector2(1.9, 2.4)))
+	_prop("shelf", _in("shop", Vector2(6.1, 2.4)))
+	_prop("counter", _in("shop", Vector2(4.0, 3.9)), Vector2(48, 6))
+	_prop("barrel", _in("shop", Vector2(0.9, 5.4)), Vector2(10, 5))
+	_prop("crate", _in("shop", Vector2(7.0, 5.4)), Vector2(12, 5))
+
+
+# ---------------------------------------------------------------- ozdoby
+## Życie osady: latarnie przy drogach, skrzynki z kwiatami i doniczki przy drzwiach, ławki i rabaty przy
+## placu, kram przy sklepie, strachy na wróble, płotki i ule przy ogródkach, beczki na deszczówkę,
+## pranie i buda z psem przy domu sołtysa, koty i drobiazgi na podwórkach. Każda ozdoba szuka
+## wolnego miejsca w pobliżu swojego punktu (poza ścieżkami, budynkami, drzwiami i innymi rekwizytami).
+const GARDENS: Array[Vector2] = [Vector2(20.8, 9.9), Vector2(11.2, 17.6), Vector2(24.0, 38.2)]
+
+
+func _build_decorations() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = _rng.randi()
+	# latarnie wzdłuż drogi przez osadę, po obu stronach na zmianę
+	var lamp_side := 1.0
+	for x in range(6, 62, 6):
+		var spot := _free_spot(Vector2(x, ROAD_ROW + 0.7 + 2.3 * lamp_side), 1.4, 1.0, rng)
+		if spot.is_finite():
+			_deco("deco_lamp_post", spot, Vector2(4, 3))
+			_glow(_px(spot) + Vector2(4, -30), Color(1.0, 0.8, 0.45, 0.25), Vector2(48, 40))
+		lamp_side = -lamp_side
+	# przy drzwiach budynków: skrzynki z kwiatami, doniczki, beczka na deszczówkę za rogiem
+	for id: String in BUILDINGS:
+		var building: Building = buildings[id]
+		var door := (building.door_outside() / TILE - Vector2(origin_tile)) / SCALE
+		for side in [-1.0, 1.0]:
+			var box := _free_spot(door + Vector2(2.4 * side, -0.1), 0.6, 0.9, rng, true)
+			if box.is_finite():
+				_deco("deco_flower_box", box, Vector2(22, 4))
+		var pot := _free_spot(door + Vector2(1.3 * (1 if rng.randf() < 0.5 else -1), 0.1), 0.4, 0.5, rng, true)
+		if pot.is_finite():
+			_deco("deco_flower_pot", pot)
+		var corner := (building.position + Vector2(building.size_px.x if rng.randf() < 0.5 else 0.0, building.size_px.y)) / TILE
+		var barrel := _free_spot((corner - Vector2(origin_tile)) / SCALE + Vector2(0, 0.3), 1.2, 0.8, rng)
+		if barrel.is_finite():
+			_deco("deco_rain_barrel", barrel, Vector2(12, 5))
+	# plac: rabaty, kamienne ławki i drogowskaz
+	for i in 3:
+		var bed := _free_spot(PLAZA + Vector2.from_angle(TAU * i / 3.0 + 0.6) * (PLAZA_RADIUS + 1.6), 1.0, 1.2, rng)
+		if bed.is_finite():
+			_deco("deco_flower_bed", bed, Vector2(28, 8))
+	for side in [-1.0, 1.0]:
+		var bench := _free_spot(PLAZA + Vector2(3.6 * side, 1.4), 1.0, 1.0, rng)
+		if bench.is_finite():
+			_deco("deco_stone_bench", bench, Vector2(22, 5))
+	var sign_spot := _free_spot(PLAZA + Vector2(2.8, 3.6), 1.0, 0.8, rng)
+	if sign_spot.is_finite():
+		_deco("deco_signpost", sign_spot, Vector2(4, 3))
+	# kram przy sklepie, drewutnia przy karczmie, pranie i buda przy domu sołtysa
+	for item: Array in [["deco_market_stall", "shop", Vector2(-2.6, 4.0), Vector2(40, 8)],
+			["deco_wood_shelter", "tavern", Vector2(-1.8, 3.4), Vector2(28, 6)],
+			["deco_washing_line", "chief_house", Vector2(9.6, 3.0), Vector2(40, 4)],
+			["deco_kennel", "chief_house", Vector2(-1.8, 4.6), Vector2(20, 6)]]:
+		var spot := _free_spot(Vector2(BUILDINGS[item[1]][0]) + item[2], 2.0, 1.6, rng)
+		if spot.is_finite():
+			_deco(item[0], spot, item[3])
+	# ogródki: strach na wróble, płotek i ul
+	for garden in GARDENS:
+		for item: Array in [["deco_scarecrow", Vector2(0, -1.6), Vector2(6, 3)], ["deco_fence", Vector2(-2.6, 0.6), Vector2(26, 4)],
+				["deco_fence", Vector2(2.6, 0.6), Vector2(26, 4)], ["deco_beehive", Vector2(2.4, -1.8), Vector2(12, 5)]]:
+			var spot := _free_spot(garden + item[1], 1.0, 0.8, rng)
+			if spot.is_finite():
+				_deco(item[0], spot, item[2])
+	# podwórka: zwierzęta i drobiazgi w losowych wolnych miejscach
+	for item: Array in [["deco_cat", 2], ["deco_wheelbarrow", 2], ["deco_basket", 3],
+			["deco_lantern", 3], ["deco_bucket", 2], ["deco_axe_stump", 2], ["deco_tools", 1]]:
+		for k in item[1]:
+			var spot := _free_spot(Vector2(rng.randf_range(10, 56), rng.randf_range(8, 38)), 6.0, 0.9, rng)
+			if spot.is_finite():
+				_deco(item[0], spot, Vector2(16, 4) if item[0] == "deco_wheelbarrow" else Vector2.ZERO)
+
+
+func _deco(texture_name: String, tile_pos: Vector2, collision := Vector2.ZERO) -> void:
+	var sprite := _prop(texture_name, tile_pos, collision)
+	sprite.flip_h = _rng.randf() < 0.5 and not texture_name in ["deco_signpost", "deco_lamp_post"]
+
+
+## Wolne miejsce na ozdobę w promieniu `search` od `near` (kafelki układu): za palisadą, poza ścieżkami,
+## budynkami (z zapasem przed fasadą, chyba że `at_facade` - skrzynki z kwiatami i doniczki) i dalej niż
+## `gap` od innych rekwizytów. Vector2.INF - brak.
+func _free_spot(near: Vector2, search: float, gap: float, rng: RandomNumberGenerator, at_facade := false) -> Vector2:
+	for attempt in 24:
+		var p := near if attempt == 0 else near + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(0.3, search)
+		if outline_distance(p * SCALE) > 0.9 or _on_path(p, true):
+			continue
+		var blocked := false
+		for id: String in buildings:
+			var building: Building = buildings[id]
+			var area := Rect2(building.position / TILE, building.size_px / TILE).grow(0.4)
+			if not at_facade:
+				area.size.y += 1.2  # przed drzwiami i fasadą
+			else:
+				area.size.y -= 0.4
+			if area.has_point(_px(p) / TILE):
+				blocked = true
+				break
+		if blocked or p.distance_to(PLAZA) < PLAZA_RADIUS + 0.6:
+			continue
+		for other in _spots:
+			if other.distance_to(p) < gap:
+				blocked = true
+				break
+		if not blocked:
+			return p
+	return Vector2.INF
+
+
+# ---------------------------------------------------------------- plac
+func _build_training_dummy() -> void:
+	_trample(PRACTICE_DUMMY + Vector2(-0.6, 0.6), Vector2(2.6, 1.8))
+	_spawn_scene(TRAINING_DUMMY, PRACTICE_DUMMY)
+	map_markers.append({"position": _px(PRACTICE_DUMMY), "color": TrainingDummy.DUMMY_COLOR, "size": 2.0})
+
+
+func _build_yard() -> void:
+	# kapliczka odrodzenia na placyku przed domem sołtysa
+	var shrine: Node2D = SHRINE.instantiate()
+	shrine.position = _px(PLAZA)
+	_entities.add_child(shrine)
+	spawn_point = shrine.position + Vector2(0, 20)
+	map_markers.append({"position": shrine.position, "color": Color("5fd3ff"), "size": 3.0})
+	_prop("banner", Vector2(29.2, 16.4), Vector2(4, 3))
+	_prop("banner", Vector2(34.9, 16.4), Vector2(4, 3))
+
+	# stoliki przed karczmą
+	for table in [Vector2(15.6, 20.4), Vector2(22.4, 20.4)]:
+		_prop("table", table, Vector2(24, 6))
+		_prop("stool", table + Vector2(-1.1, 0.3))
+		_prop("stool", table + Vector2(1.1, 0.3))
+	_prop("barrel", Vector2(12.4, 19.2), Vector2(10, 5))
+	_prop("well", Vector2(26.8, 20.4), Vector2(22, 8))
+
+	# kuźnia: szopa z daszkiem, a przed nią kowadło (kowal pracuje na zewnątrz - w szopie zasłaniała go ściana)
+	_prop("awning", Vector2(21.5, 31.6))
+	_prop("anvil", Vector2(21.9, 32.6), Vector2(14, 4))
+	var hearth := _prop("hearth", Vector2(25.4, 30.4), Vector2(24, 8), 2)
+	_animate(hearth, 2, 0.15, 0.35)
+	_glow(_px(Vector2(25.4, 29.8)), Color(1, 0.5, 0.15, 0.45), Vector2(56, 40))
+	_prop("weapon_rack", Vector2(18.4, 31.4), Vector2(20, 5))
+
+	# miejsce myśliwego
+	_prop("hide_rack", Vector2(29.0, 28.4), Vector2(20, 4))
+	_prop("hide_rack", Vector2(27.3, 28.4), Vector2(20, 4))
+	_prop("pelt", Vector2(28.9, 30.3))
+
+	# stajnia z koniem i wóz z towarem przy sklepie
+	_prop("stable", Vector2(51.4, 32.6), Vector2(60, 8))
+	var horse := _prop("horse", Vector2(51.2, 35.2), Vector2(24, 5), 2)
+	_animate(horse, 2, 1.2, 3.5)
+	_prop("hay", Vector2(53.7, 34.2), Vector2(18, 5))
+	_prop("cart", Vector2(47.2, 36.6), Vector2(40, 6))
+
+	var fire: Node2D = CAMPFIRE.instantiate()
+	fire.position = _px(Vector2(37.4, 37.4))
+	_entities.add_child(fire)
+	map_markers.append({"position": fire.position, "color": Color("ff9a3c"), "size": 2.0})
+
+	# ogródki, drzewa i krzaki - żeby osada nie wyglądała jak z linijki
+	for garden in GARDENS:
+		_garden(garden)
+	for p in [Vector2(10.8, 26.4), Vector2(56.0, 18.0), Vector2(26.3, 9.6)]:
+		_spawn_scene(OAK, p)
+	for p in [Vector2(12.2, 31.6), Vector2(37.0, 9.2), Vector2(52.3, 14.4), Vector2(17.0, 38.0), Vector2(46.6, 38.8)]:
+		_spawn_scene(BUSH, p)
+
+	# naprawa palisady - stos desek przynoszonych z magazynu
+	_plank_pile = _prop("plank_pile", Vector2(54.4, 31.8), Vector2(28, 6), 4)
+	_plank_pile.frame = 0
+
+	for p in [Vector2(30.0, 39.7), Vector2(36.2, 39.7)]:
+		_prop("crate", p, Vector2(12, 5))
+	_prop("barrel", Vector2(10.8, 24.9), Vector2(10, 5))
+
+
+# ---------------------------------------------------------------- mieszkańcy
+func _build_npcs() -> void:
+	# tragarze desek: magazyn -> naprawiana palisada
+	var plank_path := _path([Vector2(46.3, 14.6), Vector2(46.3, 17.4), Vector2(46.0, 20.0), Vector2(51.5, 23.2),
+			Vector2(54.6, 26.0), Vector2(55.0, 30.6)])
+	for sheet in ["worker_gray", "worker_ochre"]:
+		var npc := _npc(sheet, Vector2.ZERO, Npc.Role.CARRIER, LINES_PLANKS)
+		npc.path = plank_path
+		npc.carried_texture = _tex("plank")
+		npc.carried_offset = Vector2(0, -30)
+		npc.on_delivered = _add_plank
+		_entities.add_child(npc)
+
+	# tragarze beczek: magazyn -> karczma
+	var barrel_path := _path([Vector2(43.8, 14.6), Vector2(43.8, 17.2), Vector2(43.4, 22.6), Vector2(19.6, 22.6),
+			Vector2(19.3, 18.6), Vector2(19.3, 15.8)])
+	for sheet in ["villager_brown", "villager_red"]:
+		var npc := _npc(sheet, Vector2.ZERO, Npc.Role.CARRIER, LINES_BARRELS)
+		npc.path = barrel_path
+		npc.carried_texture = _tex("barrel")
+		npc.carried_offset = Vector2(0, -17)
+		_entities.add_child(npc)
+
+	# tragarz rozładowuje wóz: skrzynie, beczki i worki do sklepu
+	var unloader := _npc("worker_ochre", Vector2.ZERO, Npc.Role.CARRIER, LINES_UNLOADER)
+	unloader.path = _path([Vector2(46.0, 35.8), Vector2(44.6, 35.0), Vector2(44.1, 33.4), Vector2(44.1, 31.4)])
+	unloader.carried_textures.assign([_tex("crate"), _tex("barrel"), _tex("sack")])
+	unloader.carried_offset = Vector2(0, -17)
+	_entities.add_child(unloader)
+
+	# goście karczmy wychodzą na piwo do stolików przed wejściem
+	var seats := [[Vector2(14.5, 20.75), Vector2.RIGHT], [Vector2(23.5, 20.75), Vector2.LEFT], [Vector2(16.7, 20.75), Vector2.LEFT]]
+	var patrons := ["villager_green", "worker_gray", "villager_brown"]
+	for i in seats.size():
+		var seat: Vector2 = seats[i][0]
+		var npc := _npc(patrons[i], Vector2.ZERO, Npc.Role.PATRON, LINES_PATRON)
+		npc.path = _path([Vector2(16.6 + i * 1.3, 15.4), Vector2(18.8, 17.6), Vector2(18.8, 19.3), Vector2(seat.x, 19.3), seat])
+		npc.seat_facing = seats[i][1]
+		npc.carried_texture = _tex("mug")
+		_entities.add_child(npc)
+
+	var smith := _npc("smith", Vector2(20.9, 32.6), Npc.Role.WORKER, LINES_SMITH, Vector2.RIGHT)
+	smith.work_effect = "sparks"
+	smith.work_effect_offset = Vector2(20, -14)
+	smith.work_period = 0.65
+	smith.display_name = "Kowal Bronisław"
+	smith.services.assign(["forge"])
+	smith.dialog_greeting = "Zwykłe żelazo każdy wykuje. Ale przynieś mi kamień, drewno i coś z tych potworów, a wykuję ci rzecz z charakterem!"
+	smith.work_sound = "anvil"
+	smith.display_name = "Kowal Bronisław"
+	smith.trade_greeting = "Broń i zbroja, prosto z kowadła!"
+	smith.shop_sells.assign(["iron_sword", "war_axe", "leather_cap", "iron_helmet", "leather_armor",
+			"chainmail", "leather_gloves", "leather_boots"])
+	_entities.add_child(smith)
+
+	var hunter := _npc("hunter", Vector2(27.9, 30.4), Npc.Role.WORKER, LINES_HUNTER, Vector2.RIGHT)
+	hunter.work_gentle = true
+	hunter.work_period = 1.1
+	hunter.display_name = "Myśliwy Radek"
+	hunter.trade_greeting = "Łuk? Mam jeden zapasowy."
+	hunter.shop_sells.assign(["short_bow"])
+	hunter.quest_id = "wolf_hunt"
+	_entities.add_child(hunter)
+
+	var builder := _npc("builder", Vector2(55.9, 28.6), Npc.Role.WORKER, LINES_BUILDER, Vector2.RIGHT)
+	builder.work_effect = "dust"
+	builder.work_effect_offset = Vector2(20, -8)
+	builder.work_period = 0.8
+	builder.work_sound = "hammer"
+	_entities.add_child(builder)
+
+	var merchant := _npc("merchant", _in("shop", Vector2(4.0, 3.1)), Npc.Role.MERCHANT, LINES_MERCHANT)
+	merchant.display_name = "Kupiec Bogdan"
+	merchant.looks_around = false
+	merchant.quest_id = "goblin_purge"
+	merchant.shop_sells.assign(["health_potion", "mana_potion", "pouch", "backpack", "spellbook", "copper_ring",
+			"ring_of_strength", "silver_earring", "fang_earring", "amber_necklace"])
+	_entities.add_child(merchant)
+	map_markers.append({"position": merchant.position, "color": MAP_MERCHANT, "size": 2.0})
+
+	var barkeep := _npc("barkeep", _in("tavern", Vector2(2.6, 2.3)), Npc.Role.IDLE, LINES_BARKEEP)
+	barkeep.looks_around = false
+	barkeep.display_name = "Karczmarz Wacław"
+	barkeep.services.assign(["rest"])
+	barkeep.dialog_greeting = "Witaj w Ostoi! Zmęczony? Za 25 złota przenocujesz w jednym z moich pokoi - wyśpisz się, a rano las wokół osady będzie jak nowy."
+	_entities.add_child(barkeep)
+
+	var storekeeper := _npc("storekeeper", _in("warehouse", Vector2(2.3, 4.0)), Npc.Role.IDLE, LINES_STOREKEEPER)
+	storekeeper.looks_around = false
+	storekeeper.display_name = "Magazynier Zenon"
+	storekeeper.services.assign(["storage"])
+	storekeeper.dialog_greeting = "Magazyn osady do twoich usług. Zostaw, co chcesz - przypilnuję. Drewno i kamień zawsze się przydadzą!"
+	_entities.add_child(storekeeper)
+
+	_chief = _npc("chief", Vector2(34.4, 16.8), Npc.Role.IDLE, LINES_CHIEF)
+	_chief.display_name = "Sołtys Mirosław"
+	_chief.quest_chain.assign([UNLOCK_QUEST])
+	_chief.services.assign(["build"])
+	_chief.dialog_greeting = "Ostoja rośnie dzięki tobie! Przynieś drewno i kamień - z plecaka albo z magazynu - a cieśle postawią, co zechcesz."
+
+	_entities.add_child(_chief)
+	map_markers.append({"position": _chief.position, "color": MAP_CHIEF, "size": 2.0})
+
+	for spot: Array in [[Vector2(9.9, 20.3), Vector2.LEFT], [Vector2(56.2, 20.3), Vector2.RIGHT],
+			[Vector2(30.8, 39.4), Vector2.DOWN], [Vector2(35.2, 39.4), Vector2.DOWN]]:
+		var guard := _npc("guard", spot[0], Npc.Role.IDLE, LINES_GUARD, spot[1])
+		guard.looks_around = false
+		_entities.add_child(guard)
+
+	for spot: Array in [
+		["villager_green", Vector2(36.3, 37.6), Vector2.RIGHT],
+		["villager_brown", Vector2(38.5, 37.6), Vector2.LEFT],
+		["villager_red", Vector2(25.3, 20.9), Vector2.RIGHT],
+	]:
+		_entities.add_child(_npc(spot[0], spot[1], Npc.Role.IDLE, LINES_VILLAGER, spot[2]))
+
+
+# ---------------------------------------------------------------- stosy surowców
+## Stosy kłód i kamieni przy magazynie rosną razem z ilością surowca w magazynie.
+func update_resource_piles(wood: int, stone: int) -> void:
+	if _wood_piles.is_empty():
+		for spot in WOOD_PILE_SPOTS:
+			_wood_piles.append(_hidden_pile("wood_pile", spot))
+		for spot in STONE_PILE_SPOTS:
+			_stone_piles.append(_hidden_pile("stone_pile", spot))
+	_update_piles(_wood_piles, wood)
+	_update_piles(_stone_piles, stone)
+
+
+func _hidden_pile(texture_name: String, spot: Vector2) -> Sprite2D:
+	@warning_ignore("integer_division")
+	var width := _tex(texture_name).get_width() / PILE_STAGES
+	var pile := _prop(texture_name, spot, Vector2(width * 0.75, 8), PILE_STAGES)
+	pile.visible = false
+	_set_solid(pile, false)
+	return pile
+
+
+## Kolizja rekwizytu tylko wtedy, gdy go widać (stosy przy magazynie pojawiają się z pierwszym surowcem).
+func _set_solid(sprite: Sprite2D, solid: bool) -> void:
+	for shape in _body_of(sprite).get_children():
+		if shape is CollisionShape2D:
+			shape.set_deferred("disabled", not solid)
+
+
+func _update_piles(piles: Array[Sprite2D], amount: int) -> void:
+	@warning_ignore("integer_division")
+	var stages := amount / PILE_PER_STAGE
+	for i in piles.size():
+		var stage := clampi(stages - i * PILE_STAGES, 0, PILE_STAGES)
+		# pierwszy stosik pojawia się od razu przy pierwszej sztuce
+		if i == 0 and amount > 0:
+			stage = maxi(stage, 1)
+		var pile := piles[i]
+		var was_visible := pile.visible
+		pile.visible = stage > 0
+		if was_visible != pile.visible:
+			_set_solid(pile, pile.visible)
+		if stage > 0:
+			if not was_visible or pile.frame != stage - 1:
+				pile.scale = Vector2(1.15, 0.85)
+				pile.create_tween().tween_property(pile, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK)
+			pile.frame = stage - 1
+
+
+## Tragarz odłożył deskę - stos rośnie, a gdy jest pełny, cieśla zużywa deski.
+func _add_plank() -> void:
+	_planks = mini(_planks + 1, 4)
+	_plank_pile.frame = _planks - 1
+	if _planks == 4:
+		var tween := _plank_pile.create_tween()
+		tween.tween_interval(5.0)
+		tween.tween_callback(_use_planks)
+
+
+func _use_planks() -> void:
+	_planks = 1
+	_plank_pile.frame = 0
+
+
+# ---------------------------------------------------------------- budowy (koszary, chatka myśliwych)
+## Zlecenie budowy u sołtysa: zabiera surowce (najpierw z plecaka, potem z magazynu)
+## i w wyznaczonym miejscu rusza plac budowy. Zwraca false, gdy czegoś brakuje.
+func start_project(project: String, player: Player) -> bool:
+	if project_state(project) != "none" or not building_unlocked(player) or not can_afford(project, player):
+		return false
+	var cost: Dictionary = PROJECTS[project]["cost"]
+	for id: String in cost:
+		player.take_owned(id, cost[id])
+	set_project(project, "building", PROJECTS[project]["time"])
+	_chief.say(PROJECTS[project]["start_line"])
+	return true
+
+
+## Budowanie odblokowuje zadanie sołtysa (w starszych zapisach - już rozpoczęta budowa).
+func building_unlocked(player: Player) -> bool:
+	return player.quests.state_of(UNLOCK_QUEST) == Quests.STATE_DONE or not _projects.is_empty()
+
+
+func can_afford(project: String, player: Player) -> bool:
+	var cost: Dictionary = PROJECTS[project]["cost"]
+	for id: String in cost:
+		if player.count_owned(id) < int(cost[id]):
+			return false
+	return true
+
+
+## Postęp trwającej budowy (0..1).
+func project_progress(project: String) -> float:
+	if project_state(project) != "building":
+		return 1.0 if project_state(project) == "built" else 0.0
+	return clampf(1.0 - _projects[project]["left"] / PROJECTS[project]["time"], 0.0, 1.0)
+
+
+## Odpoczynek w karczmie - przez noc cieśle kończą budowy.
+func on_rest() -> void:
+	for project: String in _projects:
+		if _projects[project]["state"] == "building":
+			_projects[project]["left"] = 0.0
+
+
+func project_state(project: String) -> String:
+	return _projects[project]["state"] if _projects.has(project) else "none"
+
+
+func get_save_data() -> Dictionary:
+	var data := {}
+	for project: String in _projects:
+		data[project] = [_projects[project]["state"], _projects[project]["left"]]
+	return {"projects": data}
+
+
+func load_save_data(data: Dictionary) -> void:
+	var saved: Dictionary = data.get("projects", {})
+	# starsze zapisy znały tylko koszary
+	if data.has("barracks"):
+		saved = {"barracks": [data["barracks"], data.get("construction_left", 0.0)]}
+	for project: String in saved:
+		var entry: Array = saved[project]
+		if PROJECTS.has(project) and str(entry[0]) in ["building", "built"]:
+			set_project(project, str(entry[0]), float(entry[1]))
+	# starsze zapisy: osada już się budowała, więc prośba o pomoc jest dawno spełniona
+	if not _projects.is_empty() and _player.quests.state_of(UNLOCK_QUEST) != Quests.STATE_DONE:
+		_player.quests.states[UNLOCK_QUEST] = Quests.STATE_DONE
+		_player.quests.changed.emit()
+
+
+func set_project(project: String, state: String, time_left := 0.0) -> void:
+	if _projects.has(project):
+		for node: Node in _projects[project]["nodes"]:
+			node.queue_free()
+	var nodes: Array[Node] = []
+	_projects[project] = {"state": state, "left": time_left, "nodes": nodes, "sprite": null}
+	if state == "building":
+		_build_construction_site(project)
+	elif state == "built":
+		map_cells.erase(_marker_cell(project))
+		call("_build_" + project)
+	# nowo udeptana ziemia przy budowie dostaje przejścia do trawy (jak ścieżki osady)
+	if get_parent() != null and get_parent().has_method("_blend_settlement_ground"):
+		get_parent()._blend_settlement_ground()
+	set_process(true)
+
+
+func _process(delta: float) -> void:
+	for project: String in _projects:
+		var entry: Dictionary = _projects[project]
+		if entry["state"] != "building":
+			continue
+		entry["left"] -= delta
+		var done: float = 1.0 - entry["left"] / PROJECTS[project]["time"]
+		entry["sprite"].frame = clampi(int(done * CONSTRUCTION_STAGES), 0, CONSTRUCTION_STAGES - 1)
+		if entry["left"] <= 0.0:
+			_finish_construction(project)
+			break  # słownik budów właśnie się zmienił
+	if project_state("barracks") == "built":
+		_process_drill(delta)
+
+
+## Plac budowy: rusztowanie w 4 etapach, stos desek i kamieni, cieśle i tragarz desek.
+func _build_construction_site(project: String) -> void:
+	var data: Dictionary = PROJECTS[project]
+	var pos: Vector2i = data["pos"]
+	var size: Vector2i = data["size"]
+	var nodes: Array[Node] = _projects[project]["nodes"]
+	var site := Sprite2D.new()
+	site.texture = _tex(data["art"])
+	site.hframes = CONSTRUCTION_STAGES
+	site.centered = false
+	# plac budowy ma grafikę w dawnej skali - rozciągamy go do rozmiaru budynku
+	site.scale = Vector2.ONE * SCALE
+	site.offset = Vector2(0, -size.y * TILE)
+	site.position = _px(Vector2(pos + Vector2i(0, size.y)))
+	_entities.add_child(site)
+	_projects[project]["sprite"] = site
+	nodes.append(site)
+	var rect_tiles := Rect2(Vector2(pos), Vector2(size))
+	var planks_at := Vector2(rect_tiles.position.x - 1.6, rect_tiles.end.y - 1.8)
+	var planks := _prop("plank_pile", planks_at, Vector2(24, 5), 4)
+	planks.frame = 3
+	var stones := _prop("stone_pile", Vector2(rect_tiles.end.x + 1.8, rect_tiles.end.y - 2.6), Vector2(28, 6), PILE_STAGES)
+	stones.frame = 2
+	nodes.append_array([_body_of(planks), _body_of(stones)])
+
+	for spot: Array in [["builder", Vector2(rect_tiles.position.x - 0.4, rect_tiles.end.y - 0.4), Vector2.RIGHT],
+			["worker_ochre", Vector2(rect_tiles.end.x + 0.6, rect_tiles.end.y - 1.4), Vector2.LEFT],
+			["builder", Vector2(rect_tiles.get_center().x + 0.6, rect_tiles.end.y + 1.4), Vector2.RIGHT]]:
+		var worker := _npc(spot[0], spot[1], Npc.Role.WORKER, LINES_CONSTRUCTION, spot[2])
+		worker.work_effect = "dust"
+		worker.work_effect_offset = Vector2(20, -8)
+		worker.work_period = randf_range(0.7, 0.9)
+		worker.work_sound = "hammer"
+		_entities.add_child(worker)
+		nodes.append(worker)
+	var carrier := _npc("worker_gray", Vector2.ZERO, Npc.Role.CARRIER, LINES_CONSTRUCTION)
+	var front := rect_tiles.end.y + 0.6
+	carrier.path = _path([planks_at + Vector2(0.2, 1.2), Vector2(planks_at.x + 1.2, front), Vector2(rect_tiles.get_center().x - 2.5, front),
+			Vector2(rect_tiles.get_center().x - 2.5, front - 1.2)])
+	carrier.carried_texture = _tex("plank")
+	carrier.carried_offset = Vector2(0, -30)
+	_entities.add_child(carrier)
+	nodes.append(carrier)
+	map_cells[_marker_cell(project)] = data["color"]
+
+
+func _finish_construction(project: String) -> void:
+	var data: Dictionary = PROJECTS[project]
+	var pos: Vector2i = data["pos"]
+	var size: Vector2i = data["size"]
+	var dust := CPUParticles2D.new()
+	dust.position = _px(Vector2(pos) + Vector2(size) * Vector2(0.5, 0.7))
+	dust.one_shot = true
+	dust.explosiveness = 0.9
+	dust.amount = 40
+	dust.lifetime = 1.2
+	dust.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	dust.emission_rect_extents = Vector2(size * TILE) * SCALE * Vector2(0.5, 0.3)
+	dust.direction = Vector2.UP
+	dust.spread = 60.0
+	dust.initial_velocity_min = 10.0
+	dust.initial_velocity_max = 30.0
+	dust.gravity = Vector2(0, -10)
+	dust.scale_amount_min = 3.0
+	dust.scale_amount_max = 6.0
+	dust.color = Color(0.8, 0.7, 0.55, 0.7)
+	dust.emitting = true
+	dust.z_index = 30
+	_entities.get_parent().add_child(dust)
+	dust.finished.connect(dust.queue_free)
+	set_project(project, "built")
+	Sfx.play("barracks")
+	_chief.say(data["done_line"])
+	var hud := get_tree().get_first_node_in_group("hud")
+	if hud != null:
+		hud.show_banner(data["banner"], Color(1.0, 0.85, 0.4))
+
+
+func _marker_cell(project: String) -> Vector2i:
+	return _cell(Vector2(PROJECTS[project]["pos"]) + Vector2(PROJECTS[project]["size"]) / 2.0)
+
+
+## Udeptana ziemia (w kafelkach osady): elipsa o środku `center` i półosiach `radii`.
+func _trample(center: Vector2, radii: Vector2) -> void:
+	center *= SCALE
+	radii *= SCALE
+	for y in range(floori(center.y - radii.y), ceili(center.y + radii.y) + 1):
+		for x in range(floori(center.x - radii.x), ceili(center.x + radii.x) + 1):
+			var d := (Vector2(x + 0.5, y + 0.5) - center) / radii
+			if d.length() <= 1.0 + randf_range(-0.12, 0.08):
+				_dirt(Vector2i(x, y))
+
+
+## Udeptana ścieżka wzdłuż punktów (w kafelkach osady).
+func _trample_path(points: Array[Vector2], radius: float) -> void:
+	for i in points.size() - 1:
+		var a := points[i]
+		var b := points[i + 1]
+		var steps := ceili(a.distance_to(b) * 2.0)
+		for k in steps + 1:
+			_trample(a.lerp(b, float(k) / steps), Vector2(radius, radius))
+
+
+func _dirt(cell: Vector2i) -> void:
+	if not Rect2i(Vector2i.ZERO, SIZE).has_point(cell):
+		return
+	_ground.set_cell(origin_tile + cell, 0, DIRT_TILES.pick_random())
+	map_cells[origin_tile + cell] = MAP_DIRT
+
+
+func _build_barracks() -> void:
+	var nodes: Array[Node] = _projects["barracks"]["nodes"]
+	if not buildings.has("barracks"):
+		_add_building("barracks", BARRACKS_POS, BARRACKS_SIZE, BARRACKS_COLOR, null)
+		# wnętrze: prycze i stojaki na broń
+		for x in [1.2, 2.6, 4.0]:
+			_prop("bed", _in("barracks", Vector2(x, 4.0)), Vector2(16, 8))
+		for x in [8.4, 10.4]:
+			_prop("weapon_rack", _in("barracks", Vector2(x, 2.5)), Vector2(20, 5))
+		_prop("chest", _in("barracks", Vector2(7.0, 6.2)), Vector2(14, 5))
+		_prop("table", _in("barracks", Vector2(9.4, 5.6)), Vector2(24, 6))
+		# plac ćwiczeń tuż obok koszar i plac musztry przed nimi - udeptane
+		_trample(TRAINING_YARD, Vector2(5.2, 3.4))
+		_trample(DRILL_SQUARE, Vector2(6.2, 2.6))
+		_trample_path([Vector2(50.2, 49.6), Vector2(52.0, 48.6)], 0.9)
+	_chief.lines = LINES_CHIEF_BUILT
+
+	# na zewnątrz: sztandary, tarcza, stojak i trzy kukły z ćwiczącymi żołnierzami
+	for p in [Vector2(41.6, 50.6), Vector2(46.4, 50.6)]:
+		nodes.append(_body_of(_prop("banner", p, Vector2(4, 3))))
+	nodes.append(_prop("shield", Vector2(37.0, 50.2)))
+	nodes.append(_body_of(_prop("weapon_rack", TRAINING_YARD + Vector2(-3.6, -2.0), Vector2(20, 5))))
+	var trainers := ["soldier_a", "soldier_b", "soldier_c"]
+	for i in 3:
+		var dummy_pos := TRAINING_YARD + Vector2(-1.4 + i * 2.7, 0.3 + (i % 2) * 0.6)
+		var dummy := _prop("dummy", dummy_pos, Vector2(8, 4))
+		nodes.append(_body_of(dummy))
+		var fighter := _npc(trainers[i], dummy_pos + Vector2(-1.1, 0.15), Npc.Role.WORKER, LINES_TRAINER, Vector2.RIGHT)
+		fighter.work_effect = "straw"
+		fighter.work_effect_offset = Vector2(21, -14)
+		fighter.work_period = randf_range(0.6, 0.8)
+		fighter.on_work_hit = _wobble.bind(dummy)
+		fighter.work_sound = "dummy"
+		_entities.add_child(fighter)
+		nodes.append(fighter)
+
+	# musztra przed koszarami: dwa szeregi i sierżant
+	_drill.clear()
+	_drill_home.clear()
+	var sheets := ["soldier_a", "soldier_b", "soldier_c", "soldier_c", "soldier_a", "soldier_b"]
+	for row in 2:
+		for col in 3:
+			var pos := Vector2(41.4 + col * 1.8, 52.6 + row * 1.7)
+			var soldier := _npc(sheets[row * 3 + col], pos, Npc.Role.IDLE, [], Vector2.RIGHT)
+			soldier.looks_around = false
+			_entities.add_child(soldier)
+			nodes.append(soldier)
+			_drill.append(soldier)
+			_drill_home.append(soldier.position)
+	_sergeant = _npc("sergeant", Vector2(48.8, 53.4), Npc.Role.IDLE, [], Vector2.LEFT)
+	_sergeant.looks_around = false
+	_entities.add_child(_sergeant)
+	nodes.append(_sergeant)
+	_drill_step = 0
+	_drill_timer = 1.0
+
+	# tragarz nosi broń i zbroje z kuźni do koszar
+	var porter := _npc("worker_gray", Vector2.ZERO, Npc.Role.CARRIER, LINES_ARMS)
+	porter.path = _path([Vector2(23.4, 32.6), Vector2(24.5, 34.8), Vector2(32.6, 35.4), Vector2(33.1, 41.5),
+			Vector2(33.3, 46.5), Vector2(36.0, 50.9), Vector2(44.0, 50.9), Vector2(44.0, 48.6)])
+	porter.carried_textures.assign([_tex("arms_bundle"), _tex("mail_bundle")])
+	porter.carried_offset = Vector2(0, -20)
+	_entities.add_child(porter)
+	nodes.append(porter)
+
+
+## Komendy sierżanta i reakcja szeregów (zwroty i marsz kilka kroków w przód i z powrotem).
+func _process_drill(delta: float) -> void:
+	if _sergeant == null:
+		return
+	_drill_timer -= delta
+	if _drill_timer > 0.0:
+		return
+	_drill_timer = 3.0
+	var command: String = LINES_SERGEANT[_drill_step]
+	_sergeant.say(command)
+	var facing: Vector2 = [Vector2.RIGHT, Vector2.UP, Vector2.UP, Vector2.DOWN, Vector2.DOWN, Vector2.RIGHT][_drill_step]
+	for i in _drill.size():
+		var soldier := _drill[i]
+		soldier.facing = facing
+		if command == "Naprzód marsz!":
+			var target := _drill_home[i] + (Vector2(0, -14) if facing == Vector2.UP else Vector2.ZERO)
+			soldier.march_to(target, 1.4)
+	_drill_step = (_drill_step + 1) % LINES_SERGEANT.size()
+
+
+# ---------------------------------------------------------------- chatka myśliwych
+func _build_lodge() -> void:
+	var nodes: Array[Node] = _projects["lodge"]["nodes"]
+	if not buildings.has("lodge"):
+		_add_building("lodge", LODGE_POS, LODGE_SIZE, LODGE_COLOR, Vector2(96, 6))
+		# wnętrze: stół ze strzałami, skóry, beczka i prycza
+		_prop("table", _in("lodge", Vector2(2.2, 4.4)), Vector2(24, 6))
+		_prop("stool", _in("lodge", Vector2(1.1, 4.7)))
+		_prop("barrel", _in("lodge", Vector2(0.9, 2.1)), Vector2(10, 5))
+		_prop("bed", _in("lodge", Vector2(6.9, 4.2)), Vector2(16, 8))
+		_prop("pelt", _in("lodge", Vector2(4.6, 5.4)))
+		# udeptane podwórko i ścieżka do wschodniej bramy
+		_trample_path(LODGE_PATH, 0.9)
+		_trample(Vector2(60.6, 12.4), Vector2(4.6, 2.8))
+		_trample(Vector2(63.2, 16.3), Vector2(2.6, 1.2))
+	for p in [LODGE_SPOTS["hide_rack"]]:
+		nodes.append(_body_of(_prop("hide_rack", p, Vector2(20, 4))))
+	nodes.append(_body_of(_prop("hide_rack", Vector2(64.4, 10.8), Vector2(20, 4))))
+	_butcher_rack = _prop("butcher_rack", LODGE_SPOTS["butcher_rack"], Vector2(24, 4), 2)
+	nodes.append(_body_of(_butcher_rack))
+	nodes.append(_body_of(_prop("table", LODGE_SPOTS["bench_table"], Vector2(24, 6))))
+	nodes.append(_prop("quiver", LODGE_SPOTS["bench_table"] + Vector2(1.6, 0.2)))
+	_archery_target = _prop("archery_target", LODGE_SPOTS["target"], Vector2(14, 4))
+	nodes.append(_body_of(_archery_target))
+	var smokehouse := _prop("smokehouse", LODGE_SPOTS["smokehouse"], Vector2(22, 6))
+	nodes.append(_body_of(smokehouse))
+	nodes.append(_smoke(smokehouse))
+
+	_hunters.clear()
+	_corner_taken = [false, false]
+	for i in HUNTER_SHEETS.size():
+		var hunter := HUNTER_SCENE.instantiate() as Npc
+		hunter.position = _px(LODGE_SPOTS["door"] + Vector2(i * 1.2 - 1.2, 0.8))
+		hunter.lines = LINES_LODGE_HUNTER
+		hunter.get_node("Sprite").texture = load("res://assets/npc/%s.png" % HUNTER_SHEETS[i])
+		hunter.set("lodge", self)
+		_entities.add_child(hunter)
+		nodes.append(hunter)
+		_hunters.append(hunter)
+
+
+# ---------------------------------------------------------------- chata mędrca
+func _build_sage_hut() -> void:
+	var nodes: Array[Node] = _projects["sage_hut"]["nodes"]
+	if not buildings.has("sage_hut"):
+		_add_building("sage_hut", SAGE_POS, SAGE_SIZE, SAGE_COLOR, Vector2(96, 6))
+		# izba: regały z księgami pod ścianami, stolik ze stołkiem i skrzynia
+		for spot: Array in [[0.95, 0], [2.25, 1], [5.75, 1], [7.05, 0]]:
+			_prop("bookshelf_%d" % spot[1], _in("sage_hut", Vector2(spot[0], 2.0)), Vector2(20, 5))
+		_prop("table", _in("sage_hut", Vector2(1.6, 5.2)), Vector2(24, 6))
+		_prop("stool", _in("sage_hut", Vector2(2.7, 5.5)))
+		_prop("chest", _in("sage_hut", Vector2(7.0, 5.5)), Vector2(14, 5))
+		# ścieżka do drogi przy zachodniej bramie i udeptane podwórko
+		_trample_path([Vector2(5.0, 8.6), Vector2(5.2, 13.0), Vector2(5.8, 18.0), Vector2(6.8, 22.8)], 0.8)
+		_trample(Vector2(5.0, 9.4), Vector2(3.2, 1.4))
+	# pulpit na gwiaździstym dywanie - mędrzec przewraca kartki - i sowa na żerdzi
+	var lectern := _prop("lectern", _in("sage_hut", Vector2(4.0, 4.1)), Vector2(18, 5), 2)
+	_animate(lectern, 2, 2.5, 6.0)
+	nodes.append(_body_of(lectern))
+	var owl := _prop("owl_perch", _in("sage_hut", Vector2(7.2, 4.3)), Vector2(6, 3), 2)
+	_animate(owl, 2, 0.15, 4.0)
+	nodes.append(_body_of(owl))
+	nodes.append(_glow_node(_px(_in("sage_hut", Vector2(4.6, 3.6))), Color(1.0, 0.8, 0.4, 0.35), Vector2(40, 30)))
+	nodes.append(_magic_motes(_px(_in("sage_hut", Vector2(4.0, 3.5)))))
+
+	var sage := _npc("sage", _in("sage_hut", Vector2(4.0, 3.55)), Npc.Role.IDLE, LINES_SAGE, Vector2.DOWN)
+	sage.looks_around = false
+	sage.display_name = "Mędrzec Teodor"
+	sage.services.assign(["disenchant"])
+	sage.dialog_greeting = "Zaklęcia to nie wieczność, młody wędrowcze. Za drobną opłatą zdejmę czar z twojego oręża i oddam ci kamienie, które go utrzymywały."
+	_entities.add_child(sage)
+	nodes.append(sage)
+
+	# wokół chaty: kocioł z wywarem, luneta, grządka ziół, kamienie runiczne i latarenka
+	var cauldron := _prop("cauldron", Vector2(2.0, 9.8), Vector2(14, 5), 2)
+	_animate(cauldron, 2, 0.35, 0.6)
+	nodes.append(_body_of(cauldron))
+	nodes.append(_glow_node(_px(Vector2(2.0, 9.4)), Color(0.3, 1.0, 0.45, 0.3), Vector2(40, 30)))
+	nodes.append(_body_of(_prop("herb_garden", Vector2(8.0, 10.4), Vector2(34, 6))))
+	nodes.append(_body_of(_prop("telescope", Vector2(9.9, 7.4), Vector2(8, 4))))
+	for spot: Vector2 in [Vector2(-0.4, 6.2), Vector2(0.3, 11.6), Vector2(10.4, 4.0)]:
+		nodes.append(_body_of(_prop("rune_stone", spot, Vector2(10, 4))))
+		nodes.append(_glow_node(_px(spot + Vector2(0, -0.5)), Color(0.45, 0.75, 1.0, 0.25), Vector2(24, 24)))
+	nodes.append(_glow_node(_px(_in("sage_hut", Vector2(4.95, 4.9))), Color(1.0, 0.8, 0.4, 0.35), Vector2(36, 30)))
+
+
+## Unoszące się, migoczące drobinki magii (nad pulpitem mędrca).
+func _magic_motes(pos: Vector2) -> CPUParticles2D:
+	var motes := CPUParticles2D.new()
+	motes.position = pos
+	motes.amount = 8
+	motes.lifetime = 2.5
+	motes.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+	motes.emission_sphere_radius = 10.0
+	motes.direction = Vector2.UP
+	motes.spread = 40.0
+	motes.gravity = Vector2(0, -4)
+	motes.initial_velocity_min = 2.0
+	motes.initial_velocity_max = 6.0
+	motes.scale_amount_max = 1.5
+	var fade := Gradient.new()
+	fade.colors = PackedColorArray([Color(0.7, 0.85, 1.0, 0.0), Color(0.8, 0.9, 1.0, 0.9), Color(0.6, 0.5, 1.0, 0.0)])
+	motes.color_ramp = fade
+	motes.z_index = 20
+	_entities.add_child(motes)
+	return motes
+
+
+# ---------------------------------------------------------------- gildia poszukiwaczy przygód
+func _build_guild() -> void:
+	var nodes: Array[Node] = _projects["guild"]["nodes"]
+	if not buildings.has("guild"):
+		_add_building("guild", GUILD_POS, GUILD_SIZE, GUILD_COLOR, Vector2(144, 6))
+		# sala: lada pisarza, stół z mapą, trofeum na ścianie, stojak z bronią, skrzynie
+		_prop("counter", _in("guild", Vector2(3.2, 3.1)), Vector2(48, 6))
+		_prop("bookshelf_0", _in("guild", Vector2(0.95, 2.0)), Vector2(20, 5))
+		_prop("trophy", _in("guild", Vector2(6.0, 1.6)))
+		_prop("weapon_rack", _in("guild", Vector2(10.6, 2.5)), Vector2(20, 5))
+		_prop("map_table", _in("guild", Vector2(8.4, 4.6)), Vector2(32, 6))
+		for p in [Vector2(7.0, 4.95), Vector2(9.8, 4.95)]:
+			_prop("stool", _in("guild", p))
+		_prop("chest", _in("guild", Vector2(1.0, 6.4)), Vector2(14, 5))
+		_prop("barrel", _in("guild", Vector2(11.1, 6.3)), Vector2(10, 5))
+		# podwórko przed wejściem i ścieżka do drogi od południowej bramy
+		_trample(Vector2(24.0, 52.4), Vector2(5.6, 2.2))
+		_trample_path([Vector2(24.0, 51.0), Vector2(28.5, 52.8), Vector2(32.6, 52.6)], 0.8)
+
+	var clerk := _npc("guild_clerk", _in("guild", Vector2(3.2, 2.6)), Npc.Role.IDLE, LINES_CLERK, Vector2.DOWN)
+	clerk.looks_around = false
+	_entities.add_child(clerk)
+	nodes.append(clerk)
+
+	# tablica ogłoszeń przed wejściem (funkcje dostanie później) i poszukiwacze, którzy ją czytają
+	notice_board = _prop("notice_board", Vector2(20.6, 52.0), Vector2(36, 5))
+	nodes.append(_body_of(notice_board))
+	# niewidoczny "rozmówca" przed tablicą - E otwiera okno zleceń
+	var no_lines: Array[String] = []
+	var board := _npc("villager_brown", Vector2(20.6, 52.7), Npc.Role.IDLE, no_lines)
+	board.looks_around = false
+	board.display_name = "Tablica ogłoszeń"
+	board.services.assign(["bounties"])
+	board.add_to_group("notice_board")
+	_entities.add_child(board)
+	board.get_node("Sprite").visible = false
+	board.get_node("Shadow").visible = false
+	board.prompt.text = "[E] Tablica ogłoszeń"
+	nodes.append(board)
+	for spot: Array in [["adventurer_a", Vector2(20.0, 53.3)], ["adventurer_b", Vector2(21.4, 53.4)]]:
+		var adventurer := _npc(spot[0], spot[1], Npc.Role.IDLE, LINES_ADVENTURER, Vector2.UP)
+		adventurer.looks_around = false
+		_entities.add_child(adventurer)
+		nodes.append(adventurer)
+
+	# proporce na masztach, pochodnie przy drzwiach, ława i skrzynie
+	for spot: Vector2 in [Vector2(18.3, 51.4), Vector2(29.9, 51.4)]:
+		var banner := _prop("banner_pole", spot, Vector2(6, 3), 2)
+		_animate(banner, 2, 0.4, 0.8)
+		nodes.append(_body_of(banner))
+	for spot: Vector2 in [Vector2(22.7, 50.7), Vector2(25.3, 50.7)]:
+		var torch := _prop("torch_stand", spot, Vector2(6, 3), 2)
+		_animate(torch, 2, 0.12, 0.25)
+		nodes.append(_body_of(torch))
+		nodes.append(_glow_node(_px(spot + Vector2(0, -1.2)), Color(1.0, 0.6, 0.2, 0.4), Vector2(48, 40)))
+	nodes.append(_body_of(_prop("bench", Vector2(27.4, 52.9), Vector2(28, 5))))
+	for spot: Array in [["crate", Vector2(30.6, 49.6), Vector2(12, 5)], ["crate", Vector2(30.9, 48.8), Vector2.ZERO],
+			["barrel", Vector2(17.4, 49.7), Vector2(10, 5)], ["barrel", Vector2(17.3, 48.4), Vector2(10, 5)]]:
+		nodes.append(_body_of(_prop(spot[0], spot[1], spot[2])))
+
+
+## Pozycja tablicy ogłoszeń w świecie (dla przyszłych zleceń); Vector2.INF, gdy gildii nie ma.
+func notice_board_position() -> Vector2:
+	return notice_board.global_position if is_instance_valid(notice_board) else Vector2.INF
+
+
+## Poświata do usunięcia razem z budową (_glow dodaje ją na stałe).
+func _glow_node(pos: Vector2, color: Color, size: Vector2) -> Sprite2D:
+	_glow(pos, color, size)
+	return _floors.get_child(_floors.get_child_count() - 1) as Sprite2D
+
+
+## Dym z komina wędzarni.
+func _smoke(sprite: Sprite2D) -> CPUParticles2D:
+	var smoke := CPUParticles2D.new()
+	smoke.amount = 14
+	smoke.lifetime = 3.0
+	smoke.direction = Vector2(0.2, -1)
+	smoke.spread = 15.0
+	smoke.gravity = Vector2(3, -6)
+	smoke.initial_velocity_min = 5.0
+	smoke.initial_velocity_max = 9.0
+	smoke.scale_amount_min = 2.0
+	smoke.scale_amount_max = 5.0
+	var fade := Gradient.new()
+	fade.colors = PackedColorArray([Color(0.6, 0.58, 0.55, 0.7), Color(0.75, 0.75, 0.78, 0.0)])
+	smoke.color_ramp = fade
+	smoke.position = sprite.global_position + Vector2(5, -30)
+	_entities.add_child(smoke)
+	return smoke
+
+
+## Pozycja miejsca przy chatce w pikselach świata (dla myśliwych).
+func lodge_spot(name: String) -> Vector2:
+	return _px(LODGE_SPOTS[name])
+
+
+## Droga z chatki do bramy, za którą zaczyna się szlak do łowiska (0 - wschód, 1 - zachód).
+func town_route(corner: int) -> Array[Vector2]:
+	var points: Array[Vector2] = LODGE_PATH.duplicate()
+	if corner == 1:
+		points.append_array([Vector2(52.0, 23.3), Vector2(33.0, 23.4), Vector2(9.0, 23.3), Vector2(4.0, 23.3)])
+	else:
+		points.append(Vector2(62.0, 23.3))
+	return _path(points)
+
+
+## Myśliwy rezerwuje łowisko - w każdym rogu poluje najwyżej jeden naraz.
+func reserve_corner() -> int:
+	var free: Array[int] = []
+	for corner in _corner_taken.size():
+		if not _corner_taken[corner] and not hunting_routes[corner].is_empty():
+			free.append(corner)
+	if free.is_empty():
+		return -1
+	var corner: int = free.pick_random()
+	_corner_taken[corner] = true
+	return corner
+
+
+func release_corner(corner: int) -> void:
+	if corner >= 0 and corner < _corner_taken.size():
+		_corner_taken[corner] = false
+
+
+## Stelaż z zawieszoną zwierzyną podczas oprawiania.
+func show_carcass(on: bool) -> void:
+	if _butcher_rack != null:
+		_butcher_rack.frame = 1 if on else 0
+
+
+## Strzała myśliwego trafia w tarczę (czasem w sam środek).
+func hit_target() -> void:
+	if _archery_target != null:
+		_wobble_small(_archery_target)
+
+
+func _wobble_small(sprite: Sprite2D) -> void:
+	var tween := sprite.create_tween()
+	tween.tween_property(sprite, "rotation", 0.06, 0.05)
+	tween.tween_property(sprite, "rotation", 0.0, 0.15)
+
+
+## Myśliwi zanoszą skóry i mięso do magazynu osady.
+func deliver_goods(goods: Dictionary) -> void:
+	for id: String in goods:
+		_player.storage.add_item(id, goods[id])
+
+
+## Kukła odchyla się po ciosie.
+func _wobble(dummy: Sprite2D) -> void:
+	var tween := dummy.create_tween()
+	tween.tween_property(dummy, "rotation", 0.18, 0.06)
+	tween.tween_property(dummy, "rotation", -0.08, 0.12)
+	tween.tween_property(dummy, "rotation", 0.0, 0.12)
+
+
+# ---------------------------------------------------------------- pomocnicze
+func _px(tile_pos: Vector2) -> Vector2:
+	return (Vector2(origin_tile) + tile_pos * SCALE) * TILE
+
+
+## Komórka świata, w której leży punkt układu.
+func _cell(tile_pos: Vector2) -> Vector2i:
+	return origin_tile + Vector2i((tile_pos * SCALE).floor())
+
+
+func _path(points: Array[Vector2]) -> Array[Vector2]:
+	var result: Array[Vector2] = []
+	for p in points:
+		result.append(_px(p))
+	return result
+
+
+func _tex(name: String) -> Texture2D:
+	if not _textures.has(name):
+		_textures[name] = load("res://assets/village/%s.png" % name)
+	return _textures[name]
+
+
+## Rekwizyt stojący na ziemi (punkt zaczepienia u podstawy), opcjonalnie z kolizją.
+func _prop(texture_name: String, tile_pos: Vector2, collision := Vector2.ZERO, frames := 1) -> Sprite2D:
+	_spots.append(tile_pos)
+	var texture := _tex(texture_name)
+	var sprite := Sprite2D.new()
+	sprite.texture = texture
+	sprite.hframes = frames
+	sprite.offset = Vector2(0, -texture.get_height() / 2.0 + 1.0)
+	if collision == Vector2.ZERO:
+		sprite.position = _px(tile_pos)
+		_entities.add_child(sprite)
+		return sprite
+	var body := StaticBody2D.new()
+	body.position = _px(tile_pos)
+	var shape := CollisionShape2D.new()
+	var box := RectangleShape2D.new()
+	box.size = collision
+	shape.shape = box
+	shape.position = Vector2(0, -collision.y / 2.0)
+	body.add_child(shape)
+	body.add_child(sprite)
+	_entities.add_child(body)
+	return sprite
+
+
+## Ogródek leży na ziemi (pod postaciami, nie zasłania ich), a każda roślina ma małą kolizję u podstawy -
+## grządek nie da się przejść na wprost, ale między rzędami można wejść. Rośliny to osobne kępki pikseli
+## grafiki, więc kolizje dopasowują się do niej same.
+func _garden(tile_pos: Vector2) -> void:
+	_spots.append(tile_pos)
+	var texture := _tex("garden")
+	var sprite := Sprite2D.new()
+	sprite.texture = texture
+	sprite.offset = Vector2(0, -texture.get_height() / 2.0 + 1.0)
+	sprite.position = _px(tile_pos)
+	_floors.add_child(sprite)
+	var body := StaticBody2D.new()
+	body.position = sprite.position
+	var top_left := Vector2(-texture.get_width() / 2.0, -texture.get_height() + 1.0)
+	for plant: Rect2 in _plants(texture):
+		var shape := CollisionShape2D.new()
+		var box := RectangleShape2D.new()
+		box.size = Vector2(maxf(plant.size.x * 0.4, 3.0), 3.0)
+		shape.shape = box
+		shape.position = top_left + Vector2(plant.get_center().x, plant.end.y - 1.5)
+		body.add_child(shape)
+	_entities.add_child(body)
+
+
+## Obrysy roślin w grafice ogródka: spójne kępki nieprzezroczystych pikseli (pomijamy okruchy).
+func _plants(texture: Texture2D) -> Array[Rect2]:
+	var image := texture.get_image()
+	var size := image.get_size()
+	var seen := {}
+	var plants: Array[Rect2] = []
+	for y in size.y:
+		for x in size.x:
+			var start := Vector2i(x, y)
+			if seen.has(start) or image.get_pixelv(start).a < 0.5:
+				continue
+			seen[start] = true
+			var stack: Array[Vector2i] = [start]
+			var box := Rect2(Vector2(start), Vector2.ONE)
+			var count := 0
+			while not stack.is_empty():
+				var p: Vector2i = stack.pop_back()
+				count += 1
+				box = box.expand(Vector2(p)).expand(Vector2(p) + Vector2.ONE)
+				for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+					var n := p + d
+					if n.x >= 0 and n.y >= 0 and n.x < size.x and n.y < size.y and not seen.has(n) 							and image.get_pixelv(n).a >= 0.5:
+						seen[n] = true
+						stack.append(n)
+			if count >= 20:
+				plants.append(box)
+	return plants
+
+
+## Węzeł do usunięcia razem z rekwizytem (ciało z kolizją albo sam sprite).
+func _body_of(sprite: Sprite2D) -> Node:
+	return sprite.get_parent() if sprite.get_parent() is StaticBody2D else sprite
+
+
+func _spawn_scene(scene: PackedScene, tile_pos: Vector2) -> void:
+	var node: Node2D = scene.instantiate()
+	node.position = _px(tile_pos)
+	_entities.add_child(node)
+
+
+## Prosta animacja klatek w losowym rytmie (koń, żar paleniska).
+func _animate(sprite: Sprite2D, frames: int, period_min: float, period_max: float) -> void:
+	var timer := Timer.new()
+	timer.wait_time = randf_range(period_min, period_max)
+	timer.autostart = true
+	timer.timeout.connect(_next_frame.bind(sprite, frames, timer, period_min, period_max))
+	sprite.add_child(timer)
+
+
+func _next_frame(sprite: Sprite2D, frames: int, timer: Timer, period_min: float, period_max: float) -> void:
+	sprite.frame = (sprite.frame + 1) % frames
+	timer.wait_time = randf_range(period_min, period_max)
+
+
+func _glow(pos: Vector2, color: Color, size: Vector2) -> void:
+	var gradient := Gradient.new()
+	gradient.colors = PackedColorArray([color, Color(color, 0.0)])
+	var texture := GradientTexture2D.new()
+	texture.gradient = gradient
+	texture.width = int(size.x)
+	texture.height = int(size.y)
+	texture.fill = GradientTexture2D.FILL_RADIAL
+	texture.fill_from = Vector2(0.5, 0.5)
+	texture.fill_to = Vector2(1.0, 0.5)
+	var glow := Sprite2D.new()
+	glow.texture = texture
+	glow.position = pos
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	glow.material = mat
+	_floors.add_child(glow)
+
+
+func _npc(sheet: String, tile_pos: Vector2, role: Npc.Role, lines: Array[String], facing := Vector2.DOWN) -> Npc:
+	var npc: Npc = NPC_SCENE.instantiate()
+	npc.position = _px(tile_pos)
+	npc.role = role
+	npc.lines = lines
+	npc.facing = facing
+	npc.get_node("Sprite").texture = load("res://assets/npc/%s.png" % sheet)
+	return npc

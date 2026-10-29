@@ -1,0 +1,43 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/hunter.gd" id="1_npc"]
+[ext_resource type="Texture2D" path="res://assets/shadow.png" id="2_shadow"]
+
+[node name="Hunter" type="Node2D"]
+script = ExtResource("1_npc")
+
+[node name="Shadow" type="Sprite2D" parent="."]
+scale = Vector2(1.2, 1)
+position = Vector2(0, -1)
+texture = ExtResource("2_shadow")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+offset = Vector2(0, -19)
+hframes = 4
+vframes = 4
+
+[node name="Carried" type="Sprite2D" parent="."]
+position = Vector2(0, -14)
+
+[node name="Bow" type="Sprite2D" parent="."]
+position = Vector2(6, -11)
+
+[node name="Bubble" type="Label" parent="."]
+z_index = 40
+offset_top = -52.0
+theme_override_colors/font_color = Color(0.1, 0.11, 0.17, 1)
+theme_override_font_sizes/font_size = 8
+text = "..."
+
+[node name="Prompt" type="Label" parent="."]
+z_index = 40
+offset_left = -30.0
+offset_top = -48.0
+offset_right = 30.0
+offset_bottom = -38.0
+theme_override_colors/font_color = Color(1, 0.85, 0.45, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.11, 0.17, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 8
+text = "[E] Handel"
+horizontal_alignment = 1

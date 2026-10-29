@@ -1,0 +1,84 @@
+{
+ "buildings": {
+  "tavern": "265b4ba9-908c-48b0-8a6c-afba9c3e31d5",
+  "chief_house": "347ddb28-acd1-4826-9073-e43ecedb9cfd",
+  "warehouse": "9cddcfc6-6e33-4de8-b12c-1eb97e4ff490",
+  "smithy": "d3e0fa9b-eca5-4cdc-a25b-ca7c4e1553fb",
+  "shop": "0620aa8a-dbee-4667-bd47-a1f02d065ec0",
+  "barracks": "3e6dc5e6-09a2-469f-8e83-a3348dade7c3",
+  "lodge": "d2f89670-701b-4404-a514-853bfc631dce",
+  "sage_hut": "7b0c3595-acc0-4624-8ba3-364f5140e910",
+  "guild": "bb3a5e25-82f8-4346-bfce-d1995e3d3b19"
+ },
+ "npcs": {
+  "villager_brown": "06bd13d5-0e17-4b80-a568-c35d6432a686",
+  "villager_green": "46d67906-a263-42e9-8147-501ea97e18fa",
+  "villager_red": "d27bfc37-2abf-4ef3-8e39-4736f46a5ac6",
+  "worker_gray": "8479117d-f951-48e0-bd92-c93f0539b88a",
+  "worker_ochre": "c9b71de9-1321-4ffc-8ec4-0af2af1419f1",
+  "smith": "4271279b-4fd0-4ebc-ad1b-fa1cbbf64e5d",
+  "hunter": "1f8954c0-8bcf-46fa-b4bb-4fd6c100e142",
+  "builder": "c7613cd0-8814-4910-80e0-312c19b6c148",
+  "merchant": "0f98c125-8d8f-42d4-8b34-cfab64a8654f",
+  "hunter_b": "f0fb6ecf-94c2-4248-9047-be7b15572c6f",
+  "hunter_c": "57dcf6cc-3469-4b2b-88fe-3a6cfc2757c5",
+  "hunter_d": "ab05398b-bc2e-4503-ad94-768c8251f840",
+  "barkeep": "c09f7f02-da71-4398-a3fa-7d799f03e617",
+  "storekeeper": "28af68c2-40ae-4908-98be-1cf2ab273f1a",
+  "guard": "93612a5c-5ddc-418f-8281-649f0399e952",
+  "chief": "d74b950d-5ba6-4fb3-8fc0-7c9d5b96a00b",
+  "sage": "24e65997-e027-4060-8b60-1ebb36f0bf3f",
+  "guild_clerk": "b6426c10-86f6-412d-96b3-2ac9043e2638",
+  "sergeant": "b675daac-0517-4d32-ae8f-48149e53e8d4",
+  "soldier_a": "951f35f1-1819-4c23-8179-8d76a14582a5",
+  "soldier_b": "0395e965-2f9a-46df-b0a9-83526b36ace7",
+  "soldier_c": "cadf1df5-130f-417a-8ed8-ac8070de96d5",
+  "adventurer_a": "7bbf239b-5366-4d0d-9f61-7d63f42bdcf7",
+  "adventurer_b": "f1bf02dc-1452-4e6f-8598-60fd18143abd"
+ },
+ "buildings_small": {
+  "tavern": "1b6cb0ae-e397-4460-a5de-ece7dca5dbc0",
+  "chief_house": "f836b30b-5971-4206-ae84-efa5692d37fa",
+  "warehouse": "48463b3d-e5d4-4f76-a9b9-9585a0fa8293",
+  "smithy": "8f1bf72a-389d-46de-84ab-8861add797e3",
+  "shop": "9621cab8-f78a-47ed-bf51-81659c9ec257",
+  "barracks": "94c1b6eb-d241-485b-97b9-acce91741ac0",
+  "lodge": "0806bf77-76ac-40d4-8b62-823dff3d32b3",
+  "sage_hut": "25efcc72-46b6-4210-962f-f838a851e710",
+  "guild": "839ccd09-4fc0-48a7-9c96-e610bb9a149e"
+ },
+ "campfire": "a7e54757-9ba4-4fe8-9bc4-ed81276c4839",
+ "wagon_pack": "ce1463b0-723a-4648-a6d4-cc778c282b3b",
+ "wagon": "12366d86-1ff0-415b-9813-db8d2322d9b5",
+ "wagon_up": "f294540f-cefa-4fc1-ba98-27a271cf67dc",
+ "_packs": {
+  "furniture": "8ad7263f-b085-407e-bfdc-540bf07c6b38",
+  "yard": "881cde32-a816-4164-bb67-154462ed997e",
+  "small": "d560cbfe-6d7b-4d9b-93df-b38d955f4e9d",
+  "tiny": "0a4bb2cc-e465-4a66-a3b8-aeebc018563e",
+  "decor": "ceb505ea-2636-4b70-9a82-a26ed9b99706",
+  "horse_pack": "ef1701e6-98e3-46e8-a3d8-e05c0d50e7a5",
+  "furniture2": "7471cdd9-17e6-4937-8d5f-6889103a3591",
+  "furniture3": "253dfdbc-2c78-41ba-a2af-55a0aa04b202",
+  "furniture4": "03087bd4-3c29-4884-8462-6132f052f701",
+  "furniture5": "b189692e-d3f6-4d6e-bbe1-a7ef49a66368"
+ },
+ "props": {
+  "stable": "b66fc970-6c38-495c-a17b-43d079a09650",
+  "awning": "7cc09d8c-73f3-42a7-ab50-ee0c0580bdd1"
+ },
+ "images": {
+  "palisade_old": "f973a3ec-909a-4792-b8f1-c9cde186aadd",
+  "palisade_broken": "34986271-3568-4fa9-8dad-2499a81200e2",
+  "palisade": "06e600e8-5eb8-4295-ba98-fe46d32223a2"
+ },
+ "_tilesets": {
+  "cobble": "3df4da64-70b5-43f0-8f3e-ebb3a01ac2b0"
+ },
+ "objects": {
+  "horse": "41796a90-125d-49e4-acb2-e224f7395cf0",
+  "hearth": "1fa3eb3f-883d-420c-a3da-13a76da97ec7",
+  "cauldron": "d855c5ec-8931-4e15-8ec9-15cae3fb0159",
+  "torch_stand": "dce0ecad-9805-41d3-b17c-6b5d691b2230"
+ }
+}

@@ -1,0 +1,61 @@
+{
+  "group_id": "3acd4637-eeb1-4189-a1a6-1a501b20188d",
+  "states": [
+    {
+      "character": {
+        "id": "08fb5d7c-1f5b-45eb-97b8-572c5f81204d",
+        "name": "Idle",
+        "prompt": "satyr piper: slim humanoid with small curved horns, goat legs with hooves, brown fur, green vine wreath on the head, playing wooden pan pipes held at the mouth",
+        "size": {
+          "width": 44,
+          "height": 44
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-28T00:42:08.281304+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "walk": {
+            "south-east": [
+              "Idle/animations/walk/south-east/frame_000.png",
+              "Idle/animations/walk/south-east/frame_001.png",
+              "Idle/animations/walk/south-east/frame_002.png",
+              "Idle/animations/walk/south-east/frame_003.png"
+            ]
+          },
+          "dance": {
+            "south-east": [
+              "Idle/animations/dance/south-east/frame_000.png",
+              "Idle/animations/dance/south-east/frame_001.png",
+              "Idle/animations/dance/south-east/frame_002.png",
+              "Idle/animations/dance/south-east/frame_003.png"
+            ]
+          },
+          "attack": {
+            "south-east": [
+              "Idle/animations/attack/south-east/frame_000.png",
+              "Idle/animations/attack/south-east/frame_001.png",
+              "Idle/animations/attack/south-east/frame_002.png",
+              "Idle/animations/attack/south-east/frame_003.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-28T00:54:38.520661"
+}

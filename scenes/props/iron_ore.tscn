@@ -1,0 +1,28 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/iron_ore.gd" id="1_ore"]
+[ext_resource type="Texture2D" path="res://assets/mountains/iron_ore_0.png" id="2_tex"]
+[ext_resource type="Texture2D" path="res://assets/mountains/iron_ore_1.png" id="3_tex"]
+[ext_resource type="Texture2D" path="res://assets/mountains/iron_ore_2.png" id="4_tex"]
+[ext_resource type="Texture2D" path="res://assets/rubble.png" id="5_rubble"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_base"]
+radius = 8.0
+
+[node name="IronOre" type="StaticBody2D"]
+script = ExtResource("1_ore")
+textures = Array[Texture2D]([ExtResource("2_tex"), ExtResource("3_tex"), ExtResource("4_tex")])
+depleted_texture = ExtResource("5_rubble")
+depleted_offset = Vector2(0, -4)
+regrow_min = 180.0
+regrow_max = 260.0
+bar_height = 30.0
+bar_color = Color(0.78, 0.46, 0.24, 1)
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_tex")
+offset = Vector2(0, -10)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -3)
+shape = SubResource("CircleShape2D_base")

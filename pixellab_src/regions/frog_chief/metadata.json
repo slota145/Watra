@@ -1,0 +1,69 @@
+{
+  "group_id": "f28fbaf5-4665-4169-919e-6a98b5c705df",
+  "states": [
+    {
+      "character": {
+        "id": "943201b2-70b9-46ca-ba17-6f78840634bf",
+        "name": "Idle",
+        "prompt": "huge fat frog king boss: bloated dark green toad humanoid with a crown made of shells, pearl necklace, tattered royal cape of moss, wide mouth",
+        "size": {
+          "width": 72,
+          "height": 72
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-27T21:42:05.998663+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "inflate": {
+            "south-east": [
+              "Idle/animations/inflate/south-east/frame_000.png",
+              "Idle/animations/inflate/south-east/frame_001.png",
+              "Idle/animations/inflate/south-east/frame_002.png",
+              "Idle/animations/inflate/south-east/frame_003.png"
+            ]
+          },
+          "jump": {
+            "south-east": [
+              "Idle/animations/jump/south-east/frame_000.png",
+              "Idle/animations/jump/south-east/frame_001.png",
+              "Idle/animations/jump/south-east/frame_002.png",
+              "Idle/animations/jump/south-east/frame_003.png"
+            ]
+          },
+          "walk": {
+            "south-east": [
+              "Idle/animations/walk/south-east/frame_000.png",
+              "Idle/animations/walk/south-east/frame_001.png",
+              "Idle/animations/walk/south-east/frame_002.png",
+              "Idle/animations/walk/south-east/frame_003.png"
+            ]
+          },
+          "tongue": {
+            "south-east": [
+              "Idle/animations/tongue/south-east/frame_000.png",
+              "Idle/animations/tongue/south-east/frame_001.png",
+              "Idle/animations/tongue/south-east/frame_002.png",
+              "Idle/animations/tongue/south-east/frame_003.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-28T00:54:24.260939"
+}

@@ -1,0 +1,28 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/boulder.gd" id="1_boulder"]
+[ext_resource type="Texture2D" path="res://assets/rubble.png" id="5_rubble"]
+[ext_resource type="Texture2D" path="res://assets/forest/trees/rock_0.png" id="20_tex"]
+[ext_resource type="Texture2D" path="res://assets/forest/trees/rock_1.png" id="21_tex"]
+[ext_resource type="Texture2D" path="res://assets/forest/trees/rock_2.png" id="22_tex"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_base"]
+radius = 8
+
+[node name="Boulder" type="StaticBody2D"]
+script = ExtResource("1_boulder")
+textures = Array[Texture2D]([ExtResource("20_tex"), ExtResource("21_tex"), ExtResource("22_tex")])
+depleted_texture = ExtResource("5_rubble")
+depleted_offset = Vector2(0, -4)
+regrow_min = 150.0
+regrow_max = 220.0
+bar_height = 30.0
+bar_color = Color(0.72, 0.75, 0.82, 1)
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("20_tex")
+offset = Vector2(0, -8)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -3)
+shape = SubResource("CircleShape2D_base")

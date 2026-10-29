@@ -1,0 +1,20 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+[ext_resource type="Texture2D" path="res://assets/forest/trees/stump_0.png" id="20_tex"]
+[ext_resource type="Texture2D" path="res://assets/forest/trees/stump_1.png" id="21_tex"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_base"]
+radius = 6
+
+[node name="Stump" type="StaticBody2D"]
+script = ExtResource("1_prop")
+textures = Array[Texture2D]([ExtResource("20_tex"), ExtResource("21_tex")])
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("20_tex")
+offset = Vector2(0, -8)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -2)
+shape = SubResource("CircleShape2D_base")

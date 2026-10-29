@@ -1,0 +1,54 @@
+{
+  "group_id": "69b684e5-0f16-4499-a58c-c0112025e647",
+  "states": [
+    {
+      "character": {
+        "id": "d9e2ffb4-4810-42f2-910e-9b9b92b8d01b",
+        "name": "Idle",
+        "prompt": "red deer stag standing on all four legs, reddish brown coat, large branching antlers, white tail patch",
+        "size": {
+          "width": 72,
+          "height": 72
+        },
+        "template_id": "horse",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-27T20:22:58.421584+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "run": {
+            "south-east": [
+              "Idle/animations/run/south-east/frame_000.png",
+              "Idle/animations/run/south-east/frame_001.png",
+              "Idle/animations/run/south-east/frame_002.png",
+              "Idle/animations/run/south-east/frame_003.png"
+            ]
+          },
+          "eat": {
+            "south-east": [
+              "Idle/animations/eat/south-east/frame_000.png",
+              "Idle/animations/eat/south-east/frame_001.png",
+              "Idle/animations/eat/south-east/frame_002.png",
+              "Idle/animations/eat/south-east/frame_003.png",
+              "Idle/animations/eat/south-east/frame_004.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-27T20:39:03.035955"
+}

@@ -1,0 +1,44 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/goblin_archer.gd" id="1_goblin"]
+[ext_resource type="Texture2D" path="res://assets/forest/goblin_archer.png" id="2_sheet"]
+[ext_resource type="Texture2D" path="res://assets/shadow.png" id="3_shadow"]
+[ext_resource type="Shader" path="res://shaders/flash.gdshader" id="4_flash"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_flash"]
+resource_local_to_scene = true
+shader = ExtResource("4_flash")
+shader_parameter/flash = 0.0
+shader_parameter/flash_color = Color(1, 1, 1, 1)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_feet"]
+radius = 3.5
+
+[node name="GoblinArcher" type="CharacterBody2D"]
+collision_layer = 4
+motion_mode = 1
+script = ExtResource("1_goblin")
+max_health = 30
+damage = 6
+attack_windup = 0.5
+attack_cooldown = 1.6
+xp_reward = 14
+attack_range = 110.0
+aggro_radius = 120.0
+hurt_height = 11
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(1.6, 1)
+texture = ExtResource("3_shadow")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+material = SubResource("ShaderMaterial_flash")
+texture = ExtResource("2_sheet")
+offset = Vector2(0, -14.5)
+hframes = 4
+vframes = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -2)
+shape = SubResource("CircleShape2D_feet")

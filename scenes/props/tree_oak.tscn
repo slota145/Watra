@@ -1,0 +1,31 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/tree.gd" id="1_prop"]
+
+[ext_resource type="Texture2D" path="res://assets/forest/trees/stump_0.png" id="9_stump"]
+[ext_resource type="Texture2D" path="res://assets/forest/trees/oak_0.png" id="20_tex"]
+[ext_resource type="Texture2D" path="res://assets/forest/trees/oak_1.png" id="21_tex"]
+[ext_resource type="Texture2D" path="res://assets/forest/trees/oak_2.png" id="22_tex"]
+[ext_resource type="Texture2D" path="res://assets/forest/trees/oak_3.png" id="23_tex"]
+[ext_resource type="Texture2D" path="res://assets/forest/trees/oak_4.png" id="24_tex"]
+[ext_resource type="Texture2D" path="res://assets/forest/trees/oak_5.png" id="25_tex"]
+[ext_resource type="Texture2D" path="res://assets/forest/trees/oak_6.png" id="26_tex"]
+[ext_resource type="Texture2D" path="res://assets/forest/trees/oak_7.png" id="27_tex"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_base"]
+radius = 8
+
+[node name="TreeOak" type="StaticBody2D"]
+script = ExtResource("1_prop")
+bar_height = 70.0
+textures = Array[Texture2D]([ExtResource("20_tex"), ExtResource("21_tex"), ExtResource("22_tex"), ExtResource("23_tex"), ExtResource("24_tex"), ExtResource("25_tex"), ExtResource("26_tex"), ExtResource("27_tex")])
+depleted_texture = ExtResource("9_stump")
+depleted_offset = Vector2(0, -8)
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("20_tex")
+offset = Vector2(0, -30)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -2)
+shape = SubResource("CircleShape2D_base")

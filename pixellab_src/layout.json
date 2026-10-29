@@ -1,0 +1,65 @@
+{
+ "leshy": {
+  "cell": [
+   90,
+   84
+  ],
+  "offset_y": -40.0
+ },
+ "treant": {
+  "cell": [
+   54,
+   56
+  ],
+  "offset_y": -26.0
+ },
+ "spider": {
+  "cell": [
+   42,
+   40
+  ],
+  "offset_y": -18.0
+ },
+ "web_spider": {
+  "cell": [
+   40,
+   42
+  ],
+  "offset_y": -18.0
+ },
+ "spiderling": {
+  "cell": [
+   22,
+   20
+  ],
+  "offset_y": -7.0
+ },
+ "beast_bear": {
+  "cell": [
+   76,
+   76
+  ],
+  "offset_y": -35.0
+ },
+ "beast_werewolf": {
+  "cell": [
+   68,
+   66
+  ],
+  "offset_y": -30.0
+ },
+ "bies": {
+  "cell": [
+   98,
+   88
+  ],
+  "offset_y": -40.0
+ },
+ "spider_queen": {
+  "cell": [
+   112,
+   112
+  ],
+  "offset_y": -53.0
+ }
+}

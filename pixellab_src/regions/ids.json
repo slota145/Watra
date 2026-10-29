@@ -1,0 +1,38 @@
+{
+ "frogman": "83389e08-bb2d-419e-b6f3-1328254e1bb1",
+ "frog_spitter": "7b1b29d8-dfc4-403c-bba3-e0bdb0950ed6",
+ "frog_chief": "943201b2-70b9-46ca-ba17-6f78840634bf",
+ "drowner": "83cc22e4-3d9c-4214-86dd-137c794eaf75",
+ "rusalka": "e68a96b5-725f-473e-bbdd-9e2f81d4b606",
+ "wodnik": "c7dc86c4-3d77-4eeb-98ff-afe7e3e7a08e",
+ "birdman": "4fcfeccd-9475-423a-8e41-de7b4119d0f1",
+ "birdman_thrower": "4382189e-ae41-4bf6-bc3c-71da7c247f34",
+ "birdman_shaman": "93a902f7-210c-4db3-9316-b9a48ff9868b",
+ "satyr": "845d42d3-675d-4ec7-aa78-ff9db13f15fc",
+ "_packs": {
+  "swamp_trees": "65e68d8b-782e-44cb-9c8c-0ad2ed80c95e",
+  "swamp_small": "a8aed4dc-8c50-489e-bbc3-af286988c750",
+  "mountain": "929047e3-e7d6-4faa-a0bc-7b9a5d1b3f09",
+  "mountain_small": "0cc8ed3a-3bf5-4366-977d-c105ba3ca1ce",
+  "eagle_pack": "7f6c7156-e8b0-48bd-946c-c7dd35df1fea",
+  "wisp_pack": "4cc48a7e-c85c-4d91-9c6e-bf9f195e8ae3"
+ },
+ "_tilesets": {
+  "swamp_mud": "3af6ed4f-5829-476f-9c48-6044285a47be",
+  "swamp_shallow": "a232c191-c1cc-4eed-8d75-7de1ba586909",
+  "alpine_rock": "4a963746-fd9e-4987-a00f-4b1af04161ac",
+  "swamp_deep": "934015f0-e2a1-4293-a5fc-28b5c0fe5fe5",
+  "alpine_gravel": "d54de626-5ca2-4665-a53a-3eb88d01ebaf",
+  "cobble": "3df4da64-70b5-43f0-8f3e-ebb3a01ac2b0"
+ },
+ "satyr_piper": "08fb5d7c-1f5b-45eb-97b8-572c5f81204d",
+ "satyr_brute": "4005597e-d858-426d-af34-43e1decf18a8",
+ "goat": "84456cd6-f83a-4e10-ab44-4342c68abd6e",
+ "_objects": {
+  "storm_eagle": "ef9d6586-75c6-41fb-856b-928dd8002722",
+  "eagle": "7f6c7156-e8b0-48bd-946c-c7dd35df1fea",
+  "wisp": "4cc48a7e-c85c-4d91-9c6e-bf9f195e8ae3"
+ },
+ "storm_eagle_obj": "obj:60e500c8-f3eb-4dd5-a021-5641afb6fa8e",
+ "eagle_obj": "obj:152c2b01-d03c-4b8a-bf82-8dbcef429614"
+}

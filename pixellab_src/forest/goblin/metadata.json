@@ -1,0 +1,82 @@
+{
+  "group_id": "ced7bfbf-ba9b-487b-a622-674b682045ff",
+  "states": [
+    {
+      "character": {
+        "id": "6d317168-9590-4824-8693-fc945e5d24e9",
+        "name": "Idle",
+        "prompt": "small green goblin warrior, pointy ears, yellow eyes, sharp teeth grin, ragged brown leather vest and loincloth, holding a crude rusty dagger",
+        "size": {
+          "width": 40,
+          "height": 40
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-27T20:22:50.108201+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "walk": {
+            "south-east": [
+              "Idle/animations/walk/south-east/frame_000.png",
+              "Idle/animations/walk/south-east/frame_001.png",
+              "Idle/animations/walk/south-east/frame_002.png",
+              "Idle/animations/walk/south-east/frame_003.png"
+            ]
+          },
+          "attack": {
+            "south-east": [
+              "Idle/animations/attack/south-east/frame_000.png",
+              "Idle/animations/attack/south-east/frame_001.png",
+              "Idle/animations/attack/south-east/frame_002.png",
+              "Idle/animations/attack/south-east/frame_003.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "504b3c32-cfa3-45b8-a120-b79a79dac1f4",
+        "name": "Siedzi",
+        "prompt": "small green goblin warrior, pointy ears, yellow eyes, sharp teeth grin, ragged brown leather vest and loincloth, holding a crude rusty dagger",
+        "size": {
+          "width": 40,
+          "height": 40
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-27T20:28:31.543002+00:00"
+      },
+      "folder": "Siedzi",
+      "frames": {
+        "rotations": {
+          "south": "Siedzi/rotations/south.png",
+          "south-east": "Siedzi/rotations/south-east.png",
+          "east": "Siedzi/rotations/east.png",
+          "north-east": "Siedzi/rotations/north-east.png",
+          "north": "Siedzi/rotations/north.png",
+          "north-west": "Siedzi/rotations/north-west.png",
+          "west": "Siedzi/rotations/west.png",
+          "south-west": "Siedzi/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-27T20:38:55.663733"
+}

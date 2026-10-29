@@ -1,0 +1,27 @@
+{
+ "goblin": "6d317168-9590-4824-8693-fc945e5d24e9",
+ "goblin_archer": "46cc2324-9dda-4cfb-8efc-850500f68482",
+ "goblin_brute": "8c122271-cc97-4372-a479-85030427db1b",
+ "goblin_chief": "76901a58-b1f4-4f52-9206-340dd426f8f5",
+ "wolf": "6b8c8d8a-6c36-49df-a9d8-210ba40a8e9c",
+ "alpha_wolf": "3f6a44f8-7a02-48f0-9e61-c285db760c14",
+ "warg": "a357128e-4b51-444d-994c-08ab4512d3c8",
+ "deer": "d9e2ffb4-4810-42f2-910e-9b9b92b8d01b",
+ "roe": "549507ca-41a7-4352-b05b-92fb56faa255",
+ "boar": "2216176f-32da-41ae-a861-ebed5ff1e1cf",
+ "hare": "8250cdd0-de77-40be-901e-b9e907effece",
+ "_packs": {
+  "trees": "06968f84-0bf5-415d-a04a-9c02cb872c9c",
+  "camp": "6c18544e-8dda-4beb-acad-6365f375f034",
+  "wolves": "8cee8923-a9e0-4610-9776-3c0f3e8fad4e",
+  "small": "dddc5e72-afed-4bce-83fe-94475d211fe2",
+  "trees2": "9d5685b7-6b28-47ff-8272-3a3c7f7aafe5",
+  "satyr": "fda1b871-6e37-4f56-87e3-853d95904a24"
+ },
+ "_tilesets": {
+  "dark": "55ac45c6-8bc3-478b-ab3d-ee3cf2fe22c1",
+  "road": "88624d78-73e3-4255-b5ca-38f0cf1769a2",
+  "flowers": "092a84be-698d-4cdf-9048-76b4a6994dbe"
+ },
+ "campfire": "obj:a7e54757-9ba4-4fe8-9bc4-ed81276c4839"
+}

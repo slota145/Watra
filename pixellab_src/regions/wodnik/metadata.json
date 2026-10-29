@@ -1,0 +1,69 @@
+{
+  "group_id": "9bcec1dd-ff31-4323-adc8-f9e5d9d58876",
+  "states": [
+    {
+      "character": {
+        "id": "c7dc86c4-3d77-4eeb-98ff-afe7e3e7a08e",
+        "name": "Idle",
+        "prompt": "wodnik water demon boss: big old green-skinned water goblin with a long dripping beard of weeds, frog-like face, red coat and tall hat, smoking a pipe, webbed hands",
+        "size": {
+          "width": 72,
+          "height": 72
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-27T21:42:09.828521+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "walk": {
+            "south-east": [
+              "Idle/animations/walk/south-east/frame_000.png",
+              "Idle/animations/walk/south-east/frame_001.png",
+              "Idle/animations/walk/south-east/frame_002.png",
+              "Idle/animations/walk/south-east/frame_003.png"
+            ]
+          },
+          "whirl": {
+            "south-east": [
+              "Idle/animations/whirl/south-east/frame_000.png",
+              "Idle/animations/whirl/south-east/frame_001.png",
+              "Idle/animations/whirl/south-east/frame_002.png",
+              "Idle/animations/whirl/south-east/frame_003.png"
+            ]
+          },
+          "wave": {
+            "south-east": [
+              "Idle/animations/wave/south-east/frame_000.png",
+              "Idle/animations/wave/south-east/frame_001.png",
+              "Idle/animations/wave/south-east/frame_002.png",
+              "Idle/animations/wave/south-east/frame_003.png"
+            ]
+          },
+          "summon": {
+            "south-east": [
+              "Idle/animations/summon/south-east/frame_000.png",
+              "Idle/animations/summon/south-east/frame_001.png",
+              "Idle/animations/summon/south-east/frame_002.png",
+              "Idle/animations/summon/south-east/frame_003.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-28T00:54:30.429954"
+}

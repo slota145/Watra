@@ -1,0 +1,53 @@
+{
+  "group_id": "b02cf049-f5f7-4509-a7c4-8c5ceb3cd022",
+  "states": [
+    {
+      "character": {
+        "id": "8c122271-cc97-4372-a479-85030427db1b",
+        "name": "Idle",
+        "prompt": "hulking goblin brute, huge muscular dark green goblin, small head with tusks, bone shoulder armor, crude leather belt with skulls, carrying an enormous spiked wooden club",
+        "size": {
+          "width": 56,
+          "height": 56
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-27T20:22:52.502334+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "smash": {
+            "south-east": [
+              "Idle/animations/smash/south-east/frame_000.png",
+              "Idle/animations/smash/south-east/frame_001.png",
+              "Idle/animations/smash/south-east/frame_002.png",
+              "Idle/animations/smash/south-east/frame_003.png"
+            ]
+          },
+          "walk": {
+            "south-east": [
+              "Idle/animations/walk/south-east/frame_000.png",
+              "Idle/animations/walk/south-east/frame_001.png",
+              "Idle/animations/walk/south-east/frame_002.png",
+              "Idle/animations/walk/south-east/frame_003.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-27T20:38:57.507649"
+}

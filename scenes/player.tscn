@@ -1,0 +1,80 @@
+[gd_scene load_steps=15 format=3]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/character_stats.gd" id="7_stats"]
+[ext_resource type="Script" path="res://scripts/inventory.gd" id="8_inventory"]
+[ext_resource type="Script" path="res://scripts/equipment.gd" id="9_equipment"]
+[ext_resource type="Script" path="res://scripts/skill_book.gd" id="10_skills"]
+[ext_resource type="Script" path="res://scripts/quest_log.gd" id="11_quests"]
+[ext_resource type="Texture2D" path="res://assets/player.png" id="2_sheet"]
+[ext_resource type="Texture2D" path="res://assets/shadow.png" id="3_shadow"]
+[ext_resource type="Shader" path="res://shaders/flash.gdshader" id="4_flash"]
+[ext_resource type="Texture2D" path="res://assets/sword.png" id="5_sword"]
+[ext_resource type="Texture2D" path="res://assets/slash.png" id="6_slash"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_flash"]
+resource_local_to_scene = true
+shader = ExtResource("4_flash")
+shader_parameter/flash = 0.0
+shader_parameter/flash_color = Color(1, 1, 1, 1)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_feet"]
+radius = 4.0
+
+[node name="Player" type="CharacterBody2D"]
+collision_layer = 2
+collision_mask = 9
+motion_mode = 1
+script = ExtResource("1_player")
+
+[node name="Stats" type="Node" parent="."]
+script = ExtResource("7_stats")
+
+[node name="Inventory" type="Node" parent="."]
+script = ExtResource("8_inventory")
+
+[node name="Equipment" type="Node" parent="."]
+script = ExtResource("9_equipment")
+
+[node name="SkillBook" type="Node" parent="."]
+script = ExtResource("10_skills")
+
+[node name="QuestLog" type="Node" parent="."]
+script = ExtResource("11_quests")
+
+[node name="Storage" type="Node" parent="."]
+script = ExtResource("8_inventory")
+slot_count = 40
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(1.2, 1.0)
+texture = ExtResource("3_shadow")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+material = SubResource("ShaderMaterial_flash")
+texture = ExtResource("2_sheet")
+offset = Vector2(0, -10)
+hframes = 4
+vframes = 3
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -3)
+shape = SubResource("CircleShape2D_feet")
+
+[node name="Pivot" type="Node2D" parent="."]
+z_index = 1
+position = Vector2(0, -9)
+
+[node name="Sword" type="Sprite2D" parent="Pivot"]
+texture = ExtResource("5_sword")
+offset = Vector2(13, 0)
+
+[node name="Slash" type="Sprite2D" parent="Pivot"]
+texture = ExtResource("6_slash")
+hframes = 4
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(0, -12)
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0

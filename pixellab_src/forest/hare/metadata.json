@@ -1,0 +1,53 @@
+{
+  "group_id": "2682f02c-30ad-4e74-b3e7-58e50e86c8c5",
+  "states": [
+    {
+      "character": {
+        "id": "8250cdd0-de77-40be-901e-b9e907effece",
+        "name": "Idle",
+        "prompt": "brown wild hare standing on all four legs, long ears, white fluffy tail, alert",
+        "size": {
+          "width": 48,
+          "height": 48
+        },
+        "template_id": "cat",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-27T20:33:24.492525+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "run": {
+            "south-east": [
+              "Idle/animations/run/south-east/frame_000.png",
+              "Idle/animations/run/south-east/frame_001.png",
+              "Idle/animations/run/south-east/frame_002.png",
+              "Idle/animations/run/south-east/frame_003.png"
+            ]
+          },
+          "eat": {
+            "south-east": [
+              "Idle/animations/eat/south-east/frame_000.png",
+              "Idle/animations/eat/south-east/frame_001.png",
+              "Idle/animations/eat/south-east/frame_002.png",
+              "Idle/animations/eat/south-east/frame_003.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-27T20:44:06.384910"
+}

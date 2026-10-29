@@ -1,0 +1,79 @@
+{
+ "goblin": {
+  "cell": [
+   33,
+   33
+  ],
+  "offset_y": -12.5
+ },
+ "goblin_archer": {
+  "cell": [
+   39,
+   33
+  ],
+  "offset_y": -14.5
+ },
+ "goblin_brute": {
+  "cell": [
+   48,
+   51
+  ],
+  "offset_y": -21.5
+ },
+ "goblin_chief": {
+  "cell": [
+   57,
+   54
+  ],
+  "offset_y": -25.0
+ },
+ "wolf": {
+  "cell": [
+   42,
+   45
+  ],
+  "offset_y": -18.5
+ },
+ "warg": {
+  "cell": [
+   60,
+   54
+  ],
+  "offset_y": -23.0
+ },
+ "alpha_wolf": {
+  "cell": [
+   63,
+   54
+  ],
+  "offset_y": -25.0
+ },
+ "deer": {
+  "cell": [
+   42,
+   54
+  ],
+  "offset_y": -23.0
+ },
+ "boar": {
+  "cell": [
+   36,
+   27
+  ],
+  "offset_y": -9.5
+ },
+ "roe": {
+  "cell": [
+   27,
+   27
+  ],
+  "offset_y": -11.5
+ },
+ "hare": {
+  "cell": [
+   24,
+   33
+  ],
+  "offset_y": -13.5
+ }
+}

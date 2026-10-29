@@ -1,0 +1,107 @@
+{
+ "frogman": {
+  "cell": [
+   36,
+   33
+  ],
+  "offset_y": -12.5
+ },
+ "frog_spitter": {
+  "cell": [
+   30,
+   33
+  ],
+  "offset_y": -12.5
+ },
+ "frog_chief": {
+  "cell": [
+   63,
+   60
+  ],
+  "offset_y": -27.0
+ },
+ "drowner": {
+  "cell": [
+   36,
+   36
+  ],
+  "offset_y": -14.0
+ },
+ "rusalka": {
+  "cell": [
+   27,
+   36
+  ],
+  "offset_y": -14.0
+ },
+ "wodnik": {
+  "cell": [
+   60,
+   60
+  ],
+  "offset_y": -26.0
+ },
+ "birdman": {
+  "cell": [
+   36,
+   33
+  ],
+  "offset_y": -14.5
+ },
+ "birdman_thrower": {
+  "cell": [
+   30,
+   36
+  ],
+  "offset_y": -16.0
+ },
+ "birdman_shaman": {
+  "cell": [
+   42,
+   36
+  ],
+  "offset_y": -14.0
+ },
+ "satyr": {
+  "cell": [
+   33,
+   36
+  ],
+  "offset_y": -16.0
+ },
+ "satyr_piper": {
+  "cell": [
+   30,
+   36
+  ],
+  "offset_y": -16.0
+ },
+ "satyr_brute": {
+  "cell": [
+   45,
+   45
+  ],
+  "offset_y": -21.5
+ },
+ "goat": {
+  "cell": [
+   51,
+   45
+  ],
+  "offset_y": -20.5
+ },
+ "wisp": {
+  "cell": [
+   12,
+   16
+  ],
+  "offset_y": -16
+ },
+ "storm_eagle": {
+  "cell": [
+   92,
+   85
+  ],
+  "offset_y": -38.5
+ }
+}

@@ -1,0 +1,447 @@
+[gd_scene load_steps=24 format=3]
+
+[ext_resource type="Script" path="res://scripts/hud.gd" id="1_hud"]
+[ext_resource type="Script" path="res://scripts/ui/character_window.gd" id="2_character"]
+[ext_resource type="Script" path="res://scripts/ui/inventory_window.gd" id="3_inventory"]
+[ext_resource type="Script" path="res://scripts/ui/map_view.gd" id="4_map_view"]
+[ext_resource type="Script" path="res://scripts/ui/big_map.gd" id="5_big_map"]
+[ext_resource type="Script" path="res://scripts/ui/pause_menu.gd" id="6_pause"]
+[ext_resource type="Script" path="res://scripts/ui/shop_window.gd" id="7_shop"]
+[ext_resource type="Script" path="res://scripts/ui/skill_window.gd" id="8_skills"]
+[ext_resource type="Script" path="res://scripts/ui/enchant_window.gd" id="9_enchant"]
+[ext_resource type="Script" path="res://scripts/ui/loot_feed.gd" id="10_loot"]
+[ext_resource type="Script" path="res://scripts/ui/help_window.gd" id="11_help"]
+[ext_resource type="Script" path="res://scripts/ui/quest_tracker.gd" id="12_tracker"]
+[ext_resource type="Script" path="res://scripts/ui/quest_journal.gd" id="13_journal"]
+[ext_resource type="Script" path="res://scripts/ui/npc_dialog.gd" id="14_dialog"]
+[ext_resource type="Script" path="res://scripts/ui/storage_window.gd" id="15_storage"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
+bg_color = Color(0.1, 0.11, 0.17, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.1, 0.11, 0.17, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health"]
+bg_color = Color(0.85, 0.22, 0.25, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.1, 0.11, 0.17, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mana"]
+bg_color = Color(0.24, 0.45, 0.9, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.1, 0.11, 0.17, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_boss"]
+bg_color = Color(0.6, 0.12, 0.16, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.1, 0.11, 0.17, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xp"]
+bg_color = Color(0.95, 0.75, 0.25, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.1, 0.11, 0.17, 1)
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="Bars" type="VBoxContainer" parent="."]
+offset_left = 6.0
+offset_top = 6.0
+offset_right = 116.0
+offset_bottom = 40.0
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="HealthBar" type="ProgressBar" parent="Bars"]
+custom_minimum_size = Vector2(110, 12)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_health")
+value = 100.0
+show_percentage = false
+
+[node name="Value" type="Label" parent="Bars/HealthBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.11, 0.17, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 8
+text = "100 / 100"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ManaBar" type="ProgressBar" parent="Bars"]
+custom_minimum_size = Vector2(110, 10)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_mana")
+value = 100.0
+show_percentage = false
+
+[node name="Value" type="Label" parent="Bars/ManaBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -2.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.11, 0.17, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 7
+text = "50 / 50"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="XpBar" type="ProgressBar" parent="Bars"]
+custom_minimum_size = Vector2(110, 5)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_xp")
+show_percentage = false
+
+[node name="XpValue" type="Label" parent="Bars"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.8, 0.4, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.11, 0.17, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 7
+text = "0 / 40 exp"
+horizontal_alignment = 1
+
+[node name="Level" type="Label" parent="."]
+offset_left = 120.0
+offset_top = 4.0
+offset_right = 180.0
+offset_bottom = 18.0
+theme_override_colors/font_color = Color(1, 0.85, 0.45, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.11, 0.17, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 10
+text = "Poz. 1"
+
+[node name="Points" type="Label" parent="."]
+offset_left = 120.0
+offset_top = 17.0
+offset_right = 200.0
+offset_bottom = 29.0
+theme_override_colors/font_color = Color(0.6, 1, 0.55, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.11, 0.17, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 8
+text = "+1 pkt [C]"
+
+[node name="Kills" type="Label" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -150.0
+offset_top = 92.0
+offset_right = -6.0
+offset_bottom = 106.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(0.75, 0.95, 0.6, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.11, 0.17, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 10
+text = "Pokonane gobliny: 0"
+horizontal_alignment = 2
+
+[node name="Gold" type="Label" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -150.0
+offset_top = 105.0
+offset_right = -6.0
+offset_bottom = 119.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.11, 0.17, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 10
+text = "Złoto: 0"
+horizontal_alignment = 2
+
+
+[node name="DeathMessage" type="Label" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -30.0
+offset_right = 160.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.95, 0.3, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.11, 0.17, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 16
+text = "Zginąłeś! Odradzanie przy kapliczce..."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="LevelUpMessage" type="Label" parent="."]
+z_index = -1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -160.0
+offset_top = 50.0
+offset_right = 160.0
+offset_bottom = 84.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.11, 0.17, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 14
+text = "Nowy poziom!"
+horizontal_alignment = 1
+
+[node name="QuestTracker" type="VBoxContainer" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -170.0
+offset_top = 120.0
+offset_right = -6.0
+offset_bottom = 196.0
+grow_horizontal = 0
+mouse_filter = 2
+script = ExtResource("12_tracker")
+
+[node name="LootFeed" type="VBoxContainer" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -170.0
+offset_top = -160.0
+offset_right = -6.0
+offset_bottom = -34.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("10_loot")
+
+[node name="CharacterWindow" type="PanelContainer" parent="."]
+offset_left = 8.0
+offset_top = 46.0
+script = ExtResource("2_character")
+
+[node name="InventoryWindow" type="PanelContainer" parent="."]
+offset_left = 400.0
+offset_top = 46.0
+script = ExtResource("3_inventory")
+
+[node name="Minimap" type="Control" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -90.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = 90.0
+grow_horizontal = 0
+mouse_filter = 2
+script = ExtResource("4_map_view")
+
+[node name="BigMap" type="PanelContainer" parent="."]
+offset_left = 140.0
+offset_top = 20.0
+script = ExtResource("5_big_map")
+
+[node name="QuickSlots" type="HBoxContainer" parent="."]
+offset_left = 6.0
+offset_top = 52.0
+offset_right = 72.0
+offset_bottom = 72.0
+theme_override_constants/separation = 2
+
+[node name="IntroMessage" type="Label" parent="."]
+z_index = -1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 70.0
+offset_right = 200.0
+offset_bottom = 130.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.95, 0.9, 0.8, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.11, 0.17, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 12
+horizontal_alignment = 1
+
+[node name="ShopWindow" type="PanelContainer" parent="."]
+offset_left = 200.0
+offset_top = 80.0
+script = ExtResource("7_shop")
+
+[node name="SkillWindow" type="PanelContainer" parent="."]
+offset_left = 60.0
+offset_top = 40.0
+script = ExtResource("8_skills")
+
+[node name="EnchantWindow" type="PanelContainer" parent="."]
+offset_left = 8.0
+offset_top = 124.0
+script = ExtResource("9_enchant")
+
+[node name="IconBar" type="HBoxContainer" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -156.0
+offset_top = -28.0
+offset_right = -6.0
+offset_bottom = -6.0
+grow_horizontal = 0
+grow_vertical = 0
+alignment = 2
+theme_override_constants/separation = 3
+
+[node name="HelpWindow" type="PanelContainer" parent="."]
+offset_left = 100.0
+offset_top = 60.0
+script = ExtResource("11_help")
+
+[node name="QuestJournal" type="PanelContainer" parent="."]
+offset_left = 150.0
+offset_top = 50.0
+script = ExtResource("13_journal")
+
+[node name="NpcDialog" type="PanelContainer" parent="."]
+offset_left = 200.0
+offset_top = 100.0
+script = ExtResource("14_dialog")
+
+[node name="BossBar" type="VBoxContainer" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -120.0
+offset_top = 20.0
+offset_right = 120.0
+offset_bottom = 46.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_constants/separation = 1
+
+[node name="Name" type="Label" parent="BossBar"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.55, 0.45, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.11, 0.17, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 10
+text = "Boss"
+horizontal_alignment = 1
+
+[node name="Health" type="ProgressBar" parent="BossBar"]
+custom_minimum_size = Vector2(240, 8)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_boss")
+show_percentage = false
+
+[node name="DevMessage" type="Label" parent="."]
+z_index = -1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 92.0
+offset_right = 200.0
+offset_bottom = 132.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.55, 0.9, 1, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.11, 0.17, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 12
+text = "Tryb deweloperski"
+horizontal_alignment = 1
+
+[node name="DevBadge" type="Label" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -90.0
+offset_top = 4.0
+offset_right = 90.0
+offset_bottom = 16.0
+grow_horizontal = 2
+tooltip_text = "Ctrl+Shift+C - wyłącz"
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.55, 0.9, 1, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.11, 0.17, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 8
+text = "[DEV]  + złoto  - awans  0 kamienie"
+horizontal_alignment = 1
+
+[node name="StorageWindow" type="PanelContainer" parent="."]
+offset_left = 120.0
+offset_top = 60.0
+script = ExtResource("15_storage")
+
+[node name="RestFade" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.03, 0.03, 0.06, 1)
+
+[node name="Label" type="Label" parent="RestFade"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -12.0
+offset_right = 150.0
+offset_bottom = 12.0
+theme_override_colors/font_color = Color(1, 0.85, 0.5, 1)
+theme_override_font_sizes/font_size = 12
+text = "Odpoczywasz w karczmie... Las odrasta."
+horizontal_alignment = 1
+
+[node name="PauseMenu" type="Control" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("6_pause")

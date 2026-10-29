@@ -1,0 +1,56 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/birdman.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/regions/birdman_shaman.png" id="2_sheet"]
+[ext_resource type="Texture2D" path="res://assets/shadow.png" id="3_shadow"]
+[ext_resource type="Shader" path="res://shaders/flash.gdshader" id="4_flash"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_flash"]
+resource_local_to_scene = true
+shader = ExtResource("4_flash")
+shader_parameter/flash = 0.0
+shader_parameter/flash_color = Color(1, 1, 1, 1)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_feet"]
+radius = 4.5
+
+[node name="BirdmanShaman" type="CharacterBody2D"]
+collision_layer = 4
+motion_mode = 1
+script = ExtResource("1_script")
+kind = "shaman"
+ranged_damage = 30
+max_health = 150
+speed = 60.0
+damage = 0
+aggro_radius = 140.0
+alert_radius = 100.0
+leash_radius = 320.0
+attack_range = 170.0
+attack_windup = 0.7
+attack_cooldown = 2.6
+xp_reward = 130
+gold_min = 8
+gold_max = 16
+heart_drop_chance = 0.0
+stone_drop_chance = 0.16
+perfect_stone_drop_chance = 0.025
+blessed_stone_drop_chance = 0.24
+mercy_stone_drop_chance = 0.12
+hurt_height = 12
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(1.7, 1)
+texture = ExtResource("3_shadow")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+material = SubResource("ShaderMaterial_flash")
+texture = ExtResource("2_sheet")
+offset = Vector2(0, -14)
+hframes = 4
+vframes = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -2)
+shape = SubResource("CircleShape2D_feet")

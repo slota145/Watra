@@ -1,0 +1,53 @@
+{
+  "group_id": "6354f68a-99f6-49f8-9752-457a8ebdf6c8",
+  "states": [
+    {
+      "character": {
+        "id": "46cc2324-9dda-4cfb-8efc-850500f68482",
+        "name": "Idle",
+        "prompt": "goblin archer, small green goblin with pointy ears, fur hood and leather jerkin, quiver of feathered arrows on the back, holding a short wooden bow",
+        "size": {
+          "width": 40,
+          "height": 40
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-27T20:22:51.297876+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "walk": {
+            "south-east": [
+              "Idle/animations/walk/south-east/frame_000.png",
+              "Idle/animations/walk/south-east/frame_001.png",
+              "Idle/animations/walk/south-east/frame_002.png",
+              "Idle/animations/walk/south-east/frame_003.png"
+            ]
+          },
+          "shoot": {
+            "south-east": [
+              "Idle/animations/shoot/south-east/frame_000.png",
+              "Idle/animations/shoot/south-east/frame_001.png",
+              "Idle/animations/shoot/south-east/frame_002.png",
+              "Idle/animations/shoot/south-east/frame_003.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-27T20:38:56.594212"
+}
