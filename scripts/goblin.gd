@@ -22,6 +22,10 @@ enum State { IDLE, CHASE, ATTACK, RETURN, DEAD }
 @export var attack_cooldown := 0.9
 ## Czy goblin siedzi (przy ognisku). Ustawiane przez generator obozu.
 @export var sitting := false
+## Musztra (plac musztry między obozami): stoi w szyku zwrócony do look_at_point i co DRILL_PERIOD robi
+## zamach razem z resztą (wspólny zegar - cały szyk równo), dopóki nie zauważy gracza; potem wraca do szyku.
+@export var drilling := false
+const DRILL_PERIOD := 1.6
 ## Wysokość tułowia nad stopami (tu celują ciosy i pociski).
 @export var hurt_height := 6.0
 
@@ -224,7 +228,7 @@ func _process_idle(delta: float) -> void:
 	if _player_alive() and global_position.distance_to(_player.global_position) < aggro_radius:
 		aggro()
 		return
-	if sitting:
+	if sitting or drilling:
 		return
 	# stojące gobliny lekko się kręcą w miejscu
 	_wander_timer -= delta
@@ -307,6 +311,11 @@ func _animate(delta: float) -> void:
 		return
 	if _strike_anim > 0.0:
 		sprite.frame = 7
+		return
+	if drilling and state == State.IDLE:
+		var beat := fmod(Time.get_ticks_msec() / 1000.0, DRILL_PERIOD)
+		sprite.frame = 6 if beat < 0.25 else 7 if beat < 0.45 else 0
+		sprite.flip_h = look_at_point.x < global_position.x
 		return
 	if sitting and state == State.IDLE:
 		_anim_time += delta * 1.5

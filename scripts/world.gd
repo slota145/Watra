@@ -175,6 +175,11 @@ const CAMP_TENTS := ["goblin_tent_0", "goblin_tent_1", "goblin_tent_2", "goblin_
 const CAMP_TENT_RING := 3.6
 const CAMP_STAKE_SPACING := 34.0
 const CAMP_GATE_WIDTH := 64.0
+## Plac musztry goblinów między obozami: półosie udeptanego owalu (kafelki), liczba goblinów w szeregu,
+## kukła strzelnicy (z osady).
+const DRILL_RADII := Vector2(7.5, 5.5)
+const DRILL_RANK := 5
+const DRILL_DUMMY := preload("res://assets/village/dummy.png")
 const DECO_FRAMES := 31
 
 const GRASS_TILES: Array[Vector2i] = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(3, 1)]
@@ -311,6 +316,8 @@ var _camp_layouts: Array[Dictionary] = []
 var _camp_dirt := {}
 ## Cały teren obozów goblinów - bez drobiazgów runa (patyki, liście, grzyby).
 var _goblin_camp_cells := {}
+## Środek placu musztry (kafelki; INF - nie zmieścił się).
+var _drill_tile := Vector2.INF
 ## Kolory przeszkód na mapie, według komórki.
 var _map_props := {}
 var _map_markers: Array[Dictionary] = []
@@ -480,6 +487,8 @@ func _generate_forest() -> void:
 
 	for layout in _camp_layouts:
 		_build_camp(layout)
+	if _drill_tile.is_finite():
+		_build_drill_ground(_drill_tile * TILE)
 	for group_tile in _group_tiles:
 		_build_group(group_tile * TILE)
 	_build_chief_lair(_chief_lair * TILE)
@@ -659,12 +668,14 @@ func _plan_goblin_sites() -> void:
 			_mark_camp_area(tile, camp_radius - 2.0)
 	for tile in _camp_tiles:
 		_camp_layouts.append(_plan_camp(tile))
+	_plan_drill_ground(area, palisade)
 
 	# grupki kręcą się w lesie wokół obozów, w tym samym rogu mapy
 	var group_area := _shrink_to_map(area, border_thickness + 4)
 	var group_ok := func(tile: Vector2) -> bool:
 		return _distance_to_rect(tile, palisade) >= settlement_clearance and _far_from(tile, _camp_tiles, camp_radius + 3.0) \
-				and tile.distance_to(_chief_lair) >= lair_radius + 4
+				and tile.distance_to(_chief_lair) >= lair_radius + 4 \
+				and (not _drill_tile.is_finite() or tile.distance_to(_drill_tile) >= DRILL_RADII.x + 4.0)
 	for i in goblin_group_count:
 		var occupied: Array[Vector2] = _camp_tiles + _group_tiles
 		var tile := _pick_spread(group_area, occupied, group_ok)
@@ -767,6 +778,47 @@ func _plan_camp(center_tile: Vector2) -> Dictionary:
 	return layout
 
 
+## Plac musztry w wolnym miejscu pomiędzy obozami (najbliżej ich środka, z odstępem od obozów, leża wodza
+## i osady): udeptany owal bez drobiazgów runa i ścieżki do wyjść dwóch najbliższych obozów.
+func _plan_drill_ground(area: Rect2, palisade: Rect2) -> void:
+	var ok := func(tile: Vector2) -> bool:
+		return _distance_to_rect(tile, palisade) >= DRILL_RADII.x + settlement_clearance \
+				and tile.distance_to(_chief_lair) >= lair_radius + DRILL_RADII.x + 3.0 \
+				and _far_from(tile, _camp_tiles, camp_radius + DRILL_RADII.x + 3.0)
+	if _camp_tiles.is_empty():
+		return
+	# pomiędzy obozami: wolne miejsce najbliżej ich środka
+	var middle := Vector2.ZERO
+	for camp in _camp_tiles:
+		middle += camp / _camp_tiles.size()
+	var search := _shrink_to_map(area, border_thickness + DRILL_RADII.x + 2.0)
+	var tile := Vector2.INF
+	for i in 600:
+		var candidate := _random_point(search)
+		if ok.call(candidate) and candidate.distance_to(middle) < tile.distance_to(middle):
+			tile = candidate
+	if not tile.is_finite():
+		return
+	_drill_tile = tile
+	_reserve_area(tile, DRILL_RADII.x + 1.5)
+	for cell in _cells_in_radius(tile, DRILL_RADII.x + 1.5):
+		_goblin_camp_cells[cell] = true
+	for cell in _cells_in_radius(tile, DRILL_RADII.x + 1.0):
+		var p := (Vector2(cell) + Vector2(0.5, 0.5) - tile) / DRILL_RADII
+		if p.length() + _noise.get_noise_2d(cell.x * 3.1, cell.y * 3.1) * 0.15 <= 1.0:
+			_camp_dirt[cell] = true
+	var gates: Array = []  # [odległość, koniec ścieżki wyjściowej obozu]
+	for layout in _camp_layouts:
+		for angle: float in layout["exits"]:
+			var gate: Vector2 = layout["center"] + Vector2.from_angle(angle) * (camp_radius + 5.0)
+			gates.append([gate.distance_to(tile), gate])
+	gates.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
+	for gate: Array in gates.slice(0, 2):
+		for point in _trample_path(tile, gate[1]):
+			for cell in _cells_in_radius(point, 1.2):
+				_reserved[cell] = true
+
+
 ## Nieregularny placyk udeptanej ziemi (brzeg poszarpany szumem).
 func _trample_patch(center_tile: Vector2, radius: float) -> void:
 	for cell in _cells_in_radius(center_tile, radius + 1.0):
@@ -850,6 +902,29 @@ func _build_camp(layout: Dictionary) -> void:
 		a += step
 
 
+## Plac musztry: sierżant (osiłek) z boku, przed nim dwuszereg goblinów zwróconych do niego - wszyscy na takt
+## robią zamach (Goblin.drilling); po prawej łucznicy strzelają w takt do słomianych kukieł; za sierżantem
+## sztandary, u góry stojak z bronią, tarcze i beczka. Gobliny mają grafiki tylko w lewo i w prawo, więc
+## szeregi stoją pionowo, a sierżant przed nimi z boku.
+func _build_drill_ground(center: Vector2) -> void:
+	var sergeant := center + Vector2(-62, 0)
+	_add_goblin_spawn({"type": "brute", "position": sergeant, "sitting": false, "look_at": center})
+	for side in [-1.0, 1.0]:
+		_spawn(FOREST_PROPS["banner"], sergeant + Vector2(-22, side * 30.0))
+	for file in 2:
+		for k in DRILL_RANK:
+			var pos := center + Vector2(-14.0 + file * 26.0, (k - (DRILL_RANK - 1) / 2.0) * 27.0)
+			_add_goblin_spawn({"type": "goblin", "position": pos, "sitting": false, "look_at": sergeant, "drill": true})
+	for y in [-24.0, 24.0]:
+		_add_goblin_spawn({"type": "archer", "position": center + Vector2(58, y), "sitting": false,
+				"look_at": center + Vector2(200, y), "drill": true})
+		_village_prop(DRILL_DUMMY, center + Vector2(98, y), Vector2(10, 4))
+	_spawn(FOREST_PROPS["weapon_rack"], center + Vector2(-22, -70))
+	_spawn(FOREST_PROPS["shields"], center + Vector2(16, -68))
+	_spawn(FOREST_PROPS["barrel"], center + Vector2(48, -62))
+	_map_markers.append({"position": center, "color": MAP_TENT, "size": 3.0})
+
+
 func _build_group(group_center: Vector2) -> void:
 	var n := _rng.randi_range(goblins_per_group_min, goblins_per_group_max)
 	# część grupek prowadzi osiłek albo osłania łucznik
@@ -881,6 +956,7 @@ func _spawn_goblin(spawn: Dictionary) -> Goblin:
 	var goblin: Goblin = scene.instantiate()
 	goblin.position = spawn["position"]
 	goblin.sitting = spawn["sitting"]
+	goblin.drilling = spawn.get("drill", false)
 	goblin.look_at_point = spawn["look_at"]
 	if is_wolf:
 		(goblin as Wolf).pose = spawn.get("pose", "lie")
