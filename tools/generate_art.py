@@ -855,6 +855,8 @@ def main():
     swamp_v2.main()
     import ancient_v2  # olbrzymie i wysokie drzewa oraz rekwizyty Prastarego Lasu z PixelLab
     ancient_v2.main()
+    import menu_art  # tło menu ze świtem, tablica logo i kursor z PixelLab
+    menu_art.main()
     import pixellab_items  # ikony przedmiotów 64 px, broń w ręku, ikony umiejętności i interfejsu z PixelLab (nadpisują)
     pixellab_items.build()
     print("Zapisano grafiki do", OUT)

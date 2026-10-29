@@ -37,6 +37,30 @@ var hero := "wojciech"
 func _ready() -> void:
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # wygaszanie ekranu (tween) w _process
 	_migrate_legacy_save()
+	_setup_cursor()
+	get_tree().root.size_changed.connect(_setup_cursor)
+	# nad przyciskami kursor z rozżarzonym kamieniem
+	get_tree().node_added.connect(func(node: Node) -> void:
+		if node is BaseButton:
+			(node as BaseButton).mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND)
+
+
+## Kursor gry (żelazna strzałka z żarem, tools/menu_art.py) powiększony w pikselach razem z oknem - na
+## ekranie 4x (2560x1600) ma 2x, żeby był wyraźny, ale nie ogromny. Czubek strzałki w (1, 1).
+const CURSOR := "res://assets/menu/cursor.png"
+const CURSOR_HOVER := "res://assets/menu/cursor_hover.png"
+
+
+func _setup_cursor() -> void:
+	var window := get_tree().root.size
+	var scale := clampi(int(minf(window.x / 640.0, window.y / 360.0) / 2.0), 1, 3)
+	for entry: Array in [[CURSOR, Input.CURSOR_ARROW], [CURSOR_HOVER, Input.CURSOR_POINTING_HAND]]:
+		var texture := load(entry[0]) as Texture2D
+		if texture == null:
+			return
+		var image := texture.get_image()
+		image.resize(image.get_width() * scale, image.get_height() * scale, Image.INTERPOLATE_NEAREST)
+		Input.set_custom_mouse_cursor(ImageTexture.create_from_image(image), entry[1], Vector2(1, 1) * scale)
 
 
 func new_game(hero_id := "") -> void:

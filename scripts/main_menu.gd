@@ -1,21 +1,32 @@
 extends Control
 ## Menu startowe: kontynuacja (najnowszy zapis), nowa gra (z wyborem jednej z czterech postaci),
 ## wczytanie dowolnego zapisu z listy i wyjście.
-## W tle rysuje leśną polanę z ogniskiem i goblinami.
+## W tle: świt nad Ostoją (grafika z PixelLab, tools/menu_art.py) ożywiona w grze - mgła płynie dolinami,
+## z kominów idzie dym, watra w osadzie migocze i sypie iskrami, słońce pulsuje poświatą z promieniami,
+## w świetle unoszą się drobinki, czasem przelatuje klucz ptaków, a całe tło lekko podąża za myszą.
 
-const TILES := preload("res://assets/tiles.png")
-const TREES: Array[Texture2D] = [
-	preload("res://assets/tree_oak_0.png"),
-	preload("res://assets/tree_oak_1.png"),
-	preload("res://assets/tree_oak_2.png"),
-	preload("res://assets/tree_pine.png"),
-]
-const CAMPFIRE := preload("res://assets/campfire.png")
-const GOBLIN := preload("res://assets/goblin.png")
-const TILE := 16
-const BACKGROUND_SEED := 7
+const BACKGROUND := preload("res://assets/menu/background.png")
+const PLAQUE := preload("res://assets/menu/plaque.png")
+const BG_SIZE := Vector2(640, 360)
+## Punkty na grafice tła (piksele): słońce, watra i kominy osady.
+const SUN := Vector2(300, 112)
+const WATRA := Vector2(336, 246)
+const CHIMNEYS: Array[Vector2] = [Vector2(278, 196), Vector2(374, 186), Vector2(392, 206)]
+## Jak daleko tło przesuwa się za myszą (piksele grafiki).
+const PARALLAX := 5.0
+const TITLE := "Watra"
+const SUBTITLE := "Dopóki płonie ogień, Ostoja trwa"
 
 var _time := 0.0
+var _scene: Node2D
+var _sun_glow: Sprite2D
+var _rays: Array[Sprite2D] = []
+var _fire_glow: Sprite2D
+var _mists: Array[Sprite2D] = []
+var _birds := []
+var _bird_timer := 3.0
+var _title: Label
+var _subtitle: Label
 var _menu: VBoxContainer
 var _heroes: VBoxContainer
 ## Podglądy postaci w oknie wyboru (chodzą w miejscu) - [AtlasTexture, id postaci].
@@ -27,32 +38,59 @@ func _ready() -> void:
 	Sfx.stop_ambient()
 	theme = UiStyle.make_menu_theme()
 
-	var dim := ColorRect.new()
-	dim.color = Color(0.05, 0.06, 0.1, 0.45)
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(dim)
+	_build_scene()
+
+	# logo: drewniana tablica z napisem u góry, nad niebem
+	var logo := Control.new()
+	logo.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(logo)
+	var plaque := TextureRect.new()
+	plaque.texture = PLAQUE
+	plaque.position = Vector2(-PLAQUE.get_width() / 2.0, 10)
+	plaque.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	logo.add_child(plaque)
+	_title = Label.new()
+	_title.text = TITLE.to_upper()
+	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_title.add_theme_font_size_override("font_size", 34)
+	_title.add_theme_color_override("font_color", Color(1.0, 0.78, 0.36))
+	_title.add_theme_color_override("font_outline_color", Color(0.18, 0.08, 0.03))
+	_title.add_theme_constant_override("outline_size", 8)
+	_title.add_theme_color_override("font_shadow_color", Color(0.9, 0.3, 0.05, 0.55))
+	_title.add_theme_constant_override("shadow_offset_x", 0)
+	_title.add_theme_constant_override("shadow_offset_y", 0)
+	_title.add_theme_constant_override("shadow_outline_size", 14)
+	_title.position = plaque.position + Vector2(0, 4)
+	_title.size = Vector2(PLAQUE.get_width(), PLAQUE.get_height() - 12)
+	_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	logo.add_child(_title)
+	var subtitle := UiStyle.label(SUBTITLE, 9, Color(1.0, 0.92, 0.78))
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.position = Vector2(-150, plaque.position.y + PLAQUE.get_height() + 2)
+	subtitle.size = Vector2(300, 14)
+	logo.add_child(subtitle)
+	_subtitle = subtitle
+
+	# przyciski po lewej, na ciemnym lesie - osada w środku zostaje odsłonięta
+	var side := PanelContainer.new()
+	side.add_theme_stylebox_override("panel", UiStyle.panel(Color(0.06, 0.05, 0.08, 0.72), Color(0.42, 0.3, 0.16), 8))
+	side.set_anchors_preset(Control.PRESET_CENTER_LEFT)
+	side.position = Vector2(22, -46)
+	add_child(side)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+	side.add_child(box)
+	_menu = box
 
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
-
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 6)
-	center.add_child(box)
-	_menu = box
 	_heroes = _make_hero_picker()
 	_heroes.visible = false
 	center.add_child(_heroes)
-
-	var title := UiStyle.title("Gobliński Las")
-	title.add_theme_font_size_override("font_size", 32)
-	title.add_theme_constant_override("outline_size", 8)
-	box.add_child(title)
-	var subtitle := UiStyle.label("Wytnij ich wszystkich", 10, UiStyle.DIM_COLOR)
-	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	box.add_child(subtitle)
-	box.add_child(Control.new())  # odstęp
 
 	# "Kontynuuj" wczytuje najnowszy zapis; pod nim jego nazwa i opis
 	var saves := Game.list_saves()
@@ -75,6 +113,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_time += delta
+	_animate_scene(delta)
 	# podglądy postaci: chód w stronę widza
 	for entry: Array in _hero_previews:
 		var atlas: AtlasTexture = entry[0]
@@ -126,7 +165,8 @@ func _make_hero_picker() -> VBoxContainer:
 
 
 func _show_heroes() -> void:
-	_menu.visible = false
+	_menu.get_parent().visible = false
+	_subtitle.visible = false
 	_heroes.visible = true
 	(_heroes.get_child(1).get_child(0) as Button).grab_focus()
 
@@ -140,60 +180,220 @@ func _show_saves() -> void:
 
 func _show_menu() -> void:
 	_heroes.visible = false
-	_menu.visible = true
+	_menu.get_parent().visible = true
+	_subtitle.visible = true
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_RESIZED:
-		queue_redraw()
+	if what == NOTIFICATION_RESIZED and _scene != null:
+		_fit_scene()
+
+
+# ---------------------------------------------------------------- tło
+func _build_scene() -> void:
+	_scene = Node2D.new()
+	_scene.show_behind_parent = true
+	add_child(_scene)
+	var bg := Sprite2D.new()
+	bg.texture = BACKGROUND
+	bg.centered = false
+	_scene.add_child(bg)
+	# promienie i poświata słońca (dodawane światło)
+	var add := CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	for i in 5:
+		var ray := Sprite2D.new()
+		ray.texture = _beam_texture()
+		ray.material = add
+		ray.position = SUN
+		ray.offset = Vector2(0, 90)
+		ray.rotation = deg_to_rad(-55.0 + i * 27.0 + randf_range(-6, 6))
+		ray.modulate = Color(1.0, 0.85, 0.6, 0.0)
+		_scene.add_child(ray)
+		_rays.append(ray)
+	_sun_glow = _glow_sprite(Color(1.0, 0.82, 0.55, 0.55), 150, add)
+	_sun_glow.position = SUN
+	_scene.add_child(_sun_glow)
+	# mgła płynąca dolinami (dwa pasma, różna prędkość)
+	for band: Array in [[Vector2(0, 150), 70, 0.32], [Vector2(0, 268), 80, 0.26]]:
+		var mist := Sprite2D.new()
+		mist.texture = _mist_texture(band[1])
+		mist.centered = false
+		mist.region_enabled = true
+		mist.region_rect = Rect2(0, 0, BG_SIZE.x, band[1])
+		mist.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+		mist.position = band[0]
+		mist.modulate.a = band[2]
+		_scene.add_child(mist)
+		_mists.append(mist)
+	# dym z kominów i z watry
+	for chimney in CHIMNEYS:
+		_scene.add_child(_smoke(chimney, 6, 0.35))
+	_scene.add_child(_smoke(WATRA + Vector2(0, -6), 10, 0.25))
+	# watra: migocząca poświata i iskry
+	_fire_glow = _glow_sprite(Color(1.0, 0.55, 0.2, 0.7), 46, add)
+	_fire_glow.position = WATRA + Vector2(0, -4)
+	_scene.add_child(_fire_glow)
+	_scene.add_child(_embers())
+	_scene.add_child(_motes())
+	_fit_scene()
+
+
+## Tło wypełnia ekran (zachowując proporcje, z zapasem na ruch za myszą) i jest wyśrodkowane.
+func _fit_scene() -> void:
+	var scale := maxf(size.x / BG_SIZE.x, size.y / BG_SIZE.y) * (1.0 + PARALLAX * 2.0 / BG_SIZE.x)
+	_scene.scale = Vector2.ONE * scale
+	_scene.set_meta("base", (size - BG_SIZE * scale) / 2.0)
+	_scene.position = _scene.get_meta("base")
+
+
+func _animate_scene(delta: float) -> void:
+	if _scene == null:
+		return
+	# lekki ruch za myszą (przesunięcie w stronę przeciwną do kursora)
+	var mouse := (get_local_mouse_position() / size - Vector2(0.5, 0.5)) * 2.0
+	var target: Vector2 = _scene.get_meta("base") - mouse.clamp(Vector2(-1, -1), Vector2.ONE) * PARALLAX * _scene.scale.x
+	_scene.position = _scene.position.lerp(target, minf(1.0, delta * 3.0))
+	_sun_glow.scale = Vector2.ONE * (1.0 + sin(_time * 0.6) * 0.05)
+	for i in _rays.size():
+		_rays[i].modulate.a = 0.07 + 0.06 * sin(_time * 0.35 + i * 1.7)
+	_fire_glow.modulate.a = 0.75 + sin(_time * 9.0) * 0.08 + sin(_time * 23.0) * 0.05
+	_fire_glow.scale = Vector2.ONE * (1.0 + sin(_time * 7.0) * 0.04)
+	for i in _mists.size():
+		_mists[i].region_rect.position.x = _time * (6.0 + i * 4.0)
+	_update_birds(delta)
+	queue_redraw()
+
+
+## Klucz ptaków przelatuje co jakiś czas po niebie (rysowany w _draw w przestrzeni tła).
+func _update_birds(delta: float) -> void:
+	_bird_timer -= delta
+	if _bird_timer <= 0.0:
+		_bird_timer = randf_range(9.0, 18.0)
+		var y := randf_range(30, 90)
+		var flock := []
+		for k in randi_range(3, 6):
+			flock.append(Vector2(-k * randf_range(9, 13), y + absf(k - 2) * 5.0 + randf_range(-2, 2)))
+		_birds.append({"points": flock, "speed": randf_range(18, 26), "phase": randf() * TAU})
+	for bird: Dictionary in _birds:
+		var points: Array = bird["points"]
+		for k in points.size():
+			points[k] += Vector2(bird["speed"] * delta, -bird["speed"] * 0.12 * delta)
+	_birds = _birds.filter(func(b: Dictionary) -> bool: return (b["points"][0] as Vector2).x < BG_SIZE.x + 80)
 
 
 func _draw() -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = BACKGROUND_SEED
-	var cols := ceili(size.x / TILE) + 1
-	var rows := ceili(size.y / TILE) + 1
+	if _scene == null:
+		return
+	draw_set_transform(_scene.position, 0.0, _scene.scale)
+	for bird: Dictionary in _birds:
+		for k in bird["points"].size():
+			var p: Vector2 = (bird["points"][k] as Vector2).floor()
+			var up := sin(_time * 8.0 + bird["phase"] + k) > 0.0
+			var c := Color(0.16, 0.12, 0.18, 0.85)
+			draw_rect(Rect2(p, Vector2.ONE), c)
+			for side in [-1.0, 1.0]:
+				draw_rect(Rect2(p + Vector2(side, -1.0 if up else 0.0), Vector2.ONE), c)
+				draw_rect(Rect2(p + Vector2(side * 2.0, -2.0 if up else 1.0), Vector2.ONE), c)
+	draw_set_transform(Vector2.ZERO)
 
-	# trawa
-	for y in rows:
-		for x in cols:
-			var atlas := Vector2(rng.randi() % 4, rng.randi() % 2)
-			draw_texture_rect_region(TILES, Rect2(x * TILE, y * TILE, TILE, TILE), Rect2(atlas * TILE, Vector2(TILE, TILE)))
 
-	# ognisko z goblinami pod napisami
-	var fire := Vector2(size.x / 2.0, size.y - 40)
-	var sprites: Array[Dictionary] = []
-	for i in 5:
-		var a := PI * 0.15 + PI * 0.7 * i / 4.0 + PI
-		var pos := fire + Vector2.from_angle(a) * Vector2(26, 14)
-		sprites.append({"pos": pos, "goblin": true, "flip": pos.x > fire.x, "frame": 4 + (int(_time * 1.5 + i) % 2)})
-	sprites.append({"pos": fire, "fire": true})
+func _glow_sprite(color: Color, radius: int, material: Material) -> Sprite2D:
+	var gradient := Gradient.new()
+	gradient.colors = PackedColorArray([color, Color(color, 0.0)])
+	var texture := GradientTexture2D.new()
+	texture.gradient = gradient
+	texture.width = radius * 2
+	texture.height = radius * 2
+	texture.fill = GradientTexture2D.FILL_RADIAL
+	texture.fill_from = Vector2(0.5, 0.5)
+	texture.fill_to = Vector2(1.0, 0.5)  # promień do brzegu tekstury - bez widocznych krawędzi kwadratu
+	var sprite := Sprite2D.new()
+	sprite.texture = texture
+	sprite.material = material
+	return sprite
 
-	# drzewa po bokach - środek zostaje wolny na menu
-	for i in 70:
-		var pos := Vector2(rng.randf() * size.x, rng.randf() * (size.y + 30))
-		var from_center := absf(pos.x - size.x / 2.0)
-		if from_center < size.x * 0.26 and pos.y < size.y - 70:
-			continue
-		if pos.distance_to(fire) < 60:
-			continue
-		sprites.append({"pos": pos, "tree": TREES[rng.randi() % TREES.size()]})
 
-	sprites.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["pos"].y < b["pos"].y)
-	for s in sprites:
-		var pos: Vector2 = s["pos"]
-		if s.has("tree"):
-			var tex: Texture2D = s["tree"]
-			draw_texture(tex, (pos - Vector2(tex.get_width() / 2.0, tex.get_height() - 4)).floor())
-		elif s.has("fire"):
-			var glow := 22.0 + sin(_time * 8.0) * 1.5
-			draw_circle(pos + Vector2(0, -4), glow, Color(1, 0.6, 0.2, 0.12))
-			var frame := int(_time * 8.0) % 4
-			draw_texture_rect_region(CAMPFIRE, Rect2(pos - Vector2(8, 14), Vector2(16, 16)), Rect2(frame * 16, 0, 16, 16))
-		else:
-			var frame: int = s["frame"]
-			var src := Rect2((frame % 4) * 16, 16 if frame >= 4 else 0, 16, 16)
-			# lustrzane odbicie goblinów po prawej stronie ogniska
-			draw_set_transform(pos, 0.0, Vector2(-1, 1) if s["flip"] else Vector2.ONE)
-			draw_texture_rect_region(GOBLIN, Rect2(-8, -15, 16, 16), src)
-			draw_set_transform(Vector2.ZERO)
+## Smuga światła: wąska u słońca, rozszerza się w dół, miękka z boków i wygaszona na końcu.
+func _beam_texture() -> Texture2D:
+	var image := Image.create(40, 180, false, Image.FORMAT_RGBA8)
+	for y in 180:
+		var t := y / 180.0
+		var half := 3.0 + t * 17.0
+		for x in 40:
+			var d := absf(x - 19.5) / half
+			if d < 1.0:
+				var a := (1.0 - d * d) * sin(t * PI) * 0.9
+				image.set_pixel(x, y, Color(1, 1, 1, a))
+	return ImageTexture.create_from_image(image)
+
+
+## Bezszwowa mgła: miękki szum, przezroczysta u góry i dołu pasma.
+func _mist_texture(height: int) -> Texture2D:
+	var noise := FastNoiseLite.new()
+	noise.seed = randi()
+	noise.frequency = 0.02
+	noise.fractal_octaves = 3
+	var image := noise.get_seamless_image(int(BG_SIZE.x), height)
+	image.convert(Image.FORMAT_RGBA8)
+	for y in height:
+		var edge := sin(float(y) / height * PI)
+		for x in int(BG_SIZE.x):
+			var v := image.get_pixel(x, y).r
+			image.set_pixel(x, y, Color(0.92, 0.9, 0.95, clampf((v - 0.35) * 2.2, 0.0, 1.0) * edge))
+	return ImageTexture.create_from_image(image)
+
+
+func _smoke(at: Vector2, amount: int, alpha: float) -> CPUParticles2D:
+	var p := CPUParticles2D.new()
+	p.position = at
+	p.amount = amount
+	p.lifetime = 4.5
+	p.direction = Vector2.UP
+	p.spread = 12.0
+	p.initial_velocity_min = 4.0
+	p.initial_velocity_max = 7.0
+	p.gravity = Vector2(2.5, -1.0)
+	p.scale_amount_min = 1.0
+	p.scale_amount_max = 2.5
+	var ramp := Gradient.new()
+	ramp.colors = PackedColorArray([Color(0.85, 0.82, 0.86, alpha), Color(0.8, 0.78, 0.85, 0.0)])
+	p.color_ramp = ramp
+	return p
+
+
+func _embers() -> CPUParticles2D:
+	var p := CPUParticles2D.new()
+	p.position = WATRA + Vector2(0, -4)
+	p.amount = 14
+	p.lifetime = 1.8
+	p.direction = Vector2.UP
+	p.spread = 25.0
+	p.initial_velocity_min = 8.0
+	p.initial_velocity_max = 18.0
+	p.gravity = Vector2(1.5, -4.0)
+	var ramp := Gradient.new()
+	ramp.colors = PackedColorArray([Color(1.0, 0.85, 0.4, 1.0), Color(1.0, 0.4, 0.1, 0.0)])
+	p.color_ramp = ramp
+	return p
+
+
+## Drobinki kurzu i pyłku w porannym świetle - wolno dryfują po całym ekranie.
+func _motes() -> CPUParticles2D:
+	var p := CPUParticles2D.new()
+	p.position = BG_SIZE / 2.0
+	p.amount = 40
+	p.lifetime = 9.0
+	p.preprocess = 9.0
+	p.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	p.emission_rect_extents = BG_SIZE / 2.0
+	p.direction = Vector2(1, -0.3)
+	p.spread = 40.0
+	p.initial_velocity_min = 2.0
+	p.initial_velocity_max = 5.0
+	p.gravity = Vector2.ZERO
+	var ramp := Gradient.new()
+	ramp.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
+	ramp.colors = PackedColorArray([Color(1, 0.9, 0.7, 0.0), Color(1, 0.92, 0.75, 0.55), Color(1, 0.9, 0.7, 0.0)])
+	p.color_ramp = ramp
+	return p
