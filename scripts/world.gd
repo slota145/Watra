@@ -272,6 +272,13 @@ var _soft_corners := {}
 ## Góry: teren narożników na granicy poziomów od strony niższego terenu i wysokości komórek (null = płasko).
 var _soft_low_corners := {}
 var _soft_levels: Image
+## Tekstury terenów 64 px z PixelLab zamiast kafelków atlasu (Gobliński Las - tools/forest_ground.py).
+var _soft_textures := {}
+const FOREST_GROUND := {
+	"grass": preload("res://assets/forest/ground/grass.png"), "road": preload("res://assets/forest/ground/road.png"),
+	"dark": preload("res://assets/forest/ground/dark.png"), "flowers": preload("res://assets/forest/ground/flowers.png"),
+	"cobble": preload("res://assets/forest/ground/cobble.png"),
+}
 var _rng := RandomNumberGenerator.new()
 var _noise := FastNoiseLite.new()
 ## Komórki zajęte przez przeszkody (żeby drzewa na siebie nie wchodziły).
@@ -396,7 +403,9 @@ func _ready() -> void:
 		ancient.generate(self)
 	else:
 		_generate_forest()
-	_soft_ground = SoftGround.attach(ground, _soft_corners, _soft_low_corners, _soft_levels)
+	if zone == "forest":
+		_soft_textures = FOREST_GROUND
+	_soft_ground = SoftGround.attach(ground, _soft_corners, _soft_low_corners, _soft_levels, _soft_textures)
 
 	var world_rect := Rect2i(Vector2i.ZERO, map_size * TILE)
 	player.position = _spawn_point

@@ -80,6 +80,9 @@ var _corners := {}
 ## nie wylewa się na niższy teren obok krawędzi (i odwrotnie).
 var _low_corners := {}
 var _levels: Texture2D
+## Tekstury terenów podane przez krainę (nazwa z ORDER -> tekstura 64 px): las podmienia nimi kafelki
+## atlasu (trawa, ścieżka, ciemna trawa, kwiaty, bruk) - rozmieszczenie terenów się nie zmienia.
+var _textures := {}
 var _noise: Texture2D
 var _set_of_row := {}
 var _full_tiles := {}
@@ -90,11 +93,13 @@ var _rebuild_queued := false
 
 
 ## Podpina miękkie podłoże pod warstwę Ground (i ją ukrywa) - woła świat po wygenerowaniu krainy.
-static func attach(ground: TileMapLayer, corners := {}, low_corners := {}, levels: Image = null) -> SoftGround:
+static func attach(ground: TileMapLayer, corners := {}, low_corners := {}, levels: Image = null,
+		textures := {}) -> SoftGround:
 	var soft := SoftGround.new()
 	soft._ground = ground
 	soft._corners = corners
 	soft._low_corners = low_corners
+	soft._textures = textures
 	if levels != null:
 		soft._levels = ImageTexture.create_from_image(levels)
 	ground.add_child(soft)
@@ -188,7 +193,7 @@ func rebuild() -> void:
 		if not _low_corners.is_empty():
 			ranks.append_array([low_rank[top], low_rank[top + 1], low_rank[top + cw], low_rank[top + cw + 1]])
 		var lowest: int = ranks.min()
-		if TEXTURES.has(ORDER[lowest]):
+		if _texture(ORDER[lowest]) != null:
 			textured_base.get_or_add(lowest, []).append(cell)
 		else:
 			base.set_cell(cell, 0, _full_tile(ORDER[lowest], cell))
@@ -247,7 +252,7 @@ func rebuild() -> void:
 						continue
 					grown[y * w + x] = 1
 					var spot := Vector2i(x, y)
-					layer.set_cell(spot, 0, FILLER_TILE if TEXTURES.has(kind) else _full_tile(kind, spot))
+					layer.set_cell(spot, 0, FILLER_TILE if _texture(kind) != null else _full_tile(kind, spot))
 		layer.material = _material(kind, field, Vector2i(cw, h + 1), false, low_fields.get(r))
 		add_child(layer)
 
@@ -267,9 +272,9 @@ func _material(kind: String, field: Image, corner_count: Vector2i, full: bool, l
 	material.set_shader_parameter("noise_tex", _noise)
 	material.set_shader_parameter("corner_count", Vector2(corner_count))
 	material.set_shader_parameter("full", full)
-	if TEXTURES.has(kind):
+	if _texture(kind) != null:
 		material.set_shader_parameter("use_texture", true)
-		material.set_shader_parameter("terrain_tex", TEXTURES[kind])
+		material.set_shader_parameter("terrain_tex", _texture(kind))
 	material.set_shader_parameter("edge_noise", style.get("noise", 0.4))
 	material.set_shader_parameter("fine_noise", style.get("fine", 0.0))
 	material.set_shader_parameter("rim_color", style.get("rim", Color(0, 0, 0, 0)))
@@ -278,6 +283,11 @@ func _material(kind: String, field: Image, corner_count: Vector2i, full: bool, l
 	material.set_shader_parameter("shadow_color", style.get("shadow", Color(0, 0, 0, 0)))
 	material.set_shader_parameter("shadow_width", style.get("shadow_width", 0.0))
 	return material
+
+
+## Tekstura terenu w przestrzeni świata (podana przez krainę albo z TEXTURES) - null: kafelki z atlasu.
+func _texture(kind: String) -> Texture2D:
+	return _textures.get(kind, TEXTURES.get(kind))
 
 
 func _new_layer() -> TileMapLayer:

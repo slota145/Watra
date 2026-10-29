@@ -845,6 +845,8 @@ def main():
     region_props.main()
     import alpine_tiles  # podłoże i klify gór z zestawów Wang PixelLab 64 px (po region_props - nadpisuje klify)
     alpine_tiles.main()
+    import forest_ground  # podłoże Goblińskiego Lasu z zestawów Wang PixelLab 64 px
+    forest_ground.main()
     import pixellab_items  # ikony przedmiotów 64 px, broń w ręku, ikony umiejętności i interfejsu z PixelLab (nadpisują)
     pixellab_items.build()
     print("Zapisano grafiki do", OUT)
