@@ -6,12 +6,15 @@ extends Node2D
 ## - CARRIER: nosi towar tam i z powrotem po ścieżce (deski, beczki),
 ## - MERCHANT: stoi za ladą i handluje,
 ## - PATRON: gość karczmy - wychodzi po ścieżce do stolika, siada z kufelkiem, pije i wraca.
+## - WANDER: biega po wyznaczonym obszarze (dzieci); z `chase` bawi się w berka - goni drugie dziecko,
+##   a po złapaniu role się zamieniają (uciekający ucieka od goniącego).
+## Stojący mogą też siedzieć (seated - np. uchodźcy przy ognisku).
 ## Stojący mogą też maszerować na komendę (musztra - march_to).
 ## Każdy, kto ma towar (shop_sells), handluje po naciśnięciu E - także kowal czy myśliwy przy pracy.
 ## NPC z zadaniem (quest_id albo łańcuch quest_chain - kolejne zadania po wykonaniu poprzednich) ma nad głową znacznik: złote "!" (do przyjęcia),
 ## szare "?" (w toku) albo złote "?" (do odebrania nagrody), a E otwiera rozmowę.
 
-enum Role { IDLE, WORKER, CARRIER, MERCHANT, PATRON }
+enum Role { IDLE, WORKER, CARRIER, MERCHANT, PATRON, WANDER }
 
 const WALK_FPS := 7.0
 const SPEED := 30.0
@@ -42,8 +45,18 @@ var wait_time := 1.5
 var on_delivered := Callable()
 ## PATRON: w którą stronę patrzy, siedząc przy stoliku.
 var seat_facing := Vector2.RIGHT
+## IDLE: siedzi (np. przy ognisku) - postać niżej, bez rozglądania się za daleko.
+var seated := false
 
-## WORKER: efekt przy uderzeniu ("sparks", "dust" albo "") i jego pozycja.
+## WANDER: obszar zabawy (piksele świata), towarzysz zabawy w berka i czy to ten goni.
+var wander_area := Rect2()
+var chase: Npc
+var chasing := false
+const WANDER_SPEED := 52.0
+const NOTE := preload("res://assets/village/note.png")
+const TAG_DISTANCE := 9.0
+
+## WORKER: efekt przy uderzeniu ("sparks", "dust", "straw", "notes" - nutki grajka, albo "") i jego pozycja.
 var work_effect := ""
 var work_effect_offset := Vector2(12, -6)
 var work_period := 0.7
@@ -90,6 +103,8 @@ var _march_from := Vector2.ZERO
 var _march_to := Vector2.ZERO
 var _march_time := 0.0
 var _march_duration := 0.0
+var _wander_target := Vector2.ZERO
+var _tag_cooldown := 0.0
 
 @onready var sprite: Sprite2D = $Sprite
 @onready var carried: Sprite2D = $Carried
@@ -133,9 +148,12 @@ func _ready() -> void:
 			_carrying = false
 			_wait = randf_range(0.0, 12.0)
 		Role.WORKER:
-			if work_effect != "":
+			if work_effect != "" and work_effect != "notes":
 				_effect = _make_effect(work_effect)
 				add_child(_effect)
+		Role.WANDER:
+			_wander_target = position
+			_wait = randf_range(0.0, 2.0)
 
 
 func _process(delta: float) -> void:
@@ -144,6 +162,8 @@ func _process(delta: float) -> void:
 			_process_carrier(delta)
 		Role.WORKER:
 			_process_worker(delta)
+		Role.WANDER:
+			_process_wander(delta)
 		_:
 			_process_idle(delta)
 	_process_talk(delta)
@@ -254,6 +274,7 @@ func _process_idle(delta: float) -> void:
 			_march_duration = 0.0
 		return
 	_set_frame(_row_for(facing), 0)
+	sprite.position.y = _sprite_y + (3.0 if seated else 0.0)
 	if not looks_around:
 		return
 	_look_timer -= delta
@@ -279,6 +300,8 @@ func _process_worker(delta: float) -> void:
 	if frame == 1 and _last_work_frame != 1:
 		if _effect != null:
 			_effect.restart()
+		if work_effect == "notes" and randf() < 0.6:
+			_note()
 		if on_work_hit.is_valid():
 			on_work_hit.call()
 		if work_sound != "":
@@ -334,6 +357,61 @@ func _process_carrier(delta: float) -> void:
 	# niesiona rzecz za plecami, gdy idzie w górę (kolejność dzieci: Shadow, Sprite, Carried)
 	move_child(carried, 1 if _row_for(facing) == ROW_UP else 2)
 	carried.position = carried_offset + Vector2(0, -1 if int(_anim) % 2 else 0)
+
+
+## Dzieci: biegają między losowymi punktami obszaru, a w berku goniący biegnie do uciekającego,
+## uciekający od niego; po złapaniu zamieniają się rolami (z krótką przerwą na odbiegnięcie).
+func _process_wander(delta: float) -> void:
+	_tag_cooldown -= delta
+	var speed := WANDER_SPEED
+	if chase != null and _tag_cooldown <= 0.0:
+		var away := position - chase.position
+		if chasing:
+			_wander_target = chase.position
+			if away.length() < TAG_DISTANCE:
+				# berek! - teraz ucieka ten, kto gonił
+				chasing = false
+				chase.chasing = true
+				_tag_cooldown = 1.0
+				chase._tag_cooldown = 1.6
+				if randf() < 0.4:
+					say(["Berek!", "Mam cię!", "Ty gonisz!"].pick_random())
+		elif away.length() < 70.0:
+			_wander_target = (position + away.normalized() * 40.0).clamp(wander_area.position, wander_area.end)
+			speed *= 0.85
+	if _wait > 0.0:
+		_wait -= delta
+		_set_frame(_row_for(facing), 0)
+		return
+	var to_target := _wander_target - position
+	if to_target.length() < 2.0:
+		_wander_target = Vector2(randf_range(wander_area.position.x, wander_area.end.x),
+				randf_range(wander_area.position.y, wander_area.end.y))
+		if chase == null or not chasing:
+			_wait = randf_range(0.3, 2.0)
+		return
+	var step := minf(speed * delta, to_target.length())
+	position += to_target.normalized() * step
+	facing = to_target.normalized()
+	_anim += delta * WALK_FPS * 1.4
+	_set_frame(_row_for(facing), int(_anim) % 4)
+
+
+## Nutka unosząca się nad grajkiem (grafika - czcionka nie ma znaku nuty).
+func _note() -> void:
+	var note := Sprite2D.new()
+	note.texture = NOTE
+	note.hframes = 2
+	note.frame = randi() % 2
+	note.z_index = 30
+	note.modulate = [Color(1.0, 0.9, 0.5), Color(0.75, 0.9, 1.0), Color(1.0, 0.7, 0.8)].pick_random()
+	var side := -1.0 if facing.x < 0.0 else 1.0
+	note.position = Vector2(randf_range(4, 12) * side, -34).round()
+	add_child(note)
+	var tween := note.create_tween().set_parallel()
+	tween.tween_property(note, "position", note.position + Vector2(randf_range(-6, 10) * side, -18), 1.8)
+	tween.tween_property(note, "modulate:a", 0.0, 1.8).set_delay(0.8)
+	tween.chain().tween_callback(note.queue_free)
 
 
 func _process_talk(delta: float) -> void:

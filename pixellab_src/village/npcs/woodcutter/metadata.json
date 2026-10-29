@@ -1,0 +1,46 @@
+{
+  "group_id": "ec6222f2-dd86-4d60-85b2-071c317365cb",
+  "states": [
+    {
+      "character": {
+        "id": "48e4d220-bd68-465b-ae8e-f0adcbe6e00c",
+        "name": "Idle",
+        "prompt": "strong medieval woodcutter with short red beard, green hood, brown leather vest, holding a wood axe",
+        "size": {
+          "width": 48,
+          "height": 48
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-29T16:33:09.932760+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "work": {
+            "east": [
+              "Idle/animations/work/east/frame_000.png",
+              "Idle/animations/work/east/frame_001.png",
+              "Idle/animations/work/east/frame_002.png",
+              "Idle/animations/work/east/frame_003.png",
+              "Idle/animations/work/east/frame_004.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-29T16:38:09.124449"
+}

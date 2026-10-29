@@ -21,6 +21,8 @@ ROWS = [("walk", "south"), ("walk", "north"), ("walk", "east"), ("work", "east")
 ## Npc w rzędzie pracy pokazuje klatkę 2 przy zamachu i 1 przy uderzeniu, a animacja z PixelLab
 ## zaczyna od uniesionych rąk (0-1) i kończy uderzeniem (2-3) - przestawiamy klatki.
 WORK_ORDER = [2, 3, 0, 1]
+## Dzieci (child_*) są niższe od dorosłych.
+CHILD_SCALE = 0.78
 
 
 def _frames(name, anim, direction):
@@ -36,6 +38,9 @@ def build(name):
     for row, (anim, direction) in enumerate(ROWS):
         reference = Image.open(os.path.join(rotations, direction + ".png")).convert("RGBA")
         frames = _frames(name, anim, direction) or [reference] * 4
+        # nowsze animacje v3 mają na początku klatkę wzorcową (obrót) - pomijamy ją
+        if len(frames) == 5:
+            frames = frames[1:]
         # płótna PixelLab są wyśrodkowane na postaci - stopy z obrotu przesuwamy o różnicę płócien
         ref_bottom = reference.getbbox()[3]
         for col in range(4):
@@ -49,8 +54,21 @@ def build(name):
         for col in range(4):
             cell = sheet.crop((col * CELL, row * CELL, (col + 1) * CELL, (row + 1) * CELL))
             if cell.getbbox():
-                small.alpha_composite(hero_sheets.shrink_image(cell, out_cell, out_cell), (col * out_cell, row * out_cell))
+                small_cell = hero_sheets.shrink_image(cell, out_cell, out_cell)
+                if name.startswith("child_"):
+                    small_cell = _child(small_cell)
+                small.alpha_composite(small_cell, (col * out_cell, row * out_cell))
     small.save(os.path.join(OUT, name + ".png"))
+
+
+def _child(cell):
+    """Dziecko: sylwetka zmniejszona do CHILD_SCALE, oparta o ten sam dół (PixelLab rysuje je wzrostu dorosłego)."""
+    box = cell.getbbox()
+    figure = cell.crop(box)
+    small = hero_sheets.shrink_image(figure, round(figure.width * CHILD_SCALE), round(figure.height * CHILD_SCALE))
+    out = Image.new("RGBA", cell.size)
+    out.alpha_composite(small, (round((box[0] + box[2]) / 2.0 - small.width / 2.0), box[3] - small.height))
+    return out
 
 
 def main():

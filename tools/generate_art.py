@@ -837,6 +837,8 @@ def main():
     village_buildings.main()
     import village_props  # rekwizyty, ozdoby, palisada, stajnia i koń osady z PixelLab
     village_props.main()
+    import village_life  # strefy osady (obóz uchodźców, rynek, zagroda), świnie i nutki z PixelLab
+    village_life.main()
     import npc_sheets  # mieszkańcy osady z PixelLab (wielkości postaci gracza)
     npc_sheets.main()
     import region_sheets  # Rozlewiska, Wietrzne Turnie i satyrowie z PixelLab: stworzenia i przejścia runa

@@ -1,0 +1,76 @@
+{
+  "group_id": "44b89583-7bf2-4ea3-8aa0-04588fb07817",
+  "states": [
+    {
+      "character": {
+        "id": "6efdc748-0f5a-451c-ab16-2d5806282801",
+        "name": "Idle",
+        "prompt": "plump domestic farm pig, pale pink with large black spots, curly tail, floppy ears, standing on all four legs",
+        "size": {
+          "width": 56,
+          "height": 56
+        },
+        "template_id": "dog",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-29T16:22:36.066654+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "walk": {
+            "south-east": [
+              "Idle/animations/walk/south-east/frame_000.png",
+              "Idle/animations/walk/south-east/frame_001.png",
+              "Idle/animations/walk/south-east/frame_002.png",
+              "Idle/animations/walk/south-east/frame_003.png"
+            ]
+          },
+          "eat": {
+            "south-east": [
+              "Idle/animations/eat/south-east/frame_000.png",
+              "Idle/animations/eat/south-east/frame_001.png",
+              "Idle/animations/eat/south-east/frame_002.png",
+              "Idle/animations/eat/south-east/frame_003.png",
+              "Idle/animations/eat/south-east/frame_004.png"
+            ]
+          },
+          "lie": {
+            "south-east": [
+              "Idle/animations/lie/south-east/frame_000.png",
+              "Idle/animations/lie/south-east/frame_001.png",
+              "Idle/animations/lie/south-east/frame_002.png",
+              "Idle/animations/lie/south-east/frame_003.png",
+              "Idle/animations/lie/south-east/frame_004.png"
+            ]
+          },
+          "sleep": {
+            "south-east": [
+              "Idle/animations/sleep/south-east/frame_000.png",
+              "Idle/animations/sleep/south-east/frame_001.png",
+              "Idle/animations/sleep/south-east/frame_002.png",
+              "Idle/animations/sleep/south-east/frame_003.png",
+              "Idle/animations/sleep/south-east/frame_004.png",
+              "Idle/animations/sleep/south-east/frame_005.png",
+              "Idle/animations/sleep/south-east/frame_006.png",
+              "Idle/animations/sleep/south-east/frame_007.png",
+              "Idle/animations/sleep/south-east/frame_008.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-29T16:37:17.599007"
+}

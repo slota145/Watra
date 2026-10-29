@@ -168,6 +168,11 @@ const PATHS := [
 	[[Vector2(32, 15), Vector2(32, 18)], 1.0, false],
 	[[Vector2(46, 16), Vector2(45.5, 19), Vector2(44.5, 22)], 1.0, false],
 	[[Vector2(51.5, 24), Vector2(54.6, 26.5), Vector2(55.3, 29.5)], 0.9, false],
+	# udeptane place stref: rynek, obóz uchodźców, skład drewna, zagroda
+	[[Vector2(35.2, 29.0), Vector2(38.8, 29.0)], 1.9, false],
+	[[Vector2(36.6, 37.6), Vector2(44.6, 37.9)], 1.7, false],
+	[[Vector2(16.6, 37.4), Vector2(21.6, 37.6)], 1.4, false],
+	[[Vector2(51.6, 16.0), Vector2(54.4, 17.9)], 1.3, false],
 ]
 ## Placyk przed domem sołtysa z kapliczką odrodzenia.
 const PLAZA := Vector2(32.0, 18.6)
@@ -295,6 +300,42 @@ const LINES_VILLAGER: Array[String] = [
 	"Pamiętam, jak ten las był bezpieczny...",
 	"Dziękujemy, że walczysz za nas.",
 ]
+
+const LINES_REFUGEE: Array[String] = [
+	"Spalili nam wieś... Uciekliśmy tylko z tym, co na grzbiecie.",
+	"Tu przynajmniej jest palisada. I ludzie z bronią.",
+	"Mój syn został w Brzezinie. Może jeszcze dotrze...",
+	"Każdej nocy ktoś nowy przychodzi bramą.",
+	"Ciepła strawa i dach nad głową - więcej nie trzeba.",
+]
+const LINES_BARD: Array[String] = [
+	"Zaśpiewam o tobie, wędrowcze - jeśli przeżyjesz!",
+	"Muzyka to jedyne, czego potwory nam nie odbiorą.",
+	"Hej, w Ostoi ogień płonie, nikt nie zginie w naszej stronie...",
+]
+const LINES_CHILD: Array[String] = ["Złap mnie!", "Nie dogonisz!", "Hihi!", "Jak dorosnę, będę rycerzem!"]
+const LINES_GARDENER: Array[String] = [
+	"Rzepa w tym roku obrodzi. Byle gobliny nie wydeptały.",
+	"Ludzi coraz więcej, a ziemi tyle samo...",
+	"Kapusta, marchew, rzepa - wszystko się przyda.",
+]
+const LINES_WOODCUTTER: Array[String] = [
+	"Drewno na opał, deski na palisadę - roboty nie brakuje.",
+	"Do lasu już nie chodzę sam. Za dużo tam oczu.",
+]
+const LINES_MARKET: Array[String] = [
+	"Świeże jabłka! Prosto z sadu!",
+	"Chleb! Ciepły chleb!",
+	"Garnki, płótno, narzędzia - wszystko, co potrzebne!",
+	"Za dwa miedziaki oddam taniej, bo dla uchodźców.",
+]
+const LINES_WATER: Array[String] = ["Woda dla obozu...", "Ciężkie to wiadro.", "Studnia nas wszystkich żywi."]
+
+## Zagroda ze świniami (kafelki układu): prostokąt ogrodzenia, w nim szałas, koryto i błoto.
+const PIG_PEN := Rect2(50.8, 13.8, 4.4, 5.6)
+const PIG_SCENE := preload("res://scripts/livestock.gd")
+## Obszar zabawy dzieci w berka (obóz uchodźców i okolice południowej drogi).
+const PLAY_AREA := Rect2(26.0, 35.6, 19.0, 3.8)
 
 ## Stosy surowców przy magazynie (drewno w lewej kolumnie, kamień w prawej)
 ## i ile surowca przypada na jeden poziom stosu.
@@ -663,7 +704,7 @@ func _build_interiors() -> void:
 ## placu, kram przy sklepie, strachy na wróble, płotki i ule przy ogródkach, beczki na deszczówkę,
 ## pranie i buda z psem przy domu sołtysa, koty i drobiazgi na podwórkach. Każda ozdoba szuka
 ## wolnego miejsca w pobliżu swojego punktu (poza ścieżkami, budynkami, drzwiami i innymi rekwizytami).
-const GARDENS: Array[Vector2] = [Vector2(20.8, 9.9), Vector2(11.2, 17.6), Vector2(24.0, 38.2)]
+const GARDENS: Array[Vector2] = [Vector2(17.4, 9.4), Vector2(20.2, 9.4), Vector2(23.0, 9.4)]
 
 
 func _build_decorations() -> void:
@@ -705,27 +746,32 @@ func _build_decorations() -> void:
 	if sign_spot.is_finite():
 		_deco("deco_signpost", sign_spot, Vector2(4, 3))
 	# kram przy sklepie, drewutnia przy karczmie, pranie i buda przy domu sołtysa
-	for item: Array in [["deco_market_stall", "shop", Vector2(-2.6, 4.0), Vector2(40, 8)],
-			["deco_wood_shelter", "tavern", Vector2(-1.8, 3.4), Vector2(28, 6)],
+	# pranie i buda (z psem) przy domu sołtysa, drewutnia przy karczmie
+	for item: Array in [["deco_wood_shelter", "tavern", Vector2(-1.8, 3.4), Vector2(28, 6)],
 			["deco_washing_line", "chief_house", Vector2(9.6, 3.0), Vector2(40, 4)],
 			["deco_kennel", "chief_house", Vector2(-1.8, 4.6), Vector2(20, 6)]]:
 		var spot := _free_spot(Vector2(BUILDINGS[item[1]][0]) + item[2], 2.0, 1.6, rng)
 		if spot.is_finite():
 			_deco(item[0], spot, item[3])
-	# ogródki: strach na wróble, płotek i ul
-	for garden in GARDENS:
-		for item: Array in [["deco_scarecrow", Vector2(0, -1.6), Vector2(6, 3)], ["deco_fence", Vector2(-2.6, 0.6), Vector2(26, 4)],
-				["deco_fence", Vector2(2.6, 0.6), Vector2(26, 4)], ["deco_beehive", Vector2(2.4, -1.8), Vector2(12, 5)]]:
-			var spot := _free_spot(garden + item[1], 1.0, 0.8, rng)
-			if spot.is_finite():
-				_deco(item[0], spot, item[2])
-	# podwórka: zwierzęta i drobiazgi w losowych wolnych miejscach
-	for item: Array in [["deco_cat", 2], ["deco_wheelbarrow", 2], ["deco_basket", 3],
-			["deco_lantern", 3], ["deco_bucket", 2], ["deco_axe_stump", 2], ["deco_tools", 1]]:
-		for k in item[1]:
-			var spot := _free_spot(Vector2(rng.randf_range(10, 56), rng.randf_range(8, 38)), 6.0, 0.9, rng)
-			if spot.is_finite():
-				_deco(item[0], spot, Vector2(16, 4) if item[0] == "deco_wheelbarrow" else Vector2.ZERO)
+			if item[0] == "deco_kennel":
+				_deco("resting_dog", spot + Vector2(1.1, 0.5))
+			elif item[0] == "deco_washing_line":
+				_deco("laundry_basket", spot + Vector2(-1.4, 0.8))
+				_deco("wash_tub", spot + Vector2(1.6, 0.9), Vector2(14, 4))
+	# pole warzywne: jeden strach na wróble, ule na skraju, narzędzia ogrodnika
+	_deco("deco_scarecrow", GARDENS[1] + Vector2(0, -1.9), Vector2(6, 3))
+	for p in [Vector2(25.0, 8.0), Vector2(25.1, 9.5)]:
+		_deco("deco_beehive", p, Vector2(12, 5))
+	_deco("pitchfork", GARDENS[2] + Vector2(1.7, 0.4))
+	_deco("water_bucket", GARDENS[0] + Vector2(-1.7, 0.3))
+	for p in [Vector2(15.4, 10.0), Vector2(24.6, 10.4)]:
+		_deco("deco_fence", p, Vector2(26, 4))
+	# drobiazgi przy swoich miejscach: kot na beczce przy karczmie, wiadro przy studni, taczka i narzędzia
+	# przy naprawianej palisadzie
+	_deco("sleeping_cat", Vector2(12.6, 19.9))
+	_deco("water_bucket", Vector2(27.9, 20.9))
+	_deco("deco_wheelbarrow", Vector2(52.6, 31.3), Vector2(16, 4))
+	_deco("deco_tools", Vector2(53.4, 29.6))
 
 
 func _deco(texture_name: String, tile_pos: Vector2, collision := Vector2.ZERO) -> void:
@@ -816,10 +862,11 @@ func _build_yard() -> void:
 	# ogródki, drzewa i krzaki - żeby osada nie wyglądała jak z linijki
 	for garden in GARDENS:
 		_garden(garden)
-	for p in [Vector2(10.8, 26.4), Vector2(56.0, 18.0), Vector2(26.3, 9.6)]:
+	for p in [Vector2(10.8, 26.4), Vector2(26.3, 9.6), Vector2(45.4, 7.6)]:
 		_spawn_scene(OAK, p)
-	for p in [Vector2(12.2, 31.6), Vector2(37.0, 9.2), Vector2(52.3, 14.4), Vector2(17.0, 38.0), Vector2(46.6, 38.8)]:
+	for p in [Vector2(12.2, 31.6), Vector2(37.0, 9.2), Vector2(56.4, 20.6)]:
 		_spawn_scene(BUSH, p)
+	_build_life()
 
 	# naprawa palisady - stos desek przynoszonych z magazynu
 	_plank_pile = _prop("plank_pile", Vector2(54.4, 31.8), Vector2(28, 6), 4)
@@ -828,6 +875,149 @@ func _build_yard() -> void:
 	for p in [Vector2(30.0, 39.7), Vector2(36.2, 39.7)]:
 		_prop("crate", p, Vector2(12, 5))
 	_prop("barrel", Vector2(10.8, 24.9), Vector2(10, 5))
+
+
+## Strefy życia osady: rynek przy sklepie, obóz uchodźców przy ognisku za południową drogą, skład drewna
+## z drwalem obok kuźni, pole warzywne z ogrodnikiem, zagroda ze świniami przy magazynie, kąciki pracy
+## przy kuźni i studni, dzieci bawiące się w berka i nosiwoda (studnia -> kociołek obozu).
+func _build_life() -> void:
+	# rynek: trzy kramy z przekupkami za ladą, skrzynie z towarem i kupujący
+	_prop("stall_veg", Vector2(35.6, 27.8), Vector2(40, 6))
+	_prop("stall_bread", Vector2(38.4, 27.8), Vector2(40, 6))
+	_prop("stall_goods", Vector2(36.6, 31.0), Vector2(40, 6))
+	_prop("apple_crate", Vector2(34.9, 29.0), Vector2(12, 4))
+	_prop("cabbage_crate", Vector2(39.5, 29.1), Vector2(12, 4))
+	_prop("grain_sacks", Vector2(38.5, 31.3), Vector2(16, 4))
+	_prop("deco_basket", Vector2(37.4, 29.5))
+	for spot: Array in [["villager_red", Vector2(35.6, 26.9)], ["villager_green", Vector2(38.4, 26.9)],
+			["villager_red", Vector2(36.6, 30.1)]]:
+		var vendor := _npc(spot[0], spot[1], Npc.Role.IDLE, LINES_MARKET, Vector2.DOWN)
+		vendor.looks_around = false
+		_entities.add_child(vendor)
+	var shopper := _npc("villager_brown", Vector2(36.9, 29.0), Npc.Role.IDLE, LINES_VILLAGER, Vector2.UP)
+	shopper.looks_around = false
+	_entities.add_child(shopper)
+
+	# obóz uchodźców przy ognisku: namioty, szałas, wóz z dobytkiem, posłania, kociołek
+	_prop("refugee_tent_0", Vector2(40.2, 36.6), Vector2(36, 8))
+	_prop("refugee_tent_1", Vector2(44.0, 36.9), Vector2(36, 8))
+	_prop("lean_to", Vector2(42.0, 39.4), Vector2(30, 6))
+	_prop("covered_wagon", Vector2(45.4, 39.7), Vector2(44, 8))
+	_prop("bedroll_open", Vector2(36.0, 36.3))
+	_prop("bedroll", Vector2(39.0, 38.2))
+	_prop("bundle", Vector2(41.7, 37.6))
+	_prop("bundle", Vector2(45.6, 37.8))
+	_prop("deco_lantern", Vector2(42.6, 37.0))
+	var pot := _prop("cook_pot", Vector2(39.6, 39.0), Vector2(14, 4))
+	_glow(_px(Vector2(39.6, 38.8)), Color(1.0, 0.55, 0.2, 0.3), Vector2(36, 28))
+	pot.flip_h = false
+	var cook := _npc("refugee_woman", Vector2(38.5, 39.0), Npc.Role.WORKER, LINES_REFUGEE, Vector2.RIGHT)
+	cook.work_gentle = true
+	cook.work_period = 1.2
+	_entities.add_child(cook)
+	for spot: Array in [["refugee_old", Vector2(37.4, 36.4), Vector2.DOWN], ["villager_brown", Vector2(38.7, 37.6), Vector2.LEFT]]:
+		var refugee := _npc(spot[0], spot[1], Npc.Role.IDLE, LINES_REFUGEE, spot[2])
+		refugee.seated = true
+		refugee.looks_around = false
+		_entities.add_child(refugee)
+	var bard := _npc("bard", Vector2(35.6, 37.6), Npc.Role.WORKER, LINES_BARD, Vector2.RIGHT)
+	bard.work_gentle = true
+	bard.work_period = 0.55
+	bard.work_effect = "notes"
+	_entities.add_child(bard)
+	# dzieci bawią się w berka
+	var play := Rect2(_px(PLAY_AREA.position), PLAY_AREA.size * SCALE * TILE)
+	var kids: Array[Npc] = []
+	for spot: Array in [["child_a", Vector2(30.0, 37.0)], ["child_b", Vector2(34.0, 38.0)]]:
+		var kid := _npc(spot[0], spot[1], Npc.Role.WANDER, LINES_CHILD)
+		kid.wander_area = play
+		kids.append(kid)
+	kids[0].chase = kids[1]
+	kids[1].chase = kids[0]
+	kids[0].chasing = true
+	for kid in kids:
+		_entities.add_child(kid)
+	# nosiwoda: od studni do kociołka obozu i z powrotem
+	var water := _npc("villager_green", Vector2.ZERO, Npc.Role.CARRIER, LINES_WATER)
+	water.path = _path([Vector2(27.6, 21.2), Vector2(28.4, 22.9), Vector2(32.8, 23.4), Vector2(33.3, 29.0),
+			Vector2(32.8, 34.6), Vector2(35.0, 35.4), Vector2(37.4, 38.9)])
+	water.carried_texture = _tex("water_bucket")
+	water.carried_offset = Vector2(7, -9)
+	water.wait_time = 2.5
+	_entities.add_child(water)
+
+	# skład drewna obok kuźni: drwal rąbie na pieńku, stosy polan, wózek
+	_prop("firewood", Vector2(17.0, 36.9), Vector2(20, 5))
+	_prop("firewood", Vector2(18.3, 37.4), Vector2(20, 5))
+	_prop("chop_block", Vector2(21.0, 37.7), Vector2(10, 4))
+	_prop("handcart", Vector2(23.0, 38.4), Vector2(26, 6))
+	var woodcutter := _npc("woodcutter", Vector2(20.0, 37.7), Npc.Role.WORKER, LINES_WOODCUTTER, Vector2.RIGHT)
+	woodcutter.work_effect = "dust"
+	woodcutter.work_effect_offset = Vector2(16, -4)
+	woodcutter.work_period = 1.1
+	woodcutter.work_sound = "chop"
+	_entities.add_child(woodcutter)
+
+	# pole warzywne - ogrodnik okopuje grządki
+	var gardener := _npc("gardener", Vector2(21.6, 10.6), Npc.Role.WORKER, LINES_GARDENER, Vector2.LEFT)
+	gardener.work_effect = "dust"
+	gardener.work_effect_offset = Vector2(14, -2)
+	gardener.work_period = 1.3
+	_entities.add_child(gardener)
+
+	# kąciki pracy: kowal hartuje w beczce, ostrzałka i węgiel; przy studni wiadro
+	_prop("quench_barrel", Vector2(23.2, 33.0), Vector2(10, 4))
+	_prop("grindstone", Vector2(24.6, 32.8), Vector2(14, 4))
+	_prop("coal_sack", Vector2(26.4, 31.6))
+
+	_build_pig_pen()
+
+
+## Zagroda: płot dookoła (z kolizją), szałas, koryto, błoto, siano i tabliczka - i trzy świnie.
+func _build_pig_pen() -> void:
+	var pen := PIG_PEN
+	var fence_w := _tex("pen_fence_h").get_width() / (SCALE * TILE)
+	var count := int(ceil(pen.size.x / fence_w))
+	for k in count:
+		var x := pen.position.x + fence_w * (k + 0.5)
+		_prop("pen_fence_h", Vector2(x, pen.position.y))
+		_prop("pen_fence_h", Vector2(x, pen.end.y))
+	var post_h := _tex("pen_fence_v").get_height() / (SCALE * TILE)
+	var rows := int(ceil(pen.size.y / post_h))
+	for k in rows:
+		var y := pen.position.y + pen.size.y * (k + 1) / rows
+		_prop("pen_fence_v", Vector2(pen.position.x, y))
+		_prop("pen_fence_v", Vector2(pen.end.x, y))
+	var body := StaticBody2D.new()
+	var corner := _px(pen.position)
+	var size := pen.size * SCALE * TILE
+	for edge: Rect2 in [Rect2(0, -4, size.x, 6), Rect2(0, size.y - 4, size.x, 6), Rect2(-3, 0, 6, size.y), Rect2(size.x - 3, 0, 6, size.y)]:
+		var shape := CollisionShape2D.new()
+		var box := RectangleShape2D.new()
+		box.size = edge.size
+		shape.shape = box
+		shape.position = corner + edge.get_center()
+		body.add_child(shape)
+	_entities.add_child(body)
+	_prop("pig_shelter", Vector2(51.9, 15.6))
+	var trough := Vector2(53.8, 15.2)
+	var mud := Vector2(53.4, 18.1)
+	_prop("trough", trough)
+	var puddle := _prop("mud", mud)
+	puddle.reparent(_floors)
+	_prop("hay_pile", Vector2(49.7, 18.9), Vector2(20, 5))
+	_prop("slops_bucket", Vector2(51.0, 20.3))
+	_prop("pig_sign", Vector2(50.0, 20.4), Vector2(4, 3))
+	var inside := Rect2(_px(pen.position + Vector2(0.6, 0.9)), (pen.size - Vector2(1.2, 1.3)) * SCALE * TILE)
+	for sheet in ["pig_pink", "pig_spotted", "pig_pink"]:
+		var pig: Livestock = PIG_SCENE.new()
+		pig.sheet = _tex(sheet)
+		pig.sprite_offset = Vector2(0, -10)
+		pig.pen = inside
+		pig.feeding_spots.assign([_px(trough) + Vector2(0, 6), _px(mud)])
+		pig.position = Vector2(randf_range(inside.position.x, inside.end.x), randf_range(inside.position.y, inside.end.y))
+		_entities.add_child(pig)
+	map_markers.append({"position": _px(pen.get_center()), "color": Color("e8a0a0"), "size": 2.0})
 
 
 # ---------------------------------------------------------------- mieszkańcy
@@ -940,8 +1130,6 @@ func _build_npcs() -> void:
 		_entities.add_child(guard)
 
 	for spot: Array in [
-		["villager_green", Vector2(36.3, 37.6), Vector2.RIGHT],
-		["villager_brown", Vector2(38.5, 37.6), Vector2.LEFT],
 		["villager_red", Vector2(25.3, 20.9), Vector2.RIGHT],
 	]:
 		_entities.add_child(_npc(spot[0], spot[1], Npc.Role.IDLE, LINES_VILLAGER, spot[2]))

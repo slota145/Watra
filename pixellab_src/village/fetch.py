@@ -1,6 +1,6 @@
 """Pobiera grafiki osady z PixelLab do pixellab_src/village/ (identyfikatory w ids.json):
 budynki (obiekty mapy) jako buildings/<nazwa>.png i mieszkańców (paczki postaci) do npcs/<nazwa>/.
-Uruchom: python pixellab_src/village/fetch.py [buildings|npcs]"""
+Uruchom: python pixellab_src/village/fetch.py [buildings|npcs|animals|packs|props|objects]"""
 import io
 import json
 import os
@@ -31,14 +31,14 @@ def buildings(ids):
         print("  %s: pobrano" % name)
 
 
-def npcs(ids):
+def npcs(ids, root="npcs"):
     for name, ident in ids.items():
         try:
             data = _get(API + "characters/%s/download" % ident)
         except urllib.error.HTTPError as e:
             print("  %s: jeszcze nie gotowe (%d)" % (name, e.code))
             continue
-        folder = os.path.join(HERE, "npcs", name)
+        folder = os.path.join(HERE, root, name)
         with zipfile.ZipFile(io.BytesIO(data)) as z:
             for entry in z.namelist():
                 if entry.endswith("/"):
@@ -110,6 +110,8 @@ if __name__ == "__main__":
         buildings(ids["buildings"])
     if "npcs" in what:
         npcs(ids["npcs"])
+    if "animals" in what:
+        npcs(ids.get("animals", {}), "animals")
     if "packs" in what:
         packs(ids)
     if "props" in what:
