@@ -1,6 +1,6 @@
 """Muzyka w tle: spokojna pętla dla Ostoi (ok. 100 s), skomponowana i zsyntezowana w numpy.
 Harfa/lutnia gra arpeggia, pod spodem miękkie smyczki i bas, a flet prowadzi melodię.
-Zapisuje assets/music/ostoja_theme.ogg (wymaga ffmpeg w PATH).
+Zapisuje assets/music/ostoja_theme.ogg (wymaga ffmpeg w PATH); pozostałe utwory - tools/music_tracks.py.
 
 Uruchom: python tools/music.py"""
 import os
@@ -181,14 +181,20 @@ def compose():
     return stereo
 
 
-def main():
-    os.makedirs(OUT, exist_ok=True)
-    audio = compose()
+def save(audio, name):
+    """Zapis stereo [-1, 1] do assets/music/<name>.ogg przez ffmpeg."""
     pcm = (audio * 32767).astype("<i2").tobytes()
-    path = os.path.join(OUT, "ostoja_theme.ogg")
+    path = os.path.join(OUT, name + ".ogg")
     subprocess.run(["ffmpeg", "-y", "-v", "error", "-f", "s16le", "-ar", str(RATE), "-ac", "2", "-i", "-",
                     "-c:a", "libvorbis", "-q:a", "4", path], input=pcm, check=True)
     print("Zapisano", path, "%.1f s" % (len(audio) / RATE))
+
+
+def main():
+    os.makedirs(OUT, exist_ok=True)
+    save(compose(), "ostoja_theme")
+    import music_tracks  # menu, krainy i walki z bossami
+    music_tracks.main()
 
 
 if __name__ == "__main__":

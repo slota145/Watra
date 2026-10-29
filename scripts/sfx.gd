@@ -1,7 +1,8 @@
 extends Node
 ## Dźwięki gry (autoload "Sfx"): efekty z paczek CC0 od Kenney (assets/sfx), własne efekty
 ## z tools/sfx_synth.py (zaklinanie, kula ognia, kowadło, młotek, kukły, łuk), muzyka w tle
-## z tools/music.py i odgłosy lasu z tools/ambient.py: co jakiś czas podmuch wiatru w koronach
+## z tools/music.py i tools/music_tracks.py (osobna do menu, osady, każdej krainy i walk z bossami - zmienia
+## się płynnym przenikaniem, play_music) i odgłosy lasu z tools/ambient.py: co jakiś czas podmuch wiatru w koronach
 ## drzew i ptaki odzywające się losowo dookoła postaci (w budynkach ciszej).
 ## Sfx.play("hit") gra efekt bez położenia, Sfx.play_at("anvil", pozycja) - z położeniem
 ## (cichnie z odległością od kamery). Zdarzenie ma kilka wariantów i losową wysokość,
@@ -9,7 +10,14 @@ extends Node
 ## Głośność muzyki, efektów i otoczenia zapisuje się w user://settings.cfg (osobno od zapisu gry).
 
 const SFX_DIR := "res://assets/sfx/"
-const MUSIC_PATH := "res://assets/music/ostoja_theme.ogg"
+const MUSIC := {
+	"menu": "res://assets/music/menu.ogg", "ostoja": "res://assets/music/ostoja_theme.ogg",
+	"forest": "res://assets/music/forest.ogg", "swamp": "res://assets/music/swamp.ogg",
+	"mountains": "res://assets/music/mountains.ogg", "ancient": "res://assets/music/ancient.ogg",
+	"boss": "res://assets/music/boss.ogg",
+}
+const MUSIC_DB := -4.0
+const MUSIC_FADE := 2.5
 const SETTINGS_PATH := "user://settings.cfg"
 const POOL_SIZE := 12
 const POOL_2D_SIZE := 16
@@ -149,6 +157,7 @@ const GUST_INTERVAL := Vector2(10.0, 30.0)
 const INDOORS_DB := -14.0
 var _gust_scale := 1.0
 
+var master_volume := 1.0
 var music_volume := 0.6
 var sfx_volume := 0.8
 var ambient_volume := 0.7
@@ -159,7 +168,10 @@ var _pool: Array[AudioStreamPlayer] = []
 var _pool_2d: Array[AudioStreamPlayer2D] = []
 var _next := 0
 var _next_2d := 0
-var _music: AudioStreamPlayer
+## Dwa odtwarzacze muzyki na zmianę - stary utwór gaśnie, nowy narasta.
+var _music_players: Array[AudioStreamPlayer] = []
+var _music_track := ""
+var _music_streams := {}
 var _wind: AudioStreamPlayer
 var _gust_timer := 0.0
 var _gust_db := -10.0
@@ -189,13 +201,11 @@ func _ready() -> void:
 		player.attenuation = 1.6
 		add_child(player)
 		_pool_2d.append(player)
-	_music = AudioStreamPlayer.new()
-	_music.bus = "Music"
-	_music.volume_db = -4.0
-	var stream: AudioStreamOggVorbis = load(MUSIC_PATH).duplicate()
-	stream.loop = true
-	_music.stream = stream
-	add_child(_music)
+	for i in 2:
+		var music := AudioStreamPlayer.new()
+		music.bus = "Music"
+		add_child(music)
+		_music_players.append(music)
 	_wind = AudioStreamPlayer.new()
 	_wind.bus = "Ambient"
 	add_child(_wind)
@@ -207,7 +217,6 @@ func _ready() -> void:
 		add_child(bird)
 		_bird_players.append(bird)
 	_load_settings()
-	_music.play()
 	# każdy przycisk w grze klika
 	get_tree().node_added.connect(_on_node_added)
 
@@ -339,6 +348,34 @@ func set_ambient_volume(value: float) -> void:
 	_save_settings()
 
 
+## Przełącza muzykę na utwór `track` (klucz MUSIC) z przenikaniem; ten sam utwór gra dalej bez przerwy.
+func play_music(track: String, fade := MUSIC_FADE) -> void:
+	if track == _music_track or not MUSIC.has(track):
+		return
+	_music_track = track
+	if not _music_streams.has(track):
+		var stream: AudioStreamOggVorbis = load(MUSIC[track]).duplicate()
+		stream.loop = true
+		_music_streams[track] = stream
+	var old := _music_players[0]
+	var new := _music_players[1]
+	_music_players.reverse()
+	new.stream = _music_streams[track]
+	new.volume_db = -40.0
+	new.play()
+	var tween := create_tween().set_parallel()
+	tween.tween_property(new, "volume_db", MUSIC_DB, fade).set_trans(Tween.TRANS_SINE)
+	if old.playing:
+		tween.tween_property(old, "volume_db", -40.0, fade).set_trans(Tween.TRANS_SINE)
+		tween.chain().tween_callback(old.stop)
+
+
+func set_master_volume(value: float) -> void:
+	master_volume = clampf(value, 0.0, 1.0)
+	_apply_volume("Master", master_volume)
+	_save_settings()
+
+
 func set_music_volume(value: float) -> void:
 	music_volume = clampf(value, 0.0, 1.0)
 	_apply_volume("Music", music_volume)
@@ -395,13 +432,18 @@ func _load_settings() -> void:
 		music_volume = clampf(float(config.get_value("audio", "music", music_volume)), 0.0, 1.0)
 		sfx_volume = clampf(float(config.get_value("audio", "sfx", sfx_volume)), 0.0, 1.0)
 		ambient_volume = clampf(float(config.get_value("audio", "ambient", ambient_volume)), 0.0, 1.0)
+		master_volume = clampf(float(config.get_value("audio", "master", master_volume)), 0.0, 1.0)
+	_apply_volume("Master", master_volume)
 	_apply_volume("Music", music_volume)
 	_apply_volume("SFX", sfx_volume)
 	_apply_volume("Ambient", ambient_volume)
 
 
 func _save_settings() -> void:
+	# ustawienia obrazu (Game) leżą w tym samym pliku - wczytujemy, żeby ich nie skasować
 	var config := ConfigFile.new()
+	config.load(SETTINGS_PATH)
+	config.set_value("audio", "master", master_volume)
 	config.set_value("audio", "music", music_volume)
 	config.set_value("audio", "sfx", sfx_volume)
 	config.set_value("audio", "ambient", ambient_volume)

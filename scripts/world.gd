@@ -664,6 +664,7 @@ func _update_resource_piles() -> void:
 
 func _process(delta: float) -> void:
 	_process_respawns(delta)
+	_process_music(delta)
 	if zone == "forest":
 		_process_caravans(delta)
 	_process_exits()
@@ -999,6 +1000,25 @@ func _on_goblin_died(goblin: Goblin, spawn: Dictionary) -> void:
 		hud.on_enemy_killed(goblin)
 	player.quests.on_enemy_killed(goblin.quest_kind)
 	_respawn_queue.append({"spawn": spawn, "time": spawn.get("respawn", goblin_respawn_time)})
+
+
+## Muzyka: walka z bossem w pobliżu, w Ostoi jej temat, a poza nią utwór krainy.
+var _music_check := 0.0
+
+
+func _process_music(delta: float) -> void:
+	_music_check -= delta
+	if _music_check > 0.0:
+		return
+	_music_check = 0.5
+	var track: String = {"forest": "forest", "swamp": "swamp", "mountains": "mountains", "ancient": "ancient"}.get(zone, "forest")
+	if zone == "forest" and _settlement.is_inside_palisade(Vector2i((player.global_position / TILE).floor())):
+		track = "ostoja"
+	for boss in get_tree().get_nodes_in_group("bosses"):
+		if boss.is_engaged() and boss.global_position.distance_to(player.global_position) < 500.0:
+			track = "boss"
+			break
+	Sfx.play_music(track)
 
 
 func _process_respawns(delta: float) -> void:

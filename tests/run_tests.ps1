@@ -21,7 +21,7 @@ New-Item -ItemType Directory -Force $out | Out-Null
 # [plik, czy potrzebuje okna]
 $tests = @(
     @("test_loot.gd", $false), @("test_stats.gd", $false), @("test_inv.gd", $false), @("test_drops.gd", $false),
-    @("test_save_roundtrip.gd", $false), @("test_pal.gd", $false),
+    @("test_save_roundtrip.gd", $false), @("test_pal.gd", $false), @("test_audio.gd", $false),
     @("test_village.gd", $true), @("test_ui.gd", $true), @("test_pan.gd", $true)
 )
 if ($Bench) { $tests += ,@("bench_combat.gd", $false) }

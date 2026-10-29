@@ -1,7 +1,7 @@
 class_name PauseMenu
 extends Control
 ## Menu pauzy (Esc w trakcie gry): wznowienie, zapis i wczytanie (lista zapisów z miniaturkami),
-## powrót do menu i wyjście, a także głośność muzyki, efektów i odgłosów lasu.
+## ustawienia (dźwięk, obraz), powrót do menu i wyjście.
 ## Zatrzymuje grę, dopóki jest otwarte.
 
 var _load_button: Button
@@ -43,12 +43,9 @@ func _ready() -> void:
 	box.add_child(UiStyle.menu_button("Zapisz grę", _on_save))
 	_load_button = UiStyle.menu_button("Wczytaj grę", _on_load)
 	box.add_child(_load_button)
+	box.add_child(UiStyle.menu_button("Ustawienia", _on_settings))
 	box.add_child(UiStyle.menu_button("Menu główne", Game.go_to_menu))
 	box.add_child(UiStyle.menu_button("Wyjdź z gry", Game.quit_game))
-	box.add_child(HSeparator.new())
-	box.add_child(_volume_row("Muzyka", Sfx.music_volume, Sfx.set_music_volume))
-	box.add_child(_volume_row("Efekty", Sfx.sfx_volume, _on_sfx_volume))
-	box.add_child(_volume_row("Otoczenie", Sfx.ambient_volume, Sfx.set_ambient_volume))
 
 	_status = UiStyle.label("", 8, UiStyle.DIM_COLOR)
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -98,29 +95,10 @@ func _on_browser_closed() -> void:
 	_resume_button.grab_focus()
 
 
-func _volume_row(text: String, value: float, on_changed: Callable) -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 6)
-	var label := UiStyle.label(text, 8, UiStyle.TEXT_COLOR)
-	label.custom_minimum_size.x = 40
-	row.add_child(label)
-	var slider := HSlider.new()
-	slider.min_value = 0.0
-	slider.max_value = 1.0
-	slider.step = 0.05
-	slider.value = value
-	slider.custom_minimum_size = Vector2(90, 12)
-	slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	slider.focus_mode = Control.FOCUS_NONE
-	slider.value_changed.connect(on_changed)
-	row.add_child(slider)
-	return row
-
-
-## Przy zmianie głośności efektów od razu słychać, jak głośno będzie.
-func _on_sfx_volume(value: float) -> void:
-	Sfx.set_sfx_volume(value)
-	Sfx.play("ui_click")
+func _on_settings() -> void:
+	var settings := SettingsWindow.new()
+	settings.closed.connect(func() -> void: _resume_button.grab_focus())
+	add_child(settings)
 
 
 func _on_load() -> void:

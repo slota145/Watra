@@ -42,6 +42,7 @@ var _hero_previews: Array = []
 func _ready() -> void:
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF  # animacje menu idą w _process
 	Sfx.stop_ambient()
+	Sfx.play_music("menu")
 	theme = UiStyle.make_menu_theme()
 
 	_build_scene()
@@ -112,6 +113,7 @@ func _ready() -> void:
 	var load_game := UiStyle.menu_button("Wczytaj grę", _show_saves)
 	load_game.disabled = saves.is_empty()
 	box.add_child(load_game)
+	box.add_child(UiStyle.menu_button("Ustawienia", _show_settings))
 	box.add_child(UiStyle.menu_button("Wyjdź z gry", Game.quit_game))
 
 	(continue_button if not continue_button.disabled else new_game).grab_focus()
@@ -181,6 +183,12 @@ func _show_saves() -> void:
 	browser.mode = "load"
 	browser.closed.connect(func() -> void: (_menu.get_child(_menu.get_child_count() - 2) as Button).grab_focus())
 	add_child(browser)
+
+
+func _show_settings() -> void:
+	var settings := SettingsWindow.new()
+	settings.closed.connect(func() -> void: (_menu.get_child(_menu.get_child_count() - 2) as Button).grab_focus())
+	add_child(settings)
 
 
 func _show_menu() -> void:

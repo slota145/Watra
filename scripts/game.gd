@@ -39,10 +39,64 @@ func _ready() -> void:
 	_migrate_legacy_save()
 	_setup_cursor()
 	get_tree().root.size_changed.connect(_setup_cursor)
+	_load_display_settings()
 	# nad przyciskami kursor z rozżarzonym kamieniem
 	get_tree().node_added.connect(func(node: Node) -> void:
 		if node is BaseButton:
 			(node as BaseButton).mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND)
+
+
+## Ustawienia obrazu (okno ustawień, zapisane w tym samym pliku co głośność).
+const SETTINGS_PATH := "user://settings.cfg"
+var fullscreen := false
+var vsync := true
+## Mnożnik trzęsienia ekranu (0 - wyłączone, 1 - pełne).
+var screen_shake := 1.0
+
+
+func _load_display_settings() -> void:
+	var config := ConfigFile.new()
+	if config.load(SETTINGS_PATH) == OK:
+		fullscreen = bool(config.get_value("display", "fullscreen", fullscreen))
+		vsync = bool(config.get_value("display", "vsync", vsync))
+		screen_shake = clampf(float(config.get_value("display", "screen_shake", screen_shake)), 0.0, 1.0)
+	_apply_display()
+
+
+func _apply_display() -> void:
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED)
+	if DisplayServer.get_name() == "headless":
+		return
+	var mode := DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
+	if DisplayServer.window_get_mode() != mode and not (mode == DisplayServer.WINDOW_MODE_WINDOWED
+			and DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_MAXIMIZED):
+		DisplayServer.window_set_mode(mode)
+
+
+func _save_display_settings() -> void:
+	var config := ConfigFile.new()
+	config.load(SETTINGS_PATH)
+	config.set_value("display", "fullscreen", fullscreen)
+	config.set_value("display", "vsync", vsync)
+	config.set_value("display", "screen_shake", screen_shake)
+	config.save(SETTINGS_PATH)
+
+
+func set_fullscreen(value: bool) -> void:
+	fullscreen = value
+	_apply_display()
+	_save_display_settings()
+
+
+func set_vsync(value: bool) -> void:
+	vsync = value
+	_apply_display()
+	_save_display_settings()
+
+
+func set_screen_shake(value: float) -> void:
+	screen_shake = clampf(value, 0.0, 1.0)
+	_save_display_settings()
 
 
 ## Kursor gry (żelazna strzałka z żarem, tools/menu_art.py) powiększony w pikselach razem z oknem - na

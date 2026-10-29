@@ -1728,7 +1728,8 @@ func _flash(color: Color) -> void:
 
 func _update_shake(delta: float) -> void:
 	_shake = move_toward(_shake, 0.0, 20.0 * delta)
-	camera.offset = Vector2(randf_range(-_shake, _shake), randf_range(-_shake, _shake))
+	var strength := _shake * Game.screen_shake
+	camera.offset = Vector2(randf_range(-strength, strength), randf_range(-strength, strength))
 
 
 # ---------------------------------------------------------------- ruch i animacja
