@@ -11,11 +11,11 @@ signal changed
 ## (mięso z plecaka/magazynu, złoto - przy błogosławieństwie rośnie z poziomem postaci).
 const DEFS := {
 	"stew": {"name": "Gulasz myśliwski", "group": "meal", "time": 900.0, "stats": {"health_percent": 0.10},
-			"description": "+10% maks. zdrowia", "meat": 2, "gold": 30},
+			"description": "+10% maks. zdrowia", "meat": 2, "gold": 30, "gold_per_level": 3},
 	"roast": {"name": "Pieczeń z dziczyzny", "group": "meal", "time": 900.0, "stats": {"health_regen": 3.0},
-			"description": "+3 zdrowia na sekundę", "meat": 3, "gold": 50},
+			"description": "+3 zdrowia na sekundę", "meat": 3, "gold": 50, "gold_per_level": 4},
 	"broth": {"name": "Rosół z ziołami", "group": "meal", "time": 900.0, "stats": {"mana_regen": 2.0, "move_speed": 0.03},
-			"description": "+2 many na sekundę, +3% szybkości ruchu", "meat": 1, "gold": 20},
+			"description": "+2 many na sekundę, +3% szybkości ruchu", "meat": 1, "gold": 20, "gold_per_level": 2},
 	"bless_wisdom": {"name": "Błogosławieństwo mądrości", "group": "blessing", "time": 1200.0, "stats": {"xp_gain": 0.10},
 			"description": "+10% doświadczenia", "gold": 40, "gold_per_level": 8},
 	"bless_might": {"name": "Błogosławieństwo siły", "group": "blessing", "time": 1200.0, "stats": {"damage_percent": 0.05},

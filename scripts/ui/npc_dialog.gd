@@ -14,7 +14,9 @@ signal forge_requested
 signal offers_requested(kind: String, npc: Npc)
 const OFFER_SERVICES := {"meals": "Kuchnia", "blessing": "Błogosławieństwo", "bestiary": "Bestiariusz", "reforge": "Przekuwanie"}
 
-const REST_PRICE := 25
+## Odpoczynek w karczmie: 20 zł + 3 zł za poziom postaci.
+static func rest_price(level: int) -> int:
+	return 20 + 3 * level
 
 const CLOSE_DISTANCE := 60.0
 const WIDTH := 230.0
@@ -96,7 +98,7 @@ func _refresh() -> void:
 	for service in _npc.services:
 		match service:
 			"rest":
-				_buttons.add_child(_button("Odpocznij (%d zł)" % REST_PRICE, _rest))
+				_buttons.add_child(_button("Odpocznij (%d zł)" % rest_price(_player.stats.level), _rest))
 			"forge":
 				_buttons.add_child(_button("Wykuwanie", _forge))
 			"disenchant":
@@ -186,12 +188,13 @@ func _offers(kind: String) -> void:
 
 
 func _rest() -> void:
-	if _player.stats.gold < REST_PRICE:
-		_npc.say("Najpierw zapłać, przyjacielu. %d złota." % REST_PRICE)
+	var price := rest_price(_player.stats.level)
+	if _player.stats.gold < price:
+		_npc.say("Najpierw zapłać, przyjacielu. %d złota." % price)
 		Sfx.play("ui_error")
 		return
 	Sfx.play("coins")
-	_player.stats.add_gold(-REST_PRICE)
+	_player.stats.add_gold(-price)
 	close()
 	rest_requested.emit()
 

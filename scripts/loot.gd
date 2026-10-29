@@ -39,7 +39,12 @@ const TIER_VALUES := {
 	"cooldown_reduction": [0.01, 0.15], "gold_find": [0.03, 0.40], "xp_gain": [0.02, 0.25],
 }
 ## Mnożnik ceny sprzedaży wg jakości.
-const PRICE_FACTORS := {COMMON: 1, MAGIC: 2, RARE: 4, LEGENDARY: 1}
+## Cena skupu przedmiotu z łupu: z poziomu przedmiotu i jakości (nie z poziomu bazy - dawniej rzadki
+## przedmiot z Prastarego Lasu szedł za ponad 1600 zł, więcej niż złoto z setek potworów). Sprzedaż ma być
+## dodatkiem do złota z potworów (ok. 1/5 dochodu) - sprawdza tests/balance_sim.gd.
+const SELL_BASE := 5.0
+const SELL_GROWTH := 0.12
+const SELL_QUALITY := {COMMON: 1.0, MAGIC: 1.6, RARE: 2.5, LEGENDARY: 6.0}
 
 ## Premie możliwe dla rodzaju miejsca na postaci (co najmniej 8 - tyle ma najwięcej legendarny przedmiot).
 ## Broń i rękawice - walka, zbroja - przetrwanie, biżuteria - wszystkiego po trochu i premie do łupu.
@@ -251,8 +256,7 @@ static func register(recipe: Dictionary, id := "") -> String:
 	item["base"] = base
 	item["recipe"] = recipe
 	item.erase("price")  # nie ma go w sklepach
-	item["sell_price"] = roundi(int(item.get("sell_price", 5)) * PRICE_FACTORS.get(recipe["quality"], 1)
-			* (1.0 + (item_level - 1) * 0.05))
+	item["sell_price"] = sell_value(recipe["quality"], item_level)
 	Items.generated[id] = item
 	return id
 
@@ -274,6 +278,10 @@ static func reforge(id: String) -> Dictionary:
 	recipe["tiers"][stat] = tier
 	var new_id := register(recipe)
 	return {"id": new_id, "stat": stat, "before": before, "after": recipe["affixes"][stat]}
+
+
+static func sell_value(quality: String, item_level: int) -> int:
+	return maxi(1, roundi(SELL_BASE * (1.0 + SELL_GROWTH * (item_level - 1)) * SELL_QUALITY.get(quality, 1.0)))
 
 
 static func is_generated(id: String) -> bool:

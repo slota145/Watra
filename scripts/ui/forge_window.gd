@@ -5,7 +5,6 @@ extends PanelContainer
 ## broń - serca goblinów, zbroje - skóry jeleni, biżuteria - żabie języki. Surowce z plecaka
 ## i magazynu.
 
-const FORGE_LEVEL := 2
 const ROW_WIDTH := 300.0
 const LIST_HEIGHT := 230.0
 const OK_COLOR := Color(0.6, 1.0, 0.55)
@@ -81,12 +80,11 @@ func toggle() -> void:
 
 
 ## Koszt wykucia: "gold" i surowce (id -> ilość).
-static func cost(base: String, quality: String) -> Dictionary:
-	var item := Items.get_data(base)
-	var price: int = item.get("price", int(item.get("sell_price", 10)) * 3)
+static func cost(base: String, quality: String, level := 1) -> Dictionary:
 	var category := Enchanting.category(base)
 	var rare := quality == Loot.RARE
-	var result := {"gold": maxi(60, price * (5 if rare else 2)), "iron_ore": 25 if rare else 10}
+	# ok. 12 (magiczny) / 30 (rzadki) cen skupu takiego przedmiotu - kowal kuje na poziomie postaci
+	var result := {"gold": Loot.sell_value(quality, level) * (30 if rare else 12), "iron_ore": 25 if rare else 10}
 	if category != "jewelry":
 		result["wood"] = 15 if rare else 5
 	result[TROPHIES[category]] = 10 if rare else 4
@@ -143,7 +141,7 @@ func _option(base: String, quality: String) -> Control:
 	var label := UiStyle.label(Items.RARITY_NAMES[quality], 7, Items.RARITY_COLORS[quality])
 	label.custom_minimum_size.x = 46
 	line.add_child(label)
-	var price := cost(base, quality)
+	var price := cost(base, quality, _player.stats.level)
 	for id: String in price:
 		var icon := TextureRect.new()
 		icon.texture = Items.GOLD_ICON if id == "gold" else Items.get_data(id)["icon"]
@@ -166,7 +164,7 @@ func _option(base: String, quality: String) -> Control:
 
 
 func _forge(base: String, quality: String) -> void:
-	var price := cost(base, quality)
+	var price := cost(base, quality, _player.stats.level)
 	if not _can_pay(price) or not _player.inventory.can_add(base, 1):
 		Sfx.play("ui_error")
 		_status.text = "Brak surowców albo miejsca w plecaku"
@@ -177,7 +175,7 @@ func _forge(base: String, quality: String) -> void:
 			_player.stats.add_gold(-int(price[id]))
 		else:
 			_player.take_owned(id, int(price[id]))
-	var item_level := Loot.roll_item_level(FORGE_LEVEL)
+	var item_level := _player.stats.level
 	var item := Loot.generate(Loot.base_for(Items.get_data(base)["line"], item_level), quality, item_level)
 	_player.inventory.add_item(item, 1)
 	_player.item_picked.emit(item, 1)

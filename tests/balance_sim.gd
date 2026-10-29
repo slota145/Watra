@@ -3,7 +3,8 @@ extends SceneTree
 ## tego etapu (generator Loot, średnia z wielu przedmiotów), zaklęciem broni z kamieni zebranych po drodze
 ## (Levels.stone_chances i szanse Enchanting) i punktami atrybutów w sile - kontra potwory danej krainy
 ## przeskalowane do poziomu L (krzywe Levels razy siła typu względem zwykłego potwora krainy). Liczy: ile ciosów zabija zwykłego i silnego potwora, ile ciosów
-## zwykłego potwora zabija gracza, ile zabójstw na poziom postaci i złoto. Sprawdza docelowe widełki.
+## zwykłego potwora zabija gracza, ile zabójstw na poziom postaci, a w ekonomii: złoto ze 100 zabójstw
+## (z potworów i ze sprzedaży łupu) i ile zabójstw kosztują typowe zakupy. Sprawdza docelowe widełki.
 
 ## Potwory wzorcowe krain (statystyki sceny i poziom, na który jest dostrojona): [nazwa, zdrowie, obrażenia, xp, złoto średnio]
 const ENEMIES := {
@@ -19,6 +20,13 @@ const TARGET_STRONG := Vector2(6.0, 18.0)
 const TARGET_SURVIVE := Vector2(6.0, 20.0)
 const TARGET_KILLS := Vector2(8.0, 90.0)
 const SAMPLES := 40
+## Ekonomia: ile zabójstw (złota z nich) kosztuje przekucie, doskonały kamień u kupca i błogosławieństwo,
+## i jaką część dochodu daje sprzedaż łupu.
+const TARGET_REFORGE := Vector2(8.0, 60.0)
+const TARGET_PERFECT := Vector2(120.0, 600.0)
+const TARGET_BLESSING := Vector2(5.0, 40.0)
+const TARGET_SALES := Vector2(0.08, 0.4)
+const EQUIPMENT_CHANCE := 0.04
 
 var loot
 var items
@@ -74,7 +82,11 @@ func _run() -> void:
 	items = load("res://scripts/items.gd")
 	levels = load("res://scripts/levels.gd")
 	enchanting = load("res://scripts/enchanting.gd")
-	print("  L  kraina    gracz  broń(zakl) ciosy:zwykły silny  przeżywa  zabójstw/poz  złoto/100")
+	print("  L  kraina    gracz  broń(zakl) ciosy:zwykły silny  przeżywa  zabójstw/poz  złoto/100 (łup)  zabójstw na: przekucie  dosk.kamień  błogosł.")
+	var quality_share := {}
+	for i in 4000:
+		var q: String = loot.roll_quality()
+		quality_share[q] = quality_share.get(q, 0.0) + 1.0 / 4000.0
 	var weapon_stones := 0.0
 	var last_level := 0
 	for L: int in STAGES:
@@ -108,13 +120,27 @@ func _run() -> void:
 		var hits_normal := normal_hp / hit
 		var hits_strong := strong_hp / hit
 		var survive := hp / maxf(normal_dmg, 1.0)
-		var gold: float = levels.gold(L) * normal[4] / ref[3] * 100.0
-		print("%3d  %-9s %3d   %5.1f(+%.1f)   %5.1f  %6.1f    %6.1f      %6.1f      %6.0f" % [L, zone, player_level,
-				hit, enchant, hits_normal, hits_strong, survive, kills_per_level, gold])
+		var kill_gold: float = levels.gold(L) * normal[4] / ref[3]
+		var sale := 0.0
+		for q in quality_share:
+			sale += quality_share[q] * loot.sell_value(q, L + 1)
+		var per_kill := kill_gold + EQUIPMENT_CHANCE * sale
+		var sales_share := EQUIPMENT_CHANCE * sale / per_kill
+		var reforge := (30.0 + 8.0 * L) / per_kill
+		var perfect: float = items.get_data("weapon_stone_perfect")["price"] / per_kill
+		var blessing: float = (40.0 + 8.0 * (player_level - 1)) / per_kill
+		print("%3d  %-9s %3d   %5.1f(+%.1f)   %5.1f  %6.1f    %6.1f      %6.1f      %6.0f (%2d%%)        %5.0f      %6.0f     %5.0f" % [
+				L, zone, player_level, hit, enchant, hits_normal, hits_strong, survive, kills_per_level, per_kill * 100.0,
+				roundi(sales_share * 100.0), reforge, perfect, blessing])
 		_check(hits_normal, TARGET_NORMAL, "L%d: ciosy na zwykłego" % L)
 		_check(hits_strong, TARGET_STRONG, "L%d: ciosy na silnego" % L)
 		_check(survive, TARGET_SURVIVE, "L%d: przeżywa ciosów" % L)
 		_check(kills_per_level, TARGET_KILLS, "L%d: zabójstw na poziom" % L)
+		_check(reforge, TARGET_REFORGE, "L%d: zabójstw na przekucie" % L)
+		if L >= 18:  # doskonałe kamienie są w grze od gór
+			_check(perfect, TARGET_PERFECT, "L%d: zabójstw na doskonały kamień" % L)
+		_check(blessing, TARGET_BLESSING, "L%d: zabójstw na błogosławieństwo" % L)
+		_check(sales_share, TARGET_SALES, "L%d: udział sprzedaży łupu" % L)
 	print("WYNIK: ", "OK" if _fails == 0 else "%d poza widełkami" % _fails)
 	quit()
 
