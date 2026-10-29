@@ -1,4 +1,4 @@
-extends Node2D
+﻿extends Node2D
 ## Generuje leśną planszę: trawę, dekoracje, przeszkody (drzewa i głazy do zbierania, krzaki)
 ## oraz obozowiska goblinów i grupki goblinów w lesie. Brzegi mapy to gęsty las,
 ## a w środku stoi osada Ostoja (patrz Settlement), w której gracz startuje
@@ -29,7 +29,7 @@ extends Node2D
 @export var camp_radius := 12
 ## Obszar goblinów jako ułamek mapy - domyślnie lewy górny róg.
 ## Obozy i grupki pojawiają się tylko tutaj.
-@export var goblin_area := Rect2(0.0, 0.0, 0.45, 0.5)
+@export var goblin_area := Rect2(0.0, 0.0, 0.5, 0.62)
 ## Minimalny odstęp obozu i grupki od osady (w kafelkach, od palisady).
 @export var settlement_clearance := 8.0
 
@@ -146,6 +146,10 @@ const FOREST_PROPS := {
 	"barrel": preload("res://scenes/props/forest/barrel.tscn"),
 	"cauldron": preload("res://scenes/props/forest/cauldron.tscn"),
 	"palisade": preload("res://scenes/props/forest/palisade.tscn"),
+	"goblin_tent_0": preload("res://scenes/props/forest/goblin_tent_0.tscn"),
+	"goblin_tent_1": preload("res://scenes/props/forest/goblin_tent_1.tscn"),
+	"goblin_tent_2": preload("res://scenes/props/forest/goblin_tent_2.tscn"),
+	"goblin_tent_3": preload("res://scenes/props/forest/goblin_tent_3.tscn"),
 	"wolf_den": preload("res://scenes/props/forest/wolf_den.tscn"),
 	"carcass": preload("res://scenes/props/forest/carcass.tscn"),
 	"ribcage": preload("res://scenes/props/forest/ribcage.tscn"),
@@ -165,6 +169,12 @@ const BONE_TEXTURES: Array[Texture2D] = [preload("res://assets/forest/props/bone
 ## Przeszkody w głębi siedliska wilków: martwe drzewa, ciernie, głazy, pale z czaszkami.
 const WILD_PROPS := ["dead_tree", "dead_tree", "thorns", "thorns", "boulders", "hollow_log", "dead_stump", "flat_rock", "skull_pole"]
 const CAMP_CLUTTER := ["weapon_rack", "hide_rack", "shields", "pots", "barrel"]
+## Duże namioty obozu goblinów (każdy obóz dostaje różne), ich odległość od kręgu ognisk (kafelki),
+## odstęp pali barykady i szerokość wyjść (piksele).
+const CAMP_TENTS := ["goblin_tent_0", "goblin_tent_1", "goblin_tent_2", "goblin_tent_3"]
+const CAMP_TENT_RING := 3.6
+const CAMP_STAKE_SPACING := 34.0
+const CAMP_GATE_WIDTH := 64.0
 const DECO_FRAMES := 31
 
 const GRASS_TILES: Array[Vector2i] = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(3, 1)]
@@ -295,6 +305,12 @@ var _goblin_spawns: Array[Dictionary] = []
 ## Żywe gobliny według id miejsca.
 var _live_goblins := {}
 var _camp_cells := {}
+## Obozy goblinów zaplanowane przed ułożeniem podłoża (_plan_camp): ogniska, namioty i wyjścia (w kafelkach).
+var _camp_layouts: Array[Dictionary] = []
+## Udeptana ziemia obozów (place wokół ognisk, ścieżki) - podłoże jak droga.
+var _camp_dirt := {}
+## Cały teren obozów goblinów - bez drobiazgów runa (patyki, liście, grzyby).
+var _goblin_camp_cells := {}
 ## Kolory przeszkód na mapie, według komórki.
 var _map_props := {}
 var _map_markers: Array[Dictionary] = []
@@ -462,8 +478,8 @@ func _generate_forest() -> void:
 		var pos := (_settlement.spawn_point - Vector2(0, 20)) / TILE
 		shrines["ostoja"] = [pos.x, pos.y]
 
-	for camp_tile in _camp_tiles:
-		_build_camp(camp_tile * TILE)
+	for layout in _camp_layouts:
+		_build_camp(layout)
 	for group_tile in _group_tiles:
 		_build_group(group_tile * TILE)
 	_build_chief_lair(_chief_lair * TILE)
@@ -627,15 +643,22 @@ func _plan_goblin_sites() -> void:
 
 	# cały obóz (z polaną) mieści się w obszarze goblinów
 	var camp_area := _shrink_to_map(area.grow(-camp_radius), border_thickness + camp_radius + 1)
+	# obozy nie nachodzą na siebie (każdy ma barykadę na obrzeżu)
 	var camp_ok := func(tile: Vector2) -> bool:
 		return _distance_to_rect(tile, palisade) >= camp_radius + settlement_clearance \
-				and tile.distance_to(_chief_lair) >= camp_radius + lair_radius + 3
+				and tile.distance_to(_chief_lair) >= camp_radius + lair_radius + 3 \
+				and _far_from(tile, _camp_tiles, camp_radius * 2.0 + 2.0)
 	for i in camp_count:
-		var tile := _pick_spread(camp_area, _camp_tiles, camp_ok)
+		# także pierwszy obóz jak najdalej (od leża wodza) - zostaje miejsce na kolejne
+		var taken: Array[Vector2] = _camp_tiles.duplicate()
+		taken.append(_chief_lair)
+		var tile := _pick_spread(camp_area, taken, camp_ok, 400)
 		if tile.is_finite():
 			_camp_tiles.append(tile)
 			_reserve_area(tile, camp_radius)
 			_mark_camp_area(tile, camp_radius - 2.0)
+	for tile in _camp_tiles:
+		_camp_layouts.append(_plan_camp(tile))
 
 	# grupki kręcą się w lesie wokół obozów, w tym samym rogu mapy
 	var group_area := _shrink_to_map(area, border_thickness + 4)
@@ -711,17 +734,66 @@ func _cells_in_radius(center_tile: Vector2, radius: float) -> Array[Vector2i]:
 	return cells
 
 
-## Obóz: ogniska z goblinami siedzącymi w kółku i namioty na obrzeżach.
-func _build_camp(camp_center: Vector2) -> void:
+## Układ obozu goblinów - planowany przed ułożeniem podłoża, żeby udeptana ziemia trafiła na podłoże:
+## ogniska w kręgu wokół środka, duże namioty między nimi na obrzeżu (wejściem w dół), dwa wyjścia od
+## ognisk naprzeciw siebie. Udeptane są place wokół ognisk i na środku oraz kręte ścieżki między sąsiednimi
+## ogniskami, od ognisk do środka, od wejść namiotów do ognisk i od ognisk do wyjść (aż za obóz).
+func _plan_camp(center_tile: Vector2) -> Dictionary:
 	var fires := _rng.randi_range(campfires_per_camp_min, campfires_per_camp_max)
-	var fire_distance := 84.0 if fires <= 3 else 100.0
+	var fire_distance := (84.0 if fires <= 3 else 100.0) / TILE
 	var base_angle := _rng.randf() * TAU
+	var layout := {"center": center_tile, "fires": [], "tents": [], "exits": []}
 	for i in fires:
-		var angle := base_angle + TAU * i / fires
-		var fire_pos := camp_center + Vector2.from_angle(angle) * fire_distance
+		layout["fires"].append(center_tile + Vector2.from_angle(base_angle + TAU * i / fires) * fire_distance)
+		layout["tents"].append(center_tile + Vector2.from_angle(base_angle + TAU * (i + 0.5) / fires) * (fire_distance + CAMP_TENT_RING))
+	@warning_ignore("integer_division")
+	for i in [0, fires / 2]:
+		layout["exits"].append(base_angle + TAU * i / fires)
+	for cell in _cells_in_radius(center_tile, camp_radius):
+		_goblin_camp_cells[cell] = true
+	_trample_patch(center_tile, 2.6)
+	for i in fires:
+		var fire: Vector2 = layout["fires"][i]
+		_trample_patch(fire, 3.0)
+		_trample_path(fire, center_tile)
+		_trample_path(fire, layout["fires"][(i + 1) % fires])
+		_trample_path(layout["tents"][i] + Vector2(0, 0.6), fire)
+	for angle: float in layout["exits"]:
+		var path := _trample_path(center_tile + Vector2.from_angle(angle) * fire_distance,
+				center_tile + Vector2.from_angle(angle) * (camp_radius + 5.0))
+		for point in path:  # ścieżka za obozem - bez drzew na drodze
+			for cell in _cells_in_radius(point, 1.2):
+				_reserved[cell] = true
+	return layout
+
+
+## Nieregularny placyk udeptanej ziemi (brzeg poszarpany szumem).
+func _trample_patch(center_tile: Vector2, radius: float) -> void:
+	for cell in _cells_in_radius(center_tile, radius + 1.0):
+		var wobble := _noise.get_noise_2d(cell.x * 3.1, cell.y * 3.1) * 0.9
+		if (Vector2(cell) + Vector2(0.5, 0.5)).distance_to(center_tile) + wobble <= radius:
+			_camp_dirt[cell] = true
+
+
+## Kręta wydeptana ścieżka (punkty w kafelkach).
+func _trample_path(from_tile: Vector2, to_tile: Vector2) -> PackedVector2Array:
+	var path := Road.wiggle(from_tile, to_tile, _rng, 0.8, 3.0, 0.4)
+	for point in path:
+		for cell in _cells_in_radius(point, 0.75):
+			_camp_dirt[cell] = true
+	return path
+
+
+## Obóz: ogniska z goblinami siedzącymi w kółku, duże namioty z posłaniami i gratami po bokach (przy
+## jednym klatka z jeńcem), na środku kocioł, totem, sztandar i łupy z osiłkiem, przy wyjściach łucznicy
+## i stojaki na broń, a wokół barykada z zaostrzonych pali - z przerwami na wyjścia i kilkoma wyłomami.
+func _build_camp(layout: Dictionary) -> void:
+	var center: Vector2 = layout["center"] * TILE
+	var fires: Array = layout["fires"]
+	for fire_tile: Vector2 in fires:
+		var fire_pos := fire_tile * TILE
 		_spawn(CAMPFIRE, fire_pos)
 		_map_markers.append({"position": fire_pos, "color": MAP_FIRE, "size": 2.0})
-
 		var n := _rng.randi_range(goblins_per_fire_min, goblins_per_fire_max)
 		var offset := _rng.randf() * TAU
 		for k in n:
@@ -729,33 +801,53 @@ func _build_camp(camp_center: Vector2) -> void:
 			var pos := fire_pos + Vector2.from_angle(a) * Vector2(22 + 2.2 * n, 16 + 1.7 * n)
 			_add_goblin_spawn({"position": pos, "sitting": true, "look_at": fire_pos})
 
-		# namiot na obrzeżu obozu, pomiędzy ogniskami, a przy nim posłanie i graty
-		var tent_angle := angle + PI / fires
-		var tent_pos := camp_center + Vector2.from_angle(tent_angle) * (fire_distance + 62.0)
-		_spawn(FOREST_PROPS["hide_tent" if i % 2 == 0 else "tent"], tent_pos)
-		_map_markers.append({"position": tent_pos, "color": MAP_TENT, "size": 2.0})
-		var side := Vector2.from_angle(tent_angle + PI / 2) * (1 if _rng.randf() < 0.5 else -1)
-		_spawn(FOREST_PROPS["bedroll"], tent_pos + side * 32.0 + Vector2(0, 8))
-		_spawn(FOREST_PROPS[CAMP_CLUTTER[_rng.randi() % CAMP_CLUTTER.size()]], tent_pos - side * 32.0 + Vector2(0, 6))
-
-		# łucznicy pilnują obozu na skraju, przy co drugim ognisku
-		if i % 2 == 1:
-			var guard := camp_center + Vector2.from_angle(angle) * (fire_distance + 54.0)
-			_add_goblin_spawn({"type": "archer", "position": guard, "sitting": false, "look_at": guard * 2.0 - camp_center})
+	var tents: Array = layout["tents"]
+	var kinds: Array = CAMP_TENTS.duplicate()
+	for i in range(kinds.size() - 1, 0, -1):  # tasowanie z _rng - ten sam świat z tego samego ziarna
+		var j := _rng.randi_range(0, i)
+		var swap: String = kinds[i]
+		kinds[i] = kinds[j]
+		kinds[j] = swap
+	var cage_tent := _rng.randi_range(0, tents.size() - 1)
+	for i in tents.size():
+		var tent_pos: Vector2 = tents[i] * TILE
+		_spawn(FOREST_PROPS[kinds[i % kinds.size()]], tent_pos)
+		_map_markers.append({"position": tent_pos, "color": MAP_TENT, "size": 2.5})
+		# namiot stoi wejściem w dół - posłanie po jednej stronie, graty (albo klatka) po drugiej
+		var side := Vector2.RIGHT * (1.0 if _rng.randf() < 0.5 else -1.0)
+		_spawn(FOREST_PROPS["bedroll"], tent_pos + side * 48.0 + Vector2(0, 6))
+		var thing: String = "cage" if i == cage_tent else CAMP_CLUTTER[_rng.randi() % CAMP_CLUTTER.size()]
+		_spawn(FOREST_PROPS[thing], tent_pos - side * 52.0 + Vector2(0, 4))
 
 	# środek obozu: kocioł, totem z czaszką, sztandar i łupy, których pilnuje osiłek
-	_spawn(FOREST_PROPS["cauldron"], camp_center + Vector2(0, 4))
-	_spawn(FOREST_PROPS["skull_totem"], camp_center + Vector2(-26, -20))
-	_spawn(FOREST_PROPS["banner"], camp_center + Vector2(26, -22))
-	var loot_pos := camp_center + Vector2(_rng.randf_range(-6, 6), 30)
+	_spawn(FOREST_PROPS["cauldron"], center + Vector2(0, 4))
+	_spawn(FOREST_PROPS["skull_totem"], center + Vector2(-26, -20))
+	_spawn(FOREST_PROPS["banner"], center + Vector2(26, -22))
+	var loot_pos := center + Vector2(_rng.randf_range(-6, 6), 30)
 	_spawn(FOREST_PROPS["loot"], loot_pos)
-	_add_goblin_spawn({"type": "brute", "position": loot_pos + Vector2(22, 6), "sitting": false, "look_at": camp_center})
-	# klatka z jeńcem między ogniskami i kilka zaostrzonych palisad na obrzeżu
-	var cage_angle := base_angle + PI / fires
-	_spawn(FOREST_PROPS["cage"], camp_center + Vector2.from_angle(cage_angle) * (fire_distance * 0.55))
-	for k in 3:
-		var a := base_angle + TAU * (k + 0.5) / 3 + _rng.randf_range(-0.3, 0.3)
-		_spawn(FOREST_PROPS["palisade"], camp_center + Vector2.from_angle(a) * Vector2(fire_distance + 92.0, fire_distance + 76.0))
+	_add_goblin_spawn({"type": "brute", "position": loot_pos + Vector2(22, 6), "sitting": false, "look_at": center})
+
+	# barykada z pali na obrzeżu, przerwy na wyjścia; przy każdym wyjściu łucznik i stojak na broń
+	var ring := (camp_radius - 0.6) * TILE
+	var exits: Array = layout["exits"]
+	for angle: float in exits:
+		var dir := Vector2.from_angle(angle)
+		var gate := center + dir * (ring - 22.0)
+		_add_goblin_spawn({"type": "archer", "position": gate + dir.orthogonal() * 20.0, "sitting": false, "look_at": gate + dir * 60.0})
+		_spawn(FOREST_PROPS["weapon_rack"], gate - dir.orthogonal() * 30.0 - dir * 8.0)
+	var step := CAMP_STAKE_SPACING / ring
+	var phase := _rng.randf() * TAU
+	var a := 0.0
+	while a < TAU:
+		var at_gate := false
+		for angle: float in exits:
+			if absf(angle_difference(a, angle)) < CAMP_GATE_WIDTH / 2.0 / ring + step / 2.0:
+				at_gate = true
+		# rząd pali widać od frontu - barykada tylko na górnym i dolnym łuku (na bokach układała się
+		# w ukośne schodki), z kilkoma wyłomami (sinusoida po obwodzie)
+		if not at_gate and absf(sin(a)) > 0.6 and sin(a * 3.0 + phase) > -0.6:
+			_spawn(FOREST_PROPS["palisade"], center + Vector2.from_angle(a) * ring)
+		a += step
 
 
 func _build_group(group_center: Vector2) -> void:
@@ -904,7 +996,7 @@ func _lawn_corners() -> Dictionary:
 			var corner := Vector2i(x, y)
 			var road := 0
 			for cell in [corner - Vector2i(1, 1), corner - Vector2i(0, 1), corner - Vector2i(1, 0), corner]:
-				if _road_cells.has(cell):
+				if _road_cells.has(cell) or _camp_dirt.has(cell):
 					road += 1
 			# w mrocznym siedlisku wilków przeważa ciemna trawa
 			var dark_threshold := lerpf(0.25, -0.35, _wolf_strength(corner))
@@ -1025,7 +1117,8 @@ func _place_props() -> void:
 					_maybe_decor(cell, 0.06)
 				continue
 			if _reserved.has(cell):
-				_maybe_decor(cell, 0.08)
+				if not _goblin_camp_cells.has(cell):  # obóz goblinów bez patyków, liści i grzybów
+					_maybe_decor(cell, 0.08)
 				continue
 
 			var density := _noise.get_noise_2d(x, y)

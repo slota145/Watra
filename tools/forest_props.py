@@ -34,6 +34,11 @@ PROPS = {
     "barrel": ("camp", 13, 0.45, (12, 5)),
     "cauldron": ("camp", 14, 0.55, (22, 6)),
     "palisade": ("camp", 15, 0.6, (32, 6)),
+    # duże namioty obozu (paczka 128 px) - dawne z paczki 64 px były ledwie większe od goblina
+    "goblin_tent_0": ("camp_tents", 0, 0.62, (58, 10)),
+    "goblin_tent_1": ("camp_tents", 1, 0.62, (58, 10)),
+    "goblin_tent_2": ("camp_tents", 2, 0.62, (58, 10)),
+    "goblin_tent_3": ("camp_tents", 3, 0.62, (52, 10)),
     "wolf_den": ("wolves", 0, 0.75, (40, 10)),
     "carcass": ("wolves", 1, 0.6, None),
     "ribcage": ("wolves", 2, 0.6, (24, 6)),

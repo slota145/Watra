@@ -23,6 +23,9 @@ SRC = os.path.join(ROOT, "pixellab_src", "forest")
 OUT = os.path.join(ROOT, "assets", "forest")
 SCALE = hero_sheets.SCALE
 DIR = "south-east"
+## PixelLab narysował stan "Siedzi" goblina na całe płótno, tak wysoko jak stojącego (38 vs 36 px) - siedzący
+## wychodził większy niż po wstaniu. Sylwetkę siedzenia zmniejszamy, zostawiając ją opartą o ziemię.
+SIT_SCALE = 0.75
 
 
 def _open(path):
@@ -50,6 +53,8 @@ def build(name, rows, out_name=None):
     for r, paths in enumerate(rows):
         for c, path in enumerate(paths):
             img = _open(path)
+            if "Siedzi" in path:
+                img = _sitting(img)
             feet = ref_bottom + (img.height - reference.height) / 2.0
             placed.append((r, c, img, feet))
     left = right = up = down = 0.0
@@ -74,6 +79,16 @@ def build(name, rows, out_name=None):
     small.save(os.path.join(OUT, (out_name or name) + ".png"))
     w, h = round(cell_w * SCALE), round(cell_h * SCALE)
     return {"cell": [w, h], "offset_y": -(round(feet_y * SCALE) - h / 2.0)}
+
+
+def _sitting(img):
+    """Sylwetka siedzącego goblina zmniejszona do SIT_SCALE, wyśrodkowana i oparta o ten sam dół co oryginał."""
+    box = img.getbbox()
+    figure = img.crop(box)
+    small = hero_sheets.shrink_image(figure, round(figure.width * SIT_SCALE), round(figure.height * SIT_SCALE))
+    out = Image.new("RGBA", img.size)
+    out.alpha_composite(small, (round((box[0] + box[2]) / 2.0 - small.width / 2.0), box[3] - small.height))
+    return out
 
 
 def shrink(sheet, cell_w, cell_h):
