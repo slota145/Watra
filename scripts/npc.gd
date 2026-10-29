@@ -477,7 +477,8 @@ func _cycle_effect(station: Dictionary) -> void:
 	if kind != "":
 		var p := _make_effect(kind)
 		var side := -1.0 if facing.x < 0.0 else 1.0
-		p.position = Vector2(14.0 * side, -10.0)
+		# przodem do stanowiska (np. do pieca) - efekt nad nim, za postacią
+		p.position = Vector2(0, -26) if absf(facing.x) < 0.5 else Vector2(14.0 * side, -10.0)
 		add_child(p)
 		p.emitting = true
 		get_tree().create_timer(2.0).timeout.connect(p.queue_free)

@@ -94,6 +94,10 @@ def notes():
     sheet.save(os.path.join(OUT, "note.png"))
 
 
+# słupy wiaty kuźni na gotowej grafice 115x115 (lewy, przedni, prawy): (x0, y0, x1, y1), dół = podstawa słupa
+FORGE_POSTS = {"forge_post_l": (3, 52, 18, 91), "forge_post_m": (51, 70, 66, 115), "forge_post_r": (99, 53, 113, 91)}
+
+
 def forge_shed():
     """Wiata kuźni (dach na słupach) z PixelLab bez pieca i kowadła, które narysował pod dachem - gra stawia
     pod nią własny piec, kowadło i beczkę (kowal chodzi między nimi). Wycinamy wszystko pod krawędzią dachu
@@ -114,6 +118,12 @@ def forge_shed():
             for y in range(end + 2, 112):
                 px[x, y] = (0, 0, 0, 0)
     village_props.build("forge_shed", [img], 116 / village_props.GROWTH)
+    # słupy osobno (każdy sortowany wg własnej podstawy - nie zasłania tego, co stoi przed nim), dach bez nich
+    roof = Image.open(os.path.join(OUT, "forge_shed.png")).convert("RGBA")
+    for name, box in FORGE_POSTS.items():
+        roof.crop(box).save(os.path.join(OUT, name + ".png"))
+        roof.paste(Image.new("RGBA", (box[2] - box[0], box[3] - box[1])), box[:2])
+    roof.save(os.path.join(OUT, "forge_shed.png"))
 
 
 def carried():

@@ -401,8 +401,11 @@ const CELEBRATION_TIME := 600.0
 
 ## Kuźnia pod wiatą (kafelki układu): podstawa wiaty i stanowiska kowala.
 const FORGE_ROOF_BASE := Vector2(22.4, 33.6)
-const FORGE := {"furnace": Vector2(25.4, 32.6), "anvil": Vector2(23.6, 33.3), "quench": Vector2(21.0, 32.4),
+const FORGE := {"furnace": Vector2(23.4, 31.8), "anvil": Vector2(24.6, 33.45), "quench": Vector2(20.8, 32.3),
 		"crate": Vector2(19.6, 33.0)}
+## Słupy wiaty (osobne grafiki - każdy zasłania tylko to, co stoi za nim): podstawa względem FORGE_ROOF_BASE.
+const FORGE_POSTS := {"forge_post_l": Vector2(-2.136, -1.091), "forge_post_m": Vector2(0.045, 0.0),
+		"forge_post_r": Vector2(2.205, -1.091)}
 ## Pod dachem (kafelki układu) - gdy gracz tam wejdzie, dach robi się przezroczysty.
 const FORGE_UNDER := Rect2(20.0, 28.6, 5.8, 5.2)
 
@@ -958,15 +961,15 @@ func _build_yard() -> void:
 	# kuźnia pod wiatą obok szopy: piec z miechem, kowadło, beczka do hartowania i skrzynia na gotową broń;
 	# dach znika, gdy gracz wejdzie pod wiatę (_process_forge_roof)
 	_forge_roof = _prop("forge_shed", FORGE_ROOF_BASE)
-	for post: Vector2 in [Vector2(-1.9, -1.45), Vector2(0.0, -0.4), Vector2(2.1, -1.35)]:
-		_prop_collision(FORGE_ROOF_BASE + post, Vector2(6, 4))
+	for post: String in FORGE_POSTS:
+		_prop(post, FORGE_ROOF_BASE + FORGE_POSTS[post], Vector2(8, 4))
 	_prop("forge_furnace", FORGE["furnace"], Vector2(24, 8))
 	_glow(_px(FORGE["furnace"]) + Vector2(0, -12), Color(1, 0.5, 0.15, 0.5), Vector2(60, 44))
-	_prop("bellows", FORGE["furnace"] + Vector2(1.3, 0.2), Vector2(12, 4))
+	_prop("bellows", FORGE["furnace"] + Vector2(-1.2, 0.1), Vector2(12, 4))
 	_prop("anvil", FORGE["anvil"], Vector2(14, 4))
 	_prop("quench_barrel", FORGE["quench"], Vector2(10, 4))
 	_prop("weapon_crate", FORGE["crate"], Vector2(12, 4))
-	_prop("charcoal", FORGE["furnace"] + Vector2(0.9, 1.5))
+	_prop("charcoal", Vector2(25.9, 33.0))
 	_prop("ingots", FORGE["anvil"] + Vector2(1.1, 0.7))
 	_prop("tool_table", Vector2(25.6, 30.2), Vector2(18, 4))
 
@@ -1164,19 +1167,6 @@ func _process_forge_roof(delta: float) -> void:
 		return
 	var under := Rect2(_px(FORGE_UNDER.position), FORGE_UNDER.size * SCALE * TILE).has_point(_player.global_position)
 	_forge_roof.modulate.a = move_toward(_forge_roof.modulate.a, 0.3 if under else 1.0, delta * 3.0)
-
-
-## Sama kolizja (np. słup wiaty) w punkcie układu.
-func _prop_collision(tile_pos: Vector2, size: Vector2) -> void:
-	var body := StaticBody2D.new()
-	body.position = _px(tile_pos)
-	var shape := CollisionShape2D.new()
-	var box := RectangleShape2D.new()
-	box.size = size
-	shape.shape = box
-	shape.position = Vector2(0, -size.y / 2.0)
-	body.add_child(shape)
-	_entities.add_child(body)
 
 
 # ---------------------------------------------------------------- święto
@@ -1406,11 +1396,11 @@ func _build_npcs() -> void:
 	# kowal w kółko: rozgrzewa pręt w piecu, kuje na kowadle, hartuje w beczce, odkłada broń do skrzyni
 	var smith := _npc("smith", Vector2.ZERO, Npc.Role.CYCLE, LINES_SMITH, Vector2.RIGHT)
 	smith.stations = [
-		{"pos": _px(FORGE["furnace"] + Vector2(-1.0, -0.1)), "facing": Vector2.RIGHT, "time": 3.0, "effect": "fire",
+		{"pos": _px(FORGE["furnace"] + Vector2(0.0, 0.8)), "facing": Vector2.UP, "time": 3.0, "effect": "fire",
 				"sound": "", "carry": _tex("hot_bar")},
 		{"pos": _px(FORGE["anvil"] + Vector2(-1.0, 0.05)), "facing": Vector2.RIGHT, "time": 5.2, "work": true,
 				"effect": "sparks", "sound": "anvil", "carry": _tex("hot_bar")},
-		{"pos": _px(FORGE["quench"] + Vector2(0.9, 0.2)), "facing": Vector2.LEFT, "time": 1.6, "effect": "steam",
+		{"pos": _px(FORGE["quench"] + Vector2(0.7, 0.4)), "facing": Vector2.LEFT, "time": 1.6, "effect": "steam",
 				"sound": "step_water", "carry": _tex("blade")},
 		{"pos": _px(FORGE["crate"] + Vector2(0.9, 0.3)), "facing": Vector2.LEFT, "time": 1.0, "carry": null},
 	]
