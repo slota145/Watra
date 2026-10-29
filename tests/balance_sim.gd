@@ -141,8 +141,40 @@ func _run() -> void:
 			_check(perfect, TARGET_PERFECT, "L%d: zabójstw na doskonały kamień" % L)
 		_check(blessing, TARGET_BLESSING, "L%d: zabójstw na błogosławieństwo" % L)
 		_check(sales_share, TARGET_SALES, "L%d: udział sprzedaży łupu" % L)
+	_skills_report()
 	print("WYNIK: ", "OK" if _fails == 0 else "%d poza widełkami" % _fails)
 	quit()
+
+
+## Umiejętności na 5. poziomie: obrażenia (w obrażeniach broni) na punkt many, przy typowej liczbie
+## trafionych wrogów w grupie. Najlepsza nie może być więcej niż SKILL_SPREAD razy wydajniejsza od najsłabszej.
+const SKILL_SPREAD := 2.5
+
+
+func _skills_report() -> void:
+	var sk = load("res://scripts/skills.gd")
+	var lvl := 5
+	var chain := 0.0
+	var m: float = sk.CHAIN_DAMAGE
+	for i in sk.chain_targets(lvl):
+		chain += m
+		m *= sk.CHAIN_FALLOFF
+	var efficiency := {
+		"młynek (4 wrogów, 1 s)": sk.whirlwind_damage(lvl) * 4.0 / sk.WHIRLWIND_TICK / sk.WHIRLWIND_MANA_PER_SECOND,
+		"szarża (3 wrogów)": sk.lunge_damage(lvl) * 3.0 / sk.LUNGE_MANA,
+		"półksiężyc (4 wrogów)": sk.CRESCENT_DAMAGE * 4.0 / sk.CRESCENT_MANA,
+		"salwa (3 strzały)": sk.multishot_damage(lvl) * sk.MULTISHOT_ARROWS / sk.MULTISHOT_MANA,
+		"strzała tropiąca": sk.SEEKER_DAMAGE * sk.seeker_hits(lvl) / sk.SEEKER_MANA,
+		"szybka salwa": sk.VOLLEY_DAMAGE * sk.volley_arrows(lvl) / sk.VOLLEY_MANA,
+		"kula ognia (4 wrogów)": sk.fireball_damage(lvl) * 4.0 / sk.FIREBALL_MANA,
+		"łańcuch błyskawic": chain / sk.CHAIN_MANA,
+		"fala piorunów (5 wrogów)": sk.WAVE_DAMAGE * 5.0 / sk.WAVE_MANA,
+	}
+	print("Umiejętności (poz. 5) - obrażenia broni na punkt many:")
+	for name in efficiency:
+		print("   %-26s %.2f" % [name, efficiency[name]])
+	var values: Array = efficiency.values()
+	_check(values.max() / values.min(), Vector2(1.0, SKILL_SPREAD), "rozrzut wydajności umiejętności")
 
 
 func _check(value: float, window: Vector2, what: String) -> void:

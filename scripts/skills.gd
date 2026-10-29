@@ -112,7 +112,7 @@ const VOLLEY_MANA := 6.0
 const VOLLEY_DAMAGE := 0.7
 const CHAIN_MANA := 14.0
 const CHAIN_COOLDOWN := 2.4
-const CHAIN_DAMAGE := 1.3
+const CHAIN_DAMAGE := 1.6
 ## Każdy kolejny przeskok błyskawicy jest o tyle słabszy.
 const CHAIN_FALLOFF := 0.9
 const WAVE_MANA := 8.0
@@ -148,7 +148,7 @@ static func cost(id: String, level: int) -> int:
 # ---------------------------------------------------------------- wartości zależne od poziomu
 ## Młynek: procent obrażeń broni za każde uderzenie (co WHIRLWIND_TICK s).
 static func whirlwind_damage(level: int) -> float:
-	return 0.45 + 0.1 * level
+	return 0.35 + 0.08 * level
 
 
 static func whirlwind_radius(level: int) -> float:
@@ -157,7 +157,7 @@ static func whirlwind_radius(level: int) -> float:
 
 ## Salwa: procent obrażeń broni na strzałę.
 static func multishot_damage(level: int) -> float:
-	return 0.6 + 0.1 * level
+	return 0.75 + 0.12 * level
 
 
 ## Kula ognia: procent obrażeń broni w wybuchu i jego promień.
@@ -216,12 +216,12 @@ static func wave_radius(level: int) -> float:
 	return 120.0 + 12.0 * level
 
 
-static func health_regen(level: int) -> float:
-	return 0.8 * level
+static func health_regen(level: int, maximum := 0.0) -> float:
+	return 0.4 * level + 0.003 * level * maximum
 
 
-static func mana_regen(level: int) -> float:
-	return 1.0 * level
+static func mana_regen(level: int, maximum := 0.0) -> float:
+	return 0.5 * level + 0.004 * level * maximum
 
 
 static func mana_cost_text(id: String) -> String:
@@ -274,9 +274,9 @@ static func effect_text(id: String, level: int) -> String:
 			return "Stożek %d°, zasięg %d, %d%% obrażeń" % [wave_half_angle(level) * 2, wave_radius(level), roundi(WAVE_DAMAGE * 100)]
 	match DATA[id]["type"]:
 		"health_regen":
-			return "+%s zdrowia/s" % _decimal(health_regen(level), 1)
+			return "+%s zdrowia/s i %s%% maks. zdrowia/s" % [_decimal(0.4 * level, 1), _decimal(0.3 * level, 1)]
 		"mana_regen":
-			return "+%s many/s" % _decimal(mana_regen(level), 1)
+			return "+%s many/s i %s%% maks. many/s" % [_decimal(0.5 * level, 1), _decimal(0.4 * level, 1)]
 	return ""
 
 

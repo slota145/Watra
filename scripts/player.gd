@@ -434,13 +434,16 @@ func use_item(id: String) -> bool:
 
 	inventory.remove_item(id, 1)
 	Sfx.play("potion")
+	# mikstury leczą stałą wartość i procent maksimum - nie słabną z poziomem postaci
 	if effect.has("health"):
-		var healed := mini(int(effect["health"]), stats.max_health() - health)
+		var amount := int(effect["health"]) + roundi(float(effect.get("health_percent", 0.0)) * stats.max_health())
+		var healed := mini(amount, stats.max_health() - health)
 		health += healed
 		DamageNumber.spawn_text(get_parent(), text_pos, "+%d HP" % healed, Color(0.5, 1, 0.5))
 		_flash(Color(0.4, 1, 0.4))
 	if effect.has("mana"):
-		var restored := minf(float(effect["mana"]), stats.max_mana() - mana)
+		var amount := float(effect["mana"]) + float(effect.get("mana_percent", 0.0)) * stats.max_mana()
+		var restored := minf(amount, stats.max_mana() - mana)
 		mana += restored
 		DamageNumber.spawn_text(get_parent(), text_pos, "+%d many" % roundi(restored), Color(0.5, 0.7, 1))
 		_flash(Color(0.4, 0.6, 1))
@@ -828,7 +831,7 @@ func _regenerate_mana(delta: float) -> void:
 	if mana >= max_mp:
 		return
 	var before := int(mana)
-	var rate := mana_regen + skills.regen("mana_regen", stats.weapon_type()) + stats.mana_regen() \
+	var rate := mana_regen + skills.regen("mana_regen", stats.weapon_type(), max_mp) + stats.mana_regen() \
 			+ max_mp * _village_regen()
 	mana = minf(mana + rate * delta, max_mp)
 	if int(mana) != before:
@@ -837,7 +840,7 @@ func _regenerate_mana(delta: float) -> void:
 
 ## Regeneracja zdrowia z umiejętności pasywnych założonej broni i z przedmiotów.
 func _regenerate_health(delta: float) -> void:
-	var rate := skills.regen("health_regen", stats.weapon_type()) + stats.health_regen() \
+	var rate := skills.regen("health_regen", stats.weapon_type(), stats.max_health()) + stats.health_regen() \
 			+ stats.max_health() * _village_regen()
 	if rate <= 0.0 or health >= stats.max_health():
 		_health_regen_progress = 0.0

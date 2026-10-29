@@ -57,11 +57,12 @@ func _learned_of_type(weapon_type: String, kind: String) -> String:
 
 
 ## Regeneracja zdrowia/many (na sekundę) z umiejętności danego rodzaju broni.
-func regen(kind: String, weapon_type: String) -> float:
+func regen(kind: String, weapon_type: String, maximum := 0.0) -> float:
 	var total := 0.0
 	for id in Skills.for_weapon(weapon_type):
 		if Skills.DATA[id]["type"] == kind:
-			total += Skills.health_regen(level_of(id)) if kind == "health_regen" else Skills.mana_regen(level_of(id))
+			var level := level_of(id)
+			total += Skills.health_regen(level, maximum) if kind == "health_regen" else Skills.mana_regen(level, maximum)
 	return total
 
 
