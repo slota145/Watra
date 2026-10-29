@@ -172,6 +172,8 @@ const CAMP_CLUTTER := ["weapon_rack", "hide_rack", "shields", "pots", "barrel"]
 ## Duże namioty obozu goblinów (każdy obóz dostaje różne), ich odległość od kręgu ognisk (kafelki),
 ## odstęp pali barykady i szerokość wyjść (piksele).
 const CAMP_TENTS := ["goblin_tent_0", "goblin_tent_1", "goblin_tent_2", "goblin_tent_3"]
+## Wejście do leża wodza (lewy górny róg mapy) - od strony środka lasu.
+const CHIEF_LAIR_EXIT := Vector2(0.8, 0.6)
 const CAMP_TENT_RING := 3.6
 const CAMP_STAKE_SPACING := 34.0
 const CAMP_GATE_WIDTH := 64.0
@@ -1529,26 +1531,82 @@ func _plan_lairs() -> void:
 	for lair in [_chief_lair, _alpha_lair]:
 		_reserve_area(lair, lair_radius)
 		_mark_camp_area(lair, lair_radius - 2.0)
+	# leże wodza: cała arena udeptana i bez drobiazgów runa, wydeptana ścieżka wejścia w głąb lasu
+	# (własny generator - nie zmienia reszty świata z tego samego ziarna)
+	_trample_patch(_chief_lair, lair_radius + 0.5)
+	_reserve_area(_chief_lair, lair_radius + 2.0)
+	for cell in _cells_in_radius(_chief_lair, lair_radius + 1.0):
+		_goblin_camp_cells[cell] = true
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(_chief_lair)
+	var exit_from := _chief_lair + CHIEF_LAIR_EXIT * (lair_radius - 2.0)
+	for point in Road.wiggle(exit_from, _chief_lair + CHIEF_LAIR_EXIT * (lair_radius + 7.0), rng, 0.8, 3.0, 0.4):
+		for cell in _cells_in_radius(point, 0.9):
+			_camp_dirt[cell] = true
+			_reserved[cell] = true
 
 
-## Leże wodza: kościany tron, krąg totemów z czaszkami, ogniska i przyboczna straż.
+## Leże wodza - obóz jego przybocznych na udeptanej arenie: kościany tron, za nim łukiem cztery duże namioty
+## (z posłaniami, gratami i klatką z jeńcem), po bokach ogniska z siedzącymi goblinami i kotłem, łupy i tarcze
+## przy tronie, wokół barykada z pali (przerwa na wejście od południowego wschodu, przy niej czaszki na palach
+## i łucznik), na skraju stojaki z bronią i kości. Środek areny zostaje wolny do walki z wodzem.
 func _build_chief_lair(center: Vector2) -> void:
 	_spawn(FOREST_PROPS["bone_throne"], center + Vector2(0, -30))
-	for i in 8:
-		var pos := center + Vector2.from_angle(TAU * i / 8 + 0.2) * Vector2(110, 82)
-		_spawn(FOREST_PROPS["skull_totem"], pos)
 	for side in [-1, 1]:
 		_spawn(FOREST_PROPS["banner"], center + Vector2(34 * side, -46))
 		_spawn(FOREST_PROPS["loot" if side < 0 else "shields"], center + Vector2(44 * side, -16))
-		_spawn(FOREST_PROPS["weapon_rack"], center + Vector2(100 * side, 44))
 		_add_goblin_spawn({"type": "brute", "position": center + Vector2(28 * side, 10), "sitting": false, "look_at": center + Vector2(0, 60)})
-		_add_goblin_spawn({"type": "archer", "position": center + Vector2(92 * side, -36), "sitting": false, "look_at": center + Vector2(0, 80)})
-		var fire_pos := center + Vector2(64 * side, 20)
+		_spawn(FOREST_PROPS["weapon_rack"], center + Vector2(146 * side, 12))
+
+	# namioty łukiem za tronem, wejściem w dół; obok posłanie i graty, przy jednym klatka
+	var tents: Array[Vector2] = [Vector2(-122, -60), Vector2(-48, -104), Vector2(50, -104), Vector2(126, -58)]
+	for i in tents.size():
+		var tent_pos := center + tents[i]
+		_spawn(FOREST_PROPS[CAMP_TENTS[i % CAMP_TENTS.size()]], tent_pos)
+		_map_markers.append({"position": tent_pos, "color": MAP_TENT, "size": 2.5})
+		# skrajne namioty: posłanie przed wejściem od środka areny, graty od zewnątrz; środkowe: posłanie od
+		# zewnątrz, a graty (albo klatka) w przerwie do skrajnego namiotu - nic nie wypada poza arenę
+		var side := -1.0 if tents[i].x < 0.0 else 1.0
+		var outer := i == 0 or i == tents.size() - 1
+		var bed := tent_pos + (Vector2(-18 * side, 40) if outer else Vector2(20 * side, 40))
+		_spawn(FOREST_PROPS["bedroll"], bed)
+		var thing := tent_pos + (Vector2(26 * side, 38) if outer else Vector2(44 * side, 14))
+		_spawn(FOREST_PROPS["cage" if i == 1 else CAMP_CLUTTER[i % CAMP_CLUTTER.size()]], thing)
+		# przy posłaniu ktoś odpoczywa (przed nim - za posłaniem by go nie było widać)
+		_add_goblin_spawn({"position": bed + Vector2(0, 12), "sitting": true, "look_at": center})
+
+	# ogniska po bokach areny z siedzącymi w kółku, przy lewym kocioł, przy prawym beczki
+	for side in [-1, 1]:
+		var fire_pos := center + Vector2(90 * side, 42)
 		_spawn(CAMPFIRE, fire_pos)
 		_map_markers.append({"position": fire_pos, "color": MAP_FIRE, "size": 2.0})
 		for k in 3:
 			var a := TAU * k / 3 + _rng.randf_range(-0.2, 0.2)
 			_add_goblin_spawn({"position": fire_pos + Vector2.from_angle(a) * Vector2(28, 21), "sitting": true, "look_at": fire_pos})
+		_spawn(FOREST_PROPS["cauldron" if side < 0 else "barrel"], fire_pos + Vector2(34 * side, 22))
+		_spawn(FOREST_PROPS["log_seat"], fire_pos + Vector2(-6 * side, -30))
+
+	# barykada z pali na górnym i dolnym łuku (od frontu), przerwa na wejście; przy wejściu czaszki na palach
+	var ring := Vector2(lair_radius - 0.8, (lair_radius - 0.8) * 0.82) * TILE
+	var exit_angle := CHIEF_LAIR_EXIT.angle()
+	var a := 0.0
+	while a < TAU:
+		var open := absf(angle_difference(a, exit_angle)) < 0.38
+		if not open and absf(sin(a)) > 0.62:
+			_spawn(FOREST_PROPS["palisade"], center + Vector2.from_angle(a) * ring)
+		a += CAMP_STAKE_SPACING / ring.x
+	var gate := center + Vector2.from_angle(exit_angle) * ring
+	for side in [-1.0, 1.0]:
+		_spawn(FOREST_PROPS["skull_pole"], gate + CHIEF_LAIR_EXIT.orthogonal() * 34.0 * side)
+	_add_goblin_spawn({"type": "archer", "position": gate - CHIEF_LAIR_EXIT * 18.0 + CHIEF_LAIR_EXIT.orthogonal() * 22.0,
+			"sitting": false, "look_at": gate + CHIEF_LAIR_EXIT * 80.0})
+	_add_goblin_spawn({"type": "archer", "position": center + Vector2(-104, -18), "sitting": false, "look_at": center + Vector2(0, 80)})
+
+	# totemy z czaszkami na skraju areny, kości
+	for angle in [PI * 0.48, PI * 0.72, PI * 0.95, PI * 1.08]:
+		_spawn(FOREST_PROPS["skull_totem"], center + Vector2.from_angle(angle) * ring * 0.88)
+	for offset in [Vector2(-52, 82), Vector2(58, 92), Vector2(-150, -20), Vector2(0, -150)]:
+		_spawn(FOREST_PROPS["bone_pile"], center + offset)
 	_add_goblin_spawn({"type": "chief", "position": center, "sitting": false, "look_at": center, "respawn": boss_respawn_time})
 	_map_markers.append({"position": center, "color": MAP_BOSS, "size": 4.0})
 
