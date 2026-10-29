@@ -131,21 +131,73 @@ def build(name, images, old_size):
     return strip.size
 
 
-def palisade():
-    """Palisada jako pasy powtarzającego się wzoru pali (gra wycina 16-pikselowe kolumny wg pozycji):
-    w naprawie - pas z PixelLab z wyłamanymi palami; cała - nienaruszony fragment tego pasu (10 pali)
-    powtórzony trzy razy, żeby obie wersje miały ten sam styl."""
-    path = os.path.join(SRC, "props", "palisade_broken.png")
-    if not os.path.exists(path):
+# palisada z osobnych pali (Settlement._build_palisade stawia je gęsto wzdłuż owalu):
+# nazwa: (paczka, [klatki], skala) - wszystkie pale w jednej skali, żeby miały tę samą wysokość co w naturze
+PALISADE_SCALE = 0.55
+PALISADE = {
+    "palisade_stake": ("palisade_stakes", [0, 1, 13, 14, 7, 9, 3, 8, 6], PALISADE_SCALE),
+    "palisade_stake_broken": ("palisade_stakes", [11, 12], PALISADE_SCALE),
+    "palisade_tower": ("palisade_towers", [0, 2], 0.8),
+    "gate_post": ("palisade_gate_parts", [0, 1, 4], 0.62),
+    "palisade_scaffold": ("palisade_gate_parts", [6], 0.7),
+    "stake_pile": ("palisade_gate_parts", [7], 0.55),
+    "stake_fallen": ("palisade_gate_parts", [12], 0.55),
+}
+# łuk południowej bramy: paczka, klatka, skala, światło przejścia w świecie (px) - łuk z PixelLab jest za wąski,
+# więc rozcinamy go w połowie i wstawiamy powtórzony kawałek samej belki
+GATE_ARCH = ("palisade_gate_arch", 0, 0.8, 86)
+ARCH_SPLIT = 67          # środek łuku (piksele źródła)
+ARCH_BEAM_ROWS = (20, 40)  # wiersze belki (piksele źródła) - niżej jest tylko przejście i ziemia
+
+
+def _strip(images, scale):
+    cells = []
+    for img in images:
+        if scale < 1.0:
+            img = hero_sheets.shrink_image(img, max(1, round(img.width * scale)), max(1, round(img.height * scale)))
+        cells.append(img.crop(img.getbbox()))
+    w = max(c.width for c in cells)
+    h = max(c.height for c in cells)
+    strip = Image.new("RGBA", (w * len(cells), h))
+    for k, c in enumerate(cells):
+        strip.alpha_composite(c, (k * w + (w - c.width) // 2, h - c.height))
+    return strip
+
+
+def _gate_arch():
+    pack, frame, scale, opening = GATE_ARCH
+    src = _load(pack, frame)
+    if src is None:
         return
-    broken = Image.open(path).convert("RGBA")
-    broken.save(os.path.join(OUT, "palisade_broken.png"))
-    segment = broken.crop((101, 0, 173, broken.height))
-    whole = Image.new("RGBA", (segment.width * 3, broken.height))
-    for k in range(3):
-        whole.alpha_composite(segment, (k * segment.width, 0))
-    whole.save(os.path.join(OUT, "palisade.png"))
-    print("palisade", whole.size)
+    # ziemia pod łukiem znika (pod bramą i tak biegnie droga)
+    px = src.load()
+    for y in range(95, src.height):
+        for x in range(46, 89):
+            px[x, y] = (0, 0, 0, 0)
+    left, right = src.crop((0, 0, ARCH_SPLIT, src.height)), src.crop((ARCH_SPLIT, 0, src.width, src.height))
+    inner = 89 - 46  # światło przejścia w źródle
+    extra = max(0, round(opening / scale) - inner)
+    beam = src.crop((ARCH_SPLIT - 4, ARCH_BEAM_ROWS[0], ARCH_SPLIT + 4, ARCH_BEAM_ROWS[1]))
+    wide = Image.new("RGBA", (src.width + extra, src.height))
+    wide.alpha_composite(left, (0, 0))
+    for x in range(0, extra, beam.width):
+        wide.alpha_composite(beam, (ARCH_SPLIT + x, ARCH_BEAM_ROWS[0]))
+    wide.alpha_composite(right, (ARCH_SPLIT + extra, 0))
+    out = _strip([wide], scale)
+    out.save(os.path.join(OUT, "gate_arch.png"))
+    print("gate_arch", out.size)
+
+
+def palisade():
+    """Palisada: osobne pale (kilka wariantów), wyłamane pale fragmentu w naprawie, wieże na łukach owalu,
+    słupy bram, łuk bramy południowej i rusztowanie - paski klatek wyrównane do podstawy."""
+    for name, (pack, frames, scale) in PALISADE.items():
+        images = [_load(pack, f) for f in frames]
+        if all(images):
+            strip = _strip(images, scale)
+            strip.save(os.path.join(OUT, name + ".png"))
+            print(name, strip.size)
+    _gate_arch()
 
 
 def main():

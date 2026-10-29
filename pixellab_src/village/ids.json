@@ -61,7 +61,12 @@
   "furniture2": "7471cdd9-17e6-4937-8d5f-6889103a3591",
   "furniture3": "253dfdbc-2c78-41ba-a2af-55a0aa04b202",
   "furniture4": "03087bd4-3c29-4884-8462-6132f052f701",
-  "furniture5": "b189692e-d3f6-4d6e-bbe1-a7ef49a66368"
+  "furniture5": "b189692e-d3f6-4d6e-bbe1-a7ef49a66368",
+  "palisade_stakes": "2188faf0-6a28-4cae-a2be-6b40586108e7",
+  "palisade_towers": "06c9b140-66e2-4e4f-a326-9043def8c9dc",
+  "palisade_gate_towers": "3f2b3297-9267-4b2f-b05c-b660349a38af",
+  "palisade_gate_arch": "ee420ea0-803a-476c-bf1f-1d40d384ba69",
+  "palisade_gate_parts": "e0b24737-0f42-4b9f-b908-7672b6b11b70"
  },
  "props": {
   "stable": "b66fc970-6c38-495c-a17b-43d079a09650",

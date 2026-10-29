@@ -39,6 +39,14 @@ const GATE_ROWS := Vector2i(21, 24)
 const GATE_COLUMNS := Vector2i(31, 34)
 ## Fragment wschodniej palisady w naprawie (wiersze).
 const BROKEN_ROWS := Vector2i(27, 30)
+## Pale palisady stoją co STAKE_STEP pikseli wzdłuż owalu (na bokach gęściej - widać je jeden za drugim),
+## warianty z wagami (klatki palisade_stake.png). Wieże stoją na łukach owalu (kąty w przestrzeni półosi).
+const STAKE_STEP := Vector2(6.0, 3.5)
+const STAKE_WEIGHTS: Array[float] = [5, 4, 0.4, 0.4, 2, 2, 0.4, 1, 1]
+const TOWER_ANGLES: Array[float] = [-PI * 0.75, -PI * 0.25, PI * 0.25, PI * 0.75]
+const TOWER_CLEARANCE := 22.0
+## Szerokość pasa ubitej ziemi pod palisadą (w "promieniach" owalu, po obu stronach).
+const WALL_DIRT := 0.022
 
 const NPC_SCENE := preload("res://scenes/npc.tscn")
 const CAMPFIRE := preload("res://scenes/props/campfire.tscn")
@@ -389,7 +397,8 @@ func _build_ground() -> void:
 		for x in SIZE.x:
 			var cell := Vector2i(x, y)
 			var inside := _inside.has(cell)
-			var on_path := _on_path(Vector2(x + 0.5, y + 0.5) / SCALE, inside)
+			# pod palisadą pas ubitej ziemi, żeby pale stały na gruncie, a nie wyrastały z trawy
+			var on_path := _on_path(Vector2(x + 0.5, y + 0.5) / SCALE, inside) 					or absf(outline_distance(Vector2(x + 0.5, y + 0.5)) - 1.0) < WALL_DIRT
 			if not inside and not on_path:
 				continue
 			var tile: Vector2i = DIRT_TILES.pick_random() if on_path else YARD_TILES.pick_random()
@@ -415,7 +424,11 @@ func _on_path(point: Vector2, inside: bool) -> bool:
 
 
 func _is_gate(cell: Vector2i) -> bool:
-	var p := _layout(cell)
+	return _is_gate_point(_layout(cell))
+
+
+## Czy punkt układu leży w którejś bramie.
+func _is_gate_point(p: Vector2) -> bool:
 	if p.y >= GATE_ROWS.x and p.y < GATE_ROWS.y + 1:
 		return true
 	return p.y > CENTER.y and p.x >= GATE_COLUMNS.x and p.x < GATE_COLUMNS.y + 1
@@ -426,32 +439,138 @@ func _layout(cell: Vector2i) -> Vector2:
 	return (Vector2(cell) + Vector2(0.5, 0.5)) / SCALE
 
 
+## Punkt owalu palisady (kafelki układu) pod kątem `angle` w przestrzeni półosi.
+func _outline_point(angle: float) -> Vector2:
+	var q := CENTER + Vector2.from_angle(angle) * RADII
+	return CENTER + (q - CENTER) / outline_distance(q * SCALE)
+
+
+## Palisada z osobnych pali stojących gęsto wzdłuż gładkiego owalu (nie po kafelkach - bez schodków na łukach,
+## a na bokach pale stoją jeden za drugim). Na łukach wieże strażnicze, przy bramach zachodniej i wschodniej
+## słupy z latarnią/pochodnią, nad południową łuk z belką; fragment w naprawie ma wyłamane pale i rusztowanie.
+## Kolizja to łamana wzdłuż podstawy pali (przerwana w bramach). Własny generator - nie zużywa _rng świata.
 func _build_palisade() -> void:
-	var body := StaticBody2D.new()
-	body.position = rect.position
-	_entities.add_child(body)
 	for cell: Vector2i in _inside:
-		var edge := false
 		for dir: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
-			if not _inside.has(cell + dir):
-				edge = true
+			if not _inside.has(cell + dir) and not _is_gate(cell):
+				map_cells[origin_tile + cell] = MAP_PALISADE
 				break
-		if not edge or _is_gate(cell):
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(origin_tile)
+	var towers: Array[Vector2] = []
+	for angle in TOWER_ANGLES:
+		towers.append(_px(_outline_point(angle)))
+	var body := StaticBody2D.new()
+	_entities.add_child(body)
+	var run := PackedVector2Array()
+	var gate_ends: Array[Vector2] = []  # punkty, w których palisada urywa się przy bramie
+	var broken_points: Array[Vector2] = []
+	var samples := 2400
+	var previous := _outline_point(-PI)
+	var walked := 0.0
+	# start na zachodzie, w środku bramy - łamane kolizji zaczynają się i kończą na bramach
+	for i in samples + 1:
+		var point := _outline_point(-PI + TAU * i / samples)
+		var px := _px(point)
+		var delta := px - _px(previous)
+		previous = point
+		if _is_gate_point(point):
+			if run.size() > 0:
+				gate_ends.append(run[run.size() - 1])
+				_palisade_collision(body, run)
+				run = PackedVector2Array()
 			continue
-		var p := _layout(cell)
-		var broken := p.x > CENTER.x and p.y >= BROKEN_ROWS.x and p.y < BROKEN_ROWS.y + 1
-		# palisada to pas z powtarzającym się wzorem pali - kolumnę wycinamy wg pozycji, sąsiednie pasują do siebie
-		var stake := _prop("palisade_broken" if broken else "palisade", (Vector2(cell) + Vector2(0.5, 0.95)) / SCALE)
-		if stake.texture.get_width() > TILE:
-			stake.region_enabled = true
-			stake.region_rect = Rect2(posmod((origin_tile.x + cell.x) * TILE, stake.texture.get_width()), 0, TILE, stake.texture.get_height())
-		map_cells[origin_tile + cell] = MAP_PALISADE
-		var shape := CollisionShape2D.new()
-		var box := RectangleShape2D.new()
-		box.size = Vector2(16, 10)
-		shape.shape = box
-		shape.position = Vector2(cell * TILE) + Vector2(8, 9)
-		body.add_child(shape)
+		if run.is_empty():
+			gate_ends.append(px)
+			run.append(px)
+			walked = 0.0
+		walked += delta.length()
+		var step := lerpf(STAKE_STEP.x, STAKE_STEP.y, absf(delta.normalized().y))
+		if walked < step:
+			continue
+		walked -= step
+		run.append(px)
+		if towers.any(func(t: Vector2) -> bool: return t.distance_to(px) < TOWER_CLEARANCE):
+			continue
+		var broken := point.x > CENTER.x and point.y >= BROKEN_ROWS.x and point.y < BROKEN_ROWS.y + 1
+		if broken:
+			broken_points.append(point)
+			if rng.randf() < 0.6:
+				continue
+		_stake(rng, "palisade_stake_broken" if broken else "palisade_stake", px)
+	if run.size() > 1:
+		_palisade_collision(body, run)
+	for tower in towers:
+		var sprite := _prop("palisade_tower", (tower / TILE - Vector2(origin_tile)) / SCALE, Vector2(44, 10), 2)
+		sprite.frame = rng.randi() % 2
+		sprite.flip_h = tower.x > rect.get_center().x
+	_build_gates(gate_ends)
+	if not broken_points.is_empty():
+		var middle: Vector2 = broken_points[broken_points.size() / 2]
+		_prop("palisade_scaffold", middle + Vector2(-1.3, 0.2), Vector2(20, 6))
+		_prop("stake_pile", middle + Vector2(-2.6, 2.2), Vector2(18, 5))
+		_prop("stake_fallen", middle + Vector2(1.6, -1.4))
+
+
+func _stake(rng: RandomNumberGenerator, texture_name: String, px: Vector2) -> void:
+	var texture := _tex(texture_name)
+	var frames := texture.get_width() / texture.get_height() if texture_name == "palisade_stake_broken" else STAKE_WEIGHTS.size()
+	var sprite := Sprite2D.new()
+	sprite.texture = texture
+	sprite.hframes = frames
+	sprite.frame = rng.rand_weighted(PackedFloat32Array(STAKE_WEIGHTS)) if frames == STAKE_WEIGHTS.size() else rng.randi() % frames
+	sprite.offset = Vector2(0, -texture.get_height() / 2.0 + 1.0)
+	sprite.position = (px + Vector2(rng.randf_range(-0.8, 0.8), rng.randf_range(-0.6, 0.6))).round()
+	sprite.flip_h = rng.randf() < 0.5
+	var shade := rng.randf_range(0.9, 1.0)
+	sprite.modulate = Color(shade, shade, shade)
+	_entities.add_child(sprite)
+
+
+func _palisade_collision(body: StaticBody2D, run: PackedVector2Array) -> void:
+	if run.size() < 2:
+		return
+	var segments := PackedVector2Array()
+	for i in run.size() - 1:
+		segments.append_array([run[i], run[i + 1]])
+	var shape := CollisionShape2D.new()
+	var concave := ConcavePolygonShape2D.new()
+	concave.segments = segments
+	shape.shape = concave
+	body.add_child(shape)
+
+
+## Bramy: `ends` to piksele, w których palisada urywa się przy bramie. Zachodnia i wschodnia (pionowe przerwy)
+## dostają po dwa słupy z latarnią albo pochodnią, południowa - łuk z belką nad przejściem.
+func _build_gates(ends: Array[Vector2]) -> void:
+	var south: Array[Vector2] = []
+	for end in ends:
+		var p := (end / TILE - Vector2(origin_tile)) / SCALE
+		if p.y > GATE_ROWS.y + 2:
+			south.append(p)
+			continue
+		var below := p.y > ROAD_ROW
+		var post := _prop("gate_post", p + Vector2(0, 0.15), Vector2(10, 5), 3)
+		post.frame = 1 if below else 0
+		post.flip_h = p.x > CENTER.x
+		var light := _px(p) + Vector2(5.0 * (-1.0 if post.flip_h else 1.0), -22)
+		_glow(light, Color(1.0, 0.65, 0.25, 0.35), Vector2(44, 36))
+	if south.size() == 2:
+		var middle := (south[0] + south[1]) / 2.0 + Vector2(0, 0.15)
+		_prop("gate_arch", middle)
+		# słupy łuku mają kolizję, przejście nie
+		var half := _tex("gate_arch").get_width() / 2.0 - 12.0
+		var body := StaticBody2D.new()
+		body.position = _px(middle)
+		for side in [-1.0, 1.0]:
+			var shape := CollisionShape2D.new()
+			var box := RectangleShape2D.new()
+			box.size = Vector2(16, 8)
+			shape.shape = box
+			shape.position = Vector2(side * half, -4)
+			body.add_child(shape)
+			_glow(_px(middle) + Vector2(side * (half - 14.0), -32), Color(1.0, 0.65, 0.25, 0.35), Vector2(40, 34))
+		_entities.add_child(body)
 
 
 # ---------------------------------------------------------------- budynki
@@ -815,7 +934,7 @@ func _build_npcs() -> void:
 	map_markers.append({"position": _chief.position, "color": MAP_CHIEF, "size": 2.0})
 
 	for spot: Array in [[Vector2(9.9, 20.3), Vector2.LEFT], [Vector2(56.2, 20.3), Vector2.RIGHT],
-			[Vector2(30.8, 39.4), Vector2.DOWN], [Vector2(35.2, 39.4), Vector2.DOWN]]:
+			[Vector2(29.5, 39.2), Vector2.DOWN], [Vector2(36.5, 39.2), Vector2.DOWN]]:
 		var guard := _npc("guard", spot[0], Npc.Role.IDLE, LINES_GUARD, spot[1])
 		guard.looks_around = false
 		_entities.add_child(guard)
