@@ -14,11 +14,17 @@ const WATRA := Vector2(336, 246)
 const CHIMNEYS: Array[Vector2] = [Vector2(278, 196), Vector2(374, 186), Vector2(392, 206)]
 ## Jak daleko tło przesuwa się za myszą (piksele grafiki).
 const PARALLAX := 5.0
+const PAN_SHADER := preload("res://shaders/menu_pan.gdshader")
 const TITLE := "Watra"
 const SUBTITLE := "Dopóki płonie ogień, Ostoja trwa"
 
 var _time := 0.0
 var _scene: Node2D
+## Scena tła rysuje się do obrazu w rozmiarze grafiki, a na ekran trafia przez shader (płynne przesuwanie).
+var _viewport: SubViewport
+var _view: TextureRect
+var _birds_layer: Node2D
+var _pan := Vector2.ZERO
 var _sun_glow: Sprite2D
 var _rays: Array[Sprite2D] = []
 var _fire_glow: Sprite2D
@@ -119,7 +125,6 @@ func _process(delta: float) -> void:
 		var atlas: AtlasTexture = entry[0]
 		var frame := HeroRig.frame_index("walk", 0, int(_time * 6.0) % HeroRig.FRAMES)
 		atlas.region = Rect2((frame % HeroRig.FRAMES) * HeroRig.CELL, (frame / HeroRig.FRAMES) * HeroRig.CELL, HeroRig.CELL, HeroRig.CELL)
-	queue_redraw()
 
 
 ## Okno wyboru postaci do nowej gry: cztery postacie z PixelLab, chodzące w miejscu.
@@ -185,15 +190,32 @@ func _show_menu() -> void:
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_RESIZED and _scene != null:
+	if what == NOTIFICATION_RESIZED and _view != null:
 		_fit_scene()
 
 
 # ---------------------------------------------------------------- tło
 func _build_scene() -> void:
+	_viewport = SubViewport.new()
+	_viewport.size = Vector2i(BG_SIZE)
+	_viewport.transparent_bg = false
+	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	_viewport.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
+	add_child(_viewport)
 	_scene = Node2D.new()
-	_scene.show_behind_parent = true
-	add_child(_scene)
+	_viewport.add_child(_scene)
+	_view = TextureRect.new()
+	_view.texture = _viewport.get_texture()
+	_view.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_view.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_view.stretch_mode = TextureRect.STRETCH_SCALE
+	_view.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_view.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var material := ShaderMaterial.new()
+	material.shader = PAN_SHADER
+	_view.material = material
+	add_child(_view)
+	move_child(_view, 0)
 	var bg := Sprite2D.new()
 	bg.texture = BACKGROUND
 	bg.centered = false
@@ -236,24 +258,27 @@ func _build_scene() -> void:
 	_scene.add_child(_fire_glow)
 	_scene.add_child(_embers())
 	_scene.add_child(_motes())
+	_birds_layer = Node2D.new()
+	_birds_layer.draw.connect(_draw_birds)
+	_scene.add_child(_birds_layer)
 	_fit_scene()
 
 
-## Tło wypełnia ekran (zachowując proporcje, z zapasem na ruch za myszą) i jest wyśrodkowane.
+## Tło wypełnia ekran (zachowując proporcje, z zapasem na ruch za myszą): shader pokazuje wycinek obrazu.
 func _fit_scene() -> void:
 	var scale := maxf(size.x / BG_SIZE.x, size.y / BG_SIZE.y) * (1.0 + PARALLAX * 2.0 / BG_SIZE.x)
-	_scene.scale = Vector2.ONE * scale
-	_scene.set_meta("base", (size - BG_SIZE * scale) / 2.0)
-	_scene.position = _scene.get_meta("base")
+	(_view.material as ShaderMaterial).set_shader_parameter("visible", size / (BG_SIZE * scale))
 
 
 func _animate_scene(delta: float) -> void:
 	if _scene == null:
 		return
-	# lekki ruch za myszą (przesunięcie w stronę przeciwną do kursora)
-	var mouse := (get_local_mouse_position() / size - Vector2(0.5, 0.5)) * 2.0
-	var target: Vector2 = _scene.get_meta("base") - mouse.clamp(Vector2(-1, -1), Vector2.ONE) * PARALLAX * _scene.scale.x
-	_scene.position = _scene.position.lerp(target, minf(1.0, delta * 3.0))
+	# lekki ruch za myszą (wycinek przesuwa się w stronę kursora - tło odpływa w przeciwną), płynnie
+	var mouse := ((get_local_mouse_position() / size - Vector2(0.5, 0.5)) * 2.0).clamp(Vector2(-1, -1), Vector2.ONE)
+	var visible: Vector2 = (_view.material as ShaderMaterial).get_shader_parameter("visible")
+	var target := mouse * (Vector2.ONE - visible) / 2.0
+	_pan = _pan.lerp(target, 1.0 - exp(-delta * 3.0))
+	(_view.material as ShaderMaterial).set_shader_parameter("shift", _pan)
 	_sun_glow.scale = Vector2.ONE * (1.0 + sin(_time * 0.6) * 0.05)
 	for i in _rays.size():
 		_rays[i].modulate.a = 0.07 + 0.06 * sin(_time * 0.35 + i * 1.7)
@@ -262,7 +287,7 @@ func _animate_scene(delta: float) -> void:
 	for i in _mists.size():
 		_mists[i].region_rect.position.x = _time * (6.0 + i * 4.0)
 	_update_birds(delta)
-	queue_redraw()
+	_birds_layer.queue_redraw()
 
 
 ## Klucz ptaków przelatuje co jakiś czas po niebie (rysowany w _draw w przestrzeni tła).
@@ -282,20 +307,16 @@ func _update_birds(delta: float) -> void:
 	_birds = _birds.filter(func(b: Dictionary) -> bool: return (b["points"][0] as Vector2).x < BG_SIZE.x + 80)
 
 
-func _draw() -> void:
-	if _scene == null:
-		return
-	draw_set_transform(_scene.position, 0.0, _scene.scale)
+func _draw_birds() -> void:
 	for bird: Dictionary in _birds:
 		for k in bird["points"].size():
 			var p: Vector2 = (bird["points"][k] as Vector2).floor()
 			var up := sin(_time * 8.0 + bird["phase"] + k) > 0.0
 			var c := Color(0.16, 0.12, 0.18, 0.85)
-			draw_rect(Rect2(p, Vector2.ONE), c)
+			_birds_layer.draw_rect(Rect2(p, Vector2.ONE), c)
 			for side in [-1.0, 1.0]:
-				draw_rect(Rect2(p + Vector2(side, -1.0 if up else 0.0), Vector2.ONE), c)
-				draw_rect(Rect2(p + Vector2(side * 2.0, -2.0 if up else 1.0), Vector2.ONE), c)
-	draw_set_transform(Vector2.ZERO)
+				_birds_layer.draw_rect(Rect2(p + Vector2(side, -1.0 if up else 0.0), Vector2.ONE), c)
+				_birds_layer.draw_rect(Rect2(p + Vector2(side * 2.0, -2.0 if up else 1.0), Vector2.ONE), c)
 
 
 func _glow_sprite(color: Color, radius: int, material: Material) -> Sprite2D:
