@@ -29,6 +29,8 @@ uniform float dither_width = 0.0;
 // lekki cień rzucany na niższy teren tuż za brzegiem (kolor, krycie w alfie)
 uniform vec4 shadow_color : source_color = vec4(0.0, 0.0, 0.0, 0.0);
 uniform float shadow_width = 0.0;
+// woda: tekstura faluje (przesunięcie o piksel-dwa w rytm fal) i przesuwają się po niej błyski
+uniform bool animate = false;
 
 varying vec2 world_pos;
 
@@ -93,6 +95,17 @@ float level(vec2 p) {
 void fragment() {
 	vec2 p = floor(world_pos) + 0.5;
 	vec4 c = use_texture ? texture(terrain_tex, p / vec2(textureSize(terrain_tex, 0))) : texture(TEXTURE, UV);
+	if (animate && use_texture) {
+		vec2 q = p + vec2(sin(TIME * 0.7 + p.y * 0.045) * 1.6, cos(TIME * 0.55 + p.x * 0.035) * 1.2);
+		c = texture(terrain_tex, (floor(q) + 0.5) / vec2(textureSize(terrain_tex, 0)));
+		float glint = texture(noise_tex, p / 90.0 + vec2(TIME * 0.015, TIME * 0.006)).r
+				* texture(noise_tex, p / 47.0 - vec2(TIME * 0.012, 0.0)).r;
+		if (glint > 0.5) {
+			c.rgb = mix(c.rgb, vec3(0.85, 0.95, 1.0), 0.35);
+		} else if (glint > 0.45) {
+			c.rgb = mix(c.rgb, vec3(0.75, 0.88, 0.95), 0.12);
+		}
+	}
 	float v = full ? 1.0 : level(p);
 	if (v >= 0.5) {
 		if (v < 0.5 + rim_width) {

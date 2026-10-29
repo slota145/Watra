@@ -849,6 +849,12 @@ def main():
     alpine_tiles.main()
     import forest_ground  # podłoże Goblińskiego Lasu z zestawów Wang PixelLab 64 px
     forest_ground.main()
+    import zone_grounds  # podłoże Rozlewisk i Prastarego Lasu z zestawów Wang PixelLab 64 px
+    zone_grounds.main()
+    import swamp_v2  # rośliny brzegów, most i kładki Rozlewisk z PixelLab
+    swamp_v2.main()
+    import ancient_v2  # olbrzymie i wysokie drzewa oraz rekwizyty Prastarego Lasu z PixelLab
+    ancient_v2.main()
     import pixellab_items  # ikony przedmiotów 64 px, broń w ręku, ikony umiejętności i interfejsu z PixelLab (nadpisują)
     pixellab_items.build()
     print("Zapisano grafiki do", OUT)

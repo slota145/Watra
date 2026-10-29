@@ -20,7 +20,7 @@ const SETS := [
 	[47, "alpine", "rock"], [51, "alpine", "gravel"], [55, "grass", "cobble"],
 ]
 ## Kolejność rysowania (wyżej = na wierzchu); przy sprzecznych narożnikach wygrywa wyższy teren.
-const ORDER := ["soil", "grass", "alpine", "flowers", "leaves", "moss", "dark", "mud", "shallow", "deep",
+const ORDER := ["w_deep", "w_shallow", "w_mud", "soil", "grass", "alpine", "flowers", "leaves", "moss", "dark", "mud", "shallow", "deep",
 		"gravel", "rock", "road", "path", "cobble",
 		"meadow", "m_flowers", "m_dark", "m_scree", "m_rock", "m_snow", "m_path"]
 ## Tereny rysowane bezszwową teksturą w przestrzeni świata (zamiast kafelków 16 px z atlasu) - góry
@@ -66,6 +66,14 @@ const STYLES := {
 	"m_flowers": {"dither": 0.08, "noise": 0.6, "fine": 0.15},
 	"m_snow": {"rim": Color(0.75, 0.84, 0.95, 0.6), "rim_width": 0.04, "noise": 0.4, "fine": 0.12,
 			"shadow": Color(0.25, 0.27, 0.3, 0.6), "shadow_width": 0.035},
+	# rozlewiska: woda jest najniższym terenem, a trawa nawisa nad nią skarpą - poszarpany brzeg z ciemnym
+	# obrysem i szeroki cień pod skarpą na wodzie; woda faluje i błyska (animate)
+	"grass": {"rim": Color(0.07, 0.18, 0.06, 1.0), "rim_width": 0.05, "noise": 0.3, "fine": 0.16,
+			"shadow": Color(0.02, 0.07, 0.12, 0.6), "shadow_width": 0.15},
+	"w_mud": {"rim": Color(0.14, 0.08, 0.04, 0.7), "rim_width": 0.035, "noise": 0.42, "fine": 0.15,
+			"shadow": Color(0.02, 0.07, 0.07, 0.45), "shadow_width": 0.07},
+	"w_shallow": {"dither": 0.05, "noise": 0.5, "animate": true},
+	"w_deep": {"animate": true},
 }
 const SHADER := preload("res://shaders/soft_ground.gdshader")
 ## Kafelek-nośnik komórek warstw z teksturą (shader i tak rysuje teksturę terenu).
@@ -282,6 +290,7 @@ func _material(kind: String, field: Image, corner_count: Vector2i, full: bool, l
 	material.set_shader_parameter("dither_width", style.get("dither", 0.0))
 	material.set_shader_parameter("shadow_color", style.get("shadow", Color(0, 0, 0, 0)))
 	material.set_shader_parameter("shadow_width", style.get("shadow_width", 0.0))
+	material.set_shader_parameter("animate", style.get("animate", false))
 	return material
 
 

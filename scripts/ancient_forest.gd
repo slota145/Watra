@@ -32,10 +32,22 @@ const MAP_LEAVES := Color("5a3a20")
 const MAP_MOSS := Color("3e6a2a")
 const MAP_GIANT := Color("123018")
 const MAP_WEB := Color("b8b8c8")
-const SHADE := Color(0.02, 0.06, 0.03, 0.28)
+## Półmrok pod koronami - lżejszy niż na początku, żeby wrogowie byli czytelni (klimat dają smugi światła).
+const SHADE := Color(0.02, 0.06, 0.03, 0.2)
 
-const GIANT_TREES: Array[Texture2D] = [preload("res://assets/ancient/giant_tree_0.png"), preload("res://assets/ancient/giant_tree_1.png"),
-		preload("res://assets/ancient/giant_tree_2.png")]
+## Olbrzymy (ok. 6 postaci wzrostu) i wysokie drzewa lasu (ok. 3,5 postaci) - korony robią się półprzezroczyste,
+## gdy gracz wejdzie za nie (World/Occlusion); kolizję ma tylko pień.
+const GIANT_TREES: Array[Texture2D] = [preload("res://assets/ancient/v2_colossal_0.png"), preload("res://assets/ancient/v2_colossal_1.png"),
+		preload("res://assets/ancient/v2_colossal_2.png")]
+const TALL_TREES: Array[Texture2D] = [preload("res://assets/ancient/v2_tall_0.png"), preload("res://assets/ancient/v2_tall_1.png"),
+		preload("res://assets/ancient/v2_tall_2.png"), preload("res://assets/ancient/v2_tall_3.png")]
+## Część drzew w głębi lasu to wysokie drzewa (reszta - zwykłe dęby i sosny, które można ścinać).
+const TALL_CHANCE := 0.4
+const FOREST_EXTRAS: Array[Texture2D] = [preload("res://assets/ancient/v2_boulder.png"), preload("res://assets/ancient/v2_mossy_rocks.png"),
+		preload("res://assets/ancient/v2_roots.png"), preload("res://assets/ancient/v2_fallen_trunk.png"),
+		preload("res://assets/ancient/v2_mushroom_ring.png"), preload("res://assets/ancient/v2_ferns.png"),
+		preload("res://assets/ancient/v2_stump.png"), preload("res://assets/ancient/v2_hollow_log.png"),
+		preload("res://assets/ancient/v2_tall_grass.png")]
 const MENHIRS: Array[Texture2D] = [preload("res://assets/ancient/menhir_0.png"), preload("res://assets/ancient/menhir_1.png"),
 		preload("res://assets/ancient/menhir_2.png")]
 const ALTAR := preload("res://assets/ancient/altar_stump.png")
@@ -49,8 +61,8 @@ const WEB_SMALL := preload("res://assets/ancient/web_small.png")
 const WEB_HUGE := preload("res://assets/ancient/web_huge.png")
 const VICTIM := preload("res://assets/ancient/wrapped_victim.png")
 const EGG_SAC := preload("res://assets/ancient/egg_sac.png")
-const CLAW_TREE := preload("res://assets/ancient/claw_tree.png")
-const BROKEN_TREE := preload("res://assets/ancient/broken_tree.png")
+const CLAW_TREE := preload("res://assets/ancient/v2_claw_tree.png")
+const CLAW_STUMP := preload("res://assets/ancient/v2_claw_stump.png")
 const SCRATCHES := preload("res://assets/ancient/scratches.png")
 const BLOOD := preload("res://assets/ancient/blood.png")
 const SKULL_TOTEM := preload("res://assets/ancient/skull_totem.png")
@@ -292,8 +304,14 @@ func _place_forest(rng: RandomNumberGenerator) -> void:
 				continue
 			var d := dense.get_noise_2d(x, y)
 			var r := rng.randf()
-			if r < 0.014:
+			if r < 0.016:
 				_giant_tree(rng, cell)
+			elif r < 0.02 and not w._occupied.has(cell) and _free_area(cell, 1, 1):
+				# omszałe głazy, korzenie, powalone pnie, krąg grzybów, paprocie
+				_mark(cell, 1, 1)
+				var extra := FOREST_EXTRAS[rng.randi() % FOREST_EXTRAS.size()]
+				var blocking := extra in [FOREST_EXTRAS[0], FOREST_EXTRAS[1], FOREST_EXTRAS[3], FOREST_EXTRAS[7]]
+				_prop(extra, w._cell_to_world(cell), Vector2(22, 7) if blocking else Vector2.ZERO).flip_h = rng.randf() < 0.5
 			elif d > 0.1 and r < 0.13:
 				_plant(rng, cell, 0.65, 2)
 			elif r < 0.032:
@@ -322,17 +340,26 @@ func _plant(rng: RandomNumberGenerator, cell: Vector2i, oak_chance: float, spaci
 	var oak := rng.randf() < oak_chance
 	if w._occupied.has(cell):
 		return
+	# w głębi lasu część drzew to wysokie drzewa (bez ścinania); na brzegach mapy zwykłe
+	if spacing > 1 and rng.randf() < TALL_CHANCE:
+		if not _free_area(cell, 1, 1):
+			return
+		_mark(cell, 1, 1)
+		var tall := _prop(TALL_TREES[rng.randi() % TALL_TREES.size()], w._cell_to_world(cell), Vector2(14, 7))
+		tall.flip_h = rng.randf() < 0.5
+		w._map_props[cell] = MAP_OAK
+		return
 	w._try_place(OAK if oak else PINE, cell, spacing)
 	if w._occupied.has(cell):
 		w._map_props[cell] = MAP_OAK if oak else MAP_PINE
 
 
 func _giant_tree(rng: RandomNumberGenerator, cell: Vector2i) -> void:
-	if not _free_area(cell, 3, 2):
+	if not _free_area(cell, 4, 3):
 		return
-	_mark(cell, 3, 2)
+	_mark(cell, 4, 3)
 	_moss_spots.append(Vector2(cell) + Vector2(0.5, 0.5))
-	var sprite: Sprite2D = _prop(GIANT_TREES[rng.randi() % GIANT_TREES.size()], w._cell_to_world(cell), Vector2(40, 14))
+	var sprite: Sprite2D = _prop(GIANT_TREES[rng.randi() % GIANT_TREES.size()], w._cell_to_world(cell), Vector2(34, 12))
 	sprite.flip_h = rng.randf() < 0.5
 	for dy in range(-1, 1):
 		for dx in range(-1, 2):
@@ -505,7 +532,7 @@ func _build_beast_habitat(rng: RandomNumberGenerator) -> void:
 		w._map_markers.append({"position": pos, "color": Color(0.85, 0.45, 0.3), "size": 3.0})
 		for k in 2:
 			_prop(CLAW_TREE, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(50, 72), Vector2(14, 6))
-		_prop(BROKEN_TREE, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(50, 70), Vector2(12, 5))
+		_prop(CLAW_STUMP, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(50, 70), Vector2(14, 6))
 		for k in 4:
 			_floor(SCRATCHES, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(10, 50), rng.randf() * TAU)
 		for k in 2:

@@ -231,12 +231,21 @@ const SWAMP_RIVER_BANK := 4.6
 const WATER_LAYER := 8
 const MANGROVE := preload("res://scenes/props/tree_mangrove.tscn")
 const SHRINE := preload("res://scenes/props/shrine.tscn")
-const CATTAIL_TEXTURE := preload("res://assets/swamp/cattails.png")
-const REEDS_TEXTURE := preload("res://assets/swamp/reeds.png")
-const LILY_TEXTURE := preload("res://assets/swamp/lilies.png")
-const BRIDGE_DECK := preload("res://assets/swamp/bridge_deck.png")
-const BRIDGE_RAIL := preload("res://assets/swamp/bridge_rail.png")
-const BRIDGE_POST := preload("res://assets/swamp/bridge_post.png")
+const CATTAIL_TEXTURE := preload("res://assets/swamp/v2_cattails.png")
+const REEDS_TEXTURE := preload("res://assets/swamp/v2_reeds.png")
+const LILY_TEXTURE := preload("res://assets/swamp/v2_lilies.png")
+## Skarpy rzeki: kamienie, korzenie i kłody przy wodzie; most i kładki z desek (Rozlewiska po przeróbce).
+const BANK_ROCKS := preload("res://assets/swamp/v2_rocks.png")
+const BANK_ROOTS := preload("res://assets/swamp/v2_roots.png")
+const BANK_LOG := preload("res://assets/swamp/v2_log.png")
+const DECK_TEXTURE := preload("res://assets/swamp/v2_deck48.png")
+const WALK_H := preload("res://assets/swamp/v2_walk_h.png")
+const WALK_V := preload("res://assets/swamp/v2_walk_v.png")
+const BRIDGE_RAIL_V2 := preload("res://assets/swamp/v2_rail.png")
+const BRIDGE_POST_V2 := preload("res://assets/swamp/v2_post.png")
+const BRIDGE_END_L := preload("res://assets/swamp/v2_abutment_l.png")
+const BRIDGE_END_R := preload("res://assets/swamp/v2_abutment_r.png")
+const WATER_PILLAR := preload("res://assets/swamp/v2_pillar.png")
 const SIGNPOST_TEXTURE := preload("res://assets/swamp/signpost.png")
 ## Wioska żaboludzi: ile chat i gromad na brzegach, mieszkańcy, wódz i wystrój.
 const FROG_HUTS := 6
@@ -277,7 +286,6 @@ const BRAZIER := preload("res://assets/frogs/brazier.png")
 const CANOE := preload("res://assets/frogs/canoe.png")
 const CLAY_POTS := preload("res://assets/frogs/clay_pots.png")
 const SHELL_THRONE := preload("res://assets/frogs/shell_throne.png")
-const BOARDWALK := preload("res://assets/frogs/boardwalk.png")
 const ROAD_EDGE_TILE := Vector2i(2, 2)
 
 ## Ziarno, z którego wygenerowano mapę (zapisywane w zapisie gry).
@@ -296,6 +304,16 @@ const FOREST_GROUND := {
 	"dark": preload("res://assets/forest/ground/dark.png"), "flowers": preload("res://assets/forest/ground/flowers.png"),
 	# bruk osady kładziemy jako żwir (plac, główna droga, kuźnia)
 	"cobble": preload("res://assets/forest/ground/gravel.png"),
+}
+const SWAMP_GROUND := {
+	"grass": preload("res://assets/forest/ground/grass.png"), "road": preload("res://assets/forest/ground/road.png"),
+	"dark": preload("res://assets/forest/ground/dark.png"), "flowers": preload("res://assets/forest/ground/flowers.png"),
+	"w_deep": preload("res://assets/swamp/ground/water.png"), "w_shallow": preload("res://assets/swamp/ground/shallow.png"),
+	"w_mud": preload("res://assets/swamp/ground/mud.png"),
+}
+const ANCIENT_GROUND := {
+	"soil": preload("res://assets/ancient/ground/soil.png"), "moss": preload("res://assets/ancient/ground/moss.png"),
+	"leaves": preload("res://assets/ancient/ground/leaves.png"), "path": preload("res://assets/ancient/ground/path.png"),
 }
 var _rng := RandomNumberGenerator.new()
 var _noise := FastNoiseLite.new()
@@ -431,6 +449,10 @@ func _ready() -> void:
 		_generate_forest()
 	if zone == "forest":
 		_soft_textures = FOREST_GROUND
+	elif zone == "swamp":
+		_soft_textures = SWAMP_GROUND
+	elif zone == "ancient":
+		_soft_textures = ANCIENT_GROUND
 	_soft_ground = SoftGround.attach(ground, _soft_corners, _soft_low_corners, _soft_levels, _soft_textures)
 	# wysokie rekwizyty znikają, gdy gracz wejdzie za nie
 	var occlusion := Occlusion.new()
@@ -1905,7 +1927,9 @@ func _build_swamp_ground() -> void:
 	var levels := {}
 	for cell: Vector2i in _water:
 		var kind: String = _water[cell]
-		levels[cell] = 3 if kind == "deep" else 2 if kind == "shallow" else 1
+		# dawny brzeg (pas błota wzdłuż rzeki) jest teraz trawiastą skarpą; pod kładkami i pomostami woda
+		if kind != "bank":
+			levels[cell] = 3 if kind == "deep" else 2 if kind in ["shallow", "walk"] else 1
 	var corner_levels := {}
 	for y in map_size.y + 1:
 		for x in map_size.x + 1:
@@ -1929,6 +1953,35 @@ func _build_swamp_ground() -> void:
 			# zestaw przejść (błoto/płycizna/głębia) - niższe narożniki rysuje dolny teren zestawu
 			var mask := _corner_mask(cell_corners, top)
 			ground.set_cell(cell, 0, Vector2i(mask % 4, SWAMP_WANG_ROW + 4 * (top - 1) + mask / 4))
+	_swamp_soft_corners(corner_levels, lawn)
+
+
+## Narożniki terenów rozlewisk dla SoftGround: rzeka (cała jednym kolorem wody - płycizna przy brzegu
+## jest tylko do brodzenia), płycizna i błoto rozlewiska, a na lądzie łąka; przy wodzie zawsze zwykła
+## trawa, żeby skarpa nad wodą była jednolita.
+func _swamp_soft_corners(corner_levels: Dictionary, lawn: Dictionary) -> void:
+	for y in map_size.y + 1:
+		for x in map_size.x + 1:
+			var corner := Vector2i(x, y)
+			var level: int = corner_levels.get(corner, 0)
+			var in_marsh := ((Vector2(corner) - _swamp_center) / _swamp_radii).length() < 1.15
+			if level == 3 or level == 2 and not in_marsh:
+				_soft_corners[corner] = "w_deep"
+				continue
+			if level == 2:
+				_soft_corners[corner] = "w_shallow"
+				continue
+			# błotniste wysepki rozlewiska są teraz trawiaste (skarpa jak przy rzece)
+			var near_water := false
+			for dy in range(-1, 2):
+				for dx in range(-1, 2):
+					if corner_levels.get(corner + Vector2i(dx, dy), 0) >= 2:
+						near_water = true
+			var kind: int = lawn.get(corner, Lawn.GRASS)
+			if near_water or kind == Lawn.GRASS:
+				_soft_corners[corner] = "road" if kind == Lawn.ROAD else "grass"
+			else:
+				_soft_corners[corner] = {Lawn.DARK: "dark", Lawn.FLOWERS: "flowers", Lawn.ROAD: "road"}[kind]
 
 
 func _place_swamp_props() -> void:
@@ -1958,6 +2011,17 @@ func _place_swamp_props() -> void:
 				elif r < 0.25:
 					_water_plant(REEDS_TEXTURE, 2, cell, true)
 				continue
+			if kind == "bank" and _next_to_water(cell):
+				# skarpa nad wodą: kamienie, korzenie, kłoda wpadająca do wody, kępy trzciny
+				if r < 0.05:
+					_water_plant(BANK_ROCKS, 2, cell, false)
+					continue
+				if r < 0.07:
+					_water_plant(BANK_ROOTS, 1, cell, false)
+					continue
+				if r < 0.08:
+					_water_plant(BANK_LOG, 1, cell, true)
+					continue
 			if kind == "mud" or kind == "bank":
 				if r < 0.14:
 					_water_plant(CATTAIL_TEXTURE if r < 0.07 else REEDS_TEXTURE, 3 if r < 0.07 else 2, cell, true)
@@ -1984,6 +2048,13 @@ func _place_swamp_props() -> void:
 				_maybe_decor(cell, 0.07)
 
 
+func _next_to_water(cell: Vector2i) -> bool:
+	for dir: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+		if _water.get(cell + dir, "") in ["deep", "shallow"]:
+			return true
+	return false
+
+
 ## Roślina wodna bez kolizji: pałki i trzcina sortują się z postaciami, lilie leżą na wodzie.
 func _water_plant(texture: Texture2D, frames: int, cell: Vector2i, upright: bool) -> void:
 	var sprite := Sprite2D.new()
@@ -1999,7 +2070,8 @@ func _water_plant(texture: Texture2D, frames: int, cell: Vector2i, upright: bool
 		decor.add_child(sprite)
 
 
-## Drewniany most nad nurtem: pokład (pod postaciami), poręcze z obu stron i pale w wodzie.
+## Drewniany most nad nurtem: pokład z desek w poprzek (pod postaciami), poręcze z obu stron, słupy na końcach
+## i co kilka metrów, kamienne przyczółki na brzegach i pale w wodzie pod przednią krawędzią.
 func _build_bridge(cross: Vector2) -> void:
 	var y0 := floori(cross.y) - 1
 	var x_from := floori(cross.x - SWAMP_RIVER_SHALLOW) - 1
@@ -2008,28 +2080,64 @@ func _build_bridge(cross: Vector2) -> void:
 		for y in range(y0, y0 + 3):
 			var cell := Vector2i(x, y)
 			_bridge_cells[cell] = true
-			var deck := Sprite2D.new()
-			deck.texture = BRIDGE_DECK
-			deck.centered = false
-			deck.position = Vector2(cell * TILE)
-			floors.add_child(deck)
 			_map_props[cell] = MAP_BRIDGE
-		for row in [y0, y0 + 3]:
+	var left := Vector2(x_from * TILE, y0 * TILE)
+	var length := float(x_to - x_from + 1) * TILE
+	# pokład: odcinki 48 px (deski w poprzek mostu), ostatni przycięty
+	var x := 0.0
+	while x < length:
+		var deck := Sprite2D.new()
+		deck.texture = DECK_TEXTURE
+		deck.centered = false
+		deck.region_enabled = true
+		deck.region_rect = Rect2(0, 0, minf(48.0, length - x), 48)
+		deck.position = left + Vector2(x, 0)
+		floors.add_child(deck)
+		x += 48.0
+	# cień pod mostem na wodzie
+	var shade := ColorRect.new()
+	shade.position = left + Vector2(0, 48)
+	shade.size = Vector2(length, 4)
+	shade.color = Color(0.02, 0.06, 0.1, 0.45)
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	floors.add_child(shade)
+	# poręcze: tylna stoi na górnej krawędzi pokładu, przednia na dolnej (przed postaciami)
+	var rail_w := float(BRIDGE_RAIL_V2.get_width())
+	for edge_y in [y0 * TILE + 3.0, (y0 + 3) * TILE + 2.0]:
+		var rx := 0.0
+		while rx < length - 2.0:
 			var rail := Sprite2D.new()
-			rail.texture = BRIDGE_RAIL
+			rail.texture = BRIDGE_RAIL_V2
 			rail.centered = false
-			rail.offset = Vector2(0, -BRIDGE_RAIL.get_height() + 3)
-			rail.position = Vector2(x * TILE, row * TILE)
+			rail.region_enabled = true
+			rail.region_rect = Rect2(0, 0, minf(rail_w, length - rx), BRIDGE_RAIL_V2.get_height())
+			rail.offset = Vector2(0, -BRIDGE_RAIL_V2.get_height())
+			rail.position = Vector2(left.x + rx, edge_y)
 			entities.add_child(rail)
-		if (x - x_from) % 3 == 1:
+			rx += rail_w - 2.0
+		for px in [0.0, length * 0.5, length]:
 			var post := Sprite2D.new()
-			post.texture = BRIDGE_POST
-			post.offset = Vector2(0, -2)
-			post.position = Vector2(x * TILE + 8, (y0 + 3) * TILE + 9)
-			decor.add_child(post)
+			post.texture = BRIDGE_POST_V2
+			post.offset = Vector2(0, -BRIDGE_POST_V2.get_height() / 2.0 + 1.0)
+			post.position = Vector2(left.x + px, edge_y + 1.0)
+			entities.add_child(post)
+	# przyczółki z kamieni na brzegach i pale w wodzie pod przednią krawędzią
+	for end: Array in [[BRIDGE_END_L, left + Vector2(-10, 52)], [BRIDGE_END_R, left + Vector2(length + 10, 52)]]:
+		var stones := Sprite2D.new()
+		stones.texture = end[0]
+		stones.offset = Vector2(0, -(end[0] as Texture2D).get_height() / 2.0 + 1.0)
+		stones.position = end[1]
+		entities.add_child(stones)
+	var px := 24.0
+	while px < length - 16.0:
+		var pillar := Sprite2D.new()
+		pillar.texture = WATER_PILLAR
+		pillar.offset = Vector2(0, -WATER_PILLAR.get_height() / 2.0 + 2.0)
+		pillar.position = left + Vector2(px, 56)
+		decor.add_child(pillar)
+		px += 40.0
 	var body := StaticBody2D.new()
 	entities.add_child(body)
-	var length := float(x_to - x_from + 1) * TILE
 	for wall_y in [y0 * TILE - 1, (y0 + 3) * TILE - 4]:
 		var shape := CollisionShape2D.new()
 		var box := RectangleShape2D.new()
@@ -2085,14 +2193,14 @@ func _build_river_sounds() -> void:
 ## dookoła, połączone z wyspą wodza drewnianymi kładkami, oraz gromady żaboludzi na brzegach.
 func _plan_frog_village() -> void:
 	_frog_lair = _swamp_center
-	_make_island(_frog_lair, 8.5)
+	_make_platform(_frog_lair, Vector2i(8, 6))
 	var base := _rng.randf() * TAU
 	for i in FROG_HUTS:
 		var angle := base + TAU * i / FROG_HUTS + _rng.randf_range(-0.2, 0.2)
 		var hut := _swamp_center + Vector2.from_angle(angle) * _swamp_radii * _rng.randf_range(0.62, 0.74)
 		hut = hut.clamp(Vector2(8, 8), Vector2(map_size) - Vector2(8, 8))
 		_frog_huts.append(hut)
-		_make_island(hut, 4.6)
+		_make_platform(hut, Vector2i(4, 3))
 		_plan_walkway(_frog_lair, hut)
 	for i in FROG_GROUPS:
 		var angle := base + TAU * (i + 0.5) / FROG_GROUPS
@@ -2104,14 +2212,18 @@ func _plan_frog_village() -> void:
 		_reserve_area(spot, 2.5)
 
 
-## Wysepka suchego lądu (brzeg z błotnistym obrzeżem) - bez drzew, pod zabudowę.
-func _make_island(center: Vector2, radius: float) -> void:
-	for cell in _cells_in_radius(center, radius + 1.0):
-		var d := Vector2(cell).distance_to(center) + _noise.get_noise_2d(cell.x * 3.0, cell.y * 3.0) * 1.2
-		if d > radius or _water.get(cell, "") == "deep":
-			continue
-		_water[cell] = "mud" if d > radius - 1.0 else "bank"
-	_reserve_area(center, radius)
+## Pomost na palach nad wodą rozlewiska (wioska żabołaków): prostokąt z desek o ściętych narożnikach,
+## pod spodem woda (z cieniem i palami na brzegach - _build_frog_village), bez drzew.
+func _make_platform(center: Vector2, half: Vector2i) -> void:
+	var c := Vector2i(center.round())
+	for dy in range(-half.y, half.y + 1):
+		for dx in range(-half.x, half.x + 1):
+			if absi(dx) + absi(dy) > half.x + half.y - 2:  # ścięte narożniki
+				continue
+			var cell := c + Vector2i(dx, dy)
+			_water[cell] = "walk"
+			_walk_cells[cell] = true
+	_reserve_area(center, maxf(half.x, half.y) + 1.0)
 
 
 ## Kładka z desek nad płycizną (od brzegu wyspy wodza do wyspy z chatą). Biegnie w kształcie litery L
@@ -2146,11 +2258,13 @@ func _walk_cell(cell: Vector2i, horizontal: bool) -> void:
 func _build_frog_village() -> void:
 	# kładki: deski, ciemny brzeg pod spodem (cień na wodzie) i pale co kilka kafelków
 	for cell: Vector2i in _walk_cells:
+		# deski z tekstury 64 px w przestrzeni świata - sąsiednie kafelki pomostu łączą się bez szwów
 		var plank := Sprite2D.new()
-		plank.texture = BOARDWALK
-		plank.position = Vector2(cell * TILE) + Vector2(8, 8)
-		if not _walk_cells[cell]:
-			plank.rotation = PI / 2.0
+		plank.texture = WALK_H if _walk_cells[cell] else WALK_V
+		plank.centered = false
+		plank.region_enabled = true
+		plank.region_rect = Rect2(posmod(cell.x * TILE, 64), posmod(cell.y * TILE, 64), TILE, TILE)
+		plank.position = Vector2(cell * TILE)
 		floors.add_child(plank)
 		_map_props[cell] = MAP_BRIDGE
 	for cell: Vector2i in _walk_cells:
@@ -2171,9 +2285,10 @@ func _build_frog_village() -> void:
 			floors.add_child(rect)
 			if edge[0] == Vector2i.DOWN and (cell.x + cell.y) % 3 == 0:
 				var post := Sprite2D.new()
-				post.texture = BRIDGE_POST
-				post.position = top_left + Vector2(8, 15)
-				floors.add_child(post)
+				post.texture = WATER_PILLAR
+				post.offset = Vector2(0, -WATER_PILLAR.get_height() / 2.0 + 2.0)
+				post.position = top_left + Vector2(8, 20)
+				decor.add_child(post)
 
 	# wyspa wodza: tron z muszli, koksowniki z zielonym ogniem, totemy i straż
 	var lair := _frog_lair * TILE
