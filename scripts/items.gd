@@ -45,6 +45,7 @@ const CHANCE_EFFECTS := ["shockwave", "tide", "claws", "echo", "thunder", "whirl
 		"storm_arrows", "web_burst", "corpse_blast", "venom_chain", "feather_storm", "wind_shield",
 		"dance", "vine_snare", "pan_echo"]
 const EFFECT_TEXTS := {
+	"endless_whirl": "Wirujące Mgnienie (Mgnienie w trakcie Młynka) nie ma odnowienia, a Mgnienie zadaje +%s obrażeń",
 	"shockwave": "%s szans przy trafieniu: fala uderzeniowa rani trafionego i wszystkich wokół, ogłuszając ich",
 	"echo": "%s szans, że efekt przedmiotu (np. fala uderzeniowa) zadziała dwukrotnie",
 	"tide": "%s szans przy trafieniu: fala wody uderza stożkiem za trafionym, raniąc i odpychając wrogów",

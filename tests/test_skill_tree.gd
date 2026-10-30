@@ -117,7 +117,7 @@ func _check_points(p) -> void:
 	# więcej punktów na resztę testu
 	p.stats.level = 20
 	book.character_level = 20
-	for id in ["phys_1", "flicker", "smoke_burst", "whirl_reach", "endless_whirl"]:
+	for id in ["phys_1", "flicker", "smoke_burst", "whirl_reach", "whirl_dmg", "endless_whirl"]:
 		book.take("melee", id)
 	check("drzewko na poziomie 20", book.has_node_id("melee", "flicker") and book.has_node_id("melee", "smoke_burst")
 			and book.points_left() == 21 - book.points_spent() + 0)

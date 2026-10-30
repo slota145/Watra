@@ -6,6 +6,14 @@ extends Node
 ##   z odnowieniem; węzeł kluczowy Nieustający Wir znosi odnowienie (skoki trwają, dopóki trzymasz klawisz).
 ## - Dymne Wybuchy: przytrzymanie ładuje (1-3 rzędy po 3 wybuchy dymu w stożku przed postacią), puszczenie odpala.
 ##   Combo: zaraz po innej umiejętności wszystkie 9 wybuchów od razu, bez ładowania. Atak i czar jednocześnie.
+## - Rozpłatanie: szerokie cięcie z krwawieniem (po Mgnieniu podwójnym).
+## - Rozłupanie Ziemi: fala pęknięć przed postacią, rani i ogłusza (po Półksiężycu - pierścień dookoła).
+## - Riposta: krótka zasłona; cios w tym czasie nie rani, a postać kontratakuje wszystkich wokół (potem darmowa Szarża).
+## - Zew Peruna: okrzyk - premia do obrażeń, strach wrogów wokół i 3 kolejne ciosy krytyczne.
+## - Widmowe Ostrza (czar): krążące miecze raniące wrogów (po Młynku od razu wylatują we wrogów).
+## Węzły kluczowe: Nieustający Wir (wirujące Mgnienie bez odnowienia - albo Amulet Wiecznego Wiru), Taniec Ostrzy
+## (combo przyspiesza ataki), Dym i Cień (chmura po Dymnych Wybuchach: unik i darmowe Mgnienie), Krwawy Szał
+## (krwawienie leczy). Chwilowe premie trafiają do CharacterStats.temp_bonus i na listę efektów (statuses).
 
 const SMOKE_TAGS := ["attack", "spell"]
 const SMOKE_COLOR := Color(0.78, 0.78, 0.82)
@@ -13,6 +21,21 @@ const FLICKER_COLOR := Color(0.6, 0.85, 1.0)
 ## Odstęp między rzędami wybuchów (s) i promień cięcia po skoku Mgnienia.
 const SMOKE_RING_DELAY := 0.12
 const FLICKER_HIT_RADIUS := 30.0
+const BLOOD_COLOR := Color(0.8, 0.1, 0.1)
+const SPECTRAL_COLOR := Color(0.65, 0.85, 1.0)
+const PERUN_COLOR := Color(1.0, 0.85, 0.35)
+## Taniec Ostrzy: premia za combo, ile razy się kumuluje i jak długo trwa; Dym i Cień: chmura; Krwawy Szał: leczenie.
+const DANCE_STEP := 0.05
+const DANCE_STACKS := 5
+const DANCE_TIME := 4.0
+const CLOUD_TIME := 5.0
+const CLOUD_RADIUS := 70.0
+const CLOUD_DODGE := 0.3
+const FRENZY_LEECH := 0.3
+const ICONS := {
+	"war_cry": preload("res://assets/skills/war_cry.png"), "blade_dance": preload("res://assets/skills/ks_blade_dance.png"),
+	"smoke_shadow": preload("res://assets/skills/ks_smoke_shadow.png"), "riposte": preload("res://assets/skills/riposte.png"),
+}
 
 var _player: Player
 var _flicker_timer := 0.0
@@ -25,6 +48,19 @@ var _last_target: Goblin
 var _smoke_charge := -1.0
 var _smoke_stage := 0
 var _smoke_swirl: CPUParticles2D
+## odnowienia umiejętności: id -> [zostało, całość]
+var _cooldowns := {}
+var _parry_time := 0.0
+var _parry_ring: Node2D
+var _cry_time := 0.0
+var _forced_crits := 0
+var _dance_stacks := 0
+var _dance_time := 0.0
+## Chmura Dymu i Cienia: środek i ile jeszcze trwa.
+var _cloud_at := Vector2.ZERO
+var _cloud_time := 0.0
+var _cloud_node: CPUParticles2D
+var _blades: SpectralBlades
 
 
 func _init(player: Player) -> void:
@@ -41,22 +77,50 @@ func press(id: String) -> void:
 			_press_flicker()
 		"smoke_burst":
 			_press_smoke()
+		_:
+			if _cooldowns.get(id, [0.0])[0] > 0.0:
+				return
+			var cost := Skills.mana_cost(id)
+			if not _player.spend_mana(cost):
+				_player._hint("Za mało many")
+				return
+			match id:
+				"rend":
+					_rend()
+				"ground_slam":
+					_ground_slam()
+				"riposte":
+					_riposte()
+				"war_cry":
+					_war_cry()
+				"spectral_blades":
+					_spectral_blades()
 
 
 ## Przerwanie (śmierć, zmiana broni).
 func cancel() -> void:
 	_whirl_jumps_left = 0
 	_stop_smoke_charge()
+	_parry_time = 0.0
 
 
 func cooldown_of(id: String) -> Vector2:
 	if id == "flicker":
 		return Vector2(_whirl_cooldown, maxf(_whirl_cooldown_total, _whirl_cooldown))
-	return Vector2.ZERO
+	var entry: Array = _cooldowns.get(id, [0.0, 0.0])
+	return Vector2(entry[0], maxf(entry[1], entry[0]))
+
+
+func _start_cooldown(id: String, base: float) -> void:
+	var time: float = _player._cooldown(base, Skills.tags(id))
+	_cooldowns[id] = [time, time]
 
 
 func _physics_process(delta: float) -> void:
 	_whirl_cooldown = maxf(_whirl_cooldown - delta, 0.0)
+	for id: String in _cooldowns:
+		_cooldowns[id][0] = maxf(_cooldowns[id][0] - delta, 0.0)
+	_process_timed(delta)
 	if _player.is_dead:
 		cancel()
 		return
@@ -82,7 +146,7 @@ func _press_flicker() -> void:
 
 
 func _endless_whirl() -> bool:
-	return _player.skills.has_keystone("melee", "endless_whirl")
+	return _player.skills.has_keystone("melee", "endless_whirl") or _player.equipment.effect_power("endless_whirl") > 0.0
 
 
 func _process_flicker(delta: float) -> void:
@@ -101,6 +165,7 @@ func _process_flicker(delta: float) -> void:
 			if _jump(Skills.FLICKER_RANGE * 1.2, level, true):
 				_whirl_jumps_left -= 1
 				_player.note_skill("flicker")
+				_player.combo_used()
 			else:
 				_whirl_jumps_left = 0
 		return
@@ -110,6 +175,8 @@ func _process_flicker(delta: float) -> void:
 	if _player.is_dashing() or _player.is_charging_fireball() or _player.is_chopping():
 		return
 	var cost := Skills.FLICKER_MANA * (1.0 + _player.skills.tree_bonus("melee", "flicker_mana"))
+	if _in_cloud():
+		cost = 0.0
 	if _player.mana < cost:
 		_player._hint("Za mało many")
 		_flicker_timer = 0.3
@@ -157,7 +224,8 @@ func _jump(reach: float, level: int, spinning: bool) -> bool:
 	SkillEffects.bolt(_player.get_parent(), from + Player.BODY_OFFSET, _player.body_center(), 0.18, 3.0)
 	SkillEffects.crescent(_player.get_parent(), _player.body_center(), to_target.angle(), PI * 0.45, FLICKER_HIT_RADIUS + 6.0)
 	Sfx.play("dash" if spinning else "swing", 0.0, 1.2)
-	var multiplier := Skills.flicker_damage(level)
+	var multiplier := Skills.flicker_damage(level) * (1.0 + _player.skills.tree_bonus("melee", "flicker_damage")
+			+ _player.equipment.effect_power("endless_whirl"))
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
 		if enemy.hurt_center().distance_to(best.hurt_center()) <= FLICKER_HIT_RADIUS + enemy.hurt_radius:
 			_player.hit_enemy(enemy, _player._skill_damage(multiplier), _player.global_position, 90.0)
@@ -195,6 +263,7 @@ func _press_smoke() -> void:
 		_player._hint("Za mało many")
 		return
 	if _player.combo_with("smoke_burst"):
+		_player.combo_used()
 		_fire_smoke(3, true)
 		return
 	_smoke_charge = 0.0
@@ -258,6 +327,8 @@ func _fire_smoke(rows: int, combo: bool) -> void:
 	var level := _player.skills.level_of("smoke_burst")
 	_player._ranged_pose(aim)
 	_player.note_skill("smoke_burst")
+	if _player.skills.has_keystone("melee", "smoke_shadow"):
+		_start_cloud(origin + aim * Skills.SMOKE_DISTANCE[rows - 1] * 0.6)
 	if combo:
 		SkillEffects.spark(_player.get_parent(), _player.body_center(), Color(1.0, 0.9, 0.6), 12)
 	for ring in rows:
@@ -265,7 +336,8 @@ func _fire_smoke(rows: int, combo: bool) -> void:
 		for k in 3:
 			var at := origin + aim.rotated((k - 1) * spread) * Skills.SMOKE_DISTANCE[ring]
 			var timer := _player.get_tree().create_timer(ring * SMOKE_RING_DELAY + k * 0.02, false)
-			timer.timeout.connect(_burst.bind(at, Skills.SMOKE_RADIUS[ring], Skills.smoke_damage(level, ring)))
+			var bonus := (1.0 + _player.skills.tree_bonus("melee", "smoke_damage")) * (_player.combo_damage() if combo else 1.0)
+			timer.timeout.connect(_burst.bind(at, Skills.SMOKE_RADIUS[ring], Skills.smoke_damage(level, ring) * bonus))
 
 
 func _burst(at: Vector2, radius: float, multiplier: float) -> void:
@@ -306,3 +378,274 @@ static func _smoke_ramp(alpha: float) -> Gradient:
 			Color(0.42, 0.42, 0.48, alpha * 0.5), Color(0.35, 0.35, 0.4, 0.0)])
 	ramp.offsets = PackedFloat32Array([0.0, 0.35, 0.7, 1.0])
 	return ramp
+
+
+# ---------------------------------------------------------------- Rozpłatanie i krwawienie
+func _rend() -> void:
+	var level := _player.skills.level_of("rend")
+	var aim := _player._aim_direction()
+	var combo := _player.combo_with("rend")
+	if combo:
+		_player.combo_used()
+	_player._ranged_pose(aim)
+	_player.note_skill("rend")
+	var origin := _player.body_center()
+	var half := deg_to_rad(Skills.REND_ARC_DEGREES) / 2.0
+	SkillEffects.crescent(_player.get_parent(), origin, aim.angle(), half, Skills.REND_REACH)
+	Sfx.play("big_slash", 0.0, 1.1)
+	var bleed := Skills.rend_bleed(level) * (2.0 if combo else 1.0) * (_player.combo_damage() if combo else 1.0)
+	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
+		var to_enemy := enemy.hurt_center() - origin
+		if to_enemy.length() > Skills.REND_REACH + enemy.hurt_radius:
+			continue
+		if to_enemy.length() > enemy.hurt_radius and absf(angle_difference(aim.angle(), to_enemy.angle())) > half:
+			continue
+		_player.hit_enemy(enemy, _player._skill_damage(Skills.rend_damage(level)), _player.global_position, 80.0)
+		bleed_enemy(enemy, bleed)
+
+
+## Krwawienie: `multiplier` obrażeń broni rozłożone na BLEED_TICKS ran co pół sekundy (więcej z węzłów drzewka).
+## Z Krwawym Szałem rany leczą gracza.
+func bleed_enemy(enemy: Goblin, multiplier: float) -> void:
+	if not is_instance_valid(enemy) or enemy.state == Goblin.State.DEAD:
+		return
+	var total := _player._skill_damage(multiplier * (1.0 + _player.skills.tree_bonus("melee", "bleed_damage")))
+	var per_tick := maxi(1, roundi(float(total) / Skills.BLEED_TICKS))
+	var frenzy := _player.skills.has_keystone("melee", "blood_frenzy")
+	SkillEffects.spark(_player.get_parent(), enemy.hurt_center(), BLOOD_COLOR, 6)
+	for i in Skills.BLEED_TICKS:
+		_player.get_tree().create_timer(0.5 * (i + 1), false).timeout.connect(func() -> void:
+			if is_instance_valid(enemy) and enemy.state != Goblin.State.DEAD:
+				enemy.take_damage(per_tick, enemy.global_position, 0.0)
+				SkillEffects.spark(enemy.get_parent(), enemy.hurt_center(), Color(0.7, 0.05, 0.05), 2)
+				if frenzy and is_instance_valid(_player) and not _player.is_dead:
+					_player.heal(per_tick * FRENZY_LEECH))
+
+
+# ---------------------------------------------------------------- Rozłupanie Ziemi
+func _ground_slam() -> void:
+	var level := _player.skills.level_of("ground_slam")
+	_start_cooldown("ground_slam", Skills.SLAM_COOLDOWN)
+	var aim := _player._aim_direction()
+	var combo := _player.combo_with("ground_slam")
+	if combo:
+		_player.combo_used()
+	_player._ranged_pose(aim)
+	_player.note_skill("ground_slam")
+	_player.add_shake(4.0)
+	Sfx.play("explosion", -4.0, 0.7)
+	var origin := _player.global_position
+	var damage := Skills.slam_damage(level) * (_player.combo_damage() if combo else 1.0)
+	var stun := Skills.slam_stun(level) * (1.0 + _player.skills.tree_bonus("melee", "slam_stun"))
+	var layer := _player.get_tree().get_first_node_in_group("floor_layer")
+	var parent: Node = layer if layer != null else _player.get_parent()
+	var hit := {}
+	if combo:
+		SkillEffects.shockwave(_player.get_parent(), origin, Skills.SLAM_RING, Color(0.75, 0.6, 0.4))
+		SkillEffects.ground_crack(parent, origin, Skills.SLAM_RING * 0.7, 2.0)
+		for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
+			if enemy.global_position.distance_to(origin) <= Skills.SLAM_RING + enemy.hurt_radius:
+				_slam_hit(enemy, damage, stun, origin)
+		return
+	# fala pęknięć biegnie przed postacią
+	var steps := 6
+	for i in steps:
+		var at := origin + aim * (20.0 + (Skills.SLAM_LENGTH - 20.0) * i / (steps - 1))
+		_player.get_tree().create_timer(i * 0.05, false).timeout.connect(func() -> void:
+			if not is_instance_valid(_player):
+				return
+			SkillEffects.ground_crack(parent, at, Skills.SLAM_WIDTH, 1.6)
+			SkillEffects.spark(_player.get_parent(), at, Color(0.7, 0.55, 0.35), 5)
+			for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
+				if not hit.has(enemy) and enemy.global_position.distance_to(at) <= Skills.SLAM_WIDTH + enemy.hurt_radius:
+					hit[enemy] = true
+					_slam_hit(enemy, damage, stun, origin))
+
+
+func _slam_hit(enemy: Goblin, damage: float, stun: float, from: Vector2) -> void:
+	_player.hit_enemy(enemy, _player._skill_damage(damage), from, 60.0)
+	if enemy.state != Goblin.State.DEAD:
+		enemy.stun(stun)
+
+
+# ---------------------------------------------------------------- Riposta
+func _riposte() -> void:
+	_start_cooldown("riposte", Skills.RIPOSTE_COOLDOWN)
+	_parry_time = Skills.RIPOSTE_TIME
+	_player._ranged_pose(_player._aim_direction())
+	Sfx.play("swing", 0.0, 0.8)
+	if _parry_ring == null:
+		_parry_ring = _ParryRing.new()
+		_player.add_child(_parry_ring)
+		_parry_ring.position = Player.BODY_OFFSET
+	_parry_ring.visible = true
+
+
+## Wołane przez gracza przy otrzymaniu ciosu: w czasie zasłony cios nie rani, a postać kontratakuje.
+func try_parry(from: Vector2) -> bool:
+	if _parry_time <= 0.0:
+		return false
+	_parry_time = 0.0
+	if _parry_ring != null:
+		_parry_ring.visible = false
+	var level := _player.skills.level_of("riposte")
+	var damage := Skills.riposte_damage(level) * (1.0 + _player.skills.tree_bonus("melee", "riposte_damage"))
+	var origin := _player.body_center()
+	_player._invulnerable_timer = maxf(_player._invulnerable_timer, 0.4)
+	_player._face_direction(from - _player.global_position)
+	SkillEffects.crescent(_player.get_parent(), origin, (from - _player.global_position).angle(), PI * 0.9, Skills.RIPOSTE_RADIUS)
+	SkillEffects.spark(_player.get_parent(), origin, Color(1.0, 0.95, 0.7), 14)
+	DamageNumber.spawn_text(_player.get_parent(), origin + Vector2(0, -14), "Riposta!", Color(1.0, 0.9, 0.5), 9)
+	Sfx.play("hit_heavy", 2.0, 1.2)
+	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
+		if enemy.hurt_center().distance_to(origin) <= Skills.RIPOSTE_RADIUS + enemy.hurt_radius:
+			_player.hit_enemy(enemy, _player._skill_damage(damage), _player.global_position, 160.0)
+			if enemy.state != Goblin.State.DEAD:
+				enemy.stun(0.5)
+	# po udanej Ripoście Szarża jest darmowa (Skills.COMBOS)
+	_player.note_skill("riposte")
+	return true
+
+
+# ---------------------------------------------------------------- Zew Peruna
+func _war_cry() -> void:
+	var level := _player.skills.level_of("war_cry")
+	_start_cooldown("war_cry", Skills.CRY_COOLDOWN)
+	_cry_time = Skills.CRY_TIME
+	_forced_crits = Skills.CRY_CRITS
+	_player.note_skill("war_cry")
+	var origin := _player.global_position
+	SkillEffects.shockwave(_player.get_parent(), origin, Skills.CRY_RADIUS, PERUN_COLOR)
+	SkillEffects.bolt(_player.get_parent(), origin + Vector2(randf_range(-20, 20), -120), _player.body_center(), 0.3, 8.0)
+	Sfx.play("thunder", -2.0)
+	_player.add_shake(3.0)
+	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
+		if enemy.global_position.distance_to(origin) <= Skills.CRY_RADIUS:
+			enemy.fear(Skills.CRY_FEAR, origin)
+	_update_temp_bonus()
+
+
+## Wołane przy trafieniu: po Zewie Peruna kolejne ciosy są krytyczne.
+func take_forced_crit() -> bool:
+	if _forced_crits <= 0:
+		return false
+	_forced_crits -= 1
+	return true
+
+
+# ---------------------------------------------------------------- Widmowe Ostrza
+func _spectral_blades() -> void:
+	var level := _player.skills.level_of("spectral_blades")
+	_start_cooldown("spectral_blades", Skills.BLADES_COOLDOWN)
+	var combo := _player.combo_with("spectral_blades")
+	if combo:
+		_player.combo_used()
+	_player.note_skill("spectral_blades")
+	if is_instance_valid(_blades):
+		_blades.queue_free()
+	_blades = SpectralBlades.new()
+	_blades.player = _player
+	_blades.count = Skills.BLADES_COUNT + roundi(_player.skills.tree_bonus("melee", "blade_count"))
+	_blades.damage = Skills.blades_damage(level) * (_player.combo_damage() if combo else 1.0)
+	_blades.time_left = Skills.BLADES_TIME
+	_player.get_parent().add_child(_blades)
+	Sfx.play("magic", 0.0, 1.3)
+	if combo:
+		_blades.launch()
+
+
+# ---------------------------------------------------------------- premie czasowe i węzły kluczowe
+## Wykonane combo: Taniec Ostrzy dokłada ładunek szybkości ataku.
+func on_combo() -> void:
+	if not _player.skills.has_keystone("melee", "blade_dance"):
+		return
+	_dance_stacks = mini(_dance_stacks + 1, DANCE_STACKS)
+	_dance_time = DANCE_TIME
+	_update_temp_bonus()
+
+
+func _start_cloud(at: Vector2) -> void:
+	_cloud_at = at
+	_cloud_time = CLOUD_TIME
+	if is_instance_valid(_cloud_node):
+		_cloud_node.queue_free()
+	_cloud_node = CPUParticles2D.new()
+	_cloud_node.position = at
+	_cloud_node.amount = 40
+	_cloud_node.lifetime = 1.6
+	_cloud_node.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+	_cloud_node.emission_sphere_radius = CLOUD_RADIUS * 0.7
+	_cloud_node.gravity = Vector2(0, -6)
+	_cloud_node.initial_velocity_max = 8.0
+	_cloud_node.scale_amount_min = 5.0
+	_cloud_node.scale_amount_max = 10.0
+	_cloud_node.color_ramp = _smoke_ramp(0.45)
+	_player.get_parent().add_child(_cloud_node)
+	_update_temp_bonus()
+
+
+func _in_cloud() -> bool:
+	return _cloud_time > 0.0 and _player.global_position.distance_to(_cloud_at) <= CLOUD_RADIUS
+
+
+func _process_timed(delta: float) -> void:
+	var before := [_cry_time > 0.0, _dance_stacks, _in_cloud()]
+	if _parry_time > 0.0:
+		_parry_time -= delta
+		if _parry_time <= 0.0 and _parry_ring != null:
+			_parry_ring.visible = false
+	_cry_time = maxf(_cry_time - delta, 0.0)
+	_dance_time = maxf(_dance_time - delta, 0.0)
+	if _dance_time <= 0.0:
+		_dance_stacks = 0
+	if _cloud_time > 0.0:
+		_cloud_time -= delta
+		if _cloud_time <= 0.0 and is_instance_valid(_cloud_node):
+			_cloud_node.emitting = false
+			_player.get_tree().create_timer(1.6).timeout.connect(_cloud_node.queue_free)
+	if before != [_cry_time > 0.0, _dance_stacks, _in_cloud()]:
+		_update_temp_bonus()
+
+
+## Chwilowe premie do statystyk postaci: Zew Peruna (obrażenia), Taniec Ostrzy (szybkość ataku), chmura (unik).
+func _update_temp_bonus() -> void:
+	var bonus := {}
+	if _cry_time > 0.0:
+		bonus["damage_percent"] = Skills.cry_bonus(_player.skills.level_of("war_cry")) + _player.skills.tree_bonus("melee", "cry_power")
+	if _dance_stacks > 0:
+		bonus["attack_speed"] = DANCE_STEP * _dance_stacks
+	if _in_cloud():
+		bonus["dodge_chance"] = CLOUD_DODGE
+	_player.stats.temp_bonus = bonus
+
+
+## Efekty do rzędu ikon pod paskami zdrowia i many (jak LegendaryEffects.statuses).
+func statuses() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if _cry_time > 0.0:
+		result.append({"name": "Zew Peruna", "kind": "good", "left": _cry_time, "total": Skills.CRY_TIME, "icon": ICONS["war_cry"],
+				"stacks": _forced_crits, "description": "+%d%% zadawanych obrażeń; ciosy krytyczne w zapasie: %d" % [
+					roundi(_player.stats.temp_bonus.get("damage_percent", 0.0) * 100.0), _forced_crits]})
+	if _dance_stacks > 0:
+		result.append({"name": "Taniec Ostrzy", "kind": "good", "left": _dance_time, "total": DANCE_TIME, "icon": ICONS["blade_dance"],
+				"stacks": _dance_stacks, "description": "+%d%% szybkości ataku (każde combo dokłada)" % roundi(DANCE_STEP * _dance_stacks * 100.0)})
+	if _in_cloud():
+		result.append({"name": "Dym i Cień", "kind": "good", "left": _cloud_time, "total": CLOUD_TIME, "icon": ICONS["smoke_shadow"],
+				"description": "+%d%% szansy na unik, Mgnienie nie zużywa many" % roundi(CLOUD_DODGE * 100.0)})
+	if _parry_time > 0.0:
+		result.append({"name": "Riposta", "kind": "good", "left": _parry_time, "total": Skills.RIPOSTE_TIME, "icon": ICONS["riposte"],
+				"description": "Zasłona: następny cios nie zrani, a ty kontratakujesz"})
+	return result
+
+
+## Złoty pierścień wokół postaci w czasie zasłony Riposty.
+class _ParryRing:
+	extends Node2D
+
+	func _process(_delta: float) -> void:
+		if visible:
+			queue_redraw()
+
+	func _draw() -> void:
+		var pulse := 0.6 + 0.4 * sin(Time.get_ticks_msec() / 60.0)
+		draw_arc(Vector2.ZERO, 16.0, 0.0, TAU, 32, Color(1.0, 0.9, 0.5, pulse), 1.5)

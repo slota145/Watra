@@ -27,6 +27,31 @@ const DATA := {
 		"icon": preload("res://assets/skills/flicker.png"),
 		"description": "Przytrzymaj klawisz - doskakujesz do najbliższego wroga i tniesz, potem do kolejnego, dopóki starcza many. Combo: w trakcie Młynka wirujesz od wroga do wroga (odnowienie).",
 	},
+	"rend": {
+		"name": "Rozpłatanie", "weapon": "melee", "type": "skill",
+		"icon": preload("res://assets/skills/rend.png"),
+		"description": "Szerokie cięcie przed tobą - trafieni krwawią przez 3 s. Combo: zaraz po Mgnieniu krwawienie jest podwójne.",
+	},
+	"ground_slam": {
+		"name": "Rozłupanie Ziemi", "weapon": "melee", "type": "skill",
+		"icon": preload("res://assets/skills/ground_slam.png"),
+		"description": "Uderzasz mieczem w ziemię - fala pęknięć biegnie przed tobą, raniąc i ogłuszając. Combo: zaraz po Półksiężycu fala rozchodzi się we wszystkie strony.",
+	},
+	"riposte": {
+		"name": "Riposta", "weapon": "melee", "type": "skill",
+		"icon": preload("res://assets/skills/riposte.png"),
+		"description": "Na chwilę unosisz ostrze w zasłonie. Gdy ktoś cię wtedy uderzy, nie zrani cię, a ty kontratakujesz wszystkich wokół. Combo: Szarża zaraz po udanej Ripoście nic nie kosztuje i nie ma odnowienia.",
+	},
+	"war_cry": {
+		"name": "Zew Peruna", "weapon": "melee", "type": "skill",
+		"icon": preload("res://assets/skills/war_cry.png"),
+		"description": "Okrzyk bojowy: na kilka sekund zadajesz więcej obrażeń, a wrogowie wokół uciekają w strachu. Zaraz potem 3 kolejne ciosy są krytyczne.",
+	},
+	"spectral_blades": {
+		"name": "Widmowe Ostrza", "weapon": "melee", "type": "skill",
+		"icon": preload("res://assets/skills/spectral_blades.png"),
+		"description": "Czar: wokół ciebie krążą widmowe miecze, raniąc wrogów, których dotkną. Combo: zaraz po Młynku ostrza od razu wylatują we wrogów.",
+	},
 	"smoke_burst": {
 		"name": "Dymne Wybuchy", "weapon": "melee", "type": "skill",
 		"icon": preload("res://assets/skills/smoke_burst.png"),
@@ -145,6 +170,36 @@ const SMOKE_CHARGE_TIME := 0.45
 const SMOKE_DISTANCE: Array[float] = [36.0, 74.0, 114.0]
 const SMOKE_RADIUS: Array[float] = [22.0, 28.0, 34.0]
 const SMOKE_SPREAD_DEGREES: Array[float] = [22.0, 20.0, 18.0]
+## Rozpłatanie: mana, zasięg i szerokość cięcia, ile ran krwawienia (co pół sekundy).
+const REND_MANA := 8.0
+const REND_REACH := 38.0
+const REND_ARC_DEGREES := 140.0
+const BLEED_TICKS := 6
+## Rozłupanie Ziemi: mana, odnowienie, długość fali, promień pęknięć wzdłuż fali i fali dookoła (combo).
+const SLAM_MANA := 16.0
+const SLAM_COOLDOWN := 4.0
+const SLAM_LENGTH := 120.0
+const SLAM_WIDTH := 22.0
+const SLAM_RING := 95.0
+## Riposta: mana, czas zasłony, odnowienie, zasięg kontry.
+const RIPOSTE_MANA := 6.0
+const RIPOSTE_TIME := 0.7
+const RIPOSTE_COOLDOWN := 5.0
+const RIPOSTE_RADIUS := 60.0
+## Zew Peruna: mana, odnowienie, czas premii, zasięg i czas strachu, ile ciosów krytycznych po okrzyku.
+const CRY_MANA := 15.0
+const CRY_COOLDOWN := 14.0
+const CRY_TIME := 6.0
+const CRY_RADIUS := 110.0
+const CRY_FEAR := 1.6
+const CRY_CRITS := 3
+## Widmowe Ostrza: mana, odnowienie, liczba ostrzy, czas krążenia, promień orbity, mnożnik obrażeń wylotu.
+const BLADES_MANA := 18.0
+const BLADES_COOLDOWN := 8.0
+const BLADES_COUNT := 3
+const BLADES_TIME := 8.0
+const BLADES_ORBIT := 30.0
+const BLADES_LAUNCH := 2.5
 ## Ładowanie kuli ognia: czas do pełnej mocy, dodatkowa mana zjadana w trakcie
 ## i ile razy więcej obrażeń / większy promień daje pełne naładowanie.
 const FIREBALL_CHARGE_TIME := 1.5
@@ -160,6 +215,7 @@ static func get_data(id: String) -> Dictionary:
 ## Ataki i czary (zwykły atak bronią: atak, a magiczny pocisk księgi - czar).
 const TAGS := {
 	"lunge": ["attack"], "crescent": ["attack"], "whirlwind": ["attack"], "flicker": ["attack"], "smoke_burst": ["attack", "spell"],
+	"rend": ["attack"], "ground_slam": ["attack"], "riposte": ["attack"], "war_cry": ["cry"], "spectral_blades": ["spell"],
 	"seeker": ["attack"], "rapid_volley": ["attack"], "multishot": ["attack"],
 	"chain_lightning": ["spell"], "thunder_wave": ["spell"], "fireball": ["spell"],
 }
@@ -172,13 +228,14 @@ static func tags(id: String) -> Array:
 static func tags_text(id: String) -> String:
 	var names: Array[String] = []
 	for tag: String in tags(id):
-		names.append({"attack": "atak", "spell": "czar"}[tag])
+		names.append({"attack": "atak", "spell": "czar", "cry": "okrzyk"}[tag])
 	return " i ".join(names).capitalize() if not names.is_empty() else ""
 
 
 ## Combo umiejętności drzewka: po jakich umiejętnościach (użytych w oknie COMBO_WINDOW) zachowują się inaczej;
 ## "any" - po każdej innej. Mgnienie w trakcie Młynka obsługuje SwordSkills osobno (wirujące Mgnienie).
-const COMBOS := {"smoke_burst": ["any"], "flicker": ["whirlwind"]}
+const COMBOS := {"smoke_burst": ["any"], "flicker": ["whirlwind"], "rend": ["flicker"], "ground_slam": ["crescent"],
+		"lunge": ["riposte"], "spectral_blades": ["whirlwind"]}
 
 
 ## Umiejętności danego rodzaju broni w kolejności: aktywna, uderzenie, dodatkowy cios, życie, mana.
@@ -240,6 +297,37 @@ static func whirl_flicker_jumps(level: int) -> int:
 	return 3 + level
 
 
+static func rend_damage(level: int) -> float:
+	return 0.9 + 0.1 * level
+
+
+## Rozpłatanie: łączne obrażenia krwawienia (procent obrażeń broni przez 3 s).
+static func rend_bleed(level: int) -> float:
+	return 1.0 + 0.2 * level
+
+
+static func slam_damage(level: int) -> float:
+	return 1.2 + 0.15 * level
+
+
+static func slam_stun(level: int) -> float:
+	return 0.8 + 0.1 * level
+
+
+static func riposte_damage(level: int) -> float:
+	return 2.0 + 0.3 * level
+
+
+## Zew Peruna: premia do zadawanych obrażeń.
+static func cry_bonus(level: int) -> float:
+	return 0.1 + 0.03 * level
+
+
+## Widmowe Ostrza: procent obrażeń broni za dotknięcie wroga.
+static func blades_damage(level: int) -> float:
+	return 0.5 + 0.08 * level
+
+
 ## Dymne Wybuchy: procent obrażeń broni wybuchu w rzędzie `ring` (0-2).
 static func smoke_damage(level: int, ring: int) -> float:
 	return (0.7 + 0.1 * level) * (1.0 + 0.2 * ring)
@@ -293,7 +381,8 @@ static func mana_regen(level: int, maximum := 0.0) -> float:
 ## Ile many trzeba, żeby użyć umiejętności (młynek: na ułamek sekundy, jak przy starcie).
 static func mana_cost(id: String) -> float:
 	return {"whirlwind": WHIRLWIND_MANA_PER_SECOND * 0.3, "multishot": MULTISHOT_MANA, "fireball": FIREBALL_MANA,
-			"flicker": FLICKER_MANA, "smoke_burst": SMOKE_MANA,
+			"flicker": FLICKER_MANA, "smoke_burst": SMOKE_MANA, "rend": REND_MANA, "ground_slam": SLAM_MANA,
+			"riposte": RIPOSTE_MANA, "war_cry": CRY_MANA, "spectral_blades": BLADES_MANA,
 			"lunge": LUNGE_MANA, "crescent": CRESCENT_MANA, "seeker": SEEKER_MANA, "rapid_volley": VOLLEY_MANA,
 			"chain_lightning": CHAIN_MANA, "thunder_wave": WAVE_MANA}.get(id, 0.0)
 
@@ -322,6 +411,16 @@ static func mana_cost_text(id: String) -> String:
 			return "%d many za skok" % FLICKER_MANA
 		"smoke_burst":
 			return "%d many" % SMOKE_MANA
+		"rend":
+			return "%d many" % REND_MANA
+		"ground_slam":
+			return "%d many" % SLAM_MANA
+		"riposte":
+			return "%d many" % RIPOSTE_MANA
+		"war_cry":
+			return "%d many" % CRY_MANA
+		"spectral_blades":
+			return "%d many" % BLADES_MANA
 	return ""
 
 
@@ -353,6 +452,20 @@ static func effect_text(id: String, level: int) -> String:
 		"flicker":
 			return "Skok i cięcie: %d%% obrażeń; wirujące Mgnienie: %d skoków (odnowienie %s s)" % [roundi(flicker_damage(level) * 100),
 					whirl_flicker_jumps(level), _decimal(WHIRL_FLICKER_COOLDOWN, 0)]
+		"rend":
+			return "Cięcie %d%% obrażeń, krwawienie %d%% przez 3 s" % [roundi(rend_damage(level) * 100), roundi(rend_bleed(level) * 100)]
+		"ground_slam":
+			return "Fala %d%% obrażeń, ogłuszenie %s s, odnowienie %s s" % [roundi(slam_damage(level) * 100),
+					_decimal(slam_stun(level), 1), _decimal(SLAM_COOLDOWN, 0)]
+		"riposte":
+			return "Zasłona %s s, kontra %d%% obrażeń, odnowienie %s s" % [_decimal(RIPOSTE_TIME, 1),
+					roundi(riposte_damage(level) * 100), _decimal(RIPOSTE_COOLDOWN, 0)]
+		"war_cry":
+			return "+%d%% obrażeń przez %s s, strach %s s, odnowienie %s s" % [roundi(cry_bonus(level) * 100),
+					_decimal(CRY_TIME, 0), _decimal(CRY_FEAR, 1), _decimal(CRY_COOLDOWN, 0)]
+		"spectral_blades":
+			return "%d ostrza po %d%% obrażeń przez %s s (wylot: %d%%)" % [BLADES_COUNT, roundi(blades_damage(level) * 100),
+					_decimal(BLADES_TIME, 0), roundi(blades_damage(level) * BLADES_LAUNCH * 100)]
 		"smoke_burst":
 			return "Wybuchy: %d%% / %d%% / %d%% obrażeń (rzędy 1-3), pełne ładowanie %s s" % [roundi(smoke_damage(level, 0) * 100),
 					roundi(smoke_damage(level, 1) * 100), roundi(smoke_damage(level, 2) * 100), _decimal(SMOKE_CHARGE_TIME * 3, 1)]

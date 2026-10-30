@@ -6,6 +6,10 @@ class_name Legends
 ## Efekty "skill" działają tylko z daną umiejętnością / rodzajem broni - opis to mówi.
 
 const DATA := {
+	# ---------------------------------------------------------------- lochy Watry (skarbiec strażnika, Dungeon)
+	"legend_endless_amulet": {"base": "amulet_t3", "name": "Amulet Wiecznego Wiru",
+		"description": "Wirujący bursztyn ze skarbca w płomieniach Watry. Kto go nosi, nie zatrzymuje się w tańcu ostrzy.",
+		"stats": {"dexterity": 4, "strength": 4}, "effect": {"kind": "endless_whirl", "chance": 0.2, "per_level": 0.01}},
 	# ---------------------------------------------------------------- dawni bossowie (po jednej legendzie spoza biżuterii)
 	"legend_gruzlog_club": {"base": "mace_t1", "name": "Maczuga Gruzłoga",
 		"description": "Nabijana maczuga wodza goblinów, okuta złotem z łupów. Pokonani wrogowie gubią więcej skarbów.",
