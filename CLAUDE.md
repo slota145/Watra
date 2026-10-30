@@ -34,6 +34,8 @@ choć wszystko jest symulowane (patrz „Gildia i świat jak w MMO” niżej).
 | Leśny Cmentarz | `cemetery` | 32-40 | Cmentarna Kaplica |
 
 Wszystkie krainy mają 200x150 kafelków i układają się w mozaikę na mapie świata. Generują się z ziarna zapisu.
+Osobno są **lochy w płomieniach Watry** (kraina `dungeon`, 156x116 kafelków, poza mapą świata): generowane od nowa
+przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
 
 ## Struktura
 
@@ -44,6 +46,7 @@ Wszystkie krainy mają 200x150 kafelków i układają się w mozaikę na mapie �
   - `settlement.gd`: Ostoja,
   - `player.gd`, `character_stats.gd`, `items.gd`, `item_bases.gd`, `loot.gd`, `legends.gd`, `legendary_effects.gd`, `skills.gd`, `skill_effects.gd`, `levels.gd`, `quests.gd`, `bounties.gd`,
   - `hotbar.gd`: paski szybkiego wyboru (dane), `status_effects.gd`: lista efektów działających na gracza,
+  - `dungeons.gd`: dane lochów (klimaty, stopnie, modyfikatory), `dungeon.gd`: generator lochu, okno `scripts/ui/dungeon_window.gd`,
   - `scripts/ui/`: okna interfejsu (`ui_style.gd` to wspólny styl).
 - Sterowanie: WASD, spacja (zryw), F (interakcja), paski szybkiego wyboru na dole ekranu: umiejętności pod LPM, PPM, Q, E, R, Z, X
   (osobny układ dla każdej broni) i przedmioty pod 1-0 (`scripts/ui/action_bars.gd`, `scripts/ui/hotbar_slot.gd`).
@@ -210,8 +213,20 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   Gracz składa ofiary ze złota i przedmiotów, które dają żar (`Boons.ember`), a od żaru zależy poziom Watry (1-7).
   Każdy poziom daje stałe premie postaci (złoto, doświadczenie, regeneracja) i rozwój Ostoi (większy podatek, szybsze budowy).
   Za złoto można też przyjąć jeden z trzech czasowych Darów Watry.
-- [ ] Proceduralnie generowane lochy (dungeony), do których wchodzi się, wkraczając w płomienie Watry. Ich siłę ma wyznaczać poziom Watry,
-  a ofiary mają je ulepszać (to kolejny krok; dziś okno Watry zapowiada je jako „wkrótce”).
+- [x] **Lochy w płomieniach Watry** (`scripts/dungeon.gd`, dane w `scripts/dungeons.gd`, okno `scripts/ui/dungeon_window.gd`,
+  przycisk „Lochy” w oknie Watry):
+  - 4 klimaty z tilesetami z PixelLab (tryb pro, 64 px, ściany pełnej wysokości; `pixellab_src/dungeons/`, `tools/dungeon_tiles.py`):
+    Katakumby (szkielety, nekromanta), Kopalnia goblinów (gobliny i koboldy, wódz), Zatopione podziemia (topielce,
+    żabołaki, wodnik), Pajęcze korzenie (pająki, drzewce, królowa pająków);
+  - układ: komnaty i korytarze na siatce wierzchołków co 64 px, kafelki Wang dobierane do narożników (układ arkusza jak
+    w `pixellab_src/alpine/cliff.json`); mrok w kolorze klimatu, pochodnie, światło wokół gracza;
+  - cel: gromady potworów (150-250), w najdalszej komnacie strażnik; po jego pokonaniu skarbiec wysypuje łup i pojawiają się
+    płomienie powrotu do Ostoi (te same są w komnacie wejściowej);
+  - stopień 1-7 (potwory poz. 5-41) najwyżej równy poziomowi Watry; modyfikatory za żar (Hordy, Bogactwo, Wściekłość,
+    Pełny skarbiec) odblokowywane kolejnymi poziomami Watry; wydany żar nie obniża poziomu Watry (`Boons.ember_spent`).
+- [ ] Pomysły na rozwój lochów: kolejne klimaty (lodowe jaskinie, wulkaniczna kuźnia, krasnoludzkie ruiny), kilka pięter
+  w dół z coraz lepszym łupem, elitarne potwory z własnymi cechami, pułapki i zagadki, własni strażnicy lochów
+  zamiast bossów z krain, sekretne komnaty, zlecenia gildii na lochy.
 
 ### Gildia i świat jak w MMO
 

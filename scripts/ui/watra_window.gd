@@ -3,9 +3,11 @@ extends PanelContainer
 ## Okno Watry - wielkiego ognia na placu Ostoi. Gracz składa w niej ofiary: złoto albo przedmioty z plecaka
 ## (spalone - przepadają). Ofiary dokładają żaru (Boons.ember); od żaru zależy poziom Watry, a od poziomu stałe
 ## premie postaci i rozwój Ostoi (większy podatek, szybsze budowy). Za złoto można też przyjąć jeden z darów Watry
-## (czasowe błogosławieństwo); zapłata za dar także dokłada żaru.
+## (czasowe błogosławieństwo); zapłata za dar także dokłada żaru. Przycisk "Lochy" otwiera wybór lochu
+## w płomieniach Watry (DungeonWindow).
 
 signal offered(ember: int, level_up: bool)
+signal dungeon_requested
 
 const WIDTH := 300.0
 const LIST_HEIGHT := 44.0
@@ -86,6 +88,9 @@ func _ready() -> void:
 	_status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	bottom.add_child(_status)
+	bottom.add_child(_button("Lochy", func() -> void:
+		visible = false
+		dungeon_requested.emit()))
 	bottom.add_child(_button("Zamknij", func() -> void:
 		visible = false
 		Sfx.play("ui_close")))

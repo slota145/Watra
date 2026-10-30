@@ -5,7 +5,8 @@ extends Node
 ## gatunku potworów rośnie zadawane mu obrażenie). CharacterStats dolicza premie czasowe do statystyk,
 ## a Player.hit_enemy mnoży obrażenia przez premię z bestiariusza.
 ## Watra: ofiary (złoto i przedmioty) dokładają żaru; od zebranego żaru zależy poziom Watry, a od niego stałe premie
-## postaci (WATRA_PERKS) i rozwój Ostoi (Settlement: podatek, szybsze budowy). Później także poziom lochów.
+## postaci (WATRA_PERKS) i rozwój Ostoi (Settlement: podatek, szybsze budowy), a także dostępne stopnie lochów
+## w płomieniach Watry; żar wydaje się na modyfikatory lochów (Dungeons), co nie obniża poziomu Watry.
 
 signal changed
 
@@ -72,6 +73,8 @@ var active := {}
 var bestiary := {}
 ## Żar złożony w Watrze (ofiary) - stały, rośnie z każdą ofiarą.
 var ember := 0
+## Żar wydany na modyfikatory lochów - zmniejsza żar do wydania, ale nie poziom Watry.
+var ember_spent := 0
 
 
 func _process(delta: float) -> void:
@@ -123,6 +126,19 @@ func watra_level() -> int:
 func watra_next() -> int:
 	var level := watra_level()
 	return WATRA_LEVELS[level] if level < WATRA_LEVELS.size() else 0
+
+
+## Żar, który można wydać na modyfikatory lochów (zebrany minus wydany).
+func available_ember() -> int:
+	return maxi(ember - ember_spent, 0)
+
+
+func spend_ember(amount: int) -> bool:
+	if amount > available_ember():
+		return false
+	ember_spent += amount
+	changed.emit()
+	return true
 
 
 ## Dokłada żaru; zwraca true, gdy Watra wskoczyła na wyższy poziom.
@@ -191,7 +207,7 @@ func get_save_data() -> Dictionary:
 	var timed := {}
 	for group: String in active:
 		timed[group] = [active[group]["id"], active[group]["left"]]
-	return {"active": timed, "bestiary": bestiary.duplicate(), "ember": ember}
+	return {"active": timed, "bestiary": bestiary.duplicate(), "ember": ember, "ember_spent": ember_spent}
 
 
 func load_save_data(data: Dictionary) -> void:
@@ -202,6 +218,7 @@ func load_save_data(data: Dictionary) -> void:
 		if DEFS.has(str(entry[0])):
 			active[group] = {"id": str(entry[0]), "left": float(entry[1])}
 	ember = int(data.get("ember", 0))
+	ember_spent = int(data.get("ember_spent", 0))
 	bestiary.clear()
 	var saved: Dictionary = data.get("bestiary", {})
 	for kind: String in saved:
