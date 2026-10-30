@@ -1,6 +1,7 @@
 class_name Boons
 extends Node
-## Premie z osady: czasowe (posiłek z karczmy, błogosławieństwo z kaplicy, wypoczynek po łaźni, dar Watry - z każdej
+## Premie z osady: czasowe (posiłek z karczmy, błogosławieństwo z kaplicy, wypoczynek po łaźni, dar Watry, mikstura
+## zielarki - z każdej
 ## grupy działa naraz jedna, nowa zastępuje starą) i stałe (bestiariusz mędrca: za trofea z danego
 ## gatunku potworów rośnie zadawane mu obrażenie). CharacterStats dolicza premie czasowe do statystyk,
 ## a Player.hit_enemy mnoży obrażenia przez premię z bestiariusza.
@@ -29,13 +30,27 @@ const DEFS := {
 			"description": "+4 zdrowia i +2 many na sekundę, +5% maks. zdrowia", "gold": 60, "gold_per_level": 10},
 	"watra_glow": {"name": "Blask Watry", "group": "watra", "time": 1200.0, "stats": {"gold_find": 0.15, "xp_gain": 0.08},
 			"description": "+15% znajdowanego złota, +8% doświadczenia", "gold": 60, "gold_per_level": 10},
+	# mikstury zielarki (Herbs): krócej niż posiłek, ale mocniej
+	"elixir_wort": {"name": "Wywar z dziurawca", "group": "elixir", "time": 300.0, "stats": {"health_percent": 0.25},
+			"description": "+25% maks. zdrowia"},
+	"elixir_chamomile": {"name": "Napar z rumianku", "group": "elixir", "time": 300.0, "stats": {"health_regen": 8.0},
+			"description": "+8 zdrowia na sekundę"},
+	"elixir_calamus": {"name": "Nalewka z tataraku", "group": "elixir", "time": 300.0, "stats": {"mana_regen": 5.0, "move_speed": 0.08},
+			"description": "+5 many na sekundę, +8% szybkości ruchu"},
+	"elixir_arnica": {"name": "Eliksir z arniki", "group": "elixir", "time": 300.0, "stats": {"damage_percent": 0.15},
+			"description": "+15% zadawanych obrażeń"},
+	"elixir_fern": {"name": "Eliksir z kwiatu paproci", "group": "elixir", "time": 300.0, "stats": {"crit_chance": 0.08, "gold_find": 0.3},
+			"description": "+8% szansy na trafienie krytyczne, +30% znajdowanego złota"},
+	"elixir_datura": {"name": "Wywar z bielunia", "group": "elixir", "time": 300.0, "stats": {"attack_speed": 0.2},
+			"description": "+20% szybkości ataku"},
 	"rested": {"name": "Wypoczęty", "group": "rest", "time": 600.0,
 			"stats": {"health_regen": 2.0, "mana_regen": 1.0, "move_speed": 0.05},
 			"description": "+2 zdrowia i +1 many na sekundę, +5% szybkości ruchu"},
 }
-const GROUP_NAMES := {"meal": "Posiłek", "blessing": "Błogosławieństwo", "rest": "Łaźnia", "watra": "Dar Watry"}
+const GROUP_NAMES := {"meal": "Posiłek", "blessing": "Błogosławieństwo", "rest": "Łaźnia", "watra": "Dar Watry",
+		"elixir": "Mikstura zielarki"}
 const GROUP_COLORS := {"meal": Color(1.0, 0.72, 0.4), "blessing": Color(1.0, 0.92, 0.55), "rest": Color(0.6, 0.85, 1.0),
-		"watra": Color(1.0, 0.5, 0.22)}
+		"watra": Color(1.0, 0.5, 0.22), "elixir": Color(0.55, 0.95, 0.5)}
 
 ## Watra: ile żaru trzeba do kolejnych poziomów (poziom 1 na start) i co daje każdy poziom.
 const WATRA_LEVELS: Array[int] = [0, 300, 900, 2200, 5000, 11000, 24000]

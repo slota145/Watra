@@ -496,6 +496,15 @@ func use_item(id: String) -> bool:
 		inventory.remove_item(id, 1)
 		return true
 
+	# mikstura zielarki: czasowa premia (zastępuje poprzednią miksturę)
+	if effect.has("boon"):
+		inventory.remove_item(id, 1)
+		boons.grant(effect["boon"])
+		Sfx.play("potion")
+		DamageNumber.spawn_text(get_parent(), text_pos, Boons.DEFS[effect["boon"]]["name"], Color(0.55, 0.95, 0.5), 8)
+		_flash(Color(0.5, 1.0, 0.5))
+		return true
+
 	inventory.remove_item(id, 1)
 	Sfx.play("potion")
 	# mikstury leczą stałą wartość i procent maksimum - nie słabną z poziomem postaci
@@ -668,12 +677,13 @@ func _update_harvest(delta: float, input: Vector2) -> void:
 		_stop_harvest()
 		return
 	_harvest_time += delta
-	_harvest_target.set_progress(_harvest_time / HARVEST_TIME)
+	var duration := _harvest_target.harvest_time if _harvest_target.harvest_time > 0.0 else HARVEST_TIME
+	_harvest_target.set_progress(_harvest_time / duration)
 	_harvest_hit -= delta
 	if _harvest_hit <= 0.0:
 		_harvest_hit = HARVEST_HIT_INTERVAL
 		_swing_tool()
-	if _harvest_time >= HARVEST_TIME:
+	if _harvest_time >= duration:
 		var target := _harvest_target
 		_stop_harvest()
 		target.harvest(global_position)

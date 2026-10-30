@@ -47,6 +47,7 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
   - `player.gd`, `character_stats.gd`, `items.gd`, `item_bases.gd`, `loot.gd`, `legends.gd`, `legendary_effects.gd`, `skills.gd`, `skill_effects.gd`, `levels.gd`, `quests.gd`, `bounties.gd`,
   - `hotbar.gd`: paski szybkiego wyboru (dane), `status_effects.gd`: lista efektów działających na gracza,
   - `dungeons.gd`: dane lochów (klimaty, stopnie, modyfikatory), `dungeon.gd`: generator lochu, okno `scripts/ui/dungeon_window.gd`,
+  - `herbs.gd`: zioła i mikstury zielarki, `herb.gd`: zioło do zerwania (sadzone w każdej krainie przez `World._place_herbs`),
   - `scripts/ui/`: okna interfejsu (`ui_style.gd` to wspólny styl).
 - Sterowanie: WASD, spacja (zryw), F (interakcja), paski szybkiego wyboru na dole ekranu: umiejętności pod LPM, PPM, Q, E, R, Z, X
   (osobny układ dla każdej broni) i przedmioty pod 1-0 (`scripts/ui/action_bars.gd`, `scripts/ui/hotbar_slot.gd`).
@@ -221,6 +222,7 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     żabołaki, wodnik), Pajęcze korzenie (pająki, drzewce, królowa pająków);
   - układ: komnaty i korytarze na siatce wierzchołków co 64 px, kafelki Wang dobierane do narożników (układ arkusza jak
     w `pixellab_src/alpine/cliff.json`); mrok w kolorze klimatu, pochodnie, światło wokół gracza;
+  - potwory idą do gracza drogą omijającą ściany (`Dungeon.steer`, `Goblin.pathing`);
   - cel: gromady potworów (150-250), w najdalszej komnacie strażnik; po jego pokonaniu skarbiec wysypuje łup i pojawiają się
     płomienie powrotu do Ostoi (te same są w komnacie wejściowej);
   - stopień 1-7 (potwory poz. 5-41) najwyżej równy poziomowi Watry; modyfikatory za żar (Hordy, Bogactwo, Wściekłość,
@@ -236,8 +238,12 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
 
 ### Zielarstwo
 
-- [ ] **Rośliny w świecie gry** zbierane jak drewno i kamień (różne gatunki w różnych krainach), z których **zielarka**
-  w Ostoi robi **mikstury wzmacniające**: działają krócej niż posiłki, ale dają większą premię (osobna grupa premii w `scripts/boons.gd`).
+- [x] **Zioła i mikstury zielarki** (`scripts/herbs.gd`, roślina `scripts/herb.gd`, grafiki z PixelLab przez `tools/herb_art.py`):
+  w każdej krainie rośnie jej zioło (dziurawiec, rumianek, tatarak, arnika, kwiat paproci - rzadki, bieluń), zrywane klawiszem F
+  (szybciej niż drzewo, iskierki nad rośliną, odrasta po kilku minutach). Zielarka Jadwiga z lecznicy („Mikstury”) warzy
+  z 3 ziół i złota miksturę - przedmiot do wypicia (także z paska 1-0), premia z grupy „elixir” na 5 minut, mocniejsza niż posiłek.
+- [ ] Pomysły na rozwój zielarstwa: rzadsze odmiany ziół i mocniejsze mikstury na wyższe poziomy, mikstury łączące dwa zioła,
+  zioła w lochach, ogródek ziołowy w Ostoi.
 
 ### Gildia i świat jak w MMO
 

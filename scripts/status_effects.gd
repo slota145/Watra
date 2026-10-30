@@ -37,7 +37,7 @@ static func list(player: Player) -> Array[Dictionary]:
 		var entry: Dictionary = player.boons.active[group]
 		var data: Dictionary = Boons.DEFS[entry["id"]]
 		result.append({"name": data["name"], "kind": "good", "left": float(entry["left"]), "total": float(data["time"]),
-				"icon": BOON_ICONS.get(entry["id"], WATRA_ICON),
+				"icon": _boon_icon(entry["id"]),
 				"description": "%s: %s" % [Boons.GROUP_NAMES[group], data["description"]]})
 	var level := player.boons.watra_level()
 	if level > 1:
@@ -48,6 +48,15 @@ static func list(player: Player) -> Array[Dictionary]:
 					String.num(Boons.WATRA_PERKS["health_regen"] * steps, 1).replace(".", ",")]})
 	result.append_array(player.legendary.statuses())
 	return result
+
+
+## Ikona premii: posiłki, błogosławieństwa i łaźnia mają swoje, mikstury - ikonę przedmiotu, Dary Watry - płomień.
+static func _boon_icon(id: String) -> Texture2D:
+	if BOON_ICONS.has(id):
+		return BOON_ICONS[id]
+	if Items.get_data(id).has("icon"):
+		return Items.get_data(id)["icon"]
+	return WATRA_ICON
 
 
 ## Krótki zapis pozostałego czasu pod ikoną: "18m", "45s", "" (bez limitu).

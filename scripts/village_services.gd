@@ -16,6 +16,8 @@ static func offers(kind: String, player: Player, npc: Node) -> Dictionary:
 			return _bestiary(player, npc)
 		"reforge":
 			return _reforge(player, npc)
+		"elixirs":
+			return _elixirs(player, npc)
 	return {}
 
 
@@ -50,6 +52,36 @@ static func _meals(player: Player, npc: Node) -> Dictionary:
 		})
 	return {"title": "Kuchnia karczmy", "rows": rows,
 			"hint": "Mięso z plecaka albo z magazynu (znoszą je myśliwi). Działa jeden posiłek naraz - nowy zastępuje poprzedni."}
+
+
+## Warsztat zielarki: mikstura wzmacniająca z 3 ziół (z plecaka albo magazynu) i trochę złota - trafia do plecaka.
+static func _elixirs(player: Player, npc: Node) -> Dictionary:
+	var rows: Array = []
+	var gold := Herbs.brew_gold(player.stats.level)
+	var need := Herbs.HERBS_PER_ELIXIR
+	for kind in Herbs.ORDER:
+		var herb: Dictionary = Herbs.KINDS[kind]
+		var id: String = herb["elixir"]
+		var item := Items.get_data(id)
+		var have := player.count_owned(herb["item"])
+		var data: Dictionary = Boons.DEFS[id]
+		rows.append({
+			"name": item["name"], "icon": item["icon"],
+			"text": "%s przez %d min. Zioło: %s (%s)." % [data["description"], int(data["time"] / 60.0), herb["name"],
+					Zones.zone_name(herb["zone"])],
+			"cost": "%s: %d/%d   Złoto: %d   W plecaku: %d" % [herb["name"], mini(have, need), need, gold, player.inventory.count_of(id)],
+			"enabled": have >= need and player.stats.gold >= gold and player.inventory.can_add(id, 1),
+			"state": _time_left(player, "elixir", id), "button": "Uwarz",
+			"action": func() -> String:
+				player.take_owned(herb["item"], need)
+				player.stats.add_gold(-gold)
+				player.inventory.add_item(id, 1)
+				Sfx.play("craft")
+				npc.say(["Proszę, jeszcze ciepłe.", "Tylko nie pij wszystkiego naraz!", "Zioła zebrane o świcie działają najlepiej."].pick_random())
+				return "Uwarzono: %s" % item["name"],
+		})
+	return {"title": "Warsztat zielarki", "rows": rows,
+			"hint": "Zioła zerwiesz w krainach (F przy roślinie). Miksturę wypijesz z plecaka albo z paska 1-0. Działa jedna naraz - krócej niż posiłek, ale mocniej."}
 
 
 static func _blessings(player: Player, npc: Node) -> Dictionary:
