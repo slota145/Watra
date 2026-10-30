@@ -64,7 +64,9 @@ func _process(delta: float) -> bool:
 	var p: Node2D = _world.player
 	if _frame == 5:
 		for spawn in _world._goblin_spawns:
-			_spots.append(spawn["position"])
+			# bossowie z ostrzeżeniem (Hydra, Gryf) są dużo powyżej poziomu krainy - nie dla testera
+			if not spawn.get("warn", false):
+				_spots.append(spawn["position"])
 		_spots.shuffle()
 		_kills_start = _world.hud.kills
 		_gear_up(p)

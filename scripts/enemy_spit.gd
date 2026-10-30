@@ -59,6 +59,11 @@ func _physics_process(delta: float) -> void:
 	global_position += step
 	_travelled += step.length()
 	if _player != null and not _player.is_dead and _player.body_center().distance_to(global_position) < HIT_RADIUS:
+		# Serce Gryfa: wiatr odbija pocisk
+		if _player.legendary.deflects():
+			SkillEffects.spark(get_parent(), global_position, Color(0.85, 0.95, 1.0), 8)
+			queue_free()
+			return
 		_player.take_damage(damage, global_position - direction * 10.0)
 		if slow > 0.0:
 			_player.apply_slow(slow, 2.0)

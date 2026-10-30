@@ -165,6 +165,8 @@ var _harvest_scan := 0.0
 var _harvest_prompt: Label
 
 var _invulnerable_timer := 0.0
+## Oszołomienie (fletnia Króla Satyrów): sterowanie odwrócone, dopóki trwa.
+var _confused_time := 0.0
 ## Prędkość wynikająca ze sterowania (bez odrzutu).
 var _move_velocity := Vector2.ZERO
 var _knockback := Vector2.ZERO
@@ -273,6 +275,10 @@ func _physics_process(delta: float) -> void:
 		return
 
 	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	# fletnia Króla Satyrów: oszołomiony gracz biegnie w przeciwną stronę
+	if _confused_time > 0.0:
+		_confused_time -= delta
+		input = -input
 	_dash_cooldown_timer = maxf(_dash_cooldown_timer - delta, 0.0)
 	_attack_cooldown_timer = maxf(_attack_cooldown_timer - delta, 0.0)
 	_skill_cooldown_timer = maxf(_skill_cooldown_timer - delta, 0.0)
@@ -941,6 +947,7 @@ func _start_attack() -> void:
 		slash.frame = 0
 		slash.visible = true
 		Sfx.play("swing")
+		legendary.on_melee_swing(aim.normalized())
 	else:
 		_attack_cooldown_timer = weapon["cooldown"] / speed
 		_attack_length = minf(RANGED_POSE_TIME, _attack_cooldown_timer)
@@ -1220,6 +1227,7 @@ func _cast(id: String, charge := 0.0) -> void:
 		fireball.size = lerpf(0.8, 1.7, charge)
 		fireball.explosion_min = roundi(stats.damage_min() * multiplier)
 		fireball.explosion_max = roundi(stats.damage_max() * multiplier)
+		fireball.turret_damage = legendary.fire_turret_damage(multiplier)
 		get_parent().add_child(fireball)
 		Sfx.play("fireball_launch", lerpf(-4.0, 2.0, charge), lerpf(1.15, 0.85, charge))
 
@@ -1392,6 +1400,14 @@ func _aim_direction() -> Vector2:
 ## Prędkość ataku przyspiesza też umiejętności: krótsze odnowienie, szybsze ładowanie kuli
 ## ognia, szybsza salwa, łańcuch błyskawic, wir i półksiężyc.
 ## Spowolnienie na chwilę (odświeżane, dopóki działa źródło) - postać lekko sinieje.
+## Oszołomienie: przez `seconds` sterowanie ruchem jest odwrócone (nad głową krążą nuty).
+func confuse(seconds: float) -> void:
+	if is_dead:
+		return
+	_confused_time = maxf(_confused_time, seconds)
+	DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -16), "Oszołomienie!", Color(1.0, 0.8, 0.35), 9)
+
+
 func apply_slow(factor: float, duration: float) -> void:
 	_slow_factor = minf(_slow_factor, factor) if _slow_time > 0.0 else factor
 	_slow_time = maxf(_slow_time, duration)
@@ -1567,6 +1583,17 @@ func _cast_seeker(level: int) -> void:
 	arrow.damage_max = maxi(1, roundi(stats.damage_max() * Skills.SEEKER_DAMAGE))
 	get_parent().add_child(arrow)
 	Sfx.play("seeker")
+	# Łuk Hydry: dodatkowe strzały tropiące rozchodzą się wachlarzem
+	var extra := legendary.extra_seekers()
+	for i in extra:
+		var side := (i / 2 + 1) * (1 if i % 2 == 0 else -1)
+		var more := SeekerArrow.new()
+		more.position = arrow.position
+		more.velocity = dir.rotated(side * 0.35) * SeekerArrow.SPEED
+		more.hits_left = arrow.hits_left
+		more.damage_min = arrow.damage_min
+		more.damage_max = arrow.damage_max
+		get_parent().add_child(more)
 
 
 ## Szybka salwa: seria strzał w stronę kursora, jedna po drugiej.

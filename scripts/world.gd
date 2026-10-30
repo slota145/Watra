@@ -83,7 +83,7 @@
 ## Po ilu sekundach pokonany boss wraca do swojego leża (odpoczynek w karczmie wskrzesza go od razu).
 @export var boss_respawn_time := 300.0
 const BOSS_TYPES := ["chief", "alpha", "frog_chief", "storm_eagle", "wodnik", "leshy", "spider_queen", "bies",
-		"bombardier", "giant_worm", "necromancer", "colossal_ghoul"]
+		"bombardier", "giant_worm", "necromancer", "colossal_ghoul", "hydra", "gryf", "satyr_king"]
 ## Jak blisko leża trzeba stać, żeby użyć przedmiotu przyzwania.
 const SUMMON_RADIUS := 130.0
 const LAIR_NAMES := {
@@ -99,6 +99,9 @@ const LAIR_NAMES := {
 	"giant_worm": "w kraterze Pożeracza (Pola Zbożowe, południowy zachód)",
 	"necromancer": "przed mauzoleum na północnym zachodzie Leśnego Cmentarza",
 	"colossal_ghoul": "w głębi trupowiska na wschodzie Leśnego Cmentarza",
+	"hydra": "na bagnie Hydry (Rozlewiska, zachodni skraj pod drogą od wejścia)",
+	"gryf": "na skalistym wzgórzu w lewym górnym rogu Pól Zbożowych",
+	"satyr_king": "w królewskim gaju wioski satyrów (Wietrzne Turnie, południowy wschód)",
 }
 ## id miejsc bossów, którzy właśnie są przyzywani (krąg jeszcze się ładuje).
 var _summoning := {}
@@ -292,6 +295,9 @@ const FIELDS_SCENES := {
 	"zombie": preload("res://scenes/zombie.tscn"),
 	"necromancer": preload("res://scenes/necromancer.tscn"),
 	"colossal_ghoul": preload("res://scenes/colossal_ghoul.tscn"),
+	"hydra": preload("res://scenes/hydra.tscn"),
+	"gryf": preload("res://scenes/gryf.tscn"),
+	"satyr_king": preload("res://scenes/satyr_king.tscn"),
 }
 const HUT_TREES: Array[Texture2D] = [preload("res://assets/frogs/hut_tree_0.png"), preload("res://assets/frogs/hut_tree_1.png"),
 		preload("res://assets/frogs/hut_tree_2.png")]
@@ -419,6 +425,7 @@ var _frog_groups: Array[Vector2] = []
 var _walk_cells := {}
 ## Topielcze Uroczysko w lewym dolnym rogu rozlewisk (null w innych krainach).
 var _grove: DrownedGrove
+var _hydra_bog: HydraBog
 
 @onready var ground: TileMapLayer = $Ground
 @onready var decor: Node2D = $Decor
@@ -682,6 +689,8 @@ func _build_map_texture() -> ImageTexture:
 			color = color.lerp(Color(wolf_area_shadow, 1.0), wolf_area_shadow.a * _wolf_strength(cell))
 			if _grove != null:
 				color = color.lerp(DrownedGrove.MAP_SHADE, 0.5 * _grove.strength(cell))
+			if _hydra_bog != null:
+				color = color.lerp(DrownedGrove.MAP_SHADE, 0.5 * _hydra_bog.strength(cell))
 			image.set_pixel(x, y, color)
 	return ImageTexture.create_from_image(image)
 
@@ -716,6 +725,32 @@ func _process(delta: float) -> void:
 		_process_caravans(delta)
 	_process_exits()
 	_process_shrines(delta)
+	_process_warnings(delta)
+
+
+## Ostrzeżenie przed bossem dużo silniejszym od gracza (miejsca z "warn": Hydra, Gryf): gdy gracz o zbyt niskim
+## poziomie podejdzie, dostaje napis; jeśli pójdzie dalej, boss i tak zaatakuje.
+var _warn_check := 0.0
+var _warned := {}
+
+
+func _process_warnings(delta: float) -> void:
+	_warn_check -= delta
+	if _warn_check > 0.0:
+		return
+	_warn_check = 0.5
+	for spawn: Dictionary in _goblin_spawns:
+		if not spawn.get("warn", false):
+			continue
+		var boss: Goblin = _live_goblins.get(spawn["id"])
+		if boss == null or boss.state != Goblin.State.IDLE:
+			continue
+		var gap: int = boss.level - player.stats.level
+		var near := boss.global_position.distance_to(player.global_position) < 300.0
+		if near and gap >= 6 and Time.get_ticks_msec() > _warned.get(spawn["id"], 0):
+			_warned[spawn["id"]] = Time.get_ticks_msec() + 30000
+			Sfx.play("telegraph")
+			hud.show_banner("Czujesz obecność czegoś potężnego (poziom %d).\nZawróć, zanim cię zauważy!" % boss.level, Color(1.0, 0.4, 0.3))
 
 
 # ---------------------------------------------------------------- gobliny
@@ -1892,6 +1927,9 @@ func _generate_swamp() -> void:
 	_grove = DrownedGrove.new()
 	add_child(_grove)
 	_grove.plan(self)
+	_hydra_bog = HydraBog.new()
+	add_child(_hydra_bog)
+	_hydra_bog.plan(self)
 	_plan_swamp_herds()
 	_build_swamp_ground()
 	_place_swamp_props()
@@ -1903,6 +1941,7 @@ func _generate_swamp() -> void:
 		_build_herd(herd[0], herd[1] * TILE)
 	_build_frog_village()
 	_grove.build()
+	_hydra_bog.build()
 	# kaczki, żurawie, ważki i ryby
 	var wildlife := Wildlife.new()
 	add_child(wildlife)
@@ -2250,6 +2289,8 @@ func _blocks_walking(cell: Vector2i) -> bool:
 
 func _in_marsh(cell: Vector2i) -> bool:
 	if ((Vector2(cell) - _swamp_center) / _swamp_radii).length() < 1.15:
+		return true
+	if _hydra_bog != null and _hydra_bog.strength(cell) > 0.15:
 		return true
 	return _grove != null and _grove.contains(cell)
 

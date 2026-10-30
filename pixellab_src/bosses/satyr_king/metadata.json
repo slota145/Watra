@@ -1,0 +1,63 @@
+{
+  "group_id": "48305181-139d-4ea9-af5c-1e1f58d5b326",
+  "states": [
+    {
+      "character": {
+        "id": "cb051c0f-648b-461a-a78e-f7f84eb7bce5",
+        "name": "Idle",
+        "prompt": "satyr king faun lord: tall muscular goat-legged humanoid with enormous curled golden ram horns, crown of grapevines and leaves, long beard, purple royal cape, holding a golden pan flute",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-30T00:40:30.788949+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "walk": {
+            "south-east": [
+              "Idle/animations/walk/south-east/frame_000.png",
+              "Idle/animations/walk/south-east/frame_001.png",
+              "Idle/animations/walk/south-east/frame_002.png",
+              "Idle/animations/walk/south-east/frame_003.png"
+            ]
+          },
+          "charge": {
+            "south-east": [
+              "Idle/animations/charge/south-east/frame_000.png",
+              "Idle/animations/charge/south-east/frame_001.png",
+              "Idle/animations/charge/south-east/frame_002.png",
+              "Idle/animations/charge/south-east/frame_003.png",
+              "Idle/animations/charge/south-east/frame_004.png"
+            ]
+          },
+          "stomp": {
+            "south-east": [
+              "Idle/animations/stomp/south-east/frame_000.png",
+              "Idle/animations/stomp/south-east/frame_001.png",
+              "Idle/animations/stomp/south-east/frame_002.png",
+              "Idle/animations/stomp/south-east/frame_003.png",
+              "Idle/animations/stomp/south-east/frame_004.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-30T00:55:34.198728"
+}

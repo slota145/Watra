@@ -14,3 +14,9 @@ func _ready() -> void:
 	heart_drop_chance = 0.0
 	map_color = SATYR_COLOR
 	quest_kind = "satyr"
+
+
+func _drop_loot() -> void:
+	super()
+	if randf() < 0.2:
+		_spawn_pickup("satyr_horn", 1)

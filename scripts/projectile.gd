@@ -28,6 +28,9 @@ var explosion_radius := 0.0
 var size := 1.0
 var explosion_min := 0
 var explosion_max := 0
+## Księga Gryfiego Płomienia: zamiast wybuchnąć, kula zawisa jako wieżyczka strzelająca płomieniami
+## (obrażenia jednego płomienia; 0 = zwykły wybuch).
+var turret_damage := 0
 
 static var _flash_cache: ImageTexture
 
@@ -93,6 +96,23 @@ func _physics_process(delta: float) -> void:
 		tween.tween_callback(queue_free)
 
 
+## Kula zawisa w miejscu jako wieżyczka ognia; jej wybuch odpala się na końcu (kopia tej kuli bez wieżyczki).
+func _become_turret() -> void:
+	_done = true
+	var turret := LegendFx.FireTurret.new()
+	turret.shot_damage = turret_damage
+	var blast: Projectile = load("res://scenes/projectile.tscn").instantiate()
+	blast.texture = texture
+	blast.fire = true
+	blast.explosion_radius = explosion_radius
+	blast.explosion_min = explosion_min
+	blast.explosion_max = explosion_max
+	turret.explosion = blast
+	get_parent().add_child(turret)
+	turret.global_position = global_position
+	queue_free()
+
+
 ## Koniec lotu na przeszkodzie.
 func _finish() -> void:
 	if explosion_radius > 0.0:
@@ -102,6 +122,9 @@ func _finish() -> void:
 
 
 func _explode() -> void:
+	if turret_damage > 0:
+		_become_turret()
+		return
 	# im większy wybuch, tym głośniej i mocniej trzęsie
 	var power := clampf(explosion_radius / 40.0, 0.6, 2.0)
 	Sfx.play_at("explosion", global_position, (power - 1.0) * 4.0)

@@ -50,7 +50,7 @@ foreach ($t in $tests) {
     $lines = Get-Content "$out\$log.out.txt" -Encoding UTF8
     # błędy skryptów i zgłaszane przez silnik pomyłki (zwolnione obiekty w listach, błędne wywołania)
     $errors = Get-Content "$out\$log.err.txt" -Encoding UTF8 | Select-String "SCRIPT ERROR|Parse Error|Attempted to|Error calling"
-    $bad = $lines | Select-String "^FAIL|BLAD|: BLAD"
+    $bad = $lines | Select-String -CaseSensitive "^FAIL|BLAD|: BLAD"
     $good = ($lines | Select-String "^OK|: OK|WYNIK: OK|^===").Count
     if ($errors -or $bad -or $good -eq 0) {
         $failed++

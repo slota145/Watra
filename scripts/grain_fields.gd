@@ -49,6 +49,9 @@ const HOLE := preload("res://assets/fields/hole.png")
 ## 6 kamyki, 7 osmalenie, 8 lej po bombie, 9 widły, 10 wiadro, 11 pierze, 12 skorupy, 13 kępka, 14 kretowisko, 15 kości.
 const DECOR := preload("res://assets/fields/decor.png")
 const DECOR_FRAMES := 16
+const AERIE := preload("res://assets/mountains/aerie.png")
+const GRYF_BONES := preload("res://assets/mountains/bone_pile.png")
+const CAIRN := preload("res://assets/mountains/cairn.png")
 const OAK := preload("res://scenes/props/tree_oak.tscn")
 const PINE := preload("res://scenes/props/tree_pine.tscn")
 const BUSH := preload("res://scenes/props/bush.tscn")
@@ -125,6 +128,7 @@ func generate(world) -> void:
 	_build_kobold_camp(rng)
 	_build_bombardier_lair(rng)
 	_build_worm_grounds(rng)
+	_build_gryf_hill(rng)
 
 	var shrine: Node2D = w.SHRINE.instantiate()
 	shrine.position = shrine_tile * TILE
@@ -228,6 +232,8 @@ func _build_ground(rng: RandomNumberGenerator) -> void:
 	for cell in w._cells_in_radius(bombardier, 6.0):
 		dirt[cell] = true
 	for cell in w._cells_in_radius(worm_lair, 6.5):
+		dirt[cell] = true
+	for cell in w._cells_in_radius(gryf_hill, 8.0):
 		dirt[cell] = true
 	for y in w.map_size.y + 1:
 		for x in w.map_size.x + 1:
@@ -523,6 +529,24 @@ func _build_worm_grounds(rng: RandomNumberGenerator) -> void:
 		_decor(rng, center + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(30, 90), [1, 15, 15].pick_random())
 	w._add_goblin_spawn({"type": "giant_worm", "position": center, "sitting": false, "look_at": center, "respawn": w.boss_respawn_time})
 	w._map_markers.append({"position": center, "color": w.MAP_BOSS, "size": 4.0})
+
+
+# ---------------------------------------------------------------- wzgórze Gryfa
+## Najdalej od wejścia: skaliste wzgórze z gniazdem, kośćmi i szczątkami śmiałków. Gryf (poziom 42) krąży
+## nad nim w powietrzu; zbyt słabi dostają ostrzeżenie (World._process_warnings).
+func _build_gryf_hill(rng: RandomNumberGenerator) -> void:
+	var center := gryf_hill * TILE
+	_prop(AERIE, center + Vector2(0, -10), Vector2(60, 14))
+	for i in 9:
+		var pos := center + Vector2.from_angle(TAU * i / 9.0 + rng.randf_range(-0.2, 0.2)) * rng.randf_range(90, 150)
+		w._try_place(w.BOULDER, Vector2i(pos / TILE), 1)
+	for i in 6:
+		_prop(GRYF_BONES if i % 2 == 0 else CAIRN, center + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(40, 120))
+	for i in 8:
+		_decor(rng, center + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(20, 140), [6, 11, 15].pick_random())
+	w._add_goblin_spawn({"type": "gryf", "position": center, "sitting": false, "look_at": center, "respawn": w.boss_respawn_time,
+			"level": 42, "warn": true})
+	w._map_markers.append({"position": center, "color": w.MAP_BOSS, "size": 5.0})
 
 
 # ---------------------------------------------------------------- pomocnicze

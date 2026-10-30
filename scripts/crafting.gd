@@ -15,6 +15,9 @@ const RECIPES: Array[Dictionary] = [
 	{"result": "summon_giant_worm", "amount": 1, "ingredients": {"worm_tooth": 15}},
 	{"result": "summon_necromancer", "amount": 1, "ingredients": {"bone_dust": 20}},
 	{"result": "summon_colossal_ghoul", "amount": 1, "ingredients": {"ghoul_claw": 15}},
+	{"result": "summon_hydra", "amount": 1, "ingredients": {"hydra_scale": 5}},
+	{"result": "summon_satyr_king", "amount": 1, "ingredients": {"satyr_horn": 15}},
+	{"result": "summon_gryf", "amount": 1, "ingredients": {"gryf_feather": 5}},
 ]
 
 

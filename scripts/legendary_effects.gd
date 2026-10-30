@@ -42,6 +42,21 @@ extends Node
 ## - rooted_regen (Kostur Leszego): stojąc w miejscu, gracz odzyskuje zdrowie (bierne),
 ## - web_burst (Żądło Królowej): sieć oplątuje wrogów wokół trafionego,
 ## - berserk (Topór Biesa): przy niskim zdrowiu więcej obrażeń (damage_multiplier).
+## Legendy Hydry i Gryfa (węzły efektów w LegendFx):
+## - corpse_blast (Kieł Hydry): wróg padający w pobliżu (także od efektów) wybucha trucizną (on_enemy_died),
+## - toxic_aura (Łuski Hydry): trująca chmura wokół gracza (bierne),
+## - hydra_seekers (Łuk Siedmiu Głów): strzała tropiąca wylatuje z dodatkowymi (extra_seekers),
+## - regrowth (Korona Odrastających Głów): przy niskim zdrowiu regeneracja (bierne),
+## - venom_chain (Rękawice Jadu): jad przeskakuje z trafionego na sąsiadów,
+## - acid_trail (Buty Bagiennego Śladu): żrące kałuże za idącym graczem (bierne),
+## - wind_crescent (Ostrze Gryfa): cięcie wypuszcza półksiężyc wiatru (on_melee_swing),
+## - gather (Szpony Gryfa): zamach ściąga wrogów przed gracza (on_melee_swing),
+## - fire_turret (Księga Gryfiego Płomienia): kula ognia zawisa i strzela (fire_turret_damage),
+## - tornado_walk (Skrzydlate Buty): trąby powietrzne za biegnącym graczem (bierne),
+## - feather_storm (Grzebień Gryfa): wachlarz piór wokół trafionego,
+## - wind_shield (Serce Wichru): wiatr odbija wrogie pociski (deflects).
+## Legendy Faun-Króla: dance (Fletnia Fauna - wrogowie tańczą), horn_charge (Rogi Króla - unik jako szarża),
+## vine_snare (Kopyta Fauna - pnącza po otrzymaniu ciosu), pan_echo (Berło - fala dźwięku płoszy wrogów).
 ## (Kieł Gruzłoga - "might" - działa biernie na obrażenia, w CharacterStats.)
 ## Obrażenia z efektów nie wywołują kolejnych efektów, a każdy efekt ma krótki czas odnowienia,
 ## żeby szybkie ataki (salwa, łańcuch) nie zamieniały ekranu w ciągłą falę.
@@ -72,7 +87,7 @@ const DASH_TRAIL_WIDTH := 20.0
 const ECHO_COLOR := Color(0.7, 0.85, 1.0)
 ## Efekty odpalane przy trafieniu (echo i fortune tylko je wzmacniają).
 const ON_HIT := ["shockwave", "tide", "claws", "thunder", "whirlpool", "roots", "venom", "fear", "bomb", "blast_shot", "earth_arrow", "rend",
-		"tongue", "storm_arrows", "web_burst"]
+		"tongue", "storm_arrows", "web_burst", "venom_chain", "feather_storm", "dance", "pan_echo"]
 ## Efekty przy trafieniu działające tylko z danym rodzajem broni.
 const WEAPON_ONLY := {"blast_shot": ["bow", "spell"], "earth_arrow": ["bow"], "storm_arrows": ["bow"]}
 const BOMB_DAMAGE := 1.3
@@ -117,6 +132,19 @@ const WEB_HOLD := 1.0
 const TIDE_DODGE_RADIUS := 70.0
 const BERSERK_THRESHOLD := 0.4
 var _still_time := 0.0
+const CORPSE_RADIUS := 44.0
+const CORPSE_RANGE := 320.0
+const AURA_RADIUS := 52.0
+const AURA_TICK := 0.5
+const TRAIL_STEP := 0.35
+const TORNADO_STEP := 1.0
+const GATHER_RANGE := 110.0
+const FEATHER_RADIUS := 60.0
+const POISON_COLOR := Color(0.55, 0.95, 0.35)
+var _aura_tick := 0.0
+var _aura: CPUParticles2D
+var _trail_timer := 0.0
+var _tornado_timer := 0.0
 const WHIRL_RADIUS := 64.0
 const WHIRL_TIME := 2.2
 const WHIRL_PULL := 70.0
@@ -156,6 +184,7 @@ func _process(delta: float) -> void:
 	_process_tremor(delta)
 	_process_bone_armor(delta)
 	_process_rooted_regen(delta)
+	_process_hydra_gryf(delta)
 	if _bloodlust > 0:
 		_bloodlust_time -= delta
 		if _bloodlust_time <= 0.0:
@@ -227,6 +256,14 @@ func _trigger(kind: String, enemy: Goblin, at: Vector2, away: Vector2, echo := f
 			_thunder(enemy, at, echo)
 		"web_burst":
 			_web_burst(at)
+		"venom_chain":
+			_venom_chain(enemy)
+		"feather_storm":
+			_feather_storm(at, echo)
+		"dance":
+			_dance(at)
+		"pan_echo":
+			_pan_echo(away, echo)
 		"claws":
 			_claw(enemy, at, -1.0, echo)
 			get_tree().create_timer(CLAW_GAP).timeout.connect(_claw.bind(enemy, at, 1.0, echo))
@@ -320,6 +357,7 @@ func on_dash(from: Vector2, to: Vector2) -> void:
 	_mine_trail(from, to)
 	_corpse_leap(to)
 	_tidal_dodge(from, to)
+	_horn_charge(from, to)
 	var power := _player.equipment.effect_power("storm_dash")
 	if power <= 0.0 or from.distance_to(to) < 8.0:
 		return
@@ -391,6 +429,7 @@ func on_hurt(amount := 0) -> bool:
 		return true
 	_thorns()
 	_pack_call()
+	_vine_snare()
 	return false
 
 
@@ -872,3 +911,214 @@ func _process_rooted_regen(delta: float) -> void:
 	_player.heal(_player.stats.max_health() * power * delta)
 	if randf() < delta * 3.0:
 		SkillEffects.spark(_player.get_parent(), _player.global_position + Vector2(randf_range(-8, 8), -2), ROOTS_COLOR, 2)
+
+
+# ---------------------------------------------------------------- legendy Hydry i Gryfa
+## Kieł Hydry: padający w pobliżu wróg (także od efektów) może wybuchnąć trucizną.
+func on_enemy_died(enemy: Goblin) -> void:
+	if _player == null or _player.is_dead or enemy.global_position.distance_to(_player.global_position) > CORPSE_RANGE:
+		return
+	if _cooldowns.get("corpse_blast", 0.0) > 0.0 or randf() >= chance("corpse_blast"):
+		return
+	_cooldowns["corpse_blast"] = 0.08
+	var at := enemy.global_position
+	var parent := _player.get_parent()
+	SkillEffects.shockwave(parent, at, CORPSE_RADIUS, POISON_COLOR)
+	SkillEffects.spark(parent, at + Vector2(0, -6), POISON_COLOR, 12)
+	Sfx.play_at("spit_hit", at, -4.0)
+	# obrażenia z opóźnieniem - wybuch nie rani w tej samej klatce, w której wróg padł (łańcuchy wybuchów)
+	get_tree().create_timer(0.05).timeout.connect(func() -> void:
+		if not is_instance_valid(_player):
+			return
+		for other: Goblin in get_tree().get_nodes_in_group("enemies"):
+			if other.global_position.distance_to(at) <= CORPSE_RADIUS + other.hurt_radius:
+				other.take_damage(_player.roll_damage(0.8), at, 120.0)
+				poison(other))
+
+
+## Łuk Siedmiu Głów: ile dodatkowych strzał tropiących.
+func extra_seekers() -> int:
+	return roundi(_player.equipment.effect_power("hydra_seekers"))
+
+
+## Księga Gryfiego Płomienia: obrażenia jednego płomienia wieżyczki (0 - kula wybucha normalnie).
+func fire_turret_damage(multiplier: float) -> int:
+	var power := _player.equipment.effect_power("fire_turret")
+	if power <= 0.0:
+		return 0
+	return maxi(1, _player.roll_damage(multiplier * power))
+
+
+## Serce Wichru: czy wiatr odbija wrogi pocisk.
+func deflects() -> bool:
+	return randf() < chance("wind_shield")
+
+
+## Ostrze Gryfa i Szpony Gryfa: przy zamachu bronią do walki wręcz.
+func on_melee_swing(dir: Vector2) -> void:
+	var crescent := _player.equipment.effect_power("wind_crescent")
+	if crescent > 0.0:
+		var wave := LegendFx.WindCrescent.new()
+		wave.direction = dir
+		wave.damage = _player.roll_damage(crescent)
+		_player.get_parent().add_child(wave)
+		wave.global_position = _player.global_position + dir * 14.0
+	var gather := _player.equipment.effect_power("gather")
+	if gather > 0.0:
+		var point := _player.global_position + dir * 34.0
+		for other: Goblin in get_tree().get_nodes_in_group("enemies"):
+			var rel := other.global_position - _player.global_position
+			if other is Boss or rel.length() > GATHER_RANGE or rel.length() < 20.0 or absf(rel.angle_to(dir)) > 1.0:
+				continue
+			other._knockback = (point - other.global_position).normalized() * 260.0 * gather
+
+
+## Rękawice Jadu: jad na trafionym i dwóch najbliższych wrogach.
+func _venom_chain(enemy: Goblin) -> void:
+	poison(enemy)
+	var others: Array = get_tree().get_nodes_in_group("enemies").filter(func(o) -> bool:
+		return o != enemy and o.global_position.distance_to(enemy.global_position) < 90.0)
+	others.sort_custom(func(a, b) -> bool:
+		return a.global_position.distance_to(enemy.global_position) < b.global_position.distance_to(enemy.global_position))
+	for other in others.slice(0, 2):
+		SkillEffects.bolt(_player.get_parent(), enemy.hurt_center(), other.hurt_center(), 0.25, 3.0)
+		poison(other)
+
+
+## Grzebień Gryfa: wachlarz piór z trafionego.
+func _feather_storm(at: Vector2, echo: bool) -> void:
+	var parent := _player.get_parent()
+	for i in 10:
+		var dir := Vector2.from_angle(TAU * i / 10.0)
+		var line := Line2D.new()
+		line.points = PackedVector2Array([at + dir * 6.0, at + dir * FEATHER_RADIUS])
+		line.width = 2.0
+		line.default_color = ECHO_COLOR if echo else Color(1.0, 0.85, 0.45)
+		line.z_index = 4
+		parent.add_child(line)
+		var tween := line.create_tween()
+		tween.tween_property(line, "modulate:a", 0.0, 0.3)
+		tween.tween_callback(line.queue_free)
+	Sfx.play_at("wing_gust", at, -8.0)
+	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if other.hurt_center().distance_to(at) <= FEATHER_RADIUS + other.hurt_radius:
+			other.take_damage(_player.roll_damage(0.7), at, 80.0)
+
+
+## Bierne efekty Hydry i Gryfa: trująca chmura, odrastanie, żrący ślad, trąby powietrzne.
+func _process_hydra_gryf(delta: float) -> void:
+	if _player == null or _player.is_dead:
+		return
+	var equipment := _player.equipment
+	var aura := equipment.effect_power("toxic_aura")
+	if aura > 0.0 and _aura == null:
+		_aura = CPUParticles2D.new()
+		_aura.amount = 16
+		_aura.lifetime = 1.2
+		_aura.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+		_aura.emission_sphere_radius = AURA_RADIUS * 0.8
+		_aura.gravity = Vector2(0, -10)
+		_aura.initial_velocity_max = 6.0
+		_aura.scale_amount_min = 2.0
+		_aura.scale_amount_max = 4.0
+		var ramp := Gradient.new()
+		ramp.colors = PackedColorArray([Color(POISON_COLOR, 0.0), Color(POISON_COLOR, 0.35), Color(POISON_COLOR, 0.0)])
+		_aura.color_ramp = ramp
+		_aura.position = Vector2(0, -6)
+		_player.add_child(_aura)
+	elif aura <= 0.0 and _aura != null:
+		_aura.queue_free()
+		_aura = null
+	if aura > 0.0:
+		_aura_tick -= delta
+		if _aura_tick <= 0.0:
+			_aura_tick = AURA_TICK
+			for other: Goblin in get_tree().get_nodes_in_group("enemies"):
+				if other.global_position.distance_to(_player.global_position) <= AURA_RADIUS + other.hurt_radius:
+					other.take_damage(_player.roll_damage(aura), _player.global_position, 0.0)
+	var regrowth := equipment.effect_power("regrowth")
+	if regrowth > 0.0 and _player.health < _player.stats.max_health() * 0.5:
+		_player.heal(_player.stats.max_health() * regrowth * delta)
+	var moving := _player.velocity.length() > 20.0
+	var trail := equipment.effect_power("acid_trail")
+	if trail > 0.0 and moving:
+		_trail_timer -= delta
+		if _trail_timer <= 0.0:
+			_trail_timer = TRAIL_STEP
+			var patch := BurningPatch.new()
+			patch.style = "poison"
+			patch.radius = 16.0
+			patch.life = 2.5
+			patch.damage = _player.roll_damage(trail)
+			patch.hurts_enemies = true
+			var layer := get_tree().get_first_node_in_group("floor_layer")
+			(layer if layer != null else _player.get_parent()).add_child(patch)
+			patch.global_position = _player.global_position
+	var tornado := equipment.effect_power("tornado_walk")
+	if tornado > 0.0 and moving:
+		_tornado_timer -= delta
+		if _tornado_timer <= 0.0:
+			_tornado_timer = TORNADO_STEP
+			var twister := LegendFx.Tornado.new()
+			twister.direction = _player.velocity.normalized()
+			twister.damage = _player.roll_damage(tornado)
+			_player.get_parent().add_child(twister)
+			twister.global_position = _player.global_position
+			Sfx.play_at("wing_gust", _player.global_position, -14.0)
+
+
+# ---------------------------------------------------------------- legendy Faun-Króla
+const NOTE_COLOR := Color(1.0, 0.8, 0.35)
+
+
+## Fletnia Fauna: wrogowie wokół trafionego tańczą (ogłuszeni).
+func _dance(at: Vector2) -> void:
+	var parent := _player.get_parent()
+	for i in 6:
+		SkillEffects.spark(parent, at + Vector2.from_angle(TAU * i / 6.0) * 24.0 + Vector2(0, -10), NOTE_COLOR, 2)
+	Sfx.play_at("magic", at, -8.0)
+	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if other.hurt_center().distance_to(at) <= 50.0 + other.hurt_radius:
+			other.stun(2.0)
+
+
+## Berło Króla Satyrów: fala dźwięku stożkiem przed graczem - rani i płoszy.
+func _pan_echo(away: Vector2, echo: bool) -> void:
+	var from := _player.global_position
+	SkillEffects.tide(_player.get_parent(), from, away.angle(), 0.6, 90.0, echo)
+	Sfx.play_at("magic", from, -4.0)
+	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
+		var rel := other.global_position - from
+		if rel.length() <= 90.0 + other.hurt_radius and absf(rel.angle_to(away)) < 0.7:
+			other.take_damage(_player.roll_damage(0.9), from, 120.0)
+			other.fear(1.5, from)
+
+
+## Kopyta Fauna: pnącza oplątują wrogów wokół zranionego gracza.
+func _vine_snare() -> void:
+	if _cooldowns.get("vine_snare", 0.0) > 0.0 or randf() >= chance("vine_snare"):
+		return
+	_cooldowns["vine_snare"] = 2.0
+	var at := _player.global_position
+	SkillEffects.shockwave(_player.get_parent(), at, 64.0, ROOTS_COLOR)
+	Sfx.play_at("roots_burst", at, -6.0)
+	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if other.global_position.distance_to(at) <= 64.0 + other.hurt_radius:
+			other.stun(1.5)
+
+
+## Rogi Króla: unik jako szarża - rani wrogów na drodze i odrzuca ich na boki.
+func _horn_charge(from: Vector2, to: Vector2) -> void:
+	var power := _player.equipment.effect_power("horn_charge")
+	if power <= 0.0 or from.distance_to(to) < 8.0:
+		return
+	var dir := from.direction_to(to)
+	var length := from.distance_to(to)
+	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
+		var rel := other.global_position - from
+		var along := rel.dot(dir)
+		if along < -8.0 or along > length + 12.0 or absf(rel.cross(dir)) > 18.0 + other.hurt_radius:
+			continue
+		var side := signf(rel.cross(dir)) if rel.cross(dir) != 0.0 else 1.0
+		other.take_damage(_player.roll_damage(power), other.global_position - dir.orthogonal() * side * 10.0, 220.0)
+		SkillEffects.spark(_player.get_parent(), other.hurt_center(), NOTE_COLOR, 4)

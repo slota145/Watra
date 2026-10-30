@@ -376,6 +376,9 @@ func _die() -> void:
 	Sfx.play_at("enemy_die", global_position)
 	_spawn_poof()
 	_drop_loot()
+	# Kieł Hydry: każdy padający w pobliżu wróg (także od efektów) może wybuchnąć trucizną
+	if _player != null and is_instance_valid(_player.legendary):
+		_player.legendary.on_enemy_died(self)
 	if _player != null:
 		var xp := roundi(xp_reward * _player.stats.xp_multiplier() * Levels.xp_fraction(_player.stats.level, level))
 		_player.stats.add_xp(xp)

@@ -1,0 +1,56 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/hydra.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/bosses/hydra.png" id="2_sheet"]
+[ext_resource type="Texture2D" path="res://assets/shadow.png" id="3_shadow"]
+[ext_resource type="Shader" path="res://shaders/flash.gdshader" id="4_flash"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_flash"]
+resource_local_to_scene = true
+shader = ExtResource("4_flash")
+shader_parameter/flash = 0.0
+shader_parameter/flash_color = Color(1, 1, 1, 1)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_feet"]
+radius = 10.0
+
+[node name="Hydra" type="CharacterBody2D"]
+collision_layer = 4
+motion_mode = 1
+script = ExtResource("1_script")
+boss_name = "Hydra z Bagien"
+legendary_drops = PackedStringArray("legend_hydra_fang", "legend_hydra_scales", "legend_hydra_bow", "legend_hydra_crown", "legend_hydra_gloves", "legend_hydra_boots")
+max_health = 2400
+speed = 0.0
+aggro_radius = 190.0
+alert_radius = 100.0
+leash_radius = 520.0
+xp_reward = 3000
+gold_min = 30
+gold_max = 50
+gold_coins = 14
+heart_drop_chance = 0.0
+hurt_height = 40
+damage = 40
+attack_interval = 1.2
+legendary_drop_chance = 0.03
+bite_damage = 60
+venom_damage = 40
+wave_damage = 55
+breath_damage = 45
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(5, 2.4)
+texture = ExtResource("3_shadow")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+material = SubResource("ShaderMaterial_flash")
+texture = ExtResource("2_sheet")
+offset = Vector2(0, -56)
+hframes = 4
+vframes = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -2)
+shape = SubResource("CircleShape2D_feet")

@@ -865,6 +865,8 @@ def main():
     fields_sheets.main()
     import cemetery_sheets  # Leśny Cmentarz z PixelLab: rekwizyty, podłoże, nieumarli i ich sceny
     cemetery_sheets.main()
+    import boss_sheets  # Hydra i Gryf z PixelLab (obiekty z animacjami) i ich sceny
+    boss_sheets.main()
     print("Zapisano grafiki do", OUT)
 
 

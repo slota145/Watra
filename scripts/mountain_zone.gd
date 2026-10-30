@@ -90,9 +90,9 @@ const AERIE := preload("res://assets/mountains/aerie.png")
 
 const HUTS := 7
 ## Wioska satyrów: promień polany (w kafelkach), liczba namiotów i tancerzy przy ognisku.
-const SATYR_RADIUS := 12.0
-const SATYR_TENTS := 5
-const SATYR_DANCERS := 8
+const SATYR_RADIUS := 17.0
+const SATYR_TENTS := 8
+const SATYR_DANCERS := 12
 const SATYR_PROPS := {
 	"tent": preload("res://scenes/props/forest/satyr_tent.tscn"), "hut": preload("res://scenes/props/forest/satyr_hut.tscn"),
 	"barrels": preload("res://scenes/props/forest/satyr_barrels.tscn"), "amphoras": preload("res://scenes/props/forest/satyr_amphoras.tscn"),
@@ -978,7 +978,7 @@ func _build_satyr_village(rng: RandomNumberGenerator) -> void:
 	var gate_angle := (_satyr_gate * TILE - center).angle() if _satyr_gate != Vector2.ZERO else PI / 2.0
 	for i in SATYR_TENTS:
 		var angle := gate_angle + TAU * (i + 0.5) / SATYR_TENTS
-		var tent := center + Vector2.from_angle(angle) * Vector2(138, 104)
+		var tent := center + Vector2.from_angle(angle) * Vector2(190, 140)
 		w._spawn(SATYR_PROPS["tent" if i % 2 == 0 else "hut"], tent)
 		w._map_markers.append({"position": tent, "color": w.MAP_TENT, "size": 2.0})
 		var side := Vector2.from_angle(angle + PI / 2.0)
@@ -990,13 +990,14 @@ func _build_satyr_village(rng: RandomNumberGenerator) -> void:
 			var pos := front + Vector2(rng.randf_range(-18, 18), rng.randf_range(-12, 12))
 			w._add_goblin_spawn({"type": "satyr_piper" if k == 2 else "satyr", "position": pos, "sitting": false, "look_at": center})
 	# tłocznia wina między namiotami i pilnujący jej osiłek
-	var press := center + Vector2.from_angle(gate_angle + PI) * Vector2(96, 72)
+	var press := center + Vector2.from_angle(gate_angle + PI * 0.6) * Vector2(110, 84)
 	w._spawn(SATYR_PROPS["press"], press)
 	w._add_goblin_spawn({"type": "satyr_brute", "position": press + Vector2(26, 14), "sitting": false, "look_at": center})
 	# totemy z kozich czaszek na skraju polany
 	for i in 4:
 		var angle := gate_angle + TAU * (i + 0.25) / 4.0
-		w._spawn(SATYR_PROPS["totem"], center + Vector2.from_angle(angle) * Vector2(184, 140))
+		w._spawn(SATYR_PROPS["totem"], center + Vector2.from_angle(angle) * Vector2(250, 190))
+	_build_royal_grove(rng, center, gate_angle)
 
 	# brama z kwiecistego łuku na ścieżce i osiłki na straży
 	if _satyr_gate != Vector2.ZERO:
@@ -1007,6 +1008,31 @@ func _build_satyr_village(rng: RandomNumberGenerator) -> void:
 			w._add_goblin_spawn({"type": "satyr_brute", "position": gate + across * 30.0 * side + (center - gate).normalized() * 16.0,
 					"sitting": false, "look_at": gate * 2.0 - center})
 	w._map_markers.append({"position": center + Vector2(0, -24), "color": Color("c86ad8"), "size": 3.0})
+
+
+## Królewski gaj naprzeciw bramy: tron Faun-Króla między posągami rogatego boga, bębny, uczta i straż osiłków.
+## Wokół wioski kręcą się dodatkowe gromady satyrów z grajkami.
+func _build_royal_grove(rng: RandomNumberGenerator, center: Vector2, gate_angle: float) -> void:
+	var grove := center + Vector2.from_angle(gate_angle + PI) * Vector2(150, 112)
+	w._spawn(SATYR_PROPS["arch"], grove + Vector2(0, -40))
+	w._spawn(SATYR_PROPS["statue"], grove + Vector2(-56, -30))
+	w._spawn(SATYR_PROPS["statue"], grove + Vector2(56, -30))
+	w._spawn(SATYR_PROPS["drums"], grove + Vector2(-70, 20))
+	w._spawn(SATYR_PROPS["feast"], grove + Vector2(70, 22))
+	w._spawn(SATYR_PROPS["vines"], grove + Vector2(-34, -52))
+	w._spawn(SATYR_PROPS["vines"], grove + Vector2(34, -52))
+	for side in [-1.0, 1.0]:
+		w._add_goblin_spawn({"type": "satyr_brute", "position": grove + Vector2(side * 40.0, 26.0), "sitting": false, "look_at": center})
+		w._add_goblin_spawn({"type": "satyr_piper", "position": grove + Vector2(side * 84.0, -6.0), "sitting": true, "look_at": grove})
+	w._add_goblin_spawn({"type": "satyr_king", "position": grove, "sitting": false, "look_at": center, "respawn": w.boss_respawn_time})
+	w._map_markers.append({"position": grove, "color": w.MAP_BOSS, "size": 4.0})
+	# dodatkowe gromady wokół polany
+	for i in 4:
+		var angle := gate_angle + TAU * (i + 0.5) / 4.0 + rng.randf_range(-0.2, 0.2)
+		var spot := center + Vector2.from_angle(angle) * Vector2(110, 82)
+		for k in 3:
+			var pos := spot + Vector2(rng.randf_range(-20, 20), rng.randf_range(-14, 14))
+			w._add_goblin_spawn({"type": "satyr_piper" if k == 0 else "satyr", "position": pos, "sitting": false, "look_at": spot})
 
 
 ## Ośnieżone szczyty gęsto na grani wokół wioski (na rzadkiej, poszarpanej siatce).

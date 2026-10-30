@@ -38,9 +38,12 @@ const LEGENDARY_COLOR := Color(1.0, 0.62, 0.15)
 ## Wartość zmieniona przez inny założony przedmiot (np. Łzę Bulgora) - zielona w dymku.
 const MODIFIED_COLOR := "#7cf07c"
 ## Efekty, których szanse zwiększa Łza Bulgora ("fortune").
+## Efekty, których wartość to liczba sztuk (np. dodatkowe strzały), a nie procent.
+const COUNT_EFFECTS := ["hydra_seekers"]
 const CHANCE_EFFECTS := ["shockwave", "tide", "claws", "echo", "thunder", "whirlpool", "roots", "thorns", "venom", "brood", "fear",
 		"bomb", "blast_shot", "earth_arrow", "kaboom", "devour", "burrow", "raise_dead", "rend", "plunder", "pack_call", "tongue",
-		"storm_arrows", "web_burst"]
+		"storm_arrows", "web_burst", "corpse_blast", "venom_chain", "feather_storm", "wind_shield",
+		"dance", "vine_snare", "pan_echo"]
 const EFFECT_TEXTS := {
 	"shockwave": "%s szans przy trafieniu: fala uderzeniowa rani trafionego i wszystkich wokół, ogłuszając ich",
 	"echo": "%s szans, że efekt przedmiotu (np. fala uderzeniowa) zadziała dwukrotnie",
@@ -73,6 +76,22 @@ const EFFECT_TEXTS := {
 	"rend": "%s szans przy trafieniu: rozdarta rana krwawi przez 3 s (łącznie 150% obrażeń broni)",
 	"corpse_leap": "Unik kończy się skokiem miażdżącym ziemię - rani wrogów wokół za %s obrażeń broni",
 	"execute": "Ciosy w wrogów poniżej 25% zdrowia zadają dodatkowo %s obrażeń broni (nie działa na bossów)",
+	"corpse_blast": "%s szans, że wróg padający w pobliżu (także od efektów) wybuchnie trucizną, raniąc wrogów obok",
+	"toxic_aura": "Trująca chmura wokół ciebie co pół sekundy rani wrogów za %s obrażeń broni",
+	"hydra_seekers": "Strzała tropiąca wylatuje razem z %s dodatkowymi strzałami (wachlarzem)",
+	"regrowth": "Gdy masz mniej niż 50% zdrowia, odzyskujesz %s maksymalnego zdrowia na sekundę",
+	"venom_chain": "%s szans przy trafieniu: jad zatruwa trafionego i przeskakuje na dwóch wrogów obok",
+	"acid_trail": "Idąc, zostawiasz żrące kałuże - ranią wrogów za %s obrażeń broni co pół sekundy",
+	"wind_crescent": "Cięcie mieczem (i każdą bronią do walki wręcz) wypuszcza półksiężyc wiatru za %s obrażeń broni",
+	"gather": "Zamach bronią do walki wręcz ściąga wrogów przed ciebie (siła %s)",
+	"fire_turret": "Kula ognia zawisa na 3 s i strzela płomieniami w wrogów (każdy za %s jej obrażeń), potem wybucha",
+	"tornado_walk": "Biegnąc, co sekundę wypuszczasz trąbę powietrzną - wciąga i rani wrogów za %s obrażeń broni",
+	"feather_storm": "%s szans przy trafieniu: wachlarz ostrych piór rani wrogów wokół trafionego",
+	"wind_shield": "%s szans, że wiatr odbije wrogi pocisk lecący w ciebie",
+	"dance": "%s szans przy trafieniu: wrogowie wokół trafionego zaczynają tańczyć do melodii fletni (ogłuszeni na 2 s)",
+	"horn_charge": "Unik staje się szarżą z rogami - rani wrogów na drodze za %s obrażeń broni i odrzuca ich",
+	"vine_snare": "%s szans, gdy ktoś cię zrani: pnącza oplątują wrogów wokół ciebie (nie mogą się ruszać przez 1,5 s)",
+	"pan_echo": "%s szans przy trafieniu: dźwięk fletni bije falą przed tobą, raniąc i płosząc wrogów",
 	"plunder": "%s szans, że pokonany wróg upuści dodatkowy przedmiot",
 	"pack_call": "%s szans, gdy ktoś cię zrani: z mroku wyskakuje widmowy wilk i walczy u twego boku przez 12 s",
 	"tongue": "%s szans przy trafieniu: język przyciąga najbliższego innego wroga i go rani",
@@ -262,6 +281,24 @@ const DATA := {
 		"icon": preload("res://assets/items/ghoul_claw.png"),
 		"sell_price": 9,
 	},
+	"hydra_scale": {
+		"name": "Łuska Hydry",
+		"description": "Twarda jak stal, ciemnozielona łuska, z której wciąż sączy się jad.",
+		"icon": preload("res://assets/items/hydra_scale.png"),
+		"sell_price": 40,
+	},
+	"gryf_feather": {
+		"name": "Pióro Gryfa",
+		"description": "Wielkie, złote pióro, lekkie jak wiatr. Mówią, że przynosi odwagę.",
+		"icon": preload("res://assets/items/gryf_feather.png"),
+		"sell_price": 40,
+	},
+	"satyr_horn": {
+		"name": "Róg satyra",
+		"description": "Zakręcony, wypolerowany róg satyra. Wciąż pachnie winem i dymem ogniska.",
+		"icon": preload("res://assets/items/satyr_horn.png"),
+		"sell_price": 12,
+	},
 	"spider_silk": {
 		"name": "Pajęczy jedwab",
 		"description": "Lśniący, niezwykle mocny jedwab z leża pająków. Tkacze płacą za niego dobrze.",
@@ -304,6 +341,24 @@ const DATA := {
 		"description": "Cuchnący kawał trupa. Rzucony w głąb trupowiska na Leśnym Cmentarzu zwabia Gnilca.",
 		"icon": preload("res://assets/items/summon_colossal_ghoul.png"),
 		"use": {"summon": "colossal_ghoul"}, "sell_price": 40, "notable": true,
+	},
+	"summon_hydra": {
+		"name": "Bagienna Woda",
+		"description": "Flaszka czarnej wody z okiem węża. Wylana na bagnie Hydry (Rozlewiska, zachodni skraj) budzi bestię.",
+		"icon": preload("res://assets/items/summon_hydra.png"),
+		"use": {"summon": "hydra"}, "sell_price": 60, "notable": true,
+	},
+	"summon_gryf": {
+		"name": "Gryfi Róg",
+		"description": "Złoty róg z piórami. Zadęty na wzgórzu na zachodzie Pól Zbożowych przywołuje Gryfa.",
+		"icon": preload("res://assets/items/summon_gryf.png"),
+		"use": {"summon": "gryf"}, "sell_price": 60, "notable": true,
+	},
+	"summon_satyr_king": {
+		"name": "Złoty Kielich",
+		"description": "Kielich wina z królewskiej tłoczni. Wzniesiony w królewskim gaju wioski satyrów (Wietrzne Turnie) przywołuje Faun-Króla.",
+		"icon": preload("res://assets/items/summon_satyr_king.png"),
+		"use": {"summon": "satyr_king"}, "sell_price": 40, "notable": true,
 	},
 	"summon_leshy": {
 		"name": "Gałąź Leszego",
@@ -599,6 +654,9 @@ static func effect_chance(id: String, enchant := 0) -> float:
 static func _effect_value_text(id: String, enchant: int) -> String:
 	var base := effect_chance(id, enchant)
 	var base_text := "%d%%" % roundi(base * 100.0)
+	# efekty liczone w sztukach (dodatkowe strzały), nie w procentach
+	if get_data(id)["effect"]["kind"] in COUNT_EFFECTS:
+		return str(roundi(base))
 	if worn == null or not get_data(id)["effect"]["kind"] in CHANCE_EFFECTS:
 		return base_text
 	var fortune := worn.effect_power("fortune")
