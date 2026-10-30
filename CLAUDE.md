@@ -80,7 +80,57 @@ Testy zapisują do `user://test_savegame.json`, nigdy do zapisów gracza.
 ## Pomysły i rzeczy do zrobienia
 
 Aktualizuj tę listę, gdy coś zostanie zrobione albo autor rzuci nowy pomysł.
+Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne pomysły, a nie gotowe projekty.
 
+### Postać i przedmioty
+
+- [ ] Drzewko umiejętności przypisane do broni, z unikalnymi perkami dla każdego drzewka.
+  Dziś każdy rodzaj broni (`melee` / `bow` / `spell`) ma w `scripts/skills.gd` aktywną umiejętność, uderzenie, combo i dwie pasywne regeneracje.
+  Pomysł to rozbudowa tego w prawdziwe drzewko.
+- [ ] System kamieni wkładanych w przedmioty (gniazda).
+  Istniejące kamienie (zwykłe, doskonałe, uświęcone, miłosierdzia) służą tylko do zaklinania (`scripts/enchanting.gd`, `scripts/ui/enchant_window.gd`), więc to byłby nowy system.
+- [ ] Nowe bronie: kosa, kostur (nekromanta), młoty, chainblade'y, sztylety, włócznie, rapier, hydrosfera.
+  Każda broń to nowy rodzaj z własnym drzewkiem, a nie tylko nowy przedmiot, więc wymaga szczegółów od autora.
+
+### Watra i Ostoja
+
+- [ ] **Watra**: duży ogień na środku Ostoi, który odstrasza potwory.
+  - Mieszkańcy dorzucają do niego drewno, żeby go podtrzymać.
+  - Gracz może złożyć ofiarę w złocie albo przedmiotach.
+  - Ofiara ulepsza proceduralne lochy, do których wchodzi się, wkraczając w płomienie watry.
+- [ ] Proceduralnie generowane lochy (dungeony), powiązane z watrą (patrz wyżej).
 - [ ] Tablica ogłoszeń przed gildią w Ostoi ma dostać zlecenia (`scripts/settlement.gd`, „funkcje dostanie później”).
+
+### Świat
+
+- [ ] Budowa i rozbudowa obozów w innych krainach, które pasywnie dają surowce albo inne korzyści.
+- [ ] Losowe wydarzenia w świecie gry.
+- [ ] Uzupełnienie siatki mapy świata (dziś krainy stoją w kształcie krzyża) o 6 krain:
+  - 2 nad Polami Zbożowymi (`map_offset` (-200,-150) i (-200,-300)),
+  - 2 nad Rozlewiskami ((200,-150) i (200,-300)),
+  - 2 nad Wietrznymi Turniami ((400,-150) i (400,-300)).
+  Po tym mapa jest pełnym prostokątem 4x3.
+- [ ] Duża mapa świata ma wyglądać jak prawdziwa, ładna mapa, a nie jak siatka kafelków (`scripts/ui/world_map_view.gd`, `scripts/ui/big_map.gd`).
 - [ ] Sprawdzić, czy wzgórze z gryfem na Polach Zbożowych jest skończone (`scripts/grain_fields.gd:12` mówi „zostawione na później”, gryf został dodany później).
+
+### Nowe krainy
+
+- [ ] **Wysokie góry**:
+  - harpie, bardzo liczne, z Królową Harpii jako bossem,
+  - kryształowe pająki z Kamienną Królową jako bossem,
+  - górskie wiwerny,
+  - kamienne golemy,
+  - górskie gryfy.
+- [ ] **Lodowe góry**: żywiołaki lodu, lodowe bestie.
+- [ ] **Drugie Rozlewiska**: pijawki, owady bagienne, utopieni mieszkańcy wioski, mięsożerne rośliny.
+- [ ] Ruiny miasta.
+- [ ] Las grzybów.
+- [ ] Spaczone równiny.
+- [ ] Piaszczysta pustynia.
+- [ ] Skalista pustynia.
+- [ ] Wulkaniczne pola.
+- [ ] Stare krasnoludzkie podziemne miasto.
+
+### Porządki
+
 - [ ] Usunąć `_kopia_przed_poprawka/`, jeśli nie jest już potrzebna.
