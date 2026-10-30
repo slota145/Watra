@@ -70,6 +70,13 @@ func _process(_d: float) -> bool:
 		_pickup.item_id = loot.generate("ring_storm", "legendary", 30)
 		_pickup.position = player.position + Vector2(70, 0)
 		player.get_parent().add_child(_pickup)
+	if _frame == 38:
+		# kursor w stałe miejsce z dala od gracza (na środku ekranu przyciągnąłby łup i go podniósł)
+		root.warp_mouse(root.get_visible_rect().size / 2.0 + Vector2(160, 70))
+	if _frame >= 40 and _frame < 50 and not is_instance_valid(_pickup):
+		_check(false, "łup na ziemi leży do sprawdzenia dymka (nie podniesiony przez gracza)")
+		quit(1)
+		return true
 	if _frame >= 40 and _frame < 50:
 		# łup pod kursorem (pozycja prawdziwego kursora - sztuczne zdarzenia myszy nadpisuje system)
 		_pickup.global_position = _world.player.get_global_mouse_position() - Vector2(0, -3)
