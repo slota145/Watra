@@ -239,7 +239,9 @@ func _physics_process(delta: float) -> void:
 
 	velocity += _knockback
 	_knockback = _knockback.move_toward(Vector2.ZERO, 700.0 * delta)
-	move_and_slide()
+	# stojący w spoczynku nie ruszają się - bez kosztownego move_and_slide (setki potworów w siedliskach)
+	if state != State.IDLE or velocity != Vector2.ZERO:
+		move_and_slide()
 	_animate(delta)
 
 
