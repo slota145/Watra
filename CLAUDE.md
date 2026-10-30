@@ -212,7 +212,8 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   grafika z PixelLab przez `tools/watra_art.py`). Dwóch mieszkańców donosi drewno, a ogień wtedy buchnie.
   Gracz składa ofiary ze złota i przedmiotów, które dają żar (`Boons.ember`), a od żaru zależy poziom Watry (1-7).
   Każdy poziom daje stałe premie postaci (złoto, doświadczenie, regeneracja) i rozwój Ostoi (większy podatek, szybsze budowy).
-  Za złoto można też przyjąć jeden z trzech czasowych Darów Watry.
+  Za złoto można też przyjąć jeden z trzech czasowych Darów Watry. Autorowi podoba się, że Watra jest dużym ujściem
+  dla złota - kolejne systemy mogą to rozwijać.
 - [x] **Lochy w płomieniach Watry** (`scripts/dungeon.gd`, dane w `scripts/dungeons.gd`, okno `scripts/ui/dungeon_window.gd`,
   przycisk „Lochy” w oknie Watry):
   - 4 klimaty z tilesetami z PixelLab (tryb pro, 64 px, ściany pełnej wysokości; `pixellab_src/dungeons/`, `tools/dungeon_tiles.py`):
@@ -224,9 +225,19 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     płomienie powrotu do Ostoi (te same są w komnacie wejściowej);
   - stopień 1-7 (potwory poz. 5-41) najwyżej równy poziomowi Watry; modyfikatory za żar (Hordy, Bogactwo, Wściekłość,
     Pełny skarbiec) odblokowywane kolejnymi poziomami Watry; wydany żar nie obniża poziomu Watry (`Boons.ember_spent`).
+- [ ] **Losowe mechaniki w lochach z własnymi drzewkami rozwoju** (jak atlas w Path of Exile): w lochu losowo pojawia się
+  dodatkowa mechanika (np. wydarzenie, specjalny przeciwnik, ukryta komnata), a każda ma własne drzewko ulepszeń
+  rozwijane postępami w lochach. Szczegóły do ustalenia z autorem.
+- [ ] **Sloty w Watrze na przedmioty modyfikujące lochy** (jak skaraby w PoE): przedmioty z łupu wkładane w Watrę przed
+  wejściem, które dodatkowo zmieniają loch (więcej danej mechaniki, inne potwory, więcej łupu danego rodzaju).
 - [ ] Pomysły na rozwój lochów: kolejne klimaty (lodowe jaskinie, wulkaniczna kuźnia, krasnoludzkie ruiny), kilka pięter
   w dół z coraz lepszym łupem, elitarne potwory z własnymi cechami, pułapki i zagadki, własni strażnicy lochów
   zamiast bossów z krain, sekretne komnaty, zlecenia gildii na lochy.
+
+### Zielarstwo
+
+- [ ] **Rośliny w świecie gry** zbierane jak drewno i kamień (różne gatunki w różnych krainach), z których **zielarka**
+  w Ostoi robi **mikstury wzmacniające**: działają krócej niż posiłki, ale dają większą premię (osobna grupa premii w `scripts/boons.gd`).
 
 ### Gildia i świat jak w MMO
 
