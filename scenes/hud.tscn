@@ -278,13 +278,6 @@ offset_left = 140.0
 offset_top = 20.0
 script = ExtResource("5_big_map")
 
-[node name="QuickSlots" type="HBoxContainer" parent="."]
-offset_left = 6.0
-offset_top = 52.0
-offset_right = 72.0
-offset_bottom = 72.0
-theme_override_constants/separation = 2
-
 [node name="IntroMessage" type="Label" parent="."]
 z_index = -1
 anchors_preset = 5

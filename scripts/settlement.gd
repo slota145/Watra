@@ -1374,7 +1374,7 @@ func _build_armory() -> void:
 
 # ---------------------------------------------------------------- Watra
 ## Watra na placu: animowany ogień w kręgu kamieni runicznych (z kolizją), wielka poświata, iskry, miejsce rozmowy
-## (niewidoczna postać - [E] otwiera okno ofiar) i dwóch tragarzy noszących drewno z magazynu.
+## (niewidoczna postać - [F] otwiera okno ofiar) i dwóch tragarzy noszących drewno z magazynu.
 func _build_watra() -> void:
 	var texture := _tex("watra")
 	_watra = _prop("watra", WATRA_POS, Vector2(70, 22), texture.get_width() / texture.get_height())
@@ -1409,7 +1409,7 @@ func _build_watra() -> void:
 	_entities.add_child(spot)
 	spot.get_node("Sprite").visible = false
 	spot.get_node("Shadow").visible = false
-	spot.prompt.text = "[E] Watra"
+	spot.prompt.text = "[F] Watra"
 	# tragarze drewna: magazyn -> Watra
 	var wood_path := _path([Vector2(42.6, 13.9), Vector2(42.4, 17.6), Vector2(38.0, 18.6), Vector2(34.6, 18.2)])
 	for sheet in ["villager_green", "worker_gray"]:
@@ -2106,7 +2106,7 @@ func _build_guild() -> void:
 	_entities.add_child(board)
 	board.get_node("Sprite").visible = false
 	board.get_node("Shadow").visible = false
-	board.prompt.text = "[E] Tablica ogłoszeń"
+	board.prompt.text = "[F] Tablica ogłoszeń"
 	nodes.append(board)
 	for spot: Array in [["adventurer_a", Vector2(20.0, 53.3)], ["adventurer_b", Vector2(21.4, 53.4)]]:
 		var adventurer := _npc(spot[0], spot[1], Npc.Role.IDLE, LINES_ADVENTURER, Vector2.UP)

@@ -192,7 +192,8 @@ func toggle() -> void:
 		_refresh()
 		reset_size()
 		var screen := get_viewport_rect().size
-		position = Vector2(screen.x - size.x - 8, 124)  # pod minimapą
+		# pod minimapą, ale nad paskami szybkiego wyboru (z plecaka przeciąga się na nie przedmioty)
+		position = Vector2(screen.x - size.x - 8, maxf(2.0, minf(124.0, screen.y - size.y - SkillWindow.BOTTOM_RESERVE)))
 
 
 func _make_slot_panel(parent: Node, slot_size := SLOT_SIZE) -> Panel:

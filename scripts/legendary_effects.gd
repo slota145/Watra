@@ -191,6 +191,40 @@ func _process(delta: float) -> void:
 			_bloodlust = 0
 
 
+## Czasowe stany z legendarnych przedmiotów do listy efektów pod paskami zdrowia i many:
+## {"name", "description", "icon" (ikona przedmiotu, który go daje), "left" (s, -1 = bez limitu), "total", "kind" (good / cooldown), "stacks"}.
+func statuses() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if _bloodlust > 0:
+		result.append({"name": "Żądza krwi", "kind": "good", "left": _bloodlust_time, "total": BLOODLUST_TIME,
+				"stacks": _bloodlust, "icon": _effect_icon("bloodlust"),
+				"description": "+%d%% obrażeń (x%d, każde zabójstwo odnawia i dokłada)" % [
+					roundi(_bloodlust * _player.equipment.effect_power("bloodlust") * 100.0), _bloodlust]})
+	var berserk := _player.equipment.effect_power("berserk")
+	if berserk > 0.0 and _player.health < _player.stats.max_health() * BERSERK_THRESHOLD:
+		result.append({"name": "Szał", "kind": "good", "left": -1.0, "icon": _effect_icon("berserk"),
+				"description": "+%d%% obrażeń, dopóki masz mniej niż %d%% zdrowia" % [roundi(berserk * 100.0), roundi(BERSERK_THRESHOLD * 100.0)]})
+	if _bone_orbit != null:
+		result.append({"name": "Kościana tarcza", "kind": "good", "left": -1.0, "icon": _effect_icon("bone_armor"),
+				"description": "Pochłonie następny cios do %d%% maks. zdrowia" % roundi(_player.equipment.effect_power("bone_armor") * 100.0)})
+	for entry: Array in [["undying", "Filakteria odnawia się", "Cios śmiertelny znów zostawi cię przy życiu po odnowieniu", UNDYING_COOLDOWN],
+			["burrow", "Łuski Czerwia odnawiają się", "Zakopanie się pod ziemię przy ciężkim ciosie wróci po odnowieniu", BURROW_COOLDOWN]]:
+		var left: float = _cooldowns.get(entry[0], 0.0)
+		if left > 0.0 and _player.equipment.effect_power(entry[0]) > 0.0:
+			result.append({"name": entry[1], "kind": "cooldown", "left": left, "total": entry[3], "icon": _effect_icon(entry[0]),
+					"description": entry[2]})
+	return result
+
+
+## Ikona założonego przedmiotu, który daje efekt danego rodzaju.
+func _effect_icon(kind: String) -> Texture2D:
+	for slot in Equipment.SLOTS:
+		var id := _player.equipment.get_item(slot)
+		if id != "" and Items.get_data(id).get("effect", {}).get("kind", "") == kind:
+			return Items.get_data(id)["icon"]
+	return null
+
+
 ## Szansa (0..1) na efekt danego rodzaju z założonych przedmiotów, powiększona przez Łzę Bulgora.
 func chance(kind: String) -> float:
 	var base := _player.equipment.effect_power(kind)

@@ -148,7 +148,7 @@ func _ready() -> void:
 	if has_dialog() or is_trader():
 		add_to_group("interactables")
 	if has_dialog():
-		prompt.text = "[E] Rozmowa"
+		prompt.text = "[F] Rozmowa"
 	if quest_id != "":
 		_quest_marker = _make_quest_marker()
 		add_child(_quest_marker)

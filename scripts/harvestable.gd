@@ -1,6 +1,6 @@
 class_name Harvestable
 extends StaticBody2D
-## Coś, co gracz zbiera klawiszem E: drzewo (siekiera, drewno) albo głaz (kilof, kamień).
+## Coś, co gracz zbiera klawiszem F: drzewo (siekiera, drewno) albo głaz (kilof, kamień).
 ## Zebrane zostawia ślad (pieniek, gruz), z którego po kilku minutach odrasta -
 ## albo od razu po odpoczynku w karczmie. Podklasy ustawiają nazwę czynności,
 ## narzędzie i łup oraz animację zbierania.
@@ -15,7 +15,7 @@ extends StaticBody2D
 @export var bar_height := 48.0
 @export var bar_color := Color(0.85, 0.65, 0.35)
 
-## Napis nad obiektem ("[E] ...") i narzędzie, którym gracz pracuje.
+## Napis nad obiektem ("[F] ...") i narzędzie, którym gracz pracuje.
 var action_name := ""
 var tool_texture: Texture2D
 ## Kolor drzazg / odłamków przy uderzeniu.
