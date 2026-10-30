@@ -1,7 +1,8 @@
 class_name DrownedGrove
 extends Node
-## Topielcze Uroczysko - zamglony, martwy las nad czarną wodą w lewym dolnym rogu rozlewisk.
-## Sadzawki (płycizna z błotnistym brzegiem), w których czają się utopce, nad wodą dryfują
+## Topielcze Uroczysko - zamglony, martwy las nad czarną wodą, zajmujący cały lewy dolny kraniec rozlewisk:
+## wszystko pod drogą od wejścia i na zachód od rzeki (z pasem zwykłego lasu przy drodze i brzegu).
+## Kilkanaście sadzawek (płycizna z błotnistym brzegiem), w których czają się utopce, nad wodą dryfują
 ## błędne ogniki, na brzegach śpiewają topielice. Zamiast zwykłych drzew - martwe, poczerniałe,
 ## z brodami mchu; tu i ówdzie zatopione krzyże i spróchniałe pnie. Pośrodku największa
 ## sadzawka z wysepką - leże Wodnika, z garnkami, pod którymi trzyma dusze topielców,
@@ -10,7 +11,10 @@ extends Node
 ## Planowane przed ułożeniem kafelków rozlewisk (woda, rezerwacje), budowane po nich.
 
 const TILE := 16
-const POOLS := 7
+const POOLS := 16
+## Uroczysko zaczyna się tyle kafelków od drogi i rzeki (wcześniej zwykły las), a sadzawki leżą głębiej.
+const EDGE := 4
+const POOL_DEPTH := 8.0
 const DEAD_TREES: Array[Texture2D] = [preload("res://assets/drowned/drowned_tree_0.png"), preload("res://assets/drowned/drowned_tree_1.png")]
 const CROSS := preload("res://assets/drowned/sunken_cross.png")
 const STUMP := preload("res://assets/drowned/rotten_stump.png")
@@ -18,11 +22,13 @@ const SOUL_JARS := preload("res://assets/drowned/soul_jars.png")
 const BOAT := preload("res://assets/drowned/sunken_boat.png")
 const SHADE := Color(0.02, 0.06, 0.05, 0.5)
 const MAP_SHADE := Color(0.04, 0.1, 0.08)
-const FOG_PATCHES := 18
+const FOG_PATCHES := 46
 
 var w  # świat
 var center := Vector2.ZERO
-var radii := Vector2(30, 23)
+## Odległość komórki uroczyska (w kafelkach) od drogi albo rzeki - poza uroczyskiem brak wpisu.
+var _depth := {}
+var _deep_cells: Array[Vector2i] = []
 var _pools: Array[Vector2] = []
 var _pool_radius: Array[float] = []
 var _fog: Array[Sprite2D] = []
@@ -34,21 +40,91 @@ func plan(world) -> void:
 	var rng: RandomNumberGenerator = w._rng
 	var size := Vector2(w.map_size)
 	center = Vector2(size.x * 0.21, size.y * 0.79)
+	_plan_region()
 	# leże Wodnika: duża sadzawka z błotnistą wysepką pośrodku
 	_make_pool(center, 8.5)
 	for cell in w._cells_in_radius(center, 2.8):
 		w._water[cell] = "mud"
 	_pools.append(center)
 	_pool_radius.append(8.5)
-	var base := rng.randf() * TAU
-	for i in POOLS - 1:
-		var angle := base + TAU * i / (POOLS - 1) + rng.randf_range(-0.25, 0.25)
-		var spot := center + Vector2.from_angle(angle) * radii * rng.randf_range(0.55, 0.72)
-		spot = spot.clamp(Vector2(10, 10), size - Vector2(10, 10))
-		var r := rng.randf_range(3.5, 5.0)
+	# pozostałe sadzawki rozsiane po całym uroczysku, z odstępami między nimi
+	var margin := Vector2(w.border_thickness + 6, w.border_thickness + 6)
+	for attempt in 600:
+		if _pools.size() >= POOLS:
+			break
+		var r := rng.randf_range(3.5, 6.0)
+		var spot: Vector2 = Vector2(_deep_cells[rng.randi() % _deep_cells.size()]) + Vector2(0.5, 0.5)
+		if _depth.get(Vector2i(spot), 0.0) < r + POOL_DEPTH or spot.x < margin.x or spot.y < margin.y \
+				or spot.x > size.x - margin.x or spot.y > size.y - margin.y:
+			continue
+		var crowded := false
+		for p in _pools.size():
+			if spot.distance_to(_pools[p]) < r + _pool_radius[p] + 5.0:
+				crowded = true
+				break
+		if crowded:
+			continue
 		_make_pool(spot, r)
 		_pools.append(spot)
 		_pool_radius.append(r)
+
+
+## Obszar uroczyska: komórki pod drogą (droga biegnie od lewego górnego rogu do mostu) i na zachód od rzeki.
+## Głębokość to odległość od drogi, rzeki albo reszty rozlewisk - liczona falą od komórek spoza obszaru
+## (krawędzie mapy jej nie ograniczają, martwy las sięga do granicy krainy).
+func _plan_region() -> void:
+	var size: Vector2i = w.map_size
+	var road_y := PackedFloat32Array()
+	road_y.resize(size.x)
+	road_y.fill(-1.0)
+	for point: Vector2 in w._road:
+		var x := floori(point.x)
+		if x >= 0 and x < size.x and (road_y[x] < 0.0 or point.y < road_y[x]):
+			road_y[x] = point.y
+	var last := 0.0
+	for x in size.x:  # luki między punktami drogi - jak sąsiedni punkt
+		if road_y[x] < 0.0:
+			road_y[x] = last
+		last = road_y[x]
+	var river_x := PackedFloat32Array()
+	river_x.resize(size.y)
+	river_x.fill(float(size.x))
+	for point: Vector2 in w._river:
+		var y := floori(point.y)
+		if y >= 0 and y < size.y and point.x < river_x[y]:
+			river_x[y] = point.x
+	var inside := {}
+	var queue: Array[Vector2i] = []
+	for y in size.y:
+		for x in size.x:
+			var cell := Vector2i(x, y)
+			if y + 0.5 > road_y[x] and x + 0.5 < river_x[y]:
+				inside[cell] = true
+	for y in size.y:
+		for x in size.x:
+			var cell := Vector2i(x, y)
+			if not inside.has(cell):
+				continue
+			for d in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+				var n: Vector2i = cell + d
+				if n.x >= 0 and n.y >= 0 and n.x < size.x and n.y < size.y and not inside.has(n):
+					_depth[cell] = 1.0
+					queue.append(cell)
+					break
+	var head := 0
+	while head < queue.size():
+		var cell := queue[head]
+		head += 1
+		for d in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+			var n: Vector2i = cell + d
+			if inside.has(n) and not _depth.has(n):
+				_depth[n] = _depth[cell] + 1.0
+				queue.append(n)
+	for cell: Vector2i in inside:
+		if not _depth.has(cell):  # odcięte od krawędzi obszaru (cały obszar przy granicy mapy)
+			_depth[cell] = 99.0
+		if _depth[cell] >= EDGE + 4:
+			_deep_cells.append(cell)
 
 
 func _make_pool(at: Vector2, radius: float) -> void:
@@ -61,10 +137,9 @@ func _make_pool(at: Vector2, radius: float) -> void:
 	w._reserve_area(at, radius + 1.0)
 
 
-## Jak głęboko komórka leży w uroczysku: 0 poza nim, 1 w środku (łagodny brzeg).
+## Jak głęboko komórka leży w uroczysku: 0 poza nim, 1 w środku (łagodny brzeg kilka kafelków za drogą i rzeką).
 func strength(cell: Vector2i) -> float:
-	var d := ((Vector2(cell) - center) / radii).length()
-	return clampf((1.1 - d) * 3.0, 0.0, 1.0)
+	return clampf((_depth.get(cell, 0.0) - EDGE + 1.0) / 5.0, 0.0, 1.0)
 
 
 func contains(cell: Vector2i) -> bool:
@@ -112,15 +187,15 @@ func build() -> void:
 	for p in _pools.size():
 		var pool := _pools[p] * TILE
 		var r := _pool_radius[p] * TILE
-		var drowners := 8 if p == 0 else rng.randi_range(6, 8)
+		var drowners := 12 if p == 0 else rng.randi_range(9, 12)
 		for k in drowners:
 			var spot := _water_spot(pool, r * 0.75 if p > 0 else r * 0.85, r * 0.45 if p == 0 else 0.0, rng)
 			w._add_goblin_spawn({"type": "drowner", "position": spot, "sitting": false, "look_at": pool})
 		if p > 0:
-			for k in rng.randi_range(1, 2):
+			for k in rng.randi_range(2, 3):
 				var spot := pool + Vector2.from_angle(rng.randf() * TAU) * r * 0.5
 				w._add_goblin_spawn({"type": "wisp", "position": spot, "sitting": false, "look_at": pool})
-			if p % 2 == 1:
+			if p % 3 != 0:
 				var bank := pool + Vector2.from_angle(rng.randf() * TAU) * (r + 18.0)
 				w._add_goblin_spawn({"type": "rusalka", "position": bank, "sitting": false, "look_at": pool})
 			if rng.randf() < 0.7:
@@ -167,7 +242,7 @@ func _build_fog(rng: RandomNumberGenerator) -> void:
 	for i in FOG_PATCHES:
 		var fog := Sprite2D.new()
 		fog.texture = texture
-		fog.position = (center + Vector2.from_angle(rng.randf() * TAU) * radii * sqrt(rng.randf()) * 0.9) * TILE
+		fog.position = (Vector2(_deep_cells[rng.randi() % _deep_cells.size()]) + Vector2(0.5, 0.5)) * TILE
 		fog.scale = Vector2.ONE * rng.randf_range(0.9, 1.6)
 		fog.z_index = 21
 		add_child(fog)
@@ -180,6 +255,7 @@ func _process(delta: float) -> void:
 		var fog := _fog[i]
 		fog.position += _fog_drift[i] * delta
 		# mgła nie wypływa poza uroczysko - zawraca łagodnie
-		var rel := (fog.position / TILE - center) / radii
-		if rel.length() > 0.95:
-			_fog_drift[i] = (-rel.normalized() * _fog_drift[i].length()).rotated(randf_range(-0.6, 0.6))
+		var cell := Vector2i(fog.position / TILE)
+		if strength(cell) < 0.6 or not Rect2i(Vector2i(4, 4), w.map_size - Vector2i(8, 8)).has_point(cell):
+			fog.position -= _fog_drift[i] * delta
+			_fog_drift[i] = (-_fog_drift[i]).rotated(randf_range(-0.6, 0.6))

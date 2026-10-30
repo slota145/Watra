@@ -2165,7 +2165,7 @@ func _place_swamp_props() -> void:
 				if _rng.randf() < 0.9 - edge_dist * 0.12:
 					_try_place(_random_tree(), cell, 1)
 				continue
-			if _grove != null and _grove.contains(cell):  # martwy las uroczyska
+			if _grove != null and (_grove.contains(cell) or _hydra_bog.contains(cell)):  # martwy las uroczyska i bagna Hydry
 				_grove.place_land_prop(cell, r)
 				continue
 			var density := _noise.get_noise_2d(x, y)
