@@ -4,8 +4,23 @@ Dwuwymiarowy ARPG w pixel-arcie (Godot 4.7, GDScript), osadzony w słowiańskim 
 zalała świat, ostatni ludzie bronią się w osadzie **Ostoja**. Hasło gry: „Dopóki płonie ogień, Ostoja trwa”.
 Gracz rozwija postać, zdobywa łup i przemierza krainy w rosnącym zakresie poziomów.
 
-Autor gry pracuje na Windowsie (`C:\Users\slota\Documents\claude-game`) i rozmawia po polsku.
-Nie jest programistą, więc wyjaśniaj prosto, bez żargonu, i podawaj gotowe komendy do skopiowania.
+Osoba tworząca grę pracuje na Windowsie (`C:\Users\slota\Documents\claude-game`) i rozmawia po polsku.
+Nie programuje na co dzień, więc wyjaśniaj prosto, bez żargonu, i podawaj gotowe komendy do skopiowania.
+W odpowiedziach używaj form neutralnych płciowo (np. „możesz”, „wpisz”, zamiast „zrobiłeś/zrobiłaś”).
+Poniżej „autor” oznacza tę osobę.
+
+## Inspiracje i klimat
+
+Gra mocno czerpie z dwóch tytułów. Warto podpatrywać, co w nich dobrze działa:
+- **Path of Exile**: łup z losowymi cechami i rzadkościami, kamienie w gniazdach przedmiotów,
+  rozbudowane drzewka pasywne, waluta-surowce do ulepszania, proceduralne mapy i lochy jako końcówka gry
+  (ulepszane ofiarami jak „atlas”), sezonowe i losowe wydarzenia.
+- **Black Desert Online**: zaklinanie z ryzykiem porażki (już jest w grze, kamienie miłosierdzia chronią poziom),
+  sieć obozów i robotników pasywnie zbierających surowce, rynek z setkami ofert kupna i sprzedaży,
+  żywy, otwarty świat.
+
+Docelowy klimat to **offline MMO**: świat ma sprawiać wrażenie zamieszkanego przez innych graczy,
+choć wszystko jest symulowane (patrz „Gildia i świat jak w MMO” niżej).
 
 ## Krainy (`scripts/zones.gd`, poziomy w `scripts/levels.gd`)
 
@@ -75,7 +90,7 @@ Testy zapisują do `user://test_savegame.json`, nigdy do zapisów gracza.
 ## Git
 
 - Zmiany idą na gałąź roboczą, potem pull request do `main`. Autor zwykle prosi o założenie PR i od razu scalenie.
-- Gdy autor ma u siebie lokalne commity, `git pull` otwiera vima. Podpowiadaj mu `git pull --no-edit origin main`.
+- Gdy autor ma u siebie lokalne commity, `git pull` otwiera vima. Podpowiadaj wtedy `git pull --no-edit origin main`.
 
 ## Pomysły i rzeczy do zrobienia
 
@@ -99,7 +114,19 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   - Gracz może złożyć ofiarę w złocie albo przedmiotach.
   - Ofiara ulepsza proceduralne lochy, do których wchodzi się, wkraczając w płomienie watry.
 - [ ] Proceduralnie generowane lochy (dungeony), powiązane z watrą (patrz wyżej).
-- [ ] Tablica ogłoszeń przed gildią w Ostoi ma dostać zlecenia (`scripts/settlement.gd`, „funkcje dostanie później”).
+
+### Gildia i świat jak w MMO
+
+Oba systemy zależą od gildii poszukiwaczy przygód w Ostoi (budowla `guild` w `scripts/settlement.gd`, tablica ogłoszeń w `scripts/bounties.gd` i `scripts/ui/board_window.gd`).
+Dziś tablica ma tylko zlecenia na wilki i gobliny w Goblińskim Lesie (komentarze w `settlement.gd` mówiące, że tablica „funkcje dostanie później”, są już nieaktualne).
+
+- [ ] **Inni podróżnicy**: symulowani poszukiwacze przygód z imionami, poziomami i ekwipunkiem.
+  Pojawiają się w krainach, walczą z potworami i zbierają łup, wracają do Ostoi.
+  Ich liczba i siła zależą od rozwoju gildii.
+- [ ] **Symulowany rynek**: setki ofert kupna i sprzedaży wystawianych przez podróżników, z cenami zmieniającymi się w czasie, w stylu rynku z BDO.
+  Gracz może kupować, sprzedawać i składać zamówienia.
+  Rynek działa przez gildię.
+- [ ] Więcej rodzajów zleceń na tablicy (inne krainy, bossowie, zbieranie surowców), powiązanych z podróżnikami.
 
 ### Świat
 
