@@ -51,6 +51,7 @@ Wszystkie krainy mają 200x150 kafelków i układają się w mozaikę na mapie �
 - `shaders/`: shadery.
 - `tests/`: testy i symulacje.
 - `_kopia_przed_poprawka/`: stara kopia zapasowa, nieużywana.
+- `docs/`: obrazy referencyjne od autora (`docs/referencje/`). Godot je pomija (plik `.gdignore`).
 
 ## Uruchamianie i testy w chmurze (Linux, bez monitora)
 
@@ -91,6 +92,46 @@ Testy zapisują do `user://test_savegame.json`, nigdy do zapisów gracza.
 
 - Zmiany idą na gałąź roboczą, potem pull request do `main`. Autor zwykle prosi o założenie PR i od razu scalenie.
 - Gdy autor ma u siebie lokalne commity, `git pull` otwiera vima. Podpowiadaj wtedy `git pull --no-edit origin main`.
+
+## Do poprawy
+
+Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po graniu.
+
+### Zasada ogólna: dużo potworów
+
+- [ ] Domyślnie każde siedlisko potworów ma mieć **dziesiątki, a nawet setki potworów**, jak w miejscach farmienia w Black Desert albo w Path of Exile.
+  Wyjątek: siedliska, których projekt wymaga inaczej (np. arena bossa).
+  Przy zwiększaniu liczebności sprawdź wydajność (`tests/bench_combat.gd`, `tests/playtest_bot.gd`).
+
+### Wietrzne Turnie (`scripts/mountain_zone.gd`)
+
+- [ ] Elektryczny orzeł (Gromoskrzydły, `scripts/storm_eagle.gd`) ma machać skrzydłami. Dziś animacja tego nie pokazuje.
+- [ ] Wioska ptakoludzi:
+  - dodać ścieżki i drogi,
+  - trochę ją powiększyć, tak żeby schodziła z płaskowyżu na teren przed skarpą,
+  - dodać więcej ptakoludzi.
+- [ ] Wioska satyrów (faunów): powiększyć co najmniej dwukrotnie.
+  Wokół istniejących struktur dodać kilka mniejszych skupisk z budynkami, drogami i ozdobami.
+
+### Rozlewiska (`scripts/drowned_grove.gd`, `scripts/hydra_bog.gd`)
+
+- [ ] Powiększyć bagna Wodnika (Topielcze Uroczysko), tak żeby zajmowały cały obszar od drogi w dół.
+- [ ] Bagno Hydry przenieść na północ, po drugiej stronie drogi, i powiększyć je o kolejne sadzawki.
+
+### Pola Zbożowe (`scripts/grain_fields.gd`)
+
+- [ ] Rozbudować obóz koboldów wokół barykady Bombardiera (`scripts/kobold_bombardier.gd`), z dużą liczbą koboldów.
+- [ ] Pola pszenicy:
+  - znacznie większe i wyraźnie dominujące w krainie,
+  - o organicznych, nieregularnych kształtach zamiast prostokątów,
+  - pszenica nie spowalnia gracza (dziś spowalnia).
+  Wzór: `docs/referencje/pola_zbozowe.jpg` (złote, faliste łany, kręte drogi z rozstajami, kępy jesiennych drzew, gospodarstwa na polanach).
+
+### Leśny Cmentarz (`scripts/forest_cemetery.gd`)
+
+- [ ] Więcej grobów i więcej skupisk grobów.
+- [ ] Zdecydowanie więcej szkieletów rozsianych po mapie i przy nekromancie (`scripts/necromancer.gd`).
+  Szkielety mają się grupować w bardzo duże grupy.
 
 ## Pomysły i rzeczy do zrobienia
 
