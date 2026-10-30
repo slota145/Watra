@@ -37,6 +37,7 @@ var sage_window: SageWindow
 var forge_window: ForgeWindow
 var offer_window: OfferWindow
 var watra_window: WatraWindow
+var dungeon_window: DungeonWindow
 ## Paski szybkiego wyboru na dole ekranu i ikony działających efektów pod paskami zdrowia i many.
 var action_bars: ActionBars
 var status_row: StatusRow
@@ -113,6 +114,10 @@ func _ready() -> void:
 	watra_window.name = "WatraWindow"
 	add_child(watra_window)
 	move_child(watra_window, offer_window.get_index() + 1)
+	dungeon_window = DungeonWindow.new()
+	dungeon_window.name = "DungeonWindow"
+	add_child(dungeon_window)
+	move_child(dungeon_window, watra_window.get_index() + 1)
 	status_row = StatusRow.new()
 	status_row.name = "StatusRow"
 	status_row.position = Vector2(6, 52)
@@ -182,6 +187,8 @@ func connect_player(player: Player) -> void:
 	npc_dialog.offers_requested.connect(offer_window.open)
 	watra_window.setup(player)
 	npc_dialog.watra_requested.connect(watra_window.open)
+	dungeon_window.setup(player)
+	watra_window.dungeon_requested.connect(dungeon_window.open)
 	status_row.setup(player)
 	action_bars.setup(player)
 	quest_tracker.area_requested.connect(show_quest_area)
@@ -249,7 +256,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_window(quest_journal, "ui_book")
 	elif event.is_action_pressed("ui_cancel"):
 		# Esc najpierw zamyka otwarte okna, a dopiero potem otwiera menu pauzy
-		var windows: Array[Control] = [character_window, inventory_window, big_map, shop_window, skill_window, enchant_window, crafting_window, build_window, board_window, sage_window, forge_window, watra_window, help_window, quest_journal, npc_dialog, storage_window]
+		var windows: Array[Control] = [character_window, inventory_window, big_map, shop_window, skill_window, enchant_window, crafting_window, build_window, board_window, sage_window, forge_window, watra_window, dungeon_window, help_window, quest_journal, npc_dialog, storage_window]
 		if windows.any(func(w: Control) -> bool: return w.visible):
 			Sfx.play("ui_close")
 			for w in windows:

@@ -24,16 +24,23 @@ const SHRINES := {
 }
 
 
+## Loch w płomieniach Watry (scripts/dungeon.gd): osobna kraina generowana przy każdym wejściu, poza mozaiką
+## mapy świata (nie ma jej w DATA).
+const DUNGEON := "dungeon"
+
+
 static func zone_name(zone: String) -> String:
+	if zone == DUNGEON:
+		return Dungeons.NAME
 	return DATA.get(zone, {}).get("name", zone)
 
 
 static func size_of(zone: String) -> Vector2i:
-	return DATA[zone]["size"]
+	return Dungeons.SIZE if zone == DUNGEON else DATA[zone]["size"]
 
 
 static func map_offset(zone: String) -> Vector2i:
-	return DATA[zone]["map_offset"]
+	return Vector2i.ZERO if zone == DUNGEON else DATA[zone]["map_offset"]
 
 
 ## Zapamiętany obrazek mapy krainy (1 piksel = 1 kafelek) - zapisywany po wygenerowaniu krainy,

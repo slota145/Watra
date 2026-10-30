@@ -402,6 +402,9 @@ var _caravan_timer := 0.0
 
 ## Kraina, w której jest gracz ("forest", "swamp") i zapamiętany stan pozostałych krain.
 var zone := "forest"
+## Loch w płomieniach Watry (gdy zone == Zones.DUNGEON) i jego ustawienia (Dungeons.config).
+var _dungeon: Dungeon
+var _dungeon_config := {}
 var _zone_states := {}
 ## Odkryte kapliczki: id -> [x, y] (kafelki w swojej krainie).
 var shrines := {}
@@ -445,7 +448,10 @@ func _ready() -> void:
 	else:
 		_seed = randi()
 	zone = str(save.get("zone", "forest"))
-	if not Zones.DATA.has(zone):
+	# loch w płomieniach Watry - tylko z ustawieniami wyprawy (zapis gry z lochu wraca do Ostoi, patrz get_save_data)
+	if zone == Zones.DUNGEON and save.has("dungeon"):
+		_dungeon_config = save["dungeon"]
+	elif not Zones.DATA.has(zone):
 		zone = "forest"
 	_zone_states = (save.get("zones", {}) as Dictionary).duplicate(true)
 	if not save.has("zones") and not save.is_empty():
@@ -456,6 +462,7 @@ func _ready() -> void:
 	map_size = Zones.size_of(zone)
 	# to samo ziarno = identyczny świat, także losowe warianty drzew (każda kraina ma własne)
 	_rng.seed = _seed if zone == "forest" else hash([_seed, zone])
+	Goblin.dungeon_mods = {}
 	seed(_rng.seed)
 	_noise.seed = _rng.randi()
 	_noise.frequency = 0.07
@@ -466,6 +473,8 @@ func _ready() -> void:
 	floors.add_to_group("floor_layer")
 	ground.add_to_group("ground_layer")
 	Sfx.set_ambient_zone(zone)
+	if zone == Zones.DUNGEON:
+		Sfx.stop_ambient()
 	# potwory bez poziomu od świata (przywołane przez bossów) - środek zakresu krainy
 	var levels: Array = Levels.ZONES.get(zone, [1, 1, 1])
 	Levels.zone_default = roundi((levels[0] + levels[1]) / 2.0)
@@ -488,6 +497,11 @@ func _ready() -> void:
 		var cemetery := ForestCemetery.new()
 		add_child(cemetery)
 		cemetery.generate(self)
+	elif zone == Zones.DUNGEON:
+		_dungeon = Dungeon.new()
+		_dungeon.name = "Dungeon"
+		add_child(_dungeon)
+		_dungeon.generate(self, _dungeon_config)
 	else:
 		_generate_forest()
 	if zone == "forest":
@@ -528,6 +542,8 @@ func _ready() -> void:
 	if save.has("arrive"):
 		player.global_position = _arrival_point(str(save["arrive"]))
 		player.camera.reset_smoothing()
+	if _dungeon != null:
+		hud.show_banner(Dungeons.title(_dungeon_config), Color(1.0, 0.75, 0.45))
 	if zone == "forest":
 		_update_resource_piles()
 	player.reset_physics_interpolation()  # gracz przeniesiony na start / przybycie, nie przeszedł tam
@@ -559,6 +575,8 @@ func _generate_forest() -> void:
 	_map_markers.append_array(_settlement.map_markers)
 	_spawn_point = _settlement.spawn_point
 	_register_shrine("ostoja", _settlement.spawn_point - Vector2(0, 20))
+	# powrót z lochu: przed Watrą
+	_arrivals["watra"] = _settlement.watra_arrival()
 	if not shrines.has("ostoja"):
 		var pos := (_settlement.spawn_point - Vector2(0, 20)) / TILE
 		shrines["ostoja"] = [pos.x, pos.y]
@@ -596,8 +614,9 @@ func _generate_forest() -> void:
 # ---------------------------------------------------------------- zapis gry
 func get_save_data() -> Dictionary:
 	var zones := _zone_states.duplicate(true)
-	zones[zone] = _zone_state()
-	return {
+	if zone != Zones.DUNGEON:
+		zones[zone] = _zone_state()
+	var data := {
 		"seed": _seed,
 		"zone": zone,
 		"player": player.get_save_data(),
@@ -605,6 +624,24 @@ func get_save_data() -> Dictionary:
 		"zones": zones,
 		"shrines": shrines.duplicate(true),
 	}
+	# loch się nie zapisuje - wczytana gra zaczyna się przy Watrze w Ostoi
+	if zone == Zones.DUNGEON:
+		data["zone"] = "forest"
+		data["arrive"] = "watra"
+	return data
+
+
+## Wejście w płomienie Watry: przejście do lochu o danych ustawieniach (Dungeons.config).
+func enter_dungeon(settings: Dictionary) -> void:
+	if _traveling:
+		return
+	_traveling = true
+	var data := get_save_data()
+	data["zone"] = Zones.DUNGEON
+	data["arrive"] = "start"
+	data["dungeon"] = settings
+	Sfx.play("fireball_launch")
+	Game.travel(data)
 
 
 ## Stan bieżącej krainy: pokonane potwory, ścięte drzewa / rozbite głazy, budowy w osadzie.
@@ -1094,6 +1131,9 @@ func _spawn_goblin(spawn: Dictionary) -> Goblin:
 	goblin.look_at_point = spawn["look_at"]
 	if is_wolf:
 		(goblin as Wolf).pose = spawn.get("pose", "lie")
+	# utopiec poza sadzawką (np. w lochu) nie czai się pod wodą
+	if spawn.has("lurk") and goblin is Drowner:
+		goblin.lurk = spawn["lurk"]
 	goblin.died.connect(_on_goblin_died.bind(spawn))
 	entities.add_child(goblin)
 	_live_goblins[spawn["id"]] = goblin
@@ -1106,7 +1146,9 @@ func _on_goblin_died(goblin: Goblin, spawn: Dictionary) -> void:
 	if goblin.quest_kind != "animal":
 		hud.on_enemy_killed(goblin)
 	player.quests.on_enemy_killed(goblin.quest_kind)
-	_respawn_queue.append({"spawn": spawn, "time": spawn.get("respawn", goblin_respawn_time)})
+	# w lochu nic się nie odradza
+	if zone != Zones.DUNGEON:
+		_respawn_queue.append({"spawn": spawn, "time": spawn.get("respawn", goblin_respawn_time)})
 
 
 ## Muzyka: walka z bossem w pobliżu, w Ostoi jej temat, a poza nią utwór krainy.
@@ -1119,6 +1161,8 @@ func _process_music(delta: float) -> void:
 		return
 	_music_check = 0.5
 	var track: String = {"forest": "forest", "swamp": "swamp", "mountains": "mountains", "ancient": "ancient", "fields": "fields", "cemetery": "cemetery"}.get(zone, "forest")
+	if zone == Zones.DUNGEON:
+		track = {"catacombs": "cemetery", "mine": "fields", "flooded": "swamp", "roots": "ancient"}.get(_dungeon_config.get("climate", ""), "cemetery")
 	if zone == "forest" and _settlement.is_inside_palisade(Vector2i((player.global_position / TILE).floor())):
 		track = "ostoja"
 	for boss in get_tree().get_nodes_in_group("bosses"):

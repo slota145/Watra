@@ -47,6 +47,9 @@ const PICKUP_PATH := "res://scenes/pickup.tscn"
 
 ## Obszar osady - gobliny nie gonią gracza, który się w nim schronił.
 static var safe_zone := Rect2()
+## Modyfikatory lochu Watry (Dungeons.MODIFIERS) dla wszystkich potworów bieżącej krainy - mnożniki "health",
+## "damage", "xp", "gold", "loot"; poza lochem puste (świat zeruje je przy budowie krainy).
+static var dungeon_mods := {}
 ## Pozycje potworów z bieżącej klatki (wspólne dla wszystkich, do rozpychania się).
 ## Pozycje potworów w kubełkach siatki (bok SEPARATION_RADIUS) - zbierane raz na klatkę fizyki tylko przez
 ## potwory, które potrzebują rozpychania; każdy sprawdza potem wyłącznie 9 sąsiednich kubełków.
@@ -122,13 +125,14 @@ func _apply_level() -> void:
 	var strength: float = max_health / ref[0]
 	if self is Boss:
 		strength = clampf(strength, Levels.BOSS_HEALTH.x, Levels.BOSS_HEALTH.y)
-	max_health = maxi(1, roundi(Levels.health(level) * strength))
+	max_health = maxi(1, roundi(Levels.health(level) * strength * dungeon_mods.get("health", 1.0)))
+	var damage_mod: float = dungeon_mods.get("damage", 1.0)
 	for property in get_property_list():
 		var key: String = property["name"]
 		if key.ends_with("damage") and property["type"] == TYPE_INT and get(key) > 0:
-			set(key, maxi(1, roundi(Levels.damage(level) * get(key) / ref[1])))
-	xp_reward = roundi(Levels.xp(level) * xp_reward / ref[2])
-	var gold: float = Levels.gold(level) / ref[3]
+			set(key, maxi(1, roundi(Levels.damage(level) * get(key) / ref[1] * damage_mod)))
+	xp_reward = roundi(Levels.xp(level) * xp_reward / ref[2] * dungeon_mods.get("xp", 1.0))
+	var gold: float = Levels.gold(level) / ref[3] * dungeon_mods.get("gold", 1.0)
 	gold_min = roundi(gold_min * gold)
 	gold_max = maxi(gold_min, roundi(gold_max * gold))
 
@@ -438,7 +442,7 @@ func _drop_loot() -> void:
 		_spawn_pickup("blessed_stone", randi_range(1, 3))
 	if randf() < chances[3] * stone_scale:
 		_spawn_pickup("mercy_stone", randi_range(1, 2))
-	if randf() < equipment_drop_chance:
+	if randf() < equipment_drop_chance * dungeon_mods.get("loot", 1.0):
 		_spawn_pickup(Loot.drop_at_level(level), 1)
 
 

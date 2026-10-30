@@ -1423,6 +1423,11 @@ func _build_watra() -> void:
 	_watra_ember = _player.boons.ember
 
 
+## Gdzie staje gracz po powrocie z lochu w płomieniach Watry: tuż przed ogniem.
+func watra_arrival() -> Vector2:
+	return _px(WATRA_POS) + Vector2(0, 40)
+
+
 ## Ogień buchnie (więcej iskier, jaśniejsza poświata na chwilę).
 func _flare_watra(strength: float) -> void:
 	_watra_flare = maxf(_watra_flare, strength)
