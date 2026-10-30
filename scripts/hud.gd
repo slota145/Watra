@@ -36,6 +36,7 @@ var sage_window: SageWindow
 ## Wykuwanie magicznych i rzadkich przedmiotów u kowala.
 var forge_window: ForgeWindow
 var offer_window: OfferWindow
+var watra_window: WatraWindow
 ## Aktywne premie z osady (posiłek, błogosławieństwo, łaźnia) pod paskami - nazwa i minuty do końca.
 var _boon_box: VBoxContainer
 var _boon_time := 0.0
@@ -116,6 +117,10 @@ func _ready() -> void:
 	offer_window.name = "OfferWindow"
 	add_child(offer_window)
 	move_child(offer_window, forge_window.get_index() + 1)
+	watra_window = WatraWindow.new()
+	watra_window.name = "WatraWindow"
+	add_child(watra_window)
+	move_child(watra_window, offer_window.get_index() + 1)
 	_boon_box = VBoxContainer.new()
 	_boon_box.position = Vector2(6, 76)
 	_boon_box.add_theme_constant_override("separation", 0)
@@ -178,6 +183,8 @@ func connect_player(player: Player) -> void:
 	npc_dialog.forge_requested.connect(forge_window.open)
 	offer_window.setup(player)
 	npc_dialog.offers_requested.connect(offer_window.open)
+	watra_window.setup(player)
+	npc_dialog.watra_requested.connect(watra_window.open)
 	player.boons.changed.connect(_update_boons)
 	_update_boons()
 	quest_tracker.area_requested.connect(show_quest_area)
@@ -249,7 +256,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_window(quest_journal, "ui_book")
 	elif event.is_action_pressed("ui_cancel"):
 		# Esc najpierw zamyka otwarte okna, a dopiero potem otwiera menu pauzy
-		var windows: Array[Control] = [character_window, inventory_window, big_map, shop_window, skill_window, enchant_window, crafting_window, build_window, board_window, sage_window, forge_window, help_window, quest_journal, npc_dialog, storage_window]
+		var windows: Array[Control] = [character_window, inventory_window, big_map, shop_window, skill_window, enchant_window, crafting_window, build_window, board_window, sage_window, forge_window, watra_window, help_window, quest_journal, npc_dialog, storage_window]
 		if windows.any(func(w: Control) -> bool: return w.visible):
 			Sfx.play("ui_close")
 			for w in windows:
