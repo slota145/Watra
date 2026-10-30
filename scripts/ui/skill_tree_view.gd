@@ -1,6 +1,7 @@
 class_name SkillTreeView
 extends Control
-## Sieć węzłów drzewka umiejętności broni (SkillTree) w oknie umiejętności. Węzły: umiejętności (ikona w kole),
+## Sieć węzłów drzewka umiejętności broni (SkillTree) w oknie umiejętności. Przeciąganie myszą po pustym miejscu
+## przesuwa drzewko, kółko myszy je przybliża i oddala. Węzły: umiejętności (ikona w kole),
 ## pasywne (małe koła), kluczowe (duże, złote) i start. Wybrane mają złotą obwódkę i złote połączenia, możliwe do
 ## wybrania teraz - pulsującą jasną, reszta jest przygaszona. Kliknięcie zaznacza węzeł (szczegóły i przyciski
 ## pokazuje okno umiejętności), dymek opisuje węzeł, a umiejętność z wybranego węzła (start - zwykły atak) przeciąga się
@@ -9,7 +10,8 @@ extends Control
 signal selected(node_id: String)
 
 ## Ile pikseli interfejsu na jednostkę pozycji węzła i promienie węzłów wg rodzaju.
-const UNIT := 21.0
+const UNIT := 20.0
+const ZOOM_RANGE := Vector2(0.6, 1.5)
 const RADIUS := {"start": 9.0, "skill": 10.0, "passive": 6.5, "keystone": 12.0}
 const GOLD := Color(1.0, 0.82, 0.35)
 const LINK := Color(0.35, 0.36, 0.45)
@@ -18,14 +20,30 @@ const ICONS := {
 	"crit_chance": preload("res://assets/skills/node_crit.png"), "combo_window": preload("res://assets/skills/node_combo.png"),
 	"spell_damage": preload("res://assets/skills/node_spell.png"), "cast_speed": preload("res://assets/skills/node_spell.png"),
 	"whirl_radius": preload("res://assets/skills/whirlwind.png"), "flicker_mana": preload("res://assets/skills/flicker.png"),
-	"smoke_charge": preload("res://assets/skills/smoke_burst.png"),
+	"smoke_charge": preload("res://assets/skills/smoke_burst.png"), "smoke_damage": preload("res://assets/skills/smoke_burst.png"),
+	"whirl_damage": preload("res://assets/skills/whirlwind.png"), "flicker_damage": preload("res://assets/skills/flicker.png"),
+	"combo_damage": preload("res://assets/skills/node_combo.png"), "bleed_damage": preload("res://assets/skills/rend.png"),
+	"cry_power": preload("res://assets/skills/war_cry.png"), "slam_stun": preload("res://assets/skills/ground_slam.png"),
+	"lunge_cooldown": preload("res://assets/skills/lunge.png"), "riposte_damage": preload("res://assets/skills/riposte.png"),
+	"blade_count": preload("res://assets/skills/spectral_blades.png"), "life_on_hit": preload("res://assets/skills/node_physical.png"),
+	"move_speed": preload("res://assets/skills/node_attack_speed.png"), "crit_damage": preload("res://assets/skills/node_crit.png"),
+	"health_percent": preload("res://assets/skills/health_regen.png"), "health": preload("res://assets/skills/health_regen.png"),
+	"health_regen": preload("res://assets/skills/health_regen.png"), "mana": preload("res://assets/skills/mana_regen.png"),
+	"mana_regen": preload("res://assets/skills/mana_regen.png"), "cooldown_reduction": preload("res://assets/skills/node_combo.png"),
+	"armor": preload("res://assets/items/chainmail.png"), "dodge_chance": preload("res://assets/skills/flicker.png"),
 }
-const KEYSTONE_ICONS := {"endless_whirl": preload("res://assets/skills/ks_endless_whirl.png")}
+const KEYSTONE_ICONS := {"endless_whirl": preload("res://assets/skills/ks_endless_whirl.png"),
+		"blade_dance": preload("res://assets/skills/ks_blade_dance.png"), "smoke_shadow": preload("res://assets/skills/ks_smoke_shadow.png"),
+		"blood_frenzy": preload("res://assets/skills/ks_blood_frenzy.png")}
 
 var weapon_type := "melee"
 var selected_id := ""
 var _player: Player
 var _hover := ""
+## Przesunięcie i przybliżenie widoku (przeciąganie, kółko myszy) oraz czy właśnie przeciągamy.
+var _offset := Vector2.ZERO
+var _zoom := 1.0
+var _panning := false
 
 
 func _init() -> void:
@@ -45,7 +63,7 @@ func _process(_delta: float) -> void:
 
 
 func node_position(id: String) -> Vector2:
-	return size / 2.0 + SkillTree.nodes(weapon_type)[id]["pos"] * UNIT
+	return size / 2.0 + _offset + SkillTree.nodes(weapon_type)[id]["pos"] * UNIT * _zoom
 
 
 func node_at(point: Vector2) -> String:
@@ -72,6 +90,8 @@ func icon_of(id: String) -> Texture2D:
 func _draw() -> void:
 	if _player == null:
 		return
+	draw_rect(Rect2(Vector2.ZERO, size), UiStyle.SLOT_BG)
+	draw_rect(Rect2(Vector2.ZERO, size), UiStyle.SLOT_BORDER, false, 1.0)
 	var tree := SkillTree.nodes(weapon_type)
 	var book := _player.skills
 	# połączenia
@@ -108,20 +128,49 @@ func _draw() -> void:
 func _gui_input(event: InputEvent) -> void:
 	var motion := event as InputEventMouseMotion
 	if motion != null:
+		if _panning:
+			_offset += motion.relative
+			_clamp_offset()
+			accept_event()
+			return
 		var hover := node_at(motion.position)
 		if hover != _hover:
 			_hover = hover
 			queue_redraw()
 		return
 	var click := event as InputEventMouseButton
-	if click != null and click.pressed and click.button_index == MOUSE_BUTTON_LEFT:
-		var id := node_at(click.position)
-		if id != "":
-			selected_id = id
-			selected.emit(id)
-			Sfx.play("ui_click")
-			queue_redraw()
-			accept_event()
+	if click == null:
+		return
+	if click.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN] and click.pressed:
+		var before := _zoom
+		_zoom = clampf(_zoom * (1.1 if click.button_index == MOUSE_BUTTON_WHEEL_UP else 1.0 / 1.1), ZOOM_RANGE.x, ZOOM_RANGE.y)
+		# przybliżanie wokół kursora
+		var anchor := click.position - size / 2.0
+		_offset = anchor - (anchor - _offset) * (_zoom / before)
+		_clamp_offset()
+		accept_event()
+		return
+	if click.button_index != MOUSE_BUTTON_LEFT:
+		return
+	if not click.pressed:
+		_panning = false
+		return
+	var id := node_at(click.position)
+	if id != "":
+		selected_id = id
+		selected.emit(id)
+		Sfx.play("ui_click")
+		queue_redraw()
+	else:
+		_panning = true
+	accept_event()
+
+
+## Drzewko nie ucieka całkiem poza widok.
+func _clamp_offset() -> void:
+	var limit := Vector2(9.0, 5.0) * UNIT * _zoom
+	_offset = _offset.clamp(-limit, limit)
+	queue_redraw()
 
 
 func _get_tooltip(at_position: Vector2) -> String:

@@ -195,11 +195,17 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   - **Mgnienie**: dopóki trzymasz klawisz, skoki od wroga do wroga z cięciem (mana za skok); w trakcie Młynka wirujące Mgnienie -
     seria szybkich skoków z odnowieniem, węzeł kluczowy **Nieustający Wir** znosi odnowienie (Młynek zużywa 2x many);
   - **Dymne Wybuchy** (atak i czar): ładowane, 1-3 rzędy po 3 wybuchy dymu w stożku; zaraz po innej umiejętności - wszystkie 9 od razu.
-- [ ] **Drzewko miecza, etap 2**: Rozpłatanie (krwawienie; po Mgnieniu podwójne), Rozłupanie Ziemi (fala, ogłusza; po Półksiężycu
-  we wszystkie strony), Riposta (zasłona i kontra; po niej darmowa Szarża), Zew Peruna (okrzyk; po nim 3 krytyki), Widmowe Ostrza
-  (czar, krążące miecze; po Młynku wylatują we wrogów); około 30 węzłów pasywnych; węzły kluczowe Taniec Ostrzy, Dym i Cień,
-  Krwawy Szał; legendarny przedmiot znoszący odnowienie wirującego Mgnienia. Ikony są już w `assets/skills/`
-  (rend, ground_slam, riposte, war_cry, spectral_blades, ks_*, node_*).
+- [x] **Drzewko miecza, etap 2**: pełne drzewko - 12 umiejętności, 35 węzłów pasywnych, 4 kluczowe, pięć gałęzi (Wir, Krew
+  i okrzyk, Ostrze, Dym, obrona); widok drzewka przesuwa się przeciąganiem, kółko myszy przybliża, szczegóły węzła w kolumnie obok.
+  Nowe umiejętności (`scripts/sword_skills.gd`, Widmowe Ostrza w `scripts/spectral_blades.gd`):
+  - **Rozpłatanie**: szerokie cięcie z krwawieniem (combo po Mgnieniu - podwójne),
+  - **Rozłupanie Ziemi**: fala pęknięć przed postacią, rani i ogłusza (combo po Półksiężycu - pierścień dookoła),
+  - **Riposta**: zasłona - cios nie rani, kontra wokół (combo: potem Szarża za darmo i bez odnowienia),
+  - **Zew Peruna** (okrzyk): premia do obrażeń, strach wrogów, 3 kolejne ciosy krytyczne,
+  - **Widmowe Ostrza** (czar): krążące miecze (combo po Młynku - od razu wylatują we wrogów).
+  Węzły kluczowe: Nieustający Wir, **Taniec Ostrzy** (combo przyspiesza ataki), **Dym i Cień** (chmura po Dymnych Wybuchach:
+  unik i darmowe Mgnienie), **Krwawy Szał** (krwawienie leczy). Chwilowe premie w `CharacterStats.temp_bonus` i w ikonach efektów.
+  **Amulet Wiecznego Wiru** (legendarny, tylko ze skarbca strażnika w lochach): wirujące Mgnienie bez odnowienia.
 - [ ] **Etap 3**: drzewka łuku i księgi magii według tego samego wzoru (dziś mają jeszcze karty umiejętności za złoto).
 - [ ] System kamieni wkładanych w przedmioty (gniazda).
   Istniejące kamienie (zwykłe, doskonałe, uświęcone, miłosierdzia) służą tylko do zaklinania (`scripts/enchanting.gd`, `scripts/ui/enchant_window.gd`), więc to byłby nowy system.

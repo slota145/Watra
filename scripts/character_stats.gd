@@ -61,6 +61,9 @@ var equipment: Equipment:
 		equipment = value
 		equipment.changed.connect(changed.emit)
 
+## Chwilowe premie z umiejętności (Zew Peruna, Taniec Ostrzy, chmura Dymu i Cienia) - ustawia SwordSkills.
+var temp_bonus := {}
+
 ## Umiejętności gracza - premie z wybranych węzłów drzewka założonej broni (ustawiane przez gracza).
 var skill_book: SkillBook:
 	set(value):
@@ -223,6 +226,7 @@ func _bonus(stat: String) -> float:
 	var total := equipment.bonus(stat) if equipment != null else 0.0
 	if skill_book != null:
 		total += skill_book.tree_bonus(weapon_type(), stat)
+	total += float(temp_bonus.get(stat, 0.0))
 	return total + (boons.bonus(stat) if boons != null else 0.0)
 
 

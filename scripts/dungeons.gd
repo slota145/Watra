@@ -70,6 +70,9 @@ const MODIFIERS := {
 			"cost": 80, "unlock": 4, "treasure": 2.0},
 }
 const MODIFIER_ORDER: Array[String] = ["horde", "wealth", "fury", "treasure"]
+## Legendarne przedmioty ze skarbca strażnika (tylko z lochów) i szansa na jeden z nich (Pełny skarbiec ją podwaja).
+const VAULT_LEGENDS: Array[String] = ["legend_endless_amulet"]
+const VAULT_LEGEND_CHANCE := 0.12
 
 
 static func tier_level(tier: int) -> int:

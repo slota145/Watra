@@ -464,6 +464,8 @@ func _on_boss_died(_boss_node: Goblin = null) -> void:
 		if _rng.randf() < 0.5 + chances[1] * 4.0:
 			_drop(at, Enchanting.stone_id(category, _rng.randf() < chances[1] * 6.0), roundi(_rng.randi_range(1, 2) * treasure))
 	_drop(at, "blessed_stone", roundi(_rng.randi_range(1, 3) * treasure))
+	if _rng.randf() < Dungeons.VAULT_LEGEND_CHANCE * treasure:
+		_drop(at, Loot.legendary_at_level(Dungeons.VAULT_LEGENDS.pick_random(), loot_level), 1)
 	Sfx.play("quest_ready")
 	_add_portal(Vector2(boss_room.get_center()) * CELL + Vector2(0, CELL * 1.2), "Płomienie Watry - powrót do Ostoi")
 	w.hud.show_banner("Strażnik pokonany! Skarbiec otwarty\nPłomienie Watry zabiorą cię do Ostoi", Color(1.0, 0.8, 0.4))

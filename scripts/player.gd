@@ -357,6 +357,16 @@ func combo_with(id: String) -> bool:
 	return (_chain_skill != id and "any" in after) or _chain_skill in after
 
 
+## Mnożnik obrażeń ciosów combo (węzły drzewka).
+func combo_damage() -> float:
+	return 1.0 + skills.tree_bonus(stats.weapon_type(), "combo_damage")
+
+
+## Wykonane combo (np. Półksiężyc po Szarży) - Taniec Ostrzy dokłada wtedy szybkości ataku.
+func combo_used() -> void:
+	sword_skills.on_combo()
+
+
 ## Ile okna combo jeszcze zostało (0..1) - do kurczącego się pierścienia na pasku.
 func combo_fraction() -> float:
 	return clampf(_chain_time / combo_window(), 0.0, 1.0)
@@ -506,6 +516,9 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 	if randf() < stats.dodge_chance():
 		DamageNumber.spawn_text(get_parent(), body_center(), "Unik", DODGE_COLOR, 9)
 		_invulnerable_timer = invulnerability_time
+		return
+	# Riposta: zasłona przyjmuje cios i odpowiada kontrą
+	if sword_skills.try_parry(from_position):
 		return
 	amount = stats.reduce_damage(amount)
 	# Pancerz z Łusek Czerwia może pochłonąć cios zakopaniem się w ziemi
@@ -1396,7 +1409,7 @@ func _update_whirl(delta: float) -> void:
 	Sfx.play("whirl")
 	var level := skills.level_of("whirlwind")
 	var radius := whirl_radius()
-	var multiplier := Skills.whirlwind_damage(level)
+	var multiplier := Skills.whirlwind_damage(level) * (1.0 + skills.tree_bonus("melee", "whirl_damage"))
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if enemy.hurt_center().distance_to(body_center()) <= radius + enemy.hurt_radius:
 			hit_enemy(enemy, _skill_damage(multiplier), global_position, 70.0)
@@ -1487,13 +1500,18 @@ func _use_strike() -> void:
 	if _strike_blocked() or not strike_ready():
 		return
 	var cost: float = {"lunge": Skills.LUNGE_MANA, "seeker": Skills.SEEKER_MANA, "chain_lightning": Skills.CHAIN_MANA}[id]
+	# Szarża zaraz po udanej Ripoście: za darmo i bez odnowienia
+	var free := combo_with(id)
+	if free:
+		cost = 0.0
+		combo_used()
 	if not spend_mana(cost):
 		_hint("Za mało many")
 		return
 	var level := skills.level_of(id)
 	match id:
 		"lunge":
-			_strike_cooldown = _cooldown(Skills.LUNGE_COOLDOWN)
+			_strike_cooldown = 0.0 if free else _cooldown(Skills.LUNGE_COOLDOWN) * (1.0 + skills.tree_bonus("melee", "lunge_cooldown"))
 			_strike_cooldown_total = _strike_cooldown
 			_start_lunge(level)
 		"seeker":
@@ -1521,6 +1539,7 @@ func _use_combo() -> void:
 	_combo_window = 0.0
 	var level := skills.level_of(id)
 	note_skill(id)
+	combo_used()
 	match id:
 		"crescent":
 			_start_crescent(level)
@@ -1635,7 +1654,7 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 		return
 	amount = roundi(amount * legendary.damage_multiplier() * stats.damage_multiplier() * boons.damage_multiplier(enemy))
 	amount += legendary.execute_bonus(enemy)
-	var critical := randf() < stats.crit_chance()
+	var critical := randf() < stats.crit_chance() or sword_skills.take_forced_crit()
 	if critical:
 		amount = roundi(amount * stats.crit_multiplier())
 	DamageNumber.critical = critical
@@ -1702,7 +1721,7 @@ func _start_crescent(level: int) -> void:
 	_attack_cooldown_timer = 0.45 / _skill_speed()
 	_attack_reach = Skills.crescent_radius(level)
 	_attack_arc = deg_to_rad(Skills.CRESCENT_ARC_DEGREES)
-	_attack_multiplier = Skills.CRESCENT_DAMAGE
+	_attack_multiplier = Skills.CRESCENT_DAMAGE * combo_damage()
 	_swing_sign = -_swing_sign
 	pivot.rotation = _attack_angle
 	sword.visible = sword.texture != null

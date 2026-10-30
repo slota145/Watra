@@ -47,6 +47,7 @@ static func list(player: Player) -> Array[Dictionary]:
 					roundi(Boons.WATRA_PERKS["gold_find"] * steps * 100.0), roundi(Boons.WATRA_PERKS["xp_gain"] * steps * 100.0),
 					String.num(Boons.WATRA_PERKS["health_regen"] * steps, 1).replace(".", ",")]})
 	result.append_array(player.legendary.statuses())
+	result.append_array(player.sword_skills.statuses())
 	return result
 
 

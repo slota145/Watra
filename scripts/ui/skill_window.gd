@@ -11,6 +11,9 @@ extends PanelContainer
 const CARD_WIDTH := 150.0
 ## Miejsce na paski szybkiego wyboru na dole ekranu, którego okno nie zasłania.
 const BOTTOM_RESERVE := 52.0
+## Wielkość widoku drzewka i szerokość kolumny szczegółów obok.
+const TREE_SIZE := Vector2(400, 204)
+const DETAILS_WIDTH := 150.0
 
 var _player: Player
 ## id umiejętności -> {"title": Label, "level": Label, "effect": Label, "button": Button, "card": PanelContainer}
@@ -117,46 +120,43 @@ func _place() -> void:
 	position.y = maxf(2.0, minf(position.y, screen.y - size.y - BOTTOM_RESERVE))
 
 
-## Strona drzewka: punkty, sieć węzłów, a pod nią szczegóły zaznaczonego węzła z przyciskami.
+## Strona drzewka: punkty, a pod nimi sieć węzłów i obok kolumna ze szczegółami zaznaczonego węzła i przyciskami.
 func _make_tree_page(weapon_type: String) -> VBoxContainer:
 	var page := VBoxContainer.new()
 	page.add_theme_constant_override("separation", 3)
 	var points := UiStyle.label("", 8, UiStyle.TITLE_COLOR)
 	points.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	page.add_child(points)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	page.add_child(row)
 	var view := SkillTreeView.new()
-	view.custom_minimum_size = Vector2(CARD_WIDTH * 3 + 8, 132)
+	view.custom_minimum_size = TREE_SIZE
 	view.theme = UiStyle.make_theme()
-	view.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.SLOT_BG, UiStyle.SLOT_BORDER, 3))
-	page.add_child(view)
+	row.add_child(view)
 	var details := PanelContainer.new()
 	details.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.SLOT_BG, UiStyle.SLOT_BORDER, 3))
-	details.custom_minimum_size = Vector2(CARD_WIDTH * 3 + 8, 60)
-	page.add_child(details)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 6)
-	details.add_child(row)
-	var info := UiStyle.label("Kliknij węzeł, żeby zobaczyć szczegóły.", 7, UiStyle.TEXT_COLOR)
+	details.custom_minimum_size = Vector2(DETAILS_WIDTH, TREE_SIZE.y)
+	row.add_child(details)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 4)
+	details.add_child(column)
+	var info := UiStyle.label("Kliknij węzeł, żeby zobaczyć szczegóły. Przeciągaj puste miejsce, żeby przesunąć drzewko; kółko myszy przybliża.", 7, UiStyle.TEXT_COLOR)
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.custom_minimum_size.x = CARD_WIDTH * 2
-	row.add_child(info)
-	var buttons := VBoxContainer.new()
-	buttons.add_theme_constant_override("separation", 3)
-	row.add_child(buttons)
+	info.custom_minimum_size.x = DETAILS_WIDTH - 8.0
+	info.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(info)
 	var take := Button.new()
 	take.focus_mode = Control.FOCUS_NONE
 	take.add_theme_font_size_override("font_size", 8)
 	take.pressed.connect(_take_node.bind(weapon_type))
-	buttons.add_child(take)
+	column.add_child(take)
 	var upgrade := Button.new()
 	upgrade.focus_mode = Control.FOCUS_NONE
 	upgrade.add_theme_font_size_override("font_size", 8)
 	upgrade.pressed.connect(_upgrade_node.bind(weapon_type))
-	buttons.add_child(upgrade)
-	view.selected.connect(func(_id: String) -> void:
-		_refresh()
-		_place.call_deferred())
+	column.add_child(upgrade)
+	view.selected.connect(func(_id: String) -> void: _refresh())
 	_trees[weapon_type] = {"view": view, "points": points, "info": info, "take": take, "upgrade": upgrade}
 	return page
 
@@ -206,7 +206,7 @@ func _refresh_tree(weapon_type: String) -> void:
 		upgrade.disabled = cost < 0 or _player.stats.gold < cost
 		var key := _key_of(skill, weapon_type) if Hotbar.can_slot_skill(skill) else ""
 		if key != "":
-			text += "   Na pasku:" + key
+			text += "\nNa pasku:" + key
 	parts["info"].text = text
 
 
