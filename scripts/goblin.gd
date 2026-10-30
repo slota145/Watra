@@ -50,6 +50,8 @@ static var safe_zone := Rect2()
 ## Modyfikatory lochu Watry (Dungeons.MODIFIERS) dla wszystkich potworów bieżącej krainy - mnożniki "health",
 ## "damage", "xp", "gold", "loot"; poza lochem puste (świat zeruje je przy budowie krainy).
 static var dungeon_mods := {}
+## Droga przez loch (Dungeon.steer): goniący potwór idzie po niej zamiast prosto w ścianę; poza lochem null.
+static var pathing: Object = null
 ## Pozycje potworów z bieżącej klatki (wspólne dla wszystkich, do rozpychania się).
 ## Pozycje potworów w kubełkach siatki (bok SEPARATION_RADIUS) - zbierane raz na klatkę fizyki tylko przez
 ## potwory, które potrzebują rozpychania; każdy sprawdza potem wyłącznie 9 sąsiednich kubełków.
@@ -288,8 +290,17 @@ func _process_chase() -> void:
 		_attack_timer = attack_windup
 		velocity = Vector2.ZERO
 		return
-	var desired := to_player.normalized() * speed if to_player.length() > attack_range * 0.7 else Vector2.ZERO
+	var desired := _toward_player(to_player) * speed if to_player.length() > attack_range * 0.7 else Vector2.ZERO
 	velocity = desired + _separation() * speed
+
+
+## Kierunek pogoni za graczem: w lochu po drodze omijającej ściany (gdy gracz jest dalej niż za rogiem), inaczej prosto.
+func _toward_player(to_player: Vector2) -> Vector2:
+	if pathing != null:
+		var step: Vector2 = pathing.steer(global_position)
+		if step != Vector2.ZERO:
+			return step
+	return to_player.normalized()
 
 
 func _process_attack(delta: float) -> void:

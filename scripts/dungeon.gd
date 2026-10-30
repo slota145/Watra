@@ -27,6 +27,7 @@ const PORTAL_FPS := 7.0
 ## Ile potworów na wierzchołek podłogi komnaty i jak duże są gromady.
 const DENSITY := 0.42
 const PACK := Vector2i(4, 7)
+const LEASH := 5000.0
 
 var w
 var config := {}
@@ -45,6 +46,11 @@ var _chest: Sprite2D
 var _vault_open := false
 var _light: Sprite2D
 var _time := 0.0
+## Droga do gracza: wierzchołek podłogi -> liczba kroków do wierzchołka gracza (liczona od nowa, gdy gracz zmieni wierzchołek).
+var _flow := {}
+var _flow_from := Vector2i(-1, -1)
+const STEPS: Array[Vector2i] = [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN,
+		Vector2i(-1, -1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(1, 1)]
 
 
 func generate(world, settings: Dictionary) -> void:
@@ -72,6 +78,7 @@ func generate(world, settings: Dictionary) -> void:
 	_build_entrance()
 	_populate(Dungeons.multiplier(mods, "count"))
 	_build_vault()
+	Goblin.pathing = self
 
 
 # ---------------------------------------------------------------- układ
@@ -411,6 +418,10 @@ func _pick(weights: Dictionary) -> String:
 func _spawn(kind: String, pos: Vector2, look_at: Vector2, lvl: int) -> Dictionary:
 	var spawn := {"type": kind, "position": pos, "sitting": false, "look_at": look_at, "level": lvl, "lurk": false}
 	w._add_goblin_spawn(spawn)
+	# w lochu potwory nie odpuszczają pogoni (droga i tak prowadzi wokół ścian); strażnik pilnuje skarbca
+	var goblin: Goblin = w._live_goblins.get(spawn["id"])
+	if goblin != null and not goblin is Boss:
+		goblin.leash_radius = LEASH
 	return spawn
 
 
@@ -458,6 +469,55 @@ func _on_boss_died(_boss_node: Goblin = null) -> void:
 	w.hud.show_banner("Strażnik pokonany! Skarbiec otwarty\nPłomienie Watry zabiorą cię do Ostoi", Color(1.0, 0.8, 0.4))
 
 
+# ---------------------------------------------------------------- droga przez loch
+## Czy po wierzchołku da się chodzić (podłoga, nie skała i nie lico ściany).
+func _walkable(v: Vector2i) -> bool:
+	return _label(v) == "l"
+
+
+## Krok po skosie tylko wtedy, gdy oba boczne wierzchołki są wolne - bez ścinania rogów ścian.
+func _can_step(from: Vector2i, step: Vector2i) -> bool:
+	if not _walkable(from + step):
+		return false
+	return step.x == 0 or step.y == 0 or (_walkable(from + Vector2i(step.x, 0)) and _walkable(from + Vector2i(0, step.y)))
+
+
+## Odległości od wierzchołka gracza do całej podłogi lochu (przeszukiwanie wszerz).
+func _update_flow(target: Vector2i) -> void:
+	_flow_from = target
+	_flow = {target: 0}
+	var queue: Array[Vector2i] = [target]
+	var head := 0
+	while head < queue.size():
+		var v := queue[head]
+		head += 1
+		for step in STEPS:
+			var n := v + step
+			if not _flow.has(n) and _can_step(v, step):
+				_flow[n] = _flow[v] + 1
+				queue.append(n)
+
+
+## Kierunek, w którym potwór z punktu `from` ma iść do gracza: do sąsiedniego wierzchołka bliżej gracza.
+## Zero, gdy gracz jest tuż obok (wtedy prosto) albo potwór stoi poza podłogą.
+func steer(from: Vector2) -> Vector2:
+	var v := Vector2i((from / CELL).round())
+	var here: int = _flow.get(v, -1)
+	if here >= 0 and here <= 1:
+		return Vector2.ZERO
+	var best := Vector2i(-1, -1)
+	var best_d := here if here >= 0 else 1 << 30
+	for step in STEPS:
+		var n := v + step
+		var d: int = _flow.get(n, -1)
+		if d >= 0 and d < best_d and (here < 0 or _can_step(v, step)):
+			best_d = d
+			best = n
+	if best.x < 0:
+		return Vector2.ZERO
+	return (Vector2(best) * CELL - from).normalized()
+
+
 func _drop(at: Vector2, id: String, amount: int) -> void:
 	if amount <= 0:
 		return
@@ -477,6 +537,9 @@ func _process(delta: float) -> void:
 		portal["sprite"].frame = frame
 	if _light != null:
 		_light.global_position = w.player.global_position + Vector2(0, -8)
+	var player_vertex := Vector2i((w.player.global_position / CELL).round())
+	if player_vertex != _flow_from:
+		_update_flow(player_vertex)
 	if w._traveling or w.player.is_dead:
 		return
 	for portal: Dictionary in _portals:

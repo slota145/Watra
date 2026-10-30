@@ -76,6 +76,19 @@ func _check_dungeon() -> void:
 	var player = _world.player
 	var vertex := Vector2i((player.global_position / d.CELL).round())
 	check("%s: gracz na podłodze przy wejściu" % climate, d._label(vertex) == "l" and d.start_room.grow(1).has_point(vertex))
+	# droga przez loch: z komnaty strażnika krok po kroku coraz bliżej gracza
+	d._update_flow(vertex)
+	var from: Vector2i = d.boss_room.position + d.boss_room.size / 2
+	var at: Vector2 = Vector2(from) * d.CELL
+	var closer: bool = d._flow.has(from)
+	for i in 400:
+		var here: int = d._flow.get(Vector2i((at / d.CELL).round()), -1)
+		if here <= 1:
+			break
+		var step: Vector2 = d.steer(at)
+		at += step * 16.0
+		closer = closer and step != Vector2.ZERO
+	check("%s: droga do gracza omija ściany" % climate, closer and d._flow.get(Vector2i((at / d.CELL).round()), 99) <= 1)
 	var kinds := {}
 	var levels := {}
 	var count := 0

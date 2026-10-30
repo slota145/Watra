@@ -28,6 +28,7 @@ const TIPS := [
 	"Serca goblinów i skóry wilków sprzedasz u handlarzy za złoto.",
 	"Drzewa zetniesz, a głazy rozbijesz klawiszem F - odrastają po kilku minutach albo od razu po odpoczynku w karczmie.",
 	"W drewnie trafiają się uświęcone kamienie, a w głazach kamienie do zaklinania.",
+	"W każdej krainie rośnie inne zioło (iskierki nad rośliną, F - zerwij). Zielarka z lecznicy uwarzy z nich mikstury wzmacniające.",
 	"Łowiska są w prawym górnym i lewym dolnym rogu mapy. Zwierzyna ucieka - skóry i poroże sprzedasz, a mięso zjesz (PPM).",
 	"Sołtys Mirosław zleca zbieranie surowców - liczy się to, co masz w plecaku i w magazynie.",
 	"Magazynier przechowa twoje rzeczy. Im więcej drewna i kamienia złożysz, tym większe stosy przy magazynie.",

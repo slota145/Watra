@@ -404,6 +404,8 @@ var _caravan_timer := 0.0
 var zone := "forest"
 ## Loch w płomieniach Watry (gdy zone == Zones.DUNGEON) i jego ustawienia (Dungeons.config).
 var _dungeon: Dungeon
+## Obrazek mapy krainy (minimapa, duża mapa) - dorysowują się na nim zioła.
+var _map_texture: ImageTexture
 var _dungeon_config := {}
 var _zone_states := {}
 ## Odkryte kapliczki: id -> [x, y] (kafelki w swojej krainie).
@@ -463,6 +465,7 @@ func _ready() -> void:
 	# to samo ziarno = identyczny świat, także losowe warianty drzew (każda kraina ma własne)
 	_rng.seed = _seed if zone == "forest" else hash([_seed, zone])
 	Goblin.dungeon_mods = {}
+	Goblin.pathing = null
 	seed(_rng.seed)
 	_noise.seed = _rng.randi()
 	_noise.frequency = 0.07
@@ -528,6 +531,7 @@ func _ready() -> void:
 	hud.connect_player(player)
 
 	var map_texture := _build_map_texture()
+	_map_texture = map_texture
 	Zones.save_map_cache(_seed, zone, map_texture.get_image())
 	hud.setup_map(map_texture, map_size, TILE, player, _map_markers)
 	hud.setup_world_map(self, _seed, zone, map_texture)
@@ -539,6 +543,8 @@ func _ready() -> void:
 	elif zone == "forest":
 		player.give_starting_items()
 		hud.show_intro()
+	# zioła po pierwszym kroku fizyki - dopiero wtedy wszystkie przeszkody krainy są w przestrzeni kolizji
+	_place_herbs()
 	if save.has("arrive"):
 		player.global_position = _arrival_point(str(save["arrive"]))
 		player.camera.reset_smoothing()
@@ -2066,6 +2072,60 @@ func _plan_swamp_herds() -> void:
 
 
 ## Czy w danym miejscu (piksele) jest woda, po której pływają kaczki ("deep" / "shallow").
+## Dzikie zioła krainy (Herbs) w wolnych miejscach: poza drogą, wodą, osadą, siedliskami potworów i przeszkodami,
+## nie bliżej siebie niż Herbs.SPACING kafelków. Własne ziarno - reszta krainy generuje się tak samo jak bez ziół.
+## Sadzone po pierwszym kroku fizyki (część przeszkód rejestruje się dopiero wtedy); zerwane przed zapisem
+## od razu wracają do stanu z zapisu, a rośliny pojawiają się na mapie.
+func _place_herbs() -> void:
+	var kind := Herbs.kind_in_zone(zone)
+	if kind == "":
+		return
+	await get_tree().physics_frame
+	if not is_inside_tree():
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([_seed, zone, "herbs"])
+	var shape := CircleShape2D.new()
+	shape.radius = 12.0
+	var query := PhysicsShapeQueryParameters2D.new()
+	query.shape = shape
+	query.collision_mask = 1
+	var space := get_world_2d().direct_space_state
+	var want: int = Herbs.KINDS[kind]["count"]
+	var placed: Array[Vector2] = []
+	var map_color := Color(0.85, 0.95, 0.45)
+	var image: Image = _map_texture.get_image() if _map_texture != null else null
+	for _attempt in want * 60:
+		if placed.size() >= want:
+			break
+		var cell := Vector2i(rng.randi_range(Herbs.EDGE, map_size.x - Herbs.EDGE), rng.randi_range(Herbs.EDGE, map_size.y - Herbs.EDGE))
+		if _occupied.has(cell) or _reserved.has(cell) or _road_cells.has(cell):
+			continue
+		if _water.get(cell, "") == "deep" or (zone == "forest" and _settlement_area.has_point(cell)):
+			continue
+		var pos := (Vector2(cell) + Vector2(0.5, 0.8)) * TILE
+		if placed.any(func(other: Vector2) -> bool: return other.distance_to(pos) < Herbs.SPACING * TILE):
+			continue
+		query.transform = Transform2D(0.0, pos)
+		if not space.intersect_shape(query, 1).is_empty():
+			continue
+		placed.append(pos)
+		entities.add_child(Herb.create(kind, pos))
+		_map_props[cell] = map_color
+		if _map_texture != null:
+			image.set_pixel(cell.x, cell.y, map_color)
+	if _map_texture != null:
+		_map_texture.update(image)
+	# zerwane przed zapisem
+	var picked := {}
+	for stump: Array in _zone_states.get(zone, {}).get("stumps", []):
+		picked[Vector2i(Vector2(stump[0], stump[1]).round())] = float(stump[2])
+	for herb: Herb in get_tree().get_nodes_in_group("harvestables").filter(func(n: Node) -> bool: return n is Herb):
+		var key := Vector2i(herb.position.round())
+		if picked.has(key):
+			herb.deplete(picked[key])
+
+
 func water_at(pos: Vector2) -> String:
 	var kind: String = _water.get(Vector2i(pos / TILE), "")
 	return kind if kind in ["deep", "shallow"] and not _bridge_cells.has(Vector2i(pos / TILE)) else ""

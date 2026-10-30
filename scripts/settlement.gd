@@ -136,7 +136,7 @@ Trzech myśliwych rusza na łowy"},
 	# budowle bez wnętrza (grafika z zewnątrz) - "fit": plac budowy dopasowany do ich rozmiaru
 	"infirmary": {"pos": Vector2i(19, 35), "size": Vector2i(5, 4), "color": Color("4f8a4a"), "fit": true,
 			"time": 150.0, "art": "construction_lodge", "cost": {"wood": 120, "stone": 80},
-			"description": "W południowo-zachodnim kącie osady, za kuźnią. Za palisadą szybciej odzyskasz zdrowie i manę (3% na sekundę), a zielarka sprzeda wielkie mikstury.",
+			"description": "W południowo-zachodnim kącie osady, za kuźnią. Za palisadą szybciej odzyskasz zdrowie i manę (3% na sekundę), a zielarka sprzeda wielkie mikstury i uwarzy z dzikich ziół mikstury wzmacniające.",
 			"start_line": "Budujemy lecznicę! W kącie za kuźnią.",
 			"done_line": "Lecznica gotowa. Ranni wreszcie mają gdzie leżeć.",
 			"banner": "Lecznica zielarki zbudowana!\nW osadzie szybciej wracasz do sił"},
@@ -1272,6 +1272,7 @@ func _build_infirmary() -> void:
 	herbalist.display_name = "Zielarka Jadwiga"
 	herbalist.trade_greeting = "Mikstury z ziół zbieranych o świcie. Pomogą, gdy zrobi się gorąco."
 	herbalist.shop_sells.assign(["greater_health_potion", "greater_mana_potion", "health_potion", "mana_potion"])
+	herbalist.services.assign(["elixirs"])
 	_extra_npc("infirmary", herbalist)
 	map_markers.append({"position": _px(base), "color": Color("6fdc7a"), "size": 2.0})
 

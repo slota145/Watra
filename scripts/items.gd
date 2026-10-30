@@ -455,6 +455,86 @@ const DATA := {
 		"use": {"guards": 2},
 	},
 
+	# ---------------------------------------------------------------- zielarstwo (Herbs): zioła i mikstury zielarki
+	"herb_wort": {
+		"name": "Dziurawiec",
+		"description": "Pęczek żółtego ziela z Goblińskiego Lasu. Zielarka zrobi z niego wywar wzmacniający zdrowie.",
+		"icon": preload("res://assets/items/herb_wort.png"),
+		"sell_price": 5,
+	},
+	"herb_chamomile": {
+		"name": "Rumianek",
+		"description": "Biały kwiat z miedz Pól Zbożowych. Zielarka zaparzy z niego napar, który goi rany.",
+		"icon": preload("res://assets/items/herb_chamomile.png"),
+		"sell_price": 5,
+	},
+	"herb_calamus": {
+		"name": "Tatarak",
+		"description": "Korzenne liście z brzegów Rozlewisk. Zielarka zrobi z nich nalewkę na manę.",
+		"icon": preload("res://assets/items/herb_calamus.png"),
+		"sell_price": 6,
+	},
+	"herb_arnica": {
+		"name": "Arnika",
+		"description": "Górski kwiat z Wietrznych Turni. Zielarka zrobi z niego eliksir siły.",
+		"icon": preload("res://assets/items/herb_arnica.png"),
+		"sell_price": 8,
+	},
+	"herb_fern": {
+		"name": "Kwiat paproci",
+		"description": "Legendarny kwiat, który zakwita w Prastarym Lesie. Rzadki - zielarka zrobi z niego eliksir szczęścia.",
+		"icon": preload("res://assets/items/herb_fern.png"),
+		"sell_price": 15,
+	},
+	"herb_datura": {
+		"name": "Bieluń",
+		"description": "Trujące ziele z Leśnego Cmentarza. W rękach zielarki - wywar przyspieszający ciosy.",
+		"icon": preload("res://assets/items/herb_datura.png"),
+		"sell_price": 10,
+	},
+	"elixir_wort": {
+		"name": "Wywar z dziurawca",
+		"description": "Gęsty, złoty wywar. Na 5 minut: +25% maks. zdrowia. Działa jedna mikstura naraz.",
+		"icon": preload("res://assets/items/elixir_wort.png"),
+		"sell_price": 15,
+		"use": {"boon": "elixir_wort"},
+	},
+	"elixir_chamomile": {
+		"name": "Napar z rumianku",
+		"description": "Łagodny napar. Na 5 minut: +8 zdrowia na sekundę. Działa jedna mikstura naraz.",
+		"icon": preload("res://assets/items/elixir_chamomile.png"),
+		"sell_price": 15,
+		"use": {"boon": "elixir_chamomile"},
+	},
+	"elixir_calamus": {
+		"name": "Nalewka z tataraku",
+		"description": "Zielona, korzenna nalewka. Na 5 minut: +5 many na sekundę i +8% szybkości ruchu. Działa jedna mikstura naraz.",
+		"icon": preload("res://assets/items/elixir_calamus.png"),
+		"sell_price": 18,
+		"use": {"boon": "elixir_calamus"},
+	},
+	"elixir_arnica": {
+		"name": "Eliksir z arniki",
+		"description": "Ognisty eliksir. Na 5 minut: +15% zadawanych obrażeń. Działa jedna mikstura naraz.",
+		"icon": preload("res://assets/items/elixir_arnica.png"),
+		"sell_price": 24,
+		"use": {"boon": "elixir_arnica"},
+	},
+	"elixir_fern": {
+		"name": "Eliksir z kwiatu paproci",
+		"description": "Mieni się złotymi iskrami. Na 5 minut: +8% szansy na trafienie krytyczne i +30% znajdowanego złota. Działa jedna mikstura naraz.",
+		"icon": preload("res://assets/items/elixir_fern.png"),
+		"sell_price": 45,
+		"use": {"boon": "elixir_fern"},
+	},
+	"elixir_datura": {
+		"name": "Wywar z bielunia",
+		"description": "Ciemny, gorzki wywar. Na 5 minut: +20% szybkości ataku. Działa jedna mikstura naraz.",
+		"icon": preload("res://assets/items/elixir_datura.png"),
+		"sell_price": 30,
+		"use": {"boon": "elixir_datura"},
+	},
+
 	# ---------------------------------------------------------------- kamienie zaklinające
 	"weapon_stone": {
 		"name": "Kamień zaklinania broni", "short_name": "Kamień broni", "description": "Czerwony kamień. Zaklina broń od +1 do +15.",
