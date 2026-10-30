@@ -137,12 +137,11 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 
 ### Pola Zbożowe (`scripts/grain_fields.gd`)
 
-- [ ] Rozbudować obóz koboldów wokół barykady Bombardiera (`scripts/kobold_bombardier.gd`), z dużą liczbą koboldów.
-- [ ] Pola pszenicy:
-  - znacznie większe i wyraźnie dominujące w krainie,
-  - o organicznych, nieregularnych kształtach zamiast prostokątów,
-  - pszenica nie spowalnia gracza (dziś spowalnia).
-  Wzór: `docs/referencje/pola_zbozowe.jpg` (złote, faliste łany, kręte drogi z rozstajami, kępy jesiennych drzew, gospodarstwa na polanach).
+- [x] Wielki obóz koboldów (elipsa 48x30 kafelków) z barykadą Bombardiera w północnej części: 12 namiotów, 6 ognisk,
+  stojące zgraje, straż bramy; zgraje także w łanach dookoła - około 190 koboldów (było około 65).
+- [x] Pola pszenicy: organiczne kształty z szumu, łany zajmują większość krainy, miedze między polami, polany wokół
+  gospodarstw z dróżkami do drogi, kępy drzew w jesiennych barwach (`shaders/autumn.gdshader`); zboże nie spowalnia.
+  Wzór: `docs/referencje/pola_zbozowe.jpg`.
 
 ### Leśny Cmentarz (`scripts/forest_cemetery.gd`)
 
@@ -196,7 +195,6 @@ Dziś tablica ma tylko zlecenia na wilki i gobliny w Goblińskim Lesie (komentar
   - 2 nad Wietrznymi Turniami ((400,-150) i (400,-300)).
   Po tym mapa jest pełnym prostokątem 4x3.
 - [ ] Duża mapa świata ma wyglądać jak prawdziwa, ładna mapa, a nie jak siatka kafelków (`scripts/ui/world_map_view.gd`, `scripts/ui/big_map.gd`).
-- [ ] Sprawdzić, czy wzgórze z gryfem na Polach Zbożowych jest skończone (`scripts/grain_fields.gd:12` mówi „zostawione na później”, gryf został dodany później).
 
 ### Nowe krainy
 

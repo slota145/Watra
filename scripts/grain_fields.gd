@@ -1,15 +1,16 @@
 class_name GrainFields
 extends Node
 ## Pola Zbożowe - kraina na zachód od Goblińskiego Lasu (wejście na końcu leśnej drogi, w prawym dolnym rogu).
-## Dawny spichlerz okolicy: łany gęstego zboża (rząd zboża to jeden kołyszący się pas - postacie chowają się
-## w nim do pasa, a gracz brnie wolniej), ścierniska ze snopkami, zaorane zagony, część pól otoczona
-## walącymi się murkami z polnych kamieni, a między nimi opuszczone gospodarstwa (chałupy, stodoły, studnie).
-## Droga prowadzi od wejścia do rozstajów przy ruinie wiatraka (kapliczka Starego Młyna). Siedliska:
-## - na północy: obozowisko koboldów w łanach (namioty ze skór, ogniska, skrzynie bomb), a za nim
-##   barykada Bombardiera,
+## Dawny spichlerz okolicy: złote łany zboża zajmują większość krainy - organiczne, faliste kształty (z szumu),
+## rozdzielone trawiastymi miedzami, z kępami jesiennych drzew między polami (rząd zboża to kołyszący się pas -
+## postacie chowają się w nim do pasa; zboże nie spowalnia). Gdzieniegdzie ścierniska ze snopkami i zaorane
+## zagony, a na polanach wśród pól opuszczone gospodarstwa (chałupy, stodoły, studnie), do których prowadzą
+## dróżki od drogi. Droga prowadzi od wejścia do rozstajów przy ruinie wiatraka (kapliczka Starego Młyna). Siedliska:
+## - na północy: wielki obóz koboldów (namioty ze skór, ogniska, skrzynie bomb, totemy), a w jego północnej
+##   części barykada Bombardiera; zgraje koboldów także w okolicznych łanach,
 ## - na południowym zachodzie: ryjowisko czerwi polnych (kopce, nory, popękana ziemia) z kraterem
-##   Pożeracza Pól,
-## - w lewym górnym rogu, najdalej od wejścia: wzgórze, nad którym krąży gryf (zostawione na później).
+##   Pożeracza Pól (ryjowisko to ścierniska i zaorane zagony, nie łany),
+## - w lewym górnym rogu, najdalej od wejścia: wzgórze, nad którym krąży gryf.
 
 const TILE := 16
 const MAP_GRAIN := Color("c9a54a")
@@ -57,12 +58,23 @@ const PINE := preload("res://scenes/props/tree_pine.tscn")
 const BUSH := preload("res://scenes/props/bush.tscn")
 const CAMPFIRE := preload("res://scenes/props/campfire.tscn")
 
-const FIELD_COUNT := 34
-const FARMS := 6
-const KOBOLD_GROUPS := 9
+const FARMS := 7
+const KOBOLD_GROUPS := 14
 const WORMS := 26
-## Gracz brnie przez łan wolniej (mnożnik prędkości).
-const GRAIN_SLOW := 0.82
+## Obóz koboldów: półosie (w kafelkach), namioty, ogniska i stojące zgraje w obozie.
+const CAMP_RADII := Vector2(24.0, 15.0)
+const CAMP_TENTS := 12
+const CAMP_FIRES := 6
+const CAMP_PACKS := 8
+## Progi szumu pól: ponad FIELD_LEVEL - pole (reszta to łąki), miedza tam, gdzie drugi szum jest bliski zera.
+const FIELD_LEVEL := -0.22
+const BALK_WIDTH := 0.065
+## Polana wokół gospodarstwa (bez pól, w kafelkach).
+const FARM_CLEARING := 11.0
+## Jesienne barwy liści dębów (shader podmienia zieleń) - część dębów zostaje zielona.
+const AUTUMN_SHADER := preload("res://shaders/autumn.gdshader")
+const AUTUMN: Array[Color] = [Color(1.0, 0.74, 0.26), Color(1.0, 0.55, 0.2), Color(1.0, 0.88, 0.34), Color(0.92, 0.42, 0.18)]
+const AUTUMN_SHARE := 0.7
 
 var w  # świat
 var entry := Vector2.ZERO
@@ -72,47 +84,53 @@ var bombardier := Vector2.ZERO
 var worms := Vector2.ZERO
 var worm_lair := Vector2.ZERO
 var gryf_hill := Vector2.ZERO
-## [Rect2i pola w kafelkach, rodzaj: "grain" / "stubble" / "soil"]
-var fields: Array = []
+## Rodzaj pola w komórce: "grain" / "stubble" / "soil" (brak wpisu - łąka, droga, siedlisko).
+var _field_kind := {}
 var _farms: Array[Vector2] = []
 ## Teren narożników (Vector2i -> nazwa terenu SoftGround); brak wpisu = trawa.
 var _corners := {}
 var _yard_cells := {}
 var _field_cells := {}
-## Łany w pikselach (do spowalniania gracza).
-var _grain_rects: Array[Rect2] = []
 var _sway: ShaderMaterial
-var _player: Node2D
+var _autumn: Array[ShaderMaterial] = []
 
 
 func generate(world) -> void:
 	w = world
 	var rng: RandomNumberGenerator = w._rng
 	var size := Vector2(w.map_size)
-	_player = w.player
 	Goblin.safe_zone = Rect2()
 	entry = Vector2(size.x - 1.0, size.y - 3.0)
 	cross = Vector2(size.x * 0.58, size.y * 0.6)
-	kobolds = Vector2(size.x * 0.56, size.y * 0.26)
-	bombardier = Vector2(size.x * 0.4, size.y * 0.1)
+	kobolds = Vector2(size.x * 0.5, size.y * 0.25)
+	bombardier = kobolds + Vector2(0, -CAMP_RADII.y + 3.0)
 	worms = Vector2(size.x * 0.3, size.y * 0.72)
 	worm_lair = Vector2(size.x * 0.1, size.y * 0.83)
 	gryf_hill = Vector2(size.x * 0.12, size.y * 0.26)
 	_sway = ShaderMaterial.new()
 	_sway.shader = SWAY
+	for tint in AUTUMN:
+		var material := ShaderMaterial.new()
+		material.shader = AUTUMN_SHADER
+		material.set_shader_parameter("tint", Vector3(tint.r, tint.g, tint.b))
+		_autumn.append(material)
 
-	# droga od wejścia do rozstajów i dalej do koboldów; ścieżki do czerwi i na wzgórze gryfa
+	# droga od wejścia do rozstajów i dalej do bramy obozu koboldów; ścieżki do czerwi i na wzgórze gryfa,
+	# a między nimi dróżka zachodem (drugie rozstaje)
 	w._road = Road.wiggle(entry, cross, rng, 5.0, 11.0)
-	w._road.append_array(Road.wiggle(cross, kobolds + Vector2(0, 12), rng, 5.0, 11.0))
+	w._road.append_array(Road.wiggle(cross, kobolds + Vector2(0, CAMP_RADII.y + 3.0), rng, 5.0, 11.0))
 	_mark_path(w._road, 1.3, 2.8)
-	_mark_path(Road.wiggle(cross, worms + Vector2(14, -4), rng, 5.0, 11.0), 0.9, 2.2)
-	_mark_path(Road.wiggle(cross, gryf_hill + Vector2(16, 6), rng, 5.0, 11.0), 0.9, 2.2)
+	var to_worms := Road.wiggle(cross, worms + Vector2(14, -4), rng, 5.0, 11.0)
+	var to_gryf := Road.wiggle(cross, gryf_hill + Vector2(16, 6), rng, 5.0, 11.0)
+	_mark_path(to_worms, 0.9, 2.2)
+	_mark_path(to_gryf, 0.9, 2.2)
+	_mark_path(Road.wiggle(to_worms[to_worms.size() * 2 / 3], to_gryf[to_gryf.size() * 2 / 3], rng, 4.0, 9.0), 0.8, 2.0)
 
 	var shrine_tile := cross + Vector2(4.5, -4.0)
 	w._reserve_area(shrine_tile, 3.0)
 	w._reserve_area(cross + Vector2(-6.0, -6.0), 4.0)  # wiatrak
-	w._reserve_area(kobolds, 10.0)
-	w._reserve_area(bombardier, 9.0)
+	for cell in _ellipse(kobolds, CAMP_RADII):
+		w._reserved[cell] = true
 	w._reserve_area(worm_lair, 9.0)
 	w._reserve_area(gryf_hill, 14.0)
 	_plan_farms(rng)
@@ -123,8 +141,7 @@ func generate(world) -> void:
 	w._build_bounds()
 	for farm in _farms:
 		_build_farm(rng, farm)
-	for field: Array in fields:
-		_build_field(rng, field[0], field[1])
+	_build_fields(rng)
 	_build_kobold_camp(rng)
 	_build_bombardier_lair(rng)
 	_build_worm_grounds(rng)
@@ -162,28 +179,60 @@ func _plan_farms(rng: RandomNumberGenerator) -> void:
 		w._reserve_area(tile, 8.0)
 		for cell in w._cells_in_radius(tile + Vector2(0, 1), 6.0):
 			_yard_cells[cell] = true
+	# dróżki od podwórek do najbliższej drogi
+	for farm in _farms:
+		var nearest: Vector2 = w._road[0]
+		for point: Vector2 in w._road:
+			if point.distance_squared_to(farm) < nearest.distance_squared_to(farm):
+				nearest = point
+		_mark_path(Road.wiggle(farm + Vector2(0, 4), nearest, rng, 2.0, 6.0), 0.7, 1.8)
 
 
-## Pola: prostokąty w wolnym terenie (nie na drodze, w siedliskach ani gospodarstwach), z odstępem
-## na miedze między nimi.
+## Pola: wszędzie, gdzie szum pól jest ponad progiem (organiczne, faliste kształty jak łany na wzgórzach), poza
+## drogami, siedliskami, podwórkami i pasem lasu przy granicy; między polami trawiaste miedze tam, gdzie drugi
+## szum przechodzi przez zero. Rodzaj pola z trzeciego, wolnego szumu (głównie łany, czasem ścierniska i zagony);
+## na ryjowisku czerwi zamiast łanów - zagony i ścierniska.
 func _plan_fields(rng: RandomNumberGenerator) -> void:
-	var margin: int = w.border_thickness + 4
-	for attempt in 900:
-		if fields.size() >= FIELD_COUNT:
-			break
-		var fw := rng.randi_range(9, 22)
-		var fh := rng.randi_range(6, 13)
-		var x := rng.randi_range(margin, w.map_size.x - margin - fw)
-		var y := rng.randi_range(margin, w.map_size.y - margin - fh)
-		var rect := Rect2i(x, y, fw, fh)
-		if not _rect_free(rect.grow(2)):
-			continue
-		var roll := rng.randf()
-		var kind := "grain" if roll < 0.68 else "stubble" if roll < 0.88 else "soil"
-		fields.append([rect, kind])
-		for cy in range(rect.position.y - 1, rect.end.y + 1):
-			for cx in range(rect.position.x - 1, rect.end.x + 1):
-				_field_cells[Vector2i(cx, cy)] = true
+	var shape := FastNoiseLite.new()
+	shape.seed = rng.randi()
+	shape.frequency = 0.03
+	shape.fractal_octaves = 3
+	var balks := FastNoiseLite.new()
+	balks.seed = rng.randi()
+	balks.frequency = 0.035
+	var kinds := FastNoiseLite.new()
+	kinds.seed = rng.randi()
+	kinds.frequency = 0.045
+	var margin: int = w.border_thickness + 2
+	for y in range(margin, w.map_size.y - margin):
+		for x in range(margin, w.map_size.x - margin):
+			var cell := Vector2i(x, y)
+			if w._reserved.has(cell) or w._road_clear.has(cell) or _yard_cells.has(cell):
+				continue
+			if shape.get_noise_2d(x, y) < FIELD_LEVEL or absf(balks.get_noise_2d(x, y)) < BALK_WIDTH:
+				continue
+			if _farms.any(func(farm: Vector2) -> bool: return farm.distance_to(Vector2(cell)) < FARM_CLEARING):
+				continue
+			var k := kinds.get_noise_2d(x, y)
+			var kind := "grain"
+			if (Vector2(cell) - worms).length() < 30.0 and ((Vector2(cell) - worms) / Vector2(34, 22)).length() < 1.0:
+				kind = "soil" if k < 0.1 else "stubble"
+			elif k > 0.5:
+				kind = "stubble"
+			elif k < -0.55:
+				kind = "soil"
+			_field_kind[cell] = kind
+			_field_cells[cell] = true
+
+
+## Komórki elipsy (w kafelkach).
+func _ellipse(center: Vector2, radii: Vector2) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for y in range(floori(center.y - radii.y), ceili(center.y + radii.y) + 1):
+		for x in range(floori(center.x - radii.x), ceili(center.x + radii.x) + 1):
+			if ((Vector2(x, y) + Vector2(0.5, 0.5) - center) / radii).length() < 1.0:
+				cells.append(Vector2i(x, y))
+	return cells
 
 
 func _free(cell: Vector2i, radius: int) -> bool:
@@ -214,22 +263,17 @@ func _build_ground(rng: RandomNumberGenerator) -> void:
 	flowers.frequency = 0.1
 	var soil := {}
 	var stubble := {}
-	for field: Array in fields:
-		var rect: Rect2i = field[0]
-		for cy in range(rect.position.y, rect.end.y):
-			for cx in range(rect.position.x, rect.end.x):
-				if field[1] == "stubble":
-					stubble[Vector2i(cx, cy)] = true
-				else:
-					soil[Vector2i(cx, cy)] = true
+	for cell: Vector2i in _field_kind:
+		if _field_kind[cell] == "soil":
+			soil[cell] = true
+		else:  # pod łanem ściernisko - prześwituje na skraju pola
+			stubble[cell] = true
 	var dirt := {}
 	for cell in w._road_cells:
 		dirt[cell] = true
 	for cell in _yard_cells:
 		dirt[cell] = true
-	for cell in w._cells_in_radius(kobolds, 8.0):
-		dirt[cell] = true
-	for cell in w._cells_in_radius(bombardier, 6.0):
+	for cell in _ellipse(kobolds, CAMP_RADII * 0.9):
 		dirt[cell] = true
 	for cell in w._cells_in_radius(worm_lair, 6.5):
 		dirt[cell] = true
@@ -294,10 +338,10 @@ func _place_nature(rng: RandomNumberGenerator) -> void:
 			if w._reserved.has(cell) or _field_cells.has(cell) or _yard_cells.has(cell):
 				continue
 			var r := rng.randf()
-			# zadrzewienia śródpolne i pojedyncze drzewa na miedzach
-			if groves.get_noise_2d(x, y) > 0.42 and r < 0.16:
+			# kępy drzew na łąkach między polami i pojedyncze drzewa na miedzach
+			if groves.get_noise_2d(x, y) > 0.22 and r < 0.34:
 				_tree(rng, cell, 1)
-			elif r < 0.004:
+			elif r < 0.006:
 				_tree(rng, cell, 2)
 			elif r < 0.012:
 				w._try_place(BUSH, cell, 1)
@@ -305,50 +349,68 @@ func _place_nature(rng: RandomNumberGenerator) -> void:
 				_decor(rng, w._cell_to_world(cell), [3, 4, 6, 13, 13, 14].pick_random())
 
 
+## Drzewo; dęby mają jesienne barwy (złote, rude), jak na pogórzu pełnym pól.
 func _tree(rng: RandomNumberGenerator, cell: Vector2i, spacing: int) -> void:
-	var oak := rng.randf() < 0.75
+	var oak := rng.randf() < 0.8
+	if w._occupied.has(cell):
+		return
 	w._try_place(OAK if oak else PINE, cell, spacing)
 	if w._occupied.has(cell):
 		w._map_props[cell] = w.MAP_TREE if oak else w.MAP_PINE
+		if oak and rng.randf() < AUTUMN_SHARE:
+			var tree: Node2D = w.entities.get_child(w.entities.get_child_count() - 1)
+			(tree.get_node("Sprite") as Sprite2D).material = _autumn[rng.randi() % _autumn.size()]
 
 
 # ---------------------------------------------------------------- pola
-func _build_field(rng: RandomNumberGenerator, rect: Rect2i, kind: String) -> void:
-	var px := Rect2(Vector2(rect.position * TILE), Vector2(rect.size * TILE))
-	if kind == "grain":
-		_grain_rects.append(px)
-		var variant := rng.randi() % GRAIN_VARIANTS
-		for row in rect.size.y:
-			_grain_row(rng, Vector2(px.position.x, px.position.y + (row + 1) * TILE + 2), px.size.x, variant)
-		for cy in range(rect.position.y, rect.end.y):
-			for cx in range(rect.position.x, rect.end.x):
-				w._map_props[Vector2i(cx, cy)] = MAP_GRAIN
-		# strach na wróble i maki na skraju łanu
-		if rng.randf() < 0.45:
-			_prop(SCARECROW, px.position + Vector2(rng.randf_range(0.3, 0.7) * px.size.x, rng.randf_range(0.4, 0.8) * px.size.y))
-		for i in rng.randi_range(2, 6):
-			_decor(rng, px.position + Vector2(rng.randf() * px.size.x, px.size.y + 6), [3, 4, 5].pick_random())
-	elif kind == "stubble":
-		# ściernisko: snopki w rzędach, czasem bele i stóg
-		for row in range(1, rect.size.y, 3):
-			for col in range(1, rect.size.x, 3):
-				if rng.randf() < 0.55:
-					var pos := px.position + Vector2(col, row) * TILE + Vector2(rng.randf_range(-3, 3), rng.randf_range(-2, 2))
-					_prop(STOOK if rng.randf() < 0.8 else HAY_BALE, pos, Vector2(12, 5))
-		if rng.randf() < 0.4:
-			_prop(HAYSTACK, px.get_center(), Vector2(30, 10))
-	else:
-		# zaorany zagon: pług porzucony w bruździe
-		if rng.randf() < 0.5:
-			_prop(PLOUGH, px.position + Vector2(rng.randf() * px.size.x, rng.randf() * px.size.y))
-		for i in 3:
-			_decor(rng, px.position + Vector2(rng.randf() * px.size.x, rng.randf() * px.size.y), [6, 14].pick_random())
-	# walące się murki z polnych kamieni na dłuższych bokach części pól (z wyłomami)
-	if rng.randf() < 0.45:
-		for side in [-1, 1]:
-			if rng.randf() < 0.75:
-				var y := px.position.y - 10.0 if side < 0 else px.end.y + 14.0
-				_wall_line(rng, px.position.x - 8.0, px.end.x + 8.0, y)
+## Łany: w każdym rzędzie kafelków ciągłe odcinki zboża stają się jednym kołyszącym się pasem (końce lekko
+## postrzępione); odmiana zboża zmienia się łagodnie po krainie. Na łanach strachy na wróble, na skraju maki.
+## Ścierniska dostają snopki, bele i czasem stóg, zagony - porzucone pługi.
+func _build_fields(rng: RandomNumberGenerator) -> void:
+	var variants := FastNoiseLite.new()
+	variants.seed = rng.randi()
+	variants.frequency = 0.02
+	# odmiana w komórce: dwie złote (dojrzałe łany), zielonkawa tylko w rzadkich płatach; pas dzielimy tam,
+	# gdzie zmienia się odmiana - granice płatów biegną wtedy po konturze szumu, a nie w poprzek rzędów
+	var variant_of := func(x: int, y: int) -> int:
+		var n := variants.get_noise_2d(x, y)
+		return 2 if n < -0.5 else 0 if n < 0.1 else 1
+	for y in w.map_size.y:
+		var x := 0
+		while x < w.map_size.x:
+			if _field_kind.get(Vector2i(x, y), "") != "grain":
+				x += 1
+				continue
+			var start := x
+			var variant: int = variant_of.call(x, y)
+			while _field_kind.get(Vector2i(x, y), "") == "grain" and variant_of.call(x, y) == variant:
+				x += 1
+			var left := start * TILE - (rng.randf_range(0.0, 6.0) if not _field_kind.has(Vector2i(start - 1, y)) else 0.0)
+			var right := x * TILE + (rng.randf_range(0.0, 6.0) if _field_kind.get(Vector2i(x, y), "") != "grain" else 0.0)
+			_grain_row(rng, Vector2(left, (y + 1) * TILE + 2), right - left, variant)
+	for cell: Vector2i in _field_kind:
+		var kind: String = _field_kind[cell]
+		var pos := Vector2(cell * TILE) + Vector2(8, 8)
+		match kind:
+			"grain":
+				w._map_props[cell] = MAP_GRAIN
+				if rng.randf() < 0.0025:
+					_prop(SCARECROW, pos)
+				elif not _field_kind.has(cell + Vector2i.DOWN) and rng.randf() < 0.2:
+					_decor(rng, pos + Vector2(rng.randf_range(-6, 6), 14), [3, 4, 5].pick_random())
+			"stubble":
+				w._map_props[cell] = MAP_STUBBLE
+				if cell.x % 3 == 1 and cell.y % 3 == 1 and rng.randf() < 0.55:
+					var jitter := Vector2(rng.randf_range(-3, 3), rng.randf_range(-2, 2))
+					_prop(STOOK if rng.randf() < 0.8 else HAY_BALE, pos + jitter, Vector2(12, 5))
+				elif rng.randf() < 0.004:
+					_prop(HAYSTACK, pos, Vector2(30, 10))
+			_:
+				w._map_props[cell] = MAP_SOIL
+				if rng.randf() < 0.004:
+					_prop(PLOUGH, pos)
+				elif rng.randf() < 0.02:
+					_decor(rng, pos, [6, 14].pick_random())
 
 
 ## Jeden rząd zboża: pas tekstury powtarzany na szerokość pola, kołysany shaderem; postacie sortują się
@@ -446,46 +508,69 @@ func _kobold_group(rng: RandomNumberGenerator, tile: Vector2, n: int, camp: bool
 		w._add_goblin_spawn({"type": kind, "position": pos, "sitting": camp, "look_at": center})
 
 
+## Wielki obóz koboldów na udeptanej ziemi: wianuszek namiotów ze skór, kilka ognisk z siedzącymi zgrajami,
+## stojące zgraje między namiotami, skrzynie bomb i beczki prochu, totemy na skraju i straż przy bramie od
+## drogi (południe). W północnej części obozu barykada Bombardiera. Dookoła, w łanach, kolejne zgraje.
 func _build_kobold_camp(rng: RandomNumberGenerator) -> void:
 	var center := kobolds * TILE
-	for i in 5:
-		var angle := TAU * i / 5.0 + 0.3
-		var pos := center + Vector2.from_angle(angle) * Vector2(112, 80)
+	var radii := CAMP_RADII * TILE
+	var gate := center + Vector2(0, radii.y)
+	for i in CAMP_TENTS:
+		var angle := TAU * i / CAMP_TENTS + 0.15
+		var pos := center + Vector2.from_angle(angle) * radii * rng.randf_range(0.72, 0.84)
+		if pos.distance_to(gate) < 70.0 or pos.distance_to(bombardier * TILE) < 150.0:
+			continue
 		var tent := _prop(TENT, pos, Vector2(40, 12))
 		tent.flip_h = pos.x < center.x
 		w._map_props[Vector2i(pos / TILE)] = MAP_TENT
-	for i in 3:
-		var spot := center + Vector2.from_angle(TAU * i / 3.0 + 1.0) * 46.0
+	for i in CAMP_FIRES:
+		var angle := TAU * i / CAMP_FIRES + 0.5
+		var spot := center + Vector2(0, radii.y * 0.15) + Vector2.from_angle(angle) * radii * 0.48
 		var fire: Node2D = CAMPFIRE.instantiate()
 		fire.position = spot
 		w.entities.add_child(fire)
 		w._map_props[Vector2i(spot / TILE)] = w.MAP_FIRE
-		_kobold_group(rng, spot / TILE, rng.randi_range(4, 5), true)
-	for i in 4:
-		_prop(TOTEM, center + Vector2.from_angle(TAU * i / 4.0) * Vector2(150, 104), Vector2(8, 4))
-	for i in 6:
-		var pos := center + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(60, 100)
-		_prop(BOMB_CRATE if i % 2 == 0 else POWDER, pos, Vector2(16, 6))
-	for i in 10:
-		_decor(rng, center + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(20, 110), [7, 8, 11, 12, 15].pick_random())
+		_kobold_group(rng, spot / TILE, rng.randi_range(6, 8), true)
+	for i in CAMP_PACKS:
+		var angle := TAU * (i + 0.5) / CAMP_PACKS + rng.randf_range(-0.2, 0.2)
+		var spot := center + Vector2(0, radii.y * 0.15) + Vector2.from_angle(angle) * radii * rng.randf_range(0.25, 0.62)
+		_kobold_group(rng, spot / TILE, rng.randi_range(5, 7), false)
+	# straż bramy od drogi
+	_kobold_group(rng, gate / TILE + Vector2(-3, -1), 4, false)
+	_kobold_group(rng, gate / TILE + Vector2(3, -1), 4, false)
+	for side in [-1.0, 1.0]:
+		_prop(TOTEM, gate + Vector2(side * 40.0, -6), Vector2(8, 4))
+	for i in 8:
+		var angle := TAU * i / 8.0 + 0.4
+		var pos := center + Vector2.from_angle(angle) * radii * 0.97
+		if pos.distance_to(gate) > 60.0:
+			_prop(TOTEM, pos, Vector2(8, 4))
+	for i in 16:
+		var pos := center + Vector2.from_angle(rng.randf() * TAU) * radii * rng.randf_range(0.2, 0.7)
+		if pos.distance_to(bombardier * TILE) > 120.0:
+			_prop(BOMB_CRATE if i % 2 == 0 else POWDER, pos, Vector2(16, 6))
+	for i in 30:
+		_decor(rng, center + Vector2.from_angle(rng.randf() * TAU) * radii * rng.randf_range(0.1, 0.9), [7, 8, 11, 12, 15].pick_random())
 	# zgraje w okolicznych łanach i na miedzach
 	var spots: Array[Vector2] = []
-	var area := Rect2(Vector2(10, 8), Vector2(w.map_size.x - 20, w.map_size.y * 0.5))
+	var area := Rect2(Vector2(10, 8), Vector2(w.map_size.x - 20, w.map_size.y * 0.55))
 	var ok := func(tile: Vector2) -> bool:
-		return tile.distance_to(kobolds) > 14.0 and tile.distance_to(gryf_hill) > 24.0 and not w._occupied.has(Vector2i(tile)) \
-				and tile.distance_to(entry) > 50.0
+		return ((tile - kobolds) / CAMP_RADII).length() > 1.3 and tile.distance_to(gryf_hill) > 24.0 \
+				and not w._occupied.has(Vector2i(tile)) and tile.distance_to(entry) > 50.0
 	for i in KOBOLD_GROUPS:
 		var tile: Vector2 = w._pick_spread(area, spots, ok)
 		if not tile.is_finite():
 			continue
 		spots.append(tile)
-		_kobold_group(rng, tile, rng.randi_range(3, 5), false)
+		_kobold_group(rng, tile, rng.randi_range(5, 7), false)
 	w._map_markers.append({"position": center, "color": Kobold.KOBOLD_COLOR, "size": 3.0})
 
 
+## Barykada Bombardiera w północnej części obozu: łuk ze skrzyń bomb i beczek prochu, totemy, osmalona ziemia
+## i przyboczni saperzy przed wejściem.
 func _build_bombardier_lair(rng: RandomNumberGenerator) -> void:
 	var center := bombardier * TILE
-	# barykada ze skrzyń bomb i beczek prochu łukiem od północy
+	# barykada łukiem od północy (wejście od strony obozu)
 	for i in 15:
 		var angle := PI * 0.85 + PI * 1.3 * i / 14.0
 		var pos := center + Vector2.from_angle(angle) * Vector2(140, 96)
@@ -494,6 +579,9 @@ func _build_bombardier_lair(rng: RandomNumberGenerator) -> void:
 		_decor(rng, center + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(10, 110), [7, 8, 8, 6].pick_random())
 	_prop(TOTEM, center + Vector2(-30, -40), Vector2(8, 4))
 	_prop(TOTEM, center + Vector2(30, -40), Vector2(8, 4))
+	for k in 6:
+		var pos := center + Vector2(-75 + k * 30, 70 + (k % 2) * 10)
+		w._add_goblin_spawn({"type": "kobold_bomber" if k % 2 == 0 else "kobold", "position": pos, "sitting": false, "look_at": center})
 	w._add_goblin_spawn({"type": "bombardier", "position": center, "sitting": false, "look_at": center, "respawn": w.boss_respawn_time})
 	w._map_markers.append({"position": center, "color": w.MAP_BOSS, "size": 4.0})
 
@@ -580,14 +668,3 @@ func _floor_decor(rng: RandomNumberGenerator, pos: Vector2, frame: int) -> Sprit
 	sprite.position = pos
 	w.floors.add_child(sprite)
 	return sprite
-
-
-## Gracz brnie przez łan wolniej.
-func _process(_delta: float) -> void:
-	if _player == null:
-		return
-	var feet: Vector2 = _player.global_position
-	for rect in _grain_rects:
-		if rect.has_point(feet):
-			_player.apply_slow(GRAIN_SLOW, 0.2)
-			return
