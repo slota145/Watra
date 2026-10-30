@@ -38,6 +38,12 @@ const TROUGH := preload("res://assets/fields/trough.png")
 const PLOUGH := preload("res://assets/fields/plough.png")
 const SACKS := preload("res://assets/fields/sacks.png")
 const FENCE := preload("res://assets/fields/fence.png")
+## Murek z polnych kamieni jako autotile (tools/field_wall.py): 16 kafelków 16x24 wg maski sąsiadów N=1, E=2, S=4, W=8.
+const STONE_WALL := preload("res://assets/fields/stone_wall.png")
+## Murki tam, gdzie szum stylu miedz jest ponad progiem, płoty - w paśmie pod nim; co ile kafelków murka wyłom.
+const WALL_STYLE := -0.05
+const FENCE_STYLE := -0.45
+const WALL_GAP := 0.06
 const WALL := preload("res://assets/fields/wall.png")
 const WALL_END := preload("res://assets/fields/wall_end.png")
 const RUBBLE := preload("res://assets/fields/rubble.png")
@@ -96,6 +102,9 @@ var _farms: Array[Vector2] = []
 var _corners := {}
 var _yard_cells := {}
 var _field_cells := {}
+## Działka, do której należy komórka (także miedza między działkami), i komórki miedz.
+var _owner := {}
+var _balk_cells := {}
 var _sway: ShaderMaterial
 var _autumn: Array[ShaderMaterial] = []
 
@@ -242,7 +251,9 @@ func _plan_fields(rng: RandomNumberGenerator) -> void:
 						owner = g
 					elif d < second:
 						second = d
+			_owner[cell] = owner
 			if second - best < BALK:
+				_balk_cells[cell] = true
 				continue
 			var kind: String = kinds[owner]
 			if kind == "grain" and ((Vector2(cell) - worms) / Vector2(34, 22)).length() < 1.0:
@@ -447,30 +458,35 @@ func _build_balks(rng: RandomNumberGenerator) -> void:
 	var style := FastNoiseLite.new()
 	style.seed = rng.randi()
 	style.frequency = 0.04
-	# przęsła stawiamy co kilka kafelków dolnego skraju pola (skraj bywa schodkowy - ogrodzenie idzie za nim);
-	# co jakiś czas przerwa na przejście, w murkach także wyłomy z gruzem
+	# murki: ciągła linia na granicy działek (komórka miedzy, której sąsiad z prawej albo z dołu należy do innej
+	# działki - schodkowa linia zawsze styka się bokami), z wyłomami; samotne kawałki po wyłomach znikają
+	var walls := {}
+	for cell: Vector2i in _balk_cells:
+		if style.get_noise_2d(cell.x, cell.y) <= WALL_STYLE or not _wall_allowed(cell):
+			continue
+		var right: Variant = _owner.get(cell + Vector2i.RIGHT)
+		var down: Variant = _owner.get(cell + Vector2i.DOWN)
+		if (right != null and right != _owner[cell]) or (down != null and down != _owner[cell]):
+			if rng.randf() >= WALL_GAP:
+				walls[cell] = true
+	_build_stone_walls(walls)
+	# płoty z żerdzi tuż pod dolnym skrajem pól w drugim paśmie stylu (płoty są tylko poziome)
 	for y in w.map_size.y:
 		for x in w.map_size.x:
 			var cell := Vector2i(x, y)
-			if not _balk_edge(cell):
-				continue
 			var n := style.get_noise_2d(x, y)
-			var pos := Vector2((x + 0.5) * TILE, (y + 1) * TILE + 4.0)
-			if n > 0.15 and x % 3 == 0:
-				if rng.randf() < 0.2:
-					_prop(RUBBLE, pos)
-				elif rng.randf() < 0.9:
-					var piece := _prop(WALL if rng.randf() < 0.8 else WALL_END, pos, Vector2(WALL.get_width() - 4, 8))
-					piece.flip_h = rng.randf() < 0.5
-					w._map_props[cell] = MAP_WALL
-			elif n <= 0.15 and n > -0.35 and x % 2 == 0 and x % 10 != 0 and rng.randf() < 0.85:
+			if n > WALL_STYLE or n <= FENCE_STYLE or not _balk_edge(cell) or walls.has(cell + Vector2i.DOWN):
+				continue
+			if x % 2 == 0 and x % 10 != 0 and rng.randf() < 0.85:
+				var pos := Vector2((x + 0.5) * TILE, (y + 1) * TILE + 4.0)
 				_prop(FENCE, pos, Vector2(FENCE.get_width() - 8, 4)).flip_h = rng.randf() < 0.5
 				w._map_props[cell] = MAP_WALL
 	# drobiazgi na miedzach: krzaki, kamienie, kwiaty, czasem drzewo
 	for y in w.map_size.y:
 		for x in w.map_size.x:
 			var cell := Vector2i(x, y)
-			if _field_kind.has(cell) or not _near_field(cell) or w._road_clear.has(cell) or w._reserved.has(cell):
+			if _field_kind.has(cell) or not _near_field(cell) or w._road_clear.has(cell) or w._reserved.has(cell) \
+					or w._map_props.get(cell) == MAP_WALL:
 				continue
 			var r := rng.randf()
 			if r < 0.035:
@@ -479,6 +495,40 @@ func _build_balks(rng: RandomNumberGenerator) -> void:
 				_tree(rng, cell, 2)
 			elif r < 0.3:
 				_decor(rng, w._cell_to_world(cell) + Vector2(rng.randf_range(-5, 5), rng.randf_range(-4, 4)), [3, 4, 5, 6, 13, 13, 14].pick_random())
+
+
+## Czy na komórce miedzy może stanąć murek: nie na drodze, siedlisku, podwórku ani przy pasie lasu na granicy.
+func _wall_allowed(cell: Vector2i) -> bool:
+	var edge := mini(mini(cell.x, cell.y), mini(w.map_size.x - 1 - cell.x, w.map_size.y - 1 - cell.y))
+	return edge >= w.border_thickness + 4 and not (w._road_clear.has(cell) or w._reserved.has(cell) \
+			or _yard_cells.has(cell) or w._occupied.has(cell))
+
+
+## Murki z kafelków: każda komórka dostaje kafelek wg sąsiadów-murków (sortuje się z postaciami po dolnej krawędzi
+## komórki, więc łan z pola niżej zasłania dół murka), wszystkie kolizje w jednym ciele.
+func _build_stone_walls(walls: Dictionary) -> void:
+	var body := StaticBody2D.new()
+	w.add_child(body)
+	for cell: Vector2i in walls:
+		var mask := int(walls.has(cell + Vector2i.UP)) | int(walls.has(cell + Vector2i.RIGHT)) * 2 \
+				| int(walls.has(cell + Vector2i.DOWN)) * 4 | int(walls.has(cell + Vector2i.LEFT)) * 8
+		if mask == 0:
+			continue  # samotny kamień po wyłomach
+		var sprite := Sprite2D.new()
+		sprite.texture = STONE_WALL
+		sprite.hframes = 16
+		sprite.frame = mask
+		sprite.centered = false
+		sprite.offset = Vector2(0, -STONE_WALL.get_height())
+		sprite.position = Vector2(cell.x * TILE, (cell.y + 1) * TILE)
+		w.entities.add_child(sprite)
+		var shape := CollisionShape2D.new()
+		var rect := RectangleShape2D.new()
+		rect.size = Vector2(10, 8)
+		shape.shape = rect
+		shape.position = Vector2(cell * TILE) + Vector2(8, 8)
+		body.add_child(shape)
+		w._map_props[cell] = MAP_WALL
 
 
 ## Dolny skraj pola (pod nim miedza), wzdłuż którego można postawić płot albo murek: ogrodzenie stoi tuż pod
