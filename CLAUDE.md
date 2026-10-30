@@ -50,7 +50,6 @@ Wszystkie krainy mają 200x150 kafelków i układają się w mozaikę na mapie �
 - `tools/*.py`: generatory grafik i dźwięków (Pillow, numpy/scipy, ffmpeg). Uruchamia się je `python tools/<plik>.py`, a każdy plik ma opis w docstringu.
 - `shaders/`: shadery.
 - `tests/`: testy i symulacje.
-- `_kopia_przed_poprawka/`: stara kopia zapasowa, nieużywana.
 - `docs/`: obrazy referencyjne od autora (`docs/referencje/`). Godot je pomija (plik `.gdignore`).
 
 ## Uruchamianie i testy w chmurze (Linux, bez monitora)
@@ -118,6 +117,13 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   Wyjątek: siedliska, których projekt wymaga inaczej (np. arena bossa).
   Przy zwiększaniu liczebności sprawdź wydajność (`tests/bench_combat.gd`, `tests/playtest_bot.gd`).
   Potwory w spoczynku, które się nie ruszają, pomijają `move_and_slide` (`scripts/goblin.gd`), żeby setki stojących potworów mało kosztowały.
+
+### Gobliński Las i Prastary Las (`scripts/world.gd`, `scripts/ancient_forest.gd`)
+
+- [x] Gobliński Las: więcej grupek goblinów w lesie i większe siedlisko wilków - około 450 potworów (było około 340);
+  to kraina startowa, więc zwiększenie jest umiarkowane.
+- [x] Prastary Las: dwa pierścienie prastarych drzew wokół Leszego z drzewcami, wielkie leże pająków, wataha wargów
+  przy każdej bestii, gniazda pająków i stada drzewców w gęstwinie - około 400 potworów (było 66).
 
 ### Wietrzne Turnie (`scripts/mountain_zone.gd`)
 
@@ -226,6 +232,3 @@ Dziś tablica ma tylko zlecenia na wilki i gobliny w Goblińskim Lesie (komentar
 - [ ] Wulkaniczne pola.
 - [ ] Stare krasnoludzkie podziemne miasto.
 
-### Porządki
-
-- [ ] Usunąć `_kopia_przed_poprawka/`, jeśli nie jest już potrzebna.

@@ -5,14 +5,15 @@ extends Node
 ## który przebijają się smugi światła; między paprociami świecą grzyby (rozjarzają się, gdy
 ## gracz podejdzie), w powietrzu tańczą świetliki. Szlak prowadzi od wejścia przez rozstaje
 ## (kapliczka Starego Dębu) do trzech siedlisk:
-## - na północy: kamienny krąg oplątany pnączami z ołtarzem Leszego, wokół prastare drzewa
-##   z twarzami (zaatakowane budzą drzewce) i wędrujące drzewce,
-## - na północnym zachodzie: leże pająków - sieci na ziemi i między drzewami (spowalniają),
-##   kokony (rozbite wypuszczają pajęczaki), owinięte ofiary, jaja i Królowa Pająków
-##   przed ogromną pajęczyną,
-## - na południowym zachodzie: siedlisko bestii - kilka rozproszonych, bardzo silnych bestii
-##   (mini-bossów), każda w swoim rewirze pełnym śladów pazurów, złamanych drzew i krwi,
-##   a w głębi leże Biesa otoczone czaszkami na palach.
+## - na północy i północnym wschodzie: kamienny krąg oplątany pnączami z ołtarzem Leszego, wokół dwa pierścienie
+##   prastarych drzew z twarzami (zaatakowane budzą drzewce), przy każdym gromadka drzewców, a w gęstwinie
+##   na wschodzie wędrujące stada drzewców,
+## - na północnym zachodzie: wielkie leże pająków - sieci na ziemi i między drzewami (spowalniają), dziesiątki
+##   kokonów (rozbite wypuszczają pajęczaki), owinięte ofiary, jaja, gromady pająków i sieciarzy na całym
+##   obszarze i Królowa Pająków przed ogromną pajęczyną; pojedyncze gniazda pająków także w gęstwinie,
+## - na południowym zachodzie: siedlisko bestii - rozproszone, bardzo silne bestie (mini-bossowie), każda
+##   w swoim rewirze pełnym śladów pazurów, złamanych drzew i krwi, z watahą wargów, a w głębi leże Biesa
+##   otoczone czaszkami na palach.
 
 const TILE := 16
 ## Runo z PixelLab (tools/pixellab_sheets.py). Rzędy 7-10: luźne warianty ściółki, liści, mchu
@@ -81,13 +82,17 @@ const THORN_BUSH := preload("res://scenes/props/thorn_bush.tscn")
 const MAP_OAK := Color("1c3a22")
 const MAP_PINE := Color("16302a")
 
-const ANCIENT_TREES := 6
-const SPIDER_GROUPS := 6
-const COCOONS := 14
-const BEASTS := 6
+const ANCIENT_TREES := 12
+const SPIDER_GROUPS := 18
+const COCOONS := 34
+const BEASTS := 8
+## Leże pająków: półosie (w kafelkach); gniazda pająków i stada drzewców w gęstwinie poza siedliskami.
+const LAIR_RADII := Vector2(30, 21)
+const SPIDER_NESTS := 7
+const TREANT_HERDS := 8
 const SHROOMS := 46
 const LOGS := 14
-const WEB_TRAPS := 12
+const WEB_TRAPS := 20
 
 var w  # świat
 var entry_x := 0.0
@@ -99,6 +104,7 @@ var _cross := Vector2.ZERO
 var _ancient_spots: Array[Vector2] = []
 var _beast_spots: Array[Vector2] = []
 var _webs: Array = []  # [środek w pikselach, promień]
+var _lair_radii := LAIR_RADII
 ## Teren w wierzchołkach siatki kafelków (brak wpisu = ściółka).
 var _corners := {}
 ## Miejsca (w kafelkach) z mchem pod ogromnymi drzewami, żeby ich podstawa wtapiała się w runo.
@@ -136,6 +142,7 @@ func generate(world) -> void:
 	w._reserve_area(shrine_tile, 3.0)
 	w._reserve_area(leshy, 11.0)
 	w._reserve_area(lair, 10.0)
+	_lair_radii = LAIR_RADII
 	w._reserve_area(bies, 7.0)
 	_plan_ancient_trees(rng)
 	_plan_beasts(rng)
@@ -146,6 +153,7 @@ func generate(world) -> void:
 	_build_leshy_grove(rng)
 	_build_spider_lair(rng)
 	_build_beast_habitat(rng)
+	_build_thicket(rng)
 	_build_atmosphere(rng)
 
 	var shrine: Node2D = w.SHRINE.instantiate()
@@ -174,8 +182,9 @@ func _mark_path(points: PackedVector2Array, road: float, clear: float) -> void:
 func _plan_ancient_trees(rng: RandomNumberGenerator) -> void:
 	var base := rng.randf() * TAU
 	for i in ANCIENT_TREES:
-		var angle := base + TAU * i / ANCIENT_TREES + rng.randf_range(-0.2, 0.2)
-		var spot := leshy + Vector2.from_angle(angle) * Vector2(30, 20) * rng.randf_range(0.8, 1.05)
+		var outer := i % 2 == 1
+		var angle := base + TAU * i / ANCIENT_TREES + rng.randf_range(-0.15, 0.15)
+		var spot := leshy + Vector2.from_angle(angle) * (Vector2(46, 30) if outer else Vector2(28, 19)) * rng.randf_range(0.9, 1.05)
 		spot = spot.clamp(Vector2(12, 12), Vector2(w.map_size) - Vector2(12, 12))
 		_ancient_spots.append(spot)
 		_moss_spots.append(spot)
@@ -470,8 +479,8 @@ func _build_leshy_grove(rng: RandomNumberGenerator) -> void:
 		var pos := spot * TILE
 		w._add_goblin_spawn({"type": "ancient_tree", "position": pos, "sitting": false, "look_at": pos})
 		w._map_markers.append({"position": pos, "color": AncientTree.TREE_COLOR, "size": 3.0})
-		for k in 2:
-			var walker := pos + Vector2.from_angle(rng.randf() * TAU) * 56.0
+		for k in 4:
+			var walker := pos + Vector2.from_angle(TAU * k / 4.0 + rng.randf_range(-0.4, 0.4)) * rng.randf_range(48.0, 70.0)
 			w._add_goblin_spawn({"type": "treant", "position": walker, "sitting": false, "look_at": pos})
 		for k in 2:
 			_shroom(pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(44, 70))
@@ -499,22 +508,22 @@ func _build_spider_lair(rng: RandomNumberGenerator) -> void:
 	var base := rng.randf() * TAU
 	for i in SPIDER_GROUPS:
 		var angle := base + TAU * i / SPIDER_GROUPS
-		var spot := (lair + Vector2.from_angle(angle) * Vector2(17, 12) * rng.randf_range(0.8, 1.1)) * TILE
-		for k in rng.randi_range(4, 5):
+		var spot := (lair + Vector2.from_angle(angle) * _lair_radii * (0.45 if i % 2 == 0 else 0.8) * rng.randf_range(0.85, 1.1)) * TILE
+		for k in rng.randi_range(6, 8):
 			var pos := spot + Vector2(rng.randf_range(-24, 24), rng.randf_range(-18, 18))
 			w._add_goblin_spawn({"type": "web_spider" if k % 3 == 1 else "spider", "position": pos, "sitting": false, "look_at": spot})
 	# kokony, owinięte ofiary, jaja i sieci na ziemi
 	for i in COCOONS:
-		var pos := (lair + Vector2.from_angle(rng.randf() * TAU) * Vector2(22, 16) * sqrt(rng.randf())) * TILE
+		var pos := (lair + Vector2.from_angle(rng.randf() * TAU) * _lair_radii * 0.9 * sqrt(rng.randf())) * TILE
 		w._add_goblin_spawn({"type": "cocoon", "position": pos, "sitting": false, "look_at": pos, "respawn": 120.0})
 	for i in 5:
-		_remains(rng, (lair + Vector2.from_angle(rng.randf() * TAU) * Vector2(20, 15) * sqrt(rng.randf())) * TILE)
+		_remains(rng, (lair + Vector2.from_angle(rng.randf() * TAU) * _lair_radii * 0.85 * sqrt(rng.randf())) * TILE)
 	for i in 7:
-		_prop(VICTIM, (lair + Vector2.from_angle(rng.randf() * TAU) * Vector2(20, 15) * sqrt(rng.randf())) * TILE)
+		_prop(VICTIM, (lair + Vector2.from_angle(rng.randf() * TAU) * _lair_radii * 0.85 * sqrt(rng.randf())) * TILE)
 	for i in 6:
-		_prop(EGG_SAC, (lair + Vector2.from_angle(rng.randf() * TAU) * Vector2(20, 15) * sqrt(rng.randf())) * TILE)
-	for i in 30:
-		var pos := (lair + Vector2.from_angle(rng.randf() * TAU) * Vector2(26, 19) * sqrt(rng.randf())) * TILE
+		_prop(EGG_SAC, (lair + Vector2.from_angle(rng.randf() * TAU) * _lair_radii * 0.85 * sqrt(rng.randf())) * TILE)
+	for i in 70:
+		var pos := (lair + Vector2.from_angle(rng.randf() * TAU) * _lair_radii * sqrt(rng.randf())) * TILE
 		var roll := rng.randf()
 		var web := _floor(WEB_SMALL if roll < 0.55 else (WEB_TANGLE if roll < 0.8 else WEB_BIG), pos, rng.randf() * TAU)
 		web.modulate.a = 0.75
@@ -523,7 +532,7 @@ func _build_spider_lair(rng: RandomNumberGenerator) -> void:
 		w._map_props[Vector2i(pos / TILE)] = MAP_WEB
 	# lepkie sieci-pułapki: kto w nie wejdzie, grzęźnie (spowolnienie)
 	for i in WEB_TRAPS:
-		var pos := (lair + Vector2.from_angle(rng.randf() * TAU) * Vector2(24, 17) * rng.randf_range(0.35, 1.0)) * TILE
+		var pos := (lair + Vector2.from_angle(rng.randf() * TAU) * _lair_radii * 0.9 * rng.randf_range(0.35, 1.0)) * TILE
 		var web := _floor(WEB_BIG, pos, rng.randf() * TAU)
 		web.scale = Vector2.ONE * 0.6
 		_webs.append([pos, 30.0])
@@ -560,6 +569,51 @@ func _build_beast_habitat(rng: RandomNumberGenerator) -> void:
 			_floor(BLOOD, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(10, 45), rng.randf() * TAU)
 		_prop(BONE_PILE, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(25, 50))
 		_remains(rng, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(15, 45))
+		# wataha wargów krążąca przy bestii
+		var pack := pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(70.0, 100.0)
+		for k in rng.randi_range(5, 7):
+			w._add_goblin_spawn({"type": "warg", "position": pack + Vector2(rng.randf_range(-26, 26), rng.randf_range(-18, 18)),
+					"sitting": false, "look_at": pos})
+
+
+# ---------------------------------------------------------------- gęstwina
+## Poza siedliskami (z dala od drogi): gniazda pająków (sieci, kokony, gromada pająków i sieciarzy) i stada
+## wędrujących drzewców - wschodnia i środkowa część lasu też żyje.
+func _build_thicket(rng: RandomNumberGenerator) -> void:
+	var size := Vector2(w.map_size)
+	var area := Rect2(Vector2(12, 10), size - Vector2(24, 22))
+	var taken: Array[Vector2] = [leshy, lair, bies, _cross]
+	taken.append_array(_beast_spots)
+	var ok := func(tile: Vector2) -> bool:
+		return Road.distance_to(tile, w._road) > 7.0 and tile.distance_to(leshy) > 52.0 \
+				and ((tile - lair) / _lair_radii).length() > 1.4 and not beast_area.grow(4.0).has_point(tile) \
+				and not w._reserved.has(Vector2i(tile))
+	var spots: Array[Vector2] = []
+	for i in SPIDER_NESTS + TREANT_HERDS:
+		var tile: Vector2 = w._pick_spread(area, taken + spots, ok)
+		if not tile.is_finite():
+			continue
+		spots.append(tile)
+		var pos := tile * TILE
+		if i < SPIDER_NESTS:
+			for k in 6:
+				var web := _floor(WEB_SMALL if k % 2 == 0 else WEB_TANGLE, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(0, 60), rng.randf() * TAU)
+				web.modulate.a = 0.7
+				if k % 2 == 1:
+					web.scale = Vector2.ONE * 0.5
+			_prop(EGG_SAC, pos + Vector2(rng.randf_range(-30, 30), rng.randf_range(-20, 20)))
+			for k in 3:
+				var at := pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(20, 60)
+				w._add_goblin_spawn({"type": "cocoon", "position": at, "sitting": false, "look_at": at, "respawn": 120.0})
+			for k in rng.randi_range(7, 9):
+				var at := pos + Vector2(rng.randf_range(-36, 36), rng.randf_range(-26, 26))
+				w._add_goblin_spawn({"type": "web_spider" if k % 3 == 1 else "spider", "position": at, "sitting": false, "look_at": pos})
+		else:
+			for k in rng.randi_range(5, 7):
+				var at := pos + Vector2(rng.randf_range(-44, 44), rng.randf_range(-30, 30))
+				w._add_goblin_spawn({"type": "treant", "position": at, "sitting": false, "look_at": pos})
+			for k in 3:
+				_shroom(pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(30, 70))
 
 
 # ---------------------------------------------------------------- klimat: mrok, smugi światła, grzyby, świetliki
