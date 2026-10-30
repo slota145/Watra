@@ -33,7 +33,8 @@ const BOSS_LEVEL_BONUS := 5
 const TIER_VALUES := {
 	"health": [5.0, 200.0], "mana": [4.0, 140.0], "armor": [1.0, 45.0], "damage": [1.0, 35.0],
 	"strength": [1.0, 35.0], "dexterity": [1.0, 35.0], "intelligence": [1.0, 35.0], "vitality": [1.0, 35.0],
-	"attack_speed": [0.02, 0.22], "move_speed": [0.02, 0.16],
+	"attack_speed": [0.02, 0.22], "move_speed": [0.02, 0.16], "cast_speed": [0.02, 0.22],
+	"physical_damage": [0.03, 0.40], "spell_damage": [0.03, 0.40],
 	"damage_percent": [0.02, 0.30], "crit_chance": [0.01, 0.12], "crit_damage": [0.05, 0.60],
 	"life_on_hit": [1.0, 15.0], "health_regen": [0.2, 8.0], "mana_regen": [0.2, 6.0], "dodge_chance": [0.01, 0.10],
 	"cooldown_reduction": [0.01, 0.15], "gold_find": [0.03, 0.40], "xp_gain": [0.02, 0.25],
@@ -50,17 +51,19 @@ const SELL_QUALITY := {COMMON: 1.0, MAGIC: 1.6, RARE: 2.5, LEGENDARY: 6.0}
 ## Broń i rękawice - walka, zbroja - przetrwanie, biżuteria - wszystkiego po trochu i premie do łupu.
 const POOLS := {
 	"weapon": ["damage", "attack_speed", "strength", "dexterity", "intelligence", "vitality", "health", "mana",
-			"damage_percent", "crit_chance", "crit_damage", "life_on_hit", "mana_regen"],
+			"damage_percent", "crit_chance", "crit_damage", "life_on_hit", "mana_regen", "physical_damage", "spell_damage",
+			"cast_speed"],
 	"helmet": ["armor", "health", "vitality", "mana", "strength", "dexterity", "intelligence", "damage",
 			"health_regen", "mana_regen", "cooldown_reduction", "xp_gain"],
 	"chest": ["armor", "health", "vitality", "mana", "strength", "dexterity", "intelligence", "damage",
 			"health_regen", "dodge_chance"],
 	"gloves": ["armor", "health", "attack_speed", "strength", "dexterity", "intelligence", "vitality", "damage",
-			"crit_chance", "crit_damage", "life_on_hit"],
+			"crit_chance", "crit_damage", "life_on_hit", "cast_speed", "physical_damage"],
 	"boots": ["armor", "health", "move_speed", "vitality", "mana", "strength", "dexterity", "intelligence",
 			"dodge_chance", "health_regen", "gold_find"],
 	"ring": ["health", "mana", "damage", "strength", "dexterity", "intelligence", "vitality", "attack_speed",
-			"damage_percent", "crit_chance", "crit_damage", "life_on_hit", "mana_regen", "gold_find", "xp_gain"],
+			"damage_percent", "crit_chance", "crit_damage", "life_on_hit", "mana_regen", "gold_find", "xp_gain",
+			"physical_damage", "spell_damage", "cast_speed"],
 	"earring": ["health", "mana", "strength", "dexterity", "intelligence", "vitality", "armor", "move_speed",
 			"health_regen", "mana_regen", "cooldown_reduction", "dodge_chance", "xp_gain"],
 	"necklace": ["health", "mana", "damage", "strength", "dexterity", "intelligence", "vitality", "armor",
@@ -69,7 +72,7 @@ const POOLS := {
 ## Dopisek do nazwy (dopełniacz - pasuje do każdego rodzaju przedmiotu).
 const SUFFIXES := {
 	"damage": "Rzezi", "attack_speed": "Wiatru", "strength": "Niedźwiedzia", "dexterity": "Rysia",
-	"intelligence": "Sowy", "vitality": "Tura", "health": "Dębu", "mana": "Gwiazd",
+	"intelligence": "Sowy", "vitality": "Tura", "health": "Dębu", "mana": "Gwiazd", "cast_speed": "Zaklinacza", "physical_damage": "Stali", "spell_damage": "Run",
 	"armor": "Żółwia", "move_speed": "Zająca", "damage_percent": "Furii", "crit_chance": "Sokoła",
 	"crit_damage": "Kata", "life_on_hit": "Wampira", "health_regen": "Trolla", "mana_regen": "Źródła",
 	"dodge_chance": "Cienia", "cooldown_reduction": "Czasu", "gold_find": "Skarbnika", "xp_gain": "Mędrca",

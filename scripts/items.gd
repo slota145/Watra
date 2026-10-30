@@ -109,7 +109,8 @@ const SLOT_TYPE_NAMES := {
 const STAT_NAMES := {
 	"armor": "Pancerz", "health": "Zdrowie", "mana": "Mana", "damage": "Obrażenia",
 	"strength": "Siła", "dexterity": "Zręczność", "intelligence": "Inteligencja", "vitality": "Witalność",
-	"attack_speed": "Szybkość ataku", "move_speed": "Szybkość ruchu",
+	"attack_speed": "Szybkość ataku", "move_speed": "Szybkość ruchu", "cast_speed": "Szybkość rzucania czarów",
+	"physical_damage": "Obrażenia fizyczne", "spell_damage": "Obrażenia magiczne",
 	"damage_percent": "Zwiększone obrażenia", "crit_chance": "Szansa na cios krytyczny",
 	"crit_damage": "Obrażenia krytyczne", "life_on_hit": "Zdrowie za trafienie",
 	"health_regen": "Regeneracja zdrowia/s", "mana_regen": "Regeneracja many/s", "dodge_chance": "Szansa na unik",
@@ -117,6 +118,7 @@ const STAT_NAMES := {
 }
 ## Statystyki podawane w procentach.
 const PERCENT_STATS: Array[String] = ["attack_speed", "move_speed", "damage_percent", "crit_chance", "crit_damage",
+		"cast_speed", "physical_damage", "spell_damage",
 		"dodge_chance", "cooldown_reduction", "gold_find", "xp_gain"]
 ## Statystyki z częścią ułamkową (regeneracja na sekundę) - pokazywane z jednym miejscem po przecinku.
 const DECIMAL_STATS: Array[String] = ["health_regen", "mana_regen"]

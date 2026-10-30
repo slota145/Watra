@@ -2035,7 +2035,7 @@ func _build_sage_hut() -> void:
 	var sage := _npc("sage", _in("sage_hut", Vector2(4.0, 3.55)), Npc.Role.IDLE, LINES_SAGE, Vector2.DOWN)
 	sage.looks_around = false
 	sage.display_name = "Mędrzec Teodor"
-	sage.services.assign(["disenchant", "bestiary"])
+	sage.services.assign(["disenchant", "bestiary", "respec"])
 	sage.dialog_greeting = "Zaklęcia to nie wieczność, młody wędrowcze. Za drobną opłatą zdejmę czar z twojego oręża i oddam ci kamienie, które go utrzymywały."
 	_entities.add_child(sage)
 	nodes.append(sage)

@@ -137,8 +137,14 @@ var _hit_this_swing: Dictionary[Node, bool] = {}
 var _skill_held := false
 var _skill_cooldown_timer := 0.0
 var _skill_cooldown_total := 0.0
-## Wciśnięte sloty paska umiejętności (indeksy jak Hotbar.SKILL_KEYS).
+## Wciśnięte sloty paska umiejętności (indeksy jak Hotbar.SKILL_KEYS) i trzymane umiejętności drzewka (id -> true).
 var _held_slots: Array[bool] = [false, false, false, false, false, false, false]
+var _held_ids := {}
+## Ostatnio użyta umiejętność i ile jeszcze trwa okno combo po niej (Skills.COMBOS).
+var _chain_skill := ""
+var _chain_time := 0.0
+## Umiejętności drzewka miecza (Mgnienie, Dymne Wybuchy).
+var sword_skills: SwordSkills
 var _whirling := false
 ## Ładowanie kuli ognia: postęp 0..1 (-1 = nie ładujemy), kula w dłoniach i jej dźwięki.
 var _fireball_charge := -1.0
@@ -214,6 +220,11 @@ func _ready() -> void:
 	Items.worn = equipment
 	legendary = LegendaryEffects.new(self)
 	add_child(legendary)
+	sword_skills = SwordSkills.new(self)
+	sword_skills.name = "SwordSkills"
+	add_child(sword_skills)
+	stats.skill_book = skills
+	skills.character_level = stats.level
 	boons.name = "Boons"
 	add_child(boons)
 	stats.boons = boons
@@ -281,6 +292,9 @@ func _press_skill_slot(index: int) -> void:
 				_skill_held = true
 			"strike":
 				_strike_request = true
+			"skill":
+				_held_ids[id] = true
+				sword_skills.press(id)
 
 
 ## Atak i umiejętność aktywna trwają, dopóki trzymany jest któryś slot z nimi.
@@ -288,6 +302,7 @@ func _update_held_slots() -> void:
 	var bar := hotbar.skill_bar(stats.weapon_type())
 	_attack_held = false
 	_skill_held = false
+	_held_ids.clear()
 	for i in _held_slots.size():
 		if not _held_slots[i] or bar[i] == "":
 			continue
@@ -295,6 +310,8 @@ func _update_held_slots() -> void:
 			_attack_held = true
 		elif Skills.get_data(bar[i])["type"] == "active":
 			_skill_held = true
+		elif Skills.get_data(bar[i])["type"] == "skill":
+			_held_ids[bar[i]] = true
 
 
 ## Przedmiot ze slotu 1-0 (np. mikstura).
@@ -310,7 +327,48 @@ func cooldown_of(id: String) -> Vector2:
 			return Vector2(_skill_cooldown_timer, maxf(_skill_cooldown_total, _skill_cooldown_timer))
 		"strike":
 			return Vector2(_strike_cooldown, maxf(_strike_cooldown_total, _strike_cooldown))
+		"skill":
+			return sword_skills.cooldown_of(id)
 	return Vector2.ZERO
+
+
+## Czy umiejętność drzewka jest trzymana (jej slot wciśnięty).
+func is_skill_held(id: String) -> bool:
+	return _held_ids.has(id)
+
+
+# ---------------------------------------------------------------- combo
+## Okno combo (s): bazowe i dłuższe z węzłów drzewka.
+func combo_window() -> float:
+	return Skills.COMBO_WINDOW + skills.tree_bonus(stats.weapon_type(), "combo_window")
+
+
+## Zapamiętuje użytą umiejętność - przez okno combo kolejne mogą zadziałać inaczej (Skills.COMBOS).
+func note_skill(id: String) -> void:
+	_chain_skill = id
+	_chain_time = combo_window()
+
+
+## Czy umiejętność użyta teraz zadziała jako combo (po pasującej umiejętności w oknie combo).
+func combo_with(id: String) -> bool:
+	if _chain_time <= 0.0 or _chain_skill == "" or not Skills.COMBOS.has(id):
+		return false
+	var after: Array = Skills.COMBOS[id]
+	return (_chain_skill != id and "any" in after) or _chain_skill in after
+
+
+## Ile okna combo jeszcze zostało (0..1) - do kurczącego się pierścienia na pasku.
+func combo_fraction() -> float:
+	return clampf(_chain_time / combo_window(), 0.0, 1.0)
+
+
+## Zasięg Młynka (poziom umiejętności i premia z drzewka) i mnożnik zużycia many (węzeł kluczowy Nieustający Wir).
+func whirl_radius() -> float:
+	return Skills.whirlwind_radius(skills.level_of("whirlwind")) * (1.0 + skills.tree_bonus("melee", "whirl_radius"))
+
+
+func whirl_mana_factor() -> float:
+	return 2.0 if skills.has_keystone("melee", "endless_whirl") else 1.0
 
 
 ## Rzeczy na start nowej postaci (mikstury leżą od razu na pasku pod 1 i 2).
@@ -340,6 +398,7 @@ func _physics_process(delta: float) -> void:
 	_skill_cooldown_timer = maxf(_skill_cooldown_timer - delta, 0.0)
 	_strike_cooldown = maxf(_strike_cooldown - delta, 0.0)
 	_combo_window = maxf(_combo_window - delta, 0.0)
+	_chain_time = maxf(_chain_time - delta, 0.0)
 	_hint_cooldown = maxf(_hint_cooldown - delta, 0.0)
 	_update_invulnerability(delta)
 	_regenerate_mana(delta)
@@ -869,6 +928,8 @@ func load_save_data(data: Dictionary) -> void:
 	if data.has("hotbar"):
 		hotbar.load_save_data(data["hotbar"])
 	stats.load_save_data(data.get("stats", {}))
+	skills.character_level = stats.level
+	skills.changed.emit()
 	inventory.load_save_data(data.get("inventory", []))
 	var pos: Array = data.get("position", [spawn_point.x, spawn_point.y])
 	global_position = Vector2(pos[0], pos[1])
@@ -895,6 +956,8 @@ func _on_stats_changed() -> void:
 
 
 func _on_leveled_up(new_level: int) -> void:
+	skills.character_level = new_level
+	skills.changed.emit()
 	if not is_dead:
 		health = stats.max_health()
 		mana = stats.max_mana()
@@ -1060,8 +1123,9 @@ func _make_projectile(weapon: Dictionary, dir: Vector2) -> Projectile:
 	projectile.pierce = config["pierce"]
 	projectile.magic = config["magic"]
 	projectile.texture = config["texture"]
-	projectile.damage_min = stats.damage_min()
-	projectile.damage_max = stats.damage_max()
+	var kind := stats.kind_multiplier(basic_tags())
+	projectile.damage_min = maxi(1, roundi(stats.damage_min() * kind))
+	projectile.damage_max = maxi(1, roundi(stats.damage_max() * kind))
 	return projectile
 
 
@@ -1072,7 +1136,7 @@ func _process_skill(delta: float) -> void:
 		_update_fireball_charge(delta, id)
 		return
 	if _whirling:
-		if not _skill_held or id != "whirlwind" or not spend_mana(Skills.WHIRLWIND_MANA_PER_SECOND * delta):
+		if not _skill_held or id != "whirlwind" or not spend_mana(Skills.WHIRLWIND_MANA_PER_SECOND * delta * whirl_mana_factor()):
 			_stop_whirl()
 		return
 	if not _skill_held or is_dashing() or _harvest_target != null or _lunge_time > 0.0:
@@ -1132,7 +1196,7 @@ func _update_fireball_charge(delta: float, id: String) -> void:
 		return
 	_fireball_time += delta
 	if not _fireball_full:
-		var step := delta * _skill_speed() / Skills.FIREBALL_CHARGE_TIME
+		var step := delta * _skill_speed(["spell"]) / Skills.FIREBALL_CHARGE_TIME
 		if spend_mana(Skills.FIREBALL_CHARGE_MANA * step):
 			_fireball_charge = minf(_fireball_charge + step, 1.0)
 			_charge_sound.stream_paused = false
@@ -1260,6 +1324,7 @@ func _cast(id: String, charge := 0.0) -> void:
 		aim = _facing_vector()
 	var dir := aim.normalized()
 	var level := skills.level_of(id)
+	note_skill(id)
 
 	# poza z bronią w ręku, jak przy zwykłym strzale
 	_attack_kind = weapon["type"]
@@ -1286,7 +1351,7 @@ func _cast(id: String, charge := 0.0) -> void:
 			get_parent().add_child(arrow)
 		Sfx.play("bow", 2.0, 0.9)
 	else:
-		_skill_cooldown_timer = _cooldown(Skills.FIREBALL_COOLDOWN)
+		_skill_cooldown_timer = _cooldown(Skills.FIREBALL_COOLDOWN, ["spell"])
 		_skill_cooldown_total = _skill_cooldown_timer
 		var fireball := _make_projectile(weapon, dir)
 		var multiplier := Skills.fireball_damage(level) * Skills.fireball_charge_damage(charge)
@@ -1297,6 +1362,7 @@ func _cast(id: String, charge := 0.0) -> void:
 		fireball.speed = 210.0
 		fireball.explosion_radius = Skills.fireball_radius(level) * Skills.fireball_charge_radius(charge)
 		fireball.size = lerpf(0.8, 1.7, charge)
+		multiplier *= stats.kind_multiplier(["spell"])
 		fireball.explosion_min = roundi(stats.damage_min() * multiplier)
 		fireball.explosion_max = roundi(stats.damage_max() * multiplier)
 		fireball.turret_damage = legendary.fire_turret_damage(multiplier)
@@ -1308,7 +1374,8 @@ func _start_whirl() -> void:
 	_cancel_attack()
 	_whirling = true
 	_whirl_tick = 0.0
-	var radius := Skills.whirlwind_radius(skills.level_of("whirlwind"))
+	note_skill("whirlwind")
+	var radius := whirl_radius()
 	sword.visible = sword.texture != null
 	sword.rotation = 0.0
 	sword.flip_v = false
@@ -1328,12 +1395,11 @@ func _update_whirl(delta: float) -> void:
 	_whirl_tick = Skills.WHIRLWIND_TICK / _skill_speed()
 	Sfx.play("whirl")
 	var level := skills.level_of("whirlwind")
-	var radius := Skills.whirlwind_radius(level)
+	var radius := whirl_radius()
 	var multiplier := Skills.whirlwind_damage(level)
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if enemy.hurt_center().distance_to(body_center()) <= radius + enemy.hurt_radius:
-			var dmg := maxi(1, roundi(randi_range(stats.damage_min(), stats.damage_max()) * multiplier))
-			hit_enemy(enemy, dmg, global_position, 70.0)
+			hit_enemy(enemy, _skill_damage(multiplier), global_position, 70.0)
 
 
 func _stop_whirl() -> void:
@@ -1386,7 +1452,7 @@ func _hit_enemies_in_arc(half_arc: float) -> void:
 		if to_enemy.length() > enemy.hurt_radius and absf(angle_difference(_attack_angle, to_enemy.angle())) > half_arc:
 			continue
 		_hit_this_swing[enemy] = true
-		var dmg := maxi(1, roundi(randi_range(stats.damage_min(), stats.damage_max()) * _attack_multiplier))
+		var dmg := _skill_damage(_attack_multiplier)
 		hit_enemy(enemy, dmg, global_position, attack_knockback * (1.6 if _attack_multiplier > 1.0 else 1.0))
 
 
@@ -1434,12 +1500,14 @@ func _use_strike() -> void:
 			_strike_cooldown = _cooldown(Skills.SEEKER_COOLDOWN)
 			_strike_cooldown_total = _strike_cooldown
 			_cast_seeker(level)
-			_combo_window = Skills.COMBO_WINDOW
+			_combo_window = combo_window()
+			note_skill(id)
 		"chain_lightning":
-			_strike_cooldown = _cooldown(Skills.CHAIN_COOLDOWN)
+			_strike_cooldown = _cooldown(Skills.CHAIN_COOLDOWN, ["spell"])
 			_strike_cooldown_total = _strike_cooldown
 			_cast_chain(level)
-			_combo_window = Skills.COMBO_WINDOW
+			_combo_window = combo_window()
+			note_skill(id)
 
 
 func _use_combo() -> void:
@@ -1452,6 +1520,7 @@ func _use_combo() -> void:
 		return
 	_combo_window = 0.0
 	var level := skills.level_of(id)
+	note_skill(id)
 	match id:
 		"crescent":
 			_start_crescent(level)
@@ -1533,22 +1602,29 @@ func heal(amount: float) -> void:
 		health_changed.emit(health, stats.max_health())
 
 
-func _skill_speed() -> float:
-	return stats.attack_speed()
+## Szybkość umiejętności: ataki przyspiesza szybkość ataku, czary - szybkość rzucania (Skills.tags).
+func _skill_speed(tags: Array = ["attack"]) -> float:
+	return stats.skill_speed(tags)
 
 
-## Czas odnowienia umiejętności: krótszy z szybkością ataku i ze skróceniem odnowienia z przedmiotów.
-func _cooldown(base: float) -> float:
-	return base / _skill_speed() * stats.cooldown_multiplier()
+## Czas odnowienia umiejętności: krótszy z szybkością ataku / rzucania i ze skróceniem odnowienia z przedmiotów.
+func _cooldown(base: float, tags: Array = ["attack"]) -> float:
+	return base / _skill_speed(tags) * stats.cooldown_multiplier()
 
 
-func _skill_damage(multiplier: float) -> int:
-	return maxi(1, roundi(randi_range(stats.damage_min(), stats.damage_max()) * multiplier))
+## Obrażenia broni razy mnożnik umiejętności i premia do rodzaju (fizyczne dla ataków, magiczne dla czarów).
+func _skill_damage(multiplier: float, tags: Array = ["attack"]) -> int:
+	return maxi(1, roundi(randi_range(stats.damage_min(), stats.damage_max()) * multiplier * stats.kind_multiplier(tags)))
 
 
-## Losowe obrażenia broni razy mnożnik (dla efektów legendarnych przedmiotów).
+## Losowe obrażenia broni razy mnożnik (dla efektów legendarnych przedmiotów - bez premii do rodzaju).
 func roll_damage(multiplier: float) -> int:
-	return roundi(_skill_damage(multiplier) * legendary.damage_multiplier() * stats.damage_multiplier())
+	return roundi(_skill_damage(multiplier, []) * legendary.damage_multiplier() * stats.damage_multiplier())
+
+
+## Rodzaj zwykłego ataku bronią: magiczny pocisk księgi to czar, reszta - atak.
+func basic_tags() -> Array:
+	return ["spell"] if stats.weapon_type() == "spell" else ["attack"]
 
 
 ## Każde trafienie wroga przez gracza (broń, umiejętności, pociski) przechodzi tędy,
@@ -1612,7 +1688,8 @@ func _update_lunge(delta: float) -> void:
 		_move_velocity = _lunge_dir * max_speed * 0.4
 		sword.visible = false
 		_update_weapon_sprite()
-		_combo_window = Skills.COMBO_WINDOW
+		_combo_window = combo_window()
+		note_skill("lunge")
 
 
 ## Półksiężyc: potężne, bardzo szerokie cięcie zaraz po szarży.
@@ -1637,6 +1714,7 @@ func _start_crescent(level: int) -> void:
 	_face_direction(aim)
 	_attack_timer = _attack_length
 	SkillEffects.crescent(get_parent(), body_center(), _attack_angle, _attack_arc / 2.0, _attack_reach)
+	note_skill("crescent")
 	Sfx.play("big_slash")
 	_shake = maxf(_shake, 2.0)
 	_update_attack(0.0)
@@ -1654,8 +1732,9 @@ func _cast_seeker(level: int) -> void:
 	arrow.position = position + dir * 6.0
 	arrow.velocity = dir * SeekerArrow.SPEED
 	arrow.hits_left = Skills.seeker_hits(level)
-	arrow.damage_min = maxi(1, roundi(stats.damage_min() * Skills.SEEKER_DAMAGE))
-	arrow.damage_max = maxi(1, roundi(stats.damage_max() * Skills.SEEKER_DAMAGE))
+	var kind := stats.kind_multiplier(["attack"])
+	arrow.damage_min = maxi(1, roundi(stats.damage_min() * Skills.SEEKER_DAMAGE * kind))
+	arrow.damage_max = maxi(1, roundi(stats.damage_max() * Skills.SEEKER_DAMAGE * kind))
 	get_parent().add_child(arrow)
 	Sfx.play("seeker")
 	# Łuk Hydry: dodatkowe strzały tropiące rozchodzą się wachlarzem
@@ -1742,7 +1821,7 @@ func _cast_chain(level: int) -> void:
 	var multiplier := Skills.CHAIN_DAMAGE
 	for target in targets:
 		tween.tween_callback(_zap.bind(from, target, multiplier))
-		tween.tween_interval(0.06 / _skill_speed())
+		tween.tween_interval(0.06 / _skill_speed(["spell"]))
 		from = target.hurt_center()
 		multiplier *= Skills.CHAIN_FALLOFF
 
@@ -1753,7 +1832,7 @@ func _zap(from: Vector2, target: Goblin, multiplier: float) -> void:
 	var to := target.hurt_center()
 	SkillEffects.bolt(get_parent(), from, to)
 	Sfx.play("zap")
-	hit_enemy(target, _skill_damage(multiplier), from, 40.0)
+	hit_enemy(target, _skill_damage(multiplier, ["spell"]), from, 40.0)
 
 
 ## Fala piorunów: szeroki stożek błyskawic przed postacią.
@@ -1777,7 +1856,7 @@ func _cast_wave(level: int) -> void:
 		if to_enemy.length() > enemy.hurt_radius and absf(angle_difference(dir.angle(), to_enemy.angle())) > half:
 			continue
 		SkillEffects.bolt(get_parent(), origin, enemy.hurt_center(), 0.3, 7.0)
-		hit_enemy(enemy, _skill_damage(Skills.WAVE_DAMAGE), global_position, 140.0)
+		hit_enemy(enemy, _skill_damage(Skills.WAVE_DAMAGE, ["spell"]), global_position, 140.0)
 	Sfx.play("thunder")
 	_shake = maxf(_shake, 4.0)
 
@@ -1791,6 +1870,9 @@ func _die() -> void:
 	_attack_held = false
 	_skill_held = false
 	_held_slots.fill(false)
+	_held_ids.clear()
+	if sword_skills != null:
+		sword_skills.cancel()
 	_lunge_time = 0.0
 	_combo_window = 0.0
 	_stop_whirl()

@@ -20,6 +20,8 @@ const HEALTH_PER_VITALITY := 5
 const HEALTH_PER_LEVEL := 8
 const MANA_PER_INTELLIGENCE := 5
 const ATTACK_SPEED_PER_DEXTERITY := 0.02
+## Szybkość rzucania czarów rośnie z inteligencją tak jak szybkość ataku ze zręcznością.
+const CAST_SPEED_PER_INTELLIGENCE := 0.02
 ## Który atrybut zwiększa obrażenia danego rodzaju broni (o 1 za punkt).
 const DAMAGE_ATTRIBUTE := {"melee": "strength", "bow": "dexterity", "spell": "intelligence"}
 const DAMAGE_PER_ATTRIBUTE := 1
@@ -59,6 +61,12 @@ var equipment: Equipment:
 		equipment = value
 		equipment.changed.connect(changed.emit)
 
+## Umiejętności gracza - premie z wybranych węzłów drzewka założonej broni (ustawiane przez gracza).
+var skill_book: SkillBook:
+	set(value):
+		skill_book = value
+		skill_book.changed.connect(changed.emit)
+
 
 func max_health() -> int:
 	var flat := base_health + (level - 1) * HEALTH_PER_LEVEL + attribute("vitality") * HEALTH_PER_VITALITY + int(_bonus("health"))
@@ -80,6 +88,31 @@ func damage_max() -> int:
 ## Mnożnik szybkości ataku (1.0 = bazowa), bez prędkości samej broni.
 func attack_speed() -> float:
 	return 1.0 + attribute("dexterity") * ATTACK_SPEED_PER_DEXTERITY + _bonus("attack_speed")
+
+
+## Mnożnik szybkości rzucania czarów (1.0 = bazowa).
+func cast_speed() -> float:
+	return 1.0 + attribute("intelligence") * CAST_SPEED_PER_INTELLIGENCE + _bonus("cast_speed")
+
+
+## Szybkość umiejętności z danymi rodzajami (Skills.tags): atak - szybkość ataku, czar - rzucania,
+## atak i czar - średnia obu.
+func skill_speed(tags: Array) -> float:
+	var attack := "attack" in tags
+	var spell := "spell" in tags
+	if attack and spell:
+		return (attack_speed() + cast_speed()) / 2.0
+	return cast_speed() if spell else attack_speed()
+
+
+## Mnożnik obrażeń z premii do rodzaju: obrażenia fizyczne dla ataków, magiczne dla czarów (atak i czar - obie).
+func kind_multiplier(tags: Array) -> float:
+	var total := 1.0
+	if "attack" in tags:
+		total += _bonus("physical_damage")
+	if "spell" in tags:
+		total += _bonus("spell_damage")
+	return total
 
 
 func move_speed() -> float:
@@ -188,6 +221,8 @@ func attribute(id: String) -> int:
 
 func _bonus(stat: String) -> float:
 	var total := equipment.bonus(stat) if equipment != null else 0.0
+	if skill_book != null:
+		total += skill_book.tree_bonus(weapon_type(), stat)
 	return total + (boons.bonus(stat) if boons != null else 0.0)
 
 

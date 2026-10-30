@@ -18,6 +18,8 @@ static func offers(kind: String, player: Player, npc: Node) -> Dictionary:
 			return _reforge(player, npc)
 		"elixirs":
 			return _elixirs(player, npc)
+		"respec":
+			return _respec(player, npc)
 	return {}
 
 
@@ -82,6 +84,30 @@ static func _elixirs(player: Player, npc: Node) -> Dictionary:
 		})
 	return {"title": "Warsztat zielarki", "rows": rows,
 			"hint": "Zioła zerwiesz w krainach (F przy roślinie). Miksturę wypijesz z plecaka albo z paska 1-0. Działa jedna naraz - krócej niż posiłek, ale mocniej."}
+
+
+## Zapomnienie drzewka umiejętności u mędrca: wszystkie wybrane węzły wracają jako punkty (kupione poziomy zostają).
+static func _respec(player: Player, npc: Node) -> Dictionary:
+	var rows: Array = []
+	var gold := SkillTree.RESPEC_GOLD_PER_LEVEL * player.stats.level
+	for weapon_type in Skills.WEAPON_TYPES:
+		if not SkillTree.has_tree(weapon_type):
+			continue
+		var spent: int = player.skills.nodes.get(weapon_type, {}).size()
+		rows.append({
+			"name": "Drzewko: %s" % Skills.WEAPON_NAMES[weapon_type], "icon": Hotbar.ATTACK_ICON,
+			"text": "Mędrzec pomoże zapomnieć wybrane węzły - wrócą jako punkty umiejętności. Kupione poziomy umiejętności zostają.",
+			"cost": "Wybrane węzły: %d   Złoto: %d" % [spent, gold],
+			"enabled": spent > 0 and player.stats.gold >= gold, "state": "", "button": "Zapomnij",
+			"action": func() -> String:
+				player.stats.add_gold(-gold)
+				player.skills.reset_tree(weapon_type)
+				Sfx.play("magic")
+				npc.say(["Pamięć ciała jest krótsza, niż myślisz.", "Zacznij ścieżkę od nowa.", "Niech ostrze znajdzie nową drogę."].pick_random())
+				return "Zapomniano drzewko: %s" % Skills.WEAPON_NAMES[weapon_type],
+		})
+	return {"title": "Zapomnienie umiejętności", "rows": rows,
+			"hint": "Punkty umiejętności dostajesz za każdy poziom postaci. Węzły wybierasz w oknie umiejętności (K)."}
 
 
 static func _blessings(player: Player, npc: Node) -> Dictionary:

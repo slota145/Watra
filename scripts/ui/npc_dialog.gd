@@ -14,7 +14,7 @@ signal watra_requested
 ## Usługi z listą ofert (OfferWindow): "meals", "blessing", "bestiary".
 signal offers_requested(kind: String, npc: Npc)
 const OFFER_SERVICES := {"meals": "Kuchnia", "blessing": "Błogosławieństwo", "bestiary": "Bestiariusz", "reforge": "Przekuwanie",
-		"elixirs": "Mikstury"}
+		"elixirs": "Mikstury", "respec": "Zapomnienie umiejętności"}
 
 ## Odpoczynek w karczmie: 20 zł + 3 zł za poziom postaci.
 static func rest_price(level: int) -> int:
@@ -109,7 +109,7 @@ func _refresh() -> void:
 				_buttons.add_child(_button("Wykuwanie", _forge))
 			"disenchant":
 				_buttons.add_child(_button("Odczarowanie", _sage))
-			"meals", "blessing", "bestiary", "reforge", "elixirs":
+			"meals", "blessing", "bestiary", "reforge", "elixirs", "respec":
 				_buttons.add_child(_button(OFFER_SERVICES[service], _offers.bind(service)))
 			"build":
 				# plany budowy dopiero po zadaniu sołtysa z prośbą o pomoc
