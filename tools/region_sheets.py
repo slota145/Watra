@@ -130,8 +130,10 @@ def object_sheet(cells, out_path, columns=4, scale=0.75):
 
 
 def objects(layout):
-    # Gromoskrzydły: 0-3 lot, 4 spoczynek, 5 ładowanie burzy, 6 nurkowanie, 7 wrzask
-    fly, dive, screech = (_anim_frames("storm_eagle_obj", p) for p in ("flapping", "folds", "spreads"))
+    # Gromoskrzydły (układ 4x3): 0-7 pełne uderzenie skrzydeł (skrzydła w górze, w dół pod tułów i z powrotem),
+    # 8 spoczynek, 9 ładowanie burzy, 10 nurkowanie, 11 wrzask. Dawna animacja "flapping" prawie nie ruszała
+    # skrzydłami, więc lot bierze klatki "powerful_full_wingbeat" (8 klatek).
+    fly, dive, screech = (_anim_frames("storm_eagle_obj", p) for p in ("powerful_full_wingbeat", "folds", "spreads"))
     if fly and dive and screech:
         rot = Image.open(os.path.join(SRC, "storm_eagle_obj", "rotations", "unknown.png")).convert("RGBA")
         w, h = object_sheet(fly + [rot, screech[1], dive[2], screech[3]], os.path.join(OUT, "storm_eagle.png"))

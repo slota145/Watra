@@ -25,6 +25,9 @@ const GUST_TELEGRAPH := 0.8
 const GUST_RADIUS := 84.0
 const FEATHERS := 12
 const HOVER := 6.0
+const FLAP_FRAMES := 8
+const FLAP_FPS := 11.0
+const FLAP_FPS_IDLE := 8.0
 
 var _bolts_left := 0
 var _bolt_timer := 0.0
@@ -183,27 +186,32 @@ func _cancel_attack() -> void:
 	$CollisionShape2D.set_deferred("disabled", false)
 
 
-## Klatki: 0-3 lot (machanie skrzydłami), 4 spoczynek, 5 ładowanie burzy, 6 nurkowanie, 7 wrzask / podmuch.
+## Klatki: 0-7 lot (pełne uderzenie skrzydeł: w górze, w dół pod tułów i z powrotem), 8 spoczynek,
+## 9 ładowanie burzy, 10 nurkowanie, 11 wrzask / podmuch. Orzeł macha skrzydłami także w spoczynku
+## (unosi się nad gniazdem) - wolniej niż w pościgu; tułów podrywa się przy każdym uderzeniu w dół.
 func _animate(delta: float) -> void:
 	_hover_time += delta
-	var hovering := _attack != "dive"
-	sprite.position.y = -HOVER - sin(_hover_time * 3.0) * 2.0 if hovering else -2.0
 	if _attack == "storm":
-		sprite.frame = 5 if _attack_stage != "recover" else 7
+		sprite.frame = 9 if _attack_stage != "recover" else 11
 	elif _attack == "dive":
-		sprite.frame = 6 if _attack_stage == "act" else 5
+		sprite.frame = 10 if _attack_stage == "act" else 9
 		sprite.flip_h = _dive_dir.x < 0.0
 	elif _attack == "gust":
-		sprite.frame = 7 if _attack_stage != "telegraph" else 5
-	elif state == State.IDLE:
-		sprite.frame = 4
+		sprite.frame = 11 if _attack_stage != "telegraph" else 9
 	else:
-		_anim_time += delta * 8.0
-		sprite.frame = int(_anim_time) % 4
-		if velocity.length() > 8.0:
-			sprite.flip_h = velocity.x < 0.0
-		elif _player != null:
-			_face(_player.global_position)
+		_anim_time += delta * (FLAP_FPS_IDLE if state == State.IDLE else FLAP_FPS)
+		sprite.frame = int(_anim_time) % FLAP_FRAMES
+		if state != State.IDLE:
+			if velocity.length() > 8.0:
+				sprite.flip_h = velocity.x < 0.0
+			elif _player != null:
+				_face(_player.global_position)
+	if _attack == "dive":
+		sprite.position.y = -2.0
+	elif sprite.frame < FLAP_FRAMES:
+		sprite.position.y = -HOVER - sin(fmod(_anim_time, FLAP_FRAMES) / FLAP_FRAMES * TAU) * 3.0
+	else:
+		sprite.position.y = -HOVER - sin(_hover_time * 3.0) * 2.0
 
 
 func _die() -> void:

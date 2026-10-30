@@ -24,7 +24,7 @@ SCENES = {
     "satyr_piper": ("satyr_piper", 4, 2, (1.7, 1.0), 12.0, "hurt_height"),
     "satyr_brute": ("satyr_brute", 4, 2, (2.6, 1.4), 17.0, "hurt_height"),
     "goat": ("goat", 4, 2, (2.2, 1.1), 11.0, "body_offset"),
-    "storm_eagle": ("storm_eagle", 4, 2, (4.0, 1.8), 30.0, "hurt_height"),
+    "storm_eagle": ("storm_eagle", 4, 3, (4.0, 1.8), 30.0, "hurt_height"),
     "wisp": ("wisp", 4, 2, (1.0, 0.6), None, None),
 }
 
