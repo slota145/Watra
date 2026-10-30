@@ -43,10 +43,8 @@ const FENCE := preload("res://assets/fields/fence.png")
 ## pod nim, niżej miedza otwarta. Przejścia między polami co najwyżej co HEDGE_GAP_EVERY kafelków.
 const HEDGE_BUSHES: Array[Texture2D] = [preload("res://assets/forest/trees/bush_0.png"),
 		preload("res://assets/forest/trees/bush_1.png"), preload("res://assets/forest/trees/bush_2.png")]
-const HEDGE_STYLE := 0.0
-## W paśmie stylu pod żywopłotami zamiast nich biegną polne dróżki (oddzielone od pól paskiem trawy).
-const PATH_STYLE := -0.3
-const FENCE_STYLE := -0.55
+const HEDGE_STYLE := -0.2
+const FENCE_STYLE := -0.5
 const HEDGE_GAP_EVERY := 11.0
 const HEDGE_GAP_RADIUS := 1.6
 const MAP_HEDGE := Color("3f6a2a")
@@ -80,7 +78,7 @@ const CAMP_PACKS := 8
 ## Miedza tam, gdzie dwa najbliższe środki są prawie tak samo daleko (BALK); łąki tylko tam, gdzie szum łąk
 ## spada poniżej MEADOW_LEVEL. Udział rodzajów działek: łany, ścierniska (reszta - zaorane zagony).
 const PARCEL := Vector2(17.0, 12.0)
-const BALK := 2.6
+const BALK := 1.5
 const MEADOW_LEVEL := -0.45
 const GRAIN_SHARE := 0.64
 const STUBBLE_SHARE := 0.18
@@ -109,10 +107,6 @@ var _field_cells := {}
 ## Działka, do której należy komórka (także miedza między działkami), i komórki miedz.
 var _owner := {}
 var _balk_cells := {}
-## Jak blisko środka miedzy leży komórka miedzy (różnica odległości do dwóch najbliższych działek; 0 = środek).
-var _balk_gap := {}
-## Szum stylu miedz (żywopłot / dróżka / płot / nic) - wspólny dla planu dróżek i budowy miedz.
-var _style := FastNoiseLite.new()
 var _sway: ShaderMaterial
 var _autumn: Array[ShaderMaterial] = []
 
@@ -157,7 +151,6 @@ func generate(world) -> void:
 	w._reserve_area(gryf_hill, 14.0)
 	_plan_farms(rng)
 	_plan_fields(rng)
-	_plan_balk_paths()
 
 	_build_ground(rng)
 	_place_nature(rng)
@@ -263,36 +256,12 @@ func _plan_fields(rng: RandomNumberGenerator) -> void:
 			_owner[cell] = owner
 			if second - best < BALK:
 				_balk_cells[cell] = true
-				_balk_gap[cell] = second - best
 				continue
 			var kind: String = kinds[owner]
 			if kind == "grain" and ((Vector2(cell) - worms) / Vector2(34, 22)).length() < 1.0:
 				kind = "stubble" if (owner.x + owner.y) % 2 == 0 else "soil"
 			_field_kind[cell] = kind
 			_field_cells[cell] = true
-
-
-## Polne dróżki na części miedz (pasmo stylu między płotami a żywopłotami): wąski pas ubitej ziemi wzdłuż granicy
-## działek, z paskiem trawy po obu stronach (miedza jest szersza niż dróżka). Dróżki są zwykłymi komórkami drogi -
-## podłoże, mapa i rekwizyty traktują je jak dróżki do gospodarstw.
-func _plan_balk_paths() -> void:
-	_style.seed = hash([w._seed, "balk_style"])
-	_style.frequency = 0.04
-	# środek miedzy (komórki najbliżej równej odległości od dwóch działek) - ciągły pas w każdym kierunku
-	var line := {}
-	for cell: Vector2i in _balk_cells:
-		var n := _style.get_noise_2d(cell.x, cell.y)
-		if n > HEDGE_STYLE or n <= PATH_STYLE or not _hedge_allowed(cell) or _balk_gap[cell] > 1.0:
-			continue
-		line[cell] = true
-	for cell: Vector2i in line:
-		var neighbours := 0
-		for d in [Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(-1, 0), Vector2i(1, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)]:
-			neighbours += int(line.has(cell + d))
-		if neighbours == 0:
-			continue  # samotny kawałek - nie dróżka
-		w._road_cells[cell] = true
-		w._road_clear[cell] = true
 
 
 ## Komórki elipsy (w kafelkach).
@@ -488,7 +457,9 @@ func _build_fields(rng: RandomNumberGenerator) -> void:
 ## krainy płoty z żerdzi pod dolnym skrajem pól, część miedz zostaje otwarta. Na miedzach kamienie, kwiaty,
 ## pojedyncze krzaki i drzewa.
 func _build_balks(rng: RandomNumberGenerator) -> void:
-	var style := _style
+	var style := FastNoiseLite.new()
+	style.seed = rng.randi()
+	style.frequency = 0.04
 	# żywopłoty: komórki na granicy działek (sąsiad z prawej albo z dołu należy do innej działki - schodkowa
 	# linia zawsze styka się bokami), z przejściami rozstawionymi wzdłuż linii
 	var line: Array[Vector2i] = []
@@ -514,7 +485,7 @@ func _build_balks(rng: RandomNumberGenerator) -> void:
 		for x in w.map_size.x:
 			var cell := Vector2i(x, y)
 			var n := style.get_noise_2d(x, y)
-			if n > PATH_STYLE or n <= FENCE_STYLE or not _balk_edge(cell) or hedge.has(cell + Vector2i.DOWN):
+			if n > HEDGE_STYLE or n <= FENCE_STYLE or not _balk_edge(cell) or hedge.has(cell + Vector2i.DOWN):
 				continue
 			if x % 2 == 0 and x % 10 != 0 and rng.randf() < 0.85:
 				var pos := Vector2((x + 0.5) * TILE, (y + 1) * TILE + 4.0)
