@@ -360,6 +360,27 @@ def animal_voices():
     save(buzz, "dragonfly", peak=0.5)
 
 
+def cemetery_voices():
+    """Leśny Cmentarz: krakanie kruka (2 warianty: dwa i trzy chrapliwe "kra") i zawodzenie ducha
+    (długi, drżący, falujący jęk z szumem wiatru, z daleka)."""
+    rng = np.random.default_rng(131)
+    for v in range(2):
+        parts = []
+        for k in range(2 + v):
+            n = int(RATE * rng.uniform(0.18, 0.24))
+            t = np.arange(n) / RATE
+            f = 520 + 120 * np.sin(np.pi * t / (n / RATE)) - 160 * t / (n / RATE)
+            parts += [voiced(f, env_curve(n, 0.01, 0.06), 0.9, [(900, 500, 1.0), (1800, 700, 0.6), (3000, 900, 0.25)], rng, 0.35),
+                      np.zeros(int(RATE * rng.uniform(0.12, 0.2)))]
+        save(forest_space(np.concatenate(parts), 140 + v, 0.5, 1.0), "crow_caw_%d" % (v + 1), peak=0.7)
+    n = int(RATE * 2.6)
+    t = np.arange(n) / RATE
+    f = 330 + 90 * np.sin(np.pi * t / 2.6) + 14 * np.sin(2 * np.pi * 5.5 * t) + 30 * np.sin(2 * np.pi * 0.7 * t)
+    wail = voiced(f, env_curve(n, 0.6, 1.0), 0.05, [(600, 400, 1.0), (1100, 300, 0.4)], rng, 0.02)
+    air = signal.sosfilt(signal.butter(2, [300, 1500], "band", fs=RATE, output="sos"), rng.standard_normal(n)) * 0.25
+    save(forest_space((wail + air) * env_curve(n, 0.6, 1.0), 142, 0.6, 2.0), "ghost_wail", peak=0.5)
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     for v in range(5):
@@ -368,6 +389,7 @@ def main():
     save(river(), "river_loop", peak=0.6)
     frogs()
     animal_voices()
+    cemetery_voices()
 
 
 if __name__ == "__main__":
