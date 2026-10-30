@@ -20,7 +20,7 @@
 @export var map_seed := 0
 
 @export_group("Obozowiska goblinów")
-@export var camp_count := 4
+@export var camp_count := 5
 @export var campfires_per_camp_min := 3
 @export var campfires_per_camp_max := 4
 @export var goblins_per_fire_min := 5
@@ -34,19 +34,19 @@
 @export var settlement_clearance := 8.0
 
 @export_group("Grupki goblinów")
-@export var goblin_group_count := 18
+@export var goblin_group_count := 26
 @export var goblins_per_group_min := 3
-@export var goblins_per_group_max := 5
+@export var goblins_per_group_max := 6
 
 @export_group("Siedlisko wilków")
 ## Obszar wilków jako ułamek mapy - domyślnie prawy dolny róg.
-@export var wolf_area := Rect2(0.66, 0.62, 0.34, 0.38)
-@export var den_count := 6
+@export var wolf_area := Rect2(0.6, 0.58, 0.4, 0.42)
+@export var den_count := 8
 @export var wolves_per_den_min := 7
 @export var wolves_per_den_max := 11
 ## Promień polany przy norze (w kafelkach).
 @export var den_radius := 6
-@export var carcass_count := 24
+@export var carcass_count := 30
 @export var wolves_per_carcass_min := 3
 @export var wolves_per_carcass_max := 5
 ## Mrok w głębi siedliska: kolor i krycie nakładanej warstwy (alfa = jak bardzo ciemno).
