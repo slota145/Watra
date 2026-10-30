@@ -1,6 +1,6 @@
 extends SceneTree
 ## Legendy bossów: każdy przedmiot z legendary_drops w scenach bossów istnieje, ma miejsce na postaci,
-## efekt z opisem (Items.EFFECT_TEXTS) i daje się wylosować z poziomem (Loot.legendary_at_level).
+## efekt z opisem (Items.EFFECT_TEXTS, dymek Items.describe się składa) i daje się wylosować z poziomem (Loot.legendary_at_level).
 
 var _fails := 0
 
@@ -35,6 +35,8 @@ func _initialize() -> void:
 				and items.EFFECT_TEXTS.has(effect) and data.get("icon") != null
 		var rolled: String = loot.legendary_at_level(id, 20)
 		ok = ok and rolled != "" and items.get_data(rolled).get("rarity", "") == "legendary"
+		# dymek z opisem (błąd formatowania - np. "%" bez "%%" w EFFECT_TEXTS - daje pusty tekst)
+		ok = ok and items.describe(id).contains("Efekt:") and items.describe(rolled).contains("Efekt:")
 		_check("%s (%s, %s)" % [id, data.get("slot", "?"), effect], ok)
 	print("WYNIK: ", "OK" if _fails == 0 else "%d bledow" % _fails)
 	quit()
