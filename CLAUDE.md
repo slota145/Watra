@@ -140,8 +140,8 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 - [x] Wielki obóz koboldów (elipsa 48x30 kafelków) z barykadą Bombardiera w północnej części: 12 namiotów, 6 ognisk,
   stojące zgraje, straż bramy; zgraje także w łanach dookoła - około 190 koboldów (było około 65).
 - [x] Pola pszenicy: działki o organicznych granicach (komórki Woronoja wygięte szumem) na brązowej glebie, wąskie miedze
-  z płotami, murkami z polnych kamieni (autotile `assets/fields/stone_wall.png` z `tools/field_wall.py`, ciągłe linie
-  na granicach działek z wyłomami), krzakami i kwiatami; przeważają łany (około 2/3 działek), reszta to ścierniska z rzędami snopków
+  z żywopłotami (krzaki gęsto obok siebie jak pale palisady, ciągłe linie na granicach działek, przejścia co około
+  11 kafelków), płotami z żerdzi, kamieniami i kwiatami; przeważają łany (około 2/3 działek), reszta to ścierniska z rzędami snopków
   i zaorane zagony; mało trawy (łąki tylko płatami, polany wokół gospodarstw); kępy drzew w jesiennych barwach
   (`shaders/autumn.gdshader`); zboże nie spowalnia.
   Wzór: `docs/referencje/pola_zbozowe.jpg`.
