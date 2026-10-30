@@ -1,0 +1,64 @@
+{
+  "group_id": "0639d425-234f-4003-bfa8-b138eb68efb2",
+  "states": [
+    {
+      "character": {
+        "id": "70e1b2b9-a190-48e4-8508-c8e57447350e",
+        "name": "Idle",
+        "prompt": "skeleton necromancer lord in tattered black and purple robes with a bone crown, holding a staff topped with a glowing green skull, green magic wisps",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-29T23:59:05.869796+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "summon": {
+            "south-east": [
+              "Idle/animations/summon/south-east/frame_000.png",
+              "Idle/animations/summon/south-east/frame_001.png",
+              "Idle/animations/summon/south-east/frame_002.png",
+              "Idle/animations/summon/south-east/frame_003.png",
+              "Idle/animations/summon/south-east/frame_004.png"
+            ]
+          },
+          "cast": {
+            "south-east": [
+              "Idle/animations/cast/south-east/frame_000.png",
+              "Idle/animations/cast/south-east/frame_001.png",
+              "Idle/animations/cast/south-east/frame_002.png",
+              "Idle/animations/cast/south-east/frame_003.png",
+              "Idle/animations/cast/south-east/frame_004.png",
+              "Idle/animations/cast/south-east/frame_005.png"
+            ]
+          },
+          "walk": {
+            "south-east": [
+              "Idle/animations/walk/south-east/frame_000.png",
+              "Idle/animations/walk/south-east/frame_001.png",
+              "Idle/animations/walk/south-east/frame_002.png",
+              "Idle/animations/walk/south-east/frame_003.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-30T00:19:39.689687"
+}

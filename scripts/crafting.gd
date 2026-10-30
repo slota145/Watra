@@ -13,6 +13,8 @@ const RECIPES: Array[Dictionary] = [
 	{"result": "summon_bies", "amount": 1, "ingredients": {"beast_fang": 8}},
 	{"result": "summon_bombardier", "amount": 1, "ingredients": {"kobold_fuse": 15}},
 	{"result": "summon_giant_worm", "amount": 1, "ingredients": {"worm_tooth": 15}},
+	{"result": "summon_necromancer", "amount": 1, "ingredients": {"bone_dust": 20}},
+	{"result": "summon_colossal_ghoul", "amount": 1, "ingredients": {"ghoul_claw": 15}},
 ]
 
 

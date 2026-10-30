@@ -10,6 +10,7 @@ const DATA := {
 	"mountains": {"name": "Wietrzne Turnie", "size": Vector2i(200, 150), "map_offset": Vector2i(400, 0)},
 	"ancient": {"name": "Prastary Las", "size": Vector2i(200, 150), "map_offset": Vector2i(0, -150)},
 	"fields": {"name": "Pola Zbożowe", "size": Vector2i(200, 150), "map_offset": Vector2i(-200, 0)},
+	"cemetery": {"name": "Leśny Cmentarz", "size": Vector2i(200, 150), "map_offset": Vector2i(0, -300)},
 }
 
 ## Kapliczki odrodzenia - po odkryciu można się do nich teleportować z dużej mapy (M).
@@ -19,6 +20,7 @@ const SHRINES := {
 	"eagle_pass": {"zone": "mountains", "name": "Orla Przełęcz"},
 	"old_oak": {"zone": "ancient", "name": "Stary Dąb"},
 	"old_mill": {"zone": "fields", "name": "Stary Młyn"},
+	"grave_chapel": {"zone": "cemetery", "name": "Cmentarna Kaplica"},
 }
 
 

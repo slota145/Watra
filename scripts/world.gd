@@ -83,7 +83,7 @@
 ## Po ilu sekundach pokonany boss wraca do swojego leża (odpoczynek w karczmie wskrzesza go od razu).
 @export var boss_respawn_time := 300.0
 const BOSS_TYPES := ["chief", "alpha", "frog_chief", "storm_eagle", "wodnik", "leshy", "spider_queen", "bies",
-		"bombardier", "giant_worm"]
+		"bombardier", "giant_worm", "necromancer", "colossal_ghoul"]
 ## Jak blisko leża trzeba stać, żeby użyć przedmiotu przyzwania.
 const SUMMON_RADIUS := 130.0
 const LAIR_NAMES := {
@@ -97,6 +97,8 @@ const LAIR_NAMES := {
 	"bies": "w kręgu czaszek w leżu Biesa (Prastary Las, południowy zachód)",
 	"bombardier": "za barykadą prochu na północy Pól Zbożowych",
 	"giant_worm": "w kraterze Pożeracza (Pola Zbożowe, południowy zachód)",
+	"necromancer": "przed mauzoleum na północnym zachodzie Leśnego Cmentarza",
+	"colossal_ghoul": "w głębi trupowiska na wschodzie Leśnego Cmentarza",
 }
 ## id miejsc bossów, którzy właśnie są przyzywani (krąg jeszcze się ładuje).
 var _summoning := {}
@@ -283,6 +285,13 @@ const FIELDS_SCENES := {
 	"field_worm": preload("res://scenes/field_worm.tscn"),
 	"bombardier": preload("res://scenes/kobold_bombardier.tscn"),
 	"giant_worm": preload("res://scenes/giant_worm.tscn"),
+	"skeleton": preload("res://scenes/skeleton.tscn"),
+	"skeleton_archer": preload("res://scenes/skeleton_archer.tscn"),
+	"skeleton_knight": preload("res://scenes/skeleton_knight.tscn"),
+	"ghoul": preload("res://scenes/ghoul.tscn"),
+	"zombie": preload("res://scenes/zombie.tscn"),
+	"necromancer": preload("res://scenes/necromancer.tscn"),
+	"colossal_ghoul": preload("res://scenes/colossal_ghoul.tscn"),
 }
 const HUT_TREES: Array[Texture2D] = [preload("res://assets/frogs/hut_tree_0.png"), preload("res://assets/frogs/hut_tree_1.png"),
 		preload("res://assets/frogs/hut_tree_2.png")]
@@ -322,6 +331,10 @@ const FIELDS_GROUND := {
 	"grass": preload("res://assets/forest/ground/grass.png"), "road": preload("res://assets/forest/ground/road.png"),
 	"dark": preload("res://assets/forest/ground/dark.png"), "flowers": preload("res://assets/forest/ground/flowers.png"),
 	"f_soil": preload("res://assets/fields/ground/soil.png"), "f_stubble": preload("res://assets/fields/ground/stubble.png"),
+}
+const CEMETERY_GROUND := {
+	"c_grass": preload("res://assets/cemetery/ground/grass.png"), "c_soil": preload("res://assets/cemetery/ground/soil.png"),
+	"c_path": preload("res://assets/cemetery/ground/path.png"), "c_leaves": preload("res://assets/cemetery/ground/leaves.png"),
 }
 const ANCIENT_GROUND := {
 	"soil": preload("res://assets/ancient/ground/soil.png"), "moss": preload("res://assets/ancient/ground/moss.png"),
@@ -464,6 +477,10 @@ func _ready() -> void:
 		var fields := GrainFields.new()
 		add_child(fields)
 		fields.generate(self)
+	elif zone == "cemetery":
+		var cemetery := ForestCemetery.new()
+		add_child(cemetery)
+		cemetery.generate(self)
 	else:
 		_generate_forest()
 	if zone == "forest":
@@ -474,6 +491,8 @@ func _ready() -> void:
 		_soft_textures = ANCIENT_GROUND
 	elif zone == "fields":
 		_soft_textures = FIELDS_GROUND
+	elif zone == "cemetery":
+		_soft_textures = CEMETERY_GROUND
 	_soft_ground = SoftGround.attach(ground, _soft_corners, _soft_low_corners, _soft_levels, _soft_textures)
 	# wysokie rekwizyty znikają, gdy gracz wejdzie za nie
 	var occlusion := Occlusion.new()
@@ -1063,7 +1082,7 @@ func _process_music(delta: float) -> void:
 	if _music_check > 0.0:
 		return
 	_music_check = 0.5
-	var track: String = {"forest": "forest", "swamp": "swamp", "mountains": "mountains", "ancient": "ancient", "fields": "fields"}.get(zone, "forest")
+	var track: String = {"forest": "forest", "swamp": "swamp", "mountains": "mountains", "ancient": "ancient", "fields": "fields", "cemetery": "cemetery"}.get(zone, "forest")
 	if zone == "forest" and _settlement.is_inside_palisade(Vector2i((player.global_position / TILE).floor())):
 		track = "ostoja"
 	for boss in get_tree().get_nodes_in_group("bosses"):

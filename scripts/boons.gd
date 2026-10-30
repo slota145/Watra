@@ -39,6 +39,8 @@ const BESTIARY := {
 	"beast": {"name": "Bestie", "trophy": "beast_fang"},
 	"kobold": {"name": "Koboldy", "trophy": "kobold_fuse"},
 	"worm": {"name": "Czerwie", "trophy": "worm_tooth"},
+	"skeleton": {"name": "Szkielety", "trophy": "bone_dust"},
+	"ghoul": {"name": "Trupojady i zombie", "trophy": "ghoul_claw"},
 }
 const BESTIARY_COSTS: Array[int] = [10, 25, 50, 100, 200]
 const BESTIARY_STEP := 0.03
@@ -107,6 +109,10 @@ static func kind_of(enemy: Node) -> String:
 		return "kobold"
 	if enemy is FieldWorm or enemy is GiantWorm:
 		return "worm"
+	if enemy is Skeleton or enemy is Necromancer:
+		return "skeleton"
+	if enemy is Ghoul or enemy is Zombie or enemy is ColossalGhoul:
+		return "ghoul"
 	if enemy is Goblin and enemy.get_script().resource_path.get_file().begins_with("goblin"):
 		return "goblin"
 	return ""

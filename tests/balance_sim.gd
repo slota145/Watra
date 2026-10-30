@@ -13,9 +13,10 @@ const ENEMIES := {
 	"mountains": {"normal": ["birdman", 230, 26, 120, 12.0], "strong": ["satyr_brute", 750, 60, 300, 30.0]},
 	"ancient": {"normal": ["spider", 120, 18, 85, 9.0], "strong": ["treant", 260, 28, 110, 12.0]},
 	"fields": {"normal": ["kobold", 70, 13, 14, 6.5], "strong": ["field_worm", 130, 14, 22, 7.0]},
+	"cemetery": {"normal": ["skeleton", 140, 20, 95, 10.0], "strong": ["skeleton_knight", 420, 42, 260, 21.5]},
 }
 ## Etap: poziom (kraina wg poziomu) albo [poziom, kraina] - Pola Zbożowe to boczna droga obok rozlewisk.
-const STAGES := [1, 3, 5, 7, [8, "fields"], 9, [11, "fields"], 12, 14, [14, "fields"], 16, 18, 21, 24, 26, 29, 32]
+const STAGES := [1, 3, 5, 7, [8, "fields"], 9, [11, "fields"], 12, 14, [14, "fields"], 16, 18, 21, 24, 26, 29, 32, 35, 38]
 ## Docelowe widełki: ciosy na zwykłego, ciosy na silnego, ciosy zwykłego potwora do śmierci gracza, zabójstwa na poziom.
 const TARGET_NORMAL := Vector2(2.5, 6.0)
 const TARGET_STRONG := Vector2(6.0, 18.0)
@@ -42,7 +43,7 @@ func _initialize() -> void:
 
 
 func _zone(level: int) -> String:
-	for zone in ["ancient", "mountains", "swamp", "forest"]:
+	for zone in ["cemetery", "ancient", "mountains", "swamp", "forest"]:
 		if level >= levels.ZONES[zone][0]:
 			return zone
 	return "forest"

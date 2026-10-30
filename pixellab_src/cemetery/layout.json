@@ -1,0 +1,51 @@
+{
+ "skeleton": {
+  "cell": [
+   30,
+   33
+  ],
+  "offset_y": -13.5
+ },
+ "skeleton_archer": {
+  "cell": [
+   33,
+   36
+  ],
+  "offset_y": -14.0
+ },
+ "skeleton_knight": {
+  "cell": [
+   45,
+   45
+  ],
+  "offset_y": -20.5
+ },
+ "ghoul": {
+  "cell": [
+   36,
+   33
+  ],
+  "offset_y": -15.5
+ },
+ "zombie": {
+  "cell": [
+   33,
+   36
+  ],
+  "offset_y": -15.0
+ },
+ "necromancer": {
+  "cell": [
+   48,
+   51
+  ],
+  "offset_y": -23.5
+ },
+ "colossal_ghoul": {
+  "cell": [
+   63,
+   63
+  ],
+  "offset_y": -29.5
+ }
+}

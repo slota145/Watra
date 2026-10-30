@@ -17,6 +17,7 @@ const ZONES := {
 	"swamp": [9, 16, 18],
 	"mountains": [16, 24, 26],
 	"ancient": [23, 32, 34],
+	"cemetery": [32, 40, 42],
 }
 ## Zwykły potwór każdej krainy - wzorzec siły typów (statystyki jego sceny): [zdrowie, obrażenia, xp, złoto średnio].
 const REFERENCE := {
@@ -25,6 +26,7 @@ const REFERENCE := {
 	"swamp": [100.0, 17.0, 55.0, 7.0],
 	"mountains": [230.0, 26.0, 120.0, 12.0],
 	"ancient": [120.0, 18.0, 85.0, 9.0],
+	"cemetery": [140.0, 20.0, 95.0, 10.0],
 }
 ## Kraina, z której pochodzi scena potwora (wg nazwy pliku) - jej wzorzec mierzy siłę typu.
 const HOME := {
@@ -39,6 +41,8 @@ const HOME := {
 	"leshy": "ancient", "bies": "ancient",
 	"kobold": "fields", "kobold_slinger": "fields", "kobold_bomber": "fields", "field_worm": "fields",
 	"kobold_bombardier": "fields", "giant_worm": "fields",
+	"skeleton": "cemetery", "skeleton_archer": "cemetery", "skeleton_knight": "cemetery", "ghoul": "cemetery",
+	"zombie": "cemetery", "necromancer": "cemetery", "colossal_ghoul": "cemetery",
 }
 ## Krzywe zwykłego potwora: zdrowie i obrażenia rosną liniowo (jak obrażenia i zdrowie gracza z poziomu,
 ## przedmiotów i zaklęć), doświadczenie i złoto wolniej niż potrzebne doświadczenie gracza.

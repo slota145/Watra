@@ -863,6 +863,8 @@ def main():
     fields_art.main()
     import fields_sheets  # Pola Zbożowe z PixelLab: rekwizyty, podłoże, koboldy, czerwie i ich sceny (na końcu - zmienia SRC modułów)
     fields_sheets.main()
+    import cemetery_sheets  # Leśny Cmentarz z PixelLab: rekwizyty, podłoże, nieumarli i ich sceny
+    cemetery_sheets.main()
     print("Zapisano grafiki do", OUT)
 
 

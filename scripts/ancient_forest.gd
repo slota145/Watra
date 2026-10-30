@@ -127,6 +127,10 @@ func generate(world) -> void:
 	_mark_path(w._road, 1.3, 2.8)
 	_mark_path(Road.wiggle(_cross, lair + Vector2(18, 14), rng, 5.0, 11.0), 0.9, 2.2)
 	_mark_path(Road.wiggle(_cross, Vector2(beast_area.end.x - 6, beast_area.get_center().y), rng, 5.0, 11.0), 0.9, 2.2)
+	# ścieżka na cmentarz losowana osobno - reszta lasu zostaje taka jak była
+	var trail_rng := RandomNumberGenerator.new()
+	trail_rng.seed = hash([w._seed, "cemetery_trail"])
+	_mark_path(Road.wiggle(_cross, Vector2(size.x * 0.4, 0.0), trail_rng, 5.0, 10.0), 0.9, 2.2)
 
 	var shrine_tile := _cross + Vector2(4.5, -4.0)
 	w._reserve_area(shrine_tile, 3.0)
@@ -151,6 +155,10 @@ func generate(world) -> void:
 	w._map_markers.append({"position": shrine.position, "color": Color("5fd3ff"), "size": 3.0})
 	w._spawn_point = shrine.position + Vector2(0, 20)
 	w._add_exit(Rect2(entry_x - 4.5, size.y - 3.5, 9, 3.5), "forest", "from:ancient", Vector2(entry_x - 3.0, size.y - 5.0))
+	# ścieżka od rozstajów na północ - do Leśnego Cmentarza
+	var gate_x := size.x * 0.4
+	w._add_exit(Rect2(gate_x - 4.5, 0, 9, 3.5), "cemetery", "from:ancient", Vector2(gate_x + 3.0, 5.0))
+	w._arrivals["from:cemetery"] = Vector2(gate_x, 8.0) * TILE
 	w._arrivals["from:forest"] = Vector2(entry_x, size.y - 7.0) * TILE
 
 

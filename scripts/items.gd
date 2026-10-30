@@ -39,7 +39,8 @@ const LEGENDARY_COLOR := Color(1.0, 0.62, 0.15)
 const MODIFIED_COLOR := "#7cf07c"
 ## Efekty, których szanse zwiększa Łza Bulgora ("fortune").
 const CHANCE_EFFECTS := ["shockwave", "tide", "claws", "echo", "thunder", "whirlpool", "roots", "thorns", "venom", "brood", "fear",
-		"bomb", "blast_shot", "earth_arrow", "kaboom", "devour", "burrow"]
+		"bomb", "blast_shot", "earth_arrow", "kaboom", "devour", "burrow", "raise_dead", "rend", "plunder", "pack_call", "tongue",
+		"storm_arrows", "web_burst"]
 const EFFECT_TEXTS := {
 	"shockwave": "%s szans przy trafieniu: fala uderzeniowa rani trafionego i wszystkich wokół, ogłuszając ich",
 	"echo": "%s szans, że efekt przedmiotu (np. fala uderzeniowa) zadziała dwukrotnie",
@@ -65,6 +66,22 @@ const EFFECT_TEXTS := {
 	"mine_trail": "Unik zostawia na drodze trzy bomby - każda rani za %s obrażeń broni",
 	"burrow": "%s szans, że cios, po którym zostałoby ci mniej niż 35% zdrowia, nie trafi - zakopujesz się i wystrzelasz z ziemi, raniąc wszystko wokół (raz na 25 s)",
 	"tremor": "Co 4 s ziemia wokół ciebie drży, raniąc pobliskich wrogów za %s obrażeń broni",
+	"raise_dead": "%s szans, że pokonany wróg wstanie jako twój szkielet sługa na 12 s",
+	"soul_harvest": "Każdy pokonany wróg daje duszę - przy 10 duszach wyrywają się falą raniącą wrogów wokół za %s obrażeń broni",
+	"bone_armor": "Co 8 s krążące kości pochłaniają następny cios (do %s maksymalnego zdrowia)",
+	"undying": "Raz na 90 s cios śmiertelny zostawia cię przy życiu z %s zdrowia i wyzwala falę dusz",
+	"rend": "%s szans przy trafieniu: rozdarta rana krwawi przez 3 s (łącznie 150% obrażeń broni)",
+	"corpse_leap": "Unik kończy się skokiem miażdżącym ziemię - rani wrogów wokół za %s obrażeń broni",
+	"execute": "Ciosy w wrogów poniżej 25% zdrowia zadają dodatkowo %s obrażeń broni (nie działa na bossów)",
+	"plunder": "%s szans, że pokonany wróg upuści dodatkowy przedmiot",
+	"pack_call": "%s szans, gdy ktoś cię zrani: z mroku wyskakuje widmowy wilk i walczy u twego boku przez 12 s",
+	"tongue": "%s szans przy trafieniu: język przyciąga najbliższego innego wroga i go rani",
+	"storm_arrows": "Tylko łuk: %s szans przy trafieniu, że piorun przeskoczy z trafionego na dwóch pobliskich wrogów",
+	"tidal_dodge": "Unik ciągnie za sobą falę, która odpycha wrogów i rani ich za %s obrażeń broni",
+	"rooted_regen": "Stojąc w miejscu, odzyskujesz %s maksymalnego zdrowia na sekundę",
+	"web_burst": "%s szans przy trafieniu: wrogów wokół trafionego oplątuje sieć (nie mogą się ruszać przez 1 s)",
+	"berserk": "Gdy masz mniej niż 40% zdrowia, zadajesz +%s obrażeń",
+	"bile_spit": "Co 5. trafienie plujesz żółcią przed siebie - trujące kałuże ranią wrogów za %s obrażeń broni co pół sekundy",
 }
 const SLOT_TYPE_NAMES := {
 	"weapon": "Broń", "helmet": "Hełm", "chest": "Napierśnik", "gloves": "Rękawice", "boots": "Buty",
@@ -233,6 +250,18 @@ const DATA := {
 		"icon": preload("res://assets/items/worm_tooth.png"),
 		"sell_price": 6,
 	},
+	"bone_dust": {
+		"name": "Proch z kości",
+		"description": "Szary proch z rozsypanego szkieletu. Wciąż czuć w nim chłód nekromancji.",
+		"icon": preload("res://assets/items/bone_dust.png"),
+		"sell_price": 9,
+	},
+	"ghoul_claw": {
+		"name": "Pazur trupojada",
+		"description": "Czarny, zakrzywiony pazur ghula. Lepiej nie pytać, co ma za paznokciem.",
+		"icon": preload("res://assets/items/ghoul_claw.png"),
+		"sell_price": 9,
+	},
 	"spider_silk": {
 		"name": "Pajęczy jedwab",
 		"description": "Lśniący, niezwykle mocny jedwab z leża pająków. Tkacze płacą za niego dobrze.",
@@ -263,6 +292,18 @@ const DATA := {
 		"description": "Gnijące mięso na wielkim haku. Rzucone do krateru na południowym zachodzie Pól Zbożowych przyzywa Pożeracza.",
 		"icon": preload("res://assets/items/summon_giant_worm.png"),
 		"use": {"summon": "giant_worm"}, "sell_price": 30, "notable": true,
+	},
+	"summon_necromancer": {
+		"name": "Świeca Umarłych",
+		"description": "Czarna świeca na czaszce, płonąca zielonym ogniem. Zapalona przed mauzoleum na Leśnym Cmentarzu wywołuje Mortana.",
+		"icon": preload("res://assets/items/summon_necromancer.png"),
+		"use": {"summon": "necromancer"}, "sell_price": 40, "notable": true,
+	},
+	"summon_colossal_ghoul": {
+		"name": "Gnijący ochłap",
+		"description": "Cuchnący kawał trupa. Rzucony w głąb trupowiska na Leśnym Cmentarzu zwabia Gnilca.",
+		"icon": preload("res://assets/items/summon_colossal_ghoul.png"),
+		"use": {"summon": "colossal_ghoul"}, "sell_price": 40, "notable": true,
 	},
 	"summon_leshy": {
 		"name": "Gałąź Leszego",

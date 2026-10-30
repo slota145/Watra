@@ -1467,6 +1467,7 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 	if enemy.state == Goblin.State.DEAD:
 		return
 	amount = roundi(amount * legendary.damage_multiplier() * stats.damage_multiplier() * boons.damage_multiplier(enemy))
+	amount += legendary.execute_bonus(enemy)
 	var critical := randf() < stats.crit_chance()
 	if critical:
 		amount = roundi(amount * stats.crit_multiplier())
@@ -1477,6 +1478,7 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 		if enemy.state == Goblin.State.DEAD:
 			legendary.on_kill(enemy)
 		legendary.on_hit(enemy)
+		legendary.count_hit(enemy)
 		legendary.leech(amount)
 		heal(stats.life_on_hit())
 

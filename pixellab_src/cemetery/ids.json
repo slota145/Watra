@@ -1,0 +1,16 @@
+{
+ "skeleton": "31e76cea-b130-4fcb-9d33-d8ec99830f4d",
+ "skeleton_archer": "3208bbb7-00cc-4598-97d1-ab37593a8b00",
+ "skeleton_knight": "a8b8de4a-94c7-41f9-942f-acec79d095d1",
+ "necromancer": "70e1b2b9-a190-48e4-8508-c8e57447350e",
+ "ghoul": "ba96e8d8-29e3-4746-a983-8d0bf9eb51ba",
+ "zombie": "bad3448b-0d06-4ede-b449-ade178920922",
+ "colossal_ghoul": "0c1dae63-e141-4470-9617-2c8cd5017499",
+ "_packs": {
+  "props": "409993c2-7925-4e68-96c1-6fbcbc25d261",
+  "buildings": "fc8ab498-3ab9-486e-8f3b-2c9035d56beb"
+ },
+ "_tilesets": {
+  "soil": "09a9f33c-1a0a-4d43-9f31-72f685c0fe05"
+ }
+}

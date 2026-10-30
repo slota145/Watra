@@ -27,7 +27,7 @@ $tests = @(
 if ($Bench) {
     $tests += ,@("bench_combat.gd", $false)
     # tester-gracz: każda kraina po 90 s gry
-    foreach ($zone in @("forest", "fields", "swamp", "mountains", "ancient")) { $tests += ,@("playtest_bot.gd", $false, $zone) }
+    foreach ($zone in @("forest", "fields", "swamp", "mountains", "ancient", "cemetery")) { $tests += ,@("playtest_bot.gd", $false, $zone) }
 }
 
 Write-Host "Import zasobów..."

@@ -26,6 +26,22 @@ extends Node
 ## - burrow (Pancerz z Łusek Czerwia): cios, po którym zostałoby mniej niż 35% zdrowia, może zostać
 ##   pochłonięty - zakopujesz się na chwilę (nietykalny) i wystrzelasz z ziemi, raniąc wszystko wokół (on_hurt),
 ## - tremor (Serce Głębin): co kilka sekund wokół gracza drży ziemia, raniąc pobliskich wrogów (bierne).
+## - raise_dead (Kostur Mortana): pokonany wróg wstaje jako szkielet sługa (on_kill),
+## - soul_harvest (Całun Nekromanty): co 10 zabójstw fala dusz wokół gracza (on_kill),
+## - bone_armor (Kościana Korona): co 8 s kości pochłaniają następny cios (on_hurt),
+## - undying (Filakteria Mortana): raz na 90 s cios śmiertelny zostawia przy życiu (on_hurt),
+## - rend (Szpony Gnilca): trafiony krwawi (obrażenia przez 3 s),
+## - corpse_leap (Nagolenice Trupojada): unik kończy się uderzeniem w ziemię (on_dash),
+## - execute (Rzeźnicki Topór): dodatkowe obrażenia przy trafieniu wrogów poniżej 25% zdrowia,
+## - bile_spit (Paszcza Gnilca): co 5. trafienie stożek żółci przed graczem (trujące kałuże).
+## - plunder (Maczuga Gruzłoga): pokonany wróg upuszcza dodatkowy przedmiot (on_kill),
+## - pack_call (Skóra Szarokła): gdy gracz oberwie, widmowy wilk walczy u jego boku (on_hurt),
+## - tongue (Płetwy Bulgora): język przyciąga kolejnego wroga do trafionego,
+## - storm_arrows (Łuk Gromowładnego): piorun przeskakuje ze strzałą trafionego wroga,
+## - tidal_dodge (Płaszcz Topielca): unik ciągnie falę odpychającą wrogów (on_dash),
+## - rooted_regen (Kostur Leszego): stojąc w miejscu, gracz odzyskuje zdrowie (bierne),
+## - web_burst (Żądło Królowej): sieć oplątuje wrogów wokół trafionego,
+## - berserk (Topór Biesa): przy niskim zdrowiu więcej obrażeń (damage_multiplier).
 ## (Kieł Gruzłoga - "might" - działa biernie na obrażenia, w CharacterStats.)
 ## Obrażenia z efektów nie wywołują kolejnych efektów, a każdy efekt ma krótki czas odnowienia,
 ## żeby szybkie ataki (salwa, łańcuch) nie zamieniały ekranu w ciągłą falę.
@@ -55,9 +71,10 @@ const DASH_TRAIL_WIDTH := 20.0
 
 const ECHO_COLOR := Color(0.7, 0.85, 1.0)
 ## Efekty odpalane przy trafieniu (echo i fortune tylko je wzmacniają).
-const ON_HIT := ["shockwave", "tide", "claws", "thunder", "whirlpool", "roots", "venom", "fear", "bomb", "blast_shot", "earth_arrow"]
+const ON_HIT := ["shockwave", "tide", "claws", "thunder", "whirlpool", "roots", "venom", "fear", "bomb", "blast_shot", "earth_arrow", "rend",
+		"tongue", "storm_arrows", "web_burst"]
 ## Efekty przy trafieniu działające tylko z danym rodzajem broni.
-const WEAPON_ONLY := {"blast_shot": ["bow", "spell"], "earth_arrow": ["bow"]}
+const WEAPON_ONLY := {"blast_shot": ["bow", "spell"], "earth_arrow": ["bow"], "storm_arrows": ["bow"]}
 const BOMB_DAMAGE := 1.3
 const BOMB_RADIUS := 34.0
 const BLAST_DAMAGE := 0.8
@@ -80,6 +97,26 @@ const TREMOR_RADIUS := 64.0
 const FIRE_COLOR := Color(1.0, 0.55, 0.2)
 const EARTH_COLOR := Color(0.55, 0.42, 0.28)
 var _tremor_timer := TREMOR_PERIOD
+const SOUL_COUNT := 10
+const SOUL_RADIUS := 90.0
+const BONE_ARMOR_PERIOD := 8.0
+const UNDYING_COOLDOWN := 90.0
+const REND_TICKS := 6
+const LEAP_RADIUS := 52.0
+const EXECUTE_THRESHOLD := 0.25
+const BILE_EVERY := 5
+const SOUL_COLOR := Color(0.5, 1.0, 0.6)
+var _souls := 0
+var _bone_armor_timer := 0.0
+var _bone_orbit: Node2D
+var _hits := 0
+const WOLF_TEXTURE := preload("res://assets/forest/wolf.png")
+const TONGUE_RANGE := 130.0
+const WEB_RADIUS := 40.0
+const WEB_HOLD := 1.0
+const TIDE_DODGE_RADIUS := 70.0
+const BERSERK_THRESHOLD := 0.4
+var _still_time := 0.0
 const WHIRL_RADIUS := 64.0
 const WHIRL_TIME := 2.2
 const WHIRL_PULL := 70.0
@@ -117,6 +154,8 @@ func _process(delta: float) -> void:
 	for kind: String in _cooldowns:
 		_cooldowns[kind] = maxf(_cooldowns[kind] - delta, 0.0)
 	_process_tremor(delta)
+	_process_bone_armor(delta)
+	_process_rooted_regen(delta)
 	if _bloodlust > 0:
 		_bloodlust_time -= delta
 		if _bloodlust_time <= 0.0:
@@ -180,6 +219,14 @@ func _trigger(kind: String, enemy: Goblin, at: Vector2, away: Vector2, echo := f
 			_explosion(at, BLAST_RADIUS, BLAST_DAMAGE, echo)
 		"earth_arrow":
 			_earth_spike(enemy.global_position, echo)
+		"rend":
+			_rend(enemy)
+		"tongue":
+			_tongue(enemy, at)
+		"storm_arrows":
+			_thunder(enemy, at, echo)
+		"web_burst":
+			_web_burst(at)
 		"claws":
 			_claw(enemy, at, -1.0, echo)
 			get_tree().create_timer(CLAW_GAP).timeout.connect(_claw.bind(enemy, at, 1.0, echo))
@@ -271,6 +318,8 @@ func leech(amount: int) -> void:
 ## Lotka Burzy: unik zostawia ślad piorunów od miejsca startu do końca - rani wrogów na drodze.
 func on_dash(from: Vector2, to: Vector2) -> void:
 	_mine_trail(from, to)
+	_corpse_leap(to)
+	_tidal_dodge(from, to)
 	var power := _player.equipment.effect_power("storm_dash")
 	if power <= 0.0 or from.distance_to(to) < 8.0:
 		return
@@ -338,9 +387,10 @@ func _roots(at: Vector2, echo: bool) -> void:
 ## Żołądź Leszego: gdy gracz oberwie, czasem wokół niego wybuchają ciernie.
 ## Zwraca true, gdy cios został pochłonięty (Pancerz z Łusek Czerwia).
 func on_hurt(amount := 0) -> bool:
-	if _try_burrow(amount):
+	if _try_bone_armor(amount) or _try_undying(amount) or _try_burrow(amount):
 		return true
 	_thorns()
+	_pack_call()
 	return false
 
 
@@ -437,6 +487,22 @@ func on_kill(enemy: Goblin) -> void:
 	if _cooldowns.get("kaboom", 0.0) <= 0.0 and randf() < chance("kaboom"):
 		_cooldowns["kaboom"] = 0.15
 		_explosion(enemy.hurt_center(), KABOOM_RADIUS, KABOOM_DAMAGE, false)
+	if randf() < chance("plunder"):
+		var pickup: Pickup = load(Goblin.PICKUP_PATH).instantiate()
+		pickup.item_id = Loot.drop_at_level(enemy.level)
+		pickup.amount = 1
+		pickup.position = at
+		_player.get_parent().add_child.call_deferred(pickup)
+	if randf() < chance("raise_dead"):
+		var ally := SkeletonAlly.new()
+		ally.player = _player
+		_player.get_parent().add_child(ally)
+		ally.global_position = at
+	if _player.equipment.effect_power("soul_harvest") > 0.0:
+		_souls += 1
+		if _souls >= SOUL_COUNT:
+			_souls = 0
+			_soul_nova(_player.equipment.effect_power("soul_harvest"))
 	if randf() < chance("devour"):
 		_player.heal(_player.stats.max_health() * DEVOUR_HEAL)
 		SkillEffects.spark(_player.get_parent(), _player.body_center(), Color(0.9, 0.4, 0.4), 6)
@@ -458,9 +524,12 @@ func on_kill(enemy: Goblin) -> void:
 
 ## Mnożnik obrażeń z żądzy krwi (Szpon Biesa).
 func damage_multiplier() -> float:
-	if _bloodlust <= 0:
-		return 1.0
-	return 1.0 + _bloodlust * _player.equipment.effect_power("bloodlust")
+	var multiplier := 1.0
+	if _bloodlust > 0:
+		multiplier += _bloodlust * _player.equipment.effect_power("bloodlust")
+	if _player.health < _player.stats.max_health() * BERSERK_THRESHOLD:
+		multiplier += _player.equipment.effect_power("berserk")
+	return multiplier
 
 
 # ---------------------------------------------------------------- legendy bossów (Legends)
@@ -581,3 +650,225 @@ func _process_tremor(delta: float) -> void:
 	Sfx.play_at("tree_rumble", at, -10.0)
 	for other in hit:
 		other.take_damage(_player.roll_damage(power), at, 90.0)
+
+
+# ---------------------------------------------------------------- legendy Leśnego Cmentarza
+## Całun Nekromanty: zebrane dusze wyrywają się falą wokół gracza.
+func _soul_nova(power: float) -> void:
+	var at := _player.global_position
+	var parent := _player.get_parent()
+	SkillEffects.shockwave(parent, at, SOUL_RADIUS, SOUL_COLOR)
+	for i in 12:
+		SkillEffects.spark(parent, at + Vector2.from_angle(TAU * i / 12.0) * SOUL_RADIUS * 0.6 + Vector2(0, -10), SOUL_COLOR, 3)
+	Sfx.play_at("wisp_burst", at, -4.0)
+	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if other.global_position.distance_to(at) <= SOUL_RADIUS + other.hurt_radius:
+			other.take_damage(_player.roll_damage(power), at, 120.0)
+
+
+## Kościana Korona: co 8 s gotowa tarcza z krążących kości - pochłania następny cios do części maks. zdrowia.
+func _process_bone_armor(delta: float) -> void:
+	var power := _player.equipment.effect_power("bone_armor")
+	if power <= 0.0:
+		if _bone_orbit != null:
+			_bone_orbit.queue_free()
+			_bone_orbit = null
+		return
+	if _bone_orbit != null:
+		_bone_orbit.rotation += delta * 3.0
+		return
+	_bone_armor_timer -= delta
+	if _bone_armor_timer > 0.0:
+		return
+	_bone_orbit = Node2D.new()
+	_bone_orbit.position = Vector2(0, -12)
+	_bone_orbit.z_index = 2
+	for i in 4:
+		var bone := Line2D.new()
+		var dir := Vector2.from_angle(TAU * i / 4.0)
+		bone.points = PackedVector2Array([dir * 14.0 - dir.orthogonal() * 3.0, dir * 14.0 + dir.orthogonal() * 3.0])
+		bone.width = 2.0
+		bone.default_color = Skeleton.BONE_COLOR
+		_bone_orbit.add_child(bone)
+	_player.add_child(_bone_orbit)
+
+
+func _try_bone_armor(amount: int) -> bool:
+	if _bone_orbit == null:
+		return false
+	var limit := _player.stats.max_health() * _player.equipment.effect_power("bone_armor")
+	_bone_orbit.queue_free()
+	_bone_orbit = null
+	_bone_armor_timer = BONE_ARMOR_PERIOD
+	SkillEffects.spark(_player.get_parent(), _player.body_center(), Skeleton.BONE_COLOR, 12)
+	Sfx.play_at("rock_break", _player.global_position, -8.0)
+	if amount <= limit:
+		_player._invulnerable_timer = _player.invulnerability_time
+		return true
+	return false
+
+
+## Filakteria Mortana: cios śmiertelny zostawia przy życiu (raz na 90 s).
+func _try_undying(amount: int) -> bool:
+	if _cooldowns.get("undying", 0.0) > 0.0 or amount < _player.health:
+		return false
+	var power := _player.equipment.effect_power("undying")
+	if power <= 0.0:
+		return false
+	_cooldowns["undying"] = UNDYING_COOLDOWN
+	_player.health = maxi(1, roundi(_player.stats.max_health() * power))
+	_player.health_changed.emit(_player.health, _player.stats.max_health())
+	_player._invulnerable_timer = 1.5
+	DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -16), "Filakteria!", SOUL_COLOR, 10)
+	_soul_nova(2.0)
+	return true
+
+
+## Szpony Gnilca: krwawienie - 6 ran po 25% obrażeń broni co pół sekundy.
+func _rend(enemy: Goblin) -> void:
+	if not is_instance_valid(enemy) or enemy.state == Goblin.State.DEAD:
+		return
+	var per_tick := _player.roll_damage(1.5 / REND_TICKS)
+	SkillEffects.spark(_player.get_parent(), enemy.hurt_center(), Color(0.8, 0.1, 0.1), 6)
+	for i in REND_TICKS:
+		get_tree().create_timer(0.5 * (i + 1)).timeout.connect(func() -> void:
+			if is_instance_valid(enemy) and enemy.state != Goblin.State.DEAD:
+				enemy.take_damage(per_tick, enemy.global_position, 0.0)
+				SkillEffects.spark(enemy.get_parent(), enemy.hurt_center(), Color(0.7, 0.05, 0.05), 2))
+
+
+## Nagolenice Trupojada: koniec uniku miażdży ziemię.
+func _corpse_leap(at: Vector2) -> void:
+	var power := _player.equipment.effect_power("corpse_leap")
+	if power <= 0.0 or _cooldowns.get("corpse_leap", 0.0) > 0.0:
+		return
+	_cooldowns["corpse_leap"] = 0.8
+	var layer := get_tree().get_first_node_in_group("floor_layer")
+	SkillEffects.ground_crack(layer if layer != null else _player.get_parent(), at, LEAP_RADIUS * 0.8, 2.0)
+	SkillEffects.shockwave(_player.get_parent(), at, LEAP_RADIUS, Color(0.6, 0.75, 0.45))
+	Sfx.play_at("rock_break", at, -6.0)
+	_player.add_shake(3.0)
+	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if other.global_position.distance_to(at) <= LEAP_RADIUS + other.hurt_radius:
+			other.take_damage(_player.roll_damage(power), at, 150.0)
+
+
+## Rzeźnicki Topór: dodatkowe obrażenia w słabnących wrogów (woła Player.hit_enemy przed ciosem).
+func execute_bonus(enemy: Goblin) -> int:
+	var power := _player.equipment.effect_power("execute")
+	if power <= 0.0 or enemy is Boss or enemy.health > enemy.max_health * EXECUTE_THRESHOLD:
+		return 0
+	return _player.roll_damage(power)
+
+
+## Paszcza Gnilca: co 5. trafienie stożek żółci w stronę trafionego - trujące kałuże ranią wrogów.
+func count_hit(enemy: Goblin) -> void:
+	var power := _player.equipment.effect_power("bile_spit")
+	if power <= 0.0:
+		return
+	_hits += 1
+	if _hits < BILE_EVERY:
+		return
+	_hits = 0
+	var dir := (enemy.global_position - _player.global_position).normalized()
+	if dir == Vector2.ZERO:
+		dir = Vector2.RIGHT
+	var layer := get_tree().get_first_node_in_group("floor_layer")
+	Sfx.play_at("spit", _player.global_position, -4.0)
+	for i in 3:
+		var patch := BurningPatch.new()
+		patch.style = "poison"
+		patch.radius = 24.0
+		patch.life = 3.0
+		patch.damage = _player.roll_damage(power)
+		patch.hurts_enemies = true
+		(layer if layer != null else _player.get_parent()).add_child(patch)
+		patch.global_position = _player.global_position + dir.rotated(randf_range(-0.4, 0.4)) * (30.0 + i * 26.0)
+
+
+# ---------------------------------------------------------------- legendy dawnych bossów
+## Skóra Szarokła: widmowy wilk z watahy alfy.
+func _pack_call() -> void:
+	if _cooldowns.get("pack_call", 0.0) > 0.0 or randf() >= chance("pack_call"):
+		return
+	_cooldowns["pack_call"] = 4.0
+	var wolf := SkeletonAlly.new()
+	wolf.player = _player
+	wolf.texture = WOLF_TEXTURE
+	wolf.vframes = 3
+	wolf.idle_frame = 4
+	wolf.attack_frames = Vector2i(8, 9)
+	wolf.tint = Color(0.65, 0.8, 1.0, 0.85)
+	_player.get_parent().add_child(wolf)
+	wolf.global_position = _player.global_position + Vector2.from_angle(randf() * TAU) * 20.0
+	Sfx.play_at("werewolf_howl", _player.global_position, -10.0)
+
+
+## Płetwy Bulgora: język przyciąga najbliższego innego wroga do trafionego.
+func _tongue(enemy: Goblin, at: Vector2) -> void:
+	var best: Goblin = null
+	var best_distance := TONGUE_RANGE
+	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if other == enemy:
+			continue
+		var d := other.global_position.distance_to(at)
+		if d < best_distance and d > 20.0:
+			best_distance = d
+			best = other
+	if best == null:
+		return
+	var line := Line2D.new()
+	line.points = PackedVector2Array([at, best.hurt_center()])
+	line.width = 4.0
+	line.default_color = Color(0.85, 0.35, 0.45)
+	line.z_index = 4
+	_player.get_parent().add_child(line)
+	var tween := line.create_tween()
+	tween.tween_property(line, "modulate:a", 0.0, 0.25)
+	tween.tween_callback(line.queue_free)
+	Sfx.play_at("tongue_lash", at, -6.0)
+	best.take_damage(_player.roll_damage(0.8), at, 0.0)
+	if not best is Boss and best.state != Goblin.State.DEAD:
+		best._knockback = (at - best.global_position).normalized() * 360.0
+
+
+## Żądło Królowej: sieć oplątuje wrogów wokół trafionego.
+func _web_burst(at: Vector2) -> void:
+	var parent := _player.get_parent()
+	for i in 8:
+		SkillEffects.spark(parent, at + Vector2.from_angle(TAU * i / 8.0) * WEB_RADIUS * 0.6, Color(0.92, 0.92, 1.0), 2)
+	Sfx.play_at("spider_hiss", at, -10.0)
+	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if other.hurt_center().distance_to(at) <= WEB_RADIUS + other.hurt_radius:
+			other.stun(WEB_HOLD)
+
+
+## Płaszcz Topielca: fala za unikiem odpycha wrogów od drogi uniku.
+func _tidal_dodge(from: Vector2, to: Vector2) -> void:
+	var power := _player.equipment.effect_power("tidal_dodge")
+	if power <= 0.0 or from.distance_to(to) < 8.0 or _cooldowns.get("tidal_dodge", 0.0) > 0.0:
+		return
+	_cooldowns["tidal_dodge"] = 0.8
+	var dir := from.direction_to(to)
+	SkillEffects.tide(_player.get_parent(), from, dir.angle(), 0.7, TIDE_DODGE_RADIUS)
+	Sfx.play_at("tide_wave", from, -6.0)
+	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
+		var rel := other.global_position - from
+		if rel.length() <= TIDE_DODGE_RADIUS + other.hurt_radius and absf(rel.angle_to(dir)) < 1.0:
+			other.take_damage(_player.roll_damage(power), from, 280.0)
+
+
+## Kostur Leszego: stojąc w miejscu ponad 0,8 s, gracz odzyskuje zdrowie (zielone iskry z ziemi).
+func _process_rooted_regen(delta: float) -> void:
+	var power := _player.equipment.effect_power("rooted_regen")
+	if power <= 0.0 or _player.is_dead:
+		return
+	if _player.velocity.length() > 5.0:
+		_still_time = 0.0
+		return
+	_still_time += delta
+	if _still_time < 0.8 or _player.health >= _player.stats.max_health():
+		return
+	_player.heal(_player.stats.max_health() * power * delta)
+	if randf() < delta * 3.0:
+		SkillEffects.spark(_player.get_parent(), _player.global_position + Vector2(randf_range(-8, 8), -2), ROOTS_COLOR, 2)
