@@ -72,12 +72,22 @@ tools/screenshot.sh /tmp/menu.png
 tools/screenshot.sh /tmp/wioska.png res://scenes/world.tscn 4 1920x1080
 SCRIPT=tests/test_ui.gd tools/screenshot.sh /tmp/ui.png
 ```
-Obejrzyj zrzut narzędziem Read, żeby sprawdzić zmiany wizualne. Uwagi:
+Obejrzyj zrzut narzędziem Read, żeby sprawdzić zmiany wizualne. `tools/screenshot.sh` za każdym razem importuje zasoby,
+bo bez tego po podmianie grafiki gra rysowałaby starą wersję (np. pocięte klatki przy zmienionym rozmiarze arkusza). Uwagi:
 - Renderer w chmurze to tryb zgodności, a nie Forward+, więc niektóre shadery mogą wyglądać nieco inaczej niż u autora.
 - Komunikaty o wyciekach tekstur i `ERR_CANT_OPEN` przy zamykaniu są niegroźne.
 
 U autora na Windowsie wszystkie testy uruchamia `tests/run_tests.ps1`. Nowy test dopisz też do listy `$tests` w tym pliku.
 Testy zapisują do `user://test_savegame.json`, nigdy do zapisów gracza.
+
+## PixelLab w chmurze
+
+Serwer PixelLab (narzędzia `mcp__PixelLab__*`) działa, ale sieć kontenera blokuje pobieranie plików z `backblaze.pixellab.ai`
+i `api.pixellab.ai`. Obejście: złóż klatki w arkusz poleceniem `pixelart_workbench` `join <adresy klatek> --as sheet --columns 4`.
+Wynik zapisuje się lokalnie w katalogu `tool-results` sesji jako PNG w skali 1:1, z paskiem podpisu u góry i ciemnym tłem bez przezroczystości.
+Utnij pasek, a tło usuń wypełnianiem od krawędzi każdej klatki (tak powstały klatki w `pixellab_src/regions/storm_eagle_obj/animations/powerful_full_wingbeat…`).
+Surowe klatki zapisuj w `pixellab_src/…` i buduj arkusze narzędziami z `tools/`.
+Po uruchomieniu takiego narzędzia przywróć pliki, które zmieniły się tylko kodowaniem PNG (te same piksele).
 
 ## Konwencje
 
@@ -105,7 +115,7 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 
 ### Wietrzne Turnie (`scripts/mountain_zone.gd`)
 
-- [ ] Elektryczny orzeł (Gromoskrzydły, `scripts/storm_eagle.gd`) ma machać skrzydłami. Dziś animacja tego nie pokazuje.
+- [x] Elektryczny orzeł (Gromoskrzydły, `scripts/storm_eagle.gd`) macha skrzydłami: 8 klatek pełnego uderzenia z PixelLab, także w spoczynku nad gniazdem.
 - [ ] Wioska ptakoludzi:
   - dodać ścieżki i drogi,
   - trochę ją powiększyć, tak żeby schodziła z płaskowyżu na teren przed skarpą,

@@ -41,9 +41,9 @@ texture = ExtResource("3_shadow")
 [node name="Sprite" type="Sprite2D" parent="."]
 material = SubResource("ShaderMaterial_flash")
 texture = ExtResource("2_sheet")
-offset = Vector2(0, -38.5)
+offset = Vector2(0, -40)
 hframes = 4
-vframes = 2
+vframes = 3
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0, -2)

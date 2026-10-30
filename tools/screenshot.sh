@@ -28,10 +28,9 @@ else
     SCRIPT=tools/screenshot.gd
 fi
 
-# bez zaimportowanych zasobów (świeży klon, brak .godot/) skrypty nie widzą klas globalnych
-if [[ ! -d "$project/.godot/imported" ]]; then
-    "$godot" --headless --path "$project" --import >/dev/null 2>&1 || true
-fi
+# import zasobów: w świeżym klonie (brak .godot/) skrypty bez niego nie widzą klas globalnych,
+# a po zmianie grafiki gra używałaby starej wersji; gdy nic się nie zmieniło, trwa kilka sekund
+"$godot" --headless --path "$project" --import >/dev/null 2>&1 || true
 
 exec xvfb-run -a -s "-screen 0 3840x2160x24" \
     "$godot" --path "$project" --rendering-driver opengl3 --resolution "$resolution" \
