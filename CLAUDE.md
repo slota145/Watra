@@ -148,9 +148,14 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 
 ### Leśny Cmentarz (`scripts/forest_cemetery.gd`)
 
-- [ ] Więcej grobów i więcej skupisk grobów.
-- [ ] Zdecydowanie więcej szkieletów rozsianych po mapie i przy nekromancie (`scripts/necromancer.gd`).
-  Szkielety mają się grupować w bardzo duże grupy.
+- [x] Kwatery na całym cmentarzu (komórki Woronoja w normie L4 - zaokrąglone prostokąty), między nimi żwirowe alejki,
+  kwatery przycięte przez drogę i część pozostałych to zagajniki; większość kwater otacza kuty płot z kamiennymi
+  słupkami (autotile `assets/cemetery/iron_fence.png` z `tools/cemetery_art.py`), co czwartą - żywopłot z cisów;
+  po dwie furtki na kwaterę; gęste rzędy grobów, znicze (`assets/cemetery/candle.png`) przy co trzecim grobie,
+  pomniki w większych kwaterach; lżejszy mrok, gęsty tylko przy nekromancie i w trupowisku.
+- [x] Wielkie gromady szkieletów w kwaterach (im bliżej nekromanty, tym większe) - około 700 szkieletów (było około 180).
+  Rozpychanie potworów liczone w siatce sąsiadów, a odległe potwory w spoczynku sprawdzają gracza co kilka klatek
+  (`scripts/goblin.gd`).
 
 ## Pomysły i rzeczy do zrobienia
 

@@ -1,10 +1,13 @@
 class_name ForestCemetery
 extends Node
 ## Leśny Cmentarz - najgroźniejsza kraina (poziomy 32-40), na północ od Prastarego Lasu (wejście ścieżką od
-## jego rozstajów). Mroczny, zamglony cmentarz w martwym lesie: kwatery grobów za żelaznymi płotami
-## (nagrobki, krzyże, otwarte groby), kurhany, mauzolea i krypty, kamienne anioły, latarnie z zielonym
-## ogniem. Droga prowadzi od wejścia do zrujnowanej kaplicy (kapliczka odrodzenia). Siedliska:
-## - szkielety na całym cmentarzu - im bliżej mauzoleum nekromanty (północny zachód), tym gęściej; podczas
+## jego rozstajów). Zamglony cmentarz w martwym lesie, podzielony siecią żwirowych alejek na prawie prostokątne
+## kwatery. Większość kwater otacza kuty płot z kamiennymi słupkami i furtkami (autotile z tools/cemetery_art.py),
+## stare kwatery - żywopłot z ciemnych cisów; w środku gęste rzędy grobów (nagrobki, krzyże, kopczyki, otwarte
+## groby) z płonącymi zniczami, w większych pomnik. Między kwaterami zagajniki martwych drzew i świerków na
+## opadłych liściach, kurhany, mauzolea i krypty, latarnie z zielonym ogniem. Droga prowadzi od wejścia do
+## zrujnowanej kaplicy (kapliczka odrodzenia). Siedliska:
+## - wielkie gromady szkieletów w kwaterach - im bliżej mauzoleum nekromanty (północny zachód), tym większe; podczas
 ##   walki przy grobach wypełzają z nich kolejne szkielety,
 ## - na wschodzie trupowisko: dół pełen rozkopanych grobów i trupów, trupojady i zombie,
 ##   a w jego głębi kolosalny ghul Gnilec.
@@ -16,8 +19,9 @@ const MAP_PATH := Color("5a5248")
 const MAP_GRAVE := Color("8a8a90")
 const MAP_FENCE := Color("404048")
 const MAP_CRYPT := Color("6a6470")
-## Mrok nad cmentarzem (chłodny, sinawy), gęstszy przy nekromancie i w trupowisku.
-const SHADE := Color(0.03, 0.03, 0.09, 0.32)
+## Mrok nad cmentarzem (chłodny, sinawy): lekki, gęsty dopiero przy nekromancie i w trupowisku; ciepłe światło zniczy
+## przebija się przez niego.
+const SHADE := Color(0.03, 0.03, 0.09, 0.16)
 const FOG := Color(0.75, 0.8, 0.85, 0.06)
 const GREEN_FIRE := Color(0.45, 1.0, 0.55)
 
@@ -43,9 +47,26 @@ const BARROW := preload("res://assets/cemetery/barrow.png")
 const CHAPEL := preload("res://assets/cemetery/chapel.png")
 const CRYPT := preload("res://assets/cemetery/crypt.png")
 const PINE := preload("res://scenes/props/tree_pine.tscn")
+## Kuty płot jako autotile (tools/cemetery_art.py): 16 kafelków 16x32 wg maski sąsiadów N=1, E=2, S=4, W=8.
+const IRON_FENCE := preload("res://assets/cemetery/iron_fence.png")
+## Znicz (2 klatki migotania) i jego ciepła poświata.
+const CANDLE := preload("res://assets/cemetery/candle.png")
+const CANDLE_GLOW := Color(1.0, 0.45, 0.2, 0.55)
+## Cisy żywopłotów starych kwater: krzaki z lasu w ciemnej, chłodnej zieleni.
+const YEWS: Array[Texture2D] = [preload("res://assets/forest/trees/bush_0.png"),
+		preload("res://assets/forest/trees/bush_1.png"), preload("res://assets/forest/trees/bush_2.png")]
+const YEW_TINT := Color(0.42, 0.55, 0.5)
 const HEADSTONES: Array[Texture2D] = [GRAVESTONE, GRAVESTONE, CELTIC_CROSS, WOOD_CROSS, WOOD_CROSS, GRAVE_MOUND, FALLEN_STONE]
 
-const PLOTS := 22
+## Kwatery: środki na lekko poszarpanej siatce co PARCEL kafelków, granice wg odległości w normie L4 (prawie prostokąty);
+## alejka tam, gdzie dwa najbliższe środki są prawie tak samo daleko (ALLEY). Kwatera mocno przycięta przez drogę albo
+## siedlisko staje się zagajnikiem; zagajnikiem zostaje też część pozostałych, część ma żywopłot z cisów zamiast płotu.
+const PARCEL := Vector2(19.0, 13.0)
+const ALLEY := 1.6
+const PARCEL_KEEP := 0.6
+const YEW_SHARE := 0.25
+const GROVE_SHARE := 0.12
+const CANDLE_SHARE := 0.3
 const BARROWS := 6
 const GHOUL_GROUPS := 9
 ## Groby budzą się w walce: co ile sekund kwatera może wypuścić szkielety i ile naraz może ich chodzić.
@@ -61,8 +82,12 @@ var chapel := Vector2.ZERO
 var necromancer := Vector2.ZERO
 var pit := Vector2.ZERO
 var ghoul_lair := Vector2.ZERO
-## Kwatery: [Rect2i w kafelkach, Array[Vector2] grobów w pikselach, pozostały czas odnowienia]
+## Kwatery: [Rect2i w kafelkach, Array[Vector2] grobów w pikselach, pozostały czas odnowienia, komórki, rodzaj]
 var plots: Array = []
+var _alley_cells := {}
+var _grove_cells := {}
+var _candle_glow: GradientTexture2D
+var _candle_material: CanvasItemMaterial
 var _barrows: Array[Vector2] = []
 var _plot_cells := {}
 var _corners := {}
@@ -99,6 +124,7 @@ func generate(world) -> void:
 	_build_ground(rng)
 	_place_nature(rng)
 	w._build_bounds()
+	_setup_candles()
 	for plot: Array in plots:
 		_build_plot(rng, plot)
 	for barrow in _barrows:
@@ -141,30 +167,62 @@ func _plan_barrows(rng: RandomNumberGenerator) -> void:
 			w._reserve_area(tile, 6.0)
 
 
-## Kwatery grobów: prostokąty z żelaznym płotem, z odstępem na alejki między nimi.
+## Kwatery grobów: komórki Woronoja z odległością w normie L4 (zaokrąglone prostokąty) na lekko poszarpanej siatce, poza
+## drogami, siedliskami i pasem lasu przy granicy; między nimi alejki. Kwatera, z której droga albo siedlisko zabrały
+## sporą część, zostaje zagajnikiem (jej brzeg byłby poszarpany). Rodzaj: "iron" (kuty płot), "yew" (żywopłot z cisów).
 func _plan_plots(rng: RandomNumberGenerator) -> void:
-	var margin: int = w.border_thickness + 4
-	for attempt in 900:
-		if plots.size() >= PLOTS:
-			break
-		var pw := rng.randi_range(8, 16)
-		var ph := rng.randi_range(6, 11)
-		var rect := Rect2i(rng.randi_range(margin, w.map_size.x - margin - pw), rng.randi_range(margin, w.map_size.y - margin - ph), pw, ph)
-		var free := true
-		for cy in range(rect.position.y - 2, rect.end.y + 2):
-			for cx in range(rect.position.x - 2, rect.end.x + 2):
-				var c := Vector2i(cx, cy)
-				if w._reserved.has(c) or w._road_clear.has(c) or _plot_cells.has(c):
-					free = false
-					break
-			if not free:
-				break
-		if not free:
+	var grid := Vector2i((Vector2(w.map_size) / PARCEL).ceil()) + Vector2i(2, 2)
+	var seeds := {}
+	for gy in grid.y:
+		for gx in grid.x:
+			seeds[Vector2i(gx, gy)] = (Vector2(gx - 1, gy - 1) + Vector2(rng.randf_range(0.35, 0.65), rng.randf_range(0.35, 0.65))) * PARCEL
+	var margin: int = w.border_thickness + 2
+	var cells_of := {}
+	var total := {}
+	for y in range(margin, w.map_size.y - margin):
+		for x in range(margin, w.map_size.x - margin):
+			var cell := Vector2i(x, y)
+			var p := Vector2(x, y) + Vector2(0.5, 0.5)
+			var home := Vector2i((p / PARCEL).floor()) + Vector2i.ONE
+			var best := INF
+			var second := INF
+			var owner := home
+			for dy in range(-1, 2):
+				for dx in range(-1, 2):
+					var g := home + Vector2i(dx, dy)
+					var seed_at: Vector2 = seeds[g]
+					var q := Vector2(absf(p.x - seed_at.x) / PARCEL.x, absf(p.y - seed_at.y) / PARCEL.y)
+					var d := pow(pow(q.x, 4.0) + pow(q.y, 4.0), 0.25) * PARCEL.y
+					if d < best:
+						second = best
+						best = d
+						owner = g
+					elif d < second:
+						second = d
+			if second - best < ALLEY:
+				if not (w._reserved.has(cell) or w._road_clear.has(cell)):
+					_alley_cells[cell] = true
+				continue
+			total[owner] = total.get(owner, 0) + 1
+			if w._reserved.has(cell) or w._road_clear.has(cell):
+				continue
+			if not cells_of.has(owner):
+				cells_of[owner] = {}
+			cells_of[owner][cell] = true
+	for owner: Vector2i in cells_of:
+		var cells: Dictionary = cells_of[owner]
+		# z kwatery zostało za mało (droga, siedlisko, brzeg mapy) - zagajnik zamiast grobów
+		if cells.size() < total[owner] * PARCEL_KEEP or cells.size() < 40 or rng.randf() < GROVE_SHARE:
+			_grove_cells.merge(cells)
 			continue
-		plots.append([rect, [], 0.0])
-		for cy in range(rect.position.y - 1, rect.end.y + 1):
-			for cx in range(rect.position.x - 1, rect.end.x + 1):
-				_plot_cells[Vector2i(cx, cy)] = true
+		var lo := Vector2i(9999, 9999)
+		var hi := Vector2i(-1, -1)
+		for cell: Vector2i in cells:
+			lo = lo.min(cell)
+			hi = hi.max(cell)
+		var kind := "yew" if rng.randf() < YEW_SHARE else "iron"
+		plots.append([Rect2i(lo, hi - lo + Vector2i.ONE), [], 0.0, cells, kind])
+		_plot_cells.merge(cells)
 
 
 # ---------------------------------------------------------------- teren
@@ -184,12 +242,14 @@ func _build_ground(rng: RandomNumberGenerator) -> void:
 			var corner := Vector2i(x, y)
 			var kind := "c_grass"
 			var n := patch.get_noise_2d(x, y)
-			if _touches(corner, w._road_cells) >= 2:
+			if _touches(corner, w._road_cells) >= 2 or _touches(corner, _alley_cells) >= 2:
 				kind = "c_path"
 			elif _touches(corner, soil) >= 2 and n > -0.35:
 				kind = "c_soil"
-			elif _touches(corner, _plot_cells) >= 2 and n > 0.1:
+			elif _touches(corner, _plot_cells) >= 2:
 				kind = "c_soil"
+			elif _touches(corner, _grove_cells) >= 2 and n > -0.3:
+				kind = "c_leaves"
 			elif n > 0.38:
 				kind = "c_leaves"
 			_corners[corner] = kind
@@ -200,6 +260,8 @@ func _build_ground(rng: RandomNumberGenerator) -> void:
 			w.ground.set_cell(cell, 0, Vector2i(0, w.FOREST_WANG_ROW))
 			if soil.has(cell):
 				w._map_props[cell] = MAP_SOIL
+			elif _alley_cells.has(cell):
+				w._map_props[cell] = MAP_PATH
 			elif not w._road_cells.has(cell):
 				w._map_props[cell] = MAP_GRASS
 
@@ -220,7 +282,7 @@ func _place_nature(rng: RandomNumberGenerator) -> void:
 		for x in w.map_size.x:
 			var cell := Vector2i(x, y)
 			var edge_dist := mini(mini(x, y), mini(w.map_size.x - 1 - x, w.map_size.y - 1 - y))
-			if w._road_clear.has(cell):
+			if w._road_clear.has(cell) or _alley_cells.has(cell):
 				continue
 			if edge_dist < w.border_thickness + 1:
 				if rng.randf() < 0.85 - edge_dist * 0.12:
@@ -229,7 +291,9 @@ func _place_nature(rng: RandomNumberGenerator) -> void:
 			if w._reserved.has(cell) or _plot_cells.has(cell):
 				continue
 			var r := rng.randf()
-			if groves.get_noise_2d(x, y) > 0.4 and r < 0.14:
+			if _grove_cells.has(cell) and r < 0.16:  # zagajnik między kwaterami
+				_tree(rng, cell, 1)
+			elif groves.get_noise_2d(x, y) > 0.4 and r < 0.14:
 				_tree(rng, cell, 1)
 			elif r < 0.008 and _free(cell, 1):
 				_mark(cell, 1)
@@ -268,53 +332,183 @@ func _mark(cell: Vector2i, radius: int) -> void:
 
 
 # ---------------------------------------------------------------- kwatery
+## Kwatera: obramowanie (kuty płot albo żywopłot z cisów) z furtkami, w środku rzędy grobów co 2 kafelki (co drugi
+## kafelek w rzędzie, sąsiednie rzędy przesunięte), przy części grobów znicze, w większych kwaterach pomnik na środku; wielkie gromady szkieletów.
 func _build_plot(rng: RandomNumberGenerator, plot: Array) -> void:
 	var rect: Rect2i = plot[0]
-	var px := Rect2(Vector2(rect.position * TILE), Vector2(rect.size * TILE))
+	var cells: Dictionary = plot[3]
 	var graves: Array = plot[1]
-	# rzędy grobów
-	for row in range(1, rect.size.y, 3):
-		for col in range(1, rect.size.x - 1, 2):
-			if rng.randf() < 0.18:
-				continue
-			var pos := px.position + Vector2(col + 0.5, row + 1.0) * TILE + Vector2(rng.randf_range(-2, 2), 0)
-			var tex: Texture2D = OPEN_GRAVE if rng.randf() < 0.1 else HEADSTONES[rng.randi() % HEADSTONES.size()]
-			var sprite := _prop(tex, pos, Vector2(14, 5) if tex != OPEN_GRAVE and tex != GRAVE_MOUND else Vector2.ZERO)
-			sprite.flip_h = rng.randf() < 0.5
-			graves.append(pos + Vector2(0, 10))
-			w._map_props[Vector2i(pos / TILE)] = MAP_GRAVE
-	# pomnik w środku większych kwater
-	if rect.size.x >= 12 and rng.randf() < 0.6:
-		_prop([ANGEL, OBELISK, SARCOPHAGUS].pick_random(), px.get_center() + Vector2(0, 8), Vector2(22, 8))
-	# żelazny płot u góry i u dołu (z bramką i wyłomami), latarnie w rogach
-	for side in [-1, 1]:
-		var y := px.position.y - 4.0 if side < 0 else px.end.y + 6.0
-		var step := float(FENCE.get_width()) - 1.0
-		var x := px.position.x + step / 2.0
-		var gate := px.position.x + px.size.x * rng.randf_range(0.3, 0.7)
-		while x < px.end.x - step / 2.0 + 1.0:
-			if absf(x - gate) > step * 0.8:
-				var broken := rng.randf() < 0.18
-				if not (broken and rng.randf() < 0.4):
-					_prop(FENCE_BROKEN if broken else FENCE, Vector2(x, y), Vector2(step, 4))
-					w._map_props[Vector2i(Vector2(x, y) / TILE)] = MAP_FENCE
-			x += step
-	if rng.randf() < 0.5:
-		_lantern(px.position + Vector2(-6, px.size.y + 6))
-	# szkielety: im bliżej nekromanty, tym liczniej
-	var center := px.get_center() / TILE
-	var near := clampf(1.0 - center.distance_to(necromancer) / 110.0, 0.0, 1.0)
-	var groups := 1 + roundi(near * 2.0)
+	# obramowanie: komórki kwatery, których któryś z 8 sąsiadów jest poza nią - linia zawsze styka się bokami
+	var ring := {}
+	for cell: Vector2i in cells:
+		for dy in range(-1, 2):
+			for dx in range(-1, 2):
+				if not cells.has(cell + Vector2i(dx, dy)):
+					ring[cell] = true
+	var border := ring.duplicate()
+	_cut_gates(rng, ring, cells, rect)
+	if plot[4] == "iron":
+		_build_iron_fence(ring)
+	else:
+		_build_yews(rng, ring)
+	# groby w rzędach (z dala od obramowania), znicze przy części z nich
+	var center := Vector2(rect.get_center()) * TILE
+	var monument := rect.size.x >= 12 and rect.size.y >= 9 and rng.randf() < 0.7
+	for cell: Vector2i in cells:
+		var row := cell.y - rect.position.y
+		if row % 2 != 0 or (cell.x - rect.position.x + (row / 2) % 2) % 2 != 1:
+			continue
+		if border.has(cell) or border.has(cell + Vector2i.DOWN) or rng.randf() < 0.08:
+			continue
+		var pos := Vector2(cell * TILE) + Vector2(8, 14) + Vector2(rng.randf_range(-1.5, 1.5), 0)
+		if monument and pos.distance_to(center) < 40.0:
+			continue
+		var tex: Texture2D = OPEN_GRAVE if rng.randf() < 0.08 else HEADSTONES[rng.randi() % HEADSTONES.size()]
+		var sprite := _prop(tex, pos, Vector2(14, 5) if tex != OPEN_GRAVE and tex != GRAVE_MOUND else Vector2.ZERO)
+		sprite.flip_h = rng.randf() < 0.5
+		graves.append(pos + Vector2(0, 10))
+		w._map_props[cell] = MAP_GRAVE
+		if tex != OPEN_GRAVE and rng.randf() < CANDLE_SHARE:
+			_candle(rng, pos + Vector2(rng.randf_range(-7, 7), 5))
+	if monument:
+		_prop([ANGEL, OBELISK, SARCOPHAGUS, ANGEL].pick_random(), center + Vector2(0, 8), Vector2(22, 8))
+		for i in 2:
+			_candle(rng, center + Vector2(-14 + i * 28, 14))
+	# szkielety: wielkie gromady, im bliżej nekromanty, tym liczniejsze
+	var near := clampf(1.0 - Vector2(rect.get_center()).distance_to(necromancer) / 110.0, 0.0, 1.0)
+	# gromada w co drugiej kwaterze daleko od nekromanty, w każdej bliżej niego (druga przy samym mauzoleum)
+	var groups := int(near > 0.45) + (1 if near > 0.2 or rng.randf() < 0.5 else 0)
 	for g in groups:
-		var spot := px.position + Vector2(rng.randf_range(0.2, 0.8) * px.size.x, rng.randf_range(0.2, 0.8) * px.size.y)
-		_skeleton_group(rng, spot, rng.randi_range(2, 3) + roundi(near * 3.0), near)
+		var spot := (Vector2(rect.position) + Vector2(rng.randf_range(0.3, 0.7) * rect.size.x, rng.randf_range(0.3, 0.7) * rect.size.y)) * TILE
+		_skeleton_group(rng, spot, rng.randi_range(3, 6) + roundi(near * 7.0), near)
+
+
+## Czy komórka sąsiaduje (także po skosie) z którąś ze zbioru.
+func _near(cell: Vector2i, cells: Dictionary) -> bool:
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			if cells.has(cell + Vector2i(dx, dy)):
+				return true
+	return false
+
+
+## Furtki: na środku dolnego boku kwatery i na środku jednego z pozostałych (losowo) - wycięcie 3 komórek
+## obramowania (płot kończy się po obu stronach kamiennym słupkiem).
+func _cut_gates(rng: RandomNumberGenerator, ring: Dictionary, cells: Dictionary, rect: Rect2i) -> void:
+	var sides: Array[Vector2i] = [Vector2i.DOWN, [Vector2i.UP, Vector2i.LEFT, Vector2i.RIGHT].pick_random()]
+	var mid := Vector2(rect.get_center())
+	for side in sides:
+		var along := Vector2i(1, 0) if side.y != 0 else Vector2i(0, 1)
+		var best := Vector2i(-1, -1)
+		var best_score := INF
+		for cell: Vector2i in ring:
+			# komórka na tym boku: na zewnątrz kwatery w tę stronę, a wzdłuż boku z obu stron dalej obramowanie
+			if cells.has(cell + side) or not ring.has(cell + along) or not ring.has(cell - along):
+				continue
+			var score := absf(Vector2(cell).x - mid.x) if side.y != 0 else absf(Vector2(cell).y - mid.y)
+			if score < best_score:
+				best_score = score
+				best = cell
+		if best.x < 0:
+			continue
+		for k in range(-1, 2):
+			ring.erase(best + along * k)
+
+
+## Kuty płot z kafelków: każda komórka obramowania dostaje kafelek wg sąsiadów; kolizje w jednym ciele.
+func _build_iron_fence(ring: Dictionary) -> void:
+	var body := StaticBody2D.new()
+	w.add_child(body)
+	for cell: Vector2i in ring:
+		var mask := int(ring.has(cell + Vector2i.UP)) | int(ring.has(cell + Vector2i.RIGHT)) * 2 \
+				| int(ring.has(cell + Vector2i.DOWN)) * 4 | int(ring.has(cell + Vector2i.LEFT)) * 8
+		var sprite := Sprite2D.new()
+		sprite.texture = IRON_FENCE
+		sprite.hframes = 16
+		sprite.frame = mask
+		sprite.centered = false
+		sprite.offset = Vector2(0, -IRON_FENCE.get_height())
+		sprite.position = Vector2(cell.x * TILE, (cell.y + 1) * TILE)
+		w.entities.add_child(sprite)
+		_box(body, Vector2(cell * TILE) + Vector2(8, 8), Vector2(12, 8))
+		w._map_props[cell] = MAP_FENCE
+		w._occupied[cell] = true
+
+
+## Żywopłot z cisów: ciemne krzaki gęsto jeden przy drugim (w komórce i w pół drogi do sąsiada), jak na Polach.
+func _build_yews(rng: RandomNumberGenerator, ring: Dictionary) -> void:
+	var body := StaticBody2D.new()
+	w.add_child(body)
+	for cell: Vector2i in ring:
+		var center := Vector2(cell * TILE) + Vector2(8, 10)
+		var points: Array[Vector2] = [center]
+		for d in [Vector2i.RIGHT, Vector2i.DOWN]:
+			if ring.has(cell + d):
+				points.append(center + Vector2(d * TILE) * 0.5)
+		for point in points:
+			var yew := Sprite2D.new()
+			yew.texture = YEWS[rng.randi() % YEWS.size()]
+			yew.offset = Vector2(0, -13)
+			yew.position = (point + Vector2(rng.randf_range(-2, 2), rng.randf_range(-1, 1))).round()
+			yew.flip_h = rng.randf() < 0.5
+			yew.scale = Vector2.ONE * rng.randf_range(0.9, 1.1)
+			var shade := rng.randf_range(0.85, 1.0)
+			yew.modulate = Color(YEW_TINT.r * shade, YEW_TINT.g * shade, YEW_TINT.b * shade)
+			w.entities.add_child(yew)
+		_box(body, center, Vector2(14, 10))
+		w._map_props[cell] = Color("1f3328")
+		w._occupied[cell] = true
+
+
+func _box(body: StaticBody2D, center: Vector2, box_size: Vector2) -> void:
+	var shape := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = box_size
+	shape.shape = rect
+	shape.position = center
+	body.add_child(shape)
+
+
+## Wspólna poświata zniczy (ciepłe, małe koło nad mrokiem).
+func _setup_candles() -> void:
+	var gradient := Gradient.new()
+	gradient.colors = PackedColorArray([CANDLE_GLOW, Color(CANDLE_GLOW, 0.0)])
+	_candle_glow = GradientTexture2D.new()
+	_candle_glow.gradient = gradient
+	_candle_glow.width = 40
+	_candle_glow.height = 28
+	_candle_glow.fill = GradientTexture2D.FILL_RADIAL
+	_candle_glow.fill_from = Vector2(0.5, 0.5)
+	_candle_glow.fill_to = Vector2(1.0, 0.5)
+	_candle_material = CanvasItemMaterial.new()
+	_candle_material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+
+
+## Znicz z migoczącym płomykiem i poświatą rysowaną ponad mrokiem cmentarza.
+func _candle(rng: RandomNumberGenerator, pos: Vector2) -> void:
+	var candle := Sprite2D.new()
+	candle.texture = CANDLE
+	candle.hframes = 2
+	candle.frame = rng.randi() % 2
+	candle.offset = Vector2(0, -5)
+	candle.position = pos.round()
+	w.entities.add_child(candle)
+	w._flicker(candle)
+	var glow := Sprite2D.new()
+	glow.texture = _candle_glow
+	glow.material = _candle_material
+	glow.position = pos + Vector2(0, -6)
+	glow.z_index = 21
+	glow.scale = Vector2.ONE * rng.randf_range(0.85, 1.15)
+	add_child(glow)
 
 
 func _skeleton_group(rng: RandomNumberGenerator, center: Vector2, n: int, near: float) -> void:
 	for k in n:
 		var roll := rng.randf()
 		var kind := "skeleton_knight" if roll < 0.08 + near * 0.1 else "skeleton_archer" if roll < 0.35 else "skeleton"
-		var pos := center + Vector2(rng.randf_range(-24, 24), rng.randf_range(-18, 18))
+		var spread := 20.0 + n * 3.0
+		var pos := center + Vector2(rng.randf_range(-spread, spread), rng.randf_range(-spread, spread) * 0.75)
 		w._add_goblin_spawn({"type": kind, "position": pos, "sitting": false, "look_at": center})
 
 
@@ -395,8 +589,8 @@ func _build_atmosphere(rng: RandomNumberGenerator) -> void:
 	for y in size.y:
 		for x in size.x:
 			var p := Vector2(x, y)
-			var extra := clampf(1.0 - p.distance_to(necromancer) / 30.0, 0.0, 1.0) * 0.14 \
-					+ clampf(1.0 - p.distance_to(pit) / 24.0, 0.0, 1.0) * 0.04
+			var extra := clampf(1.0 - p.distance_to(necromancer) / 34.0, 0.0, 1.0) * 0.26 \
+					+ clampf(1.0 - p.distance_to(pit) / 26.0, 0.0, 1.0) * 0.14
 			image.set_pixel(x, y, Color(SHADE, SHADE.a + extra))
 	shade.texture = ImageTexture.create_from_image(image)
 	shade.centered = false
