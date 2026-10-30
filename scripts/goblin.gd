@@ -48,7 +48,9 @@ const PICKUP_PATH := "res://scenes/pickup.tscn"
 ## Obszar osady - gobliny nie gonią gracza, który się w nim schronił.
 static var safe_zone := Rect2()
 ## Pozycje potworów z bieżącej klatki (wspólne dla wszystkich, do rozpychania się).
-static var _positions := PackedVector2Array()
+## Pozycje potworów w kubełkach siatki (bok SEPARATION_RADIUS) - zbierane raz na klatkę fizyki tylko przez
+## potwory, które potrzebują rozpychania; każdy sprawdza potem wyłącznie 9 sąsiednich kubełków.
+static var _buckets := {}
 static var _positions_frame := -1
 const SEPARATION_RADIUS := 12.0
 const XP_COLOR := Color(0.7, 0.55, 1.0)
@@ -73,6 +75,10 @@ var _cooldown := 0.0
 var _strike_anim := 0.0
 var _anim_time := 0.0
 var _wander_timer := 0.0
+## Daleko od gracza potwór w spoczynku nie kręci się w miejscu (nikt tego nie widzi) - setki potworów w siedliskach
+## kosztują wtedy tylko sprawdzenie odległości co kilka klatek.
+const DORMANT_DISTANCE := 640.0
+var _dormant_check := 0
 var _wander_target := Vector2.ZERO
 ## Pozostały czas ogłuszenia i gwiazdki nad głową.
 var _stun_time := 0.0
@@ -247,7 +253,14 @@ func _physics_process(delta: float) -> void:
 
 func _process_idle(delta: float) -> void:
 	velocity = Vector2.ZERO
-	if _player_alive() and global_position.distance_to(_player.global_position) < aggro_radius:
+	if _dormant_check > 0:
+		_dormant_check -= 1
+		return
+	var distance := global_position.distance_to(_player.global_position) if _player != null else INF
+	if distance > DORMANT_DISTANCE:
+		_dormant_check = 8
+		return
+	if _player_alive() and distance < aggro_radius:
 		aggro()
 		return
 	if sitting or drilling:
@@ -298,22 +311,28 @@ func _process_return() -> void:
 
 ## Odpychanie od innych goblinów, żeby nie stały jeden na drugim.
 func _separation() -> Vector2:
-	# pozycje wszystkich potworów zbieramy raz na klatkę fizyki - przy setkach
-	# goniących potworów to dużo tańsze niż pobieranie grupy przez każdego z osobna
+	# pozycje wszystkich potworów zbieramy raz na klatkę fizyki - przy setkach goniących potworów to dużo tańsze
+	# niż pobieranie grupy przez każdego z osobna; kubełki siatki ograniczają porównania do najbliższych sąsiadów
 	var frame := Engine.get_physics_frames()
 	if frame != _positions_frame:
 		_positions_frame = frame
-		_positions.clear()
+		_buckets.clear()
 		for other: Node2D in get_tree().get_nodes_in_group("enemies"):
-			_positions.append(other.global_position)
+			var key := Vector2i((other.global_position / SEPARATION_RADIUS).floor())
+			if not _buckets.has(key):
+				_buckets[key] = []
+			(_buckets[key] as Array).append(other.global_position)
 	var push := Vector2.ZERO
 	var here := global_position
-	for pos in _positions:
-		var away := here - pos
-		var dist_sq := away.length_squared()
-		if dist_sq < SEPARATION_RADIUS * SEPARATION_RADIUS and dist_sq > 0.0001:  # 0 = on sam
-			var dist := sqrt(dist_sq)
-			push += away / dist * (1.0 - dist / SEPARATION_RADIUS)
+	var home_key := Vector2i((here / SEPARATION_RADIUS).floor())
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			for pos: Vector2 in _buckets.get(home_key + Vector2i(dx, dy), []):
+				var away := here - pos
+				var dist_sq := away.length_squared()
+				if dist_sq < SEPARATION_RADIUS * SEPARATION_RADIUS and dist_sq > 0.0001:  # 0 = on sam
+					var dist := sqrt(dist_sq)
+					push += away / dist * (1.0 - dist / SEPARATION_RADIUS)
 	return push.limit_length(1.0)
 
 
