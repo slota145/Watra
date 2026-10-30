@@ -1,5 +1,5 @@
 """Grafiki Pól Zbożowych rysowane w Pythonie: pas zboża (bezszwowy w poziomie - rząd zboża w grze to jeden
-Sprite2D z powtarzaną teksturą, kołysany shaderem), kopiec ziemi nad podkopującym się czerwiem i dziura po nim,
+Sprite2D z powtarzaną teksturą, kołysany shaderem), kopczyk ziemi nad podkopującym się czerwiem i kopczyk z wylotem nory (jak po krecie),
 oraz zaorana ziemia (bezszwowa tekstura 64x64 - skośne bruzdy schodzą się na wszystkich krawędziach).
 Wynik: assets/fields/grain.png (3 warianty jeden pod drugim: dojrzałe, jaśniejsze, zielonkawe),
 assets/fields/mound.png, assets/fields/hole.png, assets/fields/ground/soil.png.
@@ -61,41 +61,72 @@ def grain(variant, rng):
     return img
 
 
-def mound():
-    img = Image.new("RGBA", (24, 12))
-    for y in range(12):
-        for x in range(24):
-            dx, dy = (x - 11.5) / 11.5, (y - 8) / 6.5
-            if dx * dx + dy * dy <= 1.0 and y < 12:
-                shade = 0.75 + 0.35 * (1 - (y / 11))
-                n = random.Random(x * 31 + y * 7).random()
-                base = (112, 78, 48) if n > 0.25 else (88, 60, 38)
-                img.putpixel((x, y), tuple(min(255, int(c * shade)) for c in base) + (255,))
-    for x, y in ((6, 6), (15, 5), (10, 3), (18, 8)):
-        img.putpixel((x, y), (140, 132, 120, 255))
-    return img
-
-
-def hole():
-    img = Image.new("RGBA", (28, 14))
-    for y in range(14):
-        for x in range(28):
-            dx, dy = (x - 13.5) / 13.5, (y - 7) / 6.5
-            d = dx * dx + dy * dy
-            if d <= 1.0:
-                if d < 0.45:
-                    img.putpixel((x, y), (30, 20, 14, 255))
-                else:
-                    img.putpixel((x, y), (98, 68, 42, 255) if (x + y) % 3 else (120, 86, 54, 255))
-    return img
-
-
 # zaorana ziemia: paleta z dawnej tekstury PixelLab (grzbiet skiby jasny, bruzda ciemna)
 SOIL = [(42, 26, 16), (62, 39, 22), (82, 51, 28), (114, 72, 38), (144, 95, 51)]
 SOIL_CLOD = (166, 122, 73)
 SOIL_WEED = (123, 116, 47)
 SOIL_SIZE = 64
 FURROW = 16  # okres bruzd wzdłuż u = x + 2y (dzieli 64, więc tekstura się zawija); w pionie co 8 px
+
+
+def molehill(w, h, opening, seed):
+    """Kopczyk świeżej ziemi jak po krecie: kopuła z grudek (jaśniejsza od góry-lewej, ciemniejsza u dołu),
+    poszarpany brzeg z osypanymi grudkami dookoła; `opening` - ciemny otwór na szczycie (wylot nory czerwia)."""
+    rng = random.Random(seed)
+    img = Image.new("RGBA", (w, h))
+    cx, cy = (w - 1) / 2, h * 0.6
+    rx, ry = w / 2 - 2.5, h * 0.6 - 1.5
+    soil = SOIL + [SOIL_CLOD]
+    for y in range(h):
+        for x in range(w):
+            dx, dy = (x - cx) / rx, (y - cy) / ry
+            edge = 1.0 + 0.16 * ((x * 7 + y * 13) % 5 - 2) / 2
+            d = dx * dx + dy * dy
+            if d > edge:
+                continue
+            height = 1.0 - d  # wyżej w środku
+            light = height * 1.3 - dx * 0.45 - dy * 0.5 + rng.uniform(-0.22, 0.22)
+            level = max(1, min(5, int(1.2 + light * 3.4)))
+            if dy > 0.55 and d > 0.55:  # cień u dołu kopuły
+                level = min(level, 1)
+            img.putpixel((x, y), soil[level] + (255,))
+    # ciemny obrys dolnej połowy (kopczyk odcina się od ziemi i trawy)
+    px = img.load()
+    rim = []
+    for y in range(h):
+        for x in range(w):
+            if px[x, y][3] == 0 and y > cy - 1:
+                if any(0 <= x + ex < w and 0 <= y + ey < h and px[x + ex, y + ey][3] for ex, ey in ((0, -1), (1, 0), (-1, 0))):
+                    rim.append((x, y))
+    for x, y in rim:
+        px[x, y] = (30, 19, 12, 255)
+    # grudki osypane wokół kopczyka
+    for i in range(18):
+        a = rng.uniform(0, 6.283)
+        import math
+        r = rng.uniform(1.0, 1.35)
+        x, y = int(cx + math.cos(a) * rx * r), int(cy + math.sin(a) * ry * r)
+        if 0 <= x < w - 1 and 0 <= y < h - 1:
+            img.putpixel((x, y), soil[rng.choice((3, 4, 5))] + (255,))
+            img.putpixel((x, y + 1), soil[1] + (255,))
+    if opening:
+        ox, oy = cx, cy - ry * 0.25
+        for y in range(h):
+            for x in range(w):
+                dx, dy = (x - ox) / 4.2, (y - oy) / 2.2
+                if dx * dx + dy * dy <= 1.0:
+                    img.putpixel((x, y), (24, 15, 10, 255) if dy > -0.5 else SOIL[1] + (255,))
+    return img
+
+
+def mound():
+    """Kopczyk nad czerwiem, który ryje pod ziemią."""
+    return molehill(24, 15, False, 3)
+
+
+def hole():
+    """Kopczyk z wylotem nory - z niego wynurza się czerw."""
+    return molehill(30, 17, True, 7)
 
 
 def soil(rng):

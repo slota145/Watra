@@ -735,10 +735,13 @@ func _build_worm_grounds(rng: RandomNumberGenerator) -> void:
 		var pos := tile * TILE
 		w._add_goblin_spawn({"type": "field_worm", "position": pos, "sitting": false, "look_at": pos})
 		for k in 2:
-			_decor(rng, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(14, 30), [0, 1, 2, 14].pick_random())
+			_molehill(rng, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(14, 30))
 	for i in 40:
 		var tile := worms + Vector2.from_angle(rng.randf() * TAU) * Vector2(38, 25) * sqrt(rng.randf())
-		_decor(rng, tile * TILE, [0, 0, 1, 2, 2, 14, 15].pick_random())
+		if rng.randf() < 0.55:
+			_molehill(rng, tile * TILE)
+		else:
+			_decor(rng, tile * TILE, [0, 2, 2, 14, 15].pick_random())
 	w._map_markers.append({"position": worms * TILE, "color": Color(0.85, 0.6, 0.55), "size": 3.0})
 	# krater Pożeracza: popękana ziemia, gruz i kości wokół
 	var center := worm_lair * TILE
@@ -749,7 +752,7 @@ func _build_worm_grounds(rng: RandomNumberGenerator) -> void:
 		var crack := _floor_decor(rng, center + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(10, 80), 2)
 		crack.scale = Vector2.ONE * rng.randf_range(1.2, 2.0)
 	for i in 6:
-		_decor(rng, center + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(30, 90), [1, 15, 15].pick_random())
+		_decor(rng, center + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(30, 90), [0, 14, 15, 15].pick_random())
 	w._add_goblin_spawn({"type": "giant_worm", "position": center, "sitting": false, "look_at": center, "respawn": w.boss_respawn_time})
 	w._map_markers.append({"position": center, "color": w.MAP_BOSS, "size": 4.0})
 
@@ -792,6 +795,16 @@ func _decor(rng: RandomNumberGenerator, pos: Vector2, frame: int) -> void:
 	else:
 		sprite.offset = Vector2(0, -12)
 		w.entities.add_child(sprite)
+
+
+## Kopczyk świeżej ziemi jak po krecie (tools/fields_art.py) - czasem z wylotem nory czerwia.
+func _molehill(rng: RandomNumberGenerator, pos: Vector2) -> void:
+	var sprite := Sprite2D.new()
+	sprite.texture = HOLE if rng.randf() < 0.35 else MOUND
+	sprite.offset = Vector2(0, -sprite.texture.get_height() / 2.0 + 3.0)
+	sprite.flip_h = rng.randf() < 0.5
+	sprite.position = pos.round()
+	w.entities.add_child(sprite)
 
 
 func _floor_decor(rng: RandomNumberGenerator, pos: Vector2, frame: int) -> Sprite2D:
