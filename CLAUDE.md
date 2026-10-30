@@ -124,8 +124,9 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 - [x] Elektryczny orzeł (Gromoskrzydły, `scripts/storm_eagle.gd`) macha skrzydłami: 8 klatek pełnego uderzenia z PixelLab, także w spoczynku nad gniazdem.
 - [x] Wioska ptakoludzi: wydeptane ścieżki (pętla wokół gniazda, do chat, z ramp), dolna osada u stóp skarpy z ulicą
   między rampami, 9 chat na płaskowyżu i 4 na dole, około 210 ptakoludzi (wcześniej 74).
-- [ ] Wioska satyrów (faunów): powiększyć co najmniej dwukrotnie.
-  Wokół istniejących struktur dodać kilka mniejszych skupisk z budynkami, drogami i ozdobami.
+- [x] Wioska satyrów: większa polana (promień 22 zamiast 17 kafelków, 12 namiotów), wydeptana ścieżka wokół ogniska,
+  3-4 przysiółki dookoła połączone ścieżkami (ognisko, namioty, tłocznia/maj/posąg/bębny, gromady satyrów, osiłek),
+  około 120 satyrów (wcześniej 52).
 
 ### Rozlewiska (`scripts/drowned_grove.gd`, `scripts/hydra_bog.gd`)
 
