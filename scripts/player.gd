@@ -143,8 +143,9 @@ var _held_ids := {}
 ## Ostatnio użyta umiejętność i ile jeszcze trwa okno combo po niej (Skills.COMBOS).
 var _chain_skill := ""
 var _chain_time := 0.0
-## Umiejętności drzewka miecza (Mgnienie, Dymne Wybuchy).
+## Umiejętności drzewek: miecza (Mgnienie, Dymne Wybuchy...) i łuku (Grot Swaroga, Balista...).
 var sword_skills: SwordSkills
+var bow_skills: BowSkills
 var _whirling := false
 ## Ładowanie kuli ognia: postęp 0..1 (-1 = nie ładujemy), kula w dłoniach i jej dźwięki.
 var _fireball_charge := -1.0
@@ -223,6 +224,9 @@ func _ready() -> void:
 	sword_skills = SwordSkills.new(self)
 	sword_skills.name = "SwordSkills"
 	add_child(sword_skills)
+	bow_skills = BowSkills.new(self)
+	bow_skills.name = "BowSkills"
+	add_child(bow_skills)
 	stats.skill_book = skills
 	skills.character_level = stats.level
 	boons.name = "Boons"
@@ -294,7 +298,10 @@ func _press_skill_slot(index: int) -> void:
 				_strike_request = true
 			"skill":
 				_held_ids[id] = true
-				sword_skills.press(id)
+				if Skills.get_data(id)["weapon"] == "bow":
+					bow_skills.press(id)
+				else:
+					sword_skills.press(id)
 
 
 ## Atak i umiejętność aktywna trwają, dopóki trzymany jest któryś slot z nimi.
@@ -328,7 +335,7 @@ func cooldown_of(id: String) -> Vector2:
 		"strike":
 			return Vector2(_strike_cooldown, maxf(_strike_cooldown_total, _strike_cooldown))
 		"skill":
-			return sword_skills.cooldown_of(id)
+			return bow_skills.cooldown_of(id) if Skills.get_data(id)["weapon"] == "bow" else sword_skills.cooldown_of(id)
 	return Vector2.ZERO
 
 
@@ -434,7 +441,8 @@ func _physics_process(delta: float) -> void:
 			_move_velocity = _dash_dir * max_speed
 			legendary.on_dash(_dash_from, global_position)
 	else:
-		var slowdown := WHIRL_MOVE_FACTOR if _whirling or is_charging_fireball() else attack_move_factor if is_attacking() else 1.0
+		var slowdown := WHIRL_MOVE_FACTOR if _whirling or is_charging_fireball() \
+				else attack_move_factor if is_attacking() and not bow_skills.running_fire() else 1.0
 		var target_speed := max_speed * stats.move_speed() * slowdown * (WATER_SLOWDOWN if _in_water else 1.0) * _slow_factor
 		if input != Vector2.ZERO:
 			_move_velocity = _move_velocity.move_toward(input * target_speed, acceleration * delta)
@@ -1136,6 +1144,9 @@ func _make_projectile(weapon: Dictionary, dir: Vector2) -> Projectile:
 	projectile.pierce = config["pierce"]
 	projectile.magic = config["magic"]
 	projectile.texture = config["texture"]
+	if weapon["type"] == "bow":
+		projectile.pierce += roundi(skills.tree_bonus("bow", "arrow_pierce"))
+		projectile.max_range *= 1.0 + skills.tree_bonus("bow", "arrow_range")
 	var kind := stats.kind_multiplier(basic_tags())
 	projectile.damage_min = maxi(1, roundi(stats.damage_min() * kind))
 	projectile.damage_max = maxi(1, roundi(stats.damage_max() * kind))
@@ -1166,8 +1177,12 @@ func _process_skill(delta: float) -> void:
 		"multishot":
 			if not skill_ready() or is_attacking():
 				return
-			if spend_mana(Skills.MULTISHOT_MANA):
-				_cast(id)
+			# Salwa zaraz po Odskoku: darmowa i z większą liczbą strzał
+			var combo := combo_with("multishot")
+			if combo or spend_mana(Skills.MULTISHOT_MANA):
+				if combo:
+					combo_used()
+				_cast(id, 0.0, combo)
 			else:
 				_hint("Za mało many")
 		"fireball":
@@ -1330,7 +1345,8 @@ func add_shake(amount: float) -> void:
 
 
 ## Salwa trzech strzał albo kula ognia (`charge` 0..1 - naładowanie) w stronę kursora.
-func _cast(id: String, charge := 0.0) -> void:
+## Salwa: więcej strzał z węzłów drzewka i Gradu, a w combo po Odskoku - Skills.VAULT_VOLLEY_ARROWS.
+func _cast(id: String, charge := 0.0, combo := false) -> void:
 	var weapon := equipment.weapon()
 	var aim := get_global_mouse_position() - body_center()
 	if aim == Vector2.ZERO:
@@ -1354,10 +1370,14 @@ func _cast(id: String, charge := 0.0) -> void:
 	if id == "multishot":
 		_skill_cooldown_timer = _cooldown(Skills.MULTISHOT_COOLDOWN)
 		_skill_cooldown_total = _skill_cooldown_timer
-		var spread := deg_to_rad(Skills.MULTISHOT_SPREAD_DEGREES)
-		var multiplier := Skills.multishot_damage(level)
-		for i in Skills.MULTISHOT_ARROWS:
-			var angle := lerpf(-spread / 2.0, spread / 2.0, float(i) / (Skills.MULTISHOT_ARROWS - 1))
+		var hail := bow_skills.has_keystone("hail")
+		var count := (Skills.VAULT_VOLLEY_ARROWS if combo else Skills.MULTISHOT_ARROWS) \
+				+ roundi(skills.tree_bonus("bow", "multishot_arrows")) + (BowSkills.HAIL_ARROWS if hail else 0)
+		var spread := deg_to_rad(Skills.MULTISHOT_SPREAD_DEGREES) * sqrt(count / float(Skills.MULTISHOT_ARROWS))
+		var multiplier := Skills.multishot_damage(level) * (1.0 + skills.tree_bonus("bow", "multishot_damage")) \
+				* (BowSkills.HAIL_DAMAGE if hail else 1.0) * (combo_damage() if combo else 1.0)
+		for i in count:
+			var angle := lerpf(-spread / 2.0, spread / 2.0, float(i) / (count - 1))
 			var arrow := _make_projectile(weapon, dir.rotated(angle))
 			arrow.damage_min = roundi(arrow.damage_min * multiplier)
 			arrow.damage_max = roundi(arrow.damage_max * multiplier)
@@ -1654,12 +1674,17 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 		return
 	amount = roundi(amount * legendary.damage_multiplier() * stats.damage_multiplier() * boons.damage_multiplier(enemy))
 	amount += legendary.execute_bonus(enemy)
-	var critical := randf() < stats.crit_chance() or sword_skills.take_forced_crit()
+	var bow := stats.weapon_type() == "bow"
+	if bow:
+		amount = roundi(amount * bow_skills.damage_factor(enemy))
+	var critical := randf() < stats.crit_chance() or sword_skills.take_forced_crit() or (bow and bow_skills.forced_crit(enemy))
 	if critical:
 		amount = roundi(amount * stats.crit_multiplier())
 	DamageNumber.critical = critical
 	enemy.take_damage(amount, from_position, knockback)
 	DamageNumber.critical = false
+	if bow:
+		bow_skills.on_hit(enemy, amount)
 	if not is_dead:
 		if enemy.state == Goblin.State.DEAD:
 			legendary.on_kill(enemy)
@@ -1750,7 +1775,8 @@ func _cast_seeker(level: int) -> void:
 	var arrow := SeekerArrow.new()
 	arrow.position = position + dir * 6.0
 	arrow.velocity = dir * SeekerArrow.SPEED
-	arrow.hits_left = Skills.seeker_hits(level)
+	arrow.hits_left = Skills.seeker_hits(level) + roundi(skills.tree_bonus("bow", "seeker_hits"))
+	arrow.split = roundi(equipment.effect_power("seeker_split"))
 	var kind := stats.kind_multiplier(["attack"])
 	arrow.damage_min = maxi(1, roundi(stats.damage_min() * Skills.SEEKER_DAMAGE * kind))
 	arrow.damage_max = maxi(1, roundi(stats.damage_max() * Skills.SEEKER_DAMAGE * kind))
@@ -1892,6 +1918,7 @@ func _die() -> void:
 	_held_ids.clear()
 	if sword_skills != null:
 		sword_skills.cancel()
+		bow_skills.cancel()
 	_lunge_time = 0.0
 	_combo_window = 0.0
 	_stop_whirl()
@@ -1950,6 +1977,17 @@ func _update_shake(delta: float) -> void:
 
 
 # ---------------------------------------------------------------- ruch i animacja
+## Skok w kierunku `dir` trwający `time` s (Odskok łuku) - jak zryw, ale bez zużycia jego odnowienia.
+func leap(dir: Vector2, time: float) -> void:
+	_cancel_attack()
+	_dash_dir = dir.normalized() if dir != Vector2.ZERO else -_facing_vector()
+	_dash_timer = time
+	_dash_from = global_position
+	_ghost_timer = 0.0
+	_invulnerable_timer = maxf(_invulnerable_timer, time)
+	Sfx.play("dash")
+
+
 func _start_dash(input: Vector2) -> void:
 	_dash_dir = (input if input != Vector2.ZERO else _facing_vector()).normalized()
 	_dash_timer = dash_duration

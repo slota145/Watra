@@ -61,8 +61,10 @@ var equipment: Equipment:
 		equipment = value
 		equipment.changed.connect(changed.emit)
 
-## Chwilowe premie z umiejętności (Zew Peruna, Taniec Ostrzy, chmura Dymu i Cienia) - ustawia SwordSkills.
+## Chwilowe premie z umiejętności (Zew Peruna, Taniec Ostrzy, chmura Dymu i Cienia, Strzelanie w biegu) - suma
+## premii ze źródeł (set_temp: "sword" - SwordSkills, "bow" - BowSkills).
 var temp_bonus := {}
+var _temp_sources := {}
 
 ## Umiejętności gracza - premie z wybranych węzłów drzewka założonej broni (ustawiane przez gracza).
 var skill_book: SkillBook:
@@ -220,6 +222,18 @@ func spent_points() -> int:
 ## Atrybut razem z premią z ekwipunku (np. legendarne pierścienie dają siłę albo zręczność).
 func attribute(id: String) -> int:
 	return attributes[id] + int(_bonus(id))
+
+
+## Ustawia chwilowe premie jednego źródła (zastępują poprzednie premie tego źródła).
+func set_temp(source: String, bonus: Dictionary) -> void:
+	if _temp_sources.get(source, {}) == bonus:
+		return
+	_temp_sources[source] = bonus
+	temp_bonus = {}
+	for entry: Dictionary in _temp_sources.values():
+		for stat: String in entry:
+			temp_bonus[stat] = float(temp_bonus.get(stat, 0.0)) + float(entry[stat])
+	changed.emit()
 
 
 func _bonus(stat: String) -> float:

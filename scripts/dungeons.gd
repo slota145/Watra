@@ -71,7 +71,7 @@ const MODIFIERS := {
 }
 const MODIFIER_ORDER: Array[String] = ["horde", "wealth", "fury", "treasure"]
 ## Legendarne przedmioty ze skarbca strażnika (tylko z lochów) i szansa na jeden z nich (Pełny skarbiec ją podwaja).
-const VAULT_LEGENDS: Array[String] = ["legend_endless_amulet"]
+const VAULT_LEGENDS: Array[String] = ["legend_endless_amulet", "legend_swarog_bow", "legend_engineer_gloves", "legend_tracker_talisman"]
 const VAULT_LEGEND_CHANCE := 0.12
 
 

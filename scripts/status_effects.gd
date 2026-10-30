@@ -48,6 +48,7 @@ static func list(player: Player) -> Array[Dictionary]:
 					String.num(Boons.WATRA_PERKS["health_regen"] * steps, 1).replace(".", ",")]})
 	result.append_array(player.legendary.statuses())
 	result.append_array(player.sword_skills.statuses())
+	result.append_array(player.bow_skills.statuses())
 	return result
 
 

@@ -175,6 +175,13 @@ func _skills_report() -> void:
 		"fala piorunów (5 wrogów)": sk.WAVE_DAMAGE * 5.0 / sk.WAVE_MANA,
 		"mgnienie (2 wrogów na skok)": sk.flicker_damage(lvl) * 2.0 / sk.FLICKER_MANA,
 		"dymne wybuchy (9, po 1 wrogu)": (sk.smoke_damage(lvl, 0) + sk.smoke_damage(lvl, 1) + sk.smoke_damage(lvl, 2)) * 3.0 / sk.SMOKE_MANA,
+		"grot swaroga (napięty, 3 wrogów)": sk.power_damage(lvl) * sk.POWER_FULL_DAMAGE * 3.0 / (sk.POWER_MANA * 2.0),
+		"deszcz strzał (3 wrogów)": sk.rain_damage(lvl) * sk.RAIN_TIME / sk.RAIN_TICK * 3.0 / sk.RAIN_MANA,
+		"odskok (3 strzały)": sk.vault_damage(lvl) * sk.VAULT_ARROWS / sk.VAULT_MANA,
+		"sidła (3 wrogów)": sk.snare_damage(lvl) * 3.0 / sk.SNARE_MANA,
+		"sokół": sk.falcon_damage(lvl) * sk.FALCON_TIME / (sk.FALCON_INTERVAL + 0.3) / sk.FALCON_MANA,
+		"strzała wichru (3 wrogów)": sk.wind_damage(lvl) * 3.0 / sk.WIND_MANA,
+		"balista": sk.ballista_damage(lvl) * sk.BALLISTA_TIME / sk.BALLISTA_INTERVAL / sk.BALLISTA_MANA,
 	}
 	print("Umiejętności (poz. 5) - obrażenia broni na punkt many:")
 	for name in efficiency:

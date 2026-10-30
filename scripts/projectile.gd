@@ -32,6 +32,9 @@ var explosion_max := 0
 ## (obrażenia jednego płomienia; 0 = zwykły wybuch).
 var turret_damage := 0
 
+## Trafienie wroga (bez wybuchu) - np. combo Grotu Swaroga dokłada wtedy wybuch ognia (BowSkills).
+signal enemy_hit(enemy: Goblin)
+
 static var _flash_cache: ImageTexture
 
 var _travelled := 0.0
@@ -82,6 +85,7 @@ func _physics_process(delta: float) -> void:
 				return
 			_hit[enemy] = true
 			_hit_enemy(enemy, randi_range(damage_min, damage_max), global_position - direction * 10.0, knockback)
+			enemy_hit.emit(enemy)
 			if _hit.size() > pierce:
 				_impact()
 				return

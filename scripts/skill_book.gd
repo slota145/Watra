@@ -120,7 +120,7 @@ func take(weapon_type: String, id: String) -> bool:
 
 ## Zapomnienie drzewka (u mędrca): wszystkie węzły wracają jako punkty; kupione poziomy umiejętności zostają.
 func reset_tree(weapon_type: String) -> void:
-	nodes.erase(weapon_type)
+	nodes[weapon_type] = {}
 	changed.emit()
 
 
@@ -146,7 +146,8 @@ func get_save_data() -> Dictionary:
 
 
 ## Starsze zapisy to sam słownik poziomów; umiejętności drzewka kupione wtedy za złoto dostają wybrane węzły
-## (z drogą od startu), żeby nic nie przepadło.
+## (z drogą od startu), żeby nic nie przepadło. Tak samo broń, która dostała drzewko później (łuk), a w zapisie nie
+## ma jeszcze żadnych jej węzłów (po zapomnieniu drzewka zapis ma pustą listę, więc węzły nie wracają).
 func load_save_data(data: Dictionary) -> void:
 	levels.clear()
 	nodes.clear()
@@ -161,14 +162,13 @@ func load_save_data(data: Dictionary) -> void:
 		for id in saved_nodes[weapon_type]:
 			if tree.has(str(id)) and str(id) != "start":
 				nodes[weapon_type][str(id)] = true
-	if not data.has("nodes"):
-		for id: String in levels:
-			var node := SkillTree.node_for_skill(id)
-			if node == "" or levels[id] <= 0:
-				continue
-			var weapon_type: String = Skills.get_data(id)["weapon"]
-			if not nodes.has(weapon_type):
-				nodes[weapon_type] = {}
-			for step in SkillTree.path_to(weapon_type, node):
-				nodes[weapon_type][step] = true
+	for id: String in levels:
+		var node := SkillTree.node_for_skill(id)
+		var weapon_type: String = Skills.get_data(id)["weapon"]
+		if node == "" or levels[id] <= 0 or saved_nodes.has(weapon_type):
+			continue
+		if not nodes.has(weapon_type):
+			nodes[weapon_type] = {}
+		for step in SkillTree.path_to(weapon_type, node):
+			nodes[weapon_type][step] = true
 	changed.emit()
