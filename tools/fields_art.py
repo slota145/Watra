@@ -1,7 +1,8 @@
 """Grafiki Pól Zbożowych rysowane w Pythonie: pas zboża (bezszwowy w poziomie - rząd zboża w grze to jeden
-Sprite2D z powtarzaną teksturą, kołysany shaderem), kopiec ziemi nad podkopującym się czerwiem i dziura po nim.
+Sprite2D z powtarzaną teksturą, kołysany shaderem), kopiec ziemi nad podkopującym się czerwiem i dziura po nim,
+oraz zaorana ziemia (bezszwowa tekstura 64x64 - skośne bruzdy schodzą się na wszystkich krawędziach).
 Wynik: assets/fields/grain.png (3 warianty jeden pod drugim: dojrzałe, jaśniejsze, zielonkawe),
-assets/fields/mound.png, assets/fields/hole.png.
+assets/fields/mound.png, assets/fields/hole.png, assets/fields/ground/soil.png.
 Uruchom: python tools/fields_art.py (albo na końcu generate_art.py)"""
 import os
 import random
@@ -89,6 +90,41 @@ def hole():
     return img
 
 
+# zaorana ziemia: paleta z dawnej tekstury PixelLab (grzbiet skiby jasny, bruzda ciemna)
+SOIL = [(42, 26, 16), (62, 39, 22), (82, 51, 28), (114, 72, 38), (144, 95, 51)]
+SOIL_CLOD = (166, 122, 73)
+SOIL_WEED = (123, 116, 47)
+SOIL_SIZE = 64
+FURROW = 16  # okres bruzd wzdłuż u = x + 2y (dzieli 64, więc tekstura się zawija); w pionie co 8 px
+
+
+def soil(rng):
+    """Skiby wznoszące się w prawo (nachylenie 1:2): w każdej bruździe od góry grzbiet w słońcu, stok, środek,
+    cień i dno bruzdy. Lekkie falowanie (okresowe w x i y), rozrzucony szum, grudy i źdźbła chwastów."""
+    import math
+    img = Image.new("RGB", (SOIL_SIZE, SOIL_SIZE))
+    # profil skiby: indeks palety dla pozycji w okresie (0 = szczyt grzbietu)
+    profile = [4, 3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 0, 0, 1, 3]
+    for y in range(SOIL_SIZE):
+        for x in range(SOIL_SIZE):
+            wobble = math.sin(2 * math.pi * x / SOIL_SIZE * 2) * 1.2 + math.sin(2 * math.pi * y / SOIL_SIZE * 3 + 1.0) * 0.8
+            u = (x + 2 * y + wobble) % FURROW
+            level = profile[int(u)]
+            r = rng.random()
+            if r < 0.14:
+                level = max(0, level - 1)
+            elif r < 0.24:
+                level = min(4, level + 1)
+            img.putpixel((x, y), SOIL[level])
+    # grudy na grzbietach i źdźbła chwastów
+    for i in range(46):
+        x, y = rng.randrange(SOIL_SIZE), rng.randrange(SOIL_SIZE)
+        img.putpixel((x, y), SOIL_CLOD if i % 5 else SOIL_WEED)
+        if i % 5 and rng.random() < 0.5:
+            img.putpixel(((x + 1) % SOIL_SIZE, y), SOIL[3])
+    return img.convert("RGBA")
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     rng = random.Random(11)
@@ -98,7 +134,9 @@ def main():
     sheet.save(os.path.join(OUT, "grain.png"))
     mound().save(os.path.join(OUT, "mound.png"))
     hole().save(os.path.join(OUT, "hole.png"))
-    print("fields: grain, mound, hole")
+    os.makedirs(os.path.join(OUT, "ground"), exist_ok=True)
+    soil(random.Random(5)).save(os.path.join(OUT, "ground", "soil.png"))
+    print("fields: grain, mound, hole, soil")
 
 
 if __name__ == "__main__":

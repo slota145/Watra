@@ -1,6 +1,6 @@
 """Grafiki Pól Zbożowych z PixelLab (pixellab_src/fields/, pobrane przez pixellab_src/fields/fetch.py):
-rekwizyty i budynki z paczek kandydatów, drobiazgi, arkusze koboldów i czerwi, tekstury podłoża (zaorana
-ziemia, ściernisko) i sceny stworzeń. Składanie jak w region_sheets / region_props / region_scenes.
+rekwizyty i budynki z paczek kandydatów, drobiazgi, arkusze koboldów i czerwi, tekstura ścierniska i sceny
+stworzeń (zaorana ziemia - fields_art.py). Składanie jak w region_sheets / region_props / region_scenes.
 Wynik: assets/fields/*.png, scenes/<stworzenie>.tscn.
 Uruchom: python tools/fields_sheets.py (albo na końcu generate_art.py)"""
 import json
@@ -98,7 +98,8 @@ def props():
 
 
 def grounds():
-    for name, (tileset, adjust) in {"soil": ("soil", (0.85, 0.85)), "stubble": ("stubble", (0.85, 0.9))}.items():
+    # zaorana ziemia rysowana jest w fields_art.py (tekstura z PixelLab nie zawijała się w poziomie)
+    for name, (tileset, adjust) in {"stubble": ("stubble", (0.85, 0.9))}.items():
         png = os.path.join(SRC, "wang", tileset + ".png")
         if not os.path.exists(png):
             continue
