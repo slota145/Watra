@@ -4,7 +4,8 @@ extends Node2D
 ## i rozpryskuje się na przeszkodach. Da się jej uniknąć - nie skręca za graczem.
 ## Odmiany (style): "spit" - jad, "javelin" - oszczep ptakoczłeka, "feather" - naelektryzowane
 ## pióro burzowego orła, "water" - kula wody topielicy, "web" - kłębek sieci pająka (spowalnia),
-## "arrow" - strzała goblina łucznika, "note" - zaczarowana nuta satyra grajka (spowalnia).
+## "arrow" - strzała goblina łucznika, "note" - zaczarowana nuta satyra grajka (spowalnia),
+## "stone" - kamień z procy kobolda, "bone" - kościana włócznia nekromanty.
 
 const SPEED := 170.0
 const MAX_RANGE := 260.0
@@ -14,9 +15,9 @@ const COLOR := Color(0.5, 0.9, 0.3)
 var direction := Vector2.RIGHT
 var damage := 12
 var style := "spit"
-const STYLE_SPEED := {"spit": SPEED, "javelin": 230.0, "feather": 200.0, "water": 150.0, "web": 160.0, "arrow": 260.0, "note": 175.0}
+const STYLE_SPEED := {"spit": SPEED, "javelin": 230.0, "feather": 200.0, "water": 150.0, "web": 160.0, "arrow": 260.0, "note": 175.0, "stone": 220.0, "bone": 210.0}
 const STYLE_COLOR := {"spit": COLOR, "javelin": Color(0.75, 0.7, 0.6), "feather": Color(0.55, 0.8, 1.0),
-		"water": Color(0.45, 0.8, 0.95), "web": Color(0.9, 0.9, 0.95), "arrow": Color(0.6, 0.5, 0.35), "note": Color(1.0, 0.8, 0.35)}
+		"water": Color(0.45, 0.8, 0.95), "web": Color(0.9, 0.9, 0.95), "arrow": Color(0.6, 0.5, 0.35), "note": Color(1.0, 0.8, 0.35), "stone": Color(0.6, 0.56, 0.5), "bone": Color(0.6, 1.0, 0.65)}
 ## Po trafieniu: spowolnienie (mnożnik prędkości, 0 = brak) i zatrucie (obrażenia na sekundę).
 var slow := 0.0
 var poison := 0.0
@@ -86,6 +87,15 @@ func _draw() -> void:
 		draw_circle(sway, 2.0, Color(1.0, 0.82, 0.35))
 		draw_line(sway + Vector2(1.8, 0), sway + Vector2(1.8, -7), Color(0.35, 0.2, 0.05), 1.0)
 		draw_line(sway + Vector2(1.8, -7), sway + Vector2(4.5, -4.5), Color(0.35, 0.2, 0.05), 1.0)
+		return
+	if style == "bone":  # kościana włócznia nekromanty z zieloną poświatą
+		draw_line(-direction * 8.0, direction * 6.0, Color(0.3, 0.8, 0.4, 0.5), 4.0)
+		draw_line(-direction * 8.0, direction * 6.0, Color(0.92, 0.9, 0.8), 2.0)
+		draw_circle(direction * 6.0, 1.5, Color(1, 1, 0.95))
+		return
+	if style == "stone":  # kamień z procy kobolda
+		draw_circle(Vector2.ZERO, 2.5, Color(0.25, 0.23, 0.2))
+		draw_circle(Vector2(-0.5, -0.5), 1.8, Color(0.62, 0.58, 0.52))
 		return
 	if style == "web":  # kłębek pajęczyny
 		for k in 6:

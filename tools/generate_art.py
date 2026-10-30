@@ -859,6 +859,10 @@ def main():
     menu_art.main()
     import pixellab_items  # ikony przedmiotów 64 px, broń w ręku, ikony umiejętności i interfejsu z PixelLab (nadpisują)
     pixellab_items.build()
+    import fields_art  # Pola Zbożowe: pasy zboża, kopce i nory czerwi
+    fields_art.main()
+    import fields_sheets  # Pola Zbożowe z PixelLab: rekwizyty, podłoże, koboldy, czerwie i ich sceny (na końcu - zmienia SRC modułów)
+    fields_sheets.main()
     print("Zapisano grafiki do", OUT)
 
 

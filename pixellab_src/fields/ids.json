@@ -1,0 +1,17 @@
+{
+ "kobold": "0af69d1b-74ad-4c67-b49b-260f256b8ac2",
+ "kobold_slinger": "5c812a94-3f4e-4a23-b805-5ea6674c805f",
+ "kobold_bomber": "93aadbc7-b6a7-444c-957c-8b6d5ffe3223",
+ "kobold_bombardier": "f4b34818-681c-4cb3-ba3f-e00caee5682a",
+ "field_worm": "obj:fdb9b753-9ebb-4b22-a9a2-b1ba23909514",
+ "giant_worm": "obj:a22f8a5b-651f-4256-b1cb-360d3612d50c",
+ "_packs": {
+  "props": "0dd1fffb-b9c3-4894-81c4-8719f5d90ea8",
+  "buildings": "fbb0efe1-dc86-4899-b71c-7873a25802ec",
+  "small": "4c4ed51b-7c62-44b5-b4a4-619e61164fef"
+ },
+ "_tilesets": {
+  "soil": "60f90f87-edc7-452e-b0f0-590c1db5411a",
+  "stubble": "926a3506-91f8-4fe8-a9ee-f771d675bae0"
+ }
+}

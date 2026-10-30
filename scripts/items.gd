@@ -38,7 +38,8 @@ const LEGENDARY_COLOR := Color(1.0, 0.62, 0.15)
 ## Wartość zmieniona przez inny założony przedmiot (np. Łzę Bulgora) - zielona w dymku.
 const MODIFIED_COLOR := "#7cf07c"
 ## Efekty, których szanse zwiększa Łza Bulgora ("fortune").
-const CHANCE_EFFECTS := ["shockwave", "tide", "claws", "echo", "thunder", "whirlpool", "roots", "thorns", "venom", "brood", "fear"]
+const CHANCE_EFFECTS := ["shockwave", "tide", "claws", "echo", "thunder", "whirlpool", "roots", "thorns", "venom", "brood", "fear",
+		"bomb", "blast_shot", "earth_arrow", "kaboom", "devour", "burrow"]
 const EFFECT_TEXTS := {
 	"shockwave": "%s szans przy trafieniu: fala uderzeniowa rani trafionego i wszystkich wokół, ogłuszając ich",
 	"echo": "%s szans, że efekt przedmiotu (np. fala uderzeniowa) zadziała dwukrotnie",
@@ -56,6 +57,14 @@ const EFFECT_TEXTS := {
 	"brood": "%s szans przy zabiciu wroga: wybiegają z niego dwa jadowite pajączki i rzucają się na wrogów",
 	"fear": "%s szans przy trafieniu: mroczny ryk rani wrogów wokół i płoszy ich - uciekają w strachu",
 	"bloodlust": "Każde zabójstwo daje +%s obrażeń na 5 s (kumuluje się do 5 razy)",
+	"bomb": "%s szans przy trafieniu: rzucasz w trafionego bombą zapalającą (wybuch i płonąca plama)",
+	"blast_shot": "Łuk, kostur i księga: %s szans, że pocisk wybuchnie przy trafieniu, raniąc wrogów obok",
+	"earth_arrow": "Tylko łuk: %s szans przy trafieniu, że spod wroga wystrzeli kolec ziemi - rani i ogłusza",
+	"kaboom": "%s szans, że pokonany wróg wybuchnie, raniąc wrogów obok",
+	"devour": "%s szans, że pokonany wróg uleczy cię o 3% maksymalnego zdrowia",
+	"mine_trail": "Unik zostawia na drodze trzy bomby - każda rani za %s obrażeń broni",
+	"burrow": "%s szans, że cios, po którym zostałoby ci mniej niż 35% zdrowia, nie trafi - zakopujesz się i wystrzelasz z ziemi, raniąc wszystko wokół (raz na 25 s)",
+	"tremor": "Co 4 s ziemia wokół ciebie drży, raniąc pobliskich wrogów za %s obrażeń broni",
 }
 const SLOT_TYPE_NAMES := {
 	"weapon": "Broń", "helmet": "Hełm", "chest": "Napierśnik", "gloves": "Rękawice", "boots": "Buty",
@@ -212,6 +221,18 @@ const DATA := {
 		"icon": preload("res://assets/items/ancient_bark.png"),
 		"sell_price": 8,
 	},
+	"kobold_fuse": {
+		"name": "Lont kobolda",
+		"description": "Pęk lontów z łuskowatym amuletem. Koboldy noszą je przy pasie jak trofea.",
+		"icon": preload("res://assets/items/kobold_fuse.png"),
+		"sell_price": 6,
+	},
+	"worm_tooth": {
+		"name": "Ząb czerwia",
+		"description": "Zakrzywiony, twardy jak kość ząb czerwia polnego. Rzemieślnicy robią z nich haczyki i grzebienie.",
+		"icon": preload("res://assets/items/worm_tooth.png"),
+		"sell_price": 6,
+	},
 	"spider_silk": {
 		"name": "Pajęczy jedwab",
 		"description": "Lśniący, niezwykle mocny jedwab z leża pająków. Tkacze płacą za niego dobrze.",
@@ -230,6 +251,18 @@ const DATA := {
 		"icon": preload("res://assets/items/beast_fang.png"),
 		"sell_price": 30,
 		"notable": true,
+	},
+	"summon_bombardier": {
+		"name": "Beczułka prochu",
+		"description": "Beczułka z czaszką i tlącym się lontem. Postawiona za barykadą na północy Pól Zbożowych wywabia Bombardiera Kaszlaka.",
+		"icon": preload("res://assets/items/summon_bombardier.png"),
+		"use": {"summon": "bombardier"}, "sell_price": 30, "notable": true,
+	},
+	"summon_giant_worm": {
+		"name": "Przynęta na czerwia",
+		"description": "Gnijące mięso na wielkim haku. Rzucone do krateru na południowym zachodzie Pól Zbożowych przyzywa Pożeracza.",
+		"icon": preload("res://assets/items/summon_giant_worm.png"),
+		"use": {"summon": "giant_worm"}, "sell_price": 30, "notable": true,
 	},
 	"summon_leshy": {
 		"name": "Gałąź Leszego",
@@ -477,6 +510,8 @@ static func get_data(id: String) -> Dictionary:
 		return DATA[id]
 	if ItemBases.DATA.has(id):
 		return ItemBases.DATA[id]
+	if Legends.has(id):
+		return Legends.data(id)
 	return generated.get(id, {})
 
 

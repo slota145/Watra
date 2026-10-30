@@ -82,7 +82,8 @@
 @export var lair_radius := 10
 ## Po ilu sekundach pokonany boss wraca do swojego leża (odpoczynek w karczmie wskrzesza go od razu).
 @export var boss_respawn_time := 300.0
-const BOSS_TYPES := ["chief", "alpha", "frog_chief", "storm_eagle", "wodnik", "leshy", "spider_queen", "bies"]
+const BOSS_TYPES := ["chief", "alpha", "frog_chief", "storm_eagle", "wodnik", "leshy", "spider_queen", "bies",
+		"bombardier", "giant_worm"]
 ## Jak blisko leża trzeba stać, żeby użyć przedmiotu przyzwania.
 const SUMMON_RADIUS := 130.0
 const LAIR_NAMES := {
@@ -94,6 +95,8 @@ const LAIR_NAMES := {
 	"leshy": "w kamiennym kręgu Leszego (Prastary Las, północ)",
 	"spider_queen": "przed wielką pajęczyną w leżu pająków (Prastary Las, północny zachód)",
 	"bies": "w kręgu czaszek w leżu Biesa (Prastary Las, południowy zachód)",
+	"bombardier": "za barykadą prochu na północy Pól Zbożowych",
+	"giant_worm": "w kraterze Pożeracza (Pola Zbożowe, południowy zachód)",
 }
 ## id miejsc bossów, którzy właśnie są przyzywani (krąg jeszcze się ładuje).
 var _summoning := {}
@@ -273,6 +276,14 @@ const ANCIENT_SCENES := {
 	"spider_queen": preload("res://scenes/spider_queen.tscn"),
 	"bies": preload("res://scenes/bies.tscn"),
 }
+const FIELDS_SCENES := {
+	"kobold": preload("res://scenes/kobold.tscn"),
+	"kobold_slinger": preload("res://scenes/kobold_slinger.tscn"),
+	"kobold_bomber": preload("res://scenes/kobold_bomber.tscn"),
+	"field_worm": preload("res://scenes/field_worm.tscn"),
+	"bombardier": preload("res://scenes/kobold_bombardier.tscn"),
+	"giant_worm": preload("res://scenes/giant_worm.tscn"),
+}
 const HUT_TREES: Array[Texture2D] = [preload("res://assets/frogs/hut_tree_0.png"), preload("res://assets/frogs/hut_tree_1.png"),
 		preload("res://assets/frogs/hut_tree_2.png")]
 const FISH_RACK := preload("res://assets/frogs/fish_rack.png")
@@ -306,6 +317,11 @@ const SWAMP_GROUND := {
 	"dark": preload("res://assets/forest/ground/dark.png"), "flowers": preload("res://assets/forest/ground/flowers.png"),
 	"w_deep": preload("res://assets/swamp/ground/water.png"), "w_shallow": preload("res://assets/swamp/ground/shallow.png"),
 	"w_mud": preload("res://assets/swamp/ground/mud.png"),
+}
+const FIELDS_GROUND := {
+	"grass": preload("res://assets/forest/ground/grass.png"), "road": preload("res://assets/forest/ground/road.png"),
+	"dark": preload("res://assets/forest/ground/dark.png"), "flowers": preload("res://assets/forest/ground/flowers.png"),
+	"f_soil": preload("res://assets/fields/ground/soil.png"), "f_stubble": preload("res://assets/fields/ground/stubble.png"),
 }
 const ANCIENT_GROUND := {
 	"soil": preload("res://assets/ancient/ground/soil.png"), "moss": preload("res://assets/ancient/ground/moss.png"),
@@ -444,6 +460,10 @@ func _ready() -> void:
 		var ancient := AncientForest.new()
 		add_child(ancient)
 		ancient.generate(self)
+	elif zone == "fields":
+		var fields := GrainFields.new()
+		add_child(fields)
+		fields.generate(self)
 	else:
 		_generate_forest()
 	if zone == "forest":
@@ -452,6 +472,8 @@ func _ready() -> void:
 		_soft_textures = SWAMP_GROUND
 	elif zone == "ancient":
 		_soft_textures = ANCIENT_GROUND
+	elif zone == "fields":
+		_soft_textures = FIELDS_GROUND
 	_soft_ground = SoftGround.attach(ground, _soft_corners, _soft_low_corners, _soft_levels, _soft_textures)
 	# wysokie rekwizyty znikają, gdy gracz wejdzie za nie
 	var occlusion := Occlusion.new()
@@ -539,6 +561,9 @@ func _generate_forest() -> void:
 	var trail_x := map_size.x - ANCIENT_EXIT_INSET
 	_add_exit(Rect2(trail_x - 4.5, 0, 9, 3.5), "ancient", "from:forest", Vector2(trail_x + 3.0, 5.0))
 	_arrivals["from:ancient"] = Vector2(trail_x, 8.0) * TILE
+	# przejście do Pól Zbożowych na końcu drogi w lewym dolnym rogu
+	_add_exit(Rect2(0, map_size.y - 9, 3.5, 9), "fields", "from:forest", _road_point_from_edge(false, 5.0) / TILE + Vector2(1.5, -2.0))
+	_arrivals["from:fields"] = _road_point_from_edge(false, 9.0)
 
 
 # ---------------------------------------------------------------- zapis gry
@@ -998,7 +1023,7 @@ func _spawn_goblin(spawn: Dictionary) -> Goblin:
 	var kind: String = spawn.get("type", "goblin")
 	var is_wolf := kind == "wolf" or kind == "warg"
 	var scene: PackedScene = ANIMAL_SCENES[kind] if ANIMAL_SCENES.has(kind) \
-			else ANCIENT_SCENES[kind] if ANCIENT_SCENES.has(kind) else {"goblin": GOBLIN, "wolf": WOLF, "chief": GOBLIN_CHIEF, "alpha": ALPHA_WOLF,
+			else ANCIENT_SCENES[kind] if ANCIENT_SCENES.has(kind) else FIELDS_SCENES[kind] if FIELDS_SCENES.has(kind) else {"goblin": GOBLIN, "wolf": WOLF, "chief": GOBLIN_CHIEF, "alpha": ALPHA_WOLF,
 			"archer": GOBLIN_ARCHER, "brute": GOBLIN_BRUTE, "warg": WARG,
 			"frogman": FROGMAN, "frog_spitter": FROG_SPITTER, "frog_chief": FROG_CHIEF,
 			"birdman": BIRDMAN, "birdman_thrower": BIRDMAN_THROWER, "birdman_shaman": BIRDMAN_SHAMAN,
@@ -1038,7 +1063,7 @@ func _process_music(delta: float) -> void:
 	if _music_check > 0.0:
 		return
 	_music_check = 0.5
-	var track: String = {"forest": "forest", "swamp": "swamp", "mountains": "mountains", "ancient": "ancient"}.get(zone, "forest")
+	var track: String = {"forest": "forest", "swamp": "swamp", "mountains": "mountains", "ancient": "ancient", "fields": "fields"}.get(zone, "forest")
 	if zone == "forest" and _settlement.is_inside_palisade(Vector2i((player.global_position / TILE).floor())):
 		track = "ostoja"
 	for boss in get_tree().get_nodes_in_group("bosses"):

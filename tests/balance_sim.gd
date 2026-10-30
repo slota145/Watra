@@ -12,8 +12,10 @@ const ENEMIES := {
 	"swamp": {"normal": ["frogman", 100, 17, 55, 7.0], "strong": ["drowner", 180, 22, 80, 8.0]},
 	"mountains": {"normal": ["birdman", 230, 26, 120, 12.0], "strong": ["satyr_brute", 750, 60, 300, 30.0]},
 	"ancient": {"normal": ["spider", 120, 18, 85, 9.0], "strong": ["treant", 260, 28, 110, 12.0]},
+	"fields": {"normal": ["kobold", 70, 13, 14, 6.5], "strong": ["field_worm", 130, 14, 22, 7.0]},
 }
-const STAGES := [1, 3, 5, 7, 9, 12, 14, 16, 18, 21, 24, 26, 29, 32]
+## Etap: poziom (kraina wg poziomu) albo [poziom, kraina] - Pola Zbożowe to boczna droga obok rozlewisk.
+const STAGES := [1, 3, 5, 7, [8, "fields"], 9, [11, "fields"], 12, 14, [14, "fields"], 16, 18, 21, 24, 26, 29, 32]
 ## Docelowe widełki: ciosy na zwykłego, ciosy na silnego, ciosy zwykłego potwora do śmierci gracza, zabójstwa na poziom.
 const TARGET_NORMAL := Vector2(2.5, 6.0)
 const TARGET_STRONG := Vector2(6.0, 18.0)
@@ -89,8 +91,9 @@ func _run() -> void:
 		quality_share[q] = quality_share.get(q, 0.0) + 1.0 / 4000.0
 	var weapon_stones := 0.0
 	var last_level := 0
-	for L: int in STAGES:
-		var zone := _zone(L)
+	for stage in STAGES:
+		var L: int = stage if stage is int else stage[0]
+		var zone: String = _zone(L) if stage is int else stage[1]
 		var player_level := L + 1
 		# kamienie zebrane od ostatniego etapu: zabójstwa na każdy poziom postaci po drodze
 		var normal: Array = ENEMIES[zone]["normal"]

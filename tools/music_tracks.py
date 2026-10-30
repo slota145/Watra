@@ -99,6 +99,19 @@ TRACKS = {
                                 _chord("G#", "G#", "B", "D#"), _chord("C#", "C#", "E", "G#"), _chord("E", "E", "G#", "B"),
                                 _chord("A", "A", "C#", "E"), _chord("G#", "G#", "B#", "D#")],
                 "pad": 0.15, "harp": 0.1, "harp_sparse": True, "bells": 0.09, "drone": ("C#", 0.13), "bass": 0.2},
+    # Pola Zbożowe: G-dur miksolidyjski, sielsko ale pusto - żwawy bęben, harfa i flet jak przy żniwach
+    "fields": {"bpm": 100, "seed": 131, "scale": ["G", "A", "B", "C", "D", "E", "F"],
+               "progression": [_chord("G", "G", "B", "D"), _chord("F", "F", "A", "C"), _chord("C", "C", "E", "G"),
+                               _chord("G", "G", "B", "D"), _chord("E", "E", "G", "B"), _chord("C", "C", "E", "G"),
+                               _chord("D", "D", "F#", "A"), _chord("G", "G", "B", "D")],
+               "pad": 0.11, "harp": 0.2, "flute": 0.14, "flute_octave": 5, "drums": "travel", "bass": 0.26},
+    # Leśny Cmentarz: f-moll, bardzo wolno - burdon, rzadkie dzwony, niski flet, dużo pogłosu
+    "cemetery": {"bpm": 50, "seed": 149, "scale": ["F", "G", "Ab", "Bb", "C", "Db", "Eb"], "reverb": 0.48,
+                 "progression": [_chord("F", "F", "Ab", "C"), _chord("Db", "Db", "F", "Ab"), _chord("Bb", "Bb", "Db", "F"),
+                                 _chord("C", "C", "E", "G"), _chord("F", "F", "Ab", "C"), _chord("Eb", "Eb", "G", "Bb"),
+                                 _chord("Db", "Db", "F", "Ab"), _chord("C", "C", "E", "G")],
+                 "pad": 0.16, "harp": 0.08, "harp_sparse": True, "flute": 0.08, "flute_octave": 3, "bells": 0.07,
+                 "drone": ("F", 0.14), "drums": "slow", "bass": 0.2},
     # walka z bossem: d-moll, szybko - bębny, ostinato basu, ostre smyczki
     "boss": {"bpm": 128, "seed": 97, "scale": ["D", "E", "F", "G", "A", "Bb", "C"], "reverb": 0.2,
              "progression": [_chord("D", "D", "F", "A"), _chord("D", "D", "F", "A"), _chord("Bb", "Bb", "D", "F"),

@@ -16,6 +16,16 @@ extends Node
 ## - brood (Jedwabny Kokon): z zabitego wroga wybiegają jadowite pajączki i rzucają się na wrogów (on_kill),
 ## - fear (Róg Biesa): mroczny ryk - rani i płoszy wrogów wokół trafionego (uciekają w strachu),
 ## - bloodlust (Szpon Biesa): każde zabójstwo na chwilę zwiększa obrażenia, do 5 razy (on_kill).
+## Legendy bossów na inne miejsca (Legends):
+## - bomb (Rękawice Podpalacza): rzut bombą zapalającą w trafionego (wybuch i płonąca plama),
+## - blast_shot (Kostur Bombardiera): pocisk łuku / kostura / księgi wybucha przy trafieniu,
+## - earth_arrow (Łuk z Żuchwy): spod trafionego strzałą wroga wystrzela kolec ziemi - rani i ogłusza,
+## - kaboom (Naszyjnik z Lontów): pokonany wróg wybucha, raniąc sąsiadów (on_kill),
+## - devour (Szczęka Pożeracza): pokonany wróg leczy o 3% maks. zdrowia (on_kill),
+## - mine_trail (Buty Sapera): unik zostawia bomby na drodze (on_dash),
+## - burrow (Pancerz z Łusek Czerwia): cios, po którym zostałoby mniej niż 35% zdrowia, może zostać
+##   pochłonięty - zakopujesz się na chwilę (nietykalny) i wystrzelasz z ziemi, raniąc wszystko wokół (on_hurt),
+## - tremor (Serce Głębin): co kilka sekund wokół gracza drży ziemia, raniąc pobliskich wrogów (bierne).
 ## (Kieł Gruzłoga - "might" - działa biernie na obrażenia, w CharacterStats.)
 ## Obrażenia z efektów nie wywołują kolejnych efektów, a każdy efekt ma krótki czas odnowienia,
 ## żeby szybkie ataki (salwa, łańcuch) nie zamieniały ekranu w ciągłą falę.
@@ -45,7 +55,31 @@ const DASH_TRAIL_WIDTH := 20.0
 
 const ECHO_COLOR := Color(0.7, 0.85, 1.0)
 ## Efekty odpalane przy trafieniu (echo i fortune tylko je wzmacniają).
-const ON_HIT := ["shockwave", "tide", "claws", "thunder", "whirlpool", "roots", "venom", "fear"]
+const ON_HIT := ["shockwave", "tide", "claws", "thunder", "whirlpool", "roots", "venom", "fear", "bomb", "blast_shot", "earth_arrow"]
+## Efekty przy trafieniu działające tylko z danym rodzajem broni.
+const WEAPON_ONLY := {"blast_shot": ["bow", "spell"], "earth_arrow": ["bow"]}
+const BOMB_DAMAGE := 1.3
+const BOMB_RADIUS := 34.0
+const BLAST_DAMAGE := 0.8
+const BLAST_RADIUS := 30.0
+const SPIKE_DAMAGE := 1.4
+const SPIKE_RADIUS := 22.0
+const SPIKE_STUN := 0.8
+const KABOOM_DAMAGE := 1.0
+const KABOOM_RADIUS := 40.0
+const DEVOUR_HEAL := 0.03
+const MINE_DAMAGE := 1.0
+const MINE_COOLDOWN := 1.2
+const BURROW_THRESHOLD := 0.35
+const BURROW_COOLDOWN := 25.0
+const BURROW_TIME := 1.2
+const BURROW_DAMAGE := 2.0
+const BURROW_RADIUS := 70.0
+const TREMOR_PERIOD := 4.0
+const TREMOR_RADIUS := 64.0
+const FIRE_COLOR := Color(1.0, 0.55, 0.2)
+const EARTH_COLOR := Color(0.55, 0.42, 0.28)
+var _tremor_timer := TREMOR_PERIOD
 const WHIRL_RADIUS := 64.0
 const WHIRL_TIME := 2.2
 const WHIRL_PULL := 70.0
@@ -82,6 +116,7 @@ func _init(player: Player) -> void:
 func _process(delta: float) -> void:
 	for kind: String in _cooldowns:
 		_cooldowns[kind] = maxf(_cooldowns[kind] - delta, 0.0)
+	_process_tremor(delta)
 	if _bloodlust > 0:
 		_bloodlust_time -= delta
 		if _bloodlust_time <= 0.0:
@@ -98,6 +133,8 @@ func chance(kind: String) -> float:
 func on_hit(enemy: Goblin) -> void:
 	for kind: String in ON_HIT:
 		if _cooldowns.get(kind, 0.0) > 0.0:
+			continue
+		if WEAPON_ONLY.has(kind) and not _player.stats.weapon_type() in WEAPON_ONLY[kind]:
 			continue
 		var p := chance(kind)
 		if p <= 0.0 or randf() >= p:
@@ -137,6 +174,12 @@ func _trigger(kind: String, enemy: Goblin, at: Vector2, away: Vector2, echo := f
 			_venom_burst(enemy, at)
 		"fear":
 			_fear(at, echo)
+		"bomb":
+			_throw_bomb(enemy.global_position)
+		"blast_shot":
+			_explosion(at, BLAST_RADIUS, BLAST_DAMAGE, echo)
+		"earth_arrow":
+			_earth_spike(enemy.global_position, echo)
 		"claws":
 			_claw(enemy, at, -1.0, echo)
 			get_tree().create_timer(CLAW_GAP).timeout.connect(_claw.bind(enemy, at, 1.0, echo))
@@ -227,6 +270,7 @@ func leech(amount: int) -> void:
 
 ## Lotka Burzy: unik zostawia ślad piorunów od miejsca startu do końca - rani wrogów na drodze.
 func on_dash(from: Vector2, to: Vector2) -> void:
+	_mine_trail(from, to)
 	var power := _player.equipment.effect_power("storm_dash")
 	if power <= 0.0 or from.distance_to(to) < 8.0:
 		return
@@ -292,7 +336,15 @@ func _roots(at: Vector2, echo: bool) -> void:
 
 
 ## Żołądź Leszego: gdy gracz oberwie, czasem wokół niego wybuchają ciernie.
-func on_hurt() -> void:
+## Zwraca true, gdy cios został pochłonięty (Pancerz z Łusek Czerwia).
+func on_hurt(amount := 0) -> bool:
+	if _try_burrow(amount):
+		return true
+	_thorns()
+	return false
+
+
+func _thorns() -> void:
 	if _cooldowns.get("thorns", 0.0) > 0.0 or randf() >= chance("thorns"):
 		return
 	_cooldowns["thorns"] = COOLDOWN
@@ -382,6 +434,12 @@ func _fear(at: Vector2, echo: bool) -> void:
 ## Zabójstwo wroga: Jedwabny Kokon wypuszcza pajączki, Szpon Biesa podsyca żądzę krwi.
 func on_kill(enemy: Goblin) -> void:
 	var at := enemy.global_position
+	if _cooldowns.get("kaboom", 0.0) <= 0.0 and randf() < chance("kaboom"):
+		_cooldowns["kaboom"] = 0.15
+		_explosion(enemy.hurt_center(), KABOOM_RADIUS, KABOOM_DAMAGE, false)
+	if randf() < chance("devour"):
+		_player.heal(_player.stats.max_health() * DEVOUR_HEAL)
+		SkillEffects.spark(_player.get_parent(), _player.body_center(), Color(0.9, 0.4, 0.4), 6)
 	if _cooldowns.get("brood", 0.0) <= 0.0 and randf() < chance("brood"):
 		_cooldowns["brood"] = COOLDOWN
 		for i in BROOD_COUNT:
@@ -403,3 +461,123 @@ func damage_multiplier() -> float:
 	if _bloodlust <= 0:
 		return 1.0
 	return 1.0 + _bloodlust * _player.equipment.effect_power("bloodlust")
+
+
+# ---------------------------------------------------------------- legendy bossów (Legends)
+## Rękawice Podpalacza: bomba zapalająca leci łukiem w trafionego.
+func _throw_bomb(target: Vector2) -> void:
+	var bomb := KoboldBomb.new()
+	bomb.position = _player.body_center()
+	bomb.target = target
+	bomb.damage = _player.roll_damage(BOMB_DAMAGE)
+	bomb.radius = BOMB_RADIUS
+	bomb.flight = 0.45
+	bomb.height = 30.0
+	bomb.style = "fire"
+	bomb.hurts_enemies = true
+	_player.get_parent().add_child(bomb)
+
+
+## Wybuch raniący wrogów w promieniu (Kostur Bombardiera, Naszyjnik z Lontów).
+func _explosion(at: Vector2, radius: float, damage: float, echo: bool) -> void:
+	var parent := _player.get_parent()
+	SkillEffects.shockwave(parent, at, radius, ECHO_COLOR if echo else FIRE_COLOR)
+	SkillEffects.spark(parent, at, FIRE_COLOR, 10)
+	Sfx.play_at("explosion", at, -10.0)
+	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if other.hurt_center().distance_to(at) <= radius + other.hurt_radius:
+			other.take_damage(_player.roll_damage(damage), at, 140.0)
+
+
+## Łuk z Żuchwy: kolec ziemi spod trafionego.
+func _earth_spike(at: Vector2, echo: bool) -> void:
+	var layer := get_tree().get_first_node_in_group("floor_layer")
+	SkillEffects.ground_crack(layer if layer != null else _player.get_parent(), at, SPIKE_RADIUS, 1.5)
+	SkillEffects.spark(_player.get_parent(), at + Vector2(0, -8), ECHO_COLOR if echo else EARTH_COLOR, 12)
+	Sfx.play_at("rock_break", at, -8.0)
+	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if other.global_position.distance_to(at) <= SPIKE_RADIUS + other.hurt_radius:
+			other.take_damage(_player.roll_damage(SPIKE_DAMAGE), at, 0.0)
+			if other.state != Goblin.State.DEAD:
+				other.stun(SPIKE_STUN)
+
+
+## Buty Sapera: trzy bomby wzdłuż drogi uniku, wybuchają chwilę później.
+func _mine_trail(from: Vector2, to: Vector2) -> void:
+	var power := _player.equipment.effect_power("mine_trail")
+	if power <= 0.0 or from.distance_to(to) < 8.0 or _cooldowns.get("mine_trail", 0.0) > 0.0:
+		return
+	_cooldowns["mine_trail"] = MINE_COOLDOWN
+	for i in 3:
+		var spot := from.lerp(to, i / 2.0)
+		var bomb := KoboldBomb.new()
+		bomb.position = spot
+		bomb.target = spot
+		bomb.height = 0.0
+		bomb.flight = 0.05
+		bomb.fuse = 0.6 + i * 0.1
+		bomb.damage = _player.roll_damage(MINE_DAMAGE * power)
+		bomb.radius = 30.0
+		bomb.hurts_enemies = true
+		_player.get_parent().add_child(bomb)
+
+
+## Pancerz z Łusek Czerwia: cios, który zostawiłby mało zdrowia, zostaje pochłonięty - gracz zapada się
+## pod ziemię, na chwilę jest nietykalny i wystrzela z niej, raniąc wszystko wokół.
+func _try_burrow(amount: int) -> bool:
+	if _cooldowns.get("burrow", 0.0) > 0.0 or amount <= 0:
+		return false
+	if _player.health - amount >= _player.stats.max_health() * BURROW_THRESHOLD or randf() >= chance("burrow"):
+		return false
+	_cooldowns["burrow"] = BURROW_COOLDOWN
+	_player._invulnerable_timer = BURROW_TIME + 0.3
+	var at := _player.global_position
+	var parent := _player.get_parent()
+	SkillEffects.spark(parent, at, EARTH_COLOR, 16)
+	Sfx.play_at("mine", at)
+	DamageNumber.spawn_text(parent, _player.body_center() + Vector2(0, -16), "Zakopanie!", EARTH_COLOR, 9)
+	var tween := _player.create_tween()
+	tween.tween_property(_player, "modulate:a", 0.25, 0.15)
+	tween.tween_interval(BURROW_TIME)
+	tween.tween_property(_player, "modulate:a", 1.0, 0.1)
+	tween.tween_callback(_erupt_from_burrow)
+	return true
+
+
+func _erupt_from_burrow() -> void:
+	if not is_instance_valid(_player) or _player.is_dead:
+		return
+	var at := _player.global_position
+	var parent := _player.get_parent()
+	var layer := get_tree().get_first_node_in_group("floor_layer")
+	SkillEffects.ground_crack(layer if layer != null else parent, at, BURROW_RADIUS * 0.7, 3.0)
+	SkillEffects.shockwave(parent, at, BURROW_RADIUS, EARTH_COLOR)
+	Sfx.play_at("rock_break", at)
+	_player.add_shake(5.0)
+	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if other.global_position.distance_to(at) <= BURROW_RADIUS + other.hurt_radius:
+			other.take_damage(_player.roll_damage(BURROW_DAMAGE), at, 220.0)
+
+
+## Serce Głębin: co kilka sekund drży ziemia wokół gracza (tylko gdy w pobliżu są wrogowie).
+func _process_tremor(delta: float) -> void:
+	if _player == null or _player.is_dead:
+		return
+	var power := _player.equipment.effect_power("tremor")
+	if power <= 0.0:
+		return
+	_tremor_timer -= delta
+	if _tremor_timer > 0.0:
+		return
+	_tremor_timer = TREMOR_PERIOD
+	var at := _player.global_position
+	var hit: Array[Goblin] = []
+	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if other.global_position.distance_to(at) <= TREMOR_RADIUS + other.hurt_radius:
+			hit.append(other)
+	if hit.is_empty():
+		return
+	SkillEffects.shockwave(_player.get_parent(), at, TREMOR_RADIUS, EARTH_COLOR)
+	Sfx.play_at("tree_rumble", at, -10.0)
+	for other in hit:
+		other.take_damage(_player.roll_damage(power), at, 90.0)

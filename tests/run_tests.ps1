@@ -21,13 +21,13 @@ New-Item -ItemType Directory -Force $out | Out-Null
 # [plik, czy potrzebuje okna]
 $tests = @(
     @("test_loot.gd", $false), @("test_stats.gd", $false), @("test_inv.gd", $false), @("test_drops.gd", $false),
-    @("test_save_roundtrip.gd", $false), @("test_save_full.gd", $false), @("test_pal.gd", $false), @("test_audio.gd", $false), @("balance_sim.gd", $false),
+    @("test_save_roundtrip.gd", $false), @("test_save_full.gd", $false), @("test_legends.gd", $false), @("test_pal.gd", $false), @("test_audio.gd", $false), @("balance_sim.gd", $false),
     @("test_village.gd", $true), @("test_ui.gd", $true), @("test_pan.gd", $true)
 )
 if ($Bench) {
     $tests += ,@("bench_combat.gd", $false)
     # tester-gracz: każda kraina po 90 s gry
-    foreach ($zone in @("forest", "swamp", "mountains", "ancient")) { $tests += ,@("playtest_bot.gd", $false, $zone) }
+    foreach ($zone in @("forest", "fields", "swamp", "mountains", "ancient")) { $tests += ,@("playtest_bot.gd", $false, $zone) }
 }
 
 Write-Host "Import zasobów..."

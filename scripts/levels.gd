@@ -13,6 +13,7 @@ class_name Levels
 ## kraina: [poziom przy wejściu, poziom w najdalszym zakątku, poziom bossów]
 const ZONES := {
 	"forest": [1, 7, 9],
+	"fields": [7, 14, 16],
 	"swamp": [9, 16, 18],
 	"mountains": [16, 24, 26],
 	"ancient": [23, 32, 34],
@@ -20,6 +21,7 @@ const ZONES := {
 ## Zwykły potwór każdej krainy - wzorzec siły typów (statystyki jego sceny): [zdrowie, obrażenia, xp, złoto średnio].
 const REFERENCE := {
 	"forest": [40.0, 12.0, 11.0, 2.5],
+	"fields": [70.0, 13.0, 14.0, 6.5],
 	"swamp": [100.0, 17.0, 55.0, 7.0],
 	"mountains": [230.0, 26.0, 120.0, 12.0],
 	"ancient": [120.0, 18.0, 85.0, 9.0],
@@ -35,6 +37,8 @@ const HOME := {
 	"spider": "ancient", "web_spider": "ancient", "spiderling": "ancient", "cocoon": "ancient", "treant": "ancient",
 	"ancient_tree": "ancient", "beast_bear": "ancient", "beast_werewolf": "ancient", "spider_queen": "ancient",
 	"leshy": "ancient", "bies": "ancient",
+	"kobold": "fields", "kobold_slinger": "fields", "kobold_bomber": "fields", "field_worm": "fields",
+	"kobold_bombardier": "fields", "giant_worm": "fields",
 }
 ## Krzywe zwykłego potwora: zdrowie i obrażenia rosną liniowo (jak obrażenia i zdrowie gracza z poziomu,
 ## przedmiotów i zaklęć), doświadczenie i złoto wolniej niż potrzebne doświadczenie gracza.

@@ -15,6 +15,7 @@ const MUSIC := {
 	"forest": "res://assets/music/forest.ogg", "swamp": "res://assets/music/swamp.ogg",
 	"mountains": "res://assets/music/mountains.ogg", "ancient": "res://assets/music/ancient.ogg",
 	"boss": "res://assets/music/boss.ogg",
+	"fields": "res://assets/music/fields.ogg", "cemetery": "res://assets/music/cemetery.ogg",
 }
 const MUSIC_DB := -4.0
 const MUSIC_FADE := 2.5

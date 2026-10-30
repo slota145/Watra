@@ -11,6 +11,8 @@ const RECIPES: Array[Dictionary] = [
 	{"result": "summon_leshy", "amount": 1, "ingredients": {"ancient_bark": 20}},
 	{"result": "summon_spider_queen", "amount": 1, "ingredients": {"spider_silk": 15, "spider_venom": 4}},
 	{"result": "summon_bies", "amount": 1, "ingredients": {"beast_fang": 8}},
+	{"result": "summon_bombardier", "amount": 1, "ingredients": {"kobold_fuse": 15}},
+	{"result": "summon_giant_worm", "amount": 1, "ingredients": {"worm_tooth": 15}},
 ]
 
 

@@ -21,7 +21,7 @@ const SETS := [
 ]
 ## Kolejność rysowania (wyżej = na wierzchu); przy sprzecznych narożnikach wygrywa wyższy teren.
 const ORDER := ["w_deep", "w_shallow", "w_mud", "soil", "grass", "alpine", "flowers", "leaves", "moss", "dark", "mud", "shallow", "deep",
-		"gravel", "rock", "road", "path", "cobble",
+		"gravel", "rock", "f_stubble", "f_soil", "road", "path", "cobble",
 		"meadow", "m_flowers", "m_dark", "m_scree", "m_rock", "m_snow", "m_path"]
 ## Tereny rysowane bezszwową teksturą w przestrzeni świata (zamiast kafelków 16 px z atlasu) - góry
 ## z zestawów PixelLab 64 px (tools/alpine_tiles.py).
@@ -55,6 +55,9 @@ const STYLES := {
 	"rock": {"rim": Color(0.18, 0.18, 0.2, 0.45), "rim_width": 0.05, "noise": 0.4,
 			"shadow": Color(0.12, 0.16, 0.05, 0.3), "shadow_width": 0.05},
 	"gravel": {"rim": Color(0.3, 0.28, 0.25, 0.35), "rim_width": 0.04, "dither": 0.05, "noise": 0.4},
+	# Pola Zbożowe: zaorana ziemia pod łanami i ściernisko - miedza z trawy nachodzi na nie poszarpanym brzegiem
+	"f_soil": {"rim": Color(0.2, 0.12, 0.06, 0.45), "rim_width": 0.05, "noise": 0.3, "fine": 0.15},
+	"f_stubble": {"rim": Color(0.36, 0.28, 0.12, 0.35), "rim_width": 0.04, "dither": 0.05, "noise": 0.35, "fine": 0.15},
 	# góry: brzeg trawy nad ścieżką i skałą jak w ręcznie malowanych zestawach - poszarpane kępki
 	# (drobny szum) z ciemnozielonym obrysem po stronie trawy
 	"m_path": {"rim": Color(0.36, 0.22, 0.1, 0.35), "rim_width": 0.035, "noise": 0.35, "fine": 0.22,

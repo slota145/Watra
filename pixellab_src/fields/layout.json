@@ -1,0 +1,44 @@
+{
+ "kobold": {
+  "cell": [
+   33,
+   33
+  ],
+  "offset_y": -14.5
+ },
+ "kobold_slinger": {
+  "cell": [
+   33,
+   33
+  ],
+  "offset_y": -14.5
+ },
+ "kobold_bomber": {
+  "cell": [
+   30,
+   33
+  ],
+  "offset_y": -13.5
+ },
+ "kobold_bombardier": {
+  "cell": [
+   51,
+   51
+  ],
+  "offset_y": -23.5
+ },
+ "field_worm": {
+  "cell": [
+   38,
+   38
+  ],
+  "offset_y": -13.0
+ },
+ "giant_worm": {
+  "cell": [
+   116,
+   113
+  ],
+  "offset_y": -50.5
+ }
+}

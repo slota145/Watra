@@ -387,7 +387,9 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 		_invulnerable_timer = invulnerability_time
 		return
 	amount = stats.reduce_damage(amount)
-	legendary.on_hurt()
+	# Pancerz z Łusek Czerwia może pochłonąć cios zakopaniem się w ziemi
+	if legendary.on_hurt(amount):
+		return
 	health = maxi(health - amount, 0)
 	health_changed.emit(health, stats.max_health())
 	DamageNumber.spawn(get_parent(), body_center(), amount, HURT_COLOR)
