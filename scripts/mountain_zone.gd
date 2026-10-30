@@ -11,9 +11,12 @@ extends Node
 ## (najwięcej u stóp ścian). Kozy górskie pasą się na halach, a nad turniami krążą orły.
 ## Na północnym wschodzie, na wielkim płaskowyżu (dwie rampy od drogi), leży wioska ptakoludzi:
 ## chaty na palach z ogniskami, skalne iglice z gniazdami, żerdzie z piórami, totemy, a pośrodku
-## wielkie gniazdo Gromoskrzydłego, otoczone piorunochronami z kryształami burzy. Od wschodu,
-## północy i zachodu wioskę zamyka niedostępna grań o dwa poziomy wyżej - opada ku wiosce
-## wysoką ścianą i jest najeżona ośnieżonymi szczytami; od południa jest wejście.
+## wielkie gniazdo Gromoskrzydłego, otoczone piorunochronami z kryształami burzy. Wydeptane ścieżki
+## prowadzą od ramp do gniazda, okrążają je i rozchodzą się do chat. Od wschodu, północy i zachodu
+## wioskę zamyka niedostępna grań o dwa poziomy wyżej - opada ku wiosce wysoką ścianą i jest najeżona
+## ośnieżonymi szczytami; od południa jest wejście. Wioska schodzi też z płaskowyżu: u stóp skarpy,
+## między rampami, leży dolna osada (chaty, ogniska, totemy przy wejściu od drogi) z ulicą łączącą
+## obie rampy. Ptakoludzi jest bardzo wielu - gromady przy ogniskach, straż gniazda i patrole.
 ##
 ## Na południowym wschodzie, na kwietnej polanie wśród hal, leży wioska satyrów: wielkie ognisko
 ## w kręgu kamieni, wokół którego tańczą satyrowie i grają grajkowie, namioty i szałasy z winem,
@@ -88,7 +91,14 @@ const WIND_CHIME := preload("res://assets/mountains/wind_chime.png")
 const STORM_ROD := preload("res://assets/mountains/storm_rod.png")
 const AERIE := preload("res://assets/mountains/aerie.png")
 
-const HUTS := 7
+const HUTS := 9
+## Dolna osada u stóp skarpy (między rampami): półosie elipsy w kafelkach i chaty wzdłuż ulicy
+## (przesunięcie w poziomie względem środka - między stopami ramp, nie na nich).
+const LOWER_RADII := Vector2(22.0, 6.5)
+const LOWER_HUTS: Array[float] = [-16.0, -3.5, 5.5, 18.0]
+## Wydeptana ścieżka wokół gniazda (półosie w kafelkach) - z dala od piorunochronów i totemów.
+const NEST_PATH := Vector2(13.0, 8.5)
+const NEST_GUARDS := 12
 ## Wioska satyrów: promień polany (w kafelkach), liczba namiotów i tancerzy przy ognisku.
 const SATYR_RADIUS := 17.0
 const SATYR_TENTS := 8
@@ -105,7 +115,9 @@ const SATYR_PROPS := {
 }
 const SATYR_CLUTTER := ["barrels", "amphoras", "vines", "feast", "hay", "drums"]
 const PILLARS := 6
-const PATROLS := 6
+const PATROLS := 10
+## Gromady ptakoludzi stojące na ulicy dolnej osady.
+const STREET_PACKS := 3
 const EAGLES := 7
 const GOAT_HERDS := 9
 const PLATEAUS := 20
@@ -138,6 +150,12 @@ var _perches: Array = []
 var _village_cells := {}
 var _ring := {}
 var _huts: Array[Vector2] = []
+var _village_ramps: Array[Vector2i] = []
+## Dolna osada: środek, komórki elipsy (ubita ziemia jak na płaskowyżu), chaty i ulica (w kafelkach).
+var lower_village := Vector2.ZERO
+var _lower_cells := {}
+var _lower_huts: Array[Vector2] = []
+var _street := PackedVector2Array()
 ## Warstwa przejść klifów i nawisy do położenia po ułożeniu podłoża:
 ## [komórka płaskowyżu, pozycja, Lip, odbicie poziome, odbicie pionowe, (teren SoftGround - nad schodami)].
 var _blend: Node2D
@@ -183,6 +201,7 @@ func generate(world) -> void:
 	# inne płaskowyże z dala od wioski i grani (także od wysokich ścian grani)
 	_no_cliff.merge(_dilate(_ring, 7))
 	_no_cliff.merge(_dilate(_village_cells, 3))
+	_no_cliff.merge(_dilate(_lower_cells, 4))
 
 	_plan_plateaus(rng)
 	_plan_rim()
@@ -223,6 +242,79 @@ func _plan_village(rng: RandomNumberGenerator) -> void:
 		var hut := lair + Vector2.from_angle(angle) * Vector2(17.0, 13.0) * rng.randf_range(0.95, 1.1)
 		_huts.append(hut)
 		w._reserve_area(hut + Vector2(0, 2), 4.5)
+	_plan_lower_village(rng)
+	_plan_village_paths(rng)
+
+
+## Dolna osada u stóp skarpy, między rampami: elipsa ubitej ziemi zaczynająca się dwa kafelki pod
+## ścianą płaskowyżu, chaty rozstawione wzdłuż niej i ulica od zachodniej do wschodniej krawędzi.
+func _plan_lower_village(rng: RandomNumberGenerator) -> void:
+	var edge := lair.y + VILLAGE_RADII.y
+	for cell: Vector2i in _village_cells:
+		if absf(cell.x + 0.5 - lair.x) < LOWER_RADII.x:
+			edge = maxf(edge, cell.y + 1.0)
+	# pod krawędzią płaskowyżu: ściana (dwa kafelki), piarg u jej stóp i dopiero osada
+	lower_village = Vector2(lair.x + 1.0, edge + 4.0 + LOWER_RADII.y)
+	var size: Vector2i = w.map_size
+	for y in range(floori(lower_village.y - LOWER_RADII.y), ceili(lower_village.y + LOWER_RADII.y) + 1):
+		for x in range(floori(lower_village.x - LOWER_RADII.x), ceili(lower_village.x + LOWER_RADII.x) + 1):
+			var p := Vector2(x + 0.5, y + 0.5) - lower_village
+			var wobble := _shape.get_noise_2d(x * 0.8, y * 0.8) * 0.18
+			if (p / LOWER_RADII).length() < 1.0 + wobble and x > 1 and y > 1 and x < size.x - 2 and y < size.y - 2:
+				_lower_cells[Vector2i(x, y)] = true
+	for i in LOWER_HUTS.size():
+		var hut := lower_village + Vector2(LOWER_HUTS[i] + rng.randf_range(-1.0, 1.0), -2.5 if i % 2 == 0 else -1.5)
+		_lower_huts.append(hut)
+		w._reserve_area(hut + Vector2(0, 2), 4.0)
+	_street = Road.wiggle(lower_village + Vector2(-LOWER_RADII.x + 1.0, 3.5), lower_village + Vector2(LOWER_RADII.x - 1.0, 3.0), rng, 1.0, 7.0)
+
+
+## Wydeptane ścieżki wioski (komórki drogi - ubita ziemia, bez rekwizytów): od szczytu każdej rampy do
+## pętli wokół gniazda, od pętli do ognisk chat, między ogniskami sąsiednich chat; na dole ulica osady,
+## odnogi do jej ognisk i zejścia z ramp.
+func _plan_village_paths(rng: RandomNumberGenerator) -> void:
+	var loop: Array[Vector2] = []
+	for i in 40:
+		var angle := TAU * i / 40.0
+		loop.append(lair + Vector2.from_angle(angle) * NEST_PATH * rng.randf_range(0.95, 1.05))
+	loop.append(loop[0])
+	_path(Road.smooth(loop))
+	var fires: Array[Vector2] = []
+	for hut in _huts:
+		fires.append(hut + Vector2(0, 2.75))
+	fires.sort_custom(func(a: Vector2, b: Vector2) -> bool: return (a - lair).angle() < (b - lair).angle())
+	for i in fires.size():
+		var fire := fires[i]
+		var dir := (fire - lair).normalized()
+		var from := lair + Vector2.from_angle(dir.angle()) * NEST_PATH
+		_path(Road.wiggle(from, fire - dir * 2.0, rng, 0.8, 4.0), 0.8)
+		_path(Road.wiggle(fire, fires[(i + 1) % fires.size()], rng, 1.0, 5.0), 0.8)
+	for ramp in _village_ramps:
+		var top := Vector2(ramp) + Vector2(0.5, 0.5)
+		var target := lair + Vector2.from_angle((top - lair).angle()) * NEST_PATH
+		_path(Road.wiggle(top, target, rng, 1.2, 5.0))
+		var foot := Vector2(ramp) + Vector2(0.5, 3.5)
+		_path(Road.straight(foot, _nearest(_street, foot)))
+	_path(_street, 1.2)
+	for hut in _lower_huts:
+		var fire := hut + Vector2(0, 2.75)
+		_path(Road.straight(fire, _nearest(_street, fire)), 0.8)
+
+
+func _path(points: PackedVector2Array, width := 1.0) -> void:
+	for point in points:
+		for cell in w._cells_in_radius(point, width):
+			w._road_cells[cell] = true
+		for cell in w._cells_in_radius(point, width + 1.2):
+			w._road_clear[cell] = true
+
+
+func _nearest(points: PackedVector2Array, to: Vector2) -> Vector2:
+	var best := points[0]
+	for p in points:
+		if p.distance_squared_to(to) < best.distance_squared_to(to):
+			best = p
+	return best
 
 
 ## Polana satyrów na południowym wschodzie, z dala od drogi i wioski ptakoludzi; ścieżka
@@ -250,6 +342,7 @@ func _plan_village_plateau(rng: RandomNumberGenerator) -> Vector2:
 	var village := _blob(lair, VILLAGE_RADII, 0.12)
 	var ramps := _try_level(village, 1, rng, [lair + Vector2(-12, VILLAGE_RADII.y), lair + Vector2(14, VILLAGE_RADII.y)])
 	_village_cells = village
+	_village_ramps = ramps
 	var outer := VILLAGE_RADII + Vector2(RING_WIDTH, RING_WIDTH)
 	var size: Vector2i = w.map_size
 	for y in range(floori(lair.y - outer.y - 4), ceili(lair.y + outer.y + 4)):
@@ -275,6 +368,7 @@ func _plan_goats(rng: RandomNumberGenerator) -> void:
 	# pastwiska z dala od drogi, wioski i grani (z zapasem na wysokie ściany grani)
 	var walls := _dilate(_ring, 9)
 	walls.merge(_dilate(_village_cells, 4))
+	walls.merge(_dilate(_lower_cells, 4))
 	var ok := func(tile: Vector2) -> bool:
 		return Road.distance_to(tile, w._road) > 5.0 and not walls.has(Vector2i(tile)) and not w._reserved.has(Vector2i(tile))
 	var placed: Array[Vector2] = []
@@ -711,7 +805,7 @@ func _plan_soft_ground(kinds: Dictionary) -> void:
 			var cell := Vector2i(x, y)
 			var kind: int = kinds.get(cell, Floor.GRASS)
 			var name := "meadow"
-			if w._road_cells.has(cell) or kind == Floor.GRAVEL and _village_cells.has(cell):
+			if w._road_cells.has(cell) or kind == Floor.GRAVEL and (_village_cells.has(cell) or _lower_cells.has(cell)):
 				name = "m_path"
 			elif _rim.has(cell):
 				name = _rim_kind(level_of(cell))
@@ -789,9 +883,9 @@ func _floor_of(cell: Vector2i, rng: RandomNumberGenerator) -> Floor:
 		return Floor.GRASS
 	if _ring.has(cell):
 		return Floor.ROCK
-	if _village_cells.has(cell):
-		# płaskowyż wioski: ubita ziemia, płaty żwiru i gołej skały
-		return Floor.GRAVEL if m > 0.2 else Floor.ROCK if m < -0.4 else Floor.GRASS
+	if _village_cells.has(cell) or _lower_cells.has(cell) and level == 0:
+		# płaskowyż wioski i dolna osada: ubita ziemia, płaty żwiru i gołej skały
+		return Floor.GRAVEL if m > 0.42 else Floor.ROCK if m < -0.45 else Floor.GRASS
 	if _scree.has(cell) and m > -0.3:
 		return Floor.GRAVEL
 	if level == 0 and (rocky > 0.5 or rocky < -0.55):
@@ -821,7 +915,7 @@ func _place_props(rng: RandomNumberGenerator) -> void:
 				if rng.randf() < 0.6 - edge_dist * 0.08:
 					w._try_place(w.PINE if rng.randf() < 0.75 else w.BOULDER, cell, 1)
 				continue
-			if _village_cells.has(cell):
+			if _village_cells.has(cell) or _lower_cells.has(cell):
 				if r < 0.012:
 					w._try_place(w.BOULDER, cell, 1)
 				else:
@@ -908,40 +1002,24 @@ func _build_village(rng: RandomNumberGenerator) -> void:
 		w._village_prop(EAGLE_TOTEM, center + Vector2.from_angle(angle) * Vector2(150, 116), Vector2(8, 4))
 	w._add_goblin_spawn({"type": "storm_eagle", "position": center, "sitting": false, "look_at": center, "respawn": w.boss_respawn_time})
 	w._map_markers.append({"position": center, "color": w.MAP_BOSS, "size": 4.0})
-	for k in 6:
-		var pos := center + Vector2.from_angle(TAU * k / 6.0) * Vector2(80, 60)
+	# straż gniazda w dwóch kręgach
+	for k in NEST_GUARDS:
+		var ring := Vector2(80, 60) if k % 2 == 0 else Vector2(132, 98)
+		var pos := center + Vector2.from_angle(TAU * k / NEST_GUARDS) * ring
 		var kind: String = ["birdman", "birdman_thrower", "birdman_shaman"][k % 3]
 		w._add_goblin_spawn({"type": kind, "position": pos, "sitting": false, "look_at": center})
 
 	# chaty na palach z ogniskami, przy każdej gromada ptakoludzi i ozdoby
 	for hut_tile in _huts:
-		var hut := hut_tile * TILE
-		w._village_prop(STILT_HUTS[rng.randi() % STILT_HUTS.size()], hut, Vector2(40, 8))
-		w._map_markers.append({"position": hut, "color": w.MAP_TENT, "size": 2.5})
-		var fire := hut + Vector2(rng.randf_range(-8, 8), 44)
-		w._spawn(w.CAMPFIRE, fire)
-		w._map_markers.append({"position": fire, "color": w.MAP_FIRE, "size": 2.0})
-		var side := 1.0 if rng.randf() < 0.5 else -1.0
-		var chime: Sprite2D = w._village_prop(WIND_CHIME, hut + Vector2(40 * side, 18), Vector2(4, 3), 2)
-		w._flicker(chime)
-		w._village_prop(EGG_NEST, hut + Vector2(-34 * side, 30))
-		w._village_prop(BONE_PILE if rng.randf() < 0.5 else CAIRN, hut + Vector2(30 * side, 64))
-		var pole: Sprite2D = w._village_prop(PERCH_POLE, hut + Vector2(-44 * side, 58), Vector2(4, 3), 2)
-		w._flicker(pole)
-		_perches.append([hut + Vector2(-44 * side, 58), 36.0])
-		var count := rng.randi_range(5, 6)
-		var offset := rng.randf() * TAU
-		for k in count:
-			var angle := offset + TAU * k / count + rng.randf_range(-0.15, 0.15)
-			var pos := fire + Vector2.from_angle(angle) * Vector2(26, 20)
-			var kind: String = "birdman_thrower" if k % 3 == 1 else "birdman_shaman" if k == 2 else "birdman"
-			w._add_goblin_spawn({"type": kind, "position": pos, "sitting": true, "look_at": fire})
+		_hut_camp(rng, hut_tile * TILE, rng.randi_range(7, 9))
 
 	# skalne iglice z gniazdami na obrzeżach wioski
 	var base := rng.randf() * TAU
 	for i in PILLARS:
 		var angle := base + TAU * i / PILLARS
 		var spot := center + Vector2.from_angle(angle) * Vector2(23, 15) * TILE
+		if _huts.any(func(hut: Vector2) -> bool: return hut.distance_to(spot / TILE) < 6.0):
+			continue  # iglica nie wchodzi na chatę
 		w._village_prop(PILLAR_NESTS[i % PILLAR_NESTS.size()], spot, Vector2(26, 10))
 		_perches.append([spot + Vector2(0, -2), 64.0])
 		w._map_props[Vector2i(spot / TILE)] = MAP_CLIFF
@@ -950,10 +1028,70 @@ func _build_village(rng: RandomNumberGenerator) -> void:
 	for i in PATROLS:
 		var angle := base + TAU * (i + 0.5) / PATROLS
 		var spot := center + Vector2.from_angle(angle) * Vector2(24, 15) * TILE
-		for k in rng.randi_range(4, 5):
-			var pos := spot + Vector2(rng.randf_range(-20, 20), rng.randf_range(-16, 16))
-			var kind: String = "birdman_thrower" if k % 3 == 1 else "birdman_shaman" if k == 3 else "birdman"
-			w._add_goblin_spawn({"type": kind, "position": pos, "sitting": false, "look_at": spot})
+		_pack(rng, spot, rng.randi_range(6, 8), Vector2(30, 22))
+	_build_lower_village(rng)
+
+
+## Chata na palach z ogniskiem przed wejściem, dzwonkami, gniazdem z jajami, kopczykiem albo kośćmi
+## i żerdzią; wokół ogniska siedzi gromada ptakoludzi (co trzeci miota, jeden szaman).
+func _hut_camp(rng: RandomNumberGenerator, hut: Vector2, birdmen: int) -> void:
+	w._village_prop(STILT_HUTS[rng.randi() % STILT_HUTS.size()], hut, Vector2(40, 8))
+	w._map_markers.append({"position": hut, "color": w.MAP_TENT, "size": 2.5})
+	var fire := hut + Vector2(rng.randf_range(-8, 8), 44)
+	w._spawn(w.CAMPFIRE, fire)
+	w._map_markers.append({"position": fire, "color": w.MAP_FIRE, "size": 2.0})
+	var side := 1.0 if rng.randf() < 0.5 else -1.0
+	var chime: Sprite2D = w._village_prop(WIND_CHIME, hut + Vector2(40 * side, 18), Vector2(4, 3), 2)
+	w._flicker(chime)
+	w._village_prop(EGG_NEST, hut + Vector2(-34 * side, 30))
+	w._village_prop(BONE_PILE if rng.randf() < 0.5 else CAIRN, hut + Vector2(30 * side, 64))
+	var pole: Sprite2D = w._village_prop(PERCH_POLE, hut + Vector2(-44 * side, 58), Vector2(4, 3), 2)
+	w._flicker(pole)
+	_perches.append([hut + Vector2(-44 * side, 58), 36.0])
+	var offset := rng.randf() * TAU
+	for k in birdmen:
+		var angle := offset + TAU * k / birdmen + rng.randf_range(-0.12, 0.12)
+		var pos := fire + Vector2.from_angle(angle) * Vector2(30, 22)
+		var kind: String = "birdman_thrower" if k % 3 == 1 else "birdman_shaman" if k == 2 else "birdman"
+		w._add_goblin_spawn({"type": kind, "position": pos, "sitting": true, "look_at": fire})
+
+
+## Stojąca gromada ptakoludzi wokół punktu (co trzeci miota, jeden szaman).
+func _pack(rng: RandomNumberGenerator, spot: Vector2, count: int, spread: Vector2) -> void:
+	for k in count:
+		var pos := spot + Vector2(rng.randf_range(-spread.x, spread.x), rng.randf_range(-spread.y, spread.y))
+		var kind: String = "birdman_thrower" if k % 3 == 1 else "birdman_shaman" if k == 3 else "birdman"
+		w._add_goblin_spawn({"type": kind, "position": pos, "sitting": false, "look_at": spot})
+
+
+## Dolna osada u stóp skarpy: chaty z ogniskami wzdłuż ulicy, totemy i żerdzie przy wejściu od drogi
+## (zachodni kraniec ulicy), kopczyki i gniazda z jajami między chatami, gromady na ulicy i straż wejścia.
+func _build_lower_village(rng: RandomNumberGenerator) -> void:
+	for hut_tile in _lower_huts:
+		_hut_camp(rng, hut_tile * TILE, rng.randi_range(7, 8))
+	var gate := _street[0] * TILE
+	for side in [-1.0, 1.0]:
+		w._village_prop(EAGLE_TOTEM, gate + Vector2(10, 30 * side), Vector2(8, 4))
+	var east := _street[_street.size() - 1] * TILE
+	w._village_prop(EAGLE_TOTEM, east + Vector2(-10, -26), Vector2(8, 4))
+	w._village_prop(EAGLE_TOTEM, east + Vector2(-10, 30), Vector2(8, 4))
+	_pack(rng, gate + Vector2(28, 0), 5, Vector2(14, 18))
+	for i in STREET_PACKS:
+		var spot := _street[int(_street.size() * (i + 1.0) / (STREET_PACKS + 1))] * TILE
+		_pack(rng, spot + Vector2(0, 8), rng.randi_range(6, 7), Vector2(26, 12))
+	# ozdoby między chatami: kopczyki, kości, gniazda z jajami i żerdzie (z dala od ulicy i chat)
+	for i in 14:
+		var tile := lower_village + Vector2(rng.randf_range(-LOWER_RADII.x, LOWER_RADII.x), rng.randf_range(-LOWER_RADII.y, LOWER_RADII.y)) * 0.85
+		var cell := Vector2i(tile)
+		if w._road_clear.has(cell) or w._reserved.has(cell) or not _lower_cells.has(cell):
+			continue
+		var pick := rng.randi() % 4
+		if pick == 3:
+			var pole: Sprite2D = w._village_prop(PERCH_POLE, tile * TILE, Vector2(4, 3), 2)
+			w._flicker(pole)
+			_perches.append([tile * TILE, 36.0])
+		else:
+			w._village_prop([CAIRN, BONE_PILE, EGG_NEST][pick], tile * TILE)
 
 
 # ---------------------------------------------------------------- wioska satyrów

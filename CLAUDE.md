@@ -72,6 +72,11 @@ tools/screenshot.sh /tmp/menu.png
 tools/screenshot.sh /tmp/wioska.png res://scenes/world.tscn 4 1920x1080
 SCRIPT=tests/test_ui.gd tools/screenshot.sh /tmp/ui.png
 ```
+Widok z góry na fragment krainy (kamera odpięta od gracza, bez interfejsu), np. całą wioskę:
+```bash
+SCRIPT=tools/overview.gd tools/screenshot.sh /tmp/wioska.png mountains 148 57 0.32
+```
+Argumenty: plik, kraina, kafelek x i y środka kadru, przybliżenie (0.32 to około 160x90 kafelków), opcjonalnie ziarno.
 Obejrzyj zrzut narzędziem Read, żeby sprawdzić zmiany wizualne. `tools/screenshot.sh` za każdym razem importuje zasoby,
 bo bez tego po podmianie grafiki gra rysowałaby starą wersję (np. pocięte klatki przy zmienionym rozmiarze arkusza). Uwagi:
 - Renderer w chmurze to tryb zgodności, a nie Forward+, więc niektóre shadery mogą wyglądać nieco inaczej niż u autora.
@@ -112,14 +117,13 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 - [ ] Domyślnie każde siedlisko potworów ma mieć **dziesiątki, a nawet setki potworów**, jak w miejscach farmienia w Black Desert albo w Path of Exile.
   Wyjątek: siedliska, których projekt wymaga inaczej (np. arena bossa).
   Przy zwiększaniu liczebności sprawdź wydajność (`tests/bench_combat.gd`, `tests/playtest_bot.gd`).
+  Potwory w spoczynku, które się nie ruszają, pomijają `move_and_slide` (`scripts/goblin.gd`), żeby setki stojących potworów mało kosztowały.
 
 ### Wietrzne Turnie (`scripts/mountain_zone.gd`)
 
 - [x] Elektryczny orzeł (Gromoskrzydły, `scripts/storm_eagle.gd`) macha skrzydłami: 8 klatek pełnego uderzenia z PixelLab, także w spoczynku nad gniazdem.
-- [ ] Wioska ptakoludzi:
-  - dodać ścieżki i drogi,
-  - trochę ją powiększyć, tak żeby schodziła z płaskowyżu na teren przed skarpą,
-  - dodać więcej ptakoludzi.
+- [x] Wioska ptakoludzi: wydeptane ścieżki (pętla wokół gniazda, do chat, z ramp), dolna osada u stóp skarpy z ulicą
+  między rampami, 9 chat na płaskowyżu i 4 na dole, około 210 ptakoludzi (wcześniej 74).
 - [ ] Wioska satyrów (faunów): powiększyć co najmniej dwukrotnie.
   Wokół istniejących struktur dodać kilka mniejszych skupisk z budynkami, drogami i ozdobami.
 
