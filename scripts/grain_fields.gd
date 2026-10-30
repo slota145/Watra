@@ -1,11 +1,11 @@
 class_name GrainFields
 extends Node
 ## Pola Zbożowe - kraina na zachód od Goblińskiego Lasu (wejście na końcu leśnej drogi, w prawym dolnym rogu).
-## Dawny spichlerz okolicy: złote łany zboża zajmują większość krainy - organiczne, faliste kształty (z szumu),
-## rozdzielone trawiastymi miedzami, z kępami jesiennych drzew między polami (rząd zboża to kołyszący się pas -
-## postacie chowają się w nim do pasa; zboże nie spowalnia). Gdzieniegdzie ścierniska ze snopkami i zaorane
-## zagony, a na polanach wśród pól opuszczone gospodarstwa (chałupy, stodoły, studnie), do których prowadzą
-## dróżki od drogi. Droga prowadzi od wejścia do rozstajów przy ruinie wiatraka (kapliczka Starego Młyna). Siedliska:
+## Dawny spichlerz okolicy: pola zajmują prawie całą krainę - organiczne, faliste kształty (z szumu) na brązowej
+## glebie, rozdzielone wąskimi miedzami z żywopłotami (z przejściami między polami), płotami z żerdzi, kamieniami i kwiatami.
+## Przeważają wysokie, złote łany (rząd zboża to kołyszący się pas - postacie chowają się w nim do pasa; zboże nie
+## spowalnia), część pól jest już zebrana (ściernisko z rzędami snopków), część świeżo zaorana. Między polami kępy
+## jesiennych drzew, a na polanach opuszczone gospodarstwa (chałupy, stodoły, studnie) z dróżkami do drogi. Droga prowadzi od wejścia do rozstajów przy ruinie wiatraka (kapliczka Starego Młyna). Siedliska:
 ## - na północy: wielki obóz koboldów (namioty ze skór, ogniska, skrzynie bomb, totemy), a w jego północnej
 ##   części barykada Bombardiera; zgraje koboldów także w okolicznych łanach,
 ## - na południowym zachodzie: ryjowisko czerwi polnych (kopce, nory, popękana ziemia) z kraterem
@@ -38,8 +38,16 @@ const TROUGH := preload("res://assets/fields/trough.png")
 const PLOUGH := preload("res://assets/fields/plough.png")
 const SACKS := preload("res://assets/fields/sacks.png")
 const FENCE := preload("res://assets/fields/fence.png")
-const WALL := preload("res://assets/fields/wall.png")
-const WALL_END := preload("res://assets/fields/wall_end.png")
+## Żywopłoty na miedzach: krzaki ustawione gęsto jeden przy drugim (jak pale palisady), tworzą ciągłe linie
+## na granicach działek. Żywopłot tam, gdzie szum stylu miedz jest ponad HEDGE_STYLE, płot z żerdzi w paśmie
+## pod nim, niżej miedza otwarta. Przejścia między polami co najwyżej co HEDGE_GAP_EVERY kafelków.
+const HEDGE_BUSHES: Array[Texture2D] = [preload("res://assets/forest/trees/bush_0.png"),
+		preload("res://assets/forest/trees/bush_1.png"), preload("res://assets/forest/trees/bush_2.png")]
+const HEDGE_STYLE := -0.2
+const FENCE_STYLE := -0.5
+const HEDGE_GAP_EVERY := 11.0
+const HEDGE_GAP_RADIUS := 1.6
+const MAP_HEDGE := Color("3f6a2a")
 const RUBBLE := preload("res://assets/fields/rubble.png")
 const TOTEM := preload("res://assets/fields/totem.png")
 const BOMB_CRATE := preload("res://assets/fields/bomb_crate.png")
@@ -66,9 +74,14 @@ const CAMP_RADII := Vector2(24.0, 15.0)
 const CAMP_TENTS := 12
 const CAMP_FIRES := 6
 const CAMP_PACKS := 8
-## Progi szumu pól: ponad FIELD_LEVEL - pole (reszta to łąki), miedza tam, gdzie drugi szum jest bliski zera.
-const FIELD_LEVEL := -0.22
-const BALK_WIDTH := 0.065
+## Pola to działki: środki na poszarpanej siatce co PARCEL kafelków (szersze niż wyższe), granice wygięte szumem.
+## Miedza tam, gdzie dwa najbliższe środki są prawie tak samo daleko (BALK); łąki tylko tam, gdzie szum łąk
+## spada poniżej MEADOW_LEVEL. Udział rodzajów działek: łany, ścierniska (reszta - zaorane zagony).
+const PARCEL := Vector2(17.0, 12.0)
+const BALK := 1.5
+const MEADOW_LEVEL := -0.45
+const GRAIN_SHARE := 0.64
+const STUBBLE_SHARE := 0.18
 ## Polana wokół gospodarstwa (bez pól, w kafelkach).
 const FARM_CLEARING := 11.0
 ## Jesienne barwy liści dębów (shader podmienia zieleń) - część dębów zostaje zielona.
@@ -91,6 +104,9 @@ var _farms: Array[Vector2] = []
 var _corners := {}
 var _yard_cells := {}
 var _field_cells := {}
+## Działka, do której należy komórka (także miedza między działkami), i komórki miedz.
+var _owner := {}
+var _balk_cells := {}
 var _sway: ShaderMaterial
 var _autumn: Array[ShaderMaterial] = []
 
@@ -142,6 +158,7 @@ func generate(world) -> void:
 	for farm in _farms:
 		_build_farm(rng, farm)
 	_build_fields(rng)
+	_build_balks(rng)
 	_build_kobold_camp(rng)
 	_build_bombardier_lair(rng)
 	_build_worm_grounds(rng)
@@ -188,39 +205,61 @@ func _plan_farms(rng: RandomNumberGenerator) -> void:
 		_mark_path(Road.wiggle(farm + Vector2(0, 4), nearest, rng, 2.0, 6.0), 0.7, 1.8)
 
 
-## Pola: wszędzie, gdzie szum pól jest ponad progiem (organiczne, faliste kształty jak łany na wzgórzach), poza
-## drogami, siedliskami, podwórkami i pasem lasu przy granicy; między polami trawiaste miedze tam, gdzie drugi
-## szum przechodzi przez zero. Rodzaj pola z trzeciego, wolnego szumu (głównie łany, czasem ścierniska i zagony);
-## na ryjowisku czerwi zamiast łanów - zagony i ścierniska.
+## Pola: działki o organicznych granicach (komórki Woronoja z wygiętymi szumem odległościami) na całej krainie poza
+## drogami, siedliskami, podwórkami i pasem lasu przy granicy; między działkami miedze, a gdzieniegdzie łąka.
+## Każda działka ma jeden rodzaj: łan (najczęściej), ściernisko albo zaorany zagon; na ryjowisku czerwi łanów nie ma.
 func _plan_fields(rng: RandomNumberGenerator) -> void:
-	var shape := FastNoiseLite.new()
-	shape.seed = rng.randi()
-	shape.frequency = 0.03
-	shape.fractal_octaves = 3
-	var balks := FastNoiseLite.new()
-	balks.seed = rng.randi()
-	balks.frequency = 0.035
-	var kinds := FastNoiseLite.new()
-	kinds.seed = rng.randi()
-	kinds.frequency = 0.045
+	var meadows := FastNoiseLite.new()
+	meadows.seed = rng.randi()
+	meadows.frequency = 0.03
+	var warp := FastNoiseLite.new()
+	warp.seed = rng.randi()
+	warp.frequency = 0.06
+	# środki działek na poszarpanej siatce i ich rodzaje
+	var grid := Vector2i((Vector2(w.map_size) / PARCEL).ceil()) + Vector2i(2, 2)
+	var seeds := {}
+	var kinds := {}
+	for gy in grid.y:
+		for gx in grid.x:
+			var g := Vector2i(gx, gy)
+			seeds[g] = (Vector2(gx - 1, gy - 1) + Vector2(rng.randf_range(0.15, 0.85), rng.randf_range(0.15, 0.85))) * PARCEL
+			var roll := rng.randf()
+			kinds[g] = "grain" if roll < GRAIN_SHARE else "stubble" if roll < GRAIN_SHARE + STUBBLE_SHARE else "soil"
 	var margin: int = w.border_thickness + 2
 	for y in range(margin, w.map_size.y - margin):
 		for x in range(margin, w.map_size.x - margin):
 			var cell := Vector2i(x, y)
 			if w._reserved.has(cell) or w._road_clear.has(cell) or _yard_cells.has(cell):
 				continue
-			if shape.get_noise_2d(x, y) < FIELD_LEVEL or absf(balks.get_noise_2d(x, y)) < BALK_WIDTH:
+			if meadows.get_noise_2d(x, y) < MEADOW_LEVEL:
 				continue
 			if _farms.any(func(farm: Vector2) -> bool: return farm.distance_to(Vector2(cell)) < FARM_CLEARING):
 				continue
-			var k := kinds.get_noise_2d(x, y)
-			var kind := "grain"
-			if (Vector2(cell) - worms).length() < 30.0 and ((Vector2(cell) - worms) / Vector2(34, 22)).length() < 1.0:
-				kind = "soil" if k < 0.1 else "stubble"
-			elif k > 0.5:
-				kind = "stubble"
-			elif k < -0.55:
-				kind = "soil"
+			var p := Vector2(x, y) + Vector2(warp.get_noise_2d(x, y), warp.get_noise_2d(x + 500.0, y)) * 4.0
+			var home := Vector2i((p / PARCEL).floor()) + Vector2i.ONE
+			var best := INF
+			var second := INF
+			var owner := home
+			for dy in range(-1, 2):
+				for dx in range(-1, 2):
+					var g := home + Vector2i(dx, dy)
+					if not seeds.has(g):
+						continue
+					var seed_at: Vector2 = seeds[g]
+					var d := ((p - seed_at) / PARCEL).length() * PARCEL.y
+					if d < best:
+						second = best
+						best = d
+						owner = g
+					elif d < second:
+						second = d
+			_owner[cell] = owner
+			if second - best < BALK:
+				_balk_cells[cell] = true
+				continue
+			var kind: String = kinds[owner]
+			if kind == "grain" and ((Vector2(cell) - worms) / Vector2(34, 22)).length() < 1.0:
+				kind = "stubble" if (owner.x + owner.y) % 2 == 0 else "soil"
 			_field_kind[cell] = kind
 			_field_cells[cell] = true
 
@@ -264,10 +303,10 @@ func _build_ground(rng: RandomNumberGenerator) -> void:
 	var soil := {}
 	var stubble := {}
 	for cell: Vector2i in _field_kind:
-		if _field_kind[cell] == "soil":
-			soil[cell] = true
-		else:  # pod łanem ściernisko - prześwituje na skraju pola
+		if _field_kind[cell] == "stubble":
 			stubble[cell] = true
+		else:  # pod łanem brązowa gleba - prześwituje między rzędami i na skraju pola
+			soil[cell] = true
 	var dirt := {}
 	for cell in w._road_cells:
 		dirt[cell] = true
@@ -335,8 +374,8 @@ func _place_nature(rng: RandomNumberGenerator) -> void:
 				if rng.randf() < 0.85 - edge_dist * 0.12:
 					_tree(rng, cell, 1)
 				continue
-			if w._reserved.has(cell) or _field_cells.has(cell) or _yard_cells.has(cell):
-				continue
+			if w._reserved.has(cell) or _field_cells.has(cell) or _yard_cells.has(cell) or _near_field(cell):
+				continue  # miedze urządza _build_balks (żywopłoty, płoty, drobiazgi)
 			var r := rng.randf()
 			# kępy drzew na łąkach między polami i pojedyncze drzewa na miedzach
 			if groves.get_noise_2d(x, y) > 0.22 and r < 0.34:
@@ -400,9 +439,10 @@ func _build_fields(rng: RandomNumberGenerator) -> void:
 					_decor(rng, pos + Vector2(rng.randf_range(-6, 6), 14), [3, 4, 5].pick_random())
 			"stubble":
 				w._map_props[cell] = MAP_STUBBLE
-				if cell.x % 3 == 1 and cell.y % 3 == 1 and rng.randf() < 0.55:
-					var jitter := Vector2(rng.randf_range(-3, 3), rng.randf_range(-2, 2))
-					_prop(STOOK if rng.randf() < 0.8 else HAY_BALE, pos + jitter, Vector2(12, 5))
+				# snopki w równych rzędach (co dwa kafelki w poziomie, co trzy w pionie), tu i ówdzie bela
+				if cell.x % 2 == 0 and cell.y % 3 == 1 and rng.randf() < 0.85:
+					var jitter := Vector2(rng.randf_range(-2, 2), rng.randf_range(-1, 1))
+					_prop(STOOK if rng.randf() < 0.88 else HAY_BALE, pos + jitter)  # snopki nie zagradzają drogi
 				elif rng.randf() < 0.004:
 					_prop(HAYSTACK, pos, Vector2(30, 10))
 			_:
@@ -411,6 +451,121 @@ func _build_fields(rng: RandomNumberGenerator) -> void:
 					_prop(PLOUGH, pos)
 				elif rng.randf() < 0.02:
 					_decor(rng, pos, [6, 14].pick_random())
+
+
+## Miedze: na granicach działek żywopłoty (ciągłe linie krzaków z przejściami między polami), w innych płatach
+## krainy płoty z żerdzi pod dolnym skrajem pól, część miedz zostaje otwarta. Na miedzach kamienie, kwiaty,
+## pojedyncze krzaki i drzewa.
+func _build_balks(rng: RandomNumberGenerator) -> void:
+	var style := FastNoiseLite.new()
+	style.seed = rng.randi()
+	style.frequency = 0.04
+	# żywopłoty: komórki na granicy działek (sąsiad z prawej albo z dołu należy do innej działki - schodkowa
+	# linia zawsze styka się bokami), z przejściami rozstawionymi wzdłuż linii
+	var line: Array[Vector2i] = []
+	for cell: Vector2i in _balk_cells:
+		if style.get_noise_2d(cell.x, cell.y) <= HEDGE_STYLE or not _hedge_allowed(cell):
+			continue
+		var right: Variant = _owner.get(cell + Vector2i.RIGHT)
+		var down: Variant = _owner.get(cell + Vector2i.DOWN)
+		if (right != null and right != _owner[cell]) or (down != null and down != _owner[cell]):
+			line.append(cell)
+	line.sort()
+	var gaps: Array[Vector2] = []
+	for cell in line:
+		if not gaps.any(func(g: Vector2) -> bool: return g.distance_to(Vector2(cell)) < HEDGE_GAP_EVERY):
+			gaps.append(Vector2(cell) + Vector2(rng.randf_range(-2, 2), rng.randf_range(-2, 2)))
+	var hedge := {}
+	for cell in line:
+		if not gaps.any(func(g: Vector2) -> bool: return g.distance_to(Vector2(cell)) < HEDGE_GAP_RADIUS):
+			hedge[cell] = true
+	_build_hedges(rng, hedge)
+	# płoty z żerdzi tuż pod dolnym skrajem pól w drugim paśmie stylu (płoty są tylko poziome)
+	for y in w.map_size.y:
+		for x in w.map_size.x:
+			var cell := Vector2i(x, y)
+			var n := style.get_noise_2d(x, y)
+			if n > HEDGE_STYLE or n <= FENCE_STYLE or not _balk_edge(cell) or hedge.has(cell + Vector2i.DOWN):
+				continue
+			if x % 2 == 0 and x % 10 != 0 and rng.randf() < 0.85:
+				var pos := Vector2((x + 0.5) * TILE, (y + 1) * TILE + 4.0)
+				_prop(FENCE, pos, Vector2(FENCE.get_width() - 8, 4)).flip_h = rng.randf() < 0.5
+				w._map_props[cell] = MAP_WALL
+	# drobiazgi na miedzach: krzaki, kamienie, kwiaty, czasem drzewo
+	for y in w.map_size.y:
+		for x in w.map_size.x:
+			var cell := Vector2i(x, y)
+			if _field_kind.has(cell) or not _near_field(cell) or w._road_clear.has(cell) or w._reserved.has(cell) \
+					or w._map_props.get(cell) in [MAP_WALL, MAP_HEDGE]:
+				continue
+			var r := rng.randf()
+			if r < 0.015:
+				_tree(rng, cell, 2)
+			elif r < 0.3:
+				_decor(rng, w._cell_to_world(cell) + Vector2(rng.randf_range(-5, 5), rng.randf_range(-4, 4)), [3, 4, 5, 6, 13, 13, 14].pick_random())
+
+
+## Czy na komórce miedzy może rosnąć żywopłot: nie na drodze, siedlisku, podwórku ani przy pasie lasu na granicy.
+func _hedge_allowed(cell: Vector2i) -> bool:
+	var edge := mini(mini(cell.x, cell.y), mini(w.map_size.x - 1 - cell.x, w.map_size.y - 1 - cell.y))
+	return edge >= w.border_thickness + 4 and not (w._road_clear.has(cell) or w._reserved.has(cell) \
+			or _yard_cells.has(cell) or w._occupied.has(cell))
+
+
+## Żywopłot: w każdej komórce linii krzak (losowy z trzech, różnej wielkości i odcienia, przesunięty o kilka
+## pikseli), a między sąsiednimi komórkami jeszcze jeden w pół drogi - krzaki zachodzą na siebie i schodki linii
+## się zacierają. U stóp tu i ówdzie kwiaty, drzewa rosną obok na miedzy. Kolizje w jednym ciele.
+func _build_hedges(rng: RandomNumberGenerator, hedge: Dictionary) -> void:
+	var body := StaticBody2D.new()
+	w.add_child(body)
+	var points: Array[Vector2] = []
+	for cell: Vector2i in hedge:
+		var center := Vector2(cell * TILE) + Vector2(8, 10)
+		points.append(center)
+		for d in [Vector2i.RIGHT, Vector2i.DOWN]:
+			if hedge.has(cell + d):
+				points.append(center + Vector2(d * TILE) * 0.5)
+		w._map_props[cell] = MAP_HEDGE
+		w._occupied[cell] = true
+		var shape := CollisionShape2D.new()
+		var circle := CircleShape2D.new()
+		circle.radius = 8.0
+		shape.shape = circle
+		shape.position = center
+		body.add_child(shape)
+	for point in points:
+		var pos := point + Vector2(rng.randf_range(-3, 3), rng.randf_range(-2, 2))
+		var bush := Sprite2D.new()
+		bush.texture = HEDGE_BUSHES[rng.randi() % HEDGE_BUSHES.size()]
+		bush.offset = Vector2(0, -13)
+		bush.position = pos.round()
+		bush.flip_h = rng.randf() < 0.5
+		bush.scale = Vector2.ONE * rng.randf_range(0.85, 1.1)
+		var shade := rng.randf_range(0.82, 1.0)
+		bush.modulate = Color(shade, shade * rng.randf_range(0.98, 1.04), shade * 0.95)
+		w.entities.add_child(bush)
+		if rng.randf() < 0.12:
+			_decor(rng, pos + Vector2(rng.randf_range(-8, 8), 6), [3, 4, 5].pick_random())
+
+
+## Dolny skraj pola (pod nim miedza), wzdłuż którego można postawić płot albo murek: ogrodzenie stoi tuż pod
+## ostatnim rzędem łanu, więc rysuje się przed nim, a łan z pola niżej zaczyna się dopiero za miedzą.
+func _balk_edge(cell: Vector2i) -> bool:
+	var below := cell + Vector2i.DOWN
+	if not _field_kind.has(cell) or _field_kind.has(below):
+		return false
+	# przy pasie lasu na granicy krainy bez ogrodzeń - nie zamykają przejść między polem a drzewami
+	var edge := mini(mini(cell.x, cell.y), mini(w.map_size.x - 1 - cell.x, w.map_size.y - 1 - cell.y))
+	if edge < w.border_thickness + 5:
+		return false
+	return not (w._road_clear.has(below) or w._reserved.has(below) or _yard_cells.has(below) or w._occupied.has(below))
+
+
+func _near_field(cell: Vector2i) -> bool:
+	for d in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+		if _field_kind.has(cell + d):
+			return true
+	return false
 
 
 ## Jeden rząd zboża: pas tekstury powtarzany na szerokość pola, kołysany shaderem; postacie sortują się
@@ -427,26 +582,6 @@ func _grain_row(rng: RandomNumberGenerator, bottom_left: Vector2, width: float, 
 	row.material = _sway
 	row.set_meta("no_occlusion", true)
 	w.entities.add_child(row)
-
-
-## Murek: odcinki ściany z wyłomami i gruzem, zakończone osypującym się końcem.
-func _wall_line(rng: RandomNumberGenerator, from_x: float, to_x: float, y: float) -> void:
-	var step := float(WALL.get_width()) - 2.0
-	var x := from_x + step / 2.0
-	var broken := true
-	while x < to_x - step / 2.0:
-		if rng.randf() < 0.22:
-			# wyłom: gruz albo nic
-			if rng.randf() < 0.5:
-				_prop(RUBBLE, Vector2(x, y), Vector2.ZERO)
-			broken = true
-		else:
-			var end := broken or rng.randf() < 0.1
-			var piece := _prop(WALL_END if end else WALL, Vector2(x, y), Vector2(step, 8))
-			piece.flip_h = end and rng.randf() < 0.5
-			w._map_props[Vector2i(Vector2(x, y) / TILE)] = MAP_WALL
-			broken = false
-		x += step
 
 
 # ---------------------------------------------------------------- gospodarstwa
@@ -600,10 +735,13 @@ func _build_worm_grounds(rng: RandomNumberGenerator) -> void:
 		var pos := tile * TILE
 		w._add_goblin_spawn({"type": "field_worm", "position": pos, "sitting": false, "look_at": pos})
 		for k in 2:
-			_decor(rng, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(14, 30), [0, 1, 2, 14].pick_random())
+			_molehill(rng, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(14, 30))
 	for i in 40:
 		var tile := worms + Vector2.from_angle(rng.randf() * TAU) * Vector2(38, 25) * sqrt(rng.randf())
-		_decor(rng, tile * TILE, [0, 0, 1, 2, 2, 14, 15].pick_random())
+		if rng.randf() < 0.55:
+			_molehill(rng, tile * TILE)
+		else:
+			_decor(rng, tile * TILE, [0, 2, 2, 14, 15].pick_random())
 	w._map_markers.append({"position": worms * TILE, "color": Color(0.85, 0.6, 0.55), "size": 3.0})
 	# krater Pożeracza: popękana ziemia, gruz i kości wokół
 	var center := worm_lair * TILE
@@ -614,7 +752,7 @@ func _build_worm_grounds(rng: RandomNumberGenerator) -> void:
 		var crack := _floor_decor(rng, center + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(10, 80), 2)
 		crack.scale = Vector2.ONE * rng.randf_range(1.2, 2.0)
 	for i in 6:
-		_decor(rng, center + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(30, 90), [1, 15, 15].pick_random())
+		_decor(rng, center + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(30, 90), [0, 14, 15, 15].pick_random())
 	w._add_goblin_spawn({"type": "giant_worm", "position": center, "sitting": false, "look_at": center, "respawn": w.boss_respawn_time})
 	w._map_markers.append({"position": center, "color": w.MAP_BOSS, "size": 4.0})
 
@@ -657,6 +795,16 @@ func _decor(rng: RandomNumberGenerator, pos: Vector2, frame: int) -> void:
 	else:
 		sprite.offset = Vector2(0, -12)
 		w.entities.add_child(sprite)
+
+
+## Kopczyk świeżej ziemi jak po krecie (tools/fields_art.py) - czasem z wylotem nory czerwia.
+func _molehill(rng: RandomNumberGenerator, pos: Vector2) -> void:
+	var sprite := Sprite2D.new()
+	sprite.texture = HOLE if rng.randf() < 0.35 else MOUND
+	sprite.offset = Vector2(0, -sprite.texture.get_height() / 2.0 + 3.0)
+	sprite.flip_h = rng.randf() < 0.5
+	sprite.position = pos.round()
+	w.entities.add_child(sprite)
 
 
 func _floor_decor(rng: RandomNumberGenerator, pos: Vector2, frame: int) -> Sprite2D:
