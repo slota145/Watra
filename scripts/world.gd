@@ -463,6 +463,7 @@ func _ready() -> void:
 	# to samo ziarno = identyczny świat, także losowe warianty drzew (każda kraina ma własne)
 	_rng.seed = _seed if zone == "forest" else hash([_seed, zone])
 	Goblin.dungeon_mods = {}
+	Goblin.pathing = null
 	seed(_rng.seed)
 	_noise.seed = _rng.randi()
 	_noise.frequency = 0.07

@@ -70,6 +70,12 @@ func _physics_process(delta: float) -> void:
 		var turn := minf(TURN + _since_hit * 8.0, TURN_MAX) * delta
 		var heading := velocity.angle()
 		velocity = Vector2.from_angle(heading + clampf(angle_difference(heading, to_target.angle()), -turn, turn)) * SPEED
+	# w lochu strzała nie przelatuje przez ściany (w świecie omija drzewa i głazy)
+	if Goblin.pathing != null:
+		var query := PhysicsRayQueryParameters2D.create(global_position, global_position + velocity * delta, 1)
+		if not get_world_2d().direct_space_state.intersect_ray(query).is_empty():
+			_finish()
+			return
 	global_position += velocity * delta
 	_sprite.rotation = velocity.angle()
 

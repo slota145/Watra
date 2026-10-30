@@ -97,7 +97,7 @@ func _process_fight(delta: float) -> void:
 	var to_player := _player.global_position - global_position
 	if _special_cooldown <= 0.0 and _choose_attack(to_player):
 		return
-	velocity = to_player.normalized() * speed if to_player.length() > 28.0 else Vector2.ZERO
+	velocity = _toward_player(to_player) * speed if to_player.length() > 28.0 else Vector2.ZERO
 
 
 # ---------------------------------------------------------------- do nadpisania
