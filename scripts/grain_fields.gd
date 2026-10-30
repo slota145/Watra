@@ -1,11 +1,11 @@
 class_name GrainFields
 extends Node
 ## Pola Zbożowe - kraina na zachód od Goblińskiego Lasu (wejście na końcu leśnej drogi, w prawym dolnym rogu).
-## Dawny spichlerz okolicy: złote łany zboża zajmują większość krainy - organiczne, faliste kształty (z szumu),
-## rozdzielone trawiastymi miedzami, z kępami jesiennych drzew między polami (rząd zboża to kołyszący się pas -
-## postacie chowają się w nim do pasa; zboże nie spowalnia). Gdzieniegdzie ścierniska ze snopkami i zaorane
-## zagony, a na polanach wśród pól opuszczone gospodarstwa (chałupy, stodoły, studnie), do których prowadzą
-## dróżki od drogi. Droga prowadzi od wejścia do rozstajów przy ruinie wiatraka (kapliczka Starego Młyna). Siedliska:
+## Dawny spichlerz okolicy: pola zajmują prawie całą krainę - organiczne, faliste kształty (z szumu) na brązowej
+## glebie, rozdzielone wąskimi miedzami z płotami, murkami z polnych kamieni, krzakami, kamieniami i kwiatami.
+## Przeważają wysokie, złote łany (rząd zboża to kołyszący się pas - postacie chowają się w nim do pasa; zboże nie
+## spowalnia), część pól jest już zebrana (ściernisko z rzędami snopków), część świeżo zaorana. Między polami kępy
+## jesiennych drzew, a na polanach opuszczone gospodarstwa (chałupy, stodoły, studnie) z dróżkami do drogi. Droga prowadzi od wejścia do rozstajów przy ruinie wiatraka (kapliczka Starego Młyna). Siedliska:
 ## - na północy: wielki obóz koboldów (namioty ze skór, ogniska, skrzynie bomb, totemy), a w jego północnej
 ##   części barykada Bombardiera; zgraje koboldów także w okolicznych łanach,
 ## - na południowym zachodzie: ryjowisko czerwi polnych (kopce, nory, popękana ziemia) z kraterem
@@ -66,9 +66,14 @@ const CAMP_RADII := Vector2(24.0, 15.0)
 const CAMP_TENTS := 12
 const CAMP_FIRES := 6
 const CAMP_PACKS := 8
-## Progi szumu pól: ponad FIELD_LEVEL - pole (reszta to łąki), miedza tam, gdzie drugi szum jest bliski zera.
-const FIELD_LEVEL := -0.22
-const BALK_WIDTH := 0.065
+## Pola to działki: środki na poszarpanej siatce co PARCEL kafelków (szersze niż wyższe), granice wygięte szumem.
+## Miedza tam, gdzie dwa najbliższe środki są prawie tak samo daleko (BALK); łąki tylko tam, gdzie szum łąk
+## spada poniżej MEADOW_LEVEL. Udział rodzajów działek: łany, ścierniska (reszta - zaorane zagony).
+const PARCEL := Vector2(17.0, 12.0)
+const BALK := 1.5
+const MEADOW_LEVEL := -0.45
+const GRAIN_SHARE := 0.64
+const STUBBLE_SHARE := 0.18
 ## Polana wokół gospodarstwa (bez pól, w kafelkach).
 const FARM_CLEARING := 11.0
 ## Jesienne barwy liści dębów (shader podmienia zieleń) - część dębów zostaje zielona.
@@ -142,6 +147,7 @@ func generate(world) -> void:
 	for farm in _farms:
 		_build_farm(rng, farm)
 	_build_fields(rng)
+	_build_balks(rng)
 	_build_kobold_camp(rng)
 	_build_bombardier_lair(rng)
 	_build_worm_grounds(rng)
@@ -188,39 +194,59 @@ func _plan_farms(rng: RandomNumberGenerator) -> void:
 		_mark_path(Road.wiggle(farm + Vector2(0, 4), nearest, rng, 2.0, 6.0), 0.7, 1.8)
 
 
-## Pola: wszędzie, gdzie szum pól jest ponad progiem (organiczne, faliste kształty jak łany na wzgórzach), poza
-## drogami, siedliskami, podwórkami i pasem lasu przy granicy; między polami trawiaste miedze tam, gdzie drugi
-## szum przechodzi przez zero. Rodzaj pola z trzeciego, wolnego szumu (głównie łany, czasem ścierniska i zagony);
-## na ryjowisku czerwi zamiast łanów - zagony i ścierniska.
+## Pola: działki o organicznych granicach (komórki Woronoja z wygiętymi szumem odległościami) na całej krainie poza
+## drogami, siedliskami, podwórkami i pasem lasu przy granicy; między działkami miedze, a gdzieniegdzie łąka.
+## Każda działka ma jeden rodzaj: łan (najczęściej), ściernisko albo zaorany zagon; na ryjowisku czerwi łanów nie ma.
 func _plan_fields(rng: RandomNumberGenerator) -> void:
-	var shape := FastNoiseLite.new()
-	shape.seed = rng.randi()
-	shape.frequency = 0.03
-	shape.fractal_octaves = 3
-	var balks := FastNoiseLite.new()
-	balks.seed = rng.randi()
-	balks.frequency = 0.035
-	var kinds := FastNoiseLite.new()
-	kinds.seed = rng.randi()
-	kinds.frequency = 0.045
+	var meadows := FastNoiseLite.new()
+	meadows.seed = rng.randi()
+	meadows.frequency = 0.03
+	var warp := FastNoiseLite.new()
+	warp.seed = rng.randi()
+	warp.frequency = 0.06
+	# środki działek na poszarpanej siatce i ich rodzaje
+	var grid := Vector2i((Vector2(w.map_size) / PARCEL).ceil()) + Vector2i(2, 2)
+	var seeds := {}
+	var kinds := {}
+	for gy in grid.y:
+		for gx in grid.x:
+			var g := Vector2i(gx, gy)
+			seeds[g] = (Vector2(gx - 1, gy - 1) + Vector2(rng.randf_range(0.15, 0.85), rng.randf_range(0.15, 0.85))) * PARCEL
+			var roll := rng.randf()
+			kinds[g] = "grain" if roll < GRAIN_SHARE else "stubble" if roll < GRAIN_SHARE + STUBBLE_SHARE else "soil"
 	var margin: int = w.border_thickness + 2
 	for y in range(margin, w.map_size.y - margin):
 		for x in range(margin, w.map_size.x - margin):
 			var cell := Vector2i(x, y)
 			if w._reserved.has(cell) or w._road_clear.has(cell) or _yard_cells.has(cell):
 				continue
-			if shape.get_noise_2d(x, y) < FIELD_LEVEL or absf(balks.get_noise_2d(x, y)) < BALK_WIDTH:
+			if meadows.get_noise_2d(x, y) < MEADOW_LEVEL:
 				continue
 			if _farms.any(func(farm: Vector2) -> bool: return farm.distance_to(Vector2(cell)) < FARM_CLEARING):
 				continue
-			var k := kinds.get_noise_2d(x, y)
-			var kind := "grain"
-			if (Vector2(cell) - worms).length() < 30.0 and ((Vector2(cell) - worms) / Vector2(34, 22)).length() < 1.0:
-				kind = "soil" if k < 0.1 else "stubble"
-			elif k > 0.5:
-				kind = "stubble"
-			elif k < -0.55:
-				kind = "soil"
+			var p := Vector2(x, y) + Vector2(warp.get_noise_2d(x, y), warp.get_noise_2d(x + 500.0, y)) * 4.0
+			var home := Vector2i((p / PARCEL).floor()) + Vector2i.ONE
+			var best := INF
+			var second := INF
+			var owner := home
+			for dy in range(-1, 2):
+				for dx in range(-1, 2):
+					var g := home + Vector2i(dx, dy)
+					if not seeds.has(g):
+						continue
+					var seed_at: Vector2 = seeds[g]
+					var d := ((p - seed_at) / PARCEL).length() * PARCEL.y
+					if d < best:
+						second = best
+						best = d
+						owner = g
+					elif d < second:
+						second = d
+			if second - best < BALK:
+				continue
+			var kind: String = kinds[owner]
+			if kind == "grain" and ((Vector2(cell) - worms) / Vector2(34, 22)).length() < 1.0:
+				kind = "stubble" if (owner.x + owner.y) % 2 == 0 else "soil"
 			_field_kind[cell] = kind
 			_field_cells[cell] = true
 
@@ -264,10 +290,10 @@ func _build_ground(rng: RandomNumberGenerator) -> void:
 	var soil := {}
 	var stubble := {}
 	for cell: Vector2i in _field_kind:
-		if _field_kind[cell] == "soil":
-			soil[cell] = true
-		else:  # pod łanem ściernisko - prześwituje na skraju pola
+		if _field_kind[cell] == "stubble":
 			stubble[cell] = true
+		else:  # pod łanem brązowa gleba - prześwituje między rzędami i na skraju pola
+			soil[cell] = true
 	var dirt := {}
 	for cell in w._road_cells:
 		dirt[cell] = true
@@ -335,8 +361,8 @@ func _place_nature(rng: RandomNumberGenerator) -> void:
 				if rng.randf() < 0.85 - edge_dist * 0.12:
 					_tree(rng, cell, 1)
 				continue
-			if w._reserved.has(cell) or _field_cells.has(cell) or _yard_cells.has(cell):
-				continue
+			if w._reserved.has(cell) or _field_cells.has(cell) or _yard_cells.has(cell) or _near_field(cell):
+				continue  # miedze urządza _build_balks (płoty, murki, krzaki)
 			var r := rng.randf()
 			# kępy drzew na łąkach między polami i pojedyncze drzewa na miedzach
 			if groves.get_noise_2d(x, y) > 0.22 and r < 0.34:
@@ -400,9 +426,10 @@ func _build_fields(rng: RandomNumberGenerator) -> void:
 					_decor(rng, pos + Vector2(rng.randf_range(-6, 6), 14), [3, 4, 5].pick_random())
 			"stubble":
 				w._map_props[cell] = MAP_STUBBLE
-				if cell.x % 3 == 1 and cell.y % 3 == 1 and rng.randf() < 0.55:
-					var jitter := Vector2(rng.randf_range(-3, 3), rng.randf_range(-2, 2))
-					_prop(STOOK if rng.randf() < 0.8 else HAY_BALE, pos + jitter, Vector2(12, 5))
+				# snopki w równych rzędach (co dwa kafelki w poziomie, co trzy w pionie), tu i ówdzie bela
+				if cell.x % 2 == 0 and cell.y % 3 == 1 and rng.randf() < 0.85:
+					var jitter := Vector2(rng.randf_range(-2, 2), rng.randf_range(-1, 1))
+					_prop(STOOK if rng.randf() < 0.88 else HAY_BALE, pos + jitter)  # snopki nie zagradzają drogi
 				elif rng.randf() < 0.004:
 					_prop(HAYSTACK, pos, Vector2(30, 10))
 			_:
@@ -411,6 +438,67 @@ func _build_fields(rng: RandomNumberGenerator) -> void:
 					_prop(PLOUGH, pos)
 				elif rng.randf() < 0.02:
 					_decor(rng, pos, [6, 14].pick_random())
+
+
+## Miedze i skraje pól: wzdłuż poziomych granic pól (komórka poza polem, pole tuż nad nią albo pod nią) płoty
+## z żerdzi albo murki z polnych kamieni - rodzaj zmienia się płatami po krainie, część granic zostaje otwarta;
+## w ogrodzeniach co jakiś czas przerwa na przejście. Na miedzach krzaki, kamienie, kwiaty i pojedyncze drzewa.
+func _build_balks(rng: RandomNumberGenerator) -> void:
+	var style := FastNoiseLite.new()
+	style.seed = rng.randi()
+	style.frequency = 0.04
+	# przęsła stawiamy co kilka kafelków dolnego skraju pola (skraj bywa schodkowy - ogrodzenie idzie za nim);
+	# co jakiś czas przerwa na przejście, w murkach także wyłomy z gruzem
+	for y in w.map_size.y:
+		for x in w.map_size.x:
+			var cell := Vector2i(x, y)
+			if not _balk_edge(cell):
+				continue
+			var n := style.get_noise_2d(x, y)
+			var pos := Vector2((x + 0.5) * TILE, (y + 1) * TILE + 4.0)
+			if n > 0.15 and x % 3 == 0:
+				if rng.randf() < 0.2:
+					_prop(RUBBLE, pos)
+				elif rng.randf() < 0.9:
+					var piece := _prop(WALL if rng.randf() < 0.8 else WALL_END, pos, Vector2(WALL.get_width() - 4, 8))
+					piece.flip_h = rng.randf() < 0.5
+					w._map_props[cell] = MAP_WALL
+			elif n <= 0.15 and n > -0.35 and x % 2 == 0 and x % 10 != 0 and rng.randf() < 0.85:
+				_prop(FENCE, pos, Vector2(FENCE.get_width() - 8, 4)).flip_h = rng.randf() < 0.5
+				w._map_props[cell] = MAP_WALL
+	# drobiazgi na miedzach: krzaki, kamienie, kwiaty, czasem drzewo
+	for y in w.map_size.y:
+		for x in w.map_size.x:
+			var cell := Vector2i(x, y)
+			if _field_kind.has(cell) or not _near_field(cell) or w._road_clear.has(cell) or w._reserved.has(cell):
+				continue
+			var r := rng.randf()
+			if r < 0.035:
+				w._try_place(BUSH, cell, 1)
+			elif r < 0.05:
+				_tree(rng, cell, 2)
+			elif r < 0.3:
+				_decor(rng, w._cell_to_world(cell) + Vector2(rng.randf_range(-5, 5), rng.randf_range(-4, 4)), [3, 4, 5, 6, 13, 13, 14].pick_random())
+
+
+## Dolny skraj pola (pod nim miedza), wzdłuż którego można postawić płot albo murek: ogrodzenie stoi tuż pod
+## ostatnim rzędem łanu, więc rysuje się przed nim, a łan z pola niżej zaczyna się dopiero za miedzą.
+func _balk_edge(cell: Vector2i) -> bool:
+	var below := cell + Vector2i.DOWN
+	if not _field_kind.has(cell) or _field_kind.has(below):
+		return false
+	# przy pasie lasu na granicy krainy bez ogrodzeń - nie zamykają przejść między polem a drzewami
+	var edge := mini(mini(cell.x, cell.y), mini(w.map_size.x - 1 - cell.x, w.map_size.y - 1 - cell.y))
+	if edge < w.border_thickness + 5:
+		return false
+	return not (w._road_clear.has(below) or w._reserved.has(below) or _yard_cells.has(below) or w._occupied.has(below))
+
+
+func _near_field(cell: Vector2i) -> bool:
+	for d in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+		if _field_kind.has(cell + d):
+			return true
+	return false
 
 
 ## Jeden rząd zboża: pas tekstury powtarzany na szerokość pola, kołysany shaderem; postacie sortują się
