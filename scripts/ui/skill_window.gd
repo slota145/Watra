@@ -1,16 +1,20 @@
 class_name SkillWindow
 extends PanelContainer
 ## Okno umiejętności (klawisz K) z zakładkami broni: broń biała, łuk i księga magii.
-## Każda broń ma aktywną umiejętność pod PPM, uderzenie pod Shift+LPM, dodatkowy cios
-## (LPM zaraz po uderzeniu - wymaga uderzenia) i dwie regeneracje. Odblokowanie i ulepszenia
-## za złoto. Okno otwiera się na zakładce założonej broni.
+## Każda broń ma zwykły atak, aktywną umiejętność, uderzenie, dodatkowy cios (atak zaraz po uderzeniu -
+## wymaga uderzenia) i dwie regeneracje. Odblokowanie i ulepszenia za złoto. Atak, umiejętność aktywną
+## i uderzenie przeciąga się na pasek umiejętności na dole ekranu (Hotbar); przy nazwie widać, pod jakim są klawiszem.
+## Okno otwiera się na zakładce założonej broni.
 
 const CARD_WIDTH := 150.0
-const KEYS := {"active": "PPM", "strike": "Shift+LPM", "combo": "LPM po uderzeniu"}
+## Miejsce na paski szybkiego wyboru na dole ekranu, którego okno nie zasłania.
+const BOTTOM_RESERVE := 52.0
 
 var _player: Player
-## id umiejętności -> {"level": Label, "effect": Label, "button": Button, "card": PanelContainer}
+## id umiejętności -> {"title": Label, "level": Label, "effect": Label, "button": Button, "card": PanelContainer}
 var _cards := {}
+## rodzaj broni -> nazwa na karcie zwykłego ataku (z klawiszem z paska)
+var _attack_titles := {}
 ## rodzaj broni -> siatka kart / przycisk zakładki
 var _pages := {}
 var _tabs := {}
@@ -28,7 +32,7 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
 	box.add_child(UiStyle.title("Umiejętności"))
-	var hint := UiStyle.label("Umiejętności działają tylko z założoną bronią swojego rodzaju. Szybkość ataku przyspiesza też umiejętności.", 7, UiStyle.DIM_COLOR)
+	var hint := UiStyle.label("Umiejętności działają tylko z założoną bronią swojego rodzaju. Szybkość ataku przyspiesza też umiejętności.\nPrzeciągnij atak, umiejętność albo uderzenie na pasek na dole ekranu. Combo: atak zaraz po uderzeniu.", 7, UiStyle.DIM_COLOR)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(hint)
 
@@ -51,6 +55,7 @@ func _ready() -> void:
 		page.add_theme_constant_override("v_separation", 4)
 		box.add_child(page)
 		_pages[weapon_type] = page
+		page.add_child(_make_attack_card(weapon_type))
 		for id in Skills.for_weapon(weapon_type):
 			page.add_child(_make_card(id))
 
@@ -70,6 +75,7 @@ func _ready() -> void:
 
 func setup(player: Player) -> void:
 	_player = player
+	player.hotbar.changed.connect(_refresh)
 	player.skills.changed.connect(_refresh)
 	player.equipment.changed.connect(_refresh)
 	player.stats.gold_changed.connect(func(_gold: int) -> void: _refresh())
@@ -90,7 +96,10 @@ func _show_tab(weapon_type: String) -> void:
 		_tabs[other].set_pressed_no_signal(other == weapon_type)
 	_refresh()
 	reset_size()
-	position = ((get_viewport_rect().size - size) / 2.0).floor()
+	# nad paskami szybkiego wyboru - żeby dało się na nie przeciągać umiejętności
+	var screen := get_viewport_rect().size
+	position = ((screen - size) / 2.0).floor()
+	position.y = maxf(2.0, minf(position.y, screen.y - size.y - BOTTOM_RESERVE))
 
 
 func _make_card(id: String) -> PanelContainer:
@@ -114,8 +123,8 @@ func _make_card(id: String) -> PanelContainer:
 	var names := VBoxContainer.new()
 	names.add_theme_constant_override("separation", 0)
 	header.add_child(names)
-	var title: String = data["name"] + ("  [%s]" % KEYS[data["type"]] if KEYS.has(data["type"]) else "")
-	names.add_child(UiStyle.label(title, 8, UiStyle.TEXT_COLOR))
+	var title := UiStyle.label(data["name"], 8, UiStyle.TEXT_COLOR)
+	names.add_child(title)
 	var level := UiStyle.label("", 7, UiStyle.DIM_COLOR)
 	names.add_child(level)
 
@@ -130,8 +139,55 @@ func _make_card(id: String) -> PanelContainer:
 	button.pressed.connect(_upgrade.bind(id))
 	content.add_child(button)
 
-	_cards[id] = {"level": level, "effect": effect, "button": button, "card": card}
+	_cards[id] = {"title": title, "level": level, "effect": effect, "button": button, "card": card}
+	if Hotbar.can_slot_skill(id):
+		card.set_drag_forwarding(_drag_skill.bind(id, card), Callable(), Callable())
 	return card
+
+
+## Karta zwykłego ataku bronią - zawsze dostępny, da się go przełożyć na dowolny slot paska.
+func _make_attack_card(weapon_type: String) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.SLOT_BG, UiStyle.SLOT_BORDER, 3))
+	card.mouse_filter = Control.MOUSE_FILTER_PASS
+	card.custom_minimum_size.x = CARD_WIDTH
+	card.tooltip_text = "%s\nZwykły atak założoną bronią w stronę kursora. Przeciągnij na pasek umiejętności." % Hotbar.ATTACK_NAME
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 2)
+	card.add_child(content)
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 4)
+	content.add_child(header)
+	var icon := TextureRect.new()
+	icon.texture = Hotbar.ATTACK_ICON
+	UiStyle.fit_icon(icon)
+	header.add_child(icon)
+	var names := VBoxContainer.new()
+	names.add_theme_constant_override("separation", 0)
+	header.add_child(names)
+	var title := UiStyle.label(Hotbar.ATTACK_NAME, 8, UiStyle.TEXT_COLOR)
+	names.add_child(title)
+	names.add_child(UiStyle.label("Zawsze dostępny", 7, UiStyle.DIM_COLOR))
+	var effect := UiStyle.label("Zwykły atak bronią. Zaraz po uderzeniu wyprowadza dodatkowy cios (combo).", 7, UiStyle.DIM_COLOR)
+	effect.custom_minimum_size.x = CARD_WIDTH - 8.0
+	effect.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(effect)
+	_attack_titles[weapon_type] = title
+	card.set_drag_forwarding(_drag_skill.bind(Hotbar.ATTACK, card), Callable(), Callable())
+	return card
+
+
+## Przeciąganie karty na pasek umiejętności (dane jak w ActionBars: {"skill": id}).
+func _drag_skill(_at: Vector2, id: String, card: Control) -> Variant:
+	card.set_drag_preview(UiStyle.drag_preview(Hotbar.skill_icon(id)))
+	Sfx.play("ui_click")
+	return {"skill": id}
+
+
+## " [Q]" - pod jakim klawiszem paska leży umiejętność dla danej broni ("" - nie ma jej na pasku).
+func _key_of(id: String, weapon_type: String) -> String:
+	var index := _player.hotbar.skill_bar(weapon_type).find(id)
+	return "  [%s]" % Hotbar.SKILL_KEYS[index] if index >= 0 else ""
 
 
 func _upgrade(id: String) -> void:
@@ -155,10 +211,14 @@ func _refresh() -> void:
 	for weapon_type: String in _tabs:
 		_tabs[weapon_type].text = Skills.WEAPON_NAMES[weapon_type] + (" (założona)" if weapon_type == current_type else "")
 
+	for weapon_type: String in _attack_titles:
+		_attack_titles[weapon_type].text = Hotbar.ATTACK_NAME + _key_of(Hotbar.ATTACK, weapon_type)
 	var gold := _player.stats.gold
 	for id: String in _cards:
 		var parts: Dictionary = _cards[id]
 		var data := Skills.get_data(id)
+		var suffix := "  [po uderzeniu]" if data["type"] == "combo" else _key_of(id, data["weapon"])
+		parts["title"].text = data["name"] + suffix
 		var level := _player.skills.level_of(id)
 		var cost := _player.skills.next_cost(id)
 		var mana := Skills.mana_cost_text(id)

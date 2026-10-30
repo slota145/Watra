@@ -3,8 +3,9 @@ extends CharacterBody2D
 ## Postać gracza: ruch w 8 kierunkach z przyspieszeniem i hamowaniem,
 ## zryw (dash), atak założoną bronią w stronę kursora (cięcie po półksiężycu,
 ## strzała z łuku albo magiczny pocisk z księgi), zdrowie i mana zależne
-## od statystyk i ekwipunku, umiejętności pod PPM (młynek, salwa, kula ognia)
-## i pasywne regeneracje, ścinanie drzew (E przy drzewie) oraz odradzanie się po śmierci.
+## od statystyk i ekwipunku, umiejętności z paska szybkiego wyboru (Hotbar: LPM, PPM, Q, E, R, Z, X - zwykły atak,
+## młynek / salwa / kula ognia, uderzenia; przedmioty pod 1-0), pasywne regeneracje, ścinanie drzew (F przy drzewie)
+## oraz odradzanie się po śmierci.
 
 signal health_changed(current: int, maximum: int)
 signal mana_changed(current: int, maximum: int)
@@ -110,10 +111,11 @@ var _attack_angle := 0.0
 var _swing_sign := 1.0
 ## Mnożnik obrażeń bieżącego cięcia (półksiężyc tnie mocniej niż zwykły atak).
 var _attack_multiplier := 1.0
-## Uderzenia (Shift+LPM) i dodatkowe ciosy (LPM zaraz po uderzeniu).
+## Uderzenia (slot z uderzeniem) i dodatkowe ciosy (atak zaraz po uderzeniu).
 var _strike_request := false
 var _combo_request := false
 var _strike_cooldown := 0.0
+var _strike_cooldown_total := 0.0
 var _combo_window := 0.0
 ## Szarża: ile jeszcze trwa, kierunek, prędkość, mnożnik obrażeń i kogo już trafiła.
 var _lunge_time := 0.0
@@ -134,6 +136,9 @@ var _hit_this_swing: Dictionary[Node, bool] = {}
 ## Prawy przycisk (umiejętność) wciśnięty poza oknami interfejsu.
 var _skill_held := false
 var _skill_cooldown_timer := 0.0
+var _skill_cooldown_total := 0.0
+## Wciśnięte sloty paska umiejętności (indeksy jak Hotbar.SKILL_KEYS).
+var _held_slots: Array[bool] = [false, false, false, false, false, false, false]
 var _whirling := false
 ## Ładowanie kuli ognia: postęp 0..1 (-1 = nie ładujemy), kula w dłoniach i jej dźwięki.
 var _fireball_charge := -1.0
@@ -182,6 +187,8 @@ var _last_max_mana := 0
 @onready var storage: Inventory = $Storage
 ## Premie z osady (posiłki, błogosławieństwa, łaźnia, bestiariusz).
 var boons := Boons.new()
+## Paski szybkiego wyboru: przedmioty pod 1-0 i umiejętności (osobny układ dla każdej broni).
+var hotbar := Hotbar.new()
 
 ## Plecak bez toreb i miejsca na torby (sakwy, plecaki) pod ekwipunkiem.
 const BASE_INVENTORY := 20
@@ -236,31 +243,80 @@ func _ready() -> void:
 ## Kliknięcie w okno ekwipunku / postaci jest przechwytywane przez interfejs
 ## i tutaj nie dociera, więc nie powoduje ataku.
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("attack"):
-		# Shift+LPM - uderzenie broni; LPM zaraz po nim - dodatkowy cios; inaczej zwykły atak
-		if Input.is_key_pressed(KEY_SHIFT):
-			_strike_request = true
-		elif combo_ready():
-			_combo_request = true
-		else:
-			_attack_held = true
-	elif event.is_action_pressed("skill"):
-		_skill_held = true
-	elif is_dead:
+	for i in Hotbar.SKILL_ACTIONS.size():
+		if event.is_action_pressed(Hotbar.SKILL_ACTIONS[i]):
+			_press_skill_slot(i)
+			return
+	if is_dead:
 		return
-	elif event.is_action_pressed("interact"):
+	if event.is_action_pressed("interact"):
 		_interact()
-	elif event.is_action_pressed("potion_health"):
-		use_item("health_potion")
-	elif event.is_action_pressed("potion_mana"):
-		use_item("mana_potion")
+		return
+	for i in Hotbar.ITEM_SLOTS:
+		if event.is_action_pressed("item_%d" % (i + 1)):
+			use_hotbar_item(i)
+			return
 
 
 func _input(event: InputEvent) -> void:
-	if event.is_action_released("attack"):
-		_attack_held = false
-	elif event.is_action_released("skill"):
-		_skill_held = false
+	for i in Hotbar.SKILL_ACTIONS.size():
+		if event.is_action_released(Hotbar.SKILL_ACTIONS[i]):
+			_held_slots[i] = false
+			_update_held_slots()
+
+
+## Wciśnięty slot paska umiejętności: atak (albo dodatkowy cios zaraz po uderzeniu), umiejętność aktywna
+## (trzymana - młynek, ładowanie kuli ognia) albo uderzenie (jedno na wciśnięcie).
+func _press_skill_slot(index: int) -> void:
+	_held_slots[index] = true
+	var id: String = hotbar.skill_bar(stats.weapon_type())[index]
+	if id == Hotbar.ATTACK:
+		if combo_ready():
+			_combo_request = true
+		else:
+			_attack_held = true
+	elif id != "":
+		match Skills.get_data(id)["type"]:
+			"active":
+				_skill_held = true
+			"strike":
+				_strike_request = true
+
+
+## Atak i umiejętność aktywna trwają, dopóki trzymany jest któryś slot z nimi.
+func _update_held_slots() -> void:
+	var bar := hotbar.skill_bar(stats.weapon_type())
+	_attack_held = false
+	_skill_held = false
+	for i in _held_slots.size():
+		if not _held_slots[i] or bar[i] == "":
+			continue
+		if bar[i] == Hotbar.ATTACK:
+			_attack_held = true
+		elif Skills.get_data(bar[i])["type"] == "active":
+			_skill_held = true
+
+
+## Przedmiot ze slotu 1-0 (np. mikstura).
+func use_hotbar_item(index: int) -> bool:
+	var id := hotbar.items[index]
+	return use_item(id) if id != "" else false
+
+
+## Ile zostało do końca odnowienia umiejętności i ile trwa całe (Vector2(pozostało, całość); zero - gotowa).
+func cooldown_of(id: String) -> Vector2:
+	match Skills.get_data(id).get("type", ""):
+		"active":
+			return Vector2(_skill_cooldown_timer, maxf(_skill_cooldown_total, _skill_cooldown_timer))
+		"strike":
+			return Vector2(_strike_cooldown, maxf(_strike_cooldown_total, _strike_cooldown))
+	return Vector2.ZERO
+
+
+## Rzeczy na start nowej postaci (mikstury leżą od razu na pasku pod 1 i 2).
+func give_starting_items() -> void:
+	for id in Hotbar.DEFAULT_ITEMS:
+		inventory.add_item(id, Hotbar.STARTING_POTIONS)
 
 
 func _physics_process(delta: float) -> void:
@@ -726,7 +782,7 @@ func _scan_harvestables(delta: float) -> void:
 			break
 	_harvest_prompt.visible = _nearest_harvestable != null and _harvest_target == null and not npc_near
 	if _harvest_prompt.visible:
-		_harvest_prompt.text = "[E] " + _nearest_harvestable.action_name
+		_harvest_prompt.text = "[F] " + _nearest_harvestable.action_name
 		_harvest_prompt.global_position = _nearest_harvestable.global_position + Vector2(-30, -_nearest_harvestable.bar_height - 10.0)
 
 
@@ -761,6 +817,7 @@ func get_save_data() -> Dictionary:
 		"storage": storage.get_save_data(),
 		"bags": bags.duplicate(),
 		"boons": boons.get_save_data(),
+		"hotbar": hotbar.get_save_data(),
 		"generated_items": Loot.export_used(_owned_ids()),
 		"hero": hero,
 	}
@@ -798,6 +855,9 @@ func load_save_data(data: Dictionary) -> void:
 	if data.has("storage"):
 		storage.load_save_data(data["storage"])
 	boons.load_save_data(data.get("boons", {}))
+	# starsze zapisy bez paska - zostaje domyślny (mikstury pod 1 i 2, umiejętności pod LPM, PPM i Q)
+	if data.has("hotbar"):
+		hotbar.load_save_data(data["hotbar"])
 	stats.load_save_data(data.get("stats", {}))
 	inventory.load_save_data(data.get("inventory", []))
 	var pos: Array = data.get("position", [spawn_point.x, spawn_point.y])
@@ -1205,6 +1265,7 @@ func _cast(id: String, charge := 0.0) -> void:
 
 	if id == "multishot":
 		_skill_cooldown_timer = _cooldown(Skills.MULTISHOT_COOLDOWN)
+		_skill_cooldown_total = _skill_cooldown_timer
 		var spread := deg_to_rad(Skills.MULTISHOT_SPREAD_DEGREES)
 		var multiplier := Skills.multishot_damage(level)
 		for i in Skills.MULTISHOT_ARROWS:
@@ -1216,6 +1277,7 @@ func _cast(id: String, charge := 0.0) -> void:
 		Sfx.play("bow", 2.0, 0.9)
 	else:
 		_skill_cooldown_timer = _cooldown(Skills.FIREBALL_COOLDOWN)
+		_skill_cooldown_total = _skill_cooldown_timer
 		var fireball := _make_projectile(weapon, dir)
 		var multiplier := Skills.fireball_damage(level) * Skills.fireball_charge_damage(charge)
 		fireball.texture = FIREBALL_TEXTURE
@@ -1318,12 +1380,12 @@ func _hit_enemies_in_arc(half_arc: float) -> void:
 		hit_enemy(enemy, dmg, global_position, attack_knockback * (1.6 if _attack_multiplier > 1.0 else 1.0))
 
 
-# ---------------------------------------------------------------- uderzenia (Shift+LPM) i dodatkowe ciosy
+# ---------------------------------------------------------------- uderzenia i dodatkowe ciosy
 func strike_ready() -> bool:
 	return _strike_cooldown <= 0.0
 
 
-## Czy trwa okno na dodatkowy cios (LPM zaraz po uderzeniu).
+## Czy trwa okno na dodatkowy cios (atak zaraz po uderzeniu).
 func combo_ready() -> bool:
 	return _combo_window > 0.0 and skills.combo_for(stats.weapon_type()) != ""
 
@@ -1356,13 +1418,16 @@ func _use_strike() -> void:
 	match id:
 		"lunge":
 			_strike_cooldown = _cooldown(Skills.LUNGE_COOLDOWN)
+			_strike_cooldown_total = _strike_cooldown
 			_start_lunge(level)
 		"seeker":
 			_strike_cooldown = _cooldown(Skills.SEEKER_COOLDOWN)
+			_strike_cooldown_total = _strike_cooldown
 			_cast_seeker(level)
 			_combo_window = Skills.COMBO_WINDOW
 		"chain_lightning":
 			_strike_cooldown = _cooldown(Skills.CHAIN_COOLDOWN)
+			_strike_cooldown_total = _strike_cooldown
 			_cast_chain(level)
 			_combo_window = Skills.COMBO_WINDOW
 
@@ -1715,6 +1780,7 @@ func _die() -> void:
 	_attack_timer = 0.0
 	_attack_held = false
 	_skill_held = false
+	_held_slots.fill(false)
 	_lunge_time = 0.0
 	_combo_window = 0.0
 	_stop_whirl()

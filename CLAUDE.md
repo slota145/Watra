@@ -43,7 +43,12 @@ Wszystkie krainy mają 200x150 kafelków i układają się w mozaikę na mapie �
   - `world.gd` i skrypty krain (`grain_fields.gd`, `drowned_grove.gd`, `mountain_zone.gd`, `ancient_forest.gd`, `forest_cemetery.gd`, `hydra_bog.gd`),
   - `settlement.gd`: Ostoja,
   - `player.gd`, `character_stats.gd`, `items.gd`, `item_bases.gd`, `loot.gd`, `legends.gd`, `legendary_effects.gd`, `skills.gd`, `skill_effects.gd`, `levels.gd`, `quests.gd`, `bounties.gd`,
+  - `hotbar.gd`: paski szybkiego wyboru (dane), `status_effects.gd`: lista efektów działających na gracza,
   - `scripts/ui/`: okna interfejsu (`ui_style.gd` to wspólny styl).
+- Sterowanie: WASD, spacja (zryw), F (interakcja), paski szybkiego wyboru na dole ekranu: umiejętności pod LPM, PPM, Q, E, R, Z, X
+  (osobny układ dla każdej broni) i przedmioty pod 1-0 (`scripts/ui/action_bars.gd`, `scripts/ui/hotbar_slot.gd`).
+  Pod paskami zdrowia i many ikony efektów (`scripts/ui/status_row.gd`). Tryb deweloperski: Ctrl+Shift+C, potem F1 złoto,
+  F2 awans, F3 kamienie, F4 drewno i kamień.
 - `scenes/`: sceny (`main_menu.tscn` startowa, `world.tscn` rozgrywka, potwory, `hud.tscn`).
 - `assets/`: grafiki, muzyka, dźwięki.
 - `pixellab_src/`: surowe grafiki z PixelLab.
@@ -181,6 +186,22 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   Istniejące kamienie (zwykłe, doskonałe, uświęcone, miłosierdzia) służą tylko do zaklinania (`scripts/enchanting.gd`, `scripts/ui/enchant_window.gd`), więc to byłby nowy system.
 - [ ] Nowe bronie: kosa, kostur (nekromanta), młoty, chainblade'y, sztylety, włócznie, rapier, hydrosfera.
   Każda broń to nowy rodzaj z własnym drzewkiem, a nie tylko nowy przedmiot, więc wymaga szczegółów od autora.
+
+### Interfejs i walka
+
+- [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)
+  i 7 slotów umiejętności (LPM, PPM, Q, E, R, Z, X) z osobnym układem dla każdej broni. Na slot umiejętności trafia też
+  zwykły atak, więc gracz nie jest przywiązany do LPM. Przeciąganie z plecaka i z okna umiejętności, PPM albo przeciągnięcie
+  poza pasek opróżnia slot. Odnowienie widać na slocie (wskazówka zegara i sekundy), brak many - niebieskawy slot.
+  Shift+LPM zniknął (uderzenie leży domyślnie pod Q), interakcja przeszła z E na F.
+- [x] Ikony efektów pod paskami zdrowia i many: premie z osady, Dary i poziom Watry, efekty legendarnych przedmiotów,
+  trucizna, spowolnienie, oszołomienie; ramka złota/czerwona/szara, czas pod ikoną, opis w dymku.
+- [ ] **System combo** (razem z drzewkiem umiejętności): umiejętność użyta zaraz po innej zachowuje się inaczej.
+  Combo zależy od umiejętności, a nie od klawisza, więc gracz dowolnie układa pasek, a opis umiejętności mówi, z czym tworzy combo.
+  Podpowiedź na pasku: po umiejętności otwierającej combo przez chwilę świecą sloty umiejętności, które zadziałają inaczej,
+  z kurczącym się pierścieniem czasu (dziś świeci tylko slot ataku w oknie dodatkowego ciosu, `ActionBars._process`).
+- [ ] Nowe umiejętności z drzewka wypełnią wolne sloty Q, E, R, Z, X (dziś każda broń ma do przypisania tylko atak,
+  umiejętność aktywną i uderzenie).
 
 ### Watra i Ostoja
 

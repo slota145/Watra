@@ -523,6 +523,7 @@ func _ready() -> void:
 	if not save.is_empty():
 		_apply_save(save)
 	elif zone == "forest":
+		player.give_starting_items()
 		hud.show_intro()
 	if save.has("arrive"):
 		player.global_position = _arrival_point(str(save["arrive"]))

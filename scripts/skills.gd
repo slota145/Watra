@@ -1,7 +1,8 @@
 class_name Skills
 ## Baza umiejętności. Każdy rodzaj broni (melee / bow / spell) ma swoje drzewko:
-## aktywną umiejętność pod PPM, uderzenie pod Shift+LPM (type "strike"), dodatkowy cios
-## pod LPM zaraz po uderzeniu (type "combo", wymaga uderzenia) i dwie pasywne regeneracje.
+## aktywną umiejętność (domyślnie pod PPM), uderzenie (type "strike", domyślnie pod Q), dodatkowy cios
+## - atak zaraz po uderzeniu (type "combo", wymaga uderzenia) - i dwie pasywne regeneracje.
+## Aktywną umiejętność i uderzenie gracz kładzie na dowolny slot paska (Hotbar).
 ## Wszystkie działają tylko z założoną bronią swojego rodzaju.
 ## Umiejętności odblokowuje się i ulepsza za złoto (koszty rosną z poziomem).
 
@@ -20,27 +21,27 @@ const DATA := {
 	"lunge": {
 		"name": "Szarża", "weapon": "melee", "type": "strike",
 		"icon": preload("res://assets/skills/lunge.png"),
-		"description": "Shift+LPM - błyskawiczne pchnięcie mieczem w stronę kursora, raniące wszystkich na drodze.",
+		"description": "Błyskawiczne pchnięcie mieczem w stronę kursora, raniące wszystkich na drodze. Combo: atak zaraz potem to Półksiężyc.",
 	},
 	"crescent": {
 		"name": "Półksiężyc", "weapon": "melee", "type": "combo", "requires": "lunge",
 		"icon": preload("res://assets/skills/crescent.png"),
-		"description": "LPM zaraz po szarży - potężne cięcie po półksiężycu, dużo szersze niż zwykły atak.",
+		"description": "Combo: atak zaraz po Szarży - potężne cięcie po półksiężycu, dużo szersze niż zwykły atak.",
 	},
 	"seeker": {
 		"name": "Strzała tropiąca", "weapon": "bow", "type": "strike",
 		"icon": preload("res://assets/skills/seeker.png"),
-		"description": "Shift+LPM - strzała sama szuka wrogów: przebija ich na wylot i nawraca po łuku do kolejnego celu.",
+		"description": "Strzała sama szuka wrogów: przebija ich na wylot i nawraca po łuku do kolejnego celu. Combo: atak zaraz potem to Szybka salwa.",
 	},
 	"rapid_volley": {
 		"name": "Szybka salwa", "weapon": "bow", "type": "combo", "requires": "seeker",
 		"icon": preload("res://assets/skills/rapid_volley.png"),
-		"description": "LPM zaraz po strzale tropiącej - seria szybkich strzał w stronę kursora.",
+		"description": "Combo: atak zaraz po Strzale tropiącej - seria szybkich strzał w stronę kursora.",
 	},
 	"chain_lightning": {
 		"name": "Łańcuch błyskawic", "weapon": "spell", "type": "strike",
 		"icon": preload("res://assets/skills/chain_lightning.png"),
-		"description": "Shift+LPM - błyskawica przeskakuje błyskawicznie od wroga do wroga.",
+		"description": "Błyskawica przeskakuje błyskawicznie od wroga do wroga. Combo: atak zaraz potem to Fala piorunów.",
 	},
 	"thunder_wave": {
 		"name": "Fala piorunów", "weapon": "spell", "type": "combo", "requires": "chain_lightning",
@@ -50,7 +51,7 @@ const DATA := {
 	"whirlwind": {
 		"name": "Młynek", "weapon": "melee", "type": "active",
 		"icon": preload("res://assets/skills/whirlwind.png"),
-		"description": "Przytrzymaj PPM - wirujesz z bronią, raniąc wszystkich wokół. Zużywa manę co sekundę.",
+		"description": "Przytrzymaj klawisz - wirujesz z bronią, raniąc wszystkich wokół. Zużywa manę co sekundę.",
 	},
 	"warrior_blood": {
 		"name": "Krew wojownika", "weapon": "melee", "type": "health_regen", "icon": ICON_HEALTH,
@@ -63,7 +64,7 @@ const DATA := {
 	"multishot": {
 		"name": "Salwa", "weapon": "bow", "type": "active",
 		"icon": preload("res://assets/skills/multishot.png"),
-		"description": "PPM - wystrzeliwujesz 3 strzały naraz w wąskim stożku.",
+		"description": "Wystrzeliwujesz 3 strzały naraz w wąskim stożku.",
 	},
 	"hunter_breath": {
 		"name": "Oddech łowcy", "weapon": "bow", "type": "health_regen", "icon": ICON_HEALTH,
@@ -76,7 +77,7 @@ const DATA := {
 	"fireball": {
 		"name": "Kula ognia", "weapon": "spell", "type": "active",
 		"icon": preload("res://assets/skills/fireball.png"),
-		"description": "Przytrzymaj PPM, by ładować kulę ognia w dłoniach (zjada manę) - im dłużej, tym mocniejszy i większy wybuch. Puść, by rzucić.",
+		"description": "Przytrzymaj klawisz, by ładować kulę ognia w dłoniach (zjada manę) - im dłużej, tym mocniejszy i większy wybuch. Puść, by rzucić.",
 	},
 	"mystic_renewal": {
 		"name": "Mistyczna odnowa", "weapon": "spell", "type": "health_regen", "icon": ICON_HEALTH,
@@ -97,7 +98,7 @@ const MULTISHOT_ARROWS := 3
 const MULTISHOT_SPREAD_DEGREES := 16.0
 const FIREBALL_MANA := 14.0
 const FIREBALL_COOLDOWN := 0.9
-## Uderzenia (Shift+LPM) i dodatkowe ciosy (LPM w ciągu COMBO_WINDOW s po uderzeniu).
+## Uderzenia i dodatkowe ciosy (atak w ciągu COMBO_WINDOW s po uderzeniu).
 const COMBO_WINDOW := 1.2
 const LUNGE_MANA := 10.0
 const LUNGE_COOLDOWN := 2.5
@@ -222,6 +223,13 @@ static func health_regen(level: int, maximum := 0.0) -> float:
 
 static func mana_regen(level: int, maximum := 0.0) -> float:
 	return 0.5 * level + 0.004 * level * maximum
+
+
+## Ile many trzeba, żeby użyć umiejętności (młynek: na ułamek sekundy, jak przy starcie).
+static func mana_cost(id: String) -> float:
+	return {"whirlwind": WHIRLWIND_MANA_PER_SECOND * 0.3, "multishot": MULTISHOT_MANA, "fireball": FIREBALL_MANA,
+			"lunge": LUNGE_MANA, "crescent": CRESCENT_MANA, "seeker": SEEKER_MANA, "rapid_volley": VOLLEY_MANA,
+			"chain_lightning": CHAIN_MANA, "thunder_wave": WAVE_MANA}.get(id, 0.0)
 
 
 static func mana_cost_text(id: String) -> String:

@@ -4,13 +4,11 @@ extends PanelContainer
 
 const CONTROLS := [
 	["WASD / strzałki", "ruch"],
-	["LPM", "atak w stronę kursora"],
-	["PPM", "umiejętność założonej broni"],
-	["Shift + LPM", "uderzenie broni (szarża / strzała tropiąca / błyskawice)"],
-	["LPM po uderzeniu", "dodatkowy cios (półksiężyc / salwa / fala piorunów)"],
+	["LPM / PPM / Q E R Z X", "pasek umiejętności (domyślnie: atak, umiejętność broni, uderzenie)"],
+	["Atak po uderzeniu", "dodatkowy cios - combo (półksiężyc / salwa / fala piorunów)"],
+	["1 - 0", "pasek przedmiotów (na start mikstury życia i many)"],
 	["Spacja", "zryw (chwilowa nietykalność)"],
-	["E", "rozmowa, handel, ścinanie drzew, rozbijanie głazów"],
-	["1 / 2", "mikstura życia / many"],
+	["F", "rozmowa, handel, ścinanie drzew, rozbijanie głazów"],
 	["I", "ekwipunek i zaklinanie"],
 	["C", "postać i atrybuty"],
 	["K", "umiejętności"],
@@ -21,13 +19,14 @@ const CONTROLS := [
 
 const TIPS := [
 	"Osada Ostoja jest bezpieczna - potwory nie wchodzą za palisadę.",
+	"Przedmioty przeciągniesz z plecaka na pasek 1-0, a umiejętności z okna K na pasek nad nim. PPM na slocie go opróżnia.",
 	"Czerwona poświata na ziemi zapowiada atak bossa. Zejdź z niej albo użyj zrywu.",
 	"Każdy poziom daje punkt atrybutu: siła wzmacnia broń białą, zręczność łuki, inteligencja magię.",
 	"Umiejętności i regenerację kupisz za złoto - działają tylko z bronią swojego rodzaju.",
 	"Zaklinaj ekwipunek kamieniami. Od +15 potrzebne są kamienie doskonałe.",
 	"Uświęcone kamienie dają pewne zaklęcie, a kamienie miłosierdzia chronią przed spadkiem poziomu.",
 	"Serca goblinów i skóry wilków sprzedasz u handlarzy za złoto.",
-	"Drzewa zetniesz, a głazy rozbijesz klawiszem E - odrastają po kilku minutach albo od razu po odpoczynku w karczmie.",
+	"Drzewa zetniesz, a głazy rozbijesz klawiszem F - odrastają po kilku minutach albo od razu po odpoczynku w karczmie.",
 	"W drewnie trafiają się uświęcone kamienie, a w głazach kamienie do zaklinania.",
 	"Łowiska są w prawym górnym i lewym dolnym rogu mapy. Zwierzyna ucieka - skóry i poroże sprzedasz, a mięso zjesz (PPM).",
 	"Sołtys Mirosław zleca zbieranie surowców - liczy się to, co masz w plecaku i w magazynie.",

@@ -2,22 +2,22 @@ class_name Hud
 extends CanvasLayer
 ## Interfejs: paski zdrowia, many i expa, poziom, złoto, licznik pokonanych goblinów,
 ## minimapa, komunikaty (śmierć, nowy poziom) oraz okna: postać (C), ekwipunek (I),
-## mapa (M), umiejętności (K), handel z kupcem, szybkie sloty mikstur (1, 2) i umiejętności (PPM)
-## i menu pauzy (Esc, gdy żadne inne okno nie jest otwarte).
+## mapa (M), umiejętności (K), handel z kupcem i menu pauzy (Esc, gdy żadne inne okno nie jest otwarte).
+## Na dole ekranu paski szybkiego wyboru (ActionBars: umiejętności LPM, PPM, Q, E, R, Z, X i przedmioty 1-0),
+## pod paskami zdrowia i many ikony działających efektów (StatusRow).
 ## W prawym dolnym rogu pasek ikon otwierających okna (ekwipunek, postać, umiejętności,
 ## dziennik zadań, mapa, pomoc), nad nim powiadomienia o łupie. Pod minimapą lista
 ## śledzonych zadań - kliknięcie pokazuje obszar zadania na mapie.
-## Ctrl+Shift+C włącza/wyłącza tryb deweloperski: "+" daje złoto, "-" awansuje postać,
-## "0" daje kamienie zaklinające.
+## Ctrl+Shift+C włącza/wyłącza tryb deweloperski: F1 daje złoto, F2 awansuje postać,
+## F3 daje kamienie zaklinające, F4 drewno i kamień.
 
-const QUICK_SLOTS := [["health_potion", "1"], ["mana_potion", "2"]]
 const DEV_GOLD := 1000
-## Ile kamieni każdego rodzaju daje klawisz "0" w trybie deweloperskim.
+## Ile kamieni każdego rodzaju daje klawisz F3 w trybie deweloperskim.
 const DEV_STONES := 5
 const DEV_PERFECT_STONES := 3
 const DEV_BLESSED_STONES := 100
 const DEV_MERCY_STONES := 30
-## Ile drewna i kamienia daje klawisz 9 w trybie deweloperskim.
+## Ile drewna i kamienia daje klawisz F4 w trybie deweloperskim.
 const DEV_RESOURCES := 50
 const DEV_COLOR := Color(0.55, 0.9, 1.0)
 const INTRO_TEXT := "Hordy potworów zalały świat.\nOstatni ludzie schronili się w osadzie Ostoja.\nPomóż im przetrwać."
@@ -37,19 +37,12 @@ var sage_window: SageWindow
 var forge_window: ForgeWindow
 var offer_window: OfferWindow
 var watra_window: WatraWindow
-## Aktywne premie z osady (posiłek, błogosławieństwo, łaźnia) pod paskami - nazwa i minuty do końca.
-var _boon_box: VBoxContainer
-var _boon_time := 0.0
+## Paski szybkiego wyboru na dole ekranu i ikony działających efektów pod paskami zdrowia i many.
+var action_bars: ActionBars
+var status_row: StatusRow
 var _player: Player
-## id mikstury -> etykieta z liczbą sztuk
-var _quick_counts := {}
 ## [przycisk, okno] - przyciski paska ikon w prawym dolnym rogu
 var _icon_buttons: Array[Array] = []
-var _skill_slot: Panel
-## Okienko uderzenia pod Shift+LPM.
-var _strike_slot: Panel
-var _strike_icon: TextureRect
-var _skill_icon: TextureRect
 
 @onready var health_bar: ProgressBar = $Bars/HealthBar
 @onready var health_label: Label = $Bars/HealthBar/Value
@@ -71,7 +64,6 @@ var _skill_icon: TextureRect
 @onready var shop_window: ShopWindow = $ShopWindow
 @onready var skill_window: SkillWindow = $SkillWindow
 @onready var enchant_window: EnchantWindow = $EnchantWindow
-@onready var quick_slots: HBoxContainer = $QuickSlots
 @onready var intro_label: Label = $IntroMessage
 @onready var dev_message: Label = $DevMessage
 @onready var dev_badge: Label = $DevBadge
@@ -121,12 +113,19 @@ func _ready() -> void:
 	watra_window.name = "WatraWindow"
 	add_child(watra_window)
 	move_child(watra_window, offer_window.get_index() + 1)
-	_boon_box = VBoxContainer.new()
-	_boon_box.position = Vector2(6, 76)
-	_boon_box.add_theme_constant_override("separation", 0)
-	_boon_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_boon_box)
-	move_child(_boon_box, quick_slots.get_index() + 1)
+	status_row = StatusRow.new()
+	status_row.name = "StatusRow"
+	status_row.position = Vector2(6, 52)
+	status_row.size = Vector2(150, 0)
+	add_child(status_row)
+	move_child(status_row, $Bars.get_index() + 1)
+	action_bars = ActionBars.new()
+	action_bars.name = "ActionBars"
+	add_child(action_bars)
+	move_child(action_bars, status_row.get_index() + 1)
+	action_bars.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_MINSIZE, 4)
+	action_bars.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	action_bars.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	death_label.visible = false
 	level_up_label.visible = false
 	intro_label.visible = false
@@ -135,7 +134,6 @@ func _ready() -> void:
 	boss_bar.visible = false
 	rest_fade.visible = false
 	_update_kills()
-	_build_quick_slots()
 	_build_icon_bar()
 
 
@@ -158,7 +156,6 @@ func connect_player(player: Player) -> void:
 	inventory_window.enchant_requested.connect(_open_enchanting)
 	crafting_window.setup(player)
 	inventory_window.crafting_requested.connect(_open_crafting)
-	player.inventory.changed.connect(_update_quick_slots)
 	player.item_picked.connect(loot_feed.show_item)
 	quest_tracker.setup(player)
 	# dymek z opisem i porównaniem łupu leżącego na ziemi - na wierzchu HUD (nad oknami się chowa)
@@ -185,15 +182,11 @@ func connect_player(player: Player) -> void:
 	npc_dialog.offers_requested.connect(offer_window.open)
 	watra_window.setup(player)
 	npc_dialog.watra_requested.connect(watra_window.open)
-	player.boons.changed.connect(_update_boons)
-	_update_boons()
+	status_row.setup(player)
+	action_bars.setup(player)
 	quest_tracker.area_requested.connect(show_quest_area)
 	quest_journal.area_requested.connect(show_quest_area)
 	player.quests.quest_ready.connect(_on_quest_ready)
-	player.skills.changed.connect(_update_skill_slot)
-	player.equipment.changed.connect(_update_skill_slot)
-	_update_quick_slots()
-	_update_skill_slot()
 
 	var s := player.stats
 	_on_xp_changed(s.xp, s.xp_to_next_level(), s.level)
@@ -318,22 +311,20 @@ func _handle_dev_keys(event: InputEvent) -> bool:
 		return true
 	if not dev_mode or _player == null:
 		return false
-	# "+" i "-" z klawiatury głównej oraz numerycznej
-	if key.physical_keycode in [KEY_EQUAL, KEY_KP_ADD] or key.keycode == KEY_PLUS:
-		_player.stats.add_gold(DEV_GOLD)
-		_dev_feedback("+%d zł" % DEV_GOLD, Color(1.0, 0.85, 0.3))
-		return true
-	if key.physical_keycode in [KEY_MINUS, KEY_KP_SUBTRACT] or key.keycode == KEY_MINUS:
-		var stats := _player.stats
-		stats.add_xp(stats.xp_to_next_level() - stats.xp)
-		return true
-	if key.physical_keycode in [KEY_0, KEY_KP_0]:
-		_give_dev_stones()
-		return true
-	if key.physical_keycode in [KEY_9, KEY_KP_9]:
-		_give_dev_resources()
-		return true
-	return false
+	match key.physical_keycode:
+		KEY_F1:
+			_player.stats.add_gold(DEV_GOLD)
+			_dev_feedback("+%d zł" % DEV_GOLD, Color(1.0, 0.85, 0.3))
+		KEY_F2:
+			var stats := _player.stats
+			stats.add_xp(stats.xp_to_next_level() - stats.xp)
+		KEY_F3:
+			_give_dev_stones()
+		KEY_F4:
+			_give_dev_resources()
+		_:
+			return false
+	return true
 
 
 func _give_dev_stones() -> void:
@@ -362,7 +353,7 @@ func set_dev_mode(enabled: bool) -> void:
 	dev_mode = enabled
 	dev_badge.visible = enabled
 	if enabled:
-		_show_banner("Tryb deweloperski WŁĄCZONY\n[+] 1000 złota    [-] awans    [0] kamienie zaklinające    [9] drewno i kamień", DEV_COLOR)
+		_show_banner("Tryb deweloperski WŁĄCZONY\n[F1] 1000 złota    [F2] awans    [F3] kamienie zaklinające    [F4] drewno i kamień", DEV_COLOR)
 	else:
 		_show_banner("Tryb deweloperski WYŁĄCZONY", Color(0.85, 0.85, 0.9))
 
@@ -505,128 +496,17 @@ func _build_icon_bar() -> void:
 		_icon_buttons.append([button, window])
 
 
-## Lista aktywnych premii z osady: "Gulasz myśliwski 14 min" w kolorze grupy.
-func _update_boons() -> void:
-	if _boon_box == null or _player == null:
-		return
-	for child in _boon_box.get_children():
-		child.queue_free()
-	for group: String in _player.boons.active:
-		var entry: Dictionary = _player.boons.active[group]
-		var data: Dictionary = Boons.DEFS[entry["id"]]
-		var label := UiStyle.label("%s %d min" % [data["name"], ceili(float(entry["left"]) / 60.0)], 7, Boons.GROUP_COLORS[group])
-		label.add_theme_color_override("font_outline_color", Color(0.05, 0.05, 0.08))
-		label.add_theme_constant_override("outline_size", 3)
-		label.tooltip_text = "%s: %s" % [Boons.GROUP_NAMES[group], data["description"]]
-		label.mouse_filter = Control.MOUSE_FILTER_PASS
-		_boon_box.add_child(label)
-
-
-func _build_quick_slots() -> void:
-	for entry: Array in QUICK_SLOTS:
-		var item := Items.get_data(entry[0])
-		var slot := Panel.new()
-		slot.custom_minimum_size = Vector2(20, 20)
-		slot.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.SLOT_BG, UiStyle.SLOT_BORDER, 0))
-		slot.tooltip_text = "%s [%s]" % [item["name"], entry[1]]
-		slot.theme = UiStyle.make_theme()
-		var icon := TextureRect.new()
-		icon.texture = item["icon"]
-		icon.set_anchors_preset(Control.PRESET_FULL_RECT)
-		UiStyle.center_icon(icon)
-		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		slot.add_child(icon)
-		var key := UiStyle.label(entry[1], 7, UiStyle.TITLE_COLOR)
-		key.position = Vector2(2, -2)
-		key.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		slot.add_child(key)
-		var count := UiStyle.label("0", 7)
-		count.set_anchors_preset(Control.PRESET_FULL_RECT)
-		count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		count.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-		count.offset_right = -1
-		count.offset_bottom = 2
-		count.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		slot.add_child(count)
-		quick_slots.add_child(slot)
-		_quick_counts[entry[0]] = count
-
-	# slot umiejętności pod PPM (zależy od założonej broni)
-	_skill_slot = Panel.new()
-	_skill_slot.custom_minimum_size = Vector2(20, 20)
-	_skill_slot.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.SLOT_BG, UiStyle.BORDER, 0))
-	_skill_slot.theme = UiStyle.make_theme()
-	_skill_icon = TextureRect.new()
-	_skill_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
-	UiStyle.center_icon(_skill_icon)
-	_skill_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_skill_slot.add_child(_skill_icon)
-	var skill_key := UiStyle.label("PPM", 6, UiStyle.TITLE_COLOR)
-	skill_key.position = Vector2(1, 11)
-	skill_key.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_skill_slot.add_child(skill_key)
-	quick_slots.add_child(_skill_slot)
-
-	# uderzenie pod Shift+LPM
-	_strike_slot = Panel.new()
-	_strike_slot.custom_minimum_size = Vector2(20, 20)
-	_strike_slot.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.SLOT_BG, UiStyle.BORDER, 0))
-	_strike_slot.theme = UiStyle.make_theme()
-	_strike_icon = TextureRect.new()
-	_strike_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
-	UiStyle.center_icon(_strike_icon)
-	_strike_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_strike_slot.add_child(_strike_icon)
-	var strike_key := UiStyle.label("SH", 6, UiStyle.TITLE_COLOR)
-	strike_key.position = Vector2(1, 11)
-	strike_key.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_strike_slot.add_child(strike_key)
-	quick_slots.add_child(_strike_slot)
-
-
-func _update_skill_slot() -> void:
-	var weapon_type := _player.stats.weapon_type()
-	var id: String = Skills.for_weapon(weapon_type)[0]
-	var data := Skills.get_data(id)
-	var unlocked := _player.skills.level_of(id) > 0
-	_skill_icon.texture = data["icon"]
-	_skill_slot.tooltip_text = "%s [PPM]\n%s" % [data["name"], Skills.mana_cost_text(id)] if unlocked \
-			else "%s - nieodblokowana (K)" % data["name"]
-	_skill_icon.modulate = Color.WHITE if unlocked else Color(0.3, 0.3, 0.35)
-	# uderzenie (Shift+LPM) i dodatkowy cios
-	var strike_id: String = Skills.for_weapon(weapon_type)[1]
-	var combo_id: String = Skills.for_weapon(weapon_type)[2]
-	var strike := Skills.get_data(strike_id)
-	var strike_unlocked := _player.skills.level_of(strike_id) > 0
-	_strike_icon.texture = strike["icon"]
-	_strike_icon.modulate = Color.WHITE if strike_unlocked else Color(0.3, 0.3, 0.35)
-	var combo_text := ""
-	if _player.skills.level_of(combo_id) > 0:
-		combo_text = "
-LPM zaraz potem: %s (%s)" % [Skills.get_data(combo_id)["name"], Skills.mana_cost_text(combo_id)]
-	_strike_slot.tooltip_text = ("%s [Shift+LPM]
-%s%s" % [strike["name"], Skills.mana_cost_text(strike_id), combo_text]) 			if strike_unlocked else "%s - nieodblokowana (K)" % strike["name"]
-
-
 ## Odległość, z której pasek zdrowia walczącego bossa jest widoczny.
 const BOSS_BAR_DISTANCE := 450.0
 
 
-func _process(delta: float) -> void:
-	# przyciemnienie slotu umiejętności, gdy się odnawia albo brakuje many
-	if _player == null or _skill_slot == null:
+func _process(_delta: float) -> void:
+	if _player == null:
 		return
-	_boon_time -= delta
-	if _boon_time <= 0.0:
-		_boon_time = 5.0
-		_update_boons()
 	_update_boss_bar()
 	# podświetlenie ikon otwartych okien
 	for entry: Array in _icon_buttons:
 		entry[0].set_pressed_no_signal(entry[1].visible)
-	var busy := not _player.skill_ready() or _player.is_whirling() or _player.is_charging_fireball()
-	_skill_slot.modulate.a = 0.55 if busy else 1.0
-	_strike_slot.modulate.a = 1.0 if _player.strike_ready() else 0.55
 
 
 ## Pasek zdrowia bossa, z którym gracz właśnie walczy.
@@ -641,13 +521,6 @@ func _update_boss_bar() -> void:
 		boss_name_label.text = "%s  (poz. %d)" % [fighting.boss_name, fighting.level]
 		boss_health.max_value = fighting.max_health
 		boss_health.value = maxi(fighting.health, 0)
-
-
-func _update_quick_slots() -> void:
-	for id: String in _quick_counts:
-		var n := _player.inventory.count_of(id)
-		_quick_counts[id].text = str(n)
-		_quick_counts[id].get_parent().modulate.a = 1.0 if n > 0 else 0.5
 
 
 func _update_kills() -> void:

@@ -40,7 +40,7 @@ func active_for(weapon_type: String) -> String:
 	return id if level_of(id) > 0 else ""
 
 
-## Odblokowane uderzenie (Shift+LPM) i dodatkowy cios dla rodzaju broni ("" jeśli brak).
+## Odblokowane uderzenie i dodatkowy cios dla rodzaju broni ("" jeśli brak).
 func strike_for(weapon_type: String) -> String:
 	return _learned_of_type(weapon_type, "strike")
 
