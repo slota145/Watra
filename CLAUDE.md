@@ -132,7 +132,7 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 
 - [x] Topielcze Uroczysko zajmuje cały obszar pod drogą i na zachód od rzeki: 16 sadzawek (było 7), mgła na całym obszarze,
   około 220 potworów (było 66): utopce, ogniki, topielice.
-- [x] Bagno Hydry przeniesione nad drogę (miejsce najdalej od drogi, rzeki i krawędzi), z 3-5 mniejszymi sadzawkami
+- [x] Bagno Hydry przeniesione na północny skraj krainy (najdalej od drogi, na zachód od rzeki, z dala od żabołaków), z 3-5 mniejszymi sadzawkami
   wokół głównej; w bagnie martwe drzewa zamiast zwykłych.
 
 ### Pola Zbożowe (`scripts/grain_fields.gd`)

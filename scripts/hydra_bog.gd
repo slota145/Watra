@@ -1,6 +1,6 @@
 class_name HydraBog
 extends Node
-## Bagno Hydry - w północno-zachodniej części Rozlewisk, nad drogą od wejścia (pod nią leży Topielcze
+## Bagno Hydry - na północnym skraju Rozlewisk, jak najdalej od drogi od wejścia (pod nią leży Topielcze
 ## Uroczysko). Czarna, płytka woda (da się brodzić) z błotnistym brzegiem, a wokół kilka mniejszych sadzawek;
 ## martwe drzewa, kości i szczątki śmiałków; nad bagnem gęsty mrok i trujące opary.
 ## Pośrodku czeka Hydra (poziom 46 - najsilniejszy boss świata, z ostrzeżeniem dla zbyt słabych).
@@ -48,20 +48,23 @@ func plan(world) -> void:
 		_make_pool(spot, r)
 
 
-## Środek bagna: miejsce nad drogą (po stronie wejścia, na zachód od rzeki) najdalej od drogi, rzeki
-## i krawędzi mapy - przeszukujemy siatkę w lewej górnej części krainy.
+## Środek bagna: jak najdalej od drogi (czyli jak najbardziej na północ, po stronie wejścia, na zachód od
+## rzeki), byle główna sadzawka zmieściła się przed krawędzią mapy i rzeką - przeszukujemy siatkę nad drogą.
 func _pick_center() -> Vector2:
 	var size := Vector2(w.map_size)
 	var best := Vector2(size.x * 0.3, size.y * 0.18)
-	var best_room := -INF
-	for y in range(int(size.y * 0.08), int(size.y * 0.45), 2):
-		for x in range(int(size.x * 0.08), int(size.x * 0.55), 2):
+	var best_distance := -INF
+	for y in range(int(size.y * 0.05), int(size.y * 0.45)):
+		for x in range(int(size.x * 0.05), int(size.x * 0.75), 2):
 			var p := Vector2(x, y)
-			if p.y > _road_y_at(p.x):
+			if p.y > _road_y_at(p.x) or _room(p) < RADIUS + 1.0 or not _west_of_river(p):
 				continue
-			var room := _room(p)
-			if room > best_room:
-				best_room = room
+			# z dala od rozlewiska z wioską żabołaków (północny wschód)
+			if ((p - w._swamp_center) / w._swamp_radii).length() < 1.25 + (RADIUS + 10.0) / w._swamp_radii.x:
+				continue
+			var distance := Road.distance_to(p, w._road)
+			if distance > best_distance:
+				best_distance = distance
 				best = p
 	return best
 
@@ -73,6 +76,14 @@ func _room(p: Vector2) -> float:
 	var room := minf(minf(p.x, p.y), minf(size.x - p.x, size.y - p.y)) - edge
 	room = minf(room, Road.distance_to(p, w._road) - 3.0)
 	return minf(room, Road.distance_to(p, w._river) - 4.0)
+
+
+## Czy punkt leży na zachód od rzeki (po stronie wejścia) - rzeka za mostem skręca na północny wschód.
+func _west_of_river(p: Vector2) -> bool:
+	for point: Vector2 in w._river:
+		if absf(point.y - p.y) < 1.0 and point.x < p.x:
+			return false
+	return true
 
 
 ## Wysokość drogi w danej kolumnie (najwyższy punkt drogi w pobliżu) - bagno leży nad nią.
