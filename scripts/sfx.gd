@@ -66,6 +66,8 @@ const SOUNDS := {
 	"craft": [["craft"], -4.0, 0.03, 0.2],
 	"claw": [["claw"], -5.0, 0.1, 0.05],
 	"eagle_cry": [["eagle_cry"], -6.0, 0.08, 1.5],
+	"crow_caw": [["crow_caw_1", "crow_caw_2"], -9.0, 0.1, 0.8],
+	"ghost_wail": [["ghost_wail"], -10.0, 0.08, 4.0],
 	"goat_bleat": [["goat_bleat"], -8.0, 0.1, 0.6],
 	"birdman_screech": [["birdman_screech"], -5.0, 0.1, 0.4],
 	"birdman_death": [["birdman_death"], -5.0, 0.1, 0.1],

@@ -19,6 +19,10 @@ const MAP_PATH := Color("5a5248")
 const MAP_GRAVE := Color("8a8a90")
 const MAP_FENCE := Color("404048")
 const MAP_CRYPT := Color("6a6470")
+## Nad mauzoleum, trupowiskiem, kurhanami i zagajnikami krążą stada kruków, przy grobach siedzą i dziobią grupki
+## kruków (zrywają się, gdy gracz podejdzie), a w pobliżu gracza co jakiś czas przepływa i rozwiewa się zjawa
+## (CemeteryLife). Droga do mauzoleum nekromanty biegnie aleją krypt z latarniami, przy kaplicy stoi chata
+## grabarza, a wśród świerków rosną rdzawe modrzewie.
 ## Mrok nad cmentarzem (chłodny, sinawy): lekki, gęsty dopiero przy nekromancie i w trupowisku; ciepłe światło zniczy
 ## przebija się przez niego.
 const SHADE := Color(0.03, 0.03, 0.09, 0.16)
@@ -56,6 +60,17 @@ const CANDLE_GLOW := Color(1.0, 0.45, 0.2, 0.55)
 const YEWS: Array[Texture2D] = [preload("res://assets/forest/trees/bush_0.png"),
 		preload("res://assets/forest/trees/bush_1.png"), preload("res://assets/forest/trees/bush_2.png")]
 const YEW_TINT := Color(0.42, 0.55, 0.5)
+## Chata grabarza (dawna chałupa z Pól, przyciemniona) i rdzawe modrzewie (shader jesieni na części świerków).
+const HUT := preload("res://assets/fields/farmhouse.png")
+const AUTUMN_SHADER := preload("res://shaders/autumn.gdshader")
+const LARCH_TINTS: Array[Color] = [Color(0.85, 0.45, 0.18), Color(0.72, 0.36, 0.16), Color(0.9, 0.62, 0.24)]
+const LARCH_SHARE := 0.22
+## Aleja krypt: odcinek drogi do mauzoleum (ułamki długości drogi od kaplicy) i odstęp między kryptami (kafelki).
+const ALLEY_FROM := 0.5
+const ALLEY_TO := 0.88
+const ALLEY_STEP := 7.0
+const CROW_FLOCKS := 6
+const CROW_GROUPS := 16
 const HEADSTONES: Array[Texture2D] = [GRAVESTONE, GRAVESTONE, CELTIC_CROSS, WOOD_CROSS, WOOD_CROSS, GRAVE_MOUND, FALLEN_STONE]
 
 ## Kwatery: środki na lekko poszarpanej siatce co PARCEL kafelków, granice wg odległości w normie L4 (prawie prostokąty);
@@ -87,6 +102,9 @@ var plots: Array = []
 var _alley_cells := {}
 var _grove_cells := {}
 var _candle_glow: GradientTexture2D
+var _larch: Array[ShaderMaterial] = []
+var _crypt_alley: Array[Vector2] = []
+var _hut := Vector2.ZERO
 var _candle_material: CanvasItemMaterial
 var _barrows: Array[Vector2] = []
 var _plot_cells := {}
@@ -119,6 +137,9 @@ func generate(world) -> void:
 	w._reserve_area(pit, 17.0)
 	w._reserve_area(ghoul_lair, 10.0)
 	_plan_barrows(rng)
+	_plan_crypt_alley()
+	_hut = chapel + Vector2(12.0, -1.0)
+	w._reserve_area(_hut, 6.0)
 	_plan_plots(rng)
 
 	_build_ground(rng)
@@ -130,9 +151,12 @@ func generate(world) -> void:
 	for barrow in _barrows:
 		_build_barrow(rng, barrow)
 	_build_chapel(rng)
+	_build_crypt_alley(rng)
+	_build_hut(rng)
 	_build_necromancer_lair(rng)
 	_build_ghoul_pit(rng)
 	_build_atmosphere(rng)
+	_build_life(rng)
 
 	var shrine: Node2D = w.SHRINE.instantiate()
 	shrine.position = (chapel + Vector2(5.0, -2.0)) * TILE
@@ -311,9 +335,20 @@ func _tree(rng: RandomNumberGenerator, cell: Vector2i, spacing: int) -> void:
 			_prop(DEAD_TREE, w._cell_to_world(cell), Vector2(12, 6)).flip_h = rng.randf() < 0.5
 			w._map_props[cell] = w.MAP_TREE
 		return
+	if w._occupied.has(cell):
+		return
 	w._try_place(PINE, cell, spacing)
 	if w._occupied.has(cell):
 		w._map_props[cell] = w.MAP_PINE
+		if rng.randf() < LARCH_SHARE:  # rdzawy modrzew
+			if _larch.is_empty():
+				for tint in LARCH_TINTS:
+					var material := ShaderMaterial.new()
+					material.shader = AUTUMN_SHADER
+					material.set_shader_parameter("tint", Vector3(tint.r, tint.g, tint.b))
+					_larch.append(material)
+			var tree: Node2D = w.entities.get_child(w.entities.get_child_count() - 1)
+			(tree.get_node("Sprite") as Sprite2D).material = _larch[rng.randi() % _larch.size()]
 
 
 func _free(cell: Vector2i, radius: int) -> bool:
@@ -579,6 +614,84 @@ func _build_ghoul_pit(rng: RandomNumberGenerator) -> void:
 		_prop(CORPSES if i % 2 == 0 else SKULLS, pos)
 	w._add_goblin_spawn({"type": "colossal_ghoul", "position": lair, "sitting": false, "look_at": lair, "respawn": w.boss_respawn_time})
 	w._map_markers.append({"position": lair, "color": w.MAP_BOSS, "size": 4.0})
+
+
+# ---------------------------------------------------------------- aleja krypt i chata grabarza
+## Miejsca krypt po obu stronach drogi z kaplicy do mauzoleum (na zmianę), rezerwowane przed planem kwater.
+func _plan_crypt_alley() -> void:
+	var road: PackedVector2Array = w._road
+	var start := 0
+	for i in road.size():  # droga zaczyna się przy wejściu - aleja liczy się od kaplicy
+		if road[i].distance_to(chapel) < road[start].distance_to(chapel):
+			start = i
+	var walked := 0.0
+	var total := 0.0
+	for i in range(start + 1, road.size()):
+		total += road[i].distance_to(road[i - 1])
+	var next := total * ALLEY_FROM
+	var side := 1.0
+	for i in range(start + 1, road.size()):
+		walked += road[i].distance_to(road[i - 1])
+		if walked < next or walked > total * ALLEY_TO:
+			continue
+		next = walked + ALLEY_STEP
+		var dir := (road[i] - road[i - 1]).normalized()
+		var spot := road[i] + dir.orthogonal() * 4.5 * side
+		side = -side
+		_crypt_alley.append(spot)
+		w._reserve_area(spot, 3.5)
+
+
+func _build_crypt_alley(rng: RandomNumberGenerator) -> void:
+	for i in _crypt_alley.size():
+		var pos := _crypt_alley[i] * TILE + Vector2(0, 14)
+		var crypt := _prop(CRYPT, pos, Vector2(60, 16))
+		crypt.flip_h = rng.randf() < 0.5
+		for dy in range(-3, 1):
+			for dx in range(-2, 3):
+				w._map_props[Vector2i(_crypt_alley[i]) + Vector2i(dx, dy)] = MAP_CRYPT
+		if i % 2 == 0:
+			_lantern(pos + Vector2(46 if rng.randf() < 0.5 else -46, 4))
+		for k in 2:
+			_candle(rng, pos + Vector2(-10 + k * 20, 10))
+
+
+## Chata grabarza obok kaplicy: przyciemniona chałupa, przy niej świeżo wykopane groby, stos krzyży i latarnia.
+func _build_hut(rng: RandomNumberGenerator) -> void:
+	var pos := _hut * TILE
+	var hut := _prop(HUT, pos, Vector2(80, 22))
+	hut.modulate = Color(0.62, 0.6, 0.66)
+	hut.flip_h = true
+	for dy in range(-5, 1):
+		for dx in range(-3, 4):
+			w._map_props[Vector2i(_hut) + Vector2i(dx, dy)] = MAP_CRYPT
+	_prop(OPEN_GRAVE, pos + Vector2(-52, 40))
+	_prop(OPEN_GRAVE, pos + Vector2(-16, 46))
+	_prop(GRAVE_MOUND, pos + Vector2(20, 44))
+	for k in 3:
+		_prop(WOOD_CROSS, pos + Vector2(56 + k * 6, 30 + k * 3)).flip_h = k % 2 == 0
+	_lantern(pos + Vector2(48, 6))
+
+
+# ---------------------------------------------------------------- kruki i zjawy
+## Stada nad mauzoleum, trupowiskiem, leżem Gnilca, kurhanami i zagajnikami; grupki na ziemi przy losowych grobach;
+## zjawy pojawiają się nad grobami.
+func _build_life(rng: RandomNumberGenerator) -> void:
+	var spots: Array[Vector2] = [necromancer * TILE, pit * TILE, ghoul_lair * TILE]
+	for barrow in _barrows:
+		spots.append(barrow * TILE)
+	var graves: Array[Vector2] = []
+	for plot: Array in plots:
+		for grave: Vector2 in plot[1]:
+			graves.append(grave)
+	var ground: Array[Vector2] = []
+	for i in CROW_GROUPS:
+		if not graves.is_empty():
+			ground.append(graves[rng.randi() % graves.size()] + Vector2(rng.randf_range(-10, 10), 4))
+	var life := CemeteryLife.new()
+	add_child(life)
+	var bounds := Rect2(Vector2(10, 10) * TILE, (Vector2(w.map_size) - Vector2(20, 20)) * TILE)
+	life.setup(_player, w.entities, bounds, spots, ground, graves, CROW_FLOCKS, rng)
 
 
 # ---------------------------------------------------------------- klimat
