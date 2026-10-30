@@ -184,11 +184,13 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
 
 ### Watra i Ostoja
 
-- [ ] **Watra**: duży ogień na środku Ostoi, który odstrasza potwory.
-  - Mieszkańcy dorzucają do niego drewno, żeby go podtrzymać.
-  - Gracz może złożyć ofiarę w złocie albo przedmiotach.
-  - Ofiara ulepsza proceduralne lochy, do których wchodzi się, wkraczając w płomienie watry.
-- [ ] Proceduralnie generowane lochy (dungeony), powiązane z watrą (patrz wyżej).
+- [x] **Watra**: wielki, zawsze płonący ogień na placu Ostoi (`scripts/settlement.gd`, okno `scripts/ui/watra_window.gd`,
+  grafika z PixelLab przez `tools/watra_art.py`). Dwóch mieszkańców donosi drewno, a ogień wtedy buchnie.
+  Gracz składa ofiary ze złota i przedmiotów, które dają żar (`Boons.ember`), a od żaru zależy poziom Watry (1-7).
+  Każdy poziom daje stałe premie postaci (złoto, doświadczenie, regeneracja) i rozwój Ostoi (większy podatek, szybsze budowy).
+  Za złoto można też przyjąć jeden z trzech czasowych Darów Watry.
+- [ ] Proceduralnie generowane lochy (dungeony), do których wchodzi się, wkraczając w płomienie Watry. Ich siłę ma wyznaczać poziom Watry,
+  a ofiary mają je ulepszać (to kolejny krok; dziś okno Watry zapowiada je jako „wkrótce”).
 
 ### Gildia i świat jak w MMO
 

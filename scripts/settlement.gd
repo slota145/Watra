@@ -239,6 +239,17 @@ const YARD_GRASS_EDGE := 0.87
 ## Placyk przed domem sołtysa z kapliczką odrodzenia.
 const PLAZA := Vector2(32.0, 15.4)
 const PLAZA_RADIUS := 3.2
+## Watra: wielki ogień na środku placu (od niej nazwa gry), kapliczka odrodzenia stoi obok. Tragarze znoszą
+## do Watry drewno z magazynu; po każdym naręczu i po każdej ofierze gracza (Boons.ember) ogień buchnie.
+## Im wyższy poziom Watry, tym jaśniej i szerzej świeci.
+const WATRA_POS := Vector2(32.0, 16.6)
+const WATRA_SHRINE := Vector2(37.2, 18.4)
+const WATRA_FPS := 7.0
+const LINES_FIREWOOD: Array[String] = [
+	"Dopóki płonie ogień, Ostoja trwa.",
+	"Drewno dla Watry! Nie może przygasnąć.",
+	"Ogień trzyma potwory z dala. Noszę dalej.",
+]
 
 const LINES_GUARD: Array[String] = [
 	"Trzymaj się blisko palisady, wędrowcze.",
@@ -460,6 +471,12 @@ var _refugee_tents: Array[Node] = []
 var _smith: Npc
 var _traveler: Npc
 var _tax_timer := TAX_TIME
+var _watra: Sprite2D
+var _watra_glow: Sprite2D
+var _watra_sparks: CPUParticles2D
+var _watra_time := 0.0
+var _watra_flare := 0.0
+var _watra_ember := -1
 var _forge_roof: Sprite2D
 var _celebration: Array[Node] = []
 var _celebration_left := 0.0
@@ -942,8 +959,9 @@ func _build_training_dummy() -> void:
 
 func _build_yard() -> void:
 	# kapliczka odrodzenia na placyku przed domem sołtysa
+	_build_watra()
 	var shrine: Node2D = SHRINE.instantiate()
-	shrine.position = _px(PLAZA)
+	shrine.position = _px(WATRA_SHRINE)
 	_entities.add_child(shrine)
 	spawn_point = shrine.position + Vector2(0, 20)
 	map_markers.append({"position": shrine.position, "color": Color("5fd3ff"), "size": 3.0})
@@ -1292,6 +1310,7 @@ func _build_houses() -> void:
 
 func _collect_tax() -> void:
 	var gold := TAX_GOLD + TAX_PER_LEVEL * (_player.stats.level - 1)
+	gold = roundi(gold * (1.0 + Boons.WATRA_TAX * (_player.boons.watra_level() - 1)))
 	_player.stats.add_gold(gold)
 	Sfx.play("coins")
 	DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -16),
@@ -1351,6 +1370,81 @@ func _build_armory() -> void:
 	_trample(Vector2(25.0, 27.4), Vector2(2.2, 1.0))
 	if _smith != null and not "reforge" in _smith.services:
 		_smith.services.append("reforge")
+
+
+# ---------------------------------------------------------------- Watra
+## Watra na placu: animowany ogień w kręgu kamieni runicznych (z kolizją), wielka poświata, iskry, miejsce rozmowy
+## (niewidoczna postać - [E] otwiera okno ofiar) i dwóch tragarzy noszących drewno z magazynu.
+func _build_watra() -> void:
+	var texture := _tex("watra")
+	_watra = _prop("watra", WATRA_POS, Vector2(70, 22), texture.get_width() / texture.get_height())
+	_watra.offset.y += 8.0
+	_watra_glow = _glow_node(_px(WATRA_POS) + Vector2(0, -20), Color(1.0, 0.55, 0.2, 0.55), Vector2(220, 160))
+	_watra_sparks = CPUParticles2D.new()
+	_watra_sparks.position = _px(WATRA_POS) + Vector2(0, -40)
+	_watra_sparks.amount = 22
+	_watra_sparks.lifetime = 1.6
+	_watra_sparks.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	_watra_sparks.emission_rect_extents = Vector2(14, 6)
+	_watra_sparks.direction = Vector2.UP
+	_watra_sparks.spread = 25.0
+	_watra_sparks.gravity = Vector2(0, -12)
+	_watra_sparks.initial_velocity_min = 20.0
+	_watra_sparks.initial_velocity_max = 45.0
+	_watra_sparks.scale_amount_max = 1.6
+	var ramp := Gradient.new()
+	ramp.colors = PackedColorArray([Color(1.0, 0.9, 0.5, 1.0), Color(1.0, 0.45, 0.15, 0.8), Color(0.6, 0.2, 0.1, 0.0)])
+	_watra_sparks.color_ramp = ramp
+	var additive := CanvasItemMaterial.new()
+	additive.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	_watra_sparks.material = additive
+	_watra_sparks.z_index = 30
+	_floors.get_parent().add_child(_watra_sparks)
+	map_markers.append({"position": _px(WATRA_POS), "color": Color(1.0, 0.5, 0.15), "size": 4.0})
+	# miejsce rozmowy: niewidoczna postać przed ogniem
+	var spot := _npc("villager_brown", WATRA_POS + Vector2(0, 1.6), Npc.Role.IDLE, [] as Array[String])
+	spot.looks_around = false
+	spot.display_name = "Watra"
+	spot.services.assign(["watra"])
+	_entities.add_child(spot)
+	spot.get_node("Sprite").visible = false
+	spot.get_node("Shadow").visible = false
+	spot.prompt.text = "[E] Watra"
+	# tragarze drewna: magazyn -> Watra
+	var wood_path := _path([Vector2(42.6, 13.9), Vector2(42.4, 17.6), Vector2(38.0, 18.6), Vector2(34.6, 18.2)])
+	for sheet in ["villager_green", "worker_gray"]:
+		var npc := _npc(sheet, Vector2.ZERO, Npc.Role.CARRIER, LINES_FIREWOOD)
+		npc.path = wood_path
+		npc.carried_texture = _tex("firewood")
+		npc.carried_offset = Vector2(0, -24)
+		npc.on_delivered = _flare_watra.bind(0.6)
+		npc.wait_time = 2.5
+		_entities.add_child(npc)
+	_watra_ember = _player.boons.ember
+
+
+## Ogień buchnie (więcej iskier, jaśniejsza poświata na chwilę).
+func _flare_watra(strength: float) -> void:
+	_watra_flare = maxf(_watra_flare, strength)
+	Sfx.play_at("fireball_launch", _px(WATRA_POS), -14.0 + strength * 6.0)
+
+
+## Klatki płomienia, pulsowanie poświaty (szersza z poziomem Watry), buchnięcie po ofierze.
+func _process_watra(delta: float) -> void:
+	if _watra == null:
+		return
+	_watra_time += delta
+	_watra.frame = int(_watra_time * WATRA_FPS) % _watra.hframes
+	if _player.boons.ember != _watra_ember:
+		if _watra_ember >= 0 and _player.boons.ember > _watra_ember:
+			_flare_watra(1.5)
+		_watra_ember = _player.boons.ember
+	_watra_flare = maxf(_watra_flare - delta * 0.8, 0.0)
+	var level := _player.boons.watra_level()
+	var pulse := 1.0 + sin(_watra_time * 5.3) * 0.04 + sin(_watra_time * 9.1) * 0.03
+	_watra_glow.scale = Vector2.ONE * (0.85 + level * 0.12 + _watra_flare * 0.35) * pulse
+	_watra_glow.modulate.a = clampf(0.75 + level * 0.05 + _watra_flare * 0.3, 0.0, 1.0)
+	_watra_sparks.speed_scale = 0.8 + level * 0.08 + _watra_flare * 0.6
 
 
 # ---------------------------------------------------------------- mieszkańcy
@@ -1634,7 +1728,7 @@ func _process(delta: float) -> void:
 		var entry: Dictionary = _projects[project]
 		if entry["state"] != "building":
 			continue
-		entry["left"] -= delta
+		entry["left"] -= delta * (1.0 + Boons.WATRA_BUILD_SPEED * (_player.boons.watra_level() - 1))
 		var done: float = 1.0 - entry["left"] / PROJECTS[project]["time"]
 		entry["sprite"].frame = clampi(int(done * CONSTRUCTION_STAGES), 0, CONSTRUCTION_STAGES - 1)
 		if entry["left"] <= 0.0:
@@ -1643,6 +1737,7 @@ func _process(delta: float) -> void:
 	if project_state("barracks") == "built":
 		_process_drill(delta)
 	_process_celebration(delta)
+	_process_watra(delta)
 	_process_forge_roof(delta)
 	if project_state("houses") == "built":
 		_tax_timer -= delta

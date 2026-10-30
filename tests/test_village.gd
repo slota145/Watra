@@ -117,6 +117,37 @@ func _process(_d: float) -> bool:
 		check("łucznicy strzelają", shooters == 4)
 		s.celebrate()
 		check("święto", s._celebration.size() == 4)
+		# Watra: ofiary ze złota i przedmiotów podnoszą poziom, dar Watry, podatek rośnie z poziomem, zapis żaru
+		var watra = _world.hud.watra_window
+		check("watra stoi", s._watra != null and s._watra_glow != null)
+		watra.open()
+		check("okno watry", watra.visible and p.boons.watra_level() == 1)
+		p.stats.add_gold(5000)
+		watra._offer_gold(2000)
+		watra._offer_gold(2000)
+		check("watra poziom 2", p.boons.ember == 400 and p.boons.watra_level() == 2, "żar %d" % p.boons.ember)
+		var junk: String = LOOT.generate(LOOT.base_for(BASES.LINES.keys()[0], 10), "magic", 10)
+		p.inventory.add_item(junk, 1)
+		var ember0: int = p.boons.ember
+		for i in p.inventory.slots.size():
+			if not p.inventory.slots[i].is_empty() and p.inventory.slots[i]["id"] == junk:
+				watra._burn(i, 1)
+		check("spalenie przedmiotu", p.inventory.count_of(junk) == 0 and p.boons.ember > ember0)
+		watra._take_gift("watra_fire", p.boons.gold_cost("watra_fire", p.stats.level))
+		check("dar watry", p.boons.has_group("watra"))
+		var gold1: int = p.stats.gold
+		s._collect_tax()
+		var taxed: int = p.stats.gold - gold1
+		check("podatek z watrą", taxed > s.TAX_GOLD + s.TAX_PER_LEVEL * (p.stats.level - 1), "%d zł" % taxed)
+		var ember1: int = p.boons.ember
+		p.boons.load_save_data(p.boons.get_save_data())
+		check("zapis żaru", p.boons.ember == ember1 and p.boons.watra_level() == 2)
+		var carriers := 0
+		for n in s._entities.get_children():
+			if "carried_texture" in n and n.carried_texture == s._tex("firewood"):
+				carriers += 1
+		check("noszący drewno", carriers == 2, "%d" % carriers)
+		watra.visible = false
 		_cam = Camera2D.new()
 		_world.add_child(_cam)
 		_cam.make_current()

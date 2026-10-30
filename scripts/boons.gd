@@ -1,9 +1,11 @@
 class_name Boons
 extends Node
-## Premie z osady: czasowe (posiłek z karczmy, błogosławieństwo z kaplicy, wypoczynek po łaźni - z każdej
+## Premie z osady: czasowe (posiłek z karczmy, błogosławieństwo z kaplicy, wypoczynek po łaźni, dar Watry - z każdej
 ## grupy działa naraz jedna, nowa zastępuje starą) i stałe (bestiariusz mędrca: za trofea z danego
 ## gatunku potworów rośnie zadawane mu obrażenie). CharacterStats dolicza premie czasowe do statystyk,
 ## a Player.hit_enemy mnoży obrażenia przez premię z bestiariusza.
+## Watra: ofiary (złoto i przedmioty) dokładają żaru; od zebranego żaru zależy poziom Watry, a od niego stałe premie
+## postaci (WATRA_PERKS) i rozwój Ostoi (Settlement: podatek, szybsze budowy). Później także poziom lochów.
 
 signal changed
 
@@ -20,12 +22,30 @@ const DEFS := {
 			"description": "+10% doświadczenia", "gold": 40, "gold_per_level": 8},
 	"bless_might": {"name": "Błogosławieństwo siły", "group": "blessing", "time": 1200.0, "stats": {"damage_percent": 0.05},
 			"description": "+5% zadawanych obrażeń", "gold": 40, "gold_per_level": 8},
+	"watra_fire": {"name": "Żar Watry", "group": "watra", "time": 1200.0, "stats": {"damage_percent": 0.08, "crit_chance": 0.03},
+			"description": "+8% zadawanych obrażeń, +3% szansy na trafienie krytyczne", "gold": 60, "gold_per_level": 10},
+	"watra_warmth": {"name": "Ciepło Watry", "group": "watra", "time": 1200.0, "stats": {"health_regen": 4.0, "mana_regen": 2.0, "health_percent": 0.05},
+			"description": "+4 zdrowia i +2 many na sekundę, +5% maks. zdrowia", "gold": 60, "gold_per_level": 10},
+	"watra_glow": {"name": "Blask Watry", "group": "watra", "time": 1200.0, "stats": {"gold_find": 0.15, "xp_gain": 0.08},
+			"description": "+15% znajdowanego złota, +8% doświadczenia", "gold": 60, "gold_per_level": 10},
 	"rested": {"name": "Wypoczęty", "group": "rest", "time": 600.0,
 			"stats": {"health_regen": 2.0, "mana_regen": 1.0, "move_speed": 0.05},
 			"description": "+2 zdrowia i +1 many na sekundę, +5% szybkości ruchu"},
 }
-const GROUP_NAMES := {"meal": "Posiłek", "blessing": "Błogosławieństwo", "rest": "Łaźnia"}
-const GROUP_COLORS := {"meal": Color(1.0, 0.72, 0.4), "blessing": Color(1.0, 0.92, 0.55), "rest": Color(0.6, 0.85, 1.0)}
+const GROUP_NAMES := {"meal": "Posiłek", "blessing": "Błogosławieństwo", "rest": "Łaźnia", "watra": "Dar Watry"}
+const GROUP_COLORS := {"meal": Color(1.0, 0.72, 0.4), "blessing": Color(1.0, 0.92, 0.55), "rest": Color(0.6, 0.85, 1.0),
+		"watra": Color(1.0, 0.5, 0.22)}
+
+## Watra: ile żaru trzeba do kolejnych poziomów (poziom 1 na start) i co daje każdy poziom.
+const WATRA_LEVELS: Array[int] = [0, 300, 900, 2200, 5000, 11000, 24000]
+## Stałe premie postaci za każdy poziom Watry ponad pierwszy (sumują się).
+const WATRA_PERKS := {"gold_find": 0.03, "xp_gain": 0.02, "health_regen": 0.5}
+## Rozwój Ostoi za każdy poziom ponad pierwszy: podatek osadników i szybkość budów.
+const WATRA_TAX := 0.2
+const WATRA_BUILD_SPEED := 0.12
+## Ile żaru daje złoto (1 żaru za tyle złota) i spalony przedmiot (wartość u kupca razy mnożnik).
+const EMBER_PER_GOLD := 0.1
+const EMBER_PER_ITEM_VALUE := 0.15
 
 ## Bestiariusz: gatunek -> nazwa, trofeum, ile trofeów kosztuje kolejny stopień. Każdy stopień: +3% obrażeń.
 const BESTIARY := {
@@ -50,6 +70,8 @@ const BESTIARY_STEP := 0.03
 var active := {}
 ## gatunek -> zdobyty stopień (0..5)
 var bestiary := {}
+## Żar złożony w Watrze (ofiary) - stały, rośnie z każdą ofiarą.
+var ember := 0
 
 
 func _process(delta: float) -> void:
@@ -74,9 +96,9 @@ func has_group(group: String) -> bool:
 	return active.has(group)
 
 
-## Suma premii czasowych do statystyki (jak Equipment.bonus).
+## Suma premii czasowych do statystyki (jak Equipment.bonus) i stałych premii z poziomu Watry.
 func bonus(stat: String) -> float:
-	var total := 0.0
+	var total := float(WATRA_PERKS.get(stat, 0.0)) * (watra_level() - 1)
 	for group: String in active:
 		total += float(DEFS[active[group]["id"]]["stats"].get(stat, 0.0))
 	return total
@@ -86,6 +108,29 @@ func bonus(stat: String) -> float:
 static func gold_cost(id: String, level: int) -> int:
 	var data: Dictionary = DEFS[id]
 	return int(data.get("gold", 0)) + int(data.get("gold_per_level", 0)) * (level - 1)
+
+
+# ---------------------------------------------------------------- Watra
+func watra_level() -> int:
+	var level := 1
+	for i in range(1, WATRA_LEVELS.size()):
+		if ember >= WATRA_LEVELS[i]:
+			level = i + 1
+	return level
+
+
+## Żar potrzebny do następnego poziomu (0 - najwyższy poziom).
+func watra_next() -> int:
+	var level := watra_level()
+	return WATRA_LEVELS[level] if level < WATRA_LEVELS.size() else 0
+
+
+## Dokłada żaru; zwraca true, gdy Watra wskoczyła na wyższy poziom.
+func add_ember(amount: int) -> bool:
+	var before := watra_level()
+	ember += maxi(amount, 0)
+	changed.emit()
+	return watra_level() > before
 
 
 # ---------------------------------------------------------------- bestiariusz
@@ -146,7 +191,7 @@ func get_save_data() -> Dictionary:
 	var timed := {}
 	for group: String in active:
 		timed[group] = [active[group]["id"], active[group]["left"]]
-	return {"active": timed, "bestiary": bestiary.duplicate()}
+	return {"active": timed, "bestiary": bestiary.duplicate(), "ember": ember}
 
 
 func load_save_data(data: Dictionary) -> void:
@@ -156,6 +201,7 @@ func load_save_data(data: Dictionary) -> void:
 		var entry: Array = timed[group]
 		if DEFS.has(str(entry[0])):
 			active[group] = {"id": str(entry[0]), "left": float(entry[1])}
+	ember = int(data.get("ember", 0))
 	bestiary.clear()
 	var saved: Dictionary = data.get("bestiary", {})
 	for kind: String in saved:

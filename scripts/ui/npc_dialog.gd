@@ -10,6 +10,7 @@ signal build_requested
 signal board_requested
 signal sage_requested
 signal forge_requested
+signal watra_requested
 ## Usługi z listą ofert (OfferWindow): "meals", "blessing", "bestiary".
 signal offers_requested(kind: String, npc: Npc)
 const OFFER_SERVICES := {"meals": "Kuchnia", "blessing": "Błogosławieństwo", "bestiary": "Bestiariusz", "reforge": "Przekuwanie"}
@@ -62,6 +63,10 @@ func open(npc: Npc) -> void:
 	# tablica ogłoszeń od razu pokazuje zlecenia
 	if "bounties" in npc.services:
 		board_requested.emit()
+		return
+	# Watra od razu pokazuje ofiary
+	if "watra" in npc.services:
+		watra_requested.emit()
 		return
 	_npc = npc
 	visible = true
