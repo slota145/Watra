@@ -18,8 +18,10 @@ var count_label: Label
 var cooldown_label: Label
 ## 0..1 - jaka część odnowienia jeszcze została (0 - gotowa).
 var cooldown := 0.0
-## Podświetlenie (np. slot, którego atak teraz wyprowadzi dodatkowy cios).
+## Podświetlenie (np. slot, którego atak teraz wyprowadzi dodatkowy cios) i ile okna combo zostało (0..1 -
+## kurczący się pierścień wokół slotu).
 var highlight := false
+var combo_fraction := 0.0
 var _dragging := false
 var _flash := 0.0
 var _normal_style: StyleBox
@@ -99,6 +101,9 @@ func _draw() -> void:
 	if highlight:
 		var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() / 90.0)
 		draw_rect(rect.grow(-0.5), Color(1.0, 0.85, 0.35, 0.5 + 0.5 * pulse), false, 1.0)
+		if combo_fraction > 0.0:
+			var radius := size.x * 0.62
+			draw_arc(size / 2.0, radius, -PI / 2.0, -PI / 2.0 + TAU * combo_fraction, 32, Color(1.0, 0.85, 0.35), 1.5)
 
 
 ## Ciemny wycinek "zegara" przycięty do kwadratu: od godziny 12, zgodnie z ruchem wskazówek, `fraction` całości.

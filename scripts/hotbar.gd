@@ -48,9 +48,9 @@ static func default_skills(weapon_type: String) -> Array[String]:
 	return bar
 
 
-## Czy umiejętność można położyć na pasku (atak, aktywna, uderzenie - nie combo i nie regeneracje).
+## Czy umiejętność można położyć na pasku (atak, aktywna, uderzenie, umiejętność drzewka - nie combo i nie regeneracje).
 static func can_slot_skill(id: String) -> bool:
-	return id == ATTACK or Skills.get_data(id).get("type", "") in ["active", "strike"]
+	return id == ATTACK or Skills.get_data(id).get("type", "") in ["active", "strike", "skill"]
 
 
 static func skill_name(id: String) -> String:

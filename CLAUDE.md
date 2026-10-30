@@ -46,6 +46,7 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
   - `settlement.gd`: Ostoja,
   - `player.gd`, `character_stats.gd`, `items.gd`, `item_bases.gd`, `loot.gd`, `legends.gd`, `legendary_effects.gd`, `skills.gd`, `skill_effects.gd`, `levels.gd`, `quests.gd`, `bounties.gd`,
   - `hotbar.gd`: paski szybkiego wyboru (dane), `status_effects.gd`: lista efektów działających na gracza,
+  - `skill_tree.gd`: drzewka umiejętności broni (dane), `sword_skills.gd`: umiejętności drzewka miecza,
   - `dungeons.gd`: dane lochów (klimaty, stopnie, modyfikatory), `dungeon.gd`: generator lochu, okno `scripts/ui/dungeon_window.gd`,
   - `herbs.gd`: zioła i mikstury zielarki, `herb.gd`: zioło do zerwania (sadzone w każdej krainie przez `World._place_herbs`),
   - `scripts/ui/`: okna interfejsu (`ui_style.gd` to wspólny styl).
@@ -183,9 +184,23 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
 
 ### Postać i przedmioty
 
-- [ ] Drzewko umiejętności przypisane do broni, z unikalnymi perkami dla każdego drzewka.
-  Dziś każdy rodzaj broni (`melee` / `bow` / `spell`) ma w `scripts/skills.gd` aktywną umiejętność, uderzenie, combo i dwie pasywne regeneracje.
-  Pomysł to rozbudowa tego w prawdziwe drzewko.
+- [x] **Drzewko miecza, etap 1** (`scripts/skill_tree.gd`, widok `scripts/ui/skill_tree_view.gd` w oknie K, `scripts/skill_book.gd`):
+  sieć węzłów jak drzewko pasywne w PoE (umiejętności, pasywne, kluczowe), punkt umiejętności za każdy poziom postaci
+  (+1 na start), węzeł tylko obok wybranego; umiejętność odblokowuje węzeł, kolejne poziomy 2-5 dalej za złoto; zapomnienie
+  drzewka u mędrca za złoto (kupione poziomy zostają); starsze zapisy dostają węzły za kupione umiejętności miecza.
+  Ataki i czary (`Skills.TAGS`): ataki przyspiesza szybkość ataku i wzmacniają obrażenia fizyczne, czary - szybkość rzucania
+  (rośnie z inteligencją) i obrażenia magiczne; nowe statystyki są na przedmiotach. Ogólne combo (`Skills.COMBOS`,
+  `Player.note_skill` / `combo_with`) ze świecącym slotem i kurczącym się pierścieniem. Nowe umiejętności (`scripts/sword_skills.gd`,
+  ikony z PixelLab przez `tools/sword_tree_art.py`):
+  - **Mgnienie**: dopóki trzymasz klawisz, skoki od wroga do wroga z cięciem (mana za skok); w trakcie Młynka wirujące Mgnienie -
+    seria szybkich skoków z odnowieniem, węzeł kluczowy **Nieustający Wir** znosi odnowienie (Młynek zużywa 2x many);
+  - **Dymne Wybuchy** (atak i czar): ładowane, 1-3 rzędy po 3 wybuchy dymu w stożku; zaraz po innej umiejętności - wszystkie 9 od razu.
+- [ ] **Drzewko miecza, etap 2**: Rozpłatanie (krwawienie; po Mgnieniu podwójne), Rozłupanie Ziemi (fala, ogłusza; po Półksiężycu
+  we wszystkie strony), Riposta (zasłona i kontra; po niej darmowa Szarża), Zew Peruna (okrzyk; po nim 3 krytyki), Widmowe Ostrza
+  (czar, krążące miecze; po Młynku wylatują we wrogów); około 30 węzłów pasywnych; węzły kluczowe Taniec Ostrzy, Dym i Cień,
+  Krwawy Szał; legendarny przedmiot znoszący odnowienie wirującego Mgnienia. Ikony są już w `assets/skills/`
+  (rend, ground_slam, riposte, war_cry, spectral_blades, ks_*, node_*).
+- [ ] **Etap 3**: drzewka łuku i księgi magii według tego samego wzoru (dziś mają jeszcze karty umiejętności za złoto).
 - [ ] System kamieni wkładanych w przedmioty (gniazda).
   Istniejące kamienie (zwykłe, doskonałe, uświęcone, miłosierdzia) służą tylko do zaklinania (`scripts/enchanting.gd`, `scripts/ui/enchant_window.gd`), więc to byłby nowy system.
 - [ ] Nowe bronie: kosa, kostur (nekromanta), młoty, chainblade'y, sztylety, włócznie, rapier, hydrosfera.
@@ -200,12 +215,9 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   Shift+LPM zniknął (uderzenie leży domyślnie pod Q), interakcja przeszła z E na F.
 - [x] Ikony efektów pod paskami zdrowia i many: premie z osady, Dary i poziom Watry, efekty legendarnych przedmiotów,
   trucizna, spowolnienie, oszołomienie; ramka złota/czerwona/szara, czas pod ikoną, opis w dymku.
-- [ ] **System combo** (razem z drzewkiem umiejętności): umiejętność użyta zaraz po innej zachowuje się inaczej.
-  Combo zależy od umiejętności, a nie od klawisza, więc gracz dowolnie układa pasek, a opis umiejętności mówi, z czym tworzy combo.
-  Podpowiedź na pasku: po umiejętności otwierającej combo przez chwilę świecą sloty umiejętności, które zadziałają inaczej,
-  z kurczącym się pierścieniem czasu (dziś świeci tylko slot ataku w oknie dodatkowego ciosu, `ActionBars._process`).
-- [ ] Nowe umiejętności z drzewka wypełnią wolne sloty Q, E, R, Z, X (dziś każda broń ma do przypisania tylko atak,
-  umiejętność aktywną i uderzenie).
+- [x] **System combo**: umiejętność użyta zaraz po innej zachowuje się inaczej (`Skills.COMBOS`); combo zależy od umiejętności,
+  nie od klawisza; slot umiejętności gotowej do combo świeci z kurczącym się pierścieniem czasu (`ActionBars._process`).
+  Kolejne combo przychodzą z etapem 2 drzewka miecza.
 
 ### Watra i Ostoja
 

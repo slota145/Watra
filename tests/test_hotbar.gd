@@ -60,9 +60,10 @@ func _process(_d: float) -> bool:
 		check("zamiana slotów przedmiotów", bar.items[0] == "guard_horn" and bar.items[4] == "health_potion")
 		bar.swap_items(4, 0)
 		# umiejętności: uderzenie ze slotu Q, atak z LPM, combo po uderzeniu
-		p.skills.levels["lunge"] = 1
-		p.skills.levels["crescent"] = 1
-		p.skills.levels["whirlwind"] = 1
+		# umiejętności miecza odblokowują węzły drzewka (punkty z poziomów)
+		p.skills.character_level = 5
+		for node in ["lunge", "crescent", "whirlwind"]:
+			p.skills.take("melee", node)
 		p.mana = 100.0
 		p._unhandled_input(_action("skill_q", true))
 		p._input(_action("skill_q", false))

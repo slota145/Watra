@@ -149,6 +149,14 @@ func _refresh() -> void:
 	var extras: Array[String] = []
 	if s.damage_multiplier() > 1.0:
 		extras.append("Zwiększone obrażenia: +%d%%" % roundi((s.damage_multiplier() - 1.0) * 100.0))
+	if s.cast_speed() > 1.0:
+		extras.append("Szybkość rzucania czarów: %d%%" % roundi(s.cast_speed() * 100.0))
+	var physical := s.kind_multiplier(["attack"]) - 1.0
+	var magic := s.kind_multiplier(["spell"]) - 1.0
+	if physical > 0.0:
+		extras.append("Obrażenia fizyczne (ataki): +%d%%" % roundi(physical * 100.0))
+	if magic > 0.0:
+		extras.append("Obrażenia magiczne (czary): +%d%%" % roundi(magic * 100.0))
 	if s.crit_chance() > 0.0:
 		extras.append("Cios krytyczny: %d%% szans, %d%% obrażeń" % [roundi(s.crit_chance() * 100.0), roundi(s.crit_multiplier() * 100.0)])
 	if s.life_on_hit() > 0:

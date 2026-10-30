@@ -2,8 +2,9 @@ class_name ActionBars
 extends VBoxContainer
 ## Paski szybkiego wyboru na dole ekranu (dane w Player.hotbar):
 ## - umiejętności (LPM, PPM, Q, E, R, Z, X) - układ zależy od założonej broni; na slotach widać odnowienie
-##   (wskazówka zegara i sekundy), brak many (niebieskawy slot), a w czasie okna combo świeci slot ataku,
-##   bo atak wyprowadzi wtedy dodatkowy cios,
+##   (wskazówka zegara i sekundy), brak many (niebieskawy slot), a w czasie okna combo świecą sloty umiejętności,
+##   które zadziałają inaczej (atak - dodatkowy cios, Dymne Wybuchy - od razu 9 wybuchów; kurczący się pierścień
+##   pokazuje, ile okna zostało), Mgnienie świeci w trakcie Młynka,
 ## - przedmioty (1-0) z liczbą sztuk w plecaku; gdy się skończą, slot zostaje przygaszony z zerem.
 ## Umiejętności przeciąga się z okna umiejętności (K), przedmioty z plecaka; między slotami - zamiana miejscami.
 ## PPM na slocie albo przeciągnięcie poza pasek opróżnia slot, LPM na przedmiocie go używa.
@@ -140,7 +141,10 @@ func _process(_delta: float) -> void:
 			continue
 		var cooldown := _player.cooldown_of(id)
 		slot.set_cooldown(cooldown.x, cooldown.y)
-		slot.set_highlight(false)
+		# umiejętność, która teraz zadziała jako combo (np. Dymne Wybuchy zaraz po innej umiejętności)
+		var chained := _player.combo_with(id) or (id == "flicker" and _player.is_whirling() and cooldown.x <= 0.0)
+		slot.set_highlight(chained)
+		slot.combo_fraction = _player.combo_fraction() if _player.combo_with(id) else 0.0
 		if _player.skills.level_of(id) <= 0:
 			slot.icon.modulate = LOCKED
 		elif _player.mana < Skills.mana_cost(id):

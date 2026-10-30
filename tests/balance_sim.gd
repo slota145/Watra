@@ -173,6 +173,8 @@ func _skills_report() -> void:
 		"kula ognia (4 wrogów)": sk.fireball_damage(lvl) * 4.0 / sk.FIREBALL_MANA,
 		"łańcuch błyskawic": chain / sk.CHAIN_MANA,
 		"fala piorunów (5 wrogów)": sk.WAVE_DAMAGE * 5.0 / sk.WAVE_MANA,
+		"mgnienie (2 wrogów na skok)": sk.flicker_damage(lvl) * 2.0 / sk.FLICKER_MANA,
+		"dymne wybuchy (9, po 1 wrogu)": (sk.smoke_damage(lvl, 0) + sk.smoke_damage(lvl, 1) + sk.smoke_damage(lvl, 2)) * 3.0 / sk.SMOKE_MANA,
 	}
 	print("Umiejętności (poz. 5) - obrażenia broni na punkt many:")
 	for name in efficiency:

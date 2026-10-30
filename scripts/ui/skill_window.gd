@@ -4,6 +4,8 @@ extends PanelContainer
 ## Każda broń ma zwykły atak, aktywną umiejętność, uderzenie, dodatkowy cios (atak zaraz po uderzeniu -
 ## wymaga uderzenia) i dwie regeneracje. Odblokowanie i ulepszenia za złoto. Atak, umiejętność aktywną
 ## i uderzenie przeciąga się na pasek umiejętności na dole ekranu (Hotbar); przy nazwie widać, pod jakim są klawiszem.
+## Broń z drzewkiem (SkillTree, na razie miecz) zamiast kart pokazuje sieć węzłów (SkillTreeView): punkty umiejętności,
+## szczegóły zaznaczonego węzła z przyciskami "Wybierz" (1 punkt) i "Ulepsz" (złoto, umiejętności z wybranym węzłem).
 ## Okno otwiera się na zakładce założonej broni.
 
 const CARD_WIDTH := 150.0
@@ -21,6 +23,8 @@ var _tabs := {}
 var _tab := "melee"
 var _gold_label: Label
 var _status: Label
+## rodzaj broni -> {"view": SkillTreeView, "points": Label, "info": Label, "take": Button, "upgrade": Button}
+var _trees := {}
 
 
 func _ready() -> void:
@@ -32,7 +36,7 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
 	box.add_child(UiStyle.title("Umiejętności"))
-	var hint := UiStyle.label("Umiejętności działają tylko z założoną bronią swojego rodzaju. Szybkość ataku przyspiesza też umiejętności.\nPrzeciągnij atak, umiejętność albo uderzenie na pasek na dole ekranu. Combo: atak zaraz po uderzeniu.", 7, UiStyle.DIM_COLOR)
+	var hint := UiStyle.label("Działają tylko z bronią swojego rodzaju. Przeciągnij umiejętność (start drzewka - zwykły atak) na pasek. Combo: umiejętność zaraz po innej działa mocniej.", 7, UiStyle.DIM_COLOR)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(hint)
 
@@ -49,6 +53,11 @@ func _ready() -> void:
 		tabs.add_child(tab)
 		_tabs[weapon_type] = tab
 
+		if SkillTree.has_tree(weapon_type):
+			var tree_page := _make_tree_page(weapon_type)
+			box.add_child(tree_page)
+			_pages[weapon_type] = tree_page
+			continue
 		var page := GridContainer.new()
 		page.columns = 3
 		page.add_theme_constant_override("h_separation", 4)
@@ -75,6 +84,8 @@ func _ready() -> void:
 
 func setup(player: Player) -> void:
 	_player = player
+	for weapon_type: String in _trees:
+		_trees[weapon_type]["view"].setup(player, weapon_type)
 	player.hotbar.changed.connect(_refresh)
 	player.skills.changed.connect(_refresh)
 	player.equipment.changed.connect(_refresh)
@@ -95,11 +106,108 @@ func _show_tab(weapon_type: String) -> void:
 		_pages[other].visible = other == weapon_type
 		_tabs[other].set_pressed_no_signal(other == weapon_type)
 	_refresh()
+	_place()
+
+
+## Na środku ekranu, ale nad paskami szybkiego wyboru - żeby dało się na nie przeciągać umiejętności.
+func _place() -> void:
 	reset_size()
-	# nad paskami szybkiego wyboru - żeby dało się na nie przeciągać umiejętności
 	var screen := get_viewport_rect().size
 	position = ((screen - size) / 2.0).floor()
 	position.y = maxf(2.0, minf(position.y, screen.y - size.y - BOTTOM_RESERVE))
+
+
+## Strona drzewka: punkty, sieć węzłów, a pod nią szczegóły zaznaczonego węzła z przyciskami.
+func _make_tree_page(weapon_type: String) -> VBoxContainer:
+	var page := VBoxContainer.new()
+	page.add_theme_constant_override("separation", 3)
+	var points := UiStyle.label("", 8, UiStyle.TITLE_COLOR)
+	points.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	page.add_child(points)
+	var view := SkillTreeView.new()
+	view.custom_minimum_size = Vector2(CARD_WIDTH * 3 + 8, 132)
+	view.theme = UiStyle.make_theme()
+	view.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.SLOT_BG, UiStyle.SLOT_BORDER, 3))
+	page.add_child(view)
+	var details := PanelContainer.new()
+	details.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.SLOT_BG, UiStyle.SLOT_BORDER, 3))
+	details.custom_minimum_size = Vector2(CARD_WIDTH * 3 + 8, 60)
+	page.add_child(details)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	details.add_child(row)
+	var info := UiStyle.label("Kliknij węzeł, żeby zobaczyć szczegóły.", 7, UiStyle.TEXT_COLOR)
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.custom_minimum_size.x = CARD_WIDTH * 2
+	row.add_child(info)
+	var buttons := VBoxContainer.new()
+	buttons.add_theme_constant_override("separation", 3)
+	row.add_child(buttons)
+	var take := Button.new()
+	take.focus_mode = Control.FOCUS_NONE
+	take.add_theme_font_size_override("font_size", 8)
+	take.pressed.connect(_take_node.bind(weapon_type))
+	buttons.add_child(take)
+	var upgrade := Button.new()
+	upgrade.focus_mode = Control.FOCUS_NONE
+	upgrade.add_theme_font_size_override("font_size", 8)
+	upgrade.pressed.connect(_upgrade_node.bind(weapon_type))
+	buttons.add_child(upgrade)
+	view.selected.connect(func(_id: String) -> void:
+		_refresh()
+		_place.call_deferred())
+	_trees[weapon_type] = {"view": view, "points": points, "info": info, "take": take, "upgrade": upgrade}
+	return page
+
+
+func _take_node(weapon_type: String) -> void:
+	var view: SkillTreeView = _trees[weapon_type]["view"]
+	if _player.skills.take(weapon_type, view.selected_id):
+		Sfx.play("ui_confirm")
+		_status.text = "Wybrano: %s" % SkillTree.node_name(weapon_type, view.selected_id)
+		_status.add_theme_color_override("font_color", Color(0.6, 1, 0.55))
+
+
+func _upgrade_node(weapon_type: String) -> void:
+	var view: SkillTreeView = _trees[weapon_type]["view"]
+	var node: Dictionary = SkillTree.nodes(weapon_type).get(view.selected_id, {})
+	if node.get("kind", "") == "skill":
+		_upgrade(node["skill"])
+
+
+func _refresh_tree(weapon_type: String) -> void:
+	var parts: Dictionary = _trees[weapon_type]
+	var view: SkillTreeView = parts["view"]
+	var book := _player.skills
+	parts["points"].text = "Punkty umiejętności: %d   (1 za poziom postaci; zapomnieć drzewko można u mędrca)" % book.points_left()
+	view.queue_redraw()
+	var take: Button = parts["take"]
+	var upgrade: Button = parts["upgrade"]
+	var id := view.selected_id
+	if id == "":
+		take.visible = false
+		upgrade.visible = false
+		return
+	var text := view.describe(id)
+	var node: Dictionary = SkillTree.nodes(weapon_type)[id]
+	take.visible = not book.has_node_id(weapon_type, id)
+	take.text = "Wybierz (1 pkt)"
+	take.disabled = not book.can_take(weapon_type, id)
+	upgrade.visible = node["kind"] == "skill" and book.has_node_id(weapon_type, id)
+	if upgrade.visible:
+		var skill: String = node["skill"]
+		var level := book.level_of(skill)
+		var cost := book.next_cost(skill)
+		text += "\nPoz. %d/%d: %s" % [level, Skills.MAX_LEVEL, Skills.effect_text(skill, level)]
+		if cost >= 0:
+			upgrade.tooltip_text = "Następny poziom: " + Skills.effect_text(skill, level + 1)
+		upgrade.text = "Poziom maksymalny" if cost < 0 else "Ulepsz - %d zł" % cost
+		upgrade.disabled = cost < 0 or _player.stats.gold < cost
+		var key := _key_of(skill, weapon_type) if Hotbar.can_slot_skill(skill) else ""
+		if key != "":
+			text += "   Na pasku:" + key
+	parts["info"].text = text
 
 
 func _make_card(id: String) -> PanelContainer:
@@ -213,6 +321,8 @@ func _refresh() -> void:
 
 	for weapon_type: String in _attack_titles:
 		_attack_titles[weapon_type].text = Hotbar.ATTACK_NAME + _key_of(Hotbar.ATTACK, weapon_type)
+	for weapon_type: String in _trees:
+		_refresh_tree(weapon_type)
 	var gold := _player.stats.gold
 	for id: String in _cards:
 		var parts: Dictionary = _cards[id]
