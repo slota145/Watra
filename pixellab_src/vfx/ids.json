@@ -1,0 +1,4 @@
+{
+  "flicker_hit": {"effect": "f5d629cb-a186-413b-9df2-089ed571d4b9", "name": "Mgnienie - cięcie trafienia", "frame": [82, 30], "frames": 8, "fps": 16, "anchor": [43, 16]},
+  "flicker_trail": {"effect": "18b878af-6fe1-4fe3-a5d5-2d7996542e29", "name": "Mgnienie - smuga", "frame": [74, 19], "frames": 7, "fps": 16, "anchor": [8, 10]}
+}

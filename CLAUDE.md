@@ -102,6 +102,12 @@ Wynik zapisuje się lokalnie w katalogu `tool-results` sesji jako PNG w skali 1:
 Utnij pasek, a tło usuń wypełnianiem od krawędzi każdej klatki (tak powstały klatki w `pixellab_src/regions/storm_eagle_obj/animations/powerful_full_wingbeat…`).
 Surowe klatki zapisuj w `pixellab_src/…` i buduj arkusze narzędziami z `tools/`.
 Po uruchomieniu takiego narzędzia przywróć pliki, które zmieniły się tylko kodowaniem PNG (te same piksele).
+Animowane efekty (cięcia, błyski, smugi) robi kreator efektów `mcp__PixelLab__vfx_workbench` (darmowy; zapisuje
+efekt w „My effects” autora na pixellab.ai). Jego pliki też się nie pobierają: `pixelart_workbench` `join <image id z eksportu>
+--as sheet --columns <liczba klatek>` daje jeden rząd klatek na tle (31, 37, 44). Utnij pasek podpisu, zapisz do
+`pixellab_src/vfx/<nazwa>.png`, dopisz efekt do `pixellab_src/vfx/ids.json` i uruchom `python tools/vfx_art.py`
+(wynik w `assets/effects/`, w grze `SkillEffects.sheet_once`). W kreatorze kolor części najpewniej zmienia łatka
+`ramps.<nazwa>` (sam `colour` w `set_part` bywa pomijany).
 
 ## Konwencje
 
@@ -163,6 +169,8 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 - [x] Wydarzenia w świecie, pojedynki, zbóje, osłona zbieraczy i prośby drużyny (sława gildii, Znaki Zwycięstwa)
   dopiero po zbudowaniu gildii (`WorldEvents.guild_ready`); zadanie główne „Pan topielców” (id `main_hydra`) wysyła
   do Wodnika zamiast za trudnej Hydry.
+- [x] Mgnienie z efektami z kreatora efektów PixelLab (`tools/vfx_art.py`, `SkillEffects.sheet_once`): smuga za postacią
+  z błyskiem w miejscu startu (rozciągana wzdłuż skoku) i proste cięcie z błyskiem na celu, ukośnie do drogi skoku.
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

@@ -48,6 +48,27 @@ static func spark(parent: Node, at: Vector2, color: Color, amount := 8) -> void:
 	p.finished.connect(p.queue_free)
 
 
+## Jednorazowa animacja z arkusza klatek (jeden rząd, np. efekty z kreatora PixelLab - tools/vfx_art.py):
+## punkt zaczepienia `anchor` (piksel klatki) staje w `at`, efekt obrócony o `angle` (rysowany w prawo, +x);
+## `stretch` rozciąga go wzdłuż kierunku. W lewo efekt odbija się w pionie, żeby nie stał do góry nogami.
+static func sheet_once(parent: Node, texture: Texture2D, frames: int, fps: float, at: Vector2, anchor: Vector2,
+		angle := 0.0, stretch := 1.0) -> void:
+	var fx := Sprite2D.new()
+	fx.texture = texture
+	fx.hframes = frames
+	fx.centered = false
+	fx.offset = -anchor
+	fx.z_index = 25
+	fx.rotation = angle
+	fx.scale = Vector2(stretch, -1.0 if absf(wrapf(angle, -PI, PI)) > PI / 2.0 else 1.0)
+	parent.add_child(fx)
+	fx.global_position = at
+	var tween := fx.create_tween()
+	tween.tween_property(fx, "frame", frames - 1, (frames - 1) / fps).from(0)
+	tween.tween_interval(1.0 / fps)
+	tween.tween_callback(fx.queue_free)
+
+
 ## Rozbłysk w kształcie stożka (fala piorunów).
 static func cone(parent: Node, origin: Vector2, angle: float, half_arc: float, radius: float) -> void:
 	var flash := ConeFlash.new()
