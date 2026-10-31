@@ -25,10 +25,10 @@ const FLICKER_HIT_RADIUS := 30.0
 const FLICKER_OVERSHOOT := 18.0
 const FLICKER_PATH_WIDTH := 12.0
 ## Efekty Mgnienia z kreatora efektów PixelLab (tools/vfx_art.py): smuga za postacią (błysk w miejscu startu,
-## rysowana w prawo; długość pasa w klatce - FLICKER_TRAIL_LENGTH) i proste cięcie z błyskiem na trafionym celu.
+## rysowana w prawo, cienki ogon pogrubia się w stronę postaci i gaśnie od ogona; długość w klatce - FLICKER_TRAIL_LENGTH) i proste cięcie z błyskiem na trafionym celu.
 const FLICKER_TRAIL := preload("res://assets/effects/flicker_trail.png")
 const FLICKER_TRAIL_ANCHOR := Vector2(8, 10)
-const FLICKER_TRAIL_LENGTH := 62.0
+const FLICKER_TRAIL_LENGTH := 64.0
 const FLICKER_SLASH := preload("res://assets/effects/flicker_hit.png")
 const FLICKER_SLASH_ANCHOR := Vector2(43, 16)
 ## Cięcie na celu ukośnie do drogi skoku (losowo w jedną lub drugą stronę), żeby nie zlewało się ze smugą.
