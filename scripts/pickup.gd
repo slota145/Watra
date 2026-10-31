@@ -31,6 +31,9 @@ func _init() -> void:
 func _ready() -> void:
 	_player = get_tree().get_first_node_in_group("player")
 	add_to_group("pickups")  # dymek łupu na ziemi (GroundTooltip)
+	# opcja „łup niezidentyfikowany” - magiczne i rzadkie przedmioty zawinięte w płótno
+	if item_id != "gold":
+		item_id = Unidentified.convert(item_id)
 	sprite.texture = Items.GOLD_ICON if item_id == "gold" else Items.get_data(item_id)["icon"]
 	# ikony mają 64 px - na ziemi leżą w rozmiarze 16 px (moneta 10 px)
 	sprite.scale = Vector2.ONE * (10.0 if item_id == "gold" else 16.0) / sprite.texture.get_width()

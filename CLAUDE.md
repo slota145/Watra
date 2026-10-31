@@ -292,9 +292,12 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     `tools/paperdoll_art.py`): sylwetka wojownika, a wokół niej miejsca na przedmioty (hełm przy głowie, buty przy
     stopach), ramki 28 px, broń i napierśnik w wysokich ramkach; pusty slot pokazuje zarys pasującego przedmiotu,
     ramka - kolor rzadkości (`LegendaryFrame`).
-- [ ] **Przedmioty niezidentyfikowane** (pomysł autora): przełącznik w opcjach - łup od razu zidentyfikowany albo
-  niezidentyfikowany; niezidentyfikowane przedmioty jednego rodzaju układają się w stosy (oszczędzają miejsce w plecaku),
-  a identyfikuje się je PPM na przedmiocie.
+- [x] **Przedmioty niezidentyfikowane** (`scripts/unidentified.gd`, ikony z PixelLab przez `tools/unidentified_art.py`):
+  opcja „Łup niezidentyfikowany” w Ustawieniach (`Game.unidentified_loot` w `user://settings.cfg`, domyślnie wyłączona).
+  Magiczna i rzadka broń, zbroja i biżuteria z łupu (`Pickup`) wypada zawinięta w płótno - id
+  „unid_<rodzaj>_<rzadkość>_<poziom>” (dane z id - `Items.get_data`), stosy w plecaku, tańszy skup; zwykłe przedmioty
+  i legendy - zawsze zidentyfikowane. Identyfikacja (`Player.identify`): PPM - jeden, Shift+PPM - cały stos, przycisk
+  „Zidentyfikuj wszystko” w plecaku (`identify_all`) - losuje przedmiot tego rodzaju, rzadkości i poziomu.
 - [ ] **Plecaki i sakwy** (pomysł autora): wypadają z potworów i powiększają plecak - niskopoziomowe 4-6 miejsc,
   wysokopoziomowe 15-25, najrzadsze 30-40; można też wytwarzać nowe ze skór i innych surowców. Dziś są już
   miejsca na torby (`Player.bags`, 5 miejsc) oraz Sakwa (+10) i Plecak (+20) w sklepie (`Items` - pole „bag”).
