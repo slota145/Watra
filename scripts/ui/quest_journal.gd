@@ -109,7 +109,9 @@ func _entry(id: String, state: String, color: Color) -> PanelContainer:
 	title.flat = true
 	title.focus_mode = Control.FOCUS_NONE
 	title.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	title.add_theme_color_override("font_color", color)
+	title.add_theme_color_override("font_color", MainQuests.COLOR if MainQuests.is_main(id) and state != Quests.STATE_DONE else color)
+	if MainQuests.is_main(id):
+		title.text = "★ " + quest["title"]
 	title.add_theme_color_override("font_hover_color", Color.WHITE)
 	title.add_theme_font_size_override("font_size", 9)
 	title.tooltip_text = "Pokaż obszar zadania na mapie"
@@ -117,11 +119,11 @@ func _entry(id: String, state: String, color: Color) -> PanelContainer:
 	lines.add_child(title)
 	var details := [
 		"Zleceniodawca: " + quest["giver"],
-		"Postęp: %s %d/%d" % [quest["target_name"], _player.quests.progress_of(id), quest["count"]],
+		"Postęp: %s %d/%d" % [quest["target_name"], _player.quests.progress_of(id), quest.get("count", 1)],
 		"Nagroda: " + Quests.reward_text(id),
 	]
 	if state == Quests.STATE_READY:
-		details[1] = "Wykonane! Wróć do: " + quest["giver"]
+		details[1] = "Wykonane! Wróć do: " + Quests.receiver(id)
 	elif state == Quests.STATE_DONE:
 		details.remove_at(1)
 	for line: String in details:

@@ -54,12 +54,16 @@ func _entry(id: String) -> Button:
 	lines.add_theme_constant_override("separation", -2)
 	lines.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(lines)
-	var title := UiStyle.label(quest["title"], 8, READY_COLOR if is_ready else ACTIVE_COLOR)
+	var main := MainQuests.is_main(id)
+	var title := UiStyle.label(quest["title"], 8, MainQuests.COLOR if main else READY_COLOR if is_ready else ACTIVE_COLOR)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	lines.add_child(title)
-	var status := "Wróć do: %s" % quest["giver"] if is_ready \
-			else "%s: %d/%d" % [quest["target_name"], _player.quests.progress_of(id), quest["count"]]
+	var status := "Wróć do: %s" % Quests.receiver(id) if is_ready \
+			else "%s: %d/%d" % [quest["target_name"], _player.quests.progress_of(id), quest.get("count", 1)]
+	if main and not is_ready:
+		var have: Array = MainQuests.progress(_player, id)
+		status = "%s: %d/%d" % [quest["target_name"], have[0], have[1]] if have[1] > 1 else quest["target_name"]
 	var detail := UiStyle.label(status, 7, UiStyle.TEXT_COLOR)
 	detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	detail.mouse_filter = Control.MOUSE_FILTER_IGNORE

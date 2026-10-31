@@ -19,6 +19,8 @@ var nodes := {}
 var tree_gems := {}
 ## Poziom postaci (do punktów) - ustawia gracz.
 var character_level := 1
+## Dodatkowe punkty umiejętności z zadań głównych (MainQuests - skill_points).
+var bonus_points := 0
 
 ## Kamień w gnieździe drzewka działa mocniej niż w przedmiocie.
 const TREE_GEM_POWER := 1.5
@@ -98,7 +100,7 @@ func has_node_id(weapon_type: String, id: String) -> bool:
 
 
 func points_total() -> int:
-	return character_level + SkillTree.START_POINTS
+	return character_level + SkillTree.START_POINTS + bonus_points
 
 
 func points_spent() -> int:
@@ -281,7 +283,7 @@ func get_save_data() -> Dictionary:
 	var taken := {}
 	for weapon_type: String in nodes:
 		taken[weapon_type] = nodes[weapon_type].keys()
-	return {"levels": levels.duplicate(), "nodes": taken, "gems": tree_gems.duplicate(true)}
+	return {"levels": levels.duplicate(), "nodes": taken, "gems": tree_gems.duplicate(true), "bonus_points": bonus_points}
 
 
 ## Starsze zapisy to sam słownik poziomów; umiejętności drzewka kupione wtedy za złoto dostają wybrane węzły
@@ -291,6 +293,7 @@ func load_save_data(data: Dictionary) -> void:
 	levels.clear()
 	nodes.clear()
 	tree_gems.clear()
+	bonus_points = int(data.get("bonus_points", 0))
 	var saved_gems: Dictionary = data.get("gems", {})
 	for weapon_type: String in saved_gems:
 		var tree := SkillTree.nodes(weapon_type)

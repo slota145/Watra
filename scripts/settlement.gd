@@ -188,6 +188,8 @@ const MERCHANT_ROTATION := 600.0
 ## (kamienie zaklinające są tylko w lochach Watry - kupiec ich nie sprzedaje).
 const MERCHANT_STOCK := 4
 const MERCHANT_POOL: Array[String] = ["greater_health_potion", "greater_mana_potion", "pouch", "backpack", "guard_horn"]
+const LINES_ZERCA: Array[String] = ["Dopóki płonie ogień, Ostoja trwa.", "Perunie, czuwaj nad nami.",
+		"Watra słyszy każdą ofiarę.", "Ogień pamięta tych, którzy go strzegli."]
 const LINES_JEWELER: Array[String] = ["Każdy kamień ma swoją duszę.", "Szlif to cierpliwość, nie siła.",
 		"W górach wiało, tu przynajmniej ciepło od Watry.", "Rubin do zdrowia, szafir do many - pamiętaj!"]
 const LINES_HERBALIST: Array[String] = ["Rana się goi, gdy się ją czyści.", "Rumianek, babka, krwawnik - na wszystko coś rośnie.",
@@ -1436,6 +1438,13 @@ func _build_watra() -> void:
 	spot.get_node("Sprite").visible = false
 	spot.get_node("Shadow").visible = false
 	spot.prompt.text = "[F] Watra"
+	# żerca Wszebor - strażnik ognia, prowadzi zadania główne (MainQuests)
+	var zerca := _npc("zerca", WATRA_POS + Vector2(-3.4, 1.4), Npc.Role.IDLE, LINES_ZERCA, Vector2.RIGHT)
+	zerca.display_name = MainQuests.ZERCA
+	zerca.looks_around = false
+	zerca.dialog_greeting = "Póki płonie ogień, Ostoja trwa. Pilnuję go, odkąd pamiętam - i będę pilnował, póki starczy mi sił."
+	# dopiero po wygenerowaniu świata - postać losuje przy starcie, a świat z tego samego ziarna ma zostać taki sam
+	_entities.add_child.call_deferred(zerca)
 	# tragarze drewna: magazyn -> Watra
 	var wood_path := _path([Vector2(42.6, 13.9), Vector2(42.4, 17.6), Vector2(38.0, 18.6), Vector2(34.6, 18.2)])
 	for sheet in ["villager_green", "worker_gray"]:

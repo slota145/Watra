@@ -75,6 +75,8 @@ const HELD_GRIP_SHIFT := {"melee": 4.0, "bow": 7.0, "spell": 8.0}
 
 ## Efekty legendarnych pierścieni przy trafieniu.
 var legendary: LegendaryEffects
+## Co ile sprawdzać warunki zadań głównych (QuestLog.update_main).
+var _main_quest_check := 0.0
 ## Kierunek patrzenia (jeden z 8, wektor jednostkowy) i który wybrana postać z PixelLab.
 var facing_dir := Vector2.DOWN
 var hero := "wojciech"
@@ -430,6 +432,10 @@ func give_starting_items() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_main_quest_check -= delta
+	if _main_quest_check <= 0.0:
+		_main_quest_check = 0.5
+		quests.update_main(self)
 	_update_shake(delta)
 	_update_poison(delta)
 	if _slow_time > 0.0:
@@ -988,6 +994,15 @@ func _owned_ids() -> Array:
 ## Zadanie jubilera wykonane: kamienie szlachetne i gniazda zaczynają wypadać, pierwsze gniazdo za darmo
 ## i pierwszy kamień na próbę.
 func _on_quest_done(id: String) -> void:
+	# zadania główne: przedmioty i punkty umiejętności
+	if MainQuests.is_main(id):
+		var quest := Quests.get_data(id)
+		var items: Dictionary = quest.get("reward_items", {})
+		for item: String in items:
+			_gain_item(item, int(items[item]))
+		if int(quest.get("skill_points", 0)) > 0:
+			skills.bonus_points += int(quest["skill_points"])
+			skills.changed.emit()
 	if id != Gems.QUEST:
 		return
 	Gems.unlocked = true

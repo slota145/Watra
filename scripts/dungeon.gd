@@ -559,6 +559,7 @@ func _on_boss_died(_boss_node: Goblin = null) -> void:
 	if _vault_open:
 		return
 	_vault_open = true
+	w.player.quests.note_event("dungeon_clear")
 	var mods: Array = config.get("mods", [])
 	var treasure := Dungeons.multiplier(mods, "treasure")
 	var loot_level := level + Dungeons.BOSS_BONUS

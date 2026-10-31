@@ -14,6 +14,8 @@ var progress := {}
 var tracked: Array[String] = []
 ## Zlecenia z tablicy ogłoszeń: definicje przyjętych (id -> dane) i liczba wykonanych.
 var bounty_defs := {}
+## Zdarzenia dla zadań głównych (MainQuests - warunek ["event", nazwa, n]): nazwa -> ile razy.
+var events := {}
 var bounties_done := 0
 var _bounty_serial := 0
 
@@ -31,9 +33,53 @@ func accept(id: String) -> void:
 		return
 	states[id] = Quests.STATE_ACTIVE
 	progress[id] = 0
-	if tracked.size() < Quests.MAX_TRACKED:
+	if MainQuests.is_main(id):
+		# zadanie główne zawsze śledzone, na górze listy
+		tracked.push_front(id)
+		if tracked.size() > Quests.MAX_TRACKED:
+			tracked.pop_back()
+	elif tracked.size() < Quests.MAX_TRACKED:
 		tracked.append(id)
 	changed.emit()
+
+
+## Zdarzenie dla zadań głównych (np. pokonany strażnik lochu, otwarta encyklopedia).
+func note_event(key: String, amount := 1) -> void:
+	events[key] = int(events.get(key, 0)) + amount
+	changed.emit()
+
+
+## Zadania główne w toku: postęp i wykonanie wg warunku kroku (MainQuests.progress) - sprawdza gracz co chwilę.
+func update_main(player: Player) -> void:
+	var id := MainQuests.current(self)
+	if id == "" or state_of(id) not in [Quests.STATE_ACTIVE, Quests.STATE_READY]:
+		return
+	var have: Array = MainQuests.progress(player, id)
+	var state: String = Quests.STATE_READY if have[0] >= have[1] else Quests.STATE_ACTIVE
+	if have[0] == progress_of(id) and state == states[id]:
+		return
+	progress[id] = have[0]
+	if state != states[id]:
+		states[id] = state
+		if state == Quests.STATE_READY:
+			quest_ready.emit(id)
+	changed.emit()
+
+
+## Starszy zapis bez zadań głównych: kroki do ostatniego, którego warunek jest już spełniony, zaliczają się same
+## (bez nagród) - doświadczony gracz nie zaczyna od rozmowy z sołtysem, a lochy zostają otwarte.
+func catch_up_main(player: Player) -> void:
+	if MainQuests.CHAIN.any(func(id: String) -> bool: return states.has(id)):
+		return
+	var last := -1
+	for i in MainQuests.CHAIN.size():
+		var id: String = MainQuests.CHAIN[i]
+		if MainQuests.DATA[id]["check"][0] != "talk" and MainQuests.satisfied(player, id):
+			last = i
+	for i in last + 1:
+		states[MainQuests.CHAIN[i]] = Quests.STATE_DONE
+	if last >= 0:
+		changed.emit()
 
 
 ## Zadania zbierackie: postęp = ile sztuk gracz ma (plecak + magazyn); `count_item(id) -> int`.
@@ -65,7 +111,7 @@ func update_gathered(count_item: Callable) -> void:
 func on_enemy_killed(kind: String) -> void:
 	var updated := false
 	for id: String in states:
-		if states[id] != Quests.STATE_ACTIVE or Quests.is_gather(id) or Quests.get_data(id)["target"] != kind:
+		if states[id] != Quests.STATE_ACTIVE or Quests.is_gather(id) or Quests.get_data(id).get("target", "") != kind:
 			continue
 		progress[id] = progress_of(id) + 1
 		updated = true
@@ -107,7 +153,7 @@ func toggle_track(id: String) -> bool:
 
 
 func get_save_data() -> Dictionary:
-	return {"states": states.duplicate(), "progress": progress.duplicate(), "tracked": tracked.duplicate(),
+	return {"states": states.duplicate(), "progress": progress.duplicate(), "tracked": tracked.duplicate(), "events": events.duplicate(),
 			"bounties": {"defs": bounty_defs.duplicate(true), "done": bounties_done, "serial": _bounty_serial}}
 
 
@@ -163,6 +209,10 @@ func load_save_data(data: Dictionary) -> void:
 	states.clear()
 	progress.clear()
 	tracked.clear()
+	events.clear()
+	var saved_events: Dictionary = data.get("events", {})
+	for key: String in saved_events:
+		events[key] = int(saved_events[key])
 	# zlecenia z tablicy trzeba zarejestrować, zanim wczytamy ich stan
 	var bounties: Dictionary = data.get("bounties", {})
 	bounty_defs = (bounties.get("defs", {}) as Dictionary).duplicate(true)

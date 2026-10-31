@@ -149,7 +149,7 @@ func _ready() -> void:
 		add_to_group("interactables")
 	if has_dialog():
 		prompt.text = "[F] Rozmowa"
-	if quest_id != "":
+	if quest_id != "" or MainQuests.involves(display_name):
 		_quest_marker = _make_quest_marker()
 		add_child(_quest_marker)
 	match role:
@@ -204,7 +204,7 @@ func is_trader() -> bool:
 
 ## Czy E otwiera rozmowę (zadanie albo usługi), a nie od razu sklep.
 func has_dialog() -> bool:
-	return quest_id != "" or not services.is_empty()
+	return quest_id != "" or not services.is_empty() or MainQuests.involves(display_name)
 
 
 func interact(player: Player) -> void:
@@ -254,8 +254,17 @@ func march_to(target: Vector2, duration: float) -> void:
 
 ## Znacznik zadania nad głową, lekko podskakujący.
 func _update_quest_marker(delta: float) -> void:
-	var state := _player.quests.state_of(quest_id) if _player != null else Quests.STATE_AVAILABLE
-	_quest_marker.visible = state != Quests.STATE_DONE
+	# zadanie główne ma pierwszeństwo - niebieskie znaczniki
+	var main := MainQuests.step_for(_player.quests, display_name) if _player != null else ""
+	var state := _player.quests.state_of(quest_id) if _player != null and quest_id != "" else Quests.STATE_DONE
+	_quest_marker.visible = state != Quests.STATE_DONE or main != ""
+	if main != "":
+		var main_state := _player.quests.state_of(main)
+		var giving := main_state == Quests.STATE_AVAILABLE
+		var waiting := main_state == Quests.STATE_ACTIVE or (main_state == Quests.STATE_READY and MainQuests.receiver_of(main) != display_name)
+		_quest_marker.text = "!" if giving else "?"
+		_quest_marker.add_theme_color_override("font_color", MainQuests.COLOR_DIM if waiting and not giving else MainQuests.COLOR)
+		state = "main"
 	match state:
 		Quests.STATE_AVAILABLE:
 			_quest_marker.text = "!"

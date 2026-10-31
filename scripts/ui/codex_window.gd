@@ -102,6 +102,8 @@ func setup(player: Player) -> void:
 func toggle() -> void:
 	visible = not visible
 	if visible:
+		if _player != null:
+			_player.quests.note_event("codex")
 		_show_tab(_tab)
 		reset_size()
 		var screen := get_viewport_rect().size
