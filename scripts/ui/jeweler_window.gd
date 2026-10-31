@@ -223,7 +223,7 @@ func _gems_in_bag() -> Array[int]:
 	var result: Array[int] = []
 	for i in _player.inventory.slots.size():
 		var slot: Dictionary = _player.inventory.slots[i]
-		if not slot.is_empty() and Gems.is_gem(slot["id"]):
+		if not slot.is_empty() and Gems.is_gem(slot["id"]) and not Gems.is_radius(slot["id"]):
 			result.append(i)
 	return result
 

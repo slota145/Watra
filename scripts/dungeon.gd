@@ -508,6 +508,8 @@ func _on_boss_died(_boss_node: Goblin = null) -> void:
 		if _rng.randf() < 0.5 + chances[1] * 4.0:
 			_drop(at, Enchanting.stone_id(category, _rng.randf() < chances[1] * 6.0), roundi(_rng.randi_range(1, 2) * treasure))
 	_drop(at, "blessed_stone", roundi(_rng.randi_range(1, 3) * treasure))
+	if _rng.randf() < Gems.RADIUS_VAULT_CHANCE * treasure:
+		_drop(at, Gems.roll_radius(int(config.get("tier", 1))), 1)
 	if _rng.randf() < Dungeons.VAULT_LEGEND_CHANCE * treasure:
 		_drop(at, Loot.legendary_at_level(Dungeons.VAULT_LEGENDS.pick_random(), loot_level), 1)
 	Sfx.play("quest_ready")

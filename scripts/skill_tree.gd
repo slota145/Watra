@@ -4,7 +4,10 @@ class_name SkillTree
 ## wybrany zawsze). Rodzaje węzłów:
 ## - "skill": odblokowuje umiejętność (poziom 1; dalsze poziomy 2-5 za złoto jak dotąd),
 ## - "passive": stałe premie (statystyki jak na przedmiotach albo premie do umiejętności - TREE_STATS),
-## - "keystone": węzeł kluczowy - zmienia sposób gry (np. Nieustający Wir).
+## - "keystone": węzeł kluczowy - zmienia sposób gry (np. Nieustający Wir),
+## - "socket": gniazdo na kamień szlachetny (Gems) - kamień działa w drzewku o połowę mocniej (SkillBook.tree_bonus);
+##   gniazdo "legendary" stoi za węzłem kluczowym (później przyjmie też esencję legendy), a kamień promienia wzmacnia
+##   wybrane węzły pasywne w swoim promieniu.
 ## Premie działają tylko z założoną bronią swojego rodzaju. Wybrane węzły cofa za złoto mędrzec w Ostoi.
 ## Drzewka mają wszystkie rodzaje broni: miecz (broń biała), łuk i księga magii.
 
@@ -44,6 +47,9 @@ const TREES := {
 		"start": {"pos": Vector2(0, 0), "kind": "start", "name": "Ścieżka miecza", "links": ["whirlwind", "lunge", "smoke_burst", "warrior_blood", "battle_focus"],
 				"description": "Początek drzewka miecza (zwykły atak). Wybieraj węzły połączone z już wybranymi."},
 		"warrior_blood": {"pos": Vector2(-1.1, -1.6), "kind": "skill", "skill": "warrior_blood", "links": ["hp_1"]},
+		"socket_1": {"pos": Vector2(-3.0, -1.5), "kind": "socket", "name": "Gniazdo", "links": ["hp_1", "whirl_reach"]},
+		"socket_2": {"pos": Vector2(3.5, 0.0), "kind": "socket", "name": "Gniazdo", "links": ["crit_1", "smoke_dmg"]},
+		"socket_legend": {"pos": Vector2(-8.0, 0.0), "kind": "socket", "legendary": true, "name": "Gniazdo legendarne", "links": ["endless_whirl"]},
 		"battle_focus": {"pos": Vector2(-1.1, 1.6), "kind": "skill", "skill": "battle_focus", "links": ["rend", "armor_1"]},
 		# ---- Wir
 		"whirlwind": {"pos": Vector2(-1.6, 0), "kind": "skill", "skill": "whirlwind", "links": ["phys_1"]},
@@ -111,6 +117,9 @@ const TREES := {
 		"start": {"pos": Vector2(0, 0), "kind": "start", "name": "Ścieżka łuku", "links": ["multishot", "seeker", "power_shot", "hunter_breath", "hunter_patience"],
 				"description": "Początek drzewka łuku (zwykły strzał). Wybieraj węzły połączone z już wybranymi."},
 		"hunter_breath": {"pos": Vector2(-1.1, -1.6), "kind": "skill", "skill": "hunter_breath", "links": ["hp_b1"]},
+		"socket_1": {"pos": Vector2(-3.0, -1.5), "kind": "socket", "name": "Gniazdo", "links": ["hp_b1", "multi_arrows"]},
+		"socket_2": {"pos": Vector2(3.5, 0.0), "kind": "socket", "name": "Gniazdo", "links": ["crit_b1", "power_dmg"]},
+		"socket_legend": {"pos": Vector2(-8.0, 0.0), "kind": "socket", "legendary": true, "name": "Gniazdo legendarne", "links": ["hail"]},
 		"hunter_patience": {"pos": Vector2(-1.1, 1.6), "kind": "skill", "skill": "hunter_patience", "links": ["venom_arrows", "mana_b1"]},
 		# ---- Grad
 		"multishot": {"pos": Vector2(-1.6, 0), "kind": "skill", "skill": "multishot", "links": ["phys_b1"]},
@@ -180,6 +189,9 @@ const TREES := {
 		"start": {"pos": Vector2(0, 0), "kind": "start", "name": "Ścieżka księgi", "links": ["fireball", "chain_lightning", "frost_lance", "mystic_renewal", "mana_stream"],
 				"description": "Początek drzewka księgi magii (magiczny pocisk). Wybieraj węzły połączone z już wybranymi."},
 		"mystic_renewal": {"pos": Vector2(-1.1, -1.6), "kind": "skill", "skill": "mystic_renewal", "links": ["hp_s1"]},
+		"socket_1": {"pos": Vector2(-3.0, -1.5), "kind": "socket", "name": "Gniazdo", "links": ["hp_s1", "fire_charge"]},
+		"socket_2": {"pos": Vector2(3.5, 0.0), "kind": "socket", "name": "Gniazdo", "links": ["crit_s1", "ice_dmg"]},
+		"socket_legend": {"pos": Vector2(-8.0, 0.0), "kind": "socket", "legendary": true, "name": "Gniazdo legendarne", "links": ["full_power"]},
 		"mana_stream": {"pos": Vector2(-1.1, 1.6), "kind": "skill", "skill": "mana_stream", "links": ["blink", "mana_s1"]},
 		# ---- Ogień
 		"fireball": {"pos": Vector2(-1.6, 0), "kind": "skill", "skill": "fireball", "links": ["fire_b1"]},

@@ -5,14 +5,19 @@ extends Control
 ## pasywne (małe koła), kluczowe (duże, złote) i start. Wybrane mają złotą obwódkę i złote połączenia, możliwe do
 ## wybrania teraz - pulsującą jasną, reszta jest przygaszona. Kliknięcie zaznacza węzeł (szczegóły i przyciski
 ## pokazuje okno umiejętności), dymek opisuje węzeł, a umiejętność z wybranego węzła (start - zwykły atak) przeciąga się
-## na pasek.
+## na pasek. Gniazda (rodzaj "socket") pokazują osadzony kamień; kamień przeciągnięty z plecaka na wybrane gniazdo
+## się w nim osadza, a kamień promienia rysuje swój zasięg.
 
 signal selected(node_id: String)
+## Kamień z plecaka upuszczony na gniazdo (okno umiejętności pokazuje wynik).
+signal gem_dropped(message: String)
 
 ## Ile pikseli interfejsu na jednostkę pozycji węzła i promienie węzłów wg rodzaju.
 const UNIT := 20.0
 const ZOOM_RANGE := Vector2(0.6, 1.5)
-const RADIUS := {"start": 9.0, "skill": 10.0, "passive": 6.5, "keystone": 12.0}
+const RADIUS := {"start": 9.0, "skill": 10.0, "passive": 6.5, "keystone": 12.0, "socket": 8.5}
+const SOCKET_LEGEND_ICON := preload("res://assets/ui/socket_legend.png")
+const LEGEND_RING := Color(1.0, 0.55, 0.2)
 const GOLD := Color(1.0, 0.82, 0.35)
 const LINK := Color(0.35, 0.36, 0.45)
 const ICONS := {
@@ -105,6 +110,11 @@ func icon_of(id: String) -> Texture2D:
 			return Skills.get_data(node["skill"])["icon"]
 		"keystone":
 			return KEYSTONE_ICONS.get(id, Hotbar.ATTACK_ICON)
+		"socket":
+			var gem := _player.skills.gem_in(weapon_type, id) if _player != null else {}
+			if not gem.is_empty():
+				return Gems.icon_of(gem)
+			return SOCKET_LEGEND_ICON if node.get("legendary", false) else Gems.SOCKET_ICON
 	var stats: Dictionary = node.get("stats", {})
 	return ICONS.get(stats.keys()[0], ICONS["physical_damage"]) if not stats.is_empty() else ICONS["physical_damage"]
 
@@ -122,6 +132,13 @@ func _draw() -> void:
 			var both := book.has_node_id(weapon_type, id) and book.has_node_id(weapon_type, link)
 			draw_line(node_position(id), node_position(link), GOLD if both else LINK, 2.0 if both else 1.5)
 	var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() / 160.0)
+	# zasięg kamieni promienia (wzmocnione węzły pasywne - turkusowe kropki)
+	for id: String in tree:
+		var gem := book.gem_in(weapon_type, id)
+		if gem.get("kind", "") == "radius" and book.has_node_id(weapon_type, id):
+			var reach := SkillBook.RADIUS_RANGE * UNIT * _zoom
+			draw_circle(node_position(id), reach, Color(0.37, 0.88, 0.82, 0.07))
+			draw_arc(node_position(id), reach, 0.0, TAU, 64, Color(0.37, 0.88, 0.82, 0.55), 1.0)
 	for id: String in tree:
 		var kind: String = tree[id]["kind"]
 		var center := node_position(id)
@@ -135,11 +152,15 @@ func _draw() -> void:
 		var ring := GOLD if taken else Color(0.85, 0.9, 1.0, 0.45 + 0.5 * pulse) if can else Color(0.3, 0.3, 0.38)
 		if kind == "keystone":
 			ring = Color(1.0, 0.6, 0.25) if taken else ring
+		elif kind == "socket" and tree[id].get("legendary", false):
+			ring = LEGEND_RING if taken else ring
 		draw_arc(center, radius + 1.0, 0.0, TAU, 32, ring, 2.0 if taken or kind == "keystone" else 1.5)
 		if id == selected_id:
 			draw_arc(center, radius + 4.0, 0.0, TAU, 32, Color(1, 1, 1, 0.9), 1.0)
 		elif id == _hover:
 			draw_arc(center, radius + 3.0, 0.0, TAU, 32, Color(1, 1, 1, 0.4), 1.0)
+		if kind == "passive" and taken and book.radius_factor(weapon_type, id) > 1.0:
+			draw_circle(center + Vector2(radius - 1.0, -radius + 1.0), 2.0, Color(0.37, 0.88, 0.82))
 		# poziom umiejętności pod węzłem
 		if kind == "skill" and taken:
 			var level := book.level_of(tree[id]["skill"])
@@ -217,6 +238,18 @@ func describe(id: String) -> String:
 			lines.append(node["description"])
 		"start":
 			lines.append(node["description"])
+		"socket":
+			if node.get("legendary", false):
+				lines[0] += "  (gniazdo legendarne)"
+			var gem := _player.skills.gem_in(weapon_type, id) if _player != null else {}
+			lines.append(Gems.plain_text(gem) if not gem.is_empty() else
+					"Puste gniazdo na kamień szlachetny - działa tylko z tą bronią, a jego premie są o połowę mocniejsze.")
+			if node.get("legendary", false):
+				lines.append("Później przyjmie też esencję legendy.")
+			if _player != null and _player.skills.has_node_id(weapon_type, id):
+				lines.append("Przeciągnij kamień z plecaka na gniazdo albo wybierz go obok.")
+	if not lines.is_empty() and kind_of(id) == "passive" and _player != null and _player.skills.radius_factor(weapon_type, id) > 1.0:
+		lines.append("Wzmocniony kamieniem promienia: +%d%%" % roundi((_player.skills.radius_factor(weapon_type, id) - 1.0) * 100.0))
 	if _player != null and not _player.skills.has_node_id(weapon_type, id):
 		lines.append("Kliknij, a potem \"Wybierz\" (1 punkt)." if _player.skills.can_take(weapon_type, id)
 				else "Wybierz najpierw sąsiedni węzeł." if _player.skills.points_left() > 0 else "Brak punktów umiejętności.")
@@ -237,3 +270,25 @@ func _get_drag_data(at_position: Vector2) -> Variant:
 	set_drag_preview(UiStyle.drag_preview(Skills.get_data(node["skill"])["icon"]))
 	Sfx.play("ui_click")
 	return {"skill": node["skill"]}
+
+
+func kind_of(id: String) -> String:
+	return SkillTree.nodes(weapon_type).get(id, {}).get("kind", "")
+
+
+## Kamień z plecaka ({"inventory": Inventory, "index": i}) można upuścić na wybrane gniazdo.
+func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
+	if _player == null or not (data is Dictionary) or not data.has("inventory") or data["inventory"] != _player.inventory:
+		return false
+	var slot: Dictionary = _player.inventory.slots[data["index"]]
+	var id := node_at(at_position)
+	return not slot.is_empty() and Gems.is_gem(slot["id"]) and id != "" and _player.skills.can_socket(weapon_type, id)
+
+
+func _drop_data(at_position: Vector2, data: Variant) -> void:
+	var id := node_at(at_position)
+	var message := _player.skills.socket_from(_player.inventory, weapon_type, id, data["index"])
+	selected_id = id
+	selected.emit(id)
+	Sfx.play("ui_error" if message != "" else "pickup")
+	gem_dropped.emit(message)

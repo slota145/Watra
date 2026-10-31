@@ -96,12 +96,16 @@ static func _respec(player: Player, npc: Node) -> Dictionary:
 		var spent: int = player.skills.nodes.get(weapon_type, {}).size()
 		rows.append({
 			"name": "Drzewko: %s" % Skills.WEAPON_NAMES[weapon_type], "icon": Hotbar.ATTACK_ICON,
-			"text": "Mędrzec pomoże zapomnieć wybrane węzły - wrócą jako punkty umiejętności. Kupione poziomy umiejętności zostają.",
+			"text": "Mędrzec pomoże zapomnieć wybrane węzły - wrócą jako punkty umiejętności. Kupione poziomy umiejętności zostają, a kamienie z gniazd wrócą do plecaka.",
 			"cost": "Wybrane węzły: %d   Złoto: %d" % [spent, gold],
 			"enabled": spent > 0 and player.stats.gold >= gold, "state": "", "button": "Zapomnij",
 			"action": func() -> String:
 				player.stats.add_gold(-gold)
-				player.skills.reset_tree(weapon_type)
+				# kamienie z gniazd drzewka wracają do plecaka (gdy pełny - do magazynu)
+				for recipe: Dictionary in player.skills.reset_tree(weapon_type):
+					var gem_id := Gems.register(recipe.duplicate(true))
+					if player.inventory.add_item(gem_id, 1) > 0:
+						player.storage.add_item(gem_id, 1)
 				Sfx.play("magic")
 				npc.say(["Pamięć ciała jest krótsza, niż myślisz.", "Zacznij ścieżkę od nowa.", "Niech ostrze znajdzie nową drogę."].pick_random())
 				return "Zapomniano drzewko: %s" % Skills.WEAPON_NAMES[weapon_type],
