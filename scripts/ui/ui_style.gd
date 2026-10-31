@@ -84,6 +84,20 @@ static func set_item_frame(slot: Control, id: String) -> void:
 		frame.rarity = rarity
 		frame.name = "ItemFrame"
 		slot.add_child(frame)
+	# osadzone kamienie i esencja w rogu kratki
+	var badges := slot.get_node_or_null("SocketBadges") as SocketBadges
+	var icons := SocketBadges.icons_of(id)
+	if icons.is_empty():
+		if badges != null:
+			slot.remove_child(badges)
+			badges.queue_free()
+		return
+	if badges == null:
+		badges = SocketBadges.new()
+		badges.name = "SocketBadges"
+		slot.add_child(badges)
+	badges.icons = icons
+	badges.queue_redraw()
 
 
 static func label(text: String, font_size := 8, color := TEXT_COLOR) -> Label:

@@ -200,6 +200,12 @@ func _process(_d: float) -> bool:
 			ev.next_in = 0.0
 			ev.known_zones = ["swamp"]
 		426:
+			# bez gildii w Ostoi wydarzeń nie ma (sława gildii i Znaki Zwycięstwa dopiero po jej zbudowaniu)
+			check("bez gildii brak wydarzeń", ev.active.is_empty() and ev.next_in <= 60.0)
+			_world._zone_states["forest"] = {"settlement": {"projects": {"guild": ["built"]}}}
+			ev.guild_ready = _world.village_built("guild")
+			ev.next_in = 0.0
+		440:
 			check("harmonogram zaczyna wydarzenie", not ev.active.is_empty() and ev.active["zone"] == "swamp" and ev.next_in > 500.0)
 			print("WYNIK: ", "OK" if _fails == 0 else "%d bledow" % _fails)
 			quit()

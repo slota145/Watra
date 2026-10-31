@@ -89,7 +89,7 @@ func generate(world, settings: Dictionary) -> void:
 	_build_atmosphere()
 	_build_props()
 	_build_entrance()
-	_populate(Dungeons.multiplier(mods, "count"))
+	_populate(Dungeons.multiplier(mods, "count") * (1.0 + Dungeons.TIER_COUNT_BONUS * (int(settings["tier"]) - 1)))
 	_build_vault()
 	_build_event()
 	_build_altar()
@@ -424,11 +424,18 @@ func _room_point(room: Rect2i, margin := 0.0) -> Vector2:
 	return Vector2(_rng.randf_range(from.x, maxf(from.x, to.x)), _rng.randf_range(from.y, maxf(from.y, to.y)))
 
 
-## Pochodnie (koksowniki, świecące grzyby) pod północną ścianą komnat i porozrzucany wystrój.
+## Pochodnie (koksowniki, świecące grzyby) pod północną ścianą komnat, wystrój pod ścianami i porozrzucany
+## po komnatach i korytarzach (bez kolizji, tylko w wolnych miejscach).
 func _build_props() -> void:
 	var lamp: Texture2D = load(climate["lamp"])
 	var frames: int = climate["lamp_frames"]
 	var props: Array = climate["props"].map(func(path: String) -> Texture2D: return load(path))
+	var wall_props: Array = climate["wall_props"].map(func(path: String) -> Texture2D: return load(path))
+	for path in _corridors:
+		for i in range(3, path.size() - 3, 5):
+			if _rng.randf() < 0.6:
+				var at := (path[i] + Vector2(0.5, 0.5)) * CELL + Vector2(_rng.randf_range(-20, 20), _rng.randf_range(-14, 14))
+				_scatter_prop(props.pick_random(), at)
 	for room in rooms:
 		var y := (room.position.y + 1) * CELL + 6.0
 		var count := maxi(1, room.size.x / 3)
@@ -439,13 +446,24 @@ func _build_props() -> void:
 				sprite.frame = _rng.randi() % 2
 				w._flicker(sprite)
 			_glow(Vector2(x, y - 6), climate["light"], Vector2(150, 100))
+		# między pochodniami pod ścianą: skrzynie, świece, kokony...
+		for i in count:
+			if _rng.randf() < 0.7:
+				var x := lerpf(room.position.x * CELL + 24.0, (room.end.x - 1) * CELL - 24.0, (i + 1.0) / count)
+				_scatter_prop(wall_props.pick_random(), Vector2(x + _rng.randf_range(-10, 10), y + 4.0))
 		if room == start_room:
 			continue
-		for i in _rng.randi_range(2, 4):
-			var tex: Texture2D = props.pick_random()
-			var sprite: Sprite2D = w._village_prop(tex, _room_point(room, 16.0), Vector2.ZERO)
-			sprite.flip_h = _rng.randf() < 0.5
-			sprite.modulate = Color(0.9, 0.9, 0.9)
+		for i in maxi(3, room.size.x * room.size.y / 6):
+			_scatter_prop(props.pick_random(), _room_point(room, 16.0))
+
+
+## Rekwizyt bez kolizji w wolnym miejscu (punkt w ścianie przepada).
+func _scatter_prop(tex: Texture2D, at: Vector2) -> void:
+	if _blocked(at, 4.0):
+		return
+	var sprite: Sprite2D = w._village_prop(tex, at, Vector2.ZERO)
+	sprite.flip_h = _rng.randf() < 0.5
+	sprite.modulate = Color(0.9, 0.9, 0.9)
 
 
 ## Płomienie Watry w komnacie wejściowej: wejście w nie wraca do Ostoi (tak samo te po pokonaniu strażnika).
@@ -527,13 +545,51 @@ func _pick(weights: Dictionary) -> String:
 
 
 func _spawn(kind: String, pos: Vector2, look_at: Vector2, lvl: int) -> Dictionary:
-	var spawn := {"type": kind, "position": pos, "sitting": false, "look_at": look_at, "level": lvl, "lurk": false}
+	var spawn := {"type": kind, "position": _free_spot(pos, look_at), "sitting": false, "look_at": look_at, "level": lvl, "lurk": false}
 	w._add_goblin_spawn(spawn)
 	# w lochu potwory nie odpuszczają pogoni (droga i tak prowadzi wokół ścian); strażnik pilnuje skarbca
 	var goblin: Goblin = w._live_goblins.get(spawn["id"])
 	if goblin != null and not goblin is Boss:
 		goblin.leash_radius = LEASH
 	return spawn
+
+
+## Czy punkt (z zapasem `margin` na ciało potwora) leży w kolizji skały albo lica ściany (patrz _wall_box).
+func _blocked(pos: Vector2, margin := 10.0) -> bool:
+	var center := Vector2i((pos / CELL).round())
+	for dx in range(-1, 2):
+		for dy in range(-1, 2):
+			var v := center + Vector2i(dx, dy)
+			var kind := _label(v)
+			if kind == "l":
+				continue
+			var top := v.y * CELL - CELL / 2.0
+			var bottom := v.y * CELL + (FACE_DEPTH if kind == "t" else CELL / 2.0)
+			var rect := Rect2(v.x * CELL - CELL / 2.0, top, CELL, bottom - top).grow(margin)
+			if rect.has_point(pos):
+				return true
+	return false
+
+
+## Wolne miejsce dla potwora: sam punkt, a gdy wypada w ścianie - pierwszy wolny punkt w stronę `toward`
+## albo najbliższy wolny wierzchołek podłogi (inaczej potwór stałby w ścianie, nietrafialny).
+func _free_spot(pos: Vector2, toward: Vector2) -> Vector2:
+	if not _blocked(pos):
+		return pos
+	for i in range(1, 9):
+		var spot := pos.lerp(toward, i / 8.0)
+		if not _blocked(spot):
+			return spot
+	var best := toward
+	var best_d := INF
+	var center := Vector2i((pos / CELL).round())
+	for dx in range(-3, 4):
+		for dy in range(-3, 4):
+			var spot := Vector2(center + Vector2i(dx, dy)) * CELL
+			if not _blocked(spot) and spot.distance_squared_to(pos) < best_d:
+				best_d = spot.distance_squared_to(pos)
+				best = spot
+	return best
 
 
 ## Strażnik na środku najdalszej komnaty i zamknięta skrzynia skarbca pod jej północną ścianą.

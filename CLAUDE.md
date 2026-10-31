@@ -148,6 +148,21 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   `tests/balance_sim.gd` liczy kamienie zaklinające tylko z lochów (skarbiec strażnika, Kryształ Watry).
 - [x] Mgnienie (i wirujące Mgnienie) przeskakuje na wylot przez wroga i tnie wszystkich na drodze (`SwordSkills._jump`,
   `_landing_spot`); kolejny cel inny niż poprzedni, a jednego wroga przebija tam i z powrotem.
+- [x] Lochy: duża mapa (M) pokazuje loch (bez zakładki „Świat”); potwory nie rodzą się w ścianach (`Dungeon._free_spot`,
+  `_blocked`); Kryształ Watry w co czwartym lochu (`Dungeons.EVENT_CHANCE` 0,25); więcej wystroju - pod ścianami
+  (`wall_props` klimatu), w komnatach i korytarzach (`Dungeon._scatter_prop`); +7% potworów na stopień
+  (`Dungeons.TIER_COUNT_BONUS`).
+- [x] Dymek przedmiotu z ikoną (`Items.ICON_MARK`, `RichTooltip._panel`), przy kolczykach i pierścieniach porównanie
+  z obiema założonymi sztukami; kamienie i esencja osadzone w przedmiocie widać w rogu kratki (`SocketBadges`,
+  znikają pod kursorem); okno zaklinania ma u góry pasek założonych przedmiotów (kliknięcie - do zaklęcia).
+- [x] Spokojniejszy dźwięk Strzały tropiącej (równy szum bez gwizdu, `tools/sfx_synth.py`); strzały tropiące znikają
+  najpóźniej po czasie życia także wtedy, gdy lot stanie (`SeekerArrow._process`); Łuk Burzy i Łuk Swaroga w ręku
+  bez ciemnego wypełnienia między łukiem a cięciwą (`pixellab_src/legend_held/`).
+- [x] Palenie stosu w Watrze naraz (`Inventory.take`) - bez zacinania gry; w Młynku rękojeść krąży w wyciągniętej
+  dłoni (`Player.WHIRL_HAND_REACH`), bazowy promień 40 zamiast 30.
+- [x] Wydarzenia w świecie, pojedynki, zbóje, osłona zbieraczy i prośby drużyny (sława gildii, Znaki Zwycięstwa)
+  dopiero po zbudowaniu gildii (`WorldEvents.guild_ready`); zadanie główne „Pan topielców” (id `main_hydra`) wysyła
+  do Wodnika zamiast za trudnej Hydry.
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 
@@ -376,7 +391,7 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
 - [x] **Kryształ Watry** (`scripts/watra_crystal.gd`, grafiki z PixelLab przez `tools/crystal_art.py`): zaklinanie
   przeniesione do końcówki gry. Kamienie zaklinające nie wypadają już w krainach (potwory, bossowie, drzewa, głazy,
   zlecenia, wędrowny kupiec) - tylko z Kryształu Watry i ze skarbca strażnika lochu; zaklina kowal Bronisław w Ostoi
-  (usługa „Zaklinanie”, nie ma już przycisku w plecaku). W co drugim lochu (`Dungeons.EVENT_CHANCE`, w trybie
+  (usługa „Zaklinanie”, nie ma już przycisku w plecaku). W co czwartym lochu (`Dungeons.EVENT_CHANCE`, w trybie
   deweloperskim zawsze) największa komnata jest pusta i rośnie w niej kryształ; gdy gracz podejdzie, nadchodzą
   4 fale potworów idących na cel (`Goblin.objective`). Warianty: obrona kryształu albo dwóch górników kujących
   kryształ (im więcej przeżyje, tym większa nagroda); po porażce tylko część nagrody. Nagroda rośnie ze stopniem

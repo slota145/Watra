@@ -54,7 +54,7 @@ const SOUNDS := {
 	"dash": [["cloth1", "cloth2", "cloth3", "cloth4"], -4.0, 0.1, 0.1],
 	"whirl": [["drawKnife1", "drawKnife2", "drawKnife3"], -9.0, 0.1, 0.12],
 	"big_slash": [["big_slash"], -3.0, 0.05, 0.1],
-	"seeker": [["seeker_whistle"], -4.0, 0.04, 0.1],
+	"seeker": [["seeker_whistle"], -7.0, 0.04, 0.1],
 	"zap": [["lightning_zap_1", "lightning_zap_2"], -7.0, 0.1, 0.04],
 	"thunder": [["thunder"], -2.0, 0.04, 0.3],
 	"legendary_drop": [["legendary_drop"], -2.0, 0.0, 1.0],

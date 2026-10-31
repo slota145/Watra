@@ -50,6 +50,8 @@ func setup(world_seed: int, zone: String, texture: Texture2D, player: Player, ma
 	_textures.clear()
 	for other: String in Zones.DATA:
 		_textures[other] = texture if other == zone else Zones.load_map_cache(world_seed, other)
+	# loch nie należy do mozaiki świata (Zones.DATA), więc jego mapę dokładamy osobno
+	_textures[zone] = texture
 	custom_minimum_size = view_tiles() * pixels_per_tile
 	size = custom_minimum_size
 	mouse_filter = Control.MOUSE_FILTER_STOP

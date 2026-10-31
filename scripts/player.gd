@@ -57,6 +57,8 @@ const FIREBALL_TEXTURE := preload("res://assets/projectiles/fireball.png")
 ## Prędkość obrotu w młynku (rad/s) i spowolnienie ruchu podczas niego.
 const WHIRL_SPIN_SPEED := 16.0
 const WHIRL_MOVE_FACTOR := 0.7
+## W Młynku rękojeść krąży w wyciągniętej dłoni, z dala od osi obrotu (ostrze sięga dalej).
+const WHIRL_HAND_REACH := 10.0
 ## Zbieranie (drzewa, głazy): zasięg (od stóp do podstawy), czas i odstęp między uderzeniami.
 const HARVEST_RANGE := 26.0
 const HARVEST_TIME := 2.0
@@ -1583,6 +1585,7 @@ func _start_whirl() -> void:
 	sword.visible = sword.texture != null
 	sword.rotation = 0.0
 	sword.flip_v = false
+	sword.position = Vector2(WHIRL_HAND_REACH, 0.0)
 	slash.visible = true
 	slash.frame = 1
 	slash.flip_v = false
@@ -1609,6 +1612,7 @@ func _update_whirl(delta: float) -> void:
 func _stop_whirl() -> void:
 	_whirling = false
 	sword.visible = false
+	sword.position = Vector2.ZERO
 	slash.visible = false
 	slash.scale = Vector2.ONE
 

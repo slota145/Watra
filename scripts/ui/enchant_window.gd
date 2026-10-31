@@ -4,7 +4,8 @@ extends PanelContainer
 ## Nad przedmiotem kratka na kamienie miłosierdzia (chronią poziom przy porażce),
 ## pod nim kratka na uświęcone kamienie (pewne wbicie III-V; używane w pierwszej kolejności).
 ## PPM na kamieniu albo przedmiocie - w plecaku lub założonym - wkłada go do okna,
-## PPM na kratce w oknie ją opróżnia.
+## PPM na kratce w oknie ją opróżnia. Pasek u góry pokazuje założone przedmioty - kliknięcie wkłada przedmiot
+## do okna (okno może zasłaniać sylwetkę w plecaku).
 ## Zaklinanie trwa kilka sekund (pasek + złote iskry), potem złoty puls przy sukcesie
 ## albo czerwony błysk przy porażce. Opcje: pominięcie ładowania i automat do +15.
 
@@ -21,6 +22,7 @@ const GOOD_GREEN := Color(0.55, 1.0, 0.5)
 const SMALL_SLOT := Vector2(24, 24)
 const BIG_SLOT := Vector2(38, 38)
 const AID_SLOT := Vector2(20, 20)
+const WORN_SLOT := Vector2(22, 22)
 ## Jak często z kratki uświęconych kamieni wylatuje iskra (s).
 const SPARK_INTERVAL := 0.04
 
@@ -64,6 +66,8 @@ var _fx: Control
 var _pulse_radius := 0.0
 var _pulse_alpha := 0.0
 var _charge_sound: AudioStreamPlayer
+## Pasek założonych przedmiotów: miejsce -> [kratka, ikona].
+var _worn_slots := {}
 
 
 func _ready() -> void:
@@ -83,6 +87,14 @@ func _ready() -> void:
 	var hint := UiStyle.label("PPM na kamieniu lub przedmiocie (w plecaku albo założonym) wkłada go tutaj.", 7, UiStyle.DIM_COLOR)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(hint)
+	var worn_row := HBoxContainer.new()
+	worn_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	worn_row.add_theme_constant_override("separation", 2)
+	box.add_child(worn_row)
+	for slot_name: String in Equipment.SLOTS:
+		var parts := _make_slot(worn_row, WORN_SLOT, "")
+		parts[0].gui_input.connect(_on_worn_input.bind(slot_name))
+		_worn_slots[slot_name] = parts
 
 	var main := HBoxContainer.new()
 	main.add_theme_constant_override("separation", 6)
@@ -361,9 +373,33 @@ func _refresh() -> void:
 	else:
 		_set_warning("Porażka zabierze tylko kamień.", UiStyle.DIM_COLOR)
 
+	_refresh_worn()
 	_current_stats.text = _stats_text(id, level) if id != "" else "-"
 	_next_stats.text = _diff_text(id, level) if can_upgrade else "-"
 	_update_button(plan)
+
+
+## Pasek założonych przedmiotów: puste miejsca znikają, zaklinany przedmiot jest podświetlony.
+func _refresh_worn() -> void:
+	for slot_name: String in _worn_slots:
+		var parts: Array = _worn_slots[slot_name]
+		var id := _player.equipment.get_item(slot_name)
+		parts[0].visible = id != ""
+		if id == "":
+			continue
+		var level := _player.equipment.get_enchant(slot_name)
+		parts[1].texture = Items.get_data(id)["icon"]
+		parts[2].text = Enchanting.level_name(level)
+		parts[0].tooltip_text = Items.describe(id, level) + "\nKliknij - do zaklęcia"
+		UiStyle.set_item_frame(parts[0], id)
+		parts[0].modulate = Color(1.35, 1.25, 0.8) if _item_ref.get("equip", "") == slot_name else Color.WHITE
+
+
+func _on_worn_input(event: InputEvent, slot_name: String) -> void:
+	var mouse := event as InputEventMouseButton
+	if mouse != null and mouse.pressed and mouse.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT]:
+		offer_equipped(slot_name)
+		accept_event()
 
 
 func _update_aid(icon: TextureRect, label: Label, id: String, active: bool, cost: int, color: Color) -> void:
