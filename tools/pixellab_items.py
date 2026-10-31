@@ -71,14 +71,22 @@ def _outline(img):
 
 def held_sprite(icon, held, kind):
     """Broń w ręku z ikony: (obraz, chwyt [x, y] w pikselach obrazu). Broń biała i kostury - ostrzem
-    w prawo (ikona ma je po skosie w prawy górny róg), łuk - pionowo, księga - bez obrotu."""
+    w prawo (ikona ma je po skosie w prawy górny róg albo pionowo, głowicą w górę), łuk - pionowo
+    (ramiona po dowolnym skosie), księga - bez obrotu. Z kilku obrotów wybiera ten, po którym broń jest
+    najbardziej wydłużona we właściwą stronę."""
     img = _crop(icon.convert("RGBA"))
     if held["grip"] != "book":
         big = img.resize((img.width * 4, img.height * 4), Image.NEAREST)
-        # łuk: ramiona wzdłuż skosu -> pionowo; reszta: ostrze z prawego górnego rogu -> w prawo
-        big = big.rotate(45 if held["grip"] == "bow" else -45, resample=Image.BICUBIC, expand=True)
-        img = _crop(big)
-        length = img.height if held["grip"] == "bow" else img.width
+        bow = held["grip"] == "bow"
+        angles = (45, -45) if bow else (-45, -90)
+
+        def stretched(angle):
+            box = _crop(big.rotate(angle, resample=Image.BICUBIC, expand=True))
+            return box.height / box.width if bow else box.width / box.height
+
+        best = max(angles, key=stretched)
+        img = _crop(big.rotate(best, resample=Image.BICUBIC, expand=True))
+        length = img.height if bow else img.width
     else:
         length = img.width
     sprite = _outline(_crop(_shrink(img, held["length"] * HELD_DENSITY / length)))
