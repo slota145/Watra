@@ -785,6 +785,15 @@ func _process(delta: float) -> void:
 	if _traveler_check <= 0.0:
 		_traveler_check = 20.0
 		_sync_travelers()
+	_process_party_offers(delta)
+	# powrót do Ostoi kończy wspólne łowy
+	if zone == "forest" and not player.travelers.party.is_empty() and _settlement.is_inside_palisade(Vector2i((player.global_position / TILE).floor())):
+		for node: Traveler in get_tree().get_nodes_in_group("travelers"):
+			if node.mode == "party":
+				node.say("Dzięki za wspólne łowy! Do zobaczenia.")
+				node.mode = "town"
+				node.town_points = _settlement.traveler_points()
+		player.travelers.disband()
 
 
 # ---------------------------------------------------------------- inni podróżnicy
@@ -797,17 +806,20 @@ const MAX_TOWNSFOLK := 10
 ## Widoczni podróżnicy zgodni ze spisem (Travelers): łowcy tej krainy przy siedliskach (daleko od gracza - nie wyskakują
 ## mu przed nosem), a w Goblińskim Lesie także spacerowicze w Ostoi. Odesłani przez spis wracają w płomieniach Watry.
 func _sync_travelers() -> void:
-	if zone == Zones.DUNGEON or player == null:
+	if player == null:
 		return
 	var roster: Travelers = player.travelers
 	roster.ensure_roster()
+	_sync_party()
+	if zone == Zones.DUNGEON:
+		return
 	if village_built("guild") and roster.guild_rank == 0:
 		roster.guild_rank = 1
 	var shown := {}
 	for node: Traveler in get_tree().get_nodes_in_group("travelers"):
 		var data := node.data
 		var still: bool = (node.mode == "hunt" and data["state"] == "hunt" and data["zone"] == zone) \
-				or (node.mode == "town" and data["state"] == "town")
+				or (node.mode == "town" and data["state"] == "town") or (node.mode == "party" and data["state"] == "party")
 		if not still or roster.active().find(data) < 0:
 			node.recall()
 		else:
@@ -846,9 +858,117 @@ func _sync_travelers() -> void:
 			node.town_points = points
 
 
+## Drużyna gracza: członkowie idą za nim (po wczytaniu krainy - obok gracza); kto wypadł z drużyny, odchodzi.
+func _sync_party() -> void:
+	var roster: Travelers = player.travelers
+	var present := {}
+	for node: Traveler in get_tree().get_nodes_in_group("travelers"):
+		if node.mode == "party":
+			if roster.party.has(node.data["name"]) and node.is_alive():
+				present[node.data["name"]] = true
+			else:
+				node.recall()
+	var slots: Array[Vector2] = [Vector2(-26, 14), Vector2(26, 14), Vector2(0, 26)]
+	var i := 0
+	for traveler: Dictionary in roster.party_members():
+		if not present.has(traveler["name"]):
+			var node := _spawn_traveler(traveler, "party", player.global_position + slots[i % slots.size()])
+			node.slot = slots[i % slots.size()]
+		i += 1
+
+
+## Zaproszenia do drużyny i prośby o pomoc: najwyżej co PARTY_OFFER_COOLDOWN sekund, gdy gracz wejdzie między łowców
+## (bez drużyny). Odmowa - łowcy przenoszą się na inny spot; zgoda - idą z graczem (prośba: zadanie z drużyną).
+var _party_cooldown := 30.0
+var _party_check := 1.0
+const PARTY_OFFER_COOLDOWN := 120.0
+const PARTY_OFFER_RANGE := 200.0
+const HELP_CHANCE := 0.35
+
+
+func _process_party_offers(delta: float) -> void:
+	_party_cooldown -= delta
+	_party_check -= delta
+	if _party_check > 0.0 or _party_cooldown > 0.0 or player.is_dead or zone == Zones.DUNGEON:
+		return
+	_party_check = 1.0
+	var roster: Travelers = player.travelers
+	if not roster.party.is_empty() or hud.party_offer.is_open():
+		return
+	var near: Array = get_tree().get_nodes_in_group("travelers").filter(func(t: Traveler) -> bool:
+		return t.mode == "hunt" and t.is_alive() and t.global_position.distance_to(player.global_position) < PARTY_OFFER_RANGE)
+	if near.is_empty():
+		return
+	var leader: Traveler = near[0]
+	var group: Array = near.filter(func(t: Traveler) -> bool: return t.global_position.distance_to(leader.global_position) < 140.0)
+	group = group.slice(0, Travelers.PARTY_MAX)
+	_party_cooldown = PARTY_OFFER_COOLDOWN
+	var names: Array = group.map(func(t: Traveler) -> String: return t.data["name"])
+	var task := {}
+	if randf() < HELP_CHANCE and player.quests.active_help() == "" and Levels.ZONES.has(zone):
+		task = _help_task(leader.data["name"])
+	var text := ""
+	if task.is_empty():
+		text = "%s [%d] zaprasza cię do drużyny%s. Wspólne łowy: +%d%% doświadczenia za każdego towarzysza." % [
+				leader.data["name"], leader.data["level"], (" (razem z: %s)" % ", ".join(names.slice(1))) if names.size() > 1 else "",
+				roundi(Travelers.PARTY_XP_BONUS * 100.0)]
+		leader.say("Hej! Chodź z nami polować!")
+	else:
+		text = "%s [%d] prosi o pomoc: %s\nNagroda: %d zł, %d exp." % [leader.data["name"], leader.data["level"],
+				task["description"], task["gold"], task["xp"]]
+		leader.say("Pomożesz nam?")
+	hud.party_offer.ask(text, _accept_party.bind(group, task), _decline_party.bind(group))
+
+
+## Zadanie z drużyną: mniejsze zlecenie w tej krainie (potwory, boss albo surowce), nagroda od zleceniodawcy.
+func _help_task(poster: String) -> Dictionary:
+	var roll := randf()
+	var kind := "kill" if roll < 0.6 else "gather" if roll < 0.85 else "boss"
+	var task := Bounties.make(kind, zone, player.quests.bounties_done, poster)
+	var share := 1.0
+	if kind == "kill":
+		share = 0.25
+		task["count"] = maxi(10, roundi(task["count"] * share / 5.0) * 5)
+		task["description"] = "Przetrzebmy razem %s - jeszcze %d." % [task["target_name"].to_lower(), task["count"]]
+	elif kind == "gather":
+		share = 0.4
+		task["count"] = maxi(2, roundi(task["count"] * share))
+		task["description"] = "Brakuje nam %s - zbierzmy razem %d." % [task["target_name"].to_lower(), task["count"]]
+	else:
+		task["description"] = "Idziemy na %s. Bez ciebie nie damy rady!" % task["target_name"].get_slice(",", 0)
+	task["gold"] = roundi(task["gold"] * share)
+	task["xp"] = roundi(task["xp"] * share)
+	task["fame"] = roundi(task["fame"] * 0.5)
+	task["title"] = "Prośba: %s" % poster
+	return task
+
+
+func _accept_party(group: Array, task: Dictionary) -> void:
+	var roster: Travelers = player.travelers
+	var members: Array = group.filter(func(t) -> bool: return is_instance_valid(t) and t.is_alive()).map(func(t: Traveler) -> Dictionary: return t.data)
+	roster.join_party(members)
+	var slots: Array[Vector2] = [Vector2(-26, 14), Vector2(26, 14), Vector2(0, 26)]
+	var i := 0
+	for node in group:
+		if is_instance_valid(node) and node.is_alive():
+			node.become_party(slots[i % slots.size()])
+			i += 1
+	if not task.is_empty():
+		player.quests.take_help(task)
+	(group[0] as Traveler).say("Świetnie! Trzymaj się blisko.")
+
+
+func _decline_party(group: Array) -> void:
+	for node in group:
+		if is_instance_valid(node) and node.is_alive():
+			node.say(["Szkoda. Poszukamy innego miejsca.", "Jak chcesz. Idziemy dalej.", "Trudno, może następnym razem!"].pick_random())
+			node.relocate()
+
+
 func _spawn_traveler(data: Dictionary, mode: String, at: Vector2) -> Traveler:
 	var node := Traveler.new()
 	node.data = data
+	node.zone_key = zone
 	node.mode = mode
 	node.travelers = player.travelers
 	node.home = at

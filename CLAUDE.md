@@ -397,11 +397,15 @@ Oba systemy zależą od gildii poszukiwaczy przygód w Ostoi (budowla `guild` w 
   najwyżej 3 przyjęte. Nagrody: złoto, doświadczenie, przedmioty, kamień szlachetny i **sława gildii**
   (`Travelers.guild_fame`). Gildia ma **6 rang** (14, 21, 27, 32, 36, 40 aktywnych podróżników) - kolejne wymagają sławy
   oraz złota i surowców.
-- [ ] **Drużyny z podróżnikami** (pomysł autora): przy spocie z łowcami gracz dostaje zaproszenie do drużyny - wspólna
-  walka i doświadczenie; po odmowie drużyna przenosi się na inny spot. Niektórzy proszą o pomoc przy konkretnym
-  spocie (zadanie z drużyną: zabić N potworów, pokonać bossa, zebrać materiały - potem nagroda i podziękowanie).
-  Napotkani podróżnicy pozdrawiają, zagadują i dają wskazówki o krainie (np. przy bagnach wodnika: „uważaj na utopce,
-  lubią wyskakiwać z wody tuż przed twarzą”).
+- [x] **Drużyny z podróżnikami** (`Travelers.party`, `Traveler` w trybie „party”, `World._process_party_offers`,
+  okienko `scripts/ui/party_offer.gd`, ramki `scripts/ui/party_frames.gd`): gdy gracz wejdzie między łowców (najwyżej
+  co 2 minuty, bez drużyny), dostaje zaproszenie „Dołącz / Odmów”; odmowa - łowcy przenoszą się na inny spot, zgoda -
+  1-3 podróżników idzie za graczem przez krainy i lochy (dobiegają, gdy zostaną w tyle), bije wrogów przy graczu
+  (bossów słabiej), a ich zabójstwa dają graczowi łup i doświadczenie z premią +10% za członka
+  (`Travelers.party_xp_factor`). Odchodzą po 15-30 minutach, po powrocie do Ostoi albo przyciskiem „Opuść”.
+  Czasem zamiast zaproszenia **prośba o pomoc** - zadanie z drużyną w tej krainie (potwory, boss albo surowce,
+  `QuestLog.take_help`), po wykonaniu nagroda i podziękowanie same. Łowcy pozdrawiają przechodzącego gracza i dają
+  wskazówki o krainie (`Travelers.GREETINGS` / `HINTS`).
 - [ ] **Tryby symulacji świata** (pomysł autora, wybór przy nowej grze / w ustawieniach) i **charaktery podróżników**:
   spokojny (tylko zaproszenia do drużyny, po odmowie odchodzą), realistyczny (niektórzy wyzywają na pojedynek, po
   odmowie polują dalej), hardcorowy (dodatkowo niektórzy atakują bez ostrzeżenia - PK).

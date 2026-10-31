@@ -478,7 +478,9 @@ func _die() -> void:
 	if _player != null and is_instance_valid(_player.legendary):
 		_player.legendary.on_enemy_died(self)
 	if _player != null:
-		var xp := roundi(xp_reward * _player.stats.xp_multiplier() * Levels.xp_fraction(_player.stats.level, level))
+		# drużyna z podróżnikami: +10% za każdego członka (Travelers.party_xp_factor)
+		var xp := roundi(xp_reward * _player.stats.xp_multiplier() * Levels.xp_fraction(_player.stats.level, level)
+				* _player.travelers.party_xp_factor())
 		_player.stats.add_xp(xp)
 		DamageNumber.spawn_text(get_parent(), hurt_center() + Vector2(0, -8), "+%d exp" % xp, XP_COLOR, 8)
 	var tween := create_tween().set_parallel()

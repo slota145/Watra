@@ -166,7 +166,7 @@ func get_save_data() -> Dictionary:
 func active_bounties() -> Array[String]:
 	var result: Array[String] = []
 	for id: String in bounty_defs:
-		if state_of(id) in [Quests.STATE_ACTIVE, Quests.STATE_READY]:
+		if state_of(id) in [Quests.STATE_ACTIVE, Quests.STATE_READY] and not bounty_defs[id].get("help", false):
 			result.append(id)
 	return result
 
@@ -199,6 +199,25 @@ func take_bounty(definition: Dictionary) -> String:
 	return id
 
 
+## Prośba drużyny o pomoc (zadanie z drużyną - World._process_party_offers): zapisana jak zlecenie, ale poza tablicą;
+## po wykonaniu nagroda wypłaca się sama (Player._on_quest_ready).
+func take_help(definition: Dictionary) -> String:
+	definition["help"] = true
+	_bounty_serial += 1
+	var id := "bounty_help_%d" % _bounty_serial
+	bounty_defs[id] = definition
+	Quests.dynamic[id] = definition
+	accept(id)
+	return id
+
+
+func active_help() -> String:
+	for id: String in bounty_defs:
+		if bounty_defs[id].get("help", false) and state_of(id) in [Quests.STATE_ACTIVE, Quests.STATE_READY]:
+			return id
+	return ""
+
+
 ## Odbiór nagrody za zlecenie: złoto i exp (turn_in), przedmioty do plecaka (nadmiar do magazynu).
 func finish_bounty(id: String, player: Player) -> bool:
 	var definition: Dictionary = bounty_defs.get(id, {})
@@ -222,7 +241,8 @@ func finish_bounty(id: String, player: Player) -> bool:
 		var left := player.inventory.add_item(item, int(definition["reward_items"][item]))
 		if left > 0:
 			player.storage.add_item(item, left)
-	bounties_done += 1
+	if not definition.get("help", false):
+		bounties_done += 1
 	_forget_bounty(id)
 	changed.emit()
 	return true
