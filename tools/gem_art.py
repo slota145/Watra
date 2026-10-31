@@ -2,8 +2,10 @@
 w pixellab_src/gems/ids.json). Arkusze pixellab_src/gems/gems_1.png i gems_2.png (po 16 ikon 64x64, 8 kolumn,
 złożone przez pixelart_workbench join): rubin, szafir, szmaragd, potem topaz, ametyst, onyks - każdy w 5 szlifach
 (okruch, odłamek, kamień, szlifowany, królewski); na końcu surowy klejnot (zadanie jubilera) i puste gniazdo.
+Arkusz pixellab_src/gems/tree_sockets.png (2 ikony): kamień promienia (gniazda drzewek) i gniazdo legendarne.
 Ciemne tło (31, 37, 44) znika wypełnianiem od krawędzi klatki (herb_art.cells).
-Wynik: assets/items/gems/<rodzaj>_<szlif 1-5>.png, assets/items/rough_gem.png, assets/ui/socket.png.
+Wynik: assets/items/gems/<rodzaj>_<szlif 1-5>.png, assets/items/rough_gem.png, assets/ui/socket.png,
+assets/items/gems/radius.png, assets/ui/socket_legend.png.
 Uruchom: python tools/gem_art.py"""
 import os
 import sys
@@ -27,7 +29,10 @@ def main():
                 icons[k * 5 + cut].save(os.path.join(out, "%s_%d.png" % (kind, cut + 1)))
         target = ("items", "rough_gem.png") if extra == "rough_gem" else ("ui", "socket.png")
         icons[15].save(os.path.join(ROOT, "assets", *target))
-    print("kamienie szlachetne: 30 ikon, surowy klejnot, gniazdo")
+    radius, legend = cells(Image.open(os.path.join(ROOT, "pixellab_src", "gems", "tree_sockets.png")), 2, 2)
+    radius.save(os.path.join(out, "radius.png"))
+    legend.save(os.path.join(ROOT, "assets", "ui", "socket_legend.png"))
+    print("kamienie szlachetne: 30 ikon, surowy klejnot, gniazdo, kamień promienia, gniazdo legendarne")
 
 
 if __name__ == "__main__":

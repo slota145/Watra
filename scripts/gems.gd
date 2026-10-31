@@ -8,7 +8,9 @@ class_name Gems
 ## - gniazdo: przepis przedmiotu (Loot.register) ma "sockets": lista kamieni (przepisów, {} - puste gniazdo); premie
 ##   kamieni liczą się do statystyk przedmiotu (Items.stats_of), a kamień wyjęty z gniazda wraca jako przedmiot;
 ## - po zadaniu kamienie wypadają z potworów (Goblin._drop_loot), a magiczne i rzadkie przedmioty czasem mają gniazdo
-##   (Loot.generate); gniazdo dorabia i kamienie łączy (3 jednego szlifu -> 1 lepszego) jubiler (JewelerWindow).
+##   (Loot.generate); gniazdo dorabia i kamienie łączy (3 jednego szlifu -> 1 lepszego) jubiler (JewelerWindow);
+## - kamień promienia (rodzaj "radius", końcówka gry - Kryształ Watry i skarbiec lochu) pasuje tylko do gniazd drzewek
+##   broni: wzmacnia wybrane węzły pasywne w swoim promieniu (SkillBook.RADIUS_RANGE) o "radius_power".
 
 const KINDS := {
 	"ruby": {"name": "Rubin", "pool": ["health", "health_regen", "life_on_hit"]},
@@ -17,6 +19,7 @@ const KINDS := {
 	"topaz": {"name": "Topaz", "pool": ["strength", "physical_damage", "damage"]},
 	"amethyst": {"name": "Ametyst", "pool": ["intelligence", "cooldown_reduction", "spell_damage"]},
 	"onyx": {"name": "Onyks", "pool": ["vitality", "armor", "damage_percent"]},
+	"radius": {"name": "Kamień Promienia", "pool": []},
 }
 const KIND_ORDER: Array[String] = ["ruby", "sapphire", "emerald", "topaz", "amethyst", "onyx"]
 ## Premie wspólne dla wszystkich kamieni.
@@ -42,7 +45,13 @@ const COMBINE_GOLD: Array[int] = [40, 120, 300, 700]
 const QUEST := "jeweler_gem"
 const ROUGH_GEM := "rough_gem"
 const SOCKET_ICON := preload("res://assets/ui/socket.png")
-const COLORS := {"ruby": "ff6b6b", "sapphire": "6ea8ff", "emerald": "5fdc7d", "topaz": "ffc24a", "amethyst": "c07bff", "onyx": "c8c8d2"}
+const COLORS := {"ruby": "ff6b6b", "sapphire": "6ea8ff", "emerald": "5fdc7d", "topaz": "ffc24a", "amethyst": "c07bff", "onyx": "c8c8d2",
+		"radius": "5fe0d0"}
+## Kamień promienia: szansa w nagrodzie Kryształu Watry (plus za stopień lochu) i w skarbcu strażnika.
+const RADIUS_CRYSTAL_CHANCE := 0.2
+const RADIUS_CRYSTAL_PER_TIER := 0.04
+const RADIUS_VAULT_CHANCE := 0.25
+const RADIUS_ICON := preload("res://assets/items/gems/radius.png")
 
 ## Czy kamienie i gniazda już wypadają (zadanie jubilera wykonane) - ustawia gracz po wczytaniu i po zadaniu.
 static var unlocked := false
@@ -50,6 +59,21 @@ static var unlocked := false
 
 static func is_gem(id: String) -> bool:
 	return Items.get_data(id).has("gem")
+
+
+static func is_radius(id: String) -> bool:
+	return Items.get_data(id).get("gem", {}).get("kind", "") == "radius"
+
+
+## Nowy kamień promienia; moc (wzmocnienie węzłów pasywnych) rośnie ze stopniem lochu 1-7.
+static func roll_radius(tier := 1) -> String:
+	var power := snappedf(randf_range(0.2, 0.35) + 0.02 * clampi(tier, 1, 7), 0.01)
+	return register({"gem": true, "kind": "radius", "cut": CUTS.size() - 1, "affixes": {"radius_power": power}})
+
+
+## Opis działania kamienia promienia: "Wybrane węzły pasywne w promieniu: +30% premii".
+static func radius_text(power: float) -> String:
+	return "Wybrane węzły pasywne w promieniu: +%d%% premii" % roundi(power * 100.0)
 
 
 ## Szlif kamienia z poziomu potwora / lochu (0-4): poziom 16 - okruch, co około 7 poziomów lepszy.
@@ -88,6 +112,16 @@ static func register(recipe: Dictionary, id := "") -> String:
 	var kind: String = recipe["kind"]
 	var cut := clampi(int(recipe["cut"]), 0, CUTS.size() - 1)
 	recipe["cut"] = cut
+	if kind == "radius":
+		recipe["affixes"] = {"radius_power": float(recipe["affixes"].get("radius_power", 0.25))}
+		Items.generated[id] = {
+			"name": KINDS[kind]["name"],
+			"description": "Kamień do gniazda w drzewku umiejętności broni (okno K). %s. Nie pasuje do przedmiotów."
+					% radius_text(recipe["affixes"]["radius_power"]),
+			"icon": RADIUS_ICON, "rarity": "rare",
+			"gem": {"kind": kind, "cut": cut}, "stats": {}, "sell_price": 400, "recipe": recipe,
+		}
+		return id
 	var stats := {}
 	for stat: String in recipe["affixes"]:
 		var value: float = recipe["affixes"][stat]
@@ -110,11 +144,26 @@ static func register(recipe: Dictionary, id := "") -> String:
 static func socket_text(gem: Dictionary) -> String:
 	if gem.is_empty():
 		return "Puste gniazdo"
+	if gem.get("kind", "") == "radius":
+		return "[color=#%s]%s[/color]: %s" % [COLORS["radius"], KINDS["radius"]["name"], radius_text(float(gem["affixes"].get("radius_power", 0.0)))]
 	var parts: Array[String] = []
 	for stat: String in gem["affixes"]:
 		parts.append(Items._stat_text(stat, gem["affixes"][stat]))
 	return "[color=#%s]%s (%s)[/color]: %s" % [COLORS[gem["kind"]], KINDS[gem["kind"]]["name"],
 			CUTS[int(gem["cut"])].to_lower(), ", ".join(parts)]
+
+
+## Opis kamienia bez kolorów (zwykłe etykiety i dymki).
+static func plain_text(gem: Dictionary) -> String:
+	var regex := RegEx.create_from_string("\\[/?color[^\\]]*\\]")
+	return regex.sub(socket_text(gem), "", true)
+
+
+## Ikona kamienia z przepisu (kamień w gnieździe nie jest przedmiotem).
+static func icon_of(gem: Dictionary) -> Texture2D:
+	if gem.get("kind", "") == "radius":
+		return RADIUS_ICON
+	return load("res://assets/items/gems/%s_%d.png" % [gem["kind"], int(gem["cut"]) + 1])
 
 
 # ---------------------------------------------------------------- gniazda w przedmiotach

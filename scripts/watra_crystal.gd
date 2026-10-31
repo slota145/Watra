@@ -220,6 +220,8 @@ static func reward(dungeon_tier: int, factor: float) -> Array:
 	result.append(["blessed_stone", maxi(1, roundi((6 + 4 * dungeon_tier) * factor))])
 	if dungeon_tier >= 2:
 		result.append(["mercy_stone", maxi(1, roundi((1 + dungeon_tier) * factor))])
+	if randf() < (Gems.RADIUS_CRYSTAL_CHANCE + Gems.RADIUS_CRYSTAL_PER_TIER * dungeon_tier) * factor:
+		result.append([Gems.roll_radius(dungeon_tier), 1])
 	return result
 
 

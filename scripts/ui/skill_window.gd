@@ -91,6 +91,7 @@ func setup(player: Player) -> void:
 		_trees[weapon_type]["view"].setup(player, weapon_type)
 	player.hotbar.changed.connect(_refresh)
 	player.skills.changed.connect(_refresh)
+	player.inventory.changed.connect(func() -> void: if visible: _refresh())
 	player.equipment.changed.connect(_refresh)
 	player.stats.gold_changed.connect(func(_gold: int) -> void: _refresh())
 	_refresh()
@@ -156,8 +157,22 @@ func _make_tree_page(weapon_type: String) -> VBoxContainer:
 	upgrade.add_theme_font_size_override("font_size", 8)
 	upgrade.pressed.connect(_upgrade_node.bind(weapon_type))
 	column.add_child(upgrade)
+	# gniazdo: kamienie z plecaka do osadzenia i wyjmowanie
+	var gems := GridContainer.new()
+	gems.columns = 6
+	gems.add_theme_constant_override("h_separation", 2)
+	gems.add_theme_constant_override("v_separation", 2)
+	column.add_child(gems)
+	var unsocket := Button.new()
+	unsocket.focus_mode = Control.FOCUS_NONE
+	unsocket.add_theme_font_size_override("font_size", 8)
+	unsocket.text = "Wyjmij kamień"
+	unsocket.pressed.connect(_unsocket.bind(weapon_type))
+	column.add_child(unsocket)
 	view.selected.connect(func(_id: String) -> void: _refresh())
-	_trees[weapon_type] = {"view": view, "points": points, "info": info, "take": take, "upgrade": upgrade}
+	view.gem_dropped.connect(_show_socket_result)
+	_trees[weapon_type] = {"view": view, "points": points, "info": info, "take": take, "upgrade": upgrade,
+			"gems": gems, "unsocket": unsocket}
 	return page
 
 
@@ -167,6 +182,27 @@ func _take_node(weapon_type: String) -> void:
 		Sfx.play("ui_confirm")
 		_status.text = "Wybrano: %s" % SkillTree.node_name(weapon_type, view.selected_id)
 		_status.add_theme_color_override("font_color", Color(0.6, 1, 0.55))
+
+
+## Osadza kamień z pola `index` plecaka w zaznaczonym gnieździe (kamień, który tam był, wraca do plecaka).
+func _socket(weapon_type: String, index: int) -> void:
+	var view: SkillTreeView = _trees[weapon_type]["view"]
+	var message := _player.skills.socket_from(_player.inventory, weapon_type, view.selected_id, index)
+	Sfx.play("ui_error" if message != "" else "pickup")
+	_show_socket_result(message)
+
+
+func _unsocket(weapon_type: String) -> void:
+	var view: SkillTreeView = _trees[weapon_type]["view"]
+	var message := _player.skills.unsocket_to(_player.inventory, weapon_type, view.selected_id)
+	Sfx.play("ui_error" if message != "" else "pickup")
+	_show_socket_result(message, "Kamień wrócił do plecaka.")
+
+
+func _show_socket_result(message: String, done := "Kamień osadzony w gnieździe.") -> void:
+	_status.text = message if message != "" else done
+	_status.add_theme_color_override("font_color", Color(1, 0.5, 0.45) if message != "" else Color(0.6, 1, 0.55))
+	_refresh()
 
 
 func _upgrade_node(weapon_type: String) -> void:
@@ -184,11 +220,32 @@ func _refresh_tree(weapon_type: String) -> void:
 	view.queue_redraw()
 	var take: Button = parts["take"]
 	var upgrade: Button = parts["upgrade"]
+	var gems: GridContainer = parts["gems"]
+	var unsocket: Button = parts["unsocket"]
+	for child in gems.get_children():
+		gems.remove_child(child)
+		child.queue_free()
 	var id := view.selected_id
+	unsocket.visible = id != "" and not book.gem_in(weapon_type, id).is_empty()
+	gems.visible = id != "" and book.can_socket(weapon_type, id)
 	if id == "":
 		take.visible = false
 		upgrade.visible = false
 		return
+	if gems.visible:
+		for index in _player.inventory.slots.size():
+			var slot: Dictionary = _player.inventory.slots[index]
+			if slot.is_empty() or not Gems.is_gem(slot["id"]):
+				continue
+			var put := Button.new()
+			put.focus_mode = Control.FOCUS_NONE
+			put.custom_minimum_size = Vector2(20, 20)
+			put.icon = Items.get_data(slot["id"])["icon"]
+			put.expand_icon = true
+			put.tooltip_text = "Osadź: " + Items.describe(slot["id"])
+			UiStyle.rich_tooltip(put)
+			put.pressed.connect(_socket.bind(weapon_type, index))
+			gems.add_child(put)
 	var text := view.describe(id)
 	var node: Dictionary = SkillTree.nodes(weapon_type)[id]
 	take.visible = not book.has_node_id(weapon_type, id)
@@ -207,6 +264,8 @@ func _refresh_tree(weapon_type: String) -> void:
 		var key := _key_of(skill, weapon_type) if Hotbar.can_slot_skill(skill) else ""
 		if key != "":
 			text += "\nNa pasku:" + key
+	if gems.visible:
+		text += "\nKliknij kamień z plecaka, żeby go osadzić:" if gems.get_child_count() > 0 else "\nNie masz kamieni szlachetnych w plecaku."
 	parts["info"].text = text
 
 

@@ -261,13 +261,15 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     - u jubilera: wydrążenie gniazda (za złoto, jedno na przedmiot, bez legend), osadzenie, darmowe wyjęcie
       (kamień wraca), łączenie 3 kamieni jednego szlifu w lepszy; gniazda i kamienie siedzą w przepisie
       wylosowanego przedmiotu (`Loot.register`, `sockets`), premie w `Items.stats_of`.
-  - **Gniazda w drzewkach broni** (pomysł autora, jak „jewel sockets” w PoE): w każdym drzewku 2-3 węzły-gniazda
-    (`SkillTree`, na końcach gałęzi albo przy węzłach kluczowych), wybierane za punkt umiejętności; wkłada się w nie
-    kamień szlachetny, który działa tylko z bronią tego drzewka. Wyjęty kamień wraca do plecaka, a zapomnienie drzewka
-    u mędrca zwraca kamienie. W końcówce gry specjalne kamienie tylko do drzewka, np. wzmacniające węzły pasywne
-    w swoim promieniu (jak „radius jewels”).
-    Esencje legend też pasują do gniazd w drzewku (w końcówce gry, np. jedno „gniazdo legendarne” na drzewko przy
-    węźle kluczowym); kilka esencji tego samego efektu (z drzewka, gniazd przedmiotów i założonych legend) sumuje się
+  - [x] **Gniazda w drzewkach broni** (jak „jewel sockets” w PoE; `SkillTree` - węzły „socket”, `SkillBook.tree_gems`):
+    w każdym drzewku 2 zwykłe gniazda i 1 legendarne przy węźle kluczowym, wybierane za punkt umiejętności; kamień
+    działa tylko z bronią drzewka, a jego premie są o 50% mocniejsze (`SkillBook.TREE_GEM_POWER`). Osadzanie w oknie K
+    (zaznacz gniazdo - kamienie z plecaka w kolumnie szczegółów, „Wyjmij kamień” za darmo) albo przeciągnięciem kamienia
+    z plecaka na gniazdo (zamiana, gdy gniazdo zajęte). Zapomnienie drzewka u mędrca zwraca kamienie.
+    **Kamień Promienia** (`Gems.roll_radius`, tylko do drzewka, ikona z PixelLab przez `tools/gem_art.py`) wzmacnia
+    wybrane węzły pasywne w promieniu `SkillBook.RADIUS_RANGE` (turkusowy krąg w drzewku); wypada z Kryształu Watry
+    i ze skarbca strażnika lochu.
+  - Esencje legend w gniazdach drzewka: gniazdo legendarne przyjmie esencję (w końcówce gry); kilka esencji tego samego efektu (z drzewka, gniazd przedmiotów i założonych legend) sumuje się
     jak niezależne losowania - tak jak dziś `Equipment.effect_power`, więc szansa rośnie coraz wolniej i nie dochodzi
     do 100%; efekty liczone w sztukach (np. dodatkowe strzały) z mniejszym przyrostem albo z górnym limitem.
 - [ ] **Po kamieniach i esencjach** (pomysły autora, kolejność: dopiero gdy systemy kamieni i esencji będą gotowe):
