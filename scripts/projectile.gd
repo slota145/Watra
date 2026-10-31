@@ -10,6 +10,18 @@ extends Node2D
 const HEIGHT := 9.0
 const HIT_MARGIN := 3.0
 const EXPLOSION := preload("res://assets/projectiles/explosion.png")
+## Wybuch ognia z kreatora efektów PixelLab (tools/vfx_art.py) - promień kłębów w klatce FIRE_BLAST_RADIUS.
+const FIRE_BLAST := preload("res://assets/effects/fire_blast.png")
+const FIRE_BLAST_RADIUS := 38.0
+## Animowane pociski księgi (z kreatora efektów): rodzaj -> [arkusz, klatki, fps, punkt zaczepienia, obrót w kierunku
+## lotu, trafienie: arkusz, klatki, fps, punkt zaczepienia, rozmiar, skala pocisku]. "missile" - zwykły pocisk księgi (magic bez rodzaju).
+const FX := {
+	"missile": [preload("res://assets/effects/spell_missile.png"), 6, 16.0, Vector2(20, 11), true,
+			preload("res://assets/effects/spell_hit.png"), 6, 18.0, Vector2(20, 20), 0.8, 1.0],
+	"fire": [preload("res://assets/effects/fireball.png"), 8, 16.0, Vector2(18, 18), false, null, 0, 0.0, Vector2.ZERO, 0.0, 0.5],
+	"ice": [preload("res://assets/effects/frost_lance.png"), 6, 16.0, Vector2(35, 8), true,
+			preload("res://assets/effects/ice_shatter.png"), 8, 16.0, Vector2(27, 19), 0.6, 0.85],
+}
 
 var direction := Vector2.RIGHT
 var speed := 300.0
@@ -26,6 +38,9 @@ var texture: Texture2D
 var explosion_radius := 0.0
 ## Wielkość obrazka pocisku (naładowana kula ognia jest większa).
 var size := 1.0
+## Animowany wygląd z kreatora efektów (klucz FX: "fire", "ice"); pusty - magiczny pocisk dostaje "missile",
+## strzała zostaje obrazkiem.
+var fx_kind := ""
 var explosion_min := 0
 var explosion_max := 0
 ## Księga Gryfiego Płomienia: zamiast wybuchnąć, kula zawisa jako wieżyczka strzelająca płomieniami
@@ -55,10 +70,30 @@ func _ready() -> void:
 	sprite.texture = texture
 	sprite.position.y = -HEIGHT
 	sprite.scale = Vector2.ONE * size
-	if magic or fire:
+	if fx_kind == "" and magic:
+		fx_kind = "missile"
+	if FX.has(fx_kind):
+		_make_fx()
+		if fire:
+			add_child(_make_trail())
+	elif magic or fire:
 		add_child(_make_trail())
 	else:
 		sprite.rotation = direction.angle()
+
+
+## Animowany pocisk (FxLoop) zamiast obrazka - obrócony w kierunku lotu, jeśli rodzaj tego chce.
+func _make_fx() -> void:
+	var data: Array = FX[fx_kind]
+	var loop := FxLoop.make(data[0], data[1], data[2], data[3])
+	loop.position = sprite.position
+	loop.scale = sprite.scale * data[10]
+	if data[4]:
+		loop.rotation = direction.angle()
+		loop.flip_v = absf(direction.angle()) > PI / 2.0
+	sprite.visible = false
+	sprite.add_sibling(loop)
+	loop.name = "Fx"
 
 
 func _physics_process(delta: float) -> void:
@@ -143,45 +178,12 @@ func _explode() -> void:
 		if enemy.global_position.distance_to(global_position) <= explosion_radius + enemy.hurt_radius:
 			_hit_enemy(enemy, randi_range(explosion_min, explosion_max), global_position, knockback * 2.0)
 
-	var ring := Sprite2D.new()
-	ring.texture = EXPLOSION
-	ring.position = Vector2(0, -HEIGHT * 0.5)
-	ring.scale = Vector2.ONE * 0.2
-	ring.z_index = 2
-	add_child(ring)
-	var target_scale := explosion_radius / 32.0
-	var tween := ring.create_tween().set_parallel()
-	tween.tween_property(ring, "scale", Vector2(target_scale, target_scale * 0.8), 0.18).set_ease(Tween.EASE_OUT)
-	tween.tween_property(ring, "modulate:a", 0.0, 0.3).set_delay(0.1)
-
-	# błysk
-	var flash := Sprite2D.new()
-	flash.texture = _flash_texture()
-	flash.position = ring.position
-	flash.scale = Vector2.ONE * (explosion_radius / 24.0)
-	flash.z_index = 3
-	add_child(flash)
-	flash.create_tween().tween_property(flash, "modulate:a", 0.0, 0.35).set_ease(Tween.EASE_OUT)
-
-	# ogień rozchodzący się dookoła (bez grawitacji - domyślna ściągała go w dół ekranu)
-	var fire_burst := _burst(int(28 * power), 0.55, explosion_radius * 0.6, explosion_radius * 3.0, 2.0, 4.0)
-	fire_burst.damping_min = explosion_radius * 2.0
-	fire_burst.damping_max = explosion_radius * 3.0
-	fire_burst.color_ramp = _ramp([Color(1, 0.95, 0.6), Color(1, 0.5, 0.1, 0.9), Color(0.5, 0.15, 0.05, 0.0)])
-	# iskry - szybkie i drobne, lekko opadają
-	var sparks := _burst(int(18 * power), 0.7, explosion_radius * 2.0, explosion_radius * 4.5, 1.0, 1.5)
-	sparks.gravity = Vector2(0, 90)
-	sparks.damping_min = 40.0
-	sparks.damping_max = 80.0
-	sparks.color_ramp = _ramp([Color(1, 1, 0.7), Color(1, 0.7, 0.2), Color(1, 0.4, 0.1, 0.0)])
-	# dym unoszący się powoli w górę
-	var smoke := _burst(int(14 * power), 1.3, 10.0, explosion_radius * 1.2, 3.0, 6.0)
-	smoke.explosiveness = 0.85
-	smoke.gravity = Vector2(0, -25)
-	smoke.damping_min = 20.0
-	smoke.damping_max = 40.0
-	smoke.color_ramp = _ramp([Color(0.35, 0.3, 0.28, 0.0), Color(0.3, 0.27, 0.25, 0.55), Color(0.25, 0.25, 0.25, 0.0)])
-	smoke.finished.connect(queue_free)
+	var fx := get_node_or_null("Fx")
+	if fx != null:
+		fx.visible = false
+	SkillEffects.sheet_once(get_parent(), FIRE_BLAST, 11, 16.0, global_position + Vector2(0, -HEIGHT * 0.5), Vector2(42, 33),
+			0.0, 1.0, explosion_radius / FIRE_BLAST_RADIUS)
+	get_tree().create_timer(0.8, false).timeout.connect(queue_free)
 
 
 ## Rozbłysk cząsteczek we wszystkich kierunkach.
@@ -232,6 +234,15 @@ func _impact() -> void:
 	var trail := get_node_or_null("Trail") as CanvasItem
 	if trail != null:
 		trail.visible = false
+	var fx := get_node_or_null("Fx")
+	if fx != null:
+		fx.visible = false
+	if FX.has(fx_kind) and FX[fx_kind][5] != null:
+		var data: Array = FX[fx_kind]
+		SkillEffects.sheet_once(get_parent(), data[5], data[6], data[7], global_position + Vector2(0, -HEIGHT), data[8], direction.angle(),
+				1.0, data[9])
+		queue_free()
+		return
 	var burst := CPUParticles2D.new()
 	burst.position = Vector2(0, -HEIGHT)
 	burst.one_shot = true
