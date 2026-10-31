@@ -184,6 +184,9 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   (`SwordSkills.SMOKE_FX_ZIGZAG`, mały losowy rozrzut), żeby 9 wybuchów nie zlewało się w 3 strumienie.
 - [x] Rozpłatanie z kreatora efektów (`assets/effects/rend.png`, `rend_wound.png`): szeroki łuk stali z krwawym śladem
   i kroplami krwi zamiast półksiężyca, a na zranionym wrogu rozprysk krwi zamiast iskier (`SwordSkills.bleed_enemy`).
+- [x] Rozłupanie Ziemi z kreatora efektów (`assets/effects/ground_slam.png`): w każdym kroku fali pęknięć erupcja
+  kamiennych kolców, odłamków i pyłu (nieobracana, coraz większa); w combo po Półksiężycu erupcje w dwóch kręgach
+  wokół postaci (9 i 14). Pęknięcia w ziemi (`SkillEffects.ground_crack`) zostają.
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 
