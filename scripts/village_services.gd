@@ -20,6 +20,8 @@ static func offers(kind: String, player: Player, npc: Node) -> Dictionary:
 			return _elixirs(player, npc)
 		"respec":
 			return _respec(player, npc)
+		"marks":
+			return _marks(player, npc)
 	return {}
 
 
@@ -84,6 +86,49 @@ static func _elixirs(player: Player, npc: Node) -> Dictionary:
 		})
 	return {"title": "Warsztat zielarki", "rows": rows,
 			"hint": "Zioła zerwiesz w krainach (F przy roślinie). Miksturę wypijesz z plecaka albo z paska 1-0. Działa jedna naraz - krócej niż posiłek, ale mocniej."}
+
+
+## Wymiana Znaków Zwycięstwa (wydarzenia w świecie - WorldEvents) u pisarza gildii: [id, cena, ilość, opis].
+const MARK_OFFERS := [
+	["gem", 6, 1, "Losowy kamień szlachetny o szlifie na twój poziom (po zadaniu jubilera)."],
+	["rune_chaos", 12, 1, "W warsztacie kowala przelosuje wszystkie premie przedmiotu."],
+	["mercy_stone", 10, 1, "Przy nieudanym zaklinaniu przedmiot nie traci poziomu."],
+	["backpack", 15, 1, "+20 miejsc w plecaku (załóż PPM)."],
+	["crystal_heart", 20, 1, "Gniazdo na esencję u kowala i Pieczęć w warsztacie."],
+	["rune_seal", 45, 1, "Zapieczętuje jedną premię, a resztę przelosuje (z Sercem Kryształu)."],
+	["legend", 80, 1, "Losowa legenda ze skarbca lochów na twoim poziomie."],
+]
+
+
+static func _marks(player: Player, npc: Node) -> Dictionary:
+	var rows: Array = []
+	var have := player.count_owned(WorldEvents.MARK)
+	for offer: Array in MARK_OFFERS:
+		var id: String = offer[0]
+		var price: int = offer[1]
+		if id == "gem" and not Gems.unlocked:
+			continue
+		var shown: String = "Kamień szlachetny" if id == "gem" else "Legenda ze skarbca" if id == "legend" else Items.get_data(id)["name"]
+		var icon: Texture2D = Items.get_data(WorldEvents.MARK if id in ["gem", "legend"] else id)["icon"]
+		rows.append({
+			"name": shown, "icon": icon, "text": offer[3],
+			"cost": "Znaki Zwycięstwa: %d/%d" % [mini(have, price), price],
+			"enabled": have >= price, "state": "", "button": "Wymień",
+			"action": func() -> String:
+				var item := id
+				if id == "gem":
+					item = Gems.roll("", Gems.cut_for_level(player.stats.level))
+				elif id == "legend":
+					item = Loot.legendary_at_level(Dungeons.VAULT_LEGENDS.pick_random(), player.stats.level)
+				player.take_owned(WorldEvents.MARK, price)
+				if player.inventory.add_item(item, offer[2]) > 0:
+					player.storage.add_item(item, offer[2])
+				Sfx.play("coins")
+				npc.say(["Zasłużone!", "Gildia nagradza bohaterów.", "Niech ci dobrze służy."].pick_random())
+				return "Wymieniono: %s" % Items.get_data(item)["name"],
+		})
+	return {"title": "Znaki Zwycięstwa", "rows": rows,
+			"hint": "Znaki dostajesz za udział w wydarzeniach w świecie (najazdy, czempioni, meteoryty, polowania) - więcej za wyższe miejsce w rankingu. Masz: %d." % have}
 
 
 ## Zapomnienie drzewka umiejętności u mędrca: wszystkie wybrane węzły wracają jako punkty (kupione poziomy zostają).

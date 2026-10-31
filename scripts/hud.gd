@@ -9,7 +9,7 @@ extends CanvasLayer
 ## dziennik zadań, mapa, pomoc), nad nim powiadomienia o łupie. Pod minimapą lista
 ## śledzonych zadań - kliknięcie pokazuje obszar zadania na mapie.
 ## Ctrl+Shift+C włącza/wyłącza tryb deweloperski: F1 daje złoto, F2 awansuje postać,
-## F3 daje kamienie zaklinające, F4 drewno i kamień.
+## F3 daje kamienie zaklinające, F4 drewno i kamień, F5 zaczyna wydarzenie w świecie w tej krainie (WorldEvents).
 
 const DEV_GOLD := 1000
 ## Ile kamieni każdego rodzaju daje klawisz F3 w trybie deweloperskim.
@@ -49,6 +49,14 @@ var action_bars: ActionBars
 var status_row: StatusRow
 var party_frames: PartyFrames
 var party_offer: PartyOffer
+## Wydarzenia w świecie: panel trwającego wydarzenia, wynik z rankingiem i miejsce wydarzenia w tej krainie (EventSite).
+var event_tracker: EventTracker
+var event_result: EventResult
+var event_site: EventSite:
+	set(value):
+		event_site = value
+		if event_tracker != null:
+			event_tracker.site = value
 var _player: Player
 ## [przycisk, okno] - przyciski paska ikon w prawym dolnym rogu
 var _icon_buttons: Array[Array] = []
@@ -164,6 +172,14 @@ func _ready() -> void:
 	party_offer = PartyOffer.new()
 	party_offer.name = "PartyOffer"
 	add_child(party_offer)
+	event_tracker = EventTracker.new()
+	event_tracker.name = "EventTracker"
+	event_tracker.position = Vector2(6, 150)
+	add_child(event_tracker)
+	move_child(event_tracker, $BossBar.get_index() + 1)
+	event_result = EventResult.new()
+	event_result.name = "EventResult"
+	add_child(event_result)
 	action_bars = ActionBars.new()
 	action_bars.name = "ActionBars"
 	add_child(action_bars)
@@ -385,6 +401,12 @@ func _handle_dev_keys(event: InputEvent) -> bool:
 			_give_dev_stones()
 		KEY_F4:
 			_give_dev_resources()
+		KEY_F5:
+			var world := get_tree().get_first_node_in_group("world")
+			if world != null and world.start_event_here():
+				_dev_feedback("Wydarzenie: %s" % _player.events.active["title"], WorldEvents.TYPES[_player.events.active["type"]]["color"])
+			else:
+				_dev_feedback("Tu nie może zacząć się wydarzenie (albo jedno już trwa)", Color(1, 0.4, 0.4))
 		_:
 			return false
 	return true
@@ -596,9 +618,26 @@ func _process(_delta: float) -> void:
 	if _player == null:
 		return
 	_update_boss_bar()
+	_update_event_markers()
 	# podświetlenie ikon otwartych okien
 	for entry: Array in _icon_buttons:
 		entry[0].set_pressed_no_signal(entry[1].visible)
+
+
+func setup_events(player: Player) -> void:
+	event_tracker.setup(player)
+
+
+## Znaczniki wydarzenia: na minimapie i dużej mapie (dokładne miejsce w tej krainie, w innej - środek krainy).
+func _update_event_markers() -> void:
+	var events := _player.events
+	var here := event_site != null and is_instance_valid(event_site) and not event_site.done
+	minimap.event_point = event_site.center if here else Vector2.INF
+	if events.active.is_empty():
+		big_map.set_event("", Vector2.INF, "", Color.WHITE)
+		return
+	big_map.set_event(events.active["zone"], event_site.center if here else Vector2.INF, events.active["title"],
+			WorldEvents.TYPES[events.active["type"]]["color"])
 
 
 ## Pasek zdrowia bossa, z którym gracz właśnie walczy.

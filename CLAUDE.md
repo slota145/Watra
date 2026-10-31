@@ -53,7 +53,7 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
 - Sterowanie: WASD, spacja (zryw), F (interakcja), paski szybkiego wyboru na dole ekranu: umiejętności pod LPM, PPM, Q, E, R, Z, X
   (osobny układ dla każdej broni) i przedmioty pod 1-0 (`scripts/ui/action_bars.gd`, `scripts/ui/hotbar_slot.gd`).
   Pod paskami zdrowia i many ikony efektów (`scripts/ui/status_row.gd`). Tryb deweloperski: Ctrl+Shift+C, potem F1 złoto,
-  F2 awans, F3 kamienie, F4 drewno i kamień.
+  F2 awans, F3 kamienie, F4 drewno i kamień, F5 wydarzenie w świecie w tej krainie.
 - `scenes/`: sceny (`main_menu.tscn` startowa, `world.tscn` rozgrywka, potwory, `hud.tscn`).
 - `assets/`: grafiki, muzyka, dźwięki.
 - `pixellab_src/`: surowe grafiki z PixelLab.
@@ -292,6 +292,12 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     `tools/paperdoll_art.py`): sylwetka wojownika, a wokół niej miejsca na przedmioty (hełm przy głowie, buty przy
     stopach), ramki 28 px, broń i napierśnik w wysokich ramkach; pusty slot pokazuje zarys pasującego przedmiotu,
     ramka - kolor rzadkości (`LegendaryFrame`).
+- [ ] **Przedmioty niezidentyfikowane** (pomysł autora): przełącznik w opcjach - łup od razu zidentyfikowany albo
+  niezidentyfikowany; niezidentyfikowane przedmioty jednego rodzaju układają się w stosy (oszczędzają miejsce w plecaku),
+  a identyfikuje się je PPM na przedmiocie.
+- [ ] **Plecaki i sakwy** (pomysł autora): wypadają z potworów i powiększają plecak - niskopoziomowe 4-6 miejsc,
+  wysokopoziomowe 15-25, najrzadsze 30-40; można też wytwarzać nowe ze skór i innych surowców. Dziś są już
+  miejsca na torby (`Player.bags`, 5 miejsc) oraz Sakwa (+10) i Plecak (+20) w sklepie (`Items` - pole „bag”).
 - [ ] Nowe bronie: kosa, kostur (nekromanta), młoty, chainblade'y, sztylety, włócznie, rapier, hydrosfera.
   Każda broń to nowy rodzaj z własnym drzewkiem, a nie tylko nowy przedmiot, więc wymaga szczegółów od autora.
 
@@ -439,7 +445,24 @@ Oba systemy zależą od gildii poszukiwaczy przygód w Ostoi (budowla `guild` w 
 ### Świat
 
 - [ ] Budowa i rozbudowa obozów w innych krainach, które pasywnie dają surowce albo inne korzyści.
-- [ ] Losowe wydarzenia w świecie gry.
+- [x] **Losowe wydarzenia w świecie, etap 1** (`scripts/world_events.gd` - harmonogram, ranking i nagrody, dziecko gracza;
+  `scripts/event_site.gd` - wydarzenie w krainie gracza; meteoryty `scripts/meteor.gd`, `scripts/meteor_rock.gd`;
+  panele `scripts/ui/event_tracker.gd` i `scripts/ui/event_result.gd`; grafiki z PixelLab przez `tools/event_art.py`):
+  co 10-15 minut w losowej odkrytej krainie (kapliczka) - komunikat także w innej krainie, znacznik na minimapie
+  i dużej mapie, panel z czasem i celem. Poziom: górny krainy albo gracza, jeśli wyższy. Rodzaje:
+  - **Najazd na kapliczkę** (poza Goblińskim Lasem): 5 fal potworów krainy idzie na kapliczkę (`Goblin.objective`,
+    miejsca z wolną drogą - `EventSite._clear_spot`); porażka gasi kapliczkę na 10 minut (bez teleportu),
+  - **Wędrowny czempion**: elitarny potwór z cechą (`WorldEvents.TRAITS`: Płomienny, Wampiryczny, Rączy, Kamienny,
+    Przywoływacz) krąży po krainie,
+  - **Deszcz meteorytów**: krąg ostrzegawczy, uderzenie rani, skała do rozbicia (ruda, kamienie, czasem klejnot),
+    potwory z kraterów,
+  - **Polowanie na bossa** (Hydra, Gryf - `WorldEvents.HUNT_BOSSES`): boss rozwścieczony (3x zdrowie).
+  Przybywa gromada podróżników (`Traveler` w trybie „event”, polegli są zastępowani): walczą i rywalizują o wkład
+  (obrażenia potworom wydarzenia, rozbite skały); bez gracza wydarzenie rozstrzyga się samo. Na koniec ranking
+  i nagrody wg miejsca: skrzynia z łupem na miejscu, sława gildii, **Znaki Zwycięstwa** (`victory_mark`) - wymiana
+  u pisarza gildii (`VillageServices.MARK_OFFERS`: kamień, runy, kamień miłosierdzia, plecak, Serce Kryształu, legenda).
+- [ ] **Wydarzenia w świecie, etap 2**: karawana do eskortowania, święto w Ostoi, world bossy (nowe, wielkie potwory
+  z PixelLab z własnymi atakami i legendą, walka z gromadą podróżników); kolejni bossowie polowań.
 - [ ] Uzupełnienie siatki mapy świata (dziś krainy stoją w kształcie krzyża) o 6 krain:
   - 2 nad Polami Zbożowymi (`map_offset` (-200,-150) i (-200,-300)),
   - 2 nad Rozlewiskami ((200,-150) i (200,-300)),

@@ -8,6 +8,9 @@ extends CharacterBody2D
 ## - "town" (Ostoja): spaceruje między placem, Watrą, karczmą, tablicą ogłoszeń i gildią, rzuca hasła jak gracze w MMO.
 ## - "party" (drużyna gracza): idzie za graczem (przez krainy i lochy - World), bije wrogów przy graczu, także bossów
 ##   (słabiej); jego zabójstwa liczą się graczowi (łup i doświadczenie - nie zapisuje Goblin.traveler_damage).
+## - "event" (wydarzenie w świecie - EventSite): przybywa na miejsce wydarzenia i bije jego potwory (także czempiona
+##   i bossa polowania - słabiej, EVENT_ELITE_FACTOR); jego obrażenia to punkty w rankingu wkładu (WorldEvents),
+##   a potwory wydarzeń zabite przez podróżników dalej dają graczowi łup (Goblin.event_damage zamiast traveler_damage).
 ## Łowcy pozdrawiają przechodzącego gracza i dają wskazówki o krainie (Travelers.GREETINGS / HINTS).
 ## Przy okazji łowów zbierają surowce (drzewo, głaz, ruda, zioło w pobliżu siedliska): nie ruszają surowców blisko gracza
 ## (PLAYER_SAFE) ani w Ostoi, a gdy w krainie jest już zebrane MAX_DEPLETED surowców - czekają, aż odrosną. Urobek trafia
@@ -27,6 +30,12 @@ const SPELL_COLOR := Color(0.55, 0.75, 1.0)
 const PARTY_COLOR := Color(0.55, 0.8, 1.0)
 ## Bossowie są dużo wytrzymalsi - drużyna pomaga, ale walka zostaje na graczu.
 const BOSS_FACTOR := 0.12
+## Czempion i boss polowania mają wielokrotne zdrowie - gromada podróżników bez gracza bije ich kilka minut.
+const EVENT_ELITE_FACTOR := 0.012
+## Jak daleko od miejsca wydarzenia podróżnik szuka jego potworów.
+const EVENT_RANGE := 380.0
+## W wydarzeniu przybywają doświadczeni łowcy (lepiej opancerzeni) - ciosy bolą ich słabiej.
+const EVENT_TOUGHNESS := 0.3
 const GREET_RANGE := 70.0
 ## Zbieranie surowców: co ile sekund łowca bez wroga rozgląda się za surowcem, z jaką szansą, jak daleko od siedliska,
 ## jak długo pracuje, w jakiej odległości od gracza nic nie zbiera i jaka część surowców krainy może być naraz zebrana.
@@ -155,6 +164,8 @@ func is_alive() -> bool:
 func take_hit(amount: float) -> void:
 	if not is_alive():
 		return
+	if mode == "event":
+		amount *= EVENT_TOUGHNESS
 	if guard_time > 0.0:
 		amount *= GUARD_DAMAGE
 	elif gather_target != null:
@@ -180,6 +191,9 @@ func _physics_process(delta: float) -> void:
 			_process_greeting(delta)
 		"party":
 			_process_party(delta)
+		"event":
+			_process_event(delta)
+			_process_greeting(delta)
 		_:
 			_process_town(delta)
 	_animate(delta)
@@ -246,8 +260,8 @@ func _attack(weapon: String) -> void:
 	_calm = 0.0
 	var level := int(data.get("level", 1))
 	var ratio := clampf(1.0 + (level - _target.level) * 0.06, 0.4, 2.5)
-	var amount := maxi(1, roundi(_target.max_health * HIT_FRACTION[weapon] * ratio * randf_range(0.85, 1.15)
-			* (BOSS_FACTOR if _target is Boss else 1.0)))
+	var factor := EVENT_ELITE_FACTOR if _target.has_meta("elite") else BOSS_FACTOR if _target is Boss else 1.0
+	var amount := maxi(1, roundi(_target.max_health * HIT_FRACTION[weapon] * ratio * randf_range(0.85, 1.15) * factor))
 	var at := _target.hurt_center()
 	match weapon:
 		"melee":
@@ -260,12 +274,72 @@ func _attack(weapon: String) -> void:
 			SkillEffects.spark(get_parent(), at, SPELL_COLOR, 8)
 			Sfx.play_at("magic", global_position)
 	_target.objective = self
-	# zabójstwa drużyny liczą się graczowi
-	if mode != "party":
+	# zabójstwa drużyny liczą się graczowi; w wydarzeniu - punkty wkładu podróżnika
+	if _target.has_meta("event"):
+		_target.event_damage += amount
+		if _player is Player:
+			(_player as Player).events.add_points(data.get("name", "?"), amount)
+	elif mode != "party":
 		_target.traveler_damage += amount
 	_target.take_damage(amount, global_position, 40.0)
 	if _target.state == Goblin.State.DEAD and travelers != null:
 		travelers.add_kills(data, 1)
+
+
+# ---------------------------------------------------------------- wydarzenie
+func _process_event(delta: float) -> void:
+	if _calm > 4.0:
+		health = minf(health + max_health * 0.04 * delta, max_health)
+	if gather_target != null:
+		_process_gather(delta)
+		return
+	if _target != null and (not is_instance_valid(_target) or _target.state == Goblin.State.DEAD):
+		_target = null
+	_scan -= delta
+	if _target == null and _scan <= 0.0:
+		_scan = 0.4
+		_target = _find_event_target()
+	if _target == null:
+		# deszcz meteorytów: wolny podróżnik rozbija skały
+		var rock := _find_meteor_rock()
+		if rock != null:
+			_start_gather(rock)
+			return
+		_wander(delta, home, 90.0)
+		return
+	var weapon: String = data.get("weapon", "melee")
+	var to := _target.hurt_center() - global_position
+	if to.length() > REACH[weapon]:
+		_move(to.normalized(), delta, 1.15)
+		return
+	velocity = Vector2.ZERO
+	_facing = to.normalized()
+	if _cooldown == 0.0:
+		_cooldown = COOLDOWN[weapon]
+		_attack(weapon)
+
+
+func _find_meteor_rock() -> Harvestable:
+	for node: Harvestable in get_tree().get_nodes_in_group("harvestables"):
+		if node is MeteorRock and not node.is_depleted and node.global_position.distance_to(home) < EVENT_RANGE:
+			var owner_node = node.get_meta("gatherer", null)
+			if not is_instance_valid(owner_node):
+				return node
+	return null
+
+
+## Najbliższy żywy potwór wydarzenia w okolicy jego miejsca.
+func _find_event_target() -> Goblin:
+	var best: Goblin = null
+	var best_d := INF
+	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if not enemy.has_meta("event") or enemy.state == Goblin.State.DEAD or enemy.global_position.distance_to(home) > EVENT_RANGE:
+			continue
+		var d := enemy.global_position.distance_to(global_position)
+		if d < best_d:
+			best_d = d
+			best = enemy
+	return best
 
 
 # ---------------------------------------------------------------- zbieranie surowców

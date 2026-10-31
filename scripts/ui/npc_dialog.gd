@@ -22,7 +22,7 @@ signal essence_requested(mode: String)
 ## Usługi z listą ofert (OfferWindow): "meals", "blessing", "bestiary".
 signal offers_requested(kind: String, npc: Npc)
 const OFFER_SERVICES := {"meals": "Kuchnia", "blessing": "Błogosławieństwo", "bestiary": "Bestiariusz", "reforge": "Przekuwanie",
-		"elixirs": "Mikstury", "respec": "Zapomnienie umiejętności"}
+		"elixirs": "Mikstury", "respec": "Zapomnienie umiejętności", "marks": "Znaki Zwycięstwa"}
 
 ## Odpoczynek w karczmie: 20 zł + 3 zł za poziom postaci.
 static func rest_price(level: int) -> int:
@@ -158,7 +158,7 @@ func _refresh() -> void:
 					workshop_requested.emit())
 				workshop.tooltip_text = "Rzemiosło premii: przerzut, przekucie, usuwanie i dodawanie premii, ulepszanie rzadkości, runy z lochów"
 				_buttons.add_child(workshop)
-			"meals", "blessing", "bestiary", "elixirs", "respec":
+			"meals", "blessing", "bestiary", "elixirs", "respec", "marks":
 				_buttons.add_child(_button(OFFER_SERVICES[service], _offers.bind(service)))
 			"build":
 				# plany budowy dopiero po zadaniu sołtysa z prośbą o pomoc

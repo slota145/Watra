@@ -114,6 +114,15 @@ func show_area(area: Rect2, label: String) -> void:
 	_view.highlight_label = label
 
 
+## Trwające wydarzenie w świecie (WorldEvents) na mapie: kraina, miejsce w niej (INF - środek krainy), tytuł.
+func set_event(zone: String, point: Vector2, title: String, color: Color) -> void:
+	if _view != null:
+		_view.event_zone = zone
+		_view.event_point = point
+		_view.event_title = title
+		_view.event_color = color
+
+
 func toggle() -> void:
 	visible = not visible
 	_view.highlight = Rect2()
