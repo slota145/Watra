@@ -22,7 +22,8 @@ const ENEMIES := {
 const STAGES := [1, 3, 5, 7, [8, "fields"], 9, [11, "fields"], 12, 14, [14, "fields"], 16, 18, 21, 24, 26, 29, 32, 35, 38]
 ## Docelowe widełki: ciosy na zwykłego, ciosy na silnego, ciosy zwykłego potwora do śmierci gracza, zabójstwa na poziom.
 const TARGET_NORMAL := Vector2(2.5, 6.0)
-const TARGET_STRONG := Vector2(6.0, 18.0)
+## Silny: od 5,5 ciosu - topielec w Rozlewiskach przy zaklęciu z lochów pada od ok. 6 (autor uznał to za w porządku).
+const TARGET_STRONG := Vector2(5.5, 18.0)
 const TARGET_SURVIVE := Vector2(6.0, 20.0)
 const TARGET_KILLS := Vector2(25.0, 260.0)
 const SAMPLES := 40

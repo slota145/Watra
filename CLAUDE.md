@@ -143,6 +143,9 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 - [x] Zadania na start: mniej doświadczenia za pierwsze kroki zbierackie, kolejność gobliny (Gruzłog) przed wilkami
   (Szarokieł), „Pierwsza budowla” wymaga lecznicy (warunek ["project", id]), budowle Ostoi o połowę tańsze;
   niewykonana prośba drużyny przepada, gdy drużyna odejdzie albo zginie proszący (`Travelers._fail_party_help`).
+- [x] Miecz Miry w chodzie w dłoni (`tools/hero_sheets.py` - `STEADY_WALK`, `IDLE_GRIP_FROM`), dąb bez okruchu sąsiedniej
+  klatki (`tools/forest_props.py` odcina okruchy z boków), 3x wyższy próg doświadczenia (`CharacterStats.xp_base`);
+  `tests/balance_sim.gd` liczy kamienie zaklinające tylko z lochów (skarbiec strażnika, Kryształ Watry).
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 
