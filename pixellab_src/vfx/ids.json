@@ -126,5 +126,34 @@
       26,
       35
     ]
+  },
+  "riposte_guard": {
+    "effect": "04fc18b8-da4d-4bd2-bea5-9b02455f49d0",
+    "name": "Riposta - zaslona",
+    "frame": [
+      56,
+      48
+    ],
+    "frames": 8,
+    "fps": 12,
+    "loop": true,
+    "anchor": [
+      28,
+      24
+    ]
+  },
+  "riposte_counter": {
+    "effect": "581e31ae-8ac2-4d43-bd0a-adde6b07cc67",
+    "name": "Riposta - kontra",
+    "frame": [
+      131,
+      93
+    ],
+    "frames": 6,
+    "fps": 18,
+    "anchor": [
+      65,
+      47
+    ]
   }
 }
