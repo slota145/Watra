@@ -209,6 +209,14 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   celuje przez `Player._aim_direction` (uwzględnia `aim_override`, jak umiejętności).
   Na każdym wrogu trafionym cięciem (zwykły atak, Półksiężyc - `Player._hit_enemies_in_arc`) błysk trafienia
   (`assets/effects/sword_hit.png`: ukośny ślad ostrza, gwiazdka, odpryski).
+- [x] Efekty księgi magii z kreatora efektów (kolor żywiołu; wpisy w `pixellab_src/vfx/ids.json`, `scripts/fx_loop.gd` -
+  zapętlony efekt): animowany magiczny pocisk z trafieniem, płonąca Kula ognia (w dłoniach i w locie) i nowy wybuch ognia
+  (też Spadająca Gwiazda - `Projectile.FX`, `fx_kind`, `_explode`), złoto-niebieskie pioruny rozciągane między punktami
+  (`SpellSkills.lightning` / `zap_flash`: Łańcuch błyskawic, Burza Peruna - piorun z nieba, Kula Piorunów), stożek Fali
+  piorunów, lodowy grot Włóczni Marzanny z rozpryskiem, śnieżyca Zamieci, żywa Kula Piorunów z wybuchem, płonący kamień
+  Spadającej Gwiazdy, fioletowa mgła Kroku, bańka z heksagonów Tarczy Many, Kamień Runiczny z kręgiem run. Grafiki
+  `assets/spell/` (włócznia, kula, gwiazda, kamień) zastąpione animacjami (`frost_lance.png` i `meteor.png` zostają
+  tylko jako obrazek zapasowy pocisku).
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

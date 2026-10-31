@@ -14,10 +14,7 @@ extends Node
 ## czasem wybrzmiewają drugi raz). Legendy: Księga Marzanny (Zamieć zawsze zamraża), Korona Peruna (Burza trwa,
 ## dopóki trzymasz klawisz i starcza many). Chwilowe premie idą do CharacterStats.set_temp("spell", ...).
 
-const ICE_COLOR := Color(0.7, 0.9, 1.0)
-const STORM_COLOR := Color(0.85, 0.8, 1.0)
 const FIRE_COLOR := Color(1.0, 0.55, 0.2)
-const MIST_COLOR := Color(0.75, 0.85, 1.0)
 ## Harmonia Żywiołów, Pełnia Mocy (próg many, premia, droższe umiejętności), Echo Run (szansa i opóźnienie powtórki).
 const HARMONY_TIME := 4.0
 const HARMONY_BONUS := 0.3
@@ -32,9 +29,27 @@ const BURN_TICK := 0.5
 const STORM_JUMP_RANGE := 90.0
 const STORM_JUMP_DAMAGE := 0.7
 const LANCE_TEXTURE := preload("res://assets/spell/frost_lance.png")
-const RUNE_TEXTURE := preload("res://assets/spell/rune_stone.png")
 const METEOR_TEXTURE := preload("res://assets/spell/meteor.png")
-const ORB_TEXTURE := preload("res://assets/spell/ball_lightning.png")
+## Efekty z kreatora efektów PixelLab (tools/vfx_art.py, wpisy w pixellab_src/vfx/ids.json): błyskawica rozciągana
+## między dwoma punktami (długość w klatce BOLT_LENGTH), trafienie piorunem, piorun Burzy z nieba, Kula Piorunów
+## i jej wybuch (promień w klatce ORB_BLAST_RADIUS), lodowy rozprysk, Zamieć (promień BLIZZARD_FX_RADIUS),
+## Spadająca Gwiazda, mgła Kroku, Tarcza Many, Kamień Runiczny i jego krąg (promień RUNE_CIRCLE_RADIUS).
+const BOLT_FX := preload("res://assets/effects/spell_bolt.png")
+const BOLT_LENGTH := 92.0
+const ZAP_FX := preload("res://assets/effects/spell_zap.png")
+const STORM_FX := preload("res://assets/effects/storm_strike.png")
+const ORB_FX := preload("res://assets/effects/ball_lightning.png")
+const ORB_BLAST_FX := preload("res://assets/effects/orb_blast.png")
+const ORB_BLAST_RADIUS := 70.0
+const SHATTER_FX := preload("res://assets/effects/ice_shatter.png")
+const BLIZZARD_FX := preload("res://assets/effects/blizzard.png")
+const BLIZZARD_FX_RADIUS := 60.0
+const METEOR_FX := preload("res://assets/effects/meteor.png")
+const BLINK_FX := preload("res://assets/effects/blink.png")
+const SHIELD_FX := preload("res://assets/effects/mana_shield.png")
+const RUNE_FX := preload("res://assets/effects/rune_stone.png")
+const RUNE_CIRCLE_FX := preload("res://assets/effects/rune_circle.png")
+const RUNE_CIRCLE_RADIUS := 70.0
 const ICONS := {
 	"storm_call": preload("res://assets/skills/storm_call.png"), "mana_shield": preload("res://assets/skills/mana_shield.png"),
 	"rune_stone": preload("res://assets/skills/rune_stone.png"), "harmony": preload("res://assets/skills/ks_harmony.png"),
@@ -242,6 +257,23 @@ func _echo(again: Callable) -> void:
 
 
 
+# ---------------------------------------------------------------- efekty piorunów
+## Złoto-niebieska błyskawica od `from` do `to` (arkusz rozciągany wzdłuż drogi).
+static func lightning(parent: Node, from: Vector2, to: Vector2) -> void:
+	var path := to - from
+	SkillEffects.sheet_once(parent, BOLT_FX, 6, 20.0, from, Vector2(6, 19), path.angle(), maxf(path.length(), 8.0) / BOLT_LENGTH)
+
+
+## Trzask pioruna w trafionym miejscu.
+static func zap_flash(parent: Node, at: Vector2) -> void:
+	SkillEffects.sheet_once(parent, ZAP_FX, 5, 20.0, at, Vector2(22, 22))
+
+
+## Lodowy rozprysk (odłamki, szron) w rozmiarze `size`.
+static func shatter_flash(parent: Node, at: Vector2, size := 1.0) -> void:
+	SkillEffects.sheet_once(parent, SHATTER_FX, 8, 16.0, at, Vector2(27, 19), 0.0, 1.0, size)
+
+
 # ---------------------------------------------------------------- podpalenie
 ## Podpalenie wroga: `total` obrażeń rozłożone na Skills.BURN_TIME s (nowe odświeża i bierze mocniejsze).
 func burn(enemy: Goblin, total: float) -> void:
@@ -284,13 +316,13 @@ func _frost_lance(combo: bool) -> void:
 	var lance := _player._make_projectile(_player.equipment.weapon(), dir)
 	lance.texture = LANCE_TEXTURE
 	lance.magic = false
+	lance.fx_kind = "ice"
 	lance.speed = Skills.LANCE_SPEED
-	lance.size = 0.55
+	lance.size = 0.9
 	lance.pierce = Skills.lance_pierce(_level("frost_lance")) + roundi(_bonus("lance_pierce"))
 	lance.damage_min = maxi(1, roundi(lance.damage_min * multiplier))
 	lance.damage_max = maxi(1, roundi(lance.damage_max * multiplier))
 	lance.max_range *= 1.2
-	lance.add_child(BowSkills._trail(ICE_COLOR, Projectile.HEIGHT))
 	var shattered := [not combo]
 	lance.enemy_hit.connect(func(enemy: Goblin) -> void:
 		_chill(enemy)
@@ -305,7 +337,7 @@ func _frost_lance(combo: bool) -> void:
 func _shatter(enemy: Goblin, at: Vector2, multiplier: float) -> void:
 	if not is_instance_valid(_player):
 		return
-	SkillEffects.spark(_player.get_parent(), at + Vector2(0, -Projectile.HEIGHT), ICE_COLOR, 12)
+	shatter_flash(_player.get_parent(), at + Vector2(0, -Projectile.HEIGHT), 1.2)
 	Sfx.play_at("hit", at, -4.0)
 	for i in Skills.LANCE_SHARDS:
 		var dir := Vector2.from_angle(TAU * i / Skills.LANCE_SHARDS + randf_range(-0.2, 0.2))
@@ -313,7 +345,8 @@ func _shatter(enemy: Goblin, at: Vector2, multiplier: float) -> void:
 		shard.position = at
 		shard.texture = LANCE_TEXTURE
 		shard.magic = false
-		shard.size = 0.25
+		shard.fx_kind = "ice"
+		shard.size = 0.45
 		shard.speed = 260.0
 		shard.max_range = 90.0
 		shard.pierce = 0
@@ -371,9 +404,7 @@ func _process_storm(delta: float) -> void:
 		return
 	var target: Goblin = near.pick_random()
 	var multiplier := Skills.storm_damage(_level("storm_call")) * (_player.combo_damage() if _storm_chain else 1.0)
-	var top := target.hurt_center() + Vector2(randf_range(-20, 20), -140)
-	SkillEffects.bolt(_player.get_parent(), top, target.hurt_center(), 0.3, 8.0)
-	SkillEffects.spark(_player.get_parent(), target.global_position, STORM_COLOR, 6)
+	SkillEffects.sheet_once(_player.get_parent(), STORM_FX, 7, 20.0, target.hurt_center(), Vector2(25, 141))
 	Sfx.play_at("zap", target.global_position, -2.0)
 	_player.hit_enemy(target, _damage(multiplier), target.global_position + Vector2(0, -20), 30.0)
 	if not _storm_chain:
@@ -393,7 +424,8 @@ func _process_storm(delta: float) -> void:
 		if next == null:
 			return
 		hit.append(next)
-		SkillEffects.bolt(_player.get_parent(), from, next.hurt_center(), 0.25, 6.0)
+		lightning(_player.get_parent(), from, next.hurt_center())
+		zap_flash(_player.get_parent(), next.hurt_center())
 		_player.hit_enemy(next, _damage(multiplier * STORM_JUMP_DAMAGE), from, 20.0)
 		from = next.hurt_center()
 
@@ -450,11 +482,11 @@ func _blink() -> void:
 	var hit := _player.get_world_2d().direct_space_state.intersect_ray(ray)
 	if not hit.is_empty():
 		target = hit["position"] - (target - from).normalized() * 10.0
-	SkillEffects.spark(_player.get_parent(), _player.body_center(), MIST_COLOR, 16)
+	SkillEffects.sheet_once(_player.get_parent(), BLINK_FX, 8, 14.0, _player.body_center(), Vector2(23, 21))
 	_player.global_position = target
 	_player.reset_physics_interpolation()
 	_player._invulnerable_timer = maxf(_player._invulnerable_timer, 0.25)
-	SkillEffects.spark(_player.get_parent(), _player.body_center(), MIST_COLOR, 16)
+	SkillEffects.sheet_once(_player.get_parent(), BLINK_FX, 8, 14.0, _player.body_center(), Vector2(23, 21), 0.0, 1.0, 1.0, 0.0, true)
 	Sfx.play("dash", 0.0, 1.3)
 
 
@@ -537,48 +569,31 @@ class _Blizzard:
 	var freeze := 0.0
 	var _next := 0.0
 	var _fade := 0.4
-	var _snow: CPUParticles2D
+	var _storm: FxLoop
 
 	func _ready() -> void:
 		z_index = 3
-		_snow = CPUParticles2D.new()
-		_snow.amount = 140
-		_snow.lifetime = 0.9
-		_snow.preprocess = 0.9
-		_snow.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-		_snow.emission_rect_extents = Vector2(radius, 6.0)
-		_snow.position = Vector2(0, -50)
-		_snow.direction = Vector2(-0.3, 1.0)
-		_snow.spread = 10.0
-		_snow.gravity = Vector2.ZERO
-		_snow.initial_velocity_min = 60.0
-		_snow.initial_velocity_max = 90.0
-		_snow.scale_amount_min = 2.0
-		_snow.scale_amount_max = 3.0
-		var ramp := Gradient.new()
-		ramp.colors = PackedColorArray([Color(1, 1, 1, 0.9), Color(0.95, 0.98, 1.0, 1.0), Color(0.8, 0.9, 1.0, 0.0)])
-		_snow.color_ramp = ramp
-		add_child(_snow)
+		_storm = FxLoop.make(SpellSkills.BLIZZARD_FX, 12, 12.0, Vector2(72, 77))
+		_storm.scale = Vector2.ONE * (radius / SpellSkills.BLIZZARD_FX_RADIUS)
+		add_child(_storm)
 		if freeze > 0.0 and is_instance_valid(skills):
 			for enemy: Goblin in skills._enemies():
 				if _inside(enemy):
 					enemy.stun(freeze)
 					skills._chill(enemy)
-					SkillEffects.spark(get_parent(), enemy.hurt_center(), SpellSkills.ICE_COLOR, 6)
+					SpellSkills.shatter_flash(get_parent(), enemy.hurt_center(), 0.8)
 
 	func _inside(enemy: Goblin) -> bool:
 		return enemy.state != Goblin.State.DEAD and enemy.global_position.distance_to(global_position) <= radius + enemy.hurt_radius
 
 	func _process(delta: float) -> void:
-		queue_redraw()
 		if time_left <= 0.0:
 			_fade -= delta
+			_storm.modulate.a = maxf(_fade / 0.4, 0.0)
 			if _fade <= 0.0:
 				queue_free()
 			return
 		time_left -= delta
-		if time_left <= 0.0:
-			_snow.emitting = false
 		_next -= delta
 		if _next > 0.0 or not is_instance_valid(skills) or skills._player.is_dead:
 			return
@@ -587,12 +602,6 @@ class _Blizzard:
 			if _inside(enemy):
 				skills._player.hit_enemy(enemy, skills._damage(damage), enemy.global_position + Vector2(0, -20), 0.0)
 				skills._chill(enemy)
-
-	func _draw() -> void:
-		var alpha := 1.0 if time_left > 0.0 else maxf(_fade / 0.4, 0.0)
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.6))
-		draw_circle(Vector2.ZERO, radius, Color(0.85, 0.95, 1.0, 0.3 * alpha))
-		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 48, Color(0.85, 0.95, 1.0, 0.75 * alpha), 1.5)
 
 
 ## Kula Piorunów: leci powoli przed siebie, co chwilę razi wrogów obok; z combo na końcu wybucha.
@@ -606,17 +615,12 @@ class _Orb:
 	var blast := false
 	var _travelled := 0.0
 	var _next := 0.1
-	var _sprite: Sprite2D
+	var _sprite: FxLoop
 
 	func _ready() -> void:
 		z_index = 4
-		_sprite = Sprite2D.new()
-		_sprite.texture = SpellSkills.ORB_TEXTURE
-		_sprite.scale = Vector2.ONE * 0.4
+		_sprite = FxLoop.make(SpellSkills.ORB_FX, 8, 16.0, Vector2(22, 22))
 		_sprite.position = Vector2(0, -HEIGHT)
-		var glow := CanvasItemMaterial.new()
-		glow.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-		_sprite.material = glow
 		add_child(_sprite)
 
 	func _process(delta: float) -> void:
@@ -625,8 +629,6 @@ class _Orb:
 			return
 		position += direction * Skills.ORB_SPEED * delta
 		_travelled += Skills.ORB_SPEED * delta
-		_sprite.rotation += delta * 4.0
-		_sprite.scale = Vector2.ONE * (0.4 + 0.04 * sin(Time.get_ticks_msec() / 50.0))
 		_next -= delta
 		if _next <= 0.0:
 			_next = Skills.ORB_TICK
@@ -644,16 +646,15 @@ class _Orb:
 				break
 			if enemy.state != Goblin.State.DEAD and enemy.hurt_center().distance_to(center) <= Skills.ORB_RADIUS + enemy.hurt_radius:
 				count += 1
-				SkillEffects.bolt(get_parent(), center, enemy.hurt_center(), 0.18, 5.0)
+				SpellSkills.lightning(get_parent(), center, enemy.hurt_center())
 				skills._player.hit_enemy(enemy, skills._damage(damage), center, 20.0)
 		if count > 0:
 			Sfx.play_at("zap", global_position, -8.0)
 
 	func _explode() -> void:
 		var center := global_position + Vector2(0, -HEIGHT)
-		SkillEffects.shockwave(get_parent(), global_position, Skills.ORB_BLAST, SpellSkills.STORM_COLOR)
-		for i in 6:
-			SkillEffects.bolt(get_parent(), center, center + Vector2.from_angle(TAU * i / 6.0) * Skills.ORB_BLAST * 0.8, 0.3, 7.0)
+		SkillEffects.sheet_once(get_parent(), SpellSkills.ORB_BLAST_FX, 7, 18.0, center, Vector2(73, 50), 0.0, 1.0,
+				Skills.ORB_BLAST / SpellSkills.ORB_BLAST_RADIUS)
 		Sfx.play_at("thunder", global_position, -4.0)
 		for enemy: Goblin in skills._enemies():
 			if enemy.state != Goblin.State.DEAD and enemy.global_position.distance_to(global_position) <= Skills.ORB_BLAST + enemy.hurt_radius:
@@ -669,20 +670,16 @@ class _Meteor:
 	var radius := 60.0
 	var damage := 3.0
 	var _time := 0.0
-	var _sprite: Sprite2D
+	var _sprite: FxLoop
 
 	func _ready() -> void:
 		z_index = 5
-		_sprite = Sprite2D.new()
-		_sprite.texture = SpellSkills.METEOR_TEXTURE
-		_sprite.scale = Vector2.ONE * 0.6
+		# płonący kamień rysowany w prawo - obrócony w kierunku spadania (płomienie za nim)
+		_sprite = FxLoop.make(SpellSkills.METEOR_FX, 8, 16.0, Vector2(45, 15))
 		_sprite.position = FALL_FROM
+		_sprite.rotation = (-FALL_FROM).angle()
+		_sprite.flip_v = absf(_sprite.rotation) > PI / 2.0
 		add_child(_sprite)
-		var trail := BowSkills._trail(SpellSkills.FIRE_COLOR, 0.0)
-		trail.amount = 40
-		trail.lifetime = 0.5
-		trail.scale_amount_max = 4.0
-		_sprite.add_child(trail)
 
 	func _process(delta: float) -> void:
 		_time += delta
@@ -707,17 +704,17 @@ class _Rune:
 
 	var time_left := 15.0
 	var leaving := false
-	var _sprite: Sprite2D
+	var _sprite: FxLoop
 
 	func _ready() -> void:
-		_sprite = Sprite2D.new()
-		_sprite.texture = SpellSkills.RUNE_TEXTURE
-		_sprite.scale = Vector2.ONE * 0.5
-		_sprite.offset = Vector2(0, -SpellSkills.RUNE_TEXTURE.get_height() / 2.0 + 3.0)
+		var circle := FxLoop.make(SpellSkills.RUNE_CIRCLE_FX, 12, 8.0, Vector2(76, 48))
+		circle.scale = Vector2.ONE * (Skills.RUNE_RADIUS / SpellSkills.RUNE_CIRCLE_RADIUS)
+		add_child(circle)
+		_sprite = FxLoop.make(SpellSkills.RUNE_FX, 8, 8.0, Vector2(15, 39))
 		add_child(_sprite)
-		SkillEffects.spark(get_parent(), global_position, Color(0.5, 0.75, 1.0), 10)
-		_sprite.scale = Vector2(0.5, 0.0)
-		create_tween().tween_property(_sprite, "scale", Vector2.ONE * 0.5, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		SkillEffects.sheet_once(get_parent(), SpellSkills.BLINK_FX, 8, 14.0, global_position + Vector2(0, -12), Vector2(23, 21))
+		_sprite.scale = Vector2(0.8, 0.0)
+		create_tween().tween_property(_sprite, "scale", Vector2.ONE * 0.8, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 	func leave() -> void:
 		if leaving:
@@ -728,33 +725,27 @@ class _Rune:
 		tween.tween_callback(queue_free)
 
 	func _process(delta: float) -> void:
-		queue_redraw()
 		if leaving:
 			return
 		time_left -= delta
 		if time_left <= 0.0:
 			leave()
 
-	func _draw() -> void:
-		var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() / 300.0)
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.6))
-		draw_circle(Vector2.ZERO, Skills.RUNE_RADIUS, Color(0.4, 0.6, 1.0, 0.07 + 0.05 * pulse))
-		draw_arc(Vector2.ZERO, Skills.RUNE_RADIUS, 0.0, TAU, 56, Color(0.6, 0.8, 1.0, 0.5 + 0.3 * pulse), 1.5)
-		draw_arc(Vector2.ZERO, Skills.RUNE_RADIUS - 6.0, 0.0, TAU, 56, Color(0.6, 0.8, 1.0, 0.25), 1.0)
 
-
-## Niebieska bańka wokół postaci w czasie Tarczy Many (jaśniejsza, gdy przyjmuje całe ciosy).
+## Bańka z heksagonów wokół postaci w czasie Tarczy Many (zapętlona, z kreatora efektów; jaśniejsza, gdy przyjmuje
+## całe ciosy).
 class _ShieldRing:
 	extends Node2D
 
 	var skills: SpellSkills
+	var _bubble: FxLoop
+
+	func _ready() -> void:
+		z_index = 1
+		_bubble = FxLoop.make(SpellSkills.SHIELD_FX, 8, 10.0, Vector2(24, 24))
+		add_child(_bubble)
 
 	func _process(_delta: float) -> void:
 		if visible:
-			queue_redraw()
-
-	func _draw() -> void:
-		var full := is_instance_valid(skills) and skills._shield_full > 0.0
-		var pulse := 0.6 + 0.4 * sin(Time.get_ticks_msec() / 120.0)
-		draw_circle(Vector2.ZERO, 15.0, Color(0.4, 0.6, 1.0, 0.12 if not full else 0.25))
-		draw_arc(Vector2.ZERO, 15.0, 0.0, TAU, 32, Color(0.6, 0.8, 1.0, pulse * (1.0 if full else 0.7)), 1.5)
+			var full := is_instance_valid(skills) and skills._shield_full > 0.0
+			_bubble.modulate = Color(1.5, 1.5, 1.6) if full else Color.WHITE
