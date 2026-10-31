@@ -1272,9 +1272,7 @@ func _emit_resources() -> void:
 # ---------------------------------------------------------------- atak
 func _start_attack() -> void:
 	var weapon := equipment.weapon()
-	var aim := get_global_mouse_position() - body_center()
-	if aim == Vector2.ZERO:
-		aim = _facing_vector()
+	var aim := _aim_direction()
 	_attack_angle = aim.angle()
 	_attack_kind = weapon.get("type", "melee")
 	_attack_multiplier = 1.0
