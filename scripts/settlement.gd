@@ -2155,7 +2155,7 @@ func _build_guild() -> void:
 	clerk.looks_around = false
 	# rynek gildii i lista podróżników (Market, Travelers)
 	clerk.display_name = "Pisarz gildii Gniewko"
-	clerk.services.assign(["market", "travelers"])
+	clerk.services.assign(["market", "travelers", "marks"])
 	clerk.dialog_greeting = "Witaj w gildii! Tu spisuję każdego poszukiwacza przygód, a na rynku kupisz i sprzedasz, co dusza zapragnie - podróżnicy handlują dzień i noc."
 	_entities.add_child(clerk)
 	nodes.append(clerk)

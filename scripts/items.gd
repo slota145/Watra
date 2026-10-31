@@ -593,6 +593,11 @@ const DATA := {
 		"description": "Złoty kamień z runą ochronną, z lochów Watry. W warsztacie kowala zapieczętuje jedną premię, a pozostałe przelosuje (potrzebne też Serce Kryształu).",
 		"icon": preload("res://assets/items/rune_seal.png"), "sell_price": 400,
 	},
+	"victory_mark": {
+		"name": "Znak Zwycięstwa",
+		"description": "Złoty znak za udział w wydarzeniach w świecie (najazdy, czempioni, meteoryty, polowania). Pisarz gildii Gniewko wymienia znaki na rzadkie rzeczy.",
+		"icon": preload("res://assets/items/victory_mark.png"), "sell_price": 5,
+	},
 	"crystal_heart": {
 		"name": "Serce Kryształu",
 		"description": "Bijące żarem jądro Kryształu Watry (lochy od 3. stopnia). Kowal Bronisław wykuwa nim gniazdo na esencję legendy.",

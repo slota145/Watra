@@ -206,6 +206,8 @@ var codex := Codex.new()
 ## Inni podróżnicy (spis i ich życie) i rynek w gildii - zapisywane z postacią.
 var travelers := Travelers.new()
 var market := Market.new()
+## Losowe wydarzenia w świecie (najazdy, czempioni, meteoryty, polowania) - zapisywane z postacią.
+var events := WorldEvents.new()
 ## Darmowe gniazda u jubilera (pierwsze - nagroda za zadanie "Pierwszy klejnot").
 var free_sockets := 0
 
@@ -257,6 +259,9 @@ func _ready() -> void:
 	market.setup(self)
 	add_child(market)
 	travelers.market = market
+	events.name = "WorldEvents"
+	events.setup(self)
+	add_child(events)
 	Gems.unlocked = false
 	quests.quest_done.connect(_on_quest_done)
 	quests.quest_ready.connect(_on_quest_ready)
@@ -986,6 +991,7 @@ func get_save_data() -> Dictionary:
 		"codex": codex.get_save_data(),
 		"travelers": travelers.get_save_data(),
 		"market": market.get_save_data(),
+		"events": events.get_save_data(),
 		"free_sockets": free_sockets,
 		"generated_items": Loot.export_used(_owned_ids()),
 		"hero": hero,
@@ -1075,6 +1081,7 @@ func load_save_data(data: Dictionary) -> void:
 	codex.load_save_data(data.get("codex", {}))
 	travelers.load_save_data(data.get("travelers", {}))
 	market.load_save_data(data.get("market", {}))
+	events.load_save_data(data.get("events", {}))
 	codex.note_owned(self)
 	var pos: Array = data.get("position", [spawn_point.x, spawn_point.y])
 	global_position = Vector2(pos[0], pos[1])

@@ -25,6 +25,9 @@ var _origin := Vector2.ZERO
 ## Podświetlony obszar (w kafelkach), np. miejsce zadania; pusty = brak.
 var highlight := Rect2()
 var highlight_label := ""
+## Miejsce trwającego wydarzenia w świecie (WorldEvents) - pulsujący znacznik; INF - brak.
+var event_point := Vector2.INF
+const EVENT_COLOR := Color(1.0, 0.75, 0.3)
 var _time := 0.0
 
 
@@ -64,8 +67,27 @@ func _draw() -> void:
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
 		_draw_dot(enemy.global_position, enemy.map_color, goblin_dot_size, false)
 	_draw_dot(_player.global_position, PLAYER_COLOR, 2.0)
+	if event_point != Vector2.INF:
+		_draw_event()
 
 	draw_rect(Rect2(Vector2.ZERO, size), BORDER, false, 1.0)
+
+
+## Wydarzenie: pulsujący krąg; poza widokiem minimapy - strzałka przy krawędzi w jego stronę.
+func _draw_event() -> void:
+	var pos := (event_point / _tile_size - _origin) * pixels_per_tile
+	var pulse := 0.5 + 0.5 * sin(_time * 5.0)
+	var area := Rect2(Vector2.ZERO, size).grow(-5.0)
+	if area.has_point(pos):
+		draw_arc(pos, 4.0 + 3.0 * pulse, 0.0, TAU, 16, EVENT_COLOR, 1.5)
+		draw_circle(pos, 2.0, EVENT_COLOR)
+		return
+	var mid := size / 2.0
+	var dir := (pos - mid).normalized()
+	var edge := mid + dir * minf(absf(area.size.x / 2.0 / dir.x) if dir.x != 0.0 else INF, absf(area.size.y / 2.0 / dir.y) if dir.y != 0.0 else INF)
+	var side := dir.orthogonal() * 3.0
+	draw_colored_polygon(PackedVector2Array([edge + dir * 4.0, edge - dir * 3.0 + side, edge - dir * 3.0 - side]),
+			Color(EVENT_COLOR, 0.6 + 0.4 * pulse))
 
 
 ## Pulsujący złoty prostokąt nad obszarem zadania.

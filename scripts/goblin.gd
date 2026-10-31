@@ -100,6 +100,8 @@ var _stun_marker: StunMarker
 var objective: Node2D
 ## Obrażenia od innych podróżników (Traveler) - gdy to oni zadali większość, gracz nie dostaje łupu ani doświadczenia.
 var traveler_damage := 0
+## Obrażenia od podróżników w wydarzeniu (WorldEvents - ranking wkładu; nie odbierają graczowi łupu).
+var event_damage := 0
 const OBJECTIVE_PLAYER_RANGE := 60.0
 ## Spowolnienie lodem (księga magii, SpellSkills): mnożnik prędkości i do kiedy trwa (Time.get_ticks_msec); wróg sinieje.
 var _chill_until := 0

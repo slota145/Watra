@@ -538,6 +538,9 @@ func _ready() -> void:
 	# obszary zadań podświetlane na mapie (w kafelkach lasu)
 	hud.setup_quest_areas(_forest_quest_areas())
 	player.died.connect(_on_player_died_pk)
+	player.events.started.connect(_on_event_started)
+	player.events.finished.connect(_on_event_finished)
+	hud.setup_events(player)
 
 	if not save.is_empty():
 		_apply_save(save)
@@ -788,6 +791,7 @@ func _process(delta: float) -> void:
 		_sync_travelers()
 	_process_party_offers(delta)
 	_process_guard(delta)
+	_process_events(delta)
 	# powrót do Ostoi kończy wspólne łowy
 	if zone == "forest" and not player.travelers.party.is_empty() and _settlement.is_inside_palisade(Vector2i((player.global_position / TILE).floor())):
 		for node: Traveler in get_tree().get_nodes_in_group("travelers"):
@@ -796,6 +800,57 @@ func _process(delta: float) -> void:
 				node.mode = "town"
 				node.town_points = _settlement.traveler_points()
 		player.travelers.disband()
+
+
+# ---------------------------------------------------------------- wydarzenia w świecie
+## Wydarzenie w krainie gracza (WorldEvents) - stawia je EventSite; w innych krainach toczy się bez gracza.
+var event_site: EventSite
+var _event_check := 1.0
+
+
+func _process_events(delta: float) -> void:
+	_event_check -= delta
+	if _event_check > 0.0:
+		return
+	_event_check = 0.5
+	var events: WorldEvents = player.events
+	var known := {}
+	for id: String in shrines:
+		known[Zones.SHRINES[id]["zone"]] = true
+	events.known_zones = known.keys()
+	if zone == Zones.DUNGEON or _traveling or not events.is_active_in(zone) or events.active.get("built", false):
+		return
+	event_site = EventSite.new()
+	event_site.setup(self, events)
+	entities.add_child(event_site)
+	hud.event_site = event_site
+
+
+## Tryb deweloperski (F5) i testy: wydarzenie od razu w tej krainie.
+func start_event_here(type := "") -> bool:
+	var events: WorldEvents = player.events
+	if not events.active.is_empty() or not Levels.ZONES.has(zone):
+		return false
+	var types := WorldEvents.types_for(zone)
+	return events.start(type if type in types else types.pick_random(), zone)
+
+
+func _on_event_started(event: Dictionary) -> void:
+	Sfx.play("summon")
+	hud.show_banner("%s\n%s" % [event["title"], Zones.zone_name(event["zone"])], WorldEvents.TYPES[event["type"]]["color"])
+	hud.event_tracker.show_message(WorldEvents.announcement(event))
+
+
+func _on_event_finished(result: Dictionary) -> void:
+	hud.event_result.show_result(result)
+
+
+## Potwór wydarzenia pokonany: licznik, zadania i encyklopedia jak przy zwykłym potworze (bez odrodzenia).
+func note_event_kill(goblin: Goblin) -> void:
+	if goblin.quest_kind != "animal":
+		hud.on_enemy_killed(goblin)
+	player.quests.on_enemy_killed(goblin.quest_kind)
+	player.codex.note_kill(goblin)
 
 
 # ---------------------------------------------------------------- inni podróżnicy
@@ -821,7 +876,8 @@ func _sync_travelers() -> void:
 	for node: Traveler in get_tree().get_nodes_in_group("travelers"):
 		var data := node.data
 		var still: bool = (node.mode == "hunt" and data["state"] == "hunt" and data["zone"] == zone) \
-				or (node.mode == "town" and data["state"] == "town") or (node.mode == "party" and data["state"] == "party")
+				or (node.mode == "town" and data["state"] == "town") or (node.mode == "party" and data["state"] == "party") \
+				or (node.mode == "event" and player.events.is_active_in(zone))
 		if not still or roster.active().find(data) < 0:
 			node.recall()
 		else:
@@ -1507,18 +1563,27 @@ func _level_origin() -> Vector2:
 	return _road[0] if not _road.is_empty() else Vector2(map_size) / 2.0
 
 
-## `spawn` opisuje miejsce potwora (goblina albo wilka) - te same dane służą potem do odrodzenia.
-func _spawn_goblin(spawn: Dictionary) -> Goblin:
-	var kind: String = spawn.get("type", "goblin")
-	var is_wolf := kind == "wolf" or kind == "warg"
-	var scene: PackedScene = ANIMAL_SCENES[kind] if ANIMAL_SCENES.has(kind) \
-			else ANCIENT_SCENES[kind] if ANCIENT_SCENES.has(kind) else FIELDS_SCENES[kind] if FIELDS_SCENES.has(kind) else {"goblin": GOBLIN, "wolf": WOLF, "chief": GOBLIN_CHIEF, "alpha": ALPHA_WOLF,
+## Scena potwora wg rodzaju z miejsca odrodzenia (także dla potworów wydarzeń - EventSite).
+func scene_for(kind: String) -> PackedScene:
+	if ANIMAL_SCENES.has(kind):
+		return ANIMAL_SCENES[kind]
+	if ANCIENT_SCENES.has(kind):
+		return ANCIENT_SCENES[kind]
+	if FIELDS_SCENES.has(kind):
+		return FIELDS_SCENES[kind]
+	return {"goblin": GOBLIN, "wolf": WOLF, "chief": GOBLIN_CHIEF, "alpha": ALPHA_WOLF,
 			"archer": GOBLIN_ARCHER, "brute": GOBLIN_BRUTE, "warg": WARG,
 			"frogman": FROGMAN, "frog_spitter": FROG_SPITTER, "frog_chief": FROG_CHIEF,
 			"birdman": BIRDMAN, "birdman_thrower": BIRDMAN_THROWER, "birdman_shaman": BIRDMAN_SHAMAN,
 			"satyr": SATYR, "satyr_piper": SATYR_PIPER, "satyr_brute": SATYR_BRUTE,
 			"storm_eagle": STORM_EAGLE, "drowner": DROWNER, "wisp": WISP, "rusalka": RUSALKA, "wodnik": WODNIK}[kind]
-	var goblin: Goblin = scene.instantiate()
+
+
+## `spawn` opisuje miejsce potwora (goblina albo wilka) - te same dane służą potem do odrodzenia.
+func _spawn_goblin(spawn: Dictionary) -> Goblin:
+	var kind: String = spawn.get("type", "goblin")
+	var is_wolf := kind == "wolf" or kind == "warg"
+	var goblin: Goblin = scene_for(kind).instantiate()
 	if not spawn.has("level"):
 		spawn["level"] = _spawn_level(spawn, goblin is Boss)
 	goblin.level = spawn["level"]
@@ -2319,6 +2384,12 @@ func _travel(target_zone: String, arrive: String) -> void:
 ## Teleport do odkrytej kapliczki (kliknięcie na dużej mapie).
 func teleport_to(shrine_id: String) -> void:
 	if not shrines.has(shrine_id) or player.is_dead or _traveling:
+		return
+	# kapliczka zgasła po przegranym najeździe (WorldEvents)
+	if player.events.is_shrine_down(shrine_id):
+		hud.show_banner("Kapliczka %s zgasła po najeździe\nRozpali się za %d min" % [Zones.SHRINES[shrine_id]["name"],
+				ceili(float(player.events.shrine_down[shrine_id]) / 60.0)], Color(1.0, 0.5, 0.45))
+		Sfx.play("ui_error")
 		return
 	var target_zone: String = Zones.SHRINES[shrine_id]["zone"]
 	Sfx.play("magic", 2.0, 0.7)

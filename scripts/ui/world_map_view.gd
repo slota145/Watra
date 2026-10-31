@@ -32,6 +32,11 @@ var _markers: Array[Dictionary] = []
 ## Odkryte kapliczki (id -> [x, y] w kafelkach swojej krainy) - wspólny słownik ze światem.
 var _shrines := {}
 var _hovered := ""
+## Trwające wydarzenie (BigMap.set_event): kraina, miejsce w niej w pikselach świata (INF - środek), tytuł i kolor.
+var event_zone := ""
+var event_point := Vector2.INF
+var event_title := ""
+var event_color := Color.WHITE
 var _time := 0.0
 var _wilds: ImageTexture
 
@@ -124,6 +129,13 @@ func _draw() -> void:
 			var zone_name := Zones.zone_name(zone)
 			var width := font.get_string_size(zone_name, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
 			_text(font, Vector2(rect.get_center().x - width / 2.0, rect.position.y + 11), zone_name, 8, Color(1.0, 0.9, 0.6))
+	if event_zone != "" and event_zone in _visible_zones():
+		var local := event_point / tile_size if event_point != Vector2.INF else Vector2(Zones.size_of(event_zone)) / 2.0
+		var at := (local + _zone_origin(event_zone)) * pixels_per_tile
+		var pulse := 0.5 + 0.5 * sin(_time * 5.0)
+		draw_arc(at, 6.0 + 4.0 * pulse, 0.0, TAU, 20, event_color, 2.0)
+		draw_circle(at, 3.0, event_color)
+		_text(font, at + Vector2(10, 4), event_title, 8, event_color)
 	if _hovered != "":
 		var pos := _shrine_screen_pos(_hovered)
 		_text(font, pos + Vector2(10, -6), "Teleport: " + Zones.SHRINES[_hovered]["name"], 8, Color(0.6, 0.9, 1.0))
