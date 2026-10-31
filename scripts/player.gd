@@ -80,6 +80,9 @@ const LUNGE_FX_FPS := 18.0
 const LUNGE_FX_ANCHOR := Vector2(29, 17)
 const LUNGE_START_FX := preload("res://assets/effects/lunge_start.png")
 const LUNGE_HIT_FX := preload("res://assets/effects/lunge_hit.png")
+## Błysk trafienia cięciem mieczem (zwykły atak, Półksiężyc) z kreatora efektów PixelLab: ukośny ślad ostrza,
+## gwiazdka i odpryski, obrócone w kierunku ciosu.
+const SWORD_HIT_FX := preload("res://assets/effects/sword_hit.png")
 ## Zbieranie (drzewa, głazy): zasięg (od stóp do podstawy), czas i odstęp między uderzeniami.
 const HARVEST_RANGE := 26.0
 const HARVEST_TIME := 2.0
@@ -1719,6 +1722,8 @@ func _hit_enemies_in_arc(half_arc: float) -> void:
 		if to_enemy.length() > enemy.hurt_radius and absf(angle_difference(_attack_angle, to_enemy.angle())) > half_arc:
 			continue
 		_hit_this_swing[enemy] = true
+		SkillEffects.sheet_once(get_parent(), SWORD_HIT_FX, 5, 16.0, enemy.hurt_center(), Vector2(14, 14), to_enemy.angle(),
+				1.0, 1.0, 0.0, _swing_sign < 0.0)
 		var dmg := _skill_damage(_attack_multiplier)
 		hit_enemy(enemy, dmg, global_position, attack_knockback * (1.6 if _attack_multiplier > 1.0 else 1.0))
 

@@ -207,6 +207,8 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   w tempie zamachu, `scenes/player.tscn` - Pivot/Slash): stalowe cięcie z jaśniejszą krawędzią, śladem i błyskami
   zamiast jasnoniebieskiego łuku (`assets/slash.png` z `tools/generate_art.py` nie jest już używany); zwykły atak
   celuje przez `Player._aim_direction` (uwzględnia `aim_override`, jak umiejętności).
+  Na każdym wrogu trafionym cięciem (zwykły atak, Półksiężyc - `Player._hit_enemies_in_arc`) błysk trafienia
+  (`assets/effects/sword_hit.png`: ukośny ślad ostrza, gwiazdka, odpryski).
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 
