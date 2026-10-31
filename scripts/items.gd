@@ -725,6 +725,8 @@ static func get_data(id: String) -> Dictionary:
 		return ItemBases.DATA[id]
 	if Legends.has(id):
 		return Legends.data(id)
+	if id.begins_with(Unidentified.PREFIX):
+		return Unidentified.data(id)
 	return generated.get(id, {})
 
 

@@ -56,6 +56,8 @@ var fullscreen := false
 var vsync := true
 ## Mnożnik trzęsienia ekranu (0 - wyłączone, 1 - pełne).
 var screen_shake := 1.0
+## Łup magiczny i rzadki wypada niezidentyfikowany (Unidentified) - opcja rozgrywki, domyślnie wyłączona.
+var unidentified_loot := false
 
 
 func _load_display_settings() -> void:
@@ -64,6 +66,8 @@ func _load_display_settings() -> void:
 		fullscreen = bool(config.get_value("display", "fullscreen", fullscreen))
 		vsync = bool(config.get_value("display", "vsync", vsync))
 		screen_shake = clampf(float(config.get_value("display", "screen_shake", screen_shake)), 0.0, 1.0)
+		unidentified_loot = bool(config.get_value("gameplay", "unidentified_loot", unidentified_loot))
+	Unidentified.enabled = unidentified_loot
 	_apply_display()
 
 
@@ -83,6 +87,7 @@ func _save_display_settings() -> void:
 	config.set_value("display", "fullscreen", fullscreen)
 	config.set_value("display", "vsync", vsync)
 	config.set_value("display", "screen_shake", screen_shake)
+	config.set_value("gameplay", "unidentified_loot", unidentified_loot)
 	config.save(SETTINGS_PATH)
 
 
@@ -95,6 +100,12 @@ func set_fullscreen(value: bool) -> void:
 func set_vsync(value: bool) -> void:
 	vsync = value
 	_apply_display()
+	_save_display_settings()
+
+
+func set_unidentified_loot(value: bool) -> void:
+	unidentified_loot = value
+	Unidentified.enabled = value
 	_save_display_settings()
 
 

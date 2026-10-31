@@ -56,6 +56,8 @@ var _scroll: ScrollContainer
 ## miejsca na torby: [panel, ikona, podpis]
 var _bag_slots: Array[Array] = []
 var _trash: Panel
+## Przycisk „Zidentyfikuj wszystko” - widoczny, gdy w plecaku są przedmioty niezidentyfikowane.
+var _identify_button: Button
 var _confirm: ConfirmationDialog
 ## Przedmiot czekający na potwierdzenie wyrzucenia: {"index", "id"}.
 var _pending_discard := {}
@@ -130,6 +132,17 @@ func _ready() -> void:
 	sort_button.tooltip_text = "Sortuj plecak: wyposażenie (wg miejsca i jakości), torby, mikstury,\nkamienie, reszta - i połącz stosy"
 	sort_button.pressed.connect(_on_sort_pressed)
 	bag_row.add_child(sort_button)
+	# identyfikacja wszystkich niezidentyfikowanych przedmiotów (opcja łupu w Ustawieniach)
+	_identify_button = Button.new()
+	_identify_button.icon = Unidentified.ICONS["weapon"]
+	UiStyle.fit_button_icon(_identify_button)
+	_identify_button.focus_mode = Control.FOCUS_NONE
+	_identify_button.custom_minimum_size = SLOT_SIZE
+	_identify_button.tooltip_text = "Zidentyfikuj wszystko: wszystkie przedmioty niezidentyfikowane w plecaku\n(tyle, ile zmieści się w plecaku)"
+	_identify_button.pressed.connect(func() -> void:
+		if _player != null and _player.identify_all() == 0:
+			Sfx.play("ui_error"))
+	bag_row.add_child(_identify_button)
 	_trash = Panel.new()
 	_trash.custom_minimum_size = SLOT_SIZE
 	_trash.add_theme_stylebox_override("panel", UiStyle.panel(Color(0.22, 0.12, 0.1), UiStyle.BORDER, 0))
@@ -164,7 +177,7 @@ func _ready() -> void:
 	# zaklinanie jest u kowala w Ostoi (NpcDialog), tu tylko rzemiosło
 	bottom.add_child(craft_button)
 	box.add_child(bottom)
-	var hint := UiStyle.label("PPM - załóż / użyj / zdejmij   •   przeciągnij - przenieś / do kosza", 7, UiStyle.DIM_COLOR)
+	var hint := UiStyle.label("PPM - załóż / użyj / zdejmij / zidentyfikuj   •   przeciągnij - przenieś / do kosza", 7, UiStyle.DIM_COLOR)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	box.add_child(hint)
 
@@ -265,7 +278,10 @@ func _on_bag_input(event: InputEvent, index: int) -> void:
 	var data: Dictionary = _player.inventory.slots[index]
 	if data.is_empty():
 		return
-	if enchant_window != null and enchant_window.visible:
+	if Unidentified.is_unidentified(data["id"]):
+		# przedmiot niezidentyfikowany: PPM - jeden, Shift+PPM - cały stos
+		_player.identify(index, (event as InputEventMouseButton).shift_pressed)
+	elif enchant_window != null and enchant_window.visible:
 		enchant_window.offer_bag_item(index)
 	elif Items.is_usable(data["id"]):
 		_player.use_item(data["id"])
@@ -425,6 +441,8 @@ func _refresh() -> void:
 	if _player == null:
 		return
 	var inv := _player.inventory
+	_identify_button.visible = inv.slots.any(func(s: Dictionary) -> bool:
+		return not s.is_empty() and Unidentified.is_unidentified(s["id"]))
 	# plecak urósł albo zmalał (torby) - dobudowujemy / usuwamy kratki
 	while _slots.size() < inv.slots.size():
 		_make_bag_slot(_slots.size())

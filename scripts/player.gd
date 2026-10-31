@@ -441,6 +441,41 @@ func whirl_mana_factor() -> float:
 
 
 ## Rzeczy na start nowej postaci (mikstury leżą od razu na pasku pod 1 i 2).
+## Identyfikacja przedmiotów niezidentyfikowanych (Unidentified) ze stosu w plecaku: jeden albo cały stos - tyle,
+## ile zmieści się w plecaku (każdy przedmiot zajmuje kratkę; ostatnia sztuka stosu zwalnia swoją). Zwraca liczbę.
+func identify(index: int, whole := false) -> int:
+	var slot: Dictionary = inventory.slots[index]
+	if slot.is_empty() or not Unidentified.is_unidentified(slot["id"]):
+		return 0
+	var id: String = slot["id"]
+	var wanted: int = slot["count"] if whole else 1
+	var done := 0
+	for i in wanted:
+		var current: Dictionary = inventory.slots[index]
+		if current.is_empty() or current["id"] != id:
+			break
+		if current["count"] > 1 and not inventory.slots.any(func(s: Dictionary) -> bool: return s.is_empty()):
+			DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -10), "Plecak pełny", Color(1, 0.5, 0.5), 8)
+			break
+		inventory.take_one(index)
+		var item := Unidentified.identify(id)
+		inventory.add_item(item, 1)
+		item_picked.emit(item, 1)
+		done += 1
+	if done > 0:
+		Sfx.play("pickup_rare")
+	return done
+
+
+## Wszystkie niezidentyfikowane stosy w plecaku.
+func identify_all() -> int:
+	var total := 0
+	for i in inventory.slots.size():
+		if not inventory.slots[i].is_empty() and Unidentified.is_unidentified(inventory.slots[i]["id"]):
+			total += identify(i, true)
+	return total
+
+
 func give_starting_items() -> void:
 	for id in Hotbar.DEFAULT_ITEMS:
 		inventory.add_item(id, Hotbar.STARTING_POTIONS)

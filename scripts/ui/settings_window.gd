@@ -1,7 +1,7 @@
 class_name SettingsWindow
 extends Control
 ## Okno ustawień (z menu głównego i z pauzy): głośność ogólna, muzyki, efektów i otoczenia, pełny ekran,
-## synchronizacja pionowa i siła trzęsienia ekranu. Zmiany działają od razu i zapisują się w
+## synchronizacja pionowa, siła trzęsienia ekranu i łup niezidentyfikowany (Unidentified). Zmiany działają od razu i zapisują się w
 ## user://settings.cfg (Sfx - dźwięk, Game - obraz i trzęsienie). Zamyka się przyciskiem albo Esc.
 
 signal closed
@@ -42,6 +42,10 @@ func _ready() -> void:
 	box.add_child(_fullscreen)
 	box.add_child(_check_row("Synchronizacja pionowa (V-Sync)", Game.vsync, Game.set_vsync))
 	box.add_child(_slider_row("Trzęsienie ekranu", Game.screen_shake, Game.set_screen_shake))
+	box.add_child(_header("Rozgrywka"))
+	var unidentified := _check_row("Łup niezidentyfikowany (stosy, PPM identyfikuje)", Game.unidentified_loot, Game.set_unidentified_loot)
+	unidentified.tooltip_text = "Magiczna i rzadka broń, zbroja i biżuteria wypada zawinięta w płótno: układa się w stosy\n(rodzaj, rzadkość i poziom), a PPM w plecaku ją identyfikuje (Shift+PPM - cały stos)."
+	box.add_child(unidentified)
 	box.add_child(HSeparator.new())
 	var back := UiStyle.menu_button("Wróć", close)
 	box.add_child(back)
