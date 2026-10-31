@@ -146,6 +146,8 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 - [x] Miecz Miry w chodzie w dłoni (`tools/hero_sheets.py` - `STEADY_WALK`, `IDLE_GRIP_FROM`), dąb bez okruchu sąsiedniej
   klatki (`tools/forest_props.py` odcina okruchy z boków), 3x wyższy próg doświadczenia (`CharacterStats.xp_base`);
   `tests/balance_sim.gd` liczy kamienie zaklinające tylko z lochów (skarbiec strażnika, Kryształ Watry).
+- [x] Mgnienie (i wirujące Mgnienie) przeskakuje na wylot przez wroga i tnie wszystkich na drodze (`SwordSkills._jump`,
+  `_landing_spot`); kolejny cel inny niż poprzedni, a jednego wroga przebija tam i z powrotem.
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

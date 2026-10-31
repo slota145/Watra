@@ -5,6 +5,7 @@ extends SceneTree
 ## mana za skok, trzymanie), wirujące Mgnienie z odnowieniem i Dymne Wybuchy (ładowanie i combo bez ładowania).
 
 var _world: Node
+var _start := Vector2.ZERO
 var _frame := 0
 var _fails := 0
 var _enemy: Node
@@ -41,11 +42,15 @@ func _process(_d: float) -> bool:
 		6:
 			_place_near_enemy(p)
 		7:
+			_start = p.global_position
 			p._held_ids["flicker"] = true
 			p.sword_skills.press("flicker")
+		9:
+			# na wylot: po pierwszym skoku postać stoi po drugiej stronie wroga
+			check("Mgnienie: skok na wylot", (p.global_position - _enemy.global_position).dot(_start - _enemy.global_position) < 0.0)
 		30:
 			p._held_ids.erase("flicker")
-			check("Mgnienie: skok do wroga", p.global_position.distance_to(_enemy.global_position) < 40.0,
+			check("Mgnienie: skok do wroga", p.global_position.distance_to(_enemy.global_position) < 70.0,
 					"%.0f px" % p.global_position.distance_to(_enemy.global_position))
 			check("Mgnienie: cios i mana", (_enemy.health < _enemy_hp or _enemy.state == 4) and p.mana < p.stats.max_mana())
 			check("Mgnienie zapisane do combo", p._chain_skill == "flicker" or p._chain_skill == "smoke_burst")
