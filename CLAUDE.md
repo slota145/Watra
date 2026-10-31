@@ -253,6 +253,17 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   nie od klawisza; slot umiejętności gotowej do combo świeci z kurczącym się pierścieniem czasu (`ActionBars._process`).
   Kolejne combo przychodzą z etapem 2 drzewka miecza.
 
+- [ ] **Encyklopedia w grze** (pomysł autora): osobne okno z zakładkami.
+  - **Legendy**: wszystkie legendarne przedmioty (`scripts/legends.gd`, legendarne pierścienie i kolczyki) z ikoną, opisem
+    efektu i źródłem (który boss, skarbiec lochów).
+    W trybie deweloperskim kliknięcie ikony od razu daje jedną sztukę.
+  - **Bossowie i potwory**: grafika, kraina i poziomy, łup (także legendy), stopień w bestiariuszu mędrca
+    (`Boons.bestiary`), liczba pokonanych.
+  - Do ustalenia z autorem:
+    - czy nieznalezione wpisy są zakryte („???”) i odsłaniają się po zdobyciu lub pokonaniu, jak kolekcja do uzupełniania;
+    - pod jakim klawiszem otwiera się okno;
+    - czy encyklopedia obejmuje też zwykłe przedmioty, zioła i mikstury.
+
 ### Watra i Ostoja
 
 - [x] **Watra**: wielki, zawsze płonący ogień na placu Ostoi (`scripts/settlement.gd`, okno `scripts/ui/watra_window.gd`,
