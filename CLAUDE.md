@@ -371,12 +371,19 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
 Oba systemy zależą od gildii poszukiwaczy przygód w Ostoi (budowla `guild` w `scripts/settlement.gd`, tablica ogłoszeń w `scripts/bounties.gd` i `scripts/ui/board_window.gd`).
 Dziś tablica ma tylko zlecenia na wilki i gobliny w Goblińskim Lesie (komentarze w `settlement.gd` mówiące, że tablica „funkcje dostanie później”, są już nieaktualne).
 
-- [ ] **Inni podróżnicy**: symulowani poszukiwacze przygód z imionami, poziomami i ekwipunkiem.
-  Pojawiają się w krainach, walczą z potworami i zbierają łup, wracają do Ostoi.
-  Ich liczba i siła zależą od rozwoju gildii.
-- [ ] **Symulowany rynek**: setki ofert kupna i sprzedaży wystawianych przez podróżników, z cenami zmieniającymi się w czasie, w stylu rynku z BDO.
-  Gracz może kupować, sprzedawać i składać zamówienia.
-  Rynek działa przez gildię.
+- [x] **Inni podróżnicy** (`scripts/travelers.gd` - spis i życie w czasie, dziecko gracza; `scripts/traveler.gd` - postać
+  w świecie, `World._sync_travelers`): 40 poszukiwaczy przygód ze słowiańskimi imionami, wyglądem (arkusze NPC), bronią,
+  poziomem, ekwipunkiem i sławą; aktywnych tylu, ile pozwala ranga gildii (4 bez gildii, potem 14/26/40, ulepszenie
+  u pisarza gildii za surowce i złoto). Co minutę ruszają z Ostoi na łowy do krainy pasującej do poziomu, awansują,
+  wracają albo giną. W krainie widać łowców przy siedliskach (imię i poziom nad głową, pasek zdrowia): walczą
+  z potworami (bossów zostawiają graczowi), potwór odpowiada (`Goblin.objective`), a zabity głównie przez nich nie daje
+  graczowi łupu ani doświadczenia (`Goblin.traveler_damage`); w Ostoi spacerują po placu, przy Watrze i gildii
+  i rzucają hasła jak gracze w MMO. Lista podróżników (ranking) u pisarza gildii (`scripts/ui/travelers_window.gd`).
+- [x] **Symulowany rynek** (`scripts/market.gd`, okno `scripts/ui/market_window.gd`, pisarz gildii Gniewko - po zbudowaniu
+  gildii): towary (surowce, zioła, mikstury, kamienie) z cenami błądzącymi w czasie i arkuszem ofert sprzedaży i kupna
+  z imionami podróżników; kupno i sprzedaż od razu (podatek 10%, duże transakcje przesuwają cenę) albo własne
+  zamówienia po swojej cenie realizowane z czasem; oferty przedmiotów od podróżników (broń, zbroje, biżuteria,
+  kamienie szlachetne, czasem legendy) i wystawianie własnych.
 - [x] **Zadania główne** (`scripts/main_quests.gd`, żerca Wszebor przy Watrze - postać z PixelLab przez `tools/npc_sheets.py`):
   łańcuch 23 kroków przez wszystkie krainy (bossowie, kapliczki) i mechaniki (budowa, zielarstwo, drzewka,
   encyklopedia, Watra, lochy, Kryształ Watry, klejnoty, zaklinanie, esencje); niebieskie „!” i „?” nad postaciami,

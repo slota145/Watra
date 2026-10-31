@@ -203,6 +203,9 @@ var boons := Boons.new()
 var hotbar := Hotbar.new()
 ## Encyklopedia: odkryte przedmioty i pokonane potwory.
 var codex := Codex.new()
+## Inni podróżnicy (spis i ich życie) i rynek w gildii - zapisywane z postacią.
+var travelers := Travelers.new()
+var market := Market.new()
 ## Darmowe gniazda u jubilera (pierwsze - nagroda za zadanie "Pierwszy klejnot").
 var free_sockets := 0
 
@@ -248,6 +251,11 @@ func _ready() -> void:
 	add_child(boons)
 	codex.name = "Codex"
 	add_child(codex)
+	travelers.name = "Travelers"
+	add_child(travelers)
+	market.name = "Market"
+	market.setup(self)
+	add_child(market)
 	Gems.unlocked = false
 	quests.quest_done.connect(_on_quest_done)
 	stats.boons = boons
@@ -974,6 +982,8 @@ func get_save_data() -> Dictionary:
 		"boons": boons.get_save_data(),
 		"hotbar": hotbar.get_save_data(),
 		"codex": codex.get_save_data(),
+		"travelers": travelers.get_save_data(),
+		"market": market.get_save_data(),
 		"free_sockets": free_sockets,
 		"generated_items": Loot.export_used(_owned_ids()),
 		"hero": hero,
@@ -1042,6 +1052,8 @@ func load_save_data(data: Dictionary) -> void:
 	inventory.load_save_data(data.get("inventory", []))
 	# starsze zapisy bez encyklopedii odkrywają przynajmniej to, co gracz ma
 	codex.load_save_data(data.get("codex", {}))
+	travelers.load_save_data(data.get("travelers", {}))
+	market.load_save_data(data.get("market", {}))
 	codex.note_owned(self)
 	var pos: Array = data.get("position", [spawn_point.x, spawn_point.y])
 	global_position = Vector2(pos[0], pos[1])

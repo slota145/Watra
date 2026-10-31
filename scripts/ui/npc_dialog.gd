@@ -13,6 +13,8 @@ signal forge_requested
 signal enchant_requested
 signal jeweler_requested(npc: Npc)
 signal watra_requested
+signal market_requested
+signal travelers_requested
 ## Okno esencji: "smith" (kowal) albo "altar" (Ołtarz Welesa w lochu).
 signal essence_requested(mode: String)
 ## Usługi z listą ofert (OfferWindow): "meals", "blessing", "bestiary".
@@ -134,6 +136,14 @@ func _refresh() -> void:
 				_buttons.add_child(essences)
 			"disenchant":
 				_buttons.add_child(_button("Odczarowanie", _sage))
+			"market":
+				_buttons.add_child(_button("Rynek", func() -> void:
+					close()
+					market_requested.emit()))
+			"travelers":
+				_buttons.add_child(_button("Podróżnicy", func() -> void:
+					close()
+					travelers_requested.emit()))
 			"meals", "blessing", "bestiary", "reforge", "elixirs", "respec":
 				_buttons.add_child(_button(OFFER_SERVICES[service], _offers.bind(service)))
 			"build":

@@ -545,6 +545,7 @@ func _ready() -> void:
 		hud.show_intro()
 	# zioła po pierwszym kroku fizyki - dopiero wtedy wszystkie przeszkody krainy są w przestrzeni kolizji
 	_place_herbs()
+	_sync_travelers.call_deferred()
 	if save.has("arrive"):
 		player.global_position = _arrival_point(str(save["arrive"]))
 		player.camera.reset_smoothing()
@@ -780,6 +781,80 @@ func _process(delta: float) -> void:
 	_process_exits()
 	_process_shrines(delta)
 	_process_warnings(delta)
+	_traveler_check -= delta
+	if _traveler_check <= 0.0:
+		_traveler_check = 20.0
+		_sync_travelers()
+
+
+# ---------------------------------------------------------------- inni podróżnicy
+## Co ile sekund świat sprawdza spis podróżników i ilu widać naraz (łowcy w krainie / spacerowicze w Ostoi).
+var _traveler_check := 20.0
+const MAX_HUNTERS := 12
+const MAX_TOWNSFOLK := 10
+
+
+## Widoczni podróżnicy zgodni ze spisem (Travelers): łowcy tej krainy przy siedliskach (daleko od gracza - nie wyskakują
+## mu przed nosem), a w Goblińskim Lesie także spacerowicze w Ostoi. Odesłani przez spis wracają w płomieniach Watry.
+func _sync_travelers() -> void:
+	if zone == Zones.DUNGEON or player == null:
+		return
+	var roster: Travelers = player.travelers
+	roster.ensure_roster()
+	if village_built("guild") and roster.guild_rank == 0:
+		roster.guild_rank = 1
+	var shown := {}
+	for node: Traveler in get_tree().get_nodes_in_group("travelers"):
+		var data := node.data
+		var still: bool = (node.mode == "hunt" and data["state"] == "hunt" and data["zone"] == zone) \
+				or (node.mode == "town" and data["state"] == "town")
+		if not still or roster.active().find(data) < 0:
+			node.recall()
+		else:
+			shown[data["name"]] = true
+	var hunters := 0
+	for node: Traveler in get_tree().get_nodes_in_group("travelers"):
+		if node.mode == "hunt" and node.is_alive():
+			hunters += 1
+	var enemies: Array = get_tree().get_nodes_in_group("enemies").filter(func(e: Goblin) -> bool:
+		return not e is Boss and e.quest_kind != "animal" and not e.scene_file_path.contains("dummy") \
+				and e.global_position.distance_to(player.global_position) > 420.0 and not Goblin.safe_zone.has_point(e.global_position))
+	var pack_home := Vector2.ZERO
+	var pack := 0
+	for data: Dictionary in roster.in_zone(zone):
+		if hunters >= MAX_HUNTERS or enemies.is_empty():
+			break
+		if shown.has(data["name"]):
+			continue
+		# drużyny po 1-3 osoby przy jednym siedlisku
+		if pack == 0 or pack >= 3 or randf() < 0.3:
+			pack_home = (enemies.pick_random() as Goblin).global_position
+			pack = 0
+		pack += 1
+		hunters += 1
+		_spawn_traveler(data, "hunt", pack_home + Vector2(randf_range(-30, 30), randf_range(-20, 20)))
+	if zone == "forest" and _settlement.is_inside_tree():
+		var points := _settlement.traveler_points()
+		var townsfolk := get_tree().get_nodes_in_group("travelers").filter(func(t: Traveler) -> bool: return t.mode == "town").size()
+		for data: Dictionary in roster.in_town():
+			if townsfolk >= MAX_TOWNSFOLK:
+				break
+			if shown.has(data["name"]):
+				continue
+			townsfolk += 1
+			var node := _spawn_traveler(data, "town", points.pick_random() + Vector2(randf_range(-20, 20), randf_range(-10, 10)))
+			node.town_points = points
+
+
+func _spawn_traveler(data: Dictionary, mode: String, at: Vector2) -> Traveler:
+	var node := Traveler.new()
+	node.data = data
+	node.mode = mode
+	node.travelers = player.travelers
+	node.home = at
+	node.position = at
+	entities.add_child(node)
+	return node
 
 
 ## Ostrzeżenie przed bossem dużo silniejszym od gracza (miejsca z "warn": Hydra, Gryf): gdy gracz o zbyt niskim
@@ -1158,6 +1233,11 @@ func _spawn_goblin(spawn: Dictionary) -> Goblin:
 
 func _on_goblin_died(goblin: Goblin, spawn: Dictionary) -> void:
 	_live_goblins.erase(spawn["id"])
+	# potwór pokonany przez innych podróżników - tylko się odrodzi
+	if goblin.slain_by_travelers():
+		if zone != Zones.DUNGEON:
+			_respawn_queue.append({"spawn": spawn, "time": spawn.get("respawn", goblin_respawn_time)})
+		return
 	# upolowana zwierzyna nie liczy się do pokonanych potworów
 	if goblin.quest_kind != "animal":
 		hud.on_enemy_killed(goblin)
