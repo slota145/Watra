@@ -228,5 +228,48 @@
       60,
       62
     ]
+  },
+  "lunge": {
+    "effect": "d07dddbe-043d-49a4-a730-4a7da8cf7d85",
+    "name": "Szarza - grot",
+    "frame": [
+      59,
+      34
+    ],
+    "frames": 6,
+    "fps": 18,
+    "loop": true,
+    "anchor": [
+      29,
+      17
+    ]
+  },
+  "lunge_start": {
+    "effect": "9153050b-25e8-42d5-a4ea-193e5986be4d",
+    "name": "Szarza - start",
+    "frame": [
+      43,
+      25
+    ],
+    "frames": 7,
+    "fps": 14,
+    "anchor": [
+      21,
+      12
+    ]
+  },
+  "lunge_hit": {
+    "effect": "551eea51-d4a1-412c-977f-f850d31697a2",
+    "name": "Szarza - przebicie",
+    "frame": [
+      45,
+      25
+    ],
+    "frames": 5,
+    "fps": 18,
+    "anchor": [
+      14,
+      11
+    ]
   }
 }
