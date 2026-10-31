@@ -187,6 +187,9 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 - [x] Rozłupanie Ziemi z kreatora efektów (`assets/effects/ground_slam.png`): w każdym kroku fali pęknięć erupcja
   kamiennych kolców, odłamków i pyłu (nieobracana, coraz większa); w combo po Półksiężycu erupcje w dwóch kręgach
   wokół postaci (9 i 14). Pęknięcia w ziemi (`SkillEffects.ground_crack`) zostają.
+- [x] Riposta z kreatora efektów (`assets/effects/riposte_guard.png`, `riposte_counter.png`): w czasie zasłony
+  zapętlone złote łuki ostrzy krążące wokół postaci (`SwordSkills._ParryRing`, górna połowa za postacią), a kontra -
+  ostry błysk zderzenia stali, pełne cięcie dookoła i fala.
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

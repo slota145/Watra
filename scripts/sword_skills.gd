@@ -61,6 +61,12 @@ const REND_WOUND_ANCHOR := Vector2(9, 12)
 ## zaczepienia na ziemi) w każdym kroku fali pęknięć - coraz większa; w combo erupcje w dwóch kręgach wokół postaci.
 const SLAM_FX := preload("res://assets/effects/ground_slam.png")
 const SLAM_FX_ANCHOR := Vector2(26, 35)
+## Riposta z kreatora efektów PixelLab: zapętlona złota zasłona wokół tułowia (dwa krążące łuki ostrzy, błyski)
+## i kontra - błysk zderzenia stali, pełne cięcie dookoła i fala (promień cięcia w klatce RIPOSTE_FX_RADIUS).
+const RIPOSTE_GUARD_FX := preload("res://assets/effects/riposte_guard.png")
+const RIPOSTE_COUNTER_FX := preload("res://assets/effects/riposte_counter.png")
+const RIPOSTE_COUNTER_ANCHOR := Vector2(65, 47)
+const RIPOSTE_FX_RADIUS := 56.0
 const SPECTRAL_COLOR := Color(0.65, 0.85, 1.0)
 const PERUN_COLOR := Color(1.0, 0.85, 0.35)
 ## Taniec Ostrzy: premia za combo, ile razy się kumuluje i jak długo trwa; Dym i Cień: chmura; Krwawy Szał: leczenie.
@@ -534,10 +540,12 @@ func _riposte() -> void:
 	_player._ranged_pose(_player._aim_direction())
 	Sfx.play("swing", 0.0, 0.8)
 	if _parry_ring == null:
-		_parry_ring = _ParryRing.new()
+		_parry_ring = _ParryRing.new(RIPOSTE_GUARD_FX)
 		_player.add_child(_parry_ring)
+		_player.move_child(_parry_ring, _player.sprite.get_index())
 		_parry_ring.position = Player.BODY_OFFSET
 	_parry_ring.visible = true
+	_parry_ring.time = 0.0
 
 
 ## Wołane przez gracza przy otrzymaniu ciosu: w czasie zasłony cios nie rani, a postać kontratakuje.
@@ -552,8 +560,8 @@ func try_parry(from: Vector2) -> bool:
 	var origin := _player.body_center()
 	_player._invulnerable_timer = maxf(_player._invulnerable_timer, 0.4)
 	_player._face_direction(from - _player.global_position)
-	SkillEffects.crescent(_player.get_parent(), origin, (from - _player.global_position).angle(), PI * 0.9, Skills.RIPOSTE_RADIUS)
-	SkillEffects.spark(_player.get_parent(), origin, Color(1.0, 0.95, 0.7), 14)
+	SkillEffects.sheet_once(_player.get_parent(), RIPOSTE_COUNTER_FX, 6, 18.0, origin, RIPOSTE_COUNTER_ANCHOR, 0.0, 1.0,
+			Skills.RIPOSTE_RADIUS / RIPOSTE_FX_RADIUS)
 	DamageNumber.spawn_text(_player.get_parent(), origin + Vector2(0, -14), "Riposta!", Color(1.0, 0.9, 0.5), 9)
 	Sfx.play("hit_heavy", 2.0, 1.2)
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
@@ -697,14 +705,35 @@ func statuses() -> Array[Dictionary]:
 	return result
 
 
-## Złoty pierścień wokół postaci w czasie zasłony Riposty.
+## Złota zasłona Riposty wokół postaci: zapętlone klatki (8 w rzędzie), górna połowa za postacią (węzeł stoi
+## w drzewie przed jej grafiką), dolna przed nią.
 class _ParryRing:
 	extends Node2D
 
-	func _process(_delta: float) -> void:
-		if visible:
-			queue_redraw()
+	const FRAMES := 8
+	const FPS := 12.0
+	var time := 0.0
+	var _halves: Array[Sprite2D] = []
 
-	func _draw() -> void:
-		var pulse := 0.6 + 0.4 * sin(Time.get_ticks_msec() / 60.0)
-		draw_arc(Vector2.ZERO, 16.0, 0.0, TAU, 32, Color(1.0, 0.9, 0.5, pulse), 1.5)
+	func _init(texture: Texture2D) -> void:
+		var size := Vector2(texture.get_width() / float(FRAMES), texture.get_height())
+		var half := floorf(size.y / 2.0)
+		for front in [false, true]:
+			var fx := Sprite2D.new()
+			fx.texture = texture
+			fx.centered = false
+			fx.region_enabled = true
+			fx.region_rect = Rect2(0, half if front else 0.0, texture.get_width(), size.y - half if front else half)
+			fx.hframes = FRAMES
+			fx.position = Vector2(-size.x / 2.0, 0.0 if front else -half)
+			if front:
+				fx.z_index = 1
+			add_child(fx)
+			_halves.append(fx)
+
+	func _process(delta: float) -> void:
+		if not visible:
+			return
+		time += delta
+		for fx in _halves:
+			fx.frame = int(time * FPS) % FRAMES
