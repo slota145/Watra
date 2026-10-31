@@ -209,6 +209,14 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   celuje przez `Player._aim_direction` (uwzględnia `aim_override`, jak umiejętności).
   Na każdym wrogu trafionym cięciem (zwykły atak, Półksiężyc - `Player._hit_enemies_in_arc`) błysk trafienia
   (`assets/effects/sword_hit.png`: ukośny ślad ostrza, gwiazdka, odpryski).
+- [x] Łuk z kreatora efektów (`assets/effects/bow_*.png`, wpisy "bow_*" w `pixellab_src/vfx/ids.json`, stałe w
+  `BowSkills`): każda strzała z łuku ma zapętloną smugę (`BowSkills.arrow_trail`, węzeł "Trail" pocisku - zielona
+  w czasie Jadowych Grotów, złoto-zielona przy Strzale tropiącej, płonąca przy Grocie Swaroga) i błysk trafienia;
+  wystrzał Salwy, Szybkiej salwy, Odskoku i Balisty (`BowSkills.release`); żar napinania i wybuch Grotu Swaroga;
+  znacznik i uderzenia Deszczu Strzał; trawa i pył Odskoku; Sidła jako zapętlona pętla z pnączy (zamiast obrazków),
+  zatrzaśnięcie - oplatające pnącza; smuga nurkowania i szpony Sokoła (sokół i balista zostają); jad Jadowych
+  Grotów i bąble zatrucia; podmuch Strzały Wichru (w combo trzy wachlarzem). Zapętlone efekty -
+  `SkillEffects.looping` (AnimatedSprite2D bez skryptu).
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

@@ -29,6 +29,7 @@ var _last_hit: Goblin
 var _since_hit := 0.0
 var _life := LIFETIME
 var _sprite: Sprite2D
+var _trail: AnimatedSprite2D
 var _done := false
 ## Wiek strzały liczony w _process - zapas na wypadek, gdyby lot (w _physics_process) stanął i strzała zostałaby na ziemi.
 var _age := 0.0
@@ -47,19 +48,9 @@ func _ready() -> void:
 	_sprite.position.y = -HEIGHT
 	_sprite.modulate = Color(1.2, 1.3, 0.9)
 	add_child(_sprite)
-	var trail := CPUParticles2D.new()
-	trail.position = Vector2(0, -HEIGHT)
-	trail.amount = 24
-	trail.lifetime = 0.35
-	trail.local_coords = false
-	trail.spread = 180.0
-	trail.initial_velocity_max = 6.0
-	trail.gravity = Vector2.ZERO
-	trail.scale_amount_max = 2.0
-	var fade := Gradient.new()
-	fade.colors = PackedColorArray([Color(0.85, 1.0, 0.5, 0.9), Color(0.4, 0.9, 0.3, 0.0)])
-	trail.color_ramp = fade
-	add_child(trail)
+	# złoto-zielona smuga z migoczącymi drobinkami (BowSkills, kreator efektów PixelLab), skręca razem ze strzałą
+	_trail = BowSkills.arrow_trail(BowSkills.SEEKER_TRAIL_FX, velocity)
+	add_child(_trail)
 	_target = _find_target(_last_hit)
 
 
@@ -89,6 +80,7 @@ func _physics_process(delta: float) -> void:
 			return
 	global_position += velocity * delta
 	_sprite.rotation = velocity.angle()
+	_trail.rotation = velocity.angle()
 
 	var tip := global_position + Vector2(0, -HEIGHT)
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
@@ -96,7 +88,7 @@ func _physics_process(delta: float) -> void:
 			continue
 		if enemy.hurt_center().distance_to(tip) <= enemy.hurt_radius + 4.0:
 			_hit_enemy(enemy, randi_range(damage_min, damage_max), global_position - velocity.normalized() * 10.0, 40.0)
-			SkillEffects.spark(get_parent(), tip, Color(0.85, 1.0, 0.5), 6)
+			BowSkills.arrow_hit(get_parent(), enemy.hurt_center(), velocity.angle())
 			_last_hit = enemy
 			_since_hit = 0.0
 			hits_left -= 1

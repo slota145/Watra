@@ -228,6 +228,10 @@ static func _flash_texture() -> ImageTexture:
 func _impact() -> void:
 	_done = true
 	sprite.visible = false
+	# zapętlona smuga strzały (BowSkills.arrow_trail) znika razem ze strzałą
+	var trail := get_node_or_null("Trail") as CanvasItem
+	if trail != null:
+		trail.visible = false
 	var burst := CPUParticles2D.new()
 	burst.position = Vector2(0, -HEIGHT)
 	burst.one_shot = true

@@ -72,6 +72,33 @@ static func sheet_once(parent: Node, texture: Texture2D, frames: int, fps: float
 	tween.tween_callback(fx.queue_free)
 
 
+## Zapętlony efekt z arkusza klatek (jeden rząd): AnimatedSprite2D gra sam, bez skryptu, a punkt zaczepienia
+## `anchor` (piksel klatki) stoi w pozycji węzła. Klatki tego samego arkusza są wspólne (pamięć podręczna).
+static var _loop_frames := {}
+
+
+static func looping(texture: Texture2D, frames: int, fps: float, anchor: Vector2) -> AnimatedSprite2D:
+	var key := "%s:%d:%s" % [texture.resource_path, frames, fps]
+	var sprite_frames: SpriteFrames = _loop_frames.get(key)
+	if sprite_frames == null:
+		sprite_frames = SpriteFrames.new()
+		sprite_frames.set_animation_speed("default", fps)
+		sprite_frames.set_animation_loop("default", true)
+		var size := Vector2(texture.get_width() / float(frames), texture.get_height())
+		for i in frames:
+			var atlas := AtlasTexture.new()
+			atlas.atlas = texture
+			atlas.region = Rect2(Vector2(i * size.x, 0.0), size)
+			sprite_frames.add_frame("default", atlas)
+		_loop_frames[key] = sprite_frames
+	var fx := AnimatedSprite2D.new()
+	fx.sprite_frames = sprite_frames
+	fx.centered = false
+	fx.offset = -anchor
+	fx.play("default")
+	return fx
+
+
 ## Rozbłysk w kształcie stożka (fala piorunów).
 static func cone(parent: Node, origin: Vector2, angle: float, half_arc: float, radius: float) -> void:
 	var flash := ConeFlash.new()

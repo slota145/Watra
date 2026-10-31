@@ -299,5 +299,265 @@
       14,
       14
     ]
+  },
+  "bow_arrow_trail": {
+    "effect": "63e028fc-b1c3-4c5c-90ec-74bb9543990e",
+    "name": "Luk - smuga strzaly",
+    "frame": [
+      40,
+      16
+    ],
+    "frames": 4,
+    "fps": 16,
+    "anchor": [
+      36,
+      8
+    ],
+    "loop": true
+  },
+  "bow_venom_trail": {
+    "effect": "b0339600-52c0-4e0d-bc24-a6eccec67e20",
+    "name": "Luk - smuga jadowa",
+    "frame": [
+      40,
+      16
+    ],
+    "frames": 4,
+    "fps": 16,
+    "anchor": [
+      36,
+      8
+    ],
+    "loop": true
+  },
+  "bow_seeker_trail": {
+    "effect": "d2eb2a90-bcca-4d60-9170-52eaf913548e",
+    "name": "Luk - smuga tropiaca",
+    "frame": [
+      40,
+      16
+    ],
+    "frames": 4,
+    "fps": 16,
+    "anchor": [
+      36,
+      8
+    ],
+    "loop": true
+  },
+  "bow_arrow_hit": {
+    "effect": "c381d69e-926a-46ba-b3f1-cf736de0e53f",
+    "name": "Luk - trafienie strzaly",
+    "frame": [
+      32,
+      28
+    ],
+    "frames": 5,
+    "fps": 18,
+    "anchor": [
+      16,
+      14
+    ]
+  },
+  "bow_bow_release": {
+    "effect": "33051679-c33c-4fcd-8e58-7b090ec94716",
+    "name": "Luk - wystrzal salwy",
+    "frame": [
+      69,
+      42
+    ],
+    "frames": 6,
+    "fps": 18,
+    "anchor": [
+      3,
+      21
+    ]
+  },
+  "bow_power_charge": {
+    "effect": "b0675a25-0fd3-4a37-bb13-272d43b08ca0",
+    "name": "Grot Swaroga - napinanie",
+    "frame": [
+      36,
+      36
+    ],
+    "frames": 8,
+    "fps": 16,
+    "anchor": [
+      18,
+      20
+    ],
+    "loop": true
+  },
+  "bow_power_trail": {
+    "effect": "3b4eebdd-b859-4fab-9670-dbe0693bb7ea",
+    "name": "Grot Swaroga - plonaca smuga",
+    "frame": [
+      40,
+      16
+    ],
+    "frames": 4,
+    "fps": 16,
+    "anchor": [
+      36,
+      8
+    ],
+    "loop": true
+  },
+  "bow_power_blast": {
+    "effect": "9fd9be59-b32b-4a85-82b5-29bfb1a8e448",
+    "name": "Grot Swaroga - wybuch",
+    "frame": [
+      56,
+      52
+    ],
+    "frames": 7,
+    "fps": 16,
+    "anchor": [
+      28,
+      28
+    ]
+  },
+  "bow_rain_mark": {
+    "effect": "5ed7bc14-2bae-4114-ac5a-ad2274088c05",
+    "name": "Deszcz Strzal - znacznik",
+    "frame": [
+      124,
+      76
+    ],
+    "frames": 8,
+    "fps": 10,
+    "anchor": [
+      62,
+      38
+    ],
+    "loop": true
+  },
+  "bow_rain_drop": {
+    "effect": "f89e8d47-52d4-4ef0-8596-81353fc77e3d",
+    "name": "Deszcz Strzal - uderzenie",
+    "frame": [
+      28,
+      20
+    ],
+    "frames": 5,
+    "fps": 16,
+    "anchor": [
+      14,
+      13
+    ]
+  },
+  "bow_vault_burst": {
+    "effect": "dc27e089-071c-48b7-8cf3-4463dd9c507a",
+    "name": "Odskok - odbicie",
+    "frame": [
+      47,
+      36
+    ],
+    "frames": 10,
+    "fps": 14,
+    "anchor": [
+      23,
+      24
+    ]
+  },
+  "bow_snare_idle": {
+    "effect": "ff0ac178-9968-4034-8a92-ce45a81113c6",
+    "name": "Sidla - zastawione",
+    "frame": [
+      32,
+      22
+    ],
+    "frames": 8,
+    "fps": 8,
+    "anchor": [
+      16,
+      12
+    ],
+    "loop": true
+  },
+  "bow_snare_snap": {
+    "effect": "b216c732-f4ea-48ec-bb71-7c077b09e87d",
+    "name": "Sidla - zatrzasniecie",
+    "frame": [
+      36,
+      32
+    ],
+    "frames": 12,
+    "fps": 18,
+    "anchor": [
+      17,
+      23
+    ]
+  },
+  "bow_falcon_dive": {
+    "effect": "1a93137a-c570-4f78-a37b-6d0817eadbbc",
+    "name": "Sokol - nurkowanie",
+    "frame": [
+      40,
+      16
+    ],
+    "frames": 4,
+    "fps": 16,
+    "anchor": [
+      36,
+      8
+    ],
+    "loop": true
+  },
+  "bow_falcon_claw": {
+    "effect": "7a5a104d-1477-4431-860a-2048a6393892",
+    "name": "Sokol - szpony",
+    "frame": [
+      31,
+      32
+    ],
+    "frames": 8,
+    "fps": 16,
+    "anchor": [
+      19,
+      13
+    ]
+  },
+  "bow_venom_cast": {
+    "effect": "e91f179a-3143-47c4-9f4b-e15bb5492f8f",
+    "name": "Jadowe Groty - jad",
+    "frame": [
+      55,
+      65
+    ],
+    "frames": 10,
+    "fps": 16,
+    "anchor": [
+      28,
+      28
+    ]
+  },
+  "bow_venom_tick": {
+    "effect": "42a07f8b-3019-47dc-8a16-908eeaea0f53",
+    "name": "Jadowe Groty - zatrucie",
+    "frame": [
+      18,
+      25
+    ],
+    "frames": 6,
+    "fps": 14,
+    "anchor": [
+      8,
+      17
+    ]
+  },
+  "bow_wind_cone": {
+    "effect": "a3055bcd-ce51-4279-9b7a-da5404994a95",
+    "name": "Strzala Wichru - podmuch",
+    "frame": [
+      113,
+      106
+    ],
+    "frames": 9,
+    "fps": 18,
+    "anchor": [
+      4,
+      53
+    ]
   }
 }

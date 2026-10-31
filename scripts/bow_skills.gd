@@ -34,10 +34,32 @@ const RUN_SPEED := 0.15
 ## Trucizna Jadowych Grotów: ile trwa i co ile rani.
 const POISON_TIME := 3.0
 const POISON_TICK := 0.5
-const SNARE_OPEN := preload("res://assets/bow/snare_open.png")
-const SNARE_CLOSED := preload("res://assets/bow/snare_closed.png")
 const FALCON_TEXTURE := preload("res://assets/bow/falcon.png")
 const BALLISTA_TEXTURE := preload("res://assets/bow/ballista.png")
+## Efekty łuku z kreatora efektów PixelLab (tools/vfx_art.py, pixellab_src/vfx/ids.json - wpisy "bow_*"): smugi strzał
+## (zwykła, jadowa, tropiąca, płonąca; rysowane w prawo, punkt zaczepienia w środku strzały), trafienie strzały, wystrzał
+## salwy, napinanie i wybuch Grotu Swaroga, znacznik i uderzenia Deszczu Strzał, odbicie Odskoku, Sidła (zastawione
+## i zatrzaśnięcie), nurkowanie i szpony Sokoła, jad Jadowych Grotów i podmuch Strzały Wichru.
+const TRAIL_ANCHOR := Vector2(36, 8)
+const ARROW_TRAIL_FX := preload("res://assets/effects/bow_arrow_trail.png")
+const VENOM_TRAIL_FX := preload("res://assets/effects/bow_venom_trail.png")
+const SEEKER_TRAIL_FX := preload("res://assets/effects/bow_seeker_trail.png")
+const POWER_TRAIL_FX := preload("res://assets/effects/bow_power_trail.png")
+const FALCON_DIVE_FX := preload("res://assets/effects/bow_falcon_dive.png")
+const ARROW_HIT_FX := preload("res://assets/effects/bow_arrow_hit.png")
+const RELEASE_FX := preload("res://assets/effects/bow_bow_release.png")
+const POWER_CHARGE_FX := preload("res://assets/effects/bow_power_charge.png")
+const POWER_BLAST_FX := preload("res://assets/effects/bow_power_blast.png")
+const RAIN_MARK_FX := preload("res://assets/effects/bow_rain_mark.png")
+const RAIN_DROP_FX := preload("res://assets/effects/bow_rain_drop.png")
+const VAULT_FX := preload("res://assets/effects/bow_vault_burst.png")
+const SNARE_IDLE_FX := preload("res://assets/effects/bow_snare_idle.png")
+const SNARE_SNAP_FX := preload("res://assets/effects/bow_snare_snap.png")
+const FALCON_CLAW_FX := preload("res://assets/effects/bow_falcon_claw.png")
+const VENOM_CAST_FX := preload("res://assets/effects/bow_venom_cast.png")
+const VENOM_TICK_FX := preload("res://assets/effects/bow_venom_tick.png")
+const WIND_FX := preload("res://assets/effects/bow_wind_cone.png")
+const DUST_FX := preload("res://assets/effects/lunge_start.png")
 const ICONS := {
 	"venom_arrows": preload("res://assets/skills/venom_arrows.png"), "falcon": preload("res://assets/skills/falcon.png"),
 	"ballista": preload("res://assets/skills/ballista.png"), "shadow_hunter": preload("res://assets/skills/ks_shadow_hunter.png"),
@@ -49,7 +71,7 @@ var _player: Player
 var _cooldowns := {}
 ## Napinanie Grotu Swaroga: postęp 0..1 (-1 - nie napinamy) i żar na grocie.
 var _power_charge := -1.0
-var _power_glow: CPUParticles2D
+var _power_glow: AnimatedSprite2D
 var _venom_time := 0.0
 var _venom_spread := false
 ## Zatruci wrogowie: wróg -> [obrażenia na ranę, zostało sekund, do kolejnej rany]
@@ -155,18 +177,10 @@ func _start_power() -> void:
 	_player._cancel_attack()
 	_power_charge = 0.0
 	if _power_glow == null:
-		_power_glow = CPUParticles2D.new()
-		_power_glow.amount = 14
-		_power_glow.lifetime = 0.4
-		_power_glow.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-		_power_glow.emission_sphere_radius = 6.0
-		_power_glow.gravity = Vector2(0, -30)
-		_power_glow.radial_accel_min = -60.0
-		_power_glow.radial_accel_max = -30.0
-		_power_glow.scale_amount_max = 2.0
-		_power_glow.color_ramp = _ramp(FIRE_COLOR)
+		_power_glow = SkillEffects.looping(POWER_CHARGE_FX, 8, 16.0, Vector2(18, 20))
+		_power_glow.z_index = 1
 		_player.add_child(_power_glow)
-	_power_glow.emitting = true
+	_power_glow.visible = true
 	Sfx.play("swing", -4.0, 0.6)
 
 
@@ -179,7 +193,7 @@ func _process_power(delta: float) -> void:
 	var dir := _player._aim_direction()
 	_player._ranged_pose(dir)
 	_power_glow.position = Player.BODY_OFFSET + dir * 12.0
-	_power_glow.emission_sphere_radius = 4.0 + 6.0 * _power_charge
+	_power_glow.scale = Vector2.ONE * (0.6 + 0.5 * _power_charge)
 	if not _player.is_skill_held("power_shot"):
 		var charge := _power_charge
 		_stop_power()
@@ -196,7 +210,7 @@ func _process_power(delta: float) -> void:
 func _stop_power() -> void:
 	_power_charge = -1.0
 	if _power_glow != null:
-		_power_glow.emitting = false
+		_power_glow.visible = false
 
 
 ## Ile napięcia Grotu Swaroga (0..1, -1 - nie napinamy) - dla testów i paska.
@@ -223,7 +237,13 @@ func _fire_power(charge: float) -> void:
 	arrow.knockback = 120.0
 	arrow.size = lerpf(1.0, 1.5, charge)
 	arrow.modulate = Color(1.5, 1.05, 0.6)
-	arrow.add_child(_trail(FIRE_COLOR, Projectile.HEIGHT))
+	var plain := arrow.get_node_or_null("Trail")
+	if plain != null:
+		arrow.remove_child(plain)
+		plain.queue_free()
+	var fire_trail := arrow_trail(POWER_TRAIL_FX, dir)
+	fire_trail.scale = Vector2.ONE * lerpf(1.0, 1.4, charge)
+	arrow.add_child(fire_trail)
 	if combo:
 		arrow.enemy_hit.connect(func(enemy: Goblin) -> void: _fire_blast(enemy.hurt_center(), multiplier * 0.5))
 	_player.get_parent().add_child(arrow)
@@ -234,8 +254,8 @@ func _fire_power(charge: float) -> void:
 func _fire_blast(at: Vector2, multiplier: float) -> void:
 	if not is_instance_valid(_player):
 		return
-	SkillEffects.shockwave(_player.get_parent(), at, Skills.POWER_EXPLOSION, FIRE_COLOR)
-	SkillEffects.spark(_player.get_parent(), at, FIRE_COLOR, 10)
+	SkillEffects.sheet_once(_player.get_parent(), POWER_BLAST_FX, 7, 16.0, at, Vector2(28, 28), 0.0, 1.0,
+			Skills.POWER_EXPLOSION / 25.0)
 	Sfx.play_at("explosion", at, -8.0)
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
 		if enemy.hurt_center().distance_to(at) <= Skills.POWER_EXPLOSION + enemy.hurt_radius:
@@ -270,6 +290,7 @@ func _vault() -> void:
 	var level := _level("vault")
 	_start_cooldown("vault", Skills.VAULT_COOLDOWN * (1.0 + _bonus("vault_cooldown")))
 	var dir := _player._aim_direction()
+	SkillEffects.sheet_once(_player.get_parent(), VAULT_FX, 10, 14.0, _player.global_position, Vector2(23, 24))
 	_player.leap(-dir, Skills.VAULT_TIME)
 	_player.note_skill("vault")
 	var weapon := _player.equipment.weapon()
@@ -280,6 +301,7 @@ func _vault() -> void:
 		arrow.damage_min = maxi(1, roundi(arrow.damage_min * multiplier))
 		arrow.damage_max = maxi(1, roundi(arrow.damage_max * multiplier))
 		_player.get_parent().add_child(arrow)
+	release(_player.get_parent(), _player.body_center() + dir * 6.0, dir.angle(), 0.85)
 	Sfx.play("bow", 0.0, 1.1)
 	if has_keystone("shadow_hunter"):
 		_shadow_time = SHADOW_TIME
@@ -307,7 +329,7 @@ func _snare() -> void:
 func spring_snare(at: Vector2) -> void:
 	var level := _level("snare")
 	var hold := Skills.snare_time(level) * (1.0 + _bonus("snare_time"))
-	SkillEffects.spark(_player.get_parent(), at, Color(0.8, 0.8, 0.85), 10)
+	SkillEffects.sheet_once(_player.get_parent(), SNARE_SNAP_FX, 12, 18.0, at, Vector2(17, 23))
 	Sfx.play_at("hit_heavy", at, -2.0)
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
 		if enemy.global_position.distance_to(at) > Skills.SNARE_RADIUS + enemy.hurt_radius:
@@ -350,7 +372,7 @@ func _venom_arrows() -> void:
 		_player.combo_used()
 	_player.note_skill("venom_arrows")
 	_venom_time = Skills.VENOM_TIME
-	SkillEffects.spark(_player.get_parent(), _player.body_center(), VENOM_COLOR, 12)
+	SkillEffects.sheet_once(_player.get_parent(), VENOM_CAST_FX, 10, 16.0, _player.global_position, Vector2(28, 28))
 	Sfx.play("potion", -2.0, 0.8)
 
 
@@ -361,6 +383,11 @@ func poison(enemy: Goblin, total: float) -> void:
 	var per_tick := maxf(total * POISON_TICK / POISON_TIME, 1.0)
 	var entry: Array = _poisoned.get(enemy, [0.0, 0.0, POISON_TICK])
 	_poisoned[enemy] = [maxf(entry[0], per_tick), POISON_TIME, entry[2]]
+
+
+## Czy trwają Jadowe Groty (strzały zatruwają - zielona smuga strzał).
+func venom_active() -> bool:
+	return _venom_time > 0.0
 
 
 func is_poisoned(enemy: Goblin) -> bool:
@@ -378,7 +405,7 @@ func _process_poison(delta: float) -> void:
 		if entry[2] <= 0.0:
 			entry[2] += POISON_TICK
 			enemy.take_damage(roundi(entry[0]), enemy.global_position, 0.0)
-			SkillEffects.spark(enemy.get_parent(), enemy.hurt_center(), VENOM_COLOR, 2)
+			SkillEffects.sheet_once(enemy.get_parent(), VENOM_TICK_FX, 6, 14.0, enemy.hurt_center(), Vector2(8, 17))
 		if entry[1] <= 0.0:
 			_poisoned.erase(enemy)
 
@@ -394,7 +421,11 @@ func _wind_arrow() -> void:
 	_player._ranged_pose(dir)
 	var origin := _player.body_center()
 	var half := deg_to_rad(Skills.WIND_HALF_ANGLE) * (2.0 if combo else 1.0)
-	SkillEffects.cone(_player.get_parent(), origin, dir.angle(), half, Skills.WIND_RANGE)
+	# podmuch narysowany na stożek 2x28 stopni; w combo (dwa razy szerszy) - trzy podmuchy wachlarzem
+	var gusts := [0.0] if not combo else [-half / 2.0, 0.0, half / 2.0]
+	for turn: float in gusts:
+		SkillEffects.sheet_once(_player.get_parent(), WIND_FX, 9, 18.0, origin, Vector2(4, 53), dir.angle() + turn, 1.0,
+				Skills.WIND_RANGE / 104.0)
 	Sfx.play("whirl", 2.0, 1.3)
 	var multiplier := Skills.wind_damage(_level("wind_arrow")) * (1.0 + _bonus("wind_damage")) * (_player.combo_damage() if combo else 1.0)
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
@@ -422,6 +453,7 @@ func _place_ballista() -> void:
 	_ballista.interval = Skills.BALLISTA_INTERVAL / _player._skill_speed(Skills.tags("ballista"))
 	_ballista.position = _aim_point(Skills.BALLISTA_PLACE)
 	_player.get_parent().add_child(_ballista)
+	SkillEffects.sheet_once(_player.get_parent(), DUST_FX, 7, 14.0, _ballista.position, Vector2(21, 12))
 	Sfx.play("anvil", -6.0, 1.4)
 
 
@@ -493,6 +525,26 @@ func statuses() -> Array[Dictionary]:
 	return result
 
 
+## Smuga za strzałą (zapętlona, na wysokości lotu, obrócona w kierunku lotu) - węzeł "Trail" pocisku.
+static func arrow_trail(texture: Texture2D, dir: Vector2) -> AnimatedSprite2D:
+	var trail := SkillEffects.looping(texture, 4, 16.0, TRAIL_ANCHOR)
+	trail.name = "Trail"
+	trail.position = Vector2(0, -Projectile.HEIGHT)
+	trail.rotation = dir.angle()
+	trail.z_index = -1
+	return trail
+
+
+## Trafienie strzały: błysk wzdłuż lotu i drzazgi.
+static func arrow_hit(parent: Node, at: Vector2, angle: float) -> void:
+	SkillEffects.sheet_once(parent, ARROW_HIT_FX, 5, 18.0, at, Vector2(16, 14), angle)
+
+
+## Wystrzał (salwa, odskok, balista): wachlarz smug i fala powietrza przed łukiem.
+static func release(parent: Node, at: Vector2, angle: float, size := 1.0) -> void:
+	SkillEffects.sheet_once(parent, RELEASE_FX, 6, 18.0, at, Vector2(3, 21), angle, 1.0, size)
+
+
 static func _ramp(color: Color) -> Gradient:
 	var ramp := Gradient.new()
 	ramp.colors = PackedColorArray([Color(1, 1, 0.85, 0.9), color, Color(color, 0.0)])
@@ -530,18 +582,27 @@ class _Rain:
 	var _fade := 0.3
 	## spadające strzały: [punkt na ziemi, postęp 0..1]
 	var _drops: Array = []
+	var _mark: AnimatedSprite2D
 
 	func _ready() -> void:
 		z_index = 3
+		# znacznik celu narysowany na promień 56 (spłaszczony jak rzut z góry)
+		_mark = SkillEffects.looping(BowSkills.RAIN_MARK_FX, 8, 10.0, Vector2(62, 38))
+		_mark.scale = Vector2.ONE * (radius / 56.0)
+		_mark.show_behind_parent = true
+		add_child(_mark)
 
 	func _process(delta: float) -> void:
 		queue_redraw()
 		for i in range(_drops.size() - 1, -1, -1):
 			_drops[i][1] += delta / DROP_TIME
 			if _drops[i][1] >= 1.0:
+				SkillEffects.sheet_once(get_parent(), BowSkills.RAIN_DROP_FX, 5, 16.0,
+						global_position + _drops[i][0] * Vector2(1.0, 0.6), Vector2(14, 13))
 				_drops.remove_at(i)
 		if time_left <= 0.0:
 			_fade -= delta
+			_mark.modulate.a = maxf(_fade / 0.3, 0.0)
 			if _fade <= 0.0 and _drops.is_empty():
 				queue_free()
 			return
@@ -563,11 +624,6 @@ class _Rain:
 		Sfx.play_at("hit", global_position, -14.0)
 
 	func _draw() -> void:
-		var alpha := 1.0 if time_left > 0.0 else maxf(_fade / 0.3, 0.0)
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.6))
-		draw_circle(Vector2.ZERO, radius, Color(0.1, 0.08, 0.05, 0.25 * alpha))
-		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 48, Color(1.0, 0.9, 0.6, 0.8 * alpha), 1.5)
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 		for drop: Array in _drops:
 			var ground: Vector2 = drop[0] * Vector2(1.0, 0.6)
 			var fall: float = drop[1]
@@ -576,13 +632,12 @@ class _Rain:
 			draw_line(tip + Vector2(3.0, -14.0), tip + Vector2(2.6, -12.0), Color(0.95, 0.95, 0.9), 2.0)
 			draw_line(tip + Vector2(2.6, -12.0), tip, Color(0.3, 0.2, 0.12), 1.5)
 			draw_line(tip + Vector2(0.4, -2.0), tip, Color(1.0, 1.0, 1.0), 2.0)
-			if fall > 0.85:
-				draw_circle(ground, 1.5, Color(1.0, 0.95, 0.7, 0.8))
 
 
-## Sidła: leżą otwarte, aż wróg na nie wejdzie - wtedy się zatrzaskują (BowSkills.spring_snare) i po chwili znikają.
+## Sidła: leżą zastawione (zapętlona pętla z pnączy), aż wróg na nie wejdzie - wtedy się zatrzaskują
+## (BowSkills.spring_snare - pnącza oplatają wrogów) i po chwili znikają.
 class _Snare:
-	extends Sprite2D
+	extends AnimatedSprite2D
 
 	var skills: BowSkills
 	var _life := Skills.SNARE_LIFETIME
@@ -590,8 +645,12 @@ class _Snare:
 	var _sprung := false
 
 	func _ready() -> void:
-		texture = BowSkills.SNARE_OPEN
-		scale = Vector2.ONE * 0.36
+		var loop := SkillEffects.looping(BowSkills.SNARE_IDLE_FX, 8, 8.0, Vector2(16, 12))
+		sprite_frames = loop.sprite_frames
+		centered = false
+		offset = loop.offset
+		loop.free()
+		play("default")
 		z_index = -1
 		SkillEffects.spark(get_parent(), global_position, Color(0.8, 0.8, 0.85), 4)
 
@@ -615,9 +674,8 @@ class _Snare:
 		if _sprung:
 			return
 		_sprung = true
-		texture = BowSkills.SNARE_CLOSED
 		skills.spring_snare(global_position)
-		_life = minf(_life, 1.2)
+		_life = minf(_life, 0.15)
 
 	func _vanish() -> void:
 		set_physics_process(false)
@@ -646,9 +704,14 @@ class _Falcon:
 	var _sprite: Sprite2D
 	var _shadow: Node2D
 	var _flap := 0.0
+	## smuga wiatru i piór za sokołem w trakcie nurkowania
+	var _dive_fx: AnimatedSprite2D
 
 	func _ready() -> void:
 		z_index = 6
+		_dive_fx = SkillEffects.looping(BowSkills.FALCON_DIVE_FX, 4, 16.0, BowSkills.TRAIL_ANCHOR + Vector2(4, 0))
+		_dive_fx.visible = false
+		add_child(_dive_fx)
 		_sprite = Sprite2D.new()
 		_sprite.texture = BowSkills.FALCON_TEXTURE
 		_sprite.scale = Vector2.ONE * 0.4
@@ -663,6 +726,8 @@ class _Falcon:
 	func leave() -> void:
 		leaving = true
 		_target = null
+		if _dive_fx != null:
+			_dive_fx.visible = false
 
 	func _process(delta: float) -> void:
 		if not is_instance_valid(player):
@@ -683,6 +748,7 @@ class _Falcon:
 			leave()
 			return
 		_cooldown -= delta
+		_dive_fx.visible = _target != null
 		if _target != null:
 			_dive(delta)
 			return
@@ -705,7 +771,8 @@ class _Falcon:
 		var to := _target.hurt_center() - global_position
 		if to.length() <= DIVE_SPEED * delta + 6.0:
 			player.hit_enemy(_target, player._skill_damage(damage * _strength), global_position, 40.0)
-			SkillEffects.claw(get_parent(), _target.hurt_center(), 1.0 if to.x > 0.0 else -1.0, 10.0, Color(1.0, 0.9, 0.7))
+			SkillEffects.sheet_once(get_parent(), BowSkills.FALCON_CLAW_FX, 8, 16.0, _target.hurt_center(), Vector2(19, 13),
+					0.0, 1.0, 1.0, 0.0, to.x < 0.0)
 			Sfx.play_at("hit", global_position, -4.0)
 			_target = null
 			_strength = 1.0
@@ -714,6 +781,7 @@ class _Falcon:
 		_velocity = to.normalized() * DIVE_SPEED
 		position += _velocity * delta
 		_face(_velocity)
+		_dive_fx.rotation = _velocity.angle()
 
 	## Grafika sokoła patrzy w górę - obracamy ją w stronę lotu.
 	func _face(dir: Vector2) -> void:
@@ -817,6 +885,7 @@ class _Ballista:
 				bolt.max_range = Skills.BALLISTA_RANGE * 1.3
 				get_parent().add_child(bolt)
 		Sfx.play_at("bow", global_position, -2.0)
+		BowSkills.release(get_parent(), muzzle() + dir * 6.0, dir.angle(), 0.7)
 		var tween := _sprite.create_tween()
 		tween.tween_property(_sprite, "position", -dir * 2.0, 0.05)
 		tween.tween_property(_sprite, "position", Vector2.ZERO, 0.15)

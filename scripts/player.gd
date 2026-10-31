@@ -1344,6 +1344,10 @@ func _make_projectile(weapon: Dictionary, dir: Vector2) -> Projectile:
 	if weapon["type"] == "bow":
 		projectile.pierce += roundi(skills.tree_bonus("bow", "arrow_pierce"))
 		projectile.max_range *= 1.0 + skills.tree_bonus("bow", "arrow_range")
+		# smuga strzały (jadowa w czasie Jadowych Grotów) i błysk trafienia (BowSkills)
+		projectile.add_child(BowSkills.arrow_trail(BowSkills.VENOM_TRAIL_FX if bow_skills.venom_active() else BowSkills.ARROW_TRAIL_FX, dir))
+		projectile.enemy_hit.connect(func(enemy: Goblin) -> void:
+			BowSkills.arrow_hit(projectile.get_parent(), enemy.hurt_center(), dir.angle()))
 	var kind := stats.kind_multiplier(basic_tags())
 	projectile.damage_min = maxi(1, roundi(stats.damage_min() * kind))
 	projectile.damage_max = maxi(1, roundi(stats.damage_max() * kind))
@@ -1584,6 +1588,7 @@ func _cast(id: String, charge := 0.0, combo := false) -> void:
 			arrow.damage_min = roundi(arrow.damage_min * multiplier)
 			arrow.damage_max = roundi(arrow.damage_max * multiplier)
 			get_parent().add_child(arrow)
+		BowSkills.release(get_parent(), body_center() + dir * 6.0, dir.angle(), 1.0 + 0.1 * (count - Skills.MULTISHOT_ARROWS))
 		Sfx.play("bow", 2.0, 0.9)
 	else:
 		_skill_cooldown_timer = _cooldown(Skills.FIREBALL_COOLDOWN, ["spell"])
@@ -2075,6 +2080,7 @@ func _volley_arrow() -> void:
 	arrow.damage_max = maxi(1, roundi(arrow.damage_max * Skills.VOLLEY_DAMAGE))
 	arrow.speed *= 1.25
 	get_parent().add_child(arrow)
+	BowSkills.release(get_parent(), body_center() + dir * 6.0, dir.angle(), 0.55)
 	Sfx.play("bow", -2.0, randf_range(1.0, 1.15))
 
 
