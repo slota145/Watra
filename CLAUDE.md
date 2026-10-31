@@ -203,6 +203,12 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 - [x] Szarża z kreatora efektów (`assets/effects/lunge.png`, `lunge_start.png`, `lunge_hit.png`,
   `Player._start_lunge`): w trakcie pędu przed mieczem fala powietrza z liniami pędu (zapętlona, obrócona w kierunku
   szarży), na starcie pył spod stóp, na każdym trafionym wrogu błysk przebicia. Niebieskie cienie postaci zostają.
+- [x] Zwykły atak mieczem z kreatora efektów (`assets/effects/sword_slash.png` - 5 klatek 64x64 odtwarzanych
+  w tempie zamachu, `scenes/player.tscn` - Pivot/Slash): stalowe cięcie z jaśniejszą krawędzią, śladem i błyskami
+  zamiast jasnoniebieskiego łuku (`assets/slash.png` z `tools/generate_art.py` nie jest już używany); zwykły atak
+  celuje przez `Player._aim_direction` (uwzględnia `aim_override`, jak umiejętności).
+  Na każdym wrogu trafionym cięciem (zwykły atak, Półksiężyc - `Player._hit_enemies_in_arc`) błysk trafienia
+  (`assets/effects/sword_hit.png`: ukośny ślad ostrza, gwiazdka, odpryski).
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

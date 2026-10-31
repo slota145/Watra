@@ -271,5 +271,33 @@
       14,
       11
     ]
+  },
+  "sword_slash": {
+    "effect": "8d742d10-ae44-454e-ac89-e54ed6f1b5eb",
+    "name": "Ciecie mieczem (5 pierwszych z 6 klatek)",
+    "frame": [
+      64,
+      64
+    ],
+    "frames": 5,
+    "fps": 24,
+    "anchor": [
+      32,
+      32
+    ]
+  },
+  "sword_hit": {
+    "effect": "428c9ee3-ef65-416f-9cbf-6b6795a4f28c",
+    "name": "Ciecie mieczem - trafienie",
+    "frame": [
+      30,
+      28
+    ],
+    "frames": 5,
+    "fps": 16,
+    "anchor": [
+      14,
+      14
+    ]
   }
 }

@@ -10,7 +10,7 @@
 [ext_resource type="Texture2D" path="res://assets/shadow.png" id="3_shadow"]
 [ext_resource type="Shader" path="res://shaders/flash.gdshader" id="4_flash"]
 [ext_resource type="Texture2D" path="res://assets/sword.png" id="5_sword"]
-[ext_resource type="Texture2D" path="res://assets/slash.png" id="6_slash"]
+[ext_resource type="Texture2D" uid="uid://boni2sp84lkwi" path="res://assets/effects/sword_slash.png" id="6_slash"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_flash"]
 resource_local_to_scene = true
@@ -72,7 +72,7 @@ offset = Vector2(13, 0)
 
 [node name="Slash" type="Sprite2D" parent="Pivot"]
 texture = ExtResource("6_slash")
-hframes = 4
+hframes = 5
 
 [node name="Camera2D" type="Camera2D" parent="."]
 process_callback = 0
