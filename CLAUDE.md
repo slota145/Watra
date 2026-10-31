@@ -238,8 +238,36 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
 - [x] Broń w ręku: łuki we właściwym rozmiarze (`tools/pixellab_items.py` sam dobiera obrót ikony), legendarne bronie
   trzymają w ręku siebie (`tools/legend_held.py`, `scripts/legend_held.gd`; Łuk Swaroga, Łuk Burzy i Księga
   Marzanny z osobnych rysunków PixelLab w `pixellab_src/legend_held/`).
-- [ ] System kamieni wkładanych w przedmioty (gniazda).
-  Istniejące kamienie (zwykłe, doskonałe, uświęcone, miłosierdzia) służą tylko do zaklinania (`scripts/enchanting.gd`, `scripts/ui/enchant_window.gd`), więc to byłby nowy system.
+- [ ] **Esencje legend i gniazda** (pomysł autora, ustalony kierunek; szczegóły liczb do dopracowania przy realizacji):
+  - **Wyciąganie efektu w Watrze**: legenda wrzucona w płomienie (za dużo żaru) przepada, a gracz dostaje Esencję
+    z jej efektem legendarnym (np. „Esencja Kła Alfy”); siła efektu zależy od poziomu zaklęcia legendy.
+  - **Ołtarz Welesa** (nowa mechanika lochów): rzadkie ukryte pomieszczenie w lochu, w którym wyciągnięcie esencji
+    jest darmowe albo daje mocniejszą esencję.
+  - **Gniazda u kowala**: kowal Bronisław dorabia przedmiotowi jedno gniazdo na esencję; potrzebny jest nowy surowiec
+    z końcówki gry (np. Serce Kryształu z Kryształu Watry od wyższych stopni). Gniazdo w rzadkim przedmiocie
+    i - drożej - w legendzie (wtedy legenda ma dwa efekty legendarne).
+  - Esencja pasuje tylko do tego samego rodzaju miejsca (z pierścienia do biżuterii, z broni do broni); wyjęcie
+    z gniazda niszczy esencję, chyba że zapłaci się kowalowi.
+  - Dawne kamienie (zwykłe, doskonałe, uświęcone, miłosierdzia) zostają do zaklinania (`scripts/enchanting.gd`).
+  - **Kamienie szlachetne ze statystykami** (pomysł autora) do tych samych gniazd - od środka gry:
+    - drop kamieni i gniazd w rzadkich przedmiotach odblokowuje zadanie (mini samouczek, np. od kowala albo jubilera
+      w okolicy Wietrznych Turni: przynieś pierwszy kamień, kowal dorabia pierwsze gniazdo i pokazuje, jak go użyć);
+    - rodzaje kamieni (np. rubin, szafir, szmaragd, topaz, ametyst, onyks) z **częściowo losowymi premiami**:
+      każdy rodzaj ma własną pulę premii (np. rubin - zdrowie, regeneracja zdrowia), a część premii jest wspólna
+      dla wszystkich kamieni (np. szybkość ataku, szybkość rzucania, obszar umiejętności, szansa i obrażenia
+      krytyczne, regeneracja many);
+    - kilka szlifów (lepszy szlif - mocniejsze premie), trzy kamienie tego samego szlifu kowal łączy w lepszy;
+    - w końcówce gry (lochy) **lepsze kamienie**, np. z szansą na dodatkową premię;
+    - na co dzień gniazdo trzyma kamień szlachetny, a esencję zamiast niego.
+  - **Gniazda w drzewkach broni** (pomysł autora, jak „jewel sockets” w PoE): w każdym drzewku 2-3 węzły-gniazda
+    (`SkillTree`, na końcach gałęzi albo przy węzłach kluczowych), wybierane za punkt umiejętności; wkłada się w nie
+    kamień szlachetny, który działa tylko z bronią tego drzewka. Wyjęty kamień wraca do plecaka, a zapomnienie drzewka
+    u mędrca zwraca kamienie. W końcówce gry specjalne kamienie tylko do drzewka, np. wzmacniające węzły pasywne
+    w swoim promieniu (jak „radius jewels”).
+    Esencje legend też pasują do gniazd w drzewku (w końcówce gry, np. jedno „gniazdo legendarne” na drzewko przy
+    węźle kluczowym); kilka esencji tego samego efektu (z drzewka, gniazd przedmiotów i założonych legend) sumuje się
+    jak niezależne losowania - tak jak dziś `Equipment.effect_power`, więc szansa rośnie coraz wolniej i nie dochodzi
+    do 100%; efekty liczone w sztukach (np. dodatkowe strzały) z mniejszym przyrostem albo z górnym limitem.
 - [ ] Nowe bronie: kosa, kostur (nekromanta), młoty, chainblade'y, sztylety, włócznie, rapier, hydrosfera.
   Każda broń to nowy rodzaj z własnym drzewkiem, a nie tylko nowy przedmiot, więc wymaga szczegółów od autora.
 
