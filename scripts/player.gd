@@ -67,6 +67,11 @@ const WHIRL_FX_FAST := preload("res://assets/effects/whirl_fast.png")
 const WHIRL_FX_FRAMES := 8
 const WHIRL_FX_FPS := 20.0
 const WHIRL_FX_RADIUS := 35.0
+## Półksiężyc z kreatora efektów PixelLab: srebrny sierp księżycowego światła na 300 stopni, wyrzucony półksiężyc
+## i złoty pył (rysowany w prawo, punkt zaczepienia w środku tułowia, promień sierpa CRESCENT_FX_RADIUS).
+const CRESCENT_FX := preload("res://assets/effects/crescent.png")
+const CRESCENT_FX_ANCHOR := Vector2(60, 62)
+const CRESCENT_FX_RADIUS := 48.0
 ## Zbieranie (drzewa, głazy): zasięg (od stóp do podstawy), czas i odstęp między uderzeniami.
 const HARVEST_RANGE := 26.0
 const HARVEST_TIME := 2.0
@@ -1973,10 +1978,11 @@ func _start_crescent(level: int) -> void:
 	slash.flip_v = _swing_sign < 0.0
 	slash.scale = Vector2.ONE * (_attack_reach / 30.0)
 	slash.frame = 0
-	slash.visible = true
+	slash.visible = false
 	_face_direction(aim)
 	_attack_timer = _attack_length
-	SkillEffects.crescent(get_parent(), body_center(), _attack_angle, _attack_arc / 2.0, _attack_reach)
+	SkillEffects.sheet_once(get_parent(), CRESCENT_FX, 7, 20.0, body_center(), CRESCENT_FX_ANCHOR, _attack_angle, 1.0,
+			_attack_reach / CRESCENT_FX_RADIUS, 0.0, _swing_sign < 0.0)
 	note_skill("crescent")
 	Sfx.play("big_slash")
 	_shake = maxf(_shake, 2.0)
