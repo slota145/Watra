@@ -2158,7 +2158,7 @@ func _build_guild() -> void:
 	_entities.add_child(clerk)
 	nodes.append(clerk)
 
-	# tablica ogłoszeń przed wejściem (funkcje dostanie później) i poszukiwacze, którzy ją czytają
+	# tablica ogłoszeń przed wejściem (zlecenia - Bounties) i poszukiwacze, którzy ją czytają
 	notice_board = _prop("notice_board", Vector2(20.6, 52.0), Vector2(36, 5))
 	nodes.append(_body_of(notice_board))
 	# niewidoczny "rozmówca" przed tablicą - E otwiera okno zleceń

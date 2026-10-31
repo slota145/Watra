@@ -94,14 +94,17 @@ func _refresh() -> void:
 		_list.add_child(UiStyle.label(str(traveler["kills"]), 7))
 		_list.add_child(UiStyle.label(str(traveler["deaths"]), 7))
 	var rank := travelers.guild_rank
-	_rank.text = "Ranga gildii: %d/%d - aktywnych podróżników: %d, najwyższy poziom: %d" % [rank, Travelers.MAX_RANK,
-			travelers.active_count(), travelers.level_cap()]
+	_rank.text = "Ranga gildii: %d/%d - sława: %d - aktywnych podróżników: %d, najwyższy poziom: %d" % [rank, Travelers.MAX_RANK,
+			travelers.guild_fame, travelers.active_count(), travelers.level_cap()]
 	_upgrade.visible = rank >= 1 and rank < Travelers.MAX_RANK
 	if _upgrade.visible:
 		var cost: Dictionary = Travelers.RANK_COSTS[rank + 1]
 		var parts: Array[String] = []
 		for id: String in cost:
-			parts.append("%d %s" % [cost[id], "zł" if id == "gold" else Items.get_data(id)["name"].to_lower()])
+			if id == "fame":
+				parts.append("sława %d" % cost[id])
+			else:
+				parts.append("%d %s" % [cost[id], "zł" if id == "gold" else Items.get_data(id)["name"].to_lower()])
 		_upgrade.text = "Ulepsz gildię: " + ", ".join(parts)
 
 

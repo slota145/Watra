@@ -11,13 +11,19 @@ signal changed
 
 const TICK := 60.0
 const SIZE := 40
-## Ilu podróżników jest aktywnych wg rangi gildii (0 - gildii nie ma).
-const RANK_ACTIVE: Array[int] = [4, 14, 26, 40]
-const MAX_RANK := 3
+## Ilu podróżników jest aktywnych wg rangi gildii (0 - gildii nie ma) - z każdą rangą przybywa ich trochę mniej.
+const RANK_ACTIVE: Array[int] = [4, 14, 21, 27, 32, 36, 40]
+const MAX_RANK := 6
 ## Najwyższy poziom podróżników wg rangi gildii (wyższa ranga ściąga silniejszych).
-const RANK_LEVEL_CAP: Array[int] = [12, 24, 36, 45]
-## Ulepszenia gildii (u pisarza gildii): koszt kolejnej rangi - surowce i złoto.
-const RANK_COSTS := [{}, {}, {"wood": 200, "stone": 200, "gold": 2000}, {"wood": 400, "stone": 400, "iron_ore": 60, "gold": 8000}]
+const RANK_LEVEL_CAP: Array[int] = [12, 18, 24, 30, 36, 42, 45]
+## Ulepszenia gildii (u pisarza gildii): potrzebna sława gildii (ze zleceń z tablicy - nie ubywa) oraz złoto i surowce.
+const RANK_COSTS := [{}, {},
+	{"fame": 60, "gold": 1000, "wood": 100, "stone": 100},
+	{"fame": 180, "gold": 3000, "wood": 200, "stone": 200},
+	{"fame": 400, "gold": 6000, "wood": 300, "stone": 300, "iron_ore": 30},
+	{"fame": 800, "gold": 12000, "wood": 400, "stone": 400, "iron_ore": 60},
+	{"fame": 1500, "gold": 20000, "wood": 500, "stone": 500, "iron_ore": 100},
+]
 const MALE := ["Bogumił", "Radomir", "Wojsław", "Ziemowit", "Lubomir", "Gniewko", "Mścisław", "Dobrosław", "Sobiesław",
 		"Jaromir", "Czcibor", "Świętosław", "Wszemir", "Racibor", "Bożydar", "Stanimir", "Witosław", "Krzesimir", "Dalibor", "Unisław"]
 const FEMALE := ["Dobrawa", "Milena", "Wiesława", "Ludmiła", "Bogna", "Jarosława", "Zlata", "Radosława", "Świętomira", "Wanda",
@@ -42,6 +48,8 @@ const LINES_TOWN: Array[String] = ["Ktoś na Hydrę? Szukam drużyny!", "Sprzeda
 var roster: Array[Dictionary] = []
 ## Ranga gildii (0 - brak gildii; 1 po zbudowaniu, dalej ulepszenia u pisarza gildii).
 var guild_rank := 0
+## Sława gildii - za zlecenia z tablicy ogłoszeń (Bounties); od niej zależą kolejne rangi.
+var guild_fame := 0
 var _timer := TICK
 
 
@@ -179,11 +187,17 @@ func upgrade_rank(player: Player) -> String:
 	if guild_rank == 0:
 		return "Najpierw trzeba zbudować gildię."
 	var cost: Dictionary = RANK_COSTS[guild_rank + 1]
+	if guild_fame < int(cost.get("fame", 0)):
+		return "Za mało sławy gildii (%d/%d) - wykonuj zlecenia z tablicy." % [guild_fame, cost["fame"]]
 	for id: String in cost:
+		if id == "fame":
+			continue
 		var have: int = player.stats.gold if id == "gold" else player.count_owned(id)
 		if have < int(cost[id]):
 			return "Brakuje: %s" % ("złota" if id == "gold" else Items.get_data(id)["name"])
 	for id: String in cost:
+		if id == "fame":
+			continue
 		if id == "gold":
 			player.stats.add_gold(-int(cost[id]))
 		else:
@@ -194,7 +208,7 @@ func upgrade_rank(player: Player) -> String:
 
 
 func get_save_data() -> Dictionary:
-	return {"roster": roster.duplicate(true), "rank": guild_rank}
+	return {"roster": roster.duplicate(true), "rank": guild_rank, "fame": guild_fame}
 
 
 func load_save_data(data: Dictionary) -> void:
@@ -204,4 +218,5 @@ func load_save_data(data: Dictionary) -> void:
 			entry[key] = int(entry.get(key, 0))
 		roster.append(entry)
 	guild_rank = int(data.get("rank", 0))
+	guild_fame = int(data.get("fame", 0))
 	changed.emit()

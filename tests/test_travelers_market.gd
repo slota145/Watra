@@ -173,7 +173,9 @@ func _market(p) -> void:
 	# ulepszenie gildii
 	for item in ["wood", "stone"]:
 		p.inventory.add_item(item, 300)
-	check("ulepszenie gildii", p.travelers.upgrade_rank(p) == "" and p.travelers.guild_rank == 2 and p.travelers.active().size() == 26)
+	check("ulepszenie wymaga sławy", p.travelers.upgrade_rank(p) != "" and p.travelers.guild_rank == 1)
+	p.travelers.guild_fame = 60
+	check("ulepszenie gildii", p.travelers.upgrade_rank(p) == "" and p.travelers.guild_rank == 2 and p.travelers.active().size() == 21)
 	# okna
 	var hud = _world.find_child("HUD", true, false)
 	hud.market_window.open()
