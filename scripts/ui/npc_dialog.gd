@@ -113,6 +113,11 @@ func _refresh() -> void:
 	_title.text = _npc.display_name
 	var main := MainQuests.step_for(_player.quests, _npc.display_name)
 	_shown_quest = main if main != "" else _npc.quest_id
+	# krok czeka na zadanie poboczne tej postaci - pokazujemy je, żeby dało się je oddać
+	var linked := MainQuests.linked_quest(main)
+	if linked != "" and _player.quests.state_of(main) == Quests.STATE_ACTIVE and Quests.get_data(linked)["giver"] == _npc.display_name \
+			and _player.quests.state_of(linked) in [Quests.STATE_AVAILABLE, Quests.STATE_READY]:
+		_shown_quest = linked
 	if _shown_quest != "":
 		_quest_section(_shown_quest)
 	else:
@@ -210,8 +215,7 @@ func _quest_info(id: String, show_progress: bool) -> void:
 	var verb := "zbierz" if Quests.is_gather(id) else "pokonaj"
 	var goal := ""
 	if main:
-		var have: Array = MainQuests.progress(_player, id)
-		goal = "Cel: %s %d/%d" % [quest["target_name"], have[0], have[1]] if have[1] > 1 else "Cel: %s" % quest["target_name"]
+		goal = "Cel: " + MainQuests.progress_text(_player, id) if show_progress else "Cel: %s" % quest["target_name"]
 		if Quests.receiver(id) != quest["giver"]:
 			goal += "  (nagroda u: %s)" % Quests.receiver(id)
 	elif show_progress:

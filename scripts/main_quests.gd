@@ -1,7 +1,7 @@
 class_name MainQuests
 ## Zadania główne: fabularny łańcuch prowadzony przez żercę Wszebora od Watry w Ostoi przez wszystkie krainy
-## i mechaniki gry. Znaczniki "!" i "?" nad postaciami są niebieskie (Npc), w dzienniku i pod minimapą - niebieski
-## tytuł. Każdy krok (CHAIN, kolejno) daje `giver`, a nagrodę wydaje `receiver` (domyślnie ten sam). Krok jest
+## i mechaniki gry. Znaczniki "!" i "?" nad postaciami są złote (Npc; poboczne - niebieskie), w dzienniku
+## i pod minimapą - złoty tytuł. Każdy krok (CHAIN, kolejno) daje `giver`, a nagrodę wydaje `receiver` (domyślnie ten sam). Krok jest
 ## wykonany, gdy spełni się jego warunek `check` (sprawdzany co chwilę - QuestLog.update_main), np.:
 ## ["talk"] - od razu (rozmowa z `receiver`), ["level", 5], ["quest", id] (inne zadanie oddane), ["built", n],
 ## ["herb"], ["nodes", n] (węzły drzewek), ["boss", nazwa sceny] (Codex.kills), ["watra", poziom], ["shrine", id],
@@ -11,8 +11,8 @@ class_name MainQuests
 ## których warunek już spełniły (catch_up - bez nagród).
 
 const ZERCA := "Żerca Wszebor"
-const COLOR := Color(0.45, 0.7, 1.0)
-const COLOR_DIM := Color(0.35, 0.45, 0.65)
+const COLOR := Color(1.0, 0.82, 0.25)
+const COLOR_DIM := Color(0.62, 0.55, 0.36)
 ## Krok, po którego wykonaniu (albo w trakcie oddawania) działają lochy w płomieniach Watry.
 const DUNGEON_STEP := "main_watra"
 
@@ -202,7 +202,7 @@ static func current(log: QuestLog) -> String:
 	return ""
 
 
-## Czy postać bierze udział w łańcuchu (pokazuje niebieskie znaczniki i ma rozmowę).
+## Czy postać bierze udział w łańcuchu (pokazuje złote znaczniki i ma rozmowę).
 static func involves(npc_name: String) -> bool:
 	for id: String in DATA:
 		if DATA[id]["giver"] == npc_name or DATA[id].get("receiver", "") == npc_name:
@@ -226,6 +226,33 @@ static func step_for(log: QuestLog, npc_name: String) -> String:
 ## Lochy Watry: po kroku DUNGEON_STEP (wykonany albo czeka na odbiór).
 static func dungeons_unlocked(log: QuestLog) -> bool:
 	return log.state_of(DUNGEON_STEP) in [Quests.STATE_READY, Quests.STATE_DONE]
+
+
+## Zadanie poboczne, od którego oddania zależy krok (warunek ["quest", id]); "" - krok zależy od czegoś innego.
+## Przyjmuje się je razem z krokiem (QuestLog.update_main), a oddaje u jego zleceniodawcy przed krokiem.
+static func linked_quest(id: String) -> String:
+	var check: Array = DATA.get(id, {}).get("check", [])
+	return check[1] if not check.is_empty() and check[0] == "quest" else ""
+
+
+## Postęp kroku w toku słowami (lista pod minimapą, rozmowa), np. "Drewno 12/30, Kamień 5/20".
+static func progress_text(player: Player, id: String) -> String:
+	var linked := linked_quest(id)
+	if linked != "" and player.quests.state_of(linked) != Quests.STATE_DONE:
+		match player.quests.state_of(linked):
+			Quests.STATE_AVAILABLE:
+				return "Przyjmij zadanie u: %s" % Quests.get_data(linked)["giver"]
+			Quests.STATE_READY:
+				return "Wróć do: %s" % Quests.receiver(linked)
+		var needed: Dictionary = Quests.requirements(linked)
+		if needed.is_empty():
+			return "%s: %d/%d" % [Quests.get_data(linked)["target_name"], player.quests.progress_of(linked), Quests.get_data(linked)["count"]]
+		var parts: Array[String] = []
+		for item: String in needed:
+			parts.append("%s %d/%d" % [Items.get_data(item)["name"], mini(player.count_owned(item), needed[item]), needed[item]])
+		return ", ".join(parts)
+	var have: Array = progress(player, id)
+	return "%s: %d/%d" % [DATA[id]["target_name"], have[0], have[1]] if have[1] > 1 else DATA[id]["target_name"]
 
 
 ## Postęp kroku: [ile jest, ile trzeba].

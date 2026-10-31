@@ -110,14 +110,31 @@ def make_pickaxe():
     rect(img, 0, 6, 15, 7, BARK[2])  # trzonek
     rect(img, 0, 6, 15, 6, BARK[3])
     rect(img, 1, 6, 2, 7, BARK[1])
-    # żelazny grot zakrzywiony w obie strony
-    for y, x in ((0, 18), (1, 17), (2, 17), (3, 16), (4, 16), (5, 16), (6, 16), (7, 16), (8, 16), (9, 16),
-                 (10, 17), (11, 17), (12, 18)):
+    # żelazny grot - oba szpice zagięte w stronę trzonka, jak w prawdziwym kilofie
+    for y, x in ((0, 14), (1, 15), (2, 15), (3, 16), (4, 16), (5, 17), (6, 17), (7, 17), (8, 16), (9, 16),
+                 (10, 15), (11, 15), (12, 14)):
         rect(img, x, y, x + 1, y, STONE[2])
         put(img, x, y, STONE[3])
     rect(img, 15, 5, 17, 8, STONE[1])
     outline(img, OUTLINE_DARK)
     save(img, "pickaxe", WEAPONS)
+
+
+def make_hatchet():
+    """Siekiera do ścinania drzew (Player._start_harvest) - w skali kilofa, ostrze od dołu (tnie przy zamachu)."""
+    img = new(20, 13)
+    rect(img, 0, 3, 16, 4, BARK[2])  # trzonek
+    rect(img, 0, 3, 16, 3, BARK[3])
+    rect(img, 1, 3, 2, 4, BARK[1])
+    rect(img, 13, 1, 17, 5, STONE[1])  # obuch na trzonku
+    # ostrze rozszerza się w dół, jasna krawędź na dole
+    for y, (x0, x1) in ((6, (13, 17)), (7, (12, 18)), (8, (12, 18)), (9, (11, 18)), (10, (11, 18))):
+        rect(img, x0, y, x1, y, STONE[2])
+        put(img, x0, y, STONE[1])
+    rect(img, 11, 11, 18, 11, STONE[3])
+    rect(img, 14, 2, 16, 2, STONE[2])
+    outline(img, OUTLINE_DARK)
+    save(img, "hatchet", WEAPONS)
 
 
 # ---------------------------------------------------------------- wyposażenie osady
@@ -589,6 +606,7 @@ def make_all():
     make_boulders()
     make_stone_art()
     make_pickaxe()
+    make_hatchet()
     make_dummy()
     make_awning()
     make_hearth()
