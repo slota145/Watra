@@ -316,6 +316,12 @@ func _can_drop_on_bag(_at: Vector2, data: Variant) -> bool:
 ## Na kratkę plecaka: przestawienie w plecaku, przedmiot z magazynu albo zdjęcie z postaci (na wolną
 ## kratkę; na przedmiot pasujący do tego miejsca - zamiana).
 func _drop_on_bag(_at: Vector2, data: Variant, index: int) -> void:
+	# kamień albo esencja na przedmiot z gniazdem - osadzenie (Gems.drag_target)
+	if data.get("inventory") == _player.inventory and data["index"] != index and not _player.inventory.slots[index].is_empty():
+		var target := Gems.drag_target(_player.inventory.slots[data["index"]].get("id", ""), _player.inventory.slots[index]["id"])
+		if target != "":
+			_socket_by_drag(data["index"], _player.inventory.slots[index]["id"], target, "")
+			return
 	if data.has("gear_slot"):
 		var target: Dictionary = _player.inventory.slots[index]
 		if not target.is_empty() and _player.equipment.fits(data["gear_slot"], target["id"]):
@@ -332,12 +338,36 @@ func _can_drop_on_gear(_at: Vector2, data: Variant, slot_name: String) -> bool:
 	if not (data is Dictionary and data.get("inventory") == _player.inventory and _can_rearrange()):
 		return false
 	var item: Dictionary = _player.inventory.slots[data["index"]]
-	return not item.is_empty() and _player.equipment.fits(slot_name, item["id"])
+	if item.is_empty():
+		return false
+	return _player.equipment.fits(slot_name, item["id"]) or Gems.drag_target(item["id"], _player.equipment.get_item(slot_name)) != ""
 
 
 func _drop_on_gear(_at: Vector2, data: Variant, slot_name: String) -> void:
+	var worn := _player.equipment.get_item(slot_name)
+	var target := Gems.drag_target(_player.inventory.slots[data["index"]].get("id", ""), worn)
+	if target != "":
+		_socket_by_drag(data["index"], worn, target, slot_name)
+		return
 	_player.equip_from_inventory(data["index"], slot_name)
 	Sfx.play("pickup")
+
+
+## Osadzenie przeciągniętego kamienia / esencji w przedmiocie z plecaka albo założonym (`slot_name`) - albo komunikat,
+## dlaczego się nie da (zajęte gniazdo, kamień promienia, esencja innego rodzaju).
+func _socket_by_drag(index: int, item_id: String, target: String, slot_name: String) -> void:
+	if target != "gem" and target != "essence":
+		Sfx.play("ui_error")
+		DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -16), target, Color(1.0, 0.55, 0.45), 8)
+		return
+	var source_name: String = Items.get_data(_player.inventory.slots[index]["id"])["name"]
+	Gems.drag_insert(_player.inventory, index, item_id, target)
+	if slot_name != "":
+		_player.equipment.changed.emit()
+	_player.inventory.changed.emit()
+	Sfx.play("enchant_success")
+	DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -16),
+			"Osadzono: %s" % source_name, Color(0.6, 1.0, 0.55), 8)
 
 
 func _can_drop_on_trash(_at: Vector2, data: Variant) -> bool:

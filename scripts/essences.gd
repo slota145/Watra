@@ -84,7 +84,7 @@ static func register(recipe: Dictionary, id := "") -> String:
 	Items.generated[id] = {
 		"name": "Esencja: %s" % recipe["source_name"],
 		"description": ("Efekt legendy zamknięty w płomieniu (%d%% jej siły). Pasuje do gniazda esencji w przedmiocie (%s) "
-				+ "i do gniazda legendarnego w drzewku broni.") % [roundi(recipe["power"] * 100.0), GROUP_NAMES[group]],
+				+ "i do gniazda legendarnego w drzewku broni - przeciągnij ją na przedmiot albo gniazdo.") % [roundi(recipe["power"] * 100.0), GROUP_NAMES[group]],
 		"icon": ICONS[group], "rarity": "legendary", "essence": recipe,
 		"effect": {"kind": recipe["kind"], "chance": recipe["value"], "per_level": 0.0},
 		"sell_price": 50, "recipe": recipe,

@@ -279,8 +279,10 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     `Settlement.project_locked`), koszt: drewno, kamień, ruda żelaza; Dobromir przeprowadza się do chaty między kuźnią
     a bramą południową (z Orlej Przełęczy znika - `World.village_built`), a w Ostoi także przeszlifowuje kamienie
     (usługa „reshape”, `Gems.reshape`: nowe premie, rodzaj, szlif i liczba premii zostają).
-  - **Zakładanie kamienia przeciąganiem**: dziś kamień osadza tylko jubiler; przeciągnięcie kamienia z plecaka
-    na przedmiot z pustym gniazdem (w plecaku albo założony) ma go osadzić.
+  - [x] **Zakładanie kamienia przeciąganiem** (`Gems.drag_target` / `drag_insert`, okno plecaka): kamień z plecaka
+    przeciągnięty na przedmiot z pustym gniazdem (w plecaku albo założony) się osadza; zajęte gniazdo odmawia (kamień
+    wyjmuje jubiler), Kamień Promienia nie pasuje; esencja - do pustego gniazda esencji tego samego rodzaju (wyjmuje
+    kowal); przedmiot bez gniazda - zwykła zamiana miejsc.
   - **Nowe miejsce na pas** w ekwipunku postaci i pasy jako nowe przedmioty (linia w `tools/item_catalog.py`).
   - **Ładniejszy widok ekwipunku** (okno postaci): większe ramki przedmiotów, ładne tło między nimi, a pusty slot
     pokazuje ikonę rodzaju przedmiotu, który tam pasuje (hełm, pierścień...).
