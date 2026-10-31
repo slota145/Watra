@@ -200,6 +200,9 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 - [x] Półksiężyc z kreatora efektów (`assets/effects/crescent.png`, `Player._start_crescent`): srebrny sierp
   księżycowego światła na 300 stopni (odbity przy zamachu w drugą stronę - `SkillEffects.sheet_once`, `mirror`),
   wyrzucony w stronę celowania półksiężyc i złoty pył zamiast powiększonego cięcia i biało-pomarańczowego łuku.
+- [x] Szarża z kreatora efektów (`assets/effects/lunge.png`, `lunge_start.png`, `lunge_hit.png`,
+  `Player._start_lunge`): w trakcie pędu przed mieczem fala powietrza z liniami pędu (zapętlona, obrócona w kierunku
+  szarży), na starcie pył spod stóp, na każdym trafionym wrogu błysk przebicia. Niebieskie cienie postaci zostają.
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

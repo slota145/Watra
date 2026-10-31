@@ -72,6 +72,14 @@ const WHIRL_FX_RADIUS := 35.0
 const CRESCENT_FX := preload("res://assets/effects/crescent.png")
 const CRESCENT_FX_ANCHOR := Vector2(60, 62)
 const CRESCENT_FX_RADIUS := 48.0
+## Szarża z kreatora efektów PixelLab: zapętlona fala powietrza przed mieczem z liniami pędu (rysowana w prawo, punkt
+## zaczepienia w środku tułowia), pył spod stóp na starcie i błysk przebicia na trafionym wrogu.
+const LUNGE_FX := preload("res://assets/effects/lunge.png")
+const LUNGE_FX_FRAMES := 6
+const LUNGE_FX_FPS := 18.0
+const LUNGE_FX_ANCHOR := Vector2(29, 17)
+const LUNGE_START_FX := preload("res://assets/effects/lunge_start.png")
+const LUNGE_HIT_FX := preload("res://assets/effects/lunge_hit.png")
 ## Zbieranie (drzewa, głazy): zasięg (od stóp do podstawy), czas i odstęp między uderzeniami.
 const HARVEST_RANGE := 26.0
 const HARVEST_TIME := 2.0
@@ -140,6 +148,8 @@ var _lunge_dir := Vector2.RIGHT
 var _lunge_speed := 0.0
 var _lunge_damage := 1.0
 var _lunge_hit := {}
+## Fala powietrza przed mieczem w trakcie Szarży.
+var _lunge_fx: Sprite2D
 ## Łańcuch błyskawic: zasięg pierwszego celu od postaci i przeskoku między wrogami.
 const CHAIN_FIRST_RANGE := 220.0
 const CHAIN_JUMP_RANGE := 130.0
@@ -537,6 +547,8 @@ func _physics_process(delta: float) -> void:
 		_start_attack()
 	_process_skill(delta)
 
+	if _lunge_fx != null and _lunge_fx.visible and _lunge_time <= 0.0:
+		_lunge_fx.visible = false
 	if _lunge_time > 0.0:
 		_update_lunge(delta)
 	elif is_dashing():
@@ -1932,6 +1944,20 @@ func _start_lunge(level: int) -> void:
 	sword.visible = sword.texture != null
 	sword.rotation = 0.0
 	sword.flip_v = false
+	if _lunge_fx == null:
+		_lunge_fx = Sprite2D.new()
+		_lunge_fx.texture = LUNGE_FX
+		_lunge_fx.hframes = LUNGE_FX_FRAMES
+		_lunge_fx.centered = false
+		_lunge_fx.offset = -LUNGE_FX_ANCHOR
+		_lunge_fx.position = BODY_OFFSET
+		_lunge_fx.z_index = 1
+		add_child(_lunge_fx)
+	_lunge_fx.rotation = _lunge_dir.angle()
+	_lunge_fx.flip_v = _lunge_dir.x < 0.0
+	_lunge_fx.frame = 0
+	_lunge_fx.visible = true
+	SkillEffects.sheet_once(get_parent(), LUNGE_START_FX, 7, 14.0, global_position, Vector2(21, 12))
 	Sfx.play("dash")
 	Sfx.play("swing", 2.0, 0.8)
 
@@ -1939,6 +1965,8 @@ func _start_lunge(level: int) -> void:
 func _update_lunge(delta: float) -> void:
 	_lunge_time -= delta
 	_move_velocity = _lunge_dir * _lunge_speed
+	if _lunge_fx != null:
+		_lunge_fx.frame = int((Skills.LUNGE_DISTANCE / _lunge_speed - _lunge_time) * LUNGE_FX_FPS) % LUNGE_FX_FRAMES
 	_ghost_timer -= delta
 	if _ghost_timer <= 0.0:
 		_spawn_ghost()
@@ -1950,6 +1978,7 @@ func _update_lunge(delta: float) -> void:
 		if enemy.hurt_center().distance_to(tip) <= enemy.hurt_radius + 14.0:
 			_lunge_hit[enemy] = true
 			hit_enemy(enemy, _skill_damage(_lunge_damage), global_position, 180.0)
+			SkillEffects.sheet_once(get_parent(), LUNGE_HIT_FX, 5, 18.0, enemy.hurt_center(), Vector2(14, 11), _lunge_dir.angle())
 	var blocked := get_slide_collision_count() > 0 and _lunge_time < Skills.LUNGE_DISTANCE / _lunge_speed - 0.05
 	if _lunge_time <= 0.0 or blocked:
 		_lunge_time = 0.0
