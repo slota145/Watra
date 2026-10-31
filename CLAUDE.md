@@ -197,6 +197,9 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 - [x] Widmowe Ostrza z kreatora efektów (`assets/effects/spectral_blade.png`, `spectral_burst.png`,
   `scripts/spectral_blades.gd`): migoczący widmowy miecz ze smugą drobinek zamiast przyciemnionej broni gracza
   (obracany w kierunku lotu), widmowy rozbłysk przy przywołaniu, dotknięciu i trafieniu wystrzelonym ostrzem.
+- [x] Półksiężyc z kreatora efektów (`assets/effects/crescent.png`, `Player._start_crescent`): srebrny sierp
+  księżycowego światła na 300 stopni (odbity przy zamachu w drugą stronę - `SkillEffects.sheet_once`, `mirror`),
+  wyrzucony w stronę celowania półksiężyc i złoty pył zamiast powiększonego cięcia i biało-pomarańczowego łuku.
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

@@ -214,5 +214,19 @@
       24,
       24
     ]
+  },
+  "crescent": {
+    "effect": "2ac2f2db-321c-49bf-aa85-c459780ede11",
+    "name": "Polksiezyc",
+    "frame": [
+      128,
+      119
+    ],
+    "frames": 7,
+    "fps": 20,
+    "anchor": [
+      60,
+      62
+    ]
   }
 }
