@@ -292,6 +292,11 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     `tools/paperdoll_art.py`): sylwetka wojownika, a wokół niej miejsca na przedmioty (hełm przy głowie, buty przy
     stopach), ramki 28 px, broń i napierśnik w wysokich ramkach; pusty slot pokazuje zarys pasującego przedmiotu,
     ramka - kolor rzadkości (`LegendaryFrame`).
+- [ ] **Przedmioty niezidentyfikowane** (pomysł autora): przełącznik w opcjach - łup od razu zidentyfikowany albo
+  niezidentyfikowany; niezidentyfikowane przedmioty jednego rodzaju układają się w stosy (oszczędzają miejsce w plecaku),
+  a identyfikuje się je PPM na przedmiocie.
+- [ ] **Plecaki i sakwy** (pomysł autora): wypadają z potworów i powiększają plecak - niskopoziomowe 4-6 miejsc,
+  wysokopoziomowe 15-25, najrzadsze 30-40; można też wytwarzać nowe ze skór i innych surowców.
 - [ ] Nowe bronie: kosa, kostur (nekromanta), młoty, chainblade'y, sztylety, włócznie, rapier, hydrosfera.
   Każda broń to nowy rodzaj z własnym drzewkiem, a nie tylko nowy przedmiot, więc wymaga szczegółów od autora.
 
