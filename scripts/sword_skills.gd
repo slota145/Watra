@@ -50,7 +50,13 @@ const SMOKE_FX_ZIGZAG := 0.4
 const SMOKE_FX_JITTER := 0.12
 ## Klin jest narysowany lekko pod górę (około 14 stopni) - obrót o tyle w drugą stronę kieruje go wzdłuż lotu.
 const SMOKE_FX_LEAN := 0.25
-const BLOOD_COLOR := Color(0.8, 0.1, 0.1)
+## Rozpłatanie z kreatora efektów PixelLab: szeroki łuk stali z krwawym śladem i kroplami krwi (rysowany w prawo,
+## punkt zaczepienia w środku tułowia - poza klatką, promień łuku REND_FX_RADIUS) i rozprysk krwi na zranionym wrogu.
+const REND_FX := preload("res://assets/effects/rend.png")
+const REND_FX_ANCHOR := Vector2(-7, 38)
+const REND_FX_RADIUS := 36.0
+const REND_WOUND_FX := preload("res://assets/effects/rend_wound.png")
+const REND_WOUND_ANCHOR := Vector2(9, 12)
 const SPECTRAL_COLOR := Color(0.65, 0.85, 1.0)
 const PERUN_COLOR := Color(1.0, 0.85, 0.35)
 ## Taniec Ostrzy: premia za combo, ile razy się kumuluje i jak długo trwa; Dym i Cień: chmura; Krwawy Szał: leczenie.
@@ -431,7 +437,8 @@ func _rend() -> void:
 	_player.note_skill("rend")
 	var origin := _player.body_center()
 	var half := deg_to_rad(Skills.REND_ARC_DEGREES) / 2.0
-	SkillEffects.crescent(_player.get_parent(), origin, aim.angle(), half, Skills.REND_REACH)
+	SkillEffects.sheet_once(_player.get_parent(), REND_FX, 7, 18.0, origin, REND_FX_ANCHOR, aim.angle(), 1.0,
+			Skills.REND_REACH / REND_FX_RADIUS)
 	Sfx.play("big_slash", 0.0, 1.1)
 	var bleed := Skills.rend_bleed(level) * (2.0 if combo else 1.0) * (_player.combo_damage() if combo else 1.0)
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
@@ -452,7 +459,7 @@ func bleed_enemy(enemy: Goblin, multiplier: float) -> void:
 	var total := _player._skill_damage(multiplier * (1.0 + _player.skills.tree_bonus("melee", "bleed_damage")))
 	var per_tick := maxi(1, roundi(float(total) / Skills.BLEED_TICKS))
 	var frenzy := _player.skills.has_keystone("melee", "blood_frenzy")
-	SkillEffects.spark(_player.get_parent(), enemy.hurt_center(), BLOOD_COLOR, 6)
+	SkillEffects.sheet_once(_player.get_parent(), REND_WOUND_FX, 9, 15.0, enemy.hurt_center(), REND_WOUND_ANCHOR)
 	for i in Skills.BLEED_TICKS:
 		_player.get_tree().create_timer(0.5 * (i + 1), false).timeout.connect(func() -> void:
 			if is_instance_valid(enemy) and enemy.state != Goblin.State.DEAD:

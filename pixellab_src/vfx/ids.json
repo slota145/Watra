@@ -84,5 +84,33 @@
       14,
       26
     ]
+  },
+  "rend": {
+    "effect": "7b18c6b4-72fe-48a1-9c37-58c612211cb9",
+    "name": "Rozpłatanie",
+    "frame": [
+      61,
+      77
+    ],
+    "frames": 7,
+    "fps": 18,
+    "anchor": [
+      -7,
+      38
+    ]
+  },
+  "rend_wound": {
+    "effect": "d2dd417b-dff5-4a84-932a-5c3b8f64ebec",
+    "name": "Rozpłatanie - rana",
+    "frame": [
+      38,
+      51
+    ],
+    "frames": 9,
+    "fps": 15,
+    "anchor": [
+      9,
+      12
+    ]
   }
 }
