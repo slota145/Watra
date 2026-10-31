@@ -99,7 +99,7 @@ func _check_data() -> void:
 		if id != "start" and Tree.path_to("melee", id).is_empty():
 			broken.append(id)
 	check("drzewko: połączenia i osiągalność", broken.is_empty(), str(broken))
-	check("węzeł umiejętności", Tree.node_for_skill("flicker") == "flicker" and Tree.node_for_skill("fireball") == "")
+	check("węzeł umiejętności", Tree.node_for_skill("flicker") == "flicker" and Tree.node_for_skill("fireball") == "fireball")
 	check("na pasek", load("res://scripts/hotbar.gd").can_slot_skill("flicker") and load("res://scripts/hotbar.gd").can_slot_skill("smoke_burst"))
 
 
@@ -137,7 +137,7 @@ func _check_respec(p) -> void:
 	var row: Dictionary = offers["rows"][0]
 	check("zapomnienie u mędrca dostępne", row["enabled"])
 	row["action"].call()
-	check("zapomnienie drzewka", p.skills.points_spent() == 0 and p.skills.level_of("whirlwind") == 0)
+	check("zapomnienie drzewka", p.skills.nodes["melee"].is_empty() and p.skills.level_of("whirlwind") == 0)
 	p.skills.take("melee", "whirlwind")
 	check("kupione poziomy zostają", p.skills.level_of("whirlwind") == 3)
 

@@ -6,7 +6,7 @@ class_name SkillTree
 ## - "passive": stałe premie (statystyki jak na przedmiotach albo premie do umiejętności - TREE_STATS),
 ## - "keystone": węzeł kluczowy - zmienia sposób gry (np. Nieustający Wir).
 ## Premie działają tylko z założoną bronią swojego rodzaju. Wybrane węzły cofa za złoto mędrzec w Ostoi.
-## Drzewka mają miecz (broń biała) i łuk; księga magii korzysta jeszcze z kart umiejętności za złoto.
+## Drzewka mają wszystkie rodzaje broni: miecz (broń biała), łuk i księga magii.
 
 const START_POINTS := 1
 ## Ile złota kosztuje zapomnienie drzewka u mędrca (za każdy poziom postaci).
@@ -26,8 +26,14 @@ const TREE_STATS := {
 	"power_damage": "Obrażenia Grotu Swaroga", "arrow_pierce": "Strzały przebijają wrogów", "arrow_range": "Zasięg strzał",
 	"ballista_damage": "Obrażenia Balisty", "ballista_time": "Czas Balisty", "snare_time": "Unieruchomienie Sideł",
 	"venom_damage": "Obrażenia Jadowych Grotów", "vault_cooldown": "Odnowienie Odskoku",
+	"fireball_charge": "Szybkość ładowania Kuli ognia", "fireball_damage": "Obrażenia Kuli ognia", "burn_damage": "Obrażenia podpalenia",
+	"meteor_radius": "Wybuch Spadającej Gwiazdy", "shield_share": "Ciosy przyjmowane przez Tarczę Many",
+	"blink_cooldown": "Odnowienie Kroku przez Mgłę", "rune_bonus": "Moc Kamienia Runicznego", "chain_targets": "Cele Łańcucha błyskawic",
+	"storm_time": "Czas Burzy Peruna", "orb_damage": "Obrażenia Kuli Piorunów", "lance_damage": "Obrażenia Włóczni Marzanny",
+	"chill_time": "Czas spowolnienia", "lance_pierce": "Włócznia przebija wrogów", "blizzard_damage": "Obrażenia Zamieci",
+	"blizzard_time": "Czas Zamieci",
 }
-const COUNT_STATS := ["blade_count", "multishot_arrows", "seeker_hits", "arrow_pierce"]
+const COUNT_STATS := ["blade_count", "multishot_arrows", "seeker_hits", "arrow_pierce", "chain_targets", "lance_pierce"]
 
 ## Węzły: pozycja w siatce drzewka (jednostki - SkillTreeView), połączenia, rodzaj, nazwa / umiejętność, premie, opis.
 ## Gałęzie miecza: zachód - Wir (Młynek, Mgnienie, Nieustający Wir), północny zachód - Krew i okrzyk (Zew Peruna,
@@ -165,6 +171,75 @@ const TREES := {
 		"phys_b2": {"pos": Vector2(1.1, 4.2), "kind": "passive", "name": "Hartowane groty", "stats": {"physical_damage": 0.1}, "links": ["phys_b3"]},
 		"phys_b3": {"pos": Vector2(2.6, 4.2), "kind": "passive", "name": "Ciężkie strzały", "stats": {"physical_damage": 0.1}, "links": ["ballista_time"]},
 		"ballista_time": {"pos": Vector2(4.0, 4.5), "kind": "passive", "name": "Solidna rama", "stats": {"ballista_time": 0.4}, "links": []},
+	},
+	## Gałęzie księgi magii: zachód - Ogień (Kula ognia, Spadająca Gwiazda, Pełnia Mocy), północny zachód - Tarcza Many
+	## i zdrowie, południowy zachód - Mgła i runy (Krok przez Mgłę, Kamień Runiczny, Ofiara Krwi), północny wschód -
+	## Piorun (Łańcuch błyskawic, Burza Peruna, Kula Piorunów, Echo Run), południowy wschód - Lód (Włócznia Marzanny,
+	## Zamieć, Harmonia Żywiołów).
+	"spell": {
+		"start": {"pos": Vector2(0, 0), "kind": "start", "name": "Ścieżka księgi", "links": ["fireball", "chain_lightning", "frost_lance", "mystic_renewal", "mana_stream"],
+				"description": "Początek drzewka księgi magii (magiczny pocisk). Wybieraj węzły połączone z już wybranymi."},
+		"mystic_renewal": {"pos": Vector2(-1.1, -1.6), "kind": "skill", "skill": "mystic_renewal", "links": ["hp_s1"]},
+		"mana_stream": {"pos": Vector2(-1.1, 1.6), "kind": "skill", "skill": "mana_stream", "links": ["blink", "mana_s1"]},
+		# ---- Ogień
+		"fireball": {"pos": Vector2(-1.6, 0), "kind": "skill", "skill": "fireball", "links": ["fire_b1"]},
+		"fire_b1": {"pos": Vector2(-3.0, 0), "kind": "passive", "name": "Żar w żyłach", "stats": {"spell_damage": 0.08}, "links": ["fire_charge", "meteor"]},
+		"fire_charge": {"pos": Vector2(-4.3, -1.0), "kind": "passive", "name": "Szybki płomień", "stats": {"fireball_charge": 0.3}, "links": ["fire_dmg"]},
+		"meteor": {"pos": Vector2(-4.3, 1.0), "kind": "skill", "skill": "meteor", "links": ["burn_dmg"]},
+		"fire_dmg": {"pos": Vector2(-5.6, -1.6), "kind": "passive", "name": "Ogień Swaroga", "stats": {"fireball_damage": 0.2}, "links": ["full_power", "cast_s1"]},
+		"burn_dmg": {"pos": Vector2(-5.6, 1.6), "kind": "passive", "name": "Pożoga", "stats": {"burn_damage": 0.3}, "links": ["full_power", "meteor_area"]},
+		"full_power": {"pos": Vector2(-6.6, 0), "kind": "keystone", "name": "Pełnia Mocy", "links": [],
+				"description": "Gdy masz ponad 90% many, czary zadają 40% więcej obrażeń, ale wszystkie umiejętności kosztują 20% więcej many."},
+		"cast_s1": {"pos": Vector2(-7.0, -2.6), "kind": "passive", "name": "Bystre słowa", "stats": {"cast_speed": 0.08}, "links": ["crit_s0"]},
+		"meteor_area": {"pos": Vector2(-7.0, 2.6), "kind": "passive", "name": "Wielka gwiazda", "stats": {"meteor_radius": 0.25}, "links": ["crit_dmg_s"]},
+		"crit_s0": {"pos": Vector2(-8.4, -1.4), "kind": "passive", "name": "Oko wiedźmy", "stats": {"crit_chance": 0.04}, "links": []},
+		"crit_dmg_s": {"pos": Vector2(-8.4, 1.4), "kind": "passive", "name": "Klątwa", "stats": {"crit_damage": 0.3}, "links": []},
+		# ---- Tarcza i zdrowie
+		"hp_s1": {"pos": Vector2(-2.4, -2.7), "kind": "passive", "name": "Hart ducha", "stats": {"health_percent": 0.05}, "links": ["mana_shield", "regen_s1"]},
+		"mana_shield": {"pos": Vector2(-3.8, -2.9), "kind": "skill", "skill": "mana_shield", "links": ["shield_power"]},
+		"regen_s1": {"pos": Vector2(-1.4, -3.8), "kind": "passive", "name": "Ziołowy napar", "stats": {"health_regen": 1.5}, "links": ["hp_s2"]},
+		"shield_power": {"pos": Vector2(-4.6, -4.1), "kind": "passive", "name": "Twarda tarcza", "stats": {"shield_share": 0.15}, "links": ["hp_s2"]},
+		"hp_s2": {"pos": Vector2(-3.0, -4.6), "kind": "passive", "name": "Długowieczność", "stats": {"health": 40.0}, "links": []},
+		# ---- Mgła i runy
+		"blink": {"pos": Vector2(-2.8, 2.7), "kind": "skill", "skill": "blink", "links": ["blink_cd"]},
+		"blink_cd": {"pos": Vector2(-4.2, 3.6), "kind": "passive", "name": "Wędrowiec mgieł", "stats": {"blink_cooldown": -0.25}, "links": ["blood_sacrifice"]},
+		"blood_sacrifice": {"pos": Vector2(-5.7, 3.9), "kind": "keystone", "name": "Ofiara Krwi", "stats": {"health_percent": 0.25}, "links": [],
+				"description": "Z księgą w ręku umiejętności kosztują zdrowie zamiast many (nie mogą cię zabić), a maksymalne zdrowie rośnie o 25%."},
+		"mana_s1": {"pos": Vector2(-1.3, 3.5), "kind": "passive", "name": "Głęboka studnia", "stats": {"mana": 25.0}, "links": ["rune_stone", "dodge_s1"]},
+		"rune_stone": {"pos": Vector2(-2.7, 4.4), "kind": "skill", "skill": "rune_stone", "links": ["rune_power"]},
+		"rune_power": {"pos": Vector2(-4.0, 4.9), "kind": "passive", "name": "Głębokie runy", "stats": {"rune_bonus": 0.3}, "links": ["blood_sacrifice"]},
+		"dodge_s1": {"pos": Vector2(-0.1, 4.6), "kind": "passive", "name": "Mglista postać", "stats": {"dodge_chance": 0.03}, "links": []},
+		# ---- Piorun
+		"chain_lightning": {"pos": Vector2(1.1, -1.4), "kind": "skill", "skill": "chain_lightning", "links": ["thunder_wave", "cast_s2"]},
+		"thunder_wave": {"pos": Vector2(2.6, -1.4), "kind": "skill", "skill": "thunder_wave", "links": ["combo_s1", "crit_s1"]},
+		"cast_s2": {"pos": Vector2(1.1, -2.8), "kind": "passive", "name": "Szybki szept", "stats": {"cast_speed": 0.08}, "links": ["combo_s1", "cast_s3"]},
+		"combo_s1": {"pos": Vector2(2.6, -2.8), "kind": "passive", "name": "Splecione zaklęcia", "stats": {"combo_window": 0.4}, "links": ["storm_call", "chain_more"]},
+		"crit_s1": {"pos": Vector2(4.0, -1.4), "kind": "passive", "name": "Iskra", "stats": {"crit_chance": 0.04}, "links": ["storm_call", "crit_s2"]},
+		"storm_call": {"pos": Vector2(4.0, -2.8), "kind": "skill", "skill": "storm_call", "links": ["storm_time"]},
+		"storm_time": {"pos": Vector2(5.4, -3.6), "kind": "passive", "name": "Długa nawałnica", "stats": {"storm_time": 0.3}, "links": ["echo_runes", "combo_s2"]},
+		"cast_s3": {"pos": Vector2(1.1, -4.2), "kind": "passive", "name": "Błyskawiczne słowa", "stats": {"cast_speed": 0.08}, "links": ["chain_more"]},
+		"chain_more": {"pos": Vector2(2.6, -4.2), "kind": "passive", "name": "Rozgałęziony piorun", "stats": {"chain_targets": 2.0}, "links": ["echo_runes"]},
+		"echo_runes": {"pos": Vector2(4.0, -4.5), "kind": "keystone", "name": "Echo Run", "stats": {"cast_speed": -0.1}, "links": [],
+				"description": "Nowe czary drzewka (Włócznia Marzanny, Zamieć, Burza Peruna, Kula Piorunów, Spadająca Gwiazda) w 30% przypadków wybrzmiewają drugi raz za darmo, ale rzucasz o 10% wolniej."},
+		"combo_s2": {"pos": Vector2(6.8, -3.8), "kind": "passive", "name": "Mistrz zaklęć", "stats": {"combo_damage": 0.15}, "links": []},
+		"crit_s2": {"pos": Vector2(5.4, -1.4), "kind": "passive", "name": "Gniew Peruna", "stats": {"crit_damage": 0.3}, "links": ["ball_lightning", "cdr_s"]},
+		"ball_lightning": {"pos": Vector2(6.8, -2.0), "kind": "skill", "skill": "ball_lightning", "links": ["orb_dmg", "spell_s1"]},
+		"orb_dmg": {"pos": Vector2(8.2, -2.6), "kind": "passive", "name": "Żywy piorun", "stats": {"orb_damage": 0.3}, "links": []},
+		"spell_s1": {"pos": Vector2(8.2, -1.0), "kind": "passive", "name": "Moc burzy", "stats": {"spell_damage": 0.1}, "links": []},
+		"cdr_s": {"pos": Vector2(6.8, -0.5), "kind": "passive", "name": "Rytm zaklęć", "stats": {"cooldown_reduction": 0.05}, "links": []},
+		# ---- Lód
+		"frost_lance": {"pos": Vector2(1.1, 1.4), "kind": "skill", "skill": "frost_lance", "links": ["lance_dmg", "chill_1"]},
+		"lance_dmg": {"pos": Vector2(2.6, 1.4), "kind": "passive", "name": "Ostry lód", "stats": {"lance_damage": 0.25}, "links": ["lance_pierce", "ice_dmg"]},
+		"chill_1": {"pos": Vector2(1.1, 2.8), "kind": "passive", "name": "Mróz w kościach", "stats": {"chill_time": 0.4}, "links": ["lance_pierce", "spell_s2"]},
+		"lance_pierce": {"pos": Vector2(2.6, 2.8), "kind": "passive", "name": "Przeszywający lód", "stats": {"lance_pierce": 2.0}, "links": ["blizzard", "spell_s3"]},
+		"ice_dmg": {"pos": Vector2(4.0, 1.4), "kind": "passive", "name": "Oddech Marzanny", "stats": {"blizzard_damage": 0.25}, "links": ["harmony", "blizzard"]},
+		"harmony": {"pos": Vector2(5.5, 0.7), "kind": "keystone", "name": "Harmonia Żywiołów", "links": [],
+				"description": "Czar innego żywiołu (ogień, lód, piorun) niż poprzedni daje na 4 s +30% obrażeń magicznych."},
+		"blizzard": {"pos": Vector2(4.0, 2.8), "kind": "skill", "skill": "blizzard", "links": ["blizzard_time"]},
+		"blizzard_time": {"pos": Vector2(5.4, 3.6), "kind": "passive", "name": "Długa zima", "stats": {"blizzard_time": 0.4}, "links": ["mana_regen_s"]},
+		"spell_s2": {"pos": Vector2(1.1, 4.2), "kind": "passive", "name": "Pieśń zimy", "stats": {"spell_damage": 0.1}, "links": ["spell_s3"]},
+		"spell_s3": {"pos": Vector2(2.6, 4.2), "kind": "passive", "name": "Szron na runach", "stats": {"spell_damage": 0.1}, "links": ["mana_regen_s"]},
+		"mana_regen_s": {"pos": Vector2(4.0, 4.5), "kind": "passive", "name": "Źródło Marzanny", "stats": {"mana_regen": 2.0}, "links": []},
 	},
 }
 

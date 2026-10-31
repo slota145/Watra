@@ -226,7 +226,8 @@ func _check_migration() -> void:
 func _check_legends(p, bs) -> void:
 	var Loot = load("res://scripts/loot.gd")
 	var Items = load("res://scripts/items.gd")
-	check("legendy w skarbcu lochów", load("res://scripts/dungeons.gd").VAULT_LEGENDS.size() == 4)
+	var vault: Array = load("res://scripts/dungeons.gd").VAULT_LEGENDS
+	check("legendy w skarbcu lochów", vault.has("legend_swarog_bow") and vault.has("legend_engineer_gloves") and vault.has("legend_tracker_talisman"))
 	var ballista = bs.ballista()
 	if ballista == null:
 		check("balista do legend", false)

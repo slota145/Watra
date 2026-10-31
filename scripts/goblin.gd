@@ -95,6 +95,10 @@ var _fear_from := Vector2.ZERO
 ## Nieruchome "potwory" (prastare drzewa, kokony) nie uciekają w strachu.
 var fearless := false
 var _stun_marker: StunMarker
+## Spowolnienie lodem (księga magii, SpellSkills): mnożnik prędkości i do kiedy trwa (Time.get_ticks_msec); wróg sinieje.
+var _chill_until := 0
+var _chill_factor := 1.0
+const CHILL_COLOR := Color(0.65, 0.85, 1.25)
 
 @onready var sprite: Sprite2D = $Sprite
 
@@ -189,6 +193,27 @@ func fear(seconds: float, from: Vector2) -> void:
 	_on_stunned()
 
 
+## Spowolnienie: przez `seconds` wróg porusza się z prędkością razy `factor` (silniejsze spowolnienie wygrywa).
+func chill(factor: float, seconds: float) -> void:
+	if state == State.DEAD:
+		return
+	_chill_factor = minf(_chill_factor, factor) if is_chilled() else factor
+	_chill_until = maxi(_chill_until, Time.get_ticks_msec() + roundi(seconds * 1000.0))
+	sprite.modulate = CHILL_COLOR
+	# koniec sprawdzany zegarem - działa też u potworów z własnym _physics_process
+	get_tree().create_timer(seconds + 0.05, false).timeout.connect(_end_chill)
+
+
+func is_chilled() -> bool:
+	return Time.get_ticks_msec() < _chill_until
+
+
+func _end_chill() -> void:
+	if not is_chilled():
+		_chill_factor = 1.0
+		sprite.modulate = Color.WHITE
+
+
 func is_stunned() -> bool:
 	return _stun_time > 0.0
 
@@ -251,6 +276,8 @@ func _physics_process(delta: float) -> void:
 		State.RETURN:
 			_process_return()
 
+	if _chill_until > 0 and is_chilled():
+		velocity *= _chill_factor
 	velocity += _knockback
 	_knockback = _knockback.move_toward(Vector2.ZERO, 700.0 * delta)
 	# stojący w spoczynku nie ruszają się - bez kosztownego move_and_slide (setki potworów w siedliskach)

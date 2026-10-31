@@ -18,7 +18,7 @@ const LINK := Color(0.35, 0.36, 0.45)
 const ICONS := {
 	"physical_damage": preload("res://assets/skills/node_physical.png"), "attack_speed": preload("res://assets/skills/node_attack_speed.png"),
 	"crit_chance": preload("res://assets/skills/node_crit.png"), "combo_window": preload("res://assets/skills/node_combo.png"),
-	"spell_damage": preload("res://assets/skills/node_spell.png"), "cast_speed": preload("res://assets/skills/node_spell.png"),
+	"spell_damage": preload("res://assets/skills/node_spell_power.png"), "cast_speed": preload("res://assets/skills/node_cast_speed.png"),
 	"whirl_radius": preload("res://assets/skills/whirlwind.png"), "flicker_mana": preload("res://assets/skills/flicker.png"),
 	"smoke_charge": preload("res://assets/skills/smoke_burst.png"), "smoke_damage": preload("res://assets/skills/smoke_burst.png"),
 	"whirl_damage": preload("res://assets/skills/whirlwind.png"), "flicker_damage": preload("res://assets/skills/flicker.png"),
@@ -39,14 +39,24 @@ const ICONS := {
 	"arrow_range": preload("res://assets/skills/node_range.png"), "ballista_damage": preload("res://assets/skills/ballista.png"),
 	"ballista_time": preload("res://assets/skills/ballista.png"), "snare_time": preload("res://assets/skills/snare.png"),
 	"venom_damage": preload("res://assets/skills/venom_arrows.png"), "vault_cooldown": preload("res://assets/skills/vault.png"),
+	"fireball_charge": preload("res://assets/skills/fireball.png"), "fireball_damage": preload("res://assets/skills/fireball.png"),
+	"burn_damage": preload("res://assets/skills/meteor.png"), "meteor_radius": preload("res://assets/skills/meteor.png"),
+	"shield_share": preload("res://assets/skills/mana_shield.png"), "blink_cooldown": preload("res://assets/skills/blink.png"),
+	"rune_bonus": preload("res://assets/skills/rune_stone.png"), "chain_targets": preload("res://assets/skills/chain_lightning.png"),
+	"storm_time": preload("res://assets/skills/storm_call.png"), "orb_damage": preload("res://assets/skills/ball_lightning.png"),
+	"lance_damage": preload("res://assets/skills/frost_lance.png"), "chill_time": preload("res://assets/skills/blizzard.png"),
+	"lance_pierce": preload("res://assets/skills/frost_lance.png"), "blizzard_damage": preload("res://assets/skills/blizzard.png"),
+	"blizzard_time": preload("res://assets/skills/blizzard.png"),
 }
 ## Ikona startu drzewka (zwykły atak tą bronią).
-const START_ICONS := {"bow": preload("res://assets/items/short_bow.png")}
+const START_ICONS := {"bow": preload("res://assets/items/short_bow.png"), "spell": preload("res://assets/items/spellbook.png")}
 const KEYSTONE_ICONS := {"endless_whirl": preload("res://assets/skills/ks_endless_whirl.png"),
 		"blade_dance": preload("res://assets/skills/ks_blade_dance.png"), "smoke_shadow": preload("res://assets/skills/ks_smoke_shadow.png"),
 		"blood_frenzy": preload("res://assets/skills/ks_blood_frenzy.png"),
 		"falcon_eye": preload("res://assets/skills/ks_falcon_eye.png"), "hail": preload("res://assets/skills/ks_hail.png"),
-		"shadow_hunter": preload("res://assets/skills/ks_shadow_hunter.png"), "running_fire": preload("res://assets/skills/ks_running_fire.png")}
+		"shadow_hunter": preload("res://assets/skills/ks_shadow_hunter.png"), "running_fire": preload("res://assets/skills/ks_running_fire.png"),
+		"harmony": preload("res://assets/skills/ks_harmony.png"), "blood_sacrifice": preload("res://assets/skills/ks_blood_sacrifice.png"),
+		"full_power": preload("res://assets/skills/ks_full_power.png"), "echo_runes": preload("res://assets/skills/ks_echo_runes.png")}
 
 var weapon_type := "melee"
 var selected_id := ""

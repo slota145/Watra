@@ -5,8 +5,8 @@ class_name Skills
 ## Aktywną umiejętność i uderzenie gracz kładzie na dowolny slot paska (Hotbar).
 ## Wszystkie działają tylko z założoną bronią swojego rodzaju.
 ## Umiejętności odblokowuje się i ulepsza za złoto (koszty rosną z poziomem). Broń, która ma drzewko (SkillTree,
-## miecz i łuk), odblokowuje je węzłem za punkt umiejętności, a złoto kupuje kolejne poziomy.
-## Umiejętności drzewka (type "skill") mają własną obsługę (SwordSkills - miecz, BowSkills - łuk) i własne combo (COMBOS).
+## miecz, łuk i księga magii), odblokowuje je węzłem za punkt umiejętności, a złoto kupuje kolejne poziomy.
+## Umiejętności drzewka (type "skill") mają własną obsługę (SwordSkills - miecz, BowSkills - łuk, SpellSkills - księga) i własne combo (COMBOS).
 ## Każda umiejętność to atak, czar albo jedno i drugie (TAGS): ataki wzmacniają szybkość ataku i obrażenia fizyczne,
 ## czary - szybkość rzucania i obrażenia magiczne.
 
@@ -116,6 +116,46 @@ const DATA := {
 		"name": "Balista", "weapon": "bow", "type": "skill",
 		"icon": preload("res://assets/skills/ballista.png"),
 		"description": "Stawiasz pod kursorem balistę, która sama strzela w najbliższych wrogów. Naraz stoi tylko jedna.",
+	},
+	"frost_lance": {
+		"name": "Włócznia Marzanny", "weapon": "spell", "type": "skill",
+		"icon": preload("res://assets/skills/frost_lance.png"),
+		"description": "Lodowa włócznia przebija wrogów na wylot i ich spowalnia. Combo: zaraz po Kuli ognia przy pierwszym trafieniu rozpryskuje się na lodowe odłamki.",
+	},
+	"blizzard": {
+		"name": "Zamieć", "weapon": "spell", "type": "skill",
+		"icon": preload("res://assets/skills/blizzard.png"),
+		"description": "Śnieżyca pod kursorem przez kilka sekund rani i spowalnia wrogów. Combo: zaraz po Włóczni Marzanny od razu zamraża wrogów w kręgu.",
+	},
+	"storm_call": {
+		"name": "Burza Peruna", "weapon": "spell", "type": "skill",
+		"icon": preload("res://assets/skills/storm_call.png"),
+		"description": "Przez kilka sekund pioruny biją z nieba w wrogów wokół ciebie. Combo: zaraz po Łańcuchu błyskawic każdy piorun przeskakuje na dwóch kolejnych wrogów.",
+	},
+	"ball_lightning": {
+		"name": "Kula Piorunów", "weapon": "spell", "type": "skill",
+		"icon": preload("res://assets/skills/ball_lightning.png"),
+		"description": "Powolna kula piorunów leci w stronę kursora i razi wyładowaniami wszystkich wrogów obok. Combo: zaraz po Fali piorunów wybucha na końcu lotu.",
+	},
+	"meteor": {
+		"name": "Spadająca Gwiazda", "weapon": "spell", "type": "skill",
+		"icon": preload("res://assets/skills/meteor.png"),
+		"description": "Po chwili w miejsce pod kursorem spada płonąca gwiazda - wielki wybuch podpala wrogów. Combo: zaraz po Zamieci zadaje podwójne obrażenia.",
+	},
+	"blink": {
+		"name": "Krok przez Mgłę", "weapon": "spell", "type": "skill",
+		"icon": preload("res://assets/skills/blink.png"),
+		"description": "Rozpływasz się we mgle i pojawiasz pod kursorem. Combo: następna Kula ognia po Kroku przez Mgłę jest od razu w pełni naładowana.",
+	},
+	"mana_shield": {
+		"name": "Tarcza Many", "weapon": "spell", "type": "skill",
+		"icon": preload("res://assets/skills/mana_shield.png"),
+		"description": "Na kilka sekund część obrażeń zamiast zdrowia zabiera mana. Combo: zaraz po Kroku przez Mgłę tarcza przez pierwsze 2 s przyjmuje całe ciosy.",
+	},
+	"rune_stone": {
+		"name": "Kamień Runiczny", "weapon": "spell", "type": "skill",
+		"icon": preload("res://assets/skills/rune_stone.png"),
+		"description": "Stawiasz pod kursorem kamień z runami. Gdy stoisz w jego kręgu, twoje czary są mocniejsze i rzucasz je szybciej. Naraz stoi tylko jeden.",
 	},
 	"chain_lightning": {
 		"name": "Łańcuch błyskawic", "weapon": "spell", "type": "strike",
@@ -292,6 +332,62 @@ const BALLISTA_TIME := 15.0
 const BALLISTA_INTERVAL := 1.1
 const BALLISTA_RANGE := 260.0
 const BALLISTA_PLACE := 120.0
+## Włócznia Marzanny: mana, odnowienie, prędkość, spowolnienie (mnożnik prędkości wroga i czas), odłamki (combo).
+const LANCE_MANA := 12.0
+const LANCE_COOLDOWN := 1.0
+const LANCE_SPEED := 300.0
+const CHILL_FACTOR := 0.5
+const CHILL_TIME := 2.5
+const LANCE_SHARDS := 6
+const LANCE_SHARD_DAMAGE := 0.5
+## Zamieć: mana, odnowienie, czas, promień, odstęp ran, zasięg postawienia, zamrożenie (combo).
+const BLIZZARD_MANA := 22.0
+const BLIZZARD_COOLDOWN := 7.0
+const BLIZZARD_TIME := 3.5
+const BLIZZARD_RADIUS := 60.0
+const BLIZZARD_TICK := 0.4
+const BLIZZARD_RANGE := 240.0
+const FREEZE_TIME := 1.6
+## Burza Peruna: mana, odnowienie, czas, odstęp piorunów, zasięg, przeskoki (combo).
+const STORM_MANA := 24.0
+const STORM_COOLDOWN := 9.0
+const STORM_TIME := 4.0
+const STORM_INTERVAL := 0.35
+const STORM_RANGE := 160.0
+const STORM_JUMPS := 2
+## Kula Piorunów: mana, odnowienie, prędkość, zasięg lotu, promień wyładowań i ich odstęp, wybuch (combo).
+const ORB_MANA := 16.0
+const ORB_COOLDOWN := 3.0
+const ORB_SPEED := 90.0
+const ORB_RANGE := 280.0
+const ORB_RADIUS := 50.0
+const ORB_TICK := 0.3
+const ORB_BLAST := 70.0
+## Spadająca Gwiazda: mana, odnowienie, opóźnienie, promień, zasięg, podpalenie (część obrażeń przez BURN_TIME s).
+const METEOR_MANA := 26.0
+const METEOR_COOLDOWN := 6.0
+const METEOR_DELAY := 0.8
+const METEOR_RADIUS := 60.0
+const METEOR_RANGE := 260.0
+const BURN_TIME := 3.0
+const METEOR_BURN := 0.5
+## Krok przez Mgłę: mana, odnowienie, zasięg.
+const BLINK_MANA := 10.0
+const BLINK_COOLDOWN := 3.0
+const BLINK_RANGE := 170.0
+## Tarcza Many: mana, odnowienie, czas, część ciosów przyjmowana przez manę, many za punkt obrażeń, pełna tarcza (combo).
+const SHIELD_MANA := 15.0
+const SHIELD_COOLDOWN := 12.0
+const SHIELD_TIME := 6.0
+const SHIELD_SHARE := 0.5
+const SHIELD_MANA_PER_DAMAGE := 1.0
+const SHIELD_FULL_TIME := 2.0
+## Kamień Runiczny: mana, odnowienie, czas, promień kręgu, zasięg postawienia.
+const RUNE_MANA := 20.0
+const RUNE_COOLDOWN := 14.0
+const RUNE_TIME := 15.0
+const RUNE_RADIUS := 70.0
+const RUNE_PLACE := 120.0
 ## Ładowanie kuli ognia: czas do pełnej mocy, dodatkowa mana zjadana w trakcie
 ## i ile razy więcej obrażeń / większy promień daje pełne naładowanie.
 const FIREBALL_CHARGE_TIME := 1.5
@@ -310,7 +406,8 @@ const TAGS := {
 	"rend": ["attack"], "ground_slam": ["attack"], "riposte": ["attack"], "war_cry": ["cry"], "spectral_blades": ["spell"],
 	"seeker": ["attack"], "rapid_volley": ["attack"], "multishot": ["attack"], "power_shot": ["attack"], "arrow_rain": ["attack"],
 	"vault": ["attack"], "snare": ["attack"], "falcon": ["attack"], "venom_arrows": ["attack"], "wind_arrow": ["attack", "spell"],
-	"ballista": ["attack"],
+	"ballista": ["attack"], "frost_lance": ["spell"], "blizzard": ["spell"], "storm_call": ["spell"], "ball_lightning": ["spell"],
+	"meteor": ["spell"], "blink": ["spell"], "mana_shield": ["spell"], "rune_stone": ["spell"],
 	"chain_lightning": ["spell"], "thunder_wave": ["spell"], "fireball": ["spell"],
 }
 
@@ -332,7 +429,12 @@ static func tags_text(id: String) -> String:
 const COMBOS := {"smoke_burst": ["any"], "flicker": ["whirlwind"], "rend": ["flicker"], "ground_slam": ["crescent"],
 		"lunge": ["riposte"], "spectral_blades": ["whirlwind"],
 		"power_shot": ["seeker"], "arrow_rain": ["multishot"], "multishot": ["vault"], "falcon": ["seeker"],
-		"venom_arrows": ["snare"], "wind_arrow": ["vault"]}
+		"venom_arrows": ["snare"], "wind_arrow": ["vault"],
+		"frost_lance": ["fireball"], "blizzard": ["frost_lance"], "storm_call": ["chain_lightning"], "ball_lightning": ["thunder_wave"],
+		"meteor": ["blizzard"], "fireball": ["blink"], "mana_shield": ["blink"]}
+## Żywioły czarów (węzeł kluczowy Harmonia Żywiołów, SpellSkills).
+const ELEMENTS := {"fireball": "fire", "meteor": "fire", "frost_lance": "ice", "blizzard": "ice",
+		"chain_lightning": "lightning", "thunder_wave": "lightning", "storm_call": "lightning", "ball_lightning": "lightning"}
 
 
 ## Umiejętności danego rodzaju broni w kolejności: aktywna, uderzenie, dodatkowy cios, życie, mana.
@@ -471,6 +573,38 @@ static func wind_damage(level: int) -> float:
 	return 1.1 + 0.15 * level
 
 
+static func lance_damage(level: int) -> float:
+	return 1.2 + 0.18 * level
+
+
+static func lance_pierce(level: int) -> int:
+	return 2 + level
+
+
+## Zamieć: procent obrażeń broni co BLIZZARD_TICK s.
+static func blizzard_damage(level: int) -> float:
+	return 0.35 + 0.06 * level
+
+
+## Burza Peruna: procent obrażeń broni za piorun.
+static func storm_damage(level: int) -> float:
+	return 0.9 + 0.12 * level
+
+
+## Kula Piorunów: procent obrażeń broni za wyładowanie (co ORB_TICK s); wybuch - razy 3.
+static func orb_damage(level: int) -> float:
+	return 0.4 + 0.06 * level
+
+
+static func meteor_damage(level: int) -> float:
+	return 2.6 + 0.35 * level
+
+
+## Kamień Runiczny: premia do obrażeń magicznych i szybkości rzucania w kręgu.
+static func rune_bonus(level: int) -> float:
+	return 0.15 + 0.03 * level
+
+
 ## Balista: procent obrażeń broni na bełt.
 static func ballista_damage(level: int) -> float:
 	return 0.7 + 0.12 * level
@@ -529,7 +663,8 @@ static func mana_cost(id: String) -> float:
 			"lunge": LUNGE_MANA, "crescent": CRESCENT_MANA, "seeker": SEEKER_MANA, "rapid_volley": VOLLEY_MANA,
 			"chain_lightning": CHAIN_MANA, "thunder_wave": WAVE_MANA, "power_shot": POWER_MANA, "arrow_rain": RAIN_MANA,
 			"vault": VAULT_MANA, "snare": SNARE_MANA, "falcon": FALCON_MANA, "venom_arrows": VENOM_MANA, "wind_arrow": WIND_MANA,
-			"ballista": BALLISTA_MANA}.get(id, 0.0)
+			"ballista": BALLISTA_MANA, "frost_lance": LANCE_MANA, "blizzard": BLIZZARD_MANA, "storm_call": STORM_MANA,
+			"ball_lightning": ORB_MANA, "meteor": METEOR_MANA, "blink": BLINK_MANA, "mana_shield": SHIELD_MANA, "rune_stone": RUNE_MANA}.get(id, 0.0)
 
 
 static func mana_cost_text(id: String) -> String:
@@ -636,6 +771,27 @@ static func effect_text(id: String, level: int) -> String:
 		"ballista":
 			return "%d%% obrażeń co %s s przez %s s" % [roundi(ballista_damage(level) * 100), _decimal(BALLISTA_INTERVAL, 1),
 					_decimal(BALLISTA_TIME, 0)]
+		"frost_lance":
+			return "%d%% obrażeń, przebija %d wrogów, spowolnienie %d%% na %s s" % [roundi(lance_damage(level) * 100), lance_pierce(level),
+					roundi((1.0 - CHILL_FACTOR) * 100), _decimal(CHILL_TIME, 1)]
+		"blizzard":
+			return "%d%% obrażeń co %s s przez %s s, krąg %d" % [roundi(blizzard_damage(level) * 100), _decimal(BLIZZARD_TICK, 1),
+					_decimal(BLIZZARD_TIME, 1), BLIZZARD_RADIUS]
+		"storm_call":
+			return "%d%% obrażeń za piorun co %s s przez %s s" % [roundi(storm_damage(level) * 100), _decimal(STORM_INTERVAL, 2),
+					_decimal(STORM_TIME, 0)]
+		"ball_lightning":
+			return "%d%% obrażeń co %s s, zasięg %d" % [roundi(orb_damage(level) * 100), _decimal(ORB_TICK, 1), ORB_RANGE]
+		"meteor":
+			return "Wybuch %d%% obrażeń, promień %d, podpalenie %d%% przez %s s" % [roundi(meteor_damage(level) * 100), METEOR_RADIUS,
+					roundi(meteor_damage(level) * METEOR_BURN * 100), _decimal(BURN_TIME, 0)]
+		"blink":
+			return "Zasięg %d, odnowienie %s s" % [BLINK_RANGE, _decimal(BLINK_COOLDOWN, 0)]
+		"mana_shield":
+			return "%d%% obrażeń zabiera mana przez %s s, odnowienie %s s" % [roundi(SHIELD_SHARE * 100), _decimal(SHIELD_TIME, 0),
+					_decimal(SHIELD_COOLDOWN, 0)]
+		"rune_stone":
+			return "+%d%% obrażeń magicznych i szybkości rzucania w kręgu, %s s" % [roundi(rune_bonus(level) * 100), _decimal(RUNE_TIME, 0)]
 	match DATA[id]["type"]:
 		"health_regen":
 			return "+%s zdrowia/s i %s%% maks. zdrowia/s" % [_decimal(0.4 * level, 1), _decimal(0.3 * level, 1)]

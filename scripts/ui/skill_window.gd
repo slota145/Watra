@@ -4,7 +4,7 @@ extends PanelContainer
 ## Każda broń ma zwykły atak, aktywną umiejętność, uderzenie, dodatkowy cios (atak zaraz po uderzeniu -
 ## wymaga uderzenia) i dwie regeneracje. Odblokowanie i ulepszenia za złoto. Atak, umiejętność aktywną
 ## i uderzenie przeciąga się na pasek umiejętności na dole ekranu (Hotbar); przy nazwie widać, pod jakim są klawiszem.
-## Broń z drzewkiem (SkillTree: miecz i łuk) zamiast kart pokazuje sieć węzłów (SkillTreeView): punkty umiejętności,
+## Broń z drzewkiem (SkillTree: miecz, łuk i księga magii) zamiast kart pokazuje sieć węzłów (SkillTreeView): punkty umiejętności,
 ## szczegóły zaznaczonego węzła z przyciskami "Wybierz" (1 punkt) i "Ulepsz" (złoto, umiejętności z wybranym węzłem).
 ## Okno otwiera się na zakładce założonej broni.
 
