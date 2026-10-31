@@ -134,7 +134,8 @@ static func legends() -> Array[String]:
 		if not id in result:
 			result.append(id)
 	for id: String in Items.DATA:
-		if Items.DATA[id].get("rarity", "") == "legendary" and not id in result:
+		# Legendarny tobół to torba (Bags), nie legenda z efektem
+		if Items.DATA[id].get("rarity", "") == "legendary" and not id in result and not Items.DATA[id].has("bag"):
 			result.append(id)
 	for id: String in Legends.DATA:
 		if not id in result:

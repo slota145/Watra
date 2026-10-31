@@ -513,6 +513,10 @@ static func chest_loot(place: int, level: int) -> Array:
 		loot.append([Gems.roll("", Gems.cut_for_level(level)), 1])
 	if randf() < (0.25 if first else 0.1 if top else 0.0):
 		loot.append(["rune_chaos", 1])
+	if first:
+		var bag := Bags.roll_vault(level, 0.5)
+		if bag != "":
+			loot.append([bag, 1])
 	if first and level >= 23 and randf() < 0.1:
 		loot.append([Essences.HEART, 1])
 	return loot

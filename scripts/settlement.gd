@@ -187,7 +187,7 @@ const TAX_PER_LEVEL := 4
 const MERCHANT_ROTATION := 600.0
 ## (kamienie zaklinające są tylko w lochach Watry - kupiec ich nie sprzedaje).
 const MERCHANT_STOCK := 4
-const MERCHANT_POOL: Array[String] = ["greater_health_potion", "greater_mana_potion", "pouch", "backpack", "guard_horn"]
+const MERCHANT_POOL: Array[String] = ["greater_health_potion", "greater_mana_potion", "guard_horn"]
 const LINES_ZERCA: Array[String] = ["Dopóki płonie ogień, Ostoja trwa.", "Perunie, czuwaj nad nami.",
 		"Watra słyszy każdą ofiarę.", "Ogień pamięta tych, którzy go strzegli."]
 const LINES_JEWELER: Array[String] = ["Każdy kamień ma swoją duszę.", "Szlif to cierpliwość, nie siła.",
@@ -1588,7 +1588,7 @@ func _build_npcs() -> void:
 	merchant.display_name = "Kupiec Bogdan"
 	merchant.looks_around = false
 	merchant.quest_id = "goblin_purge"
-	merchant.shop_sells.assign(["health_potion", "mana_potion", "pouch", "backpack", "spellbook", "copper_ring",
+	merchant.shop_sells.assign(["health_potion", "mana_potion", "spellbook", "copper_ring",
 			"ring_of_strength", "silver_earring", "fang_earring", "amber_necklace"])
 	_entities.add_child(merchant)
 	map_markers.append({"position": merchant.position, "color": MAP_MERCHANT, "size": 2.0})
