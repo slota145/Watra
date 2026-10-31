@@ -199,6 +199,8 @@ var _last_max_mana := 0
 var boons := Boons.new()
 ## Paski szybkiego wyboru: przedmioty pod 1-0 i umiejętności (osobny układ dla każdej broni).
 var hotbar := Hotbar.new()
+## Encyklopedia: odkryte przedmioty i pokonane potwory.
+var codex := Codex.new()
 
 ## Plecak bez toreb i miejsca na torby (sakwy, plecaki) pod ekwipunkiem.
 const BASE_INVENTORY := 20
@@ -237,6 +239,8 @@ func _ready() -> void:
 	skills.character_level = stats.level
 	boons.name = "Boons"
 	add_child(boons)
+	codex.name = "Codex"
+	add_child(codex)
 	stats.boons = boons
 	spawn_point = position
 	set_hero(Game.hero)
@@ -256,6 +260,8 @@ func _ready() -> void:
 	_make_fireball_orb()
 	item_picked.connect(_on_item_picked)
 	inventory.changed.connect(_update_gather_quests)
+	for source: Signal in [inventory.changed, storage.changed, equipment.changed]:
+		source.connect(func() -> void: codex.note_owned(self))
 	storage.changed.connect(_update_gather_quests)
 	quests.changed.connect(_update_gather_quests)
 	_emit_resources.call_deferred()
@@ -941,6 +947,7 @@ func get_save_data() -> Dictionary:
 		"bags": bags.duplicate(),
 		"boons": boons.get_save_data(),
 		"hotbar": hotbar.get_save_data(),
+		"codex": codex.get_save_data(),
 		"generated_items": Loot.export_used(_owned_ids()),
 		"hero": hero,
 	}
@@ -985,6 +992,9 @@ func load_save_data(data: Dictionary) -> void:
 	skills.character_level = stats.level
 	skills.changed.emit()
 	inventory.load_save_data(data.get("inventory", []))
+	# starsze zapisy bez encyklopedii odkrywają przynajmniej to, co gracz ma
+	codex.load_save_data(data.get("codex", {}))
+	codex.note_owned(self)
 	var pos: Array = data.get("position", [spawn_point.x, spawn_point.y])
 	global_position = Vector2(pos[0], pos[1])
 	reset_physics_interpolation()  # skok, nie ruch - bez smugi przez ekran

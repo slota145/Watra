@@ -11,6 +11,8 @@ var _fails := 0
 var _enemy: Node
 var _hp := 0
 var _x := 0.0
+## Zdrowie wrogów w zasięgu Burzy Peruna (piorun wybiera cel losowo).
+var _near := {}
 
 
 func _initialize() -> void:
@@ -93,10 +95,16 @@ func _process(_d: float) -> bool:
 			_ready_to_cast(p)
 			p.note_skill("chain_lightning")
 			ss.press("storm_call")
+			_near.clear()
+			for e in _world.get_tree().get_nodes_in_group("enemies"):
+				if e.state != 4 and e.global_position.distance_to(p.global_position) <= load("res://scripts/skills.gd").STORM_RANGE:
+					e.set_physics_process(false)
+					_near[e] = e.health
 			check("Burza Peruna (combo - przeskoki)", ss.storm_active() and ss._storm_chain)
 			check("Burza w efektach", load("res://scripts/status_effects.gd").list(p).any(func(e: Dictionary) -> bool: return e["name"] == "Burza Peruna"))
 		170:
-			check("Burza Peruna rani", _hurt(), "%d -> %d" % [_hp, _now()])
+			check("Burza Peruna rani", _near.keys().any(func(e) -> bool: return not is_instance_valid(e) or e.health < _near[e] or e.state == 4),
+					"%d wrogów w zasięgu" % _near.size())
 			# Kula Piorunów
 			_aim_at_enemy(p)
 			_ready_to_cast(p)

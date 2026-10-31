@@ -253,16 +253,13 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   nie od klawisza; slot umiejętności gotowej do combo świeci z kurczącym się pierścieniem czasu (`ActionBars._process`).
   Kolejne combo przychodzą z etapem 2 drzewka miecza.
 
-- [ ] **Encyklopedia w grze** (pomysł autora): osobne okno z zakładkami.
-  - **Legendy**: wszystkie legendarne przedmioty (`scripts/legends.gd`, legendarne pierścienie i kolczyki) z ikoną, opisem
-    efektu i źródłem (który boss, skarbiec lochów).
-    W trybie deweloperskim kliknięcie ikony od razu daje jedną sztukę.
-  - **Bossowie i potwory**: grafika, kraina i poziomy, łup (także legendy), stopień w bestiariuszu mędrca
-    (`Boons.bestiary`), liczba pokonanych.
-  - Do ustalenia z autorem:
-    - czy nieznalezione wpisy są zakryte („???”) i odsłaniają się po zdobyciu lub pokonaniu, jak kolekcja do uzupełniania;
-    - pod jakim klawiszem otwiera się okno;
-    - czy encyklopedia obejmuje też zwykłe przedmioty, zioła i mikstury.
+- [x] **Encyklopedia** (klawisz L, okno `scripts/ui/codex_window.gd`, dane i odkrycia w `scripts/codex.gd` - dziecko gracza,
+  zapisywane; ikona z PixelLab przez `tools/codex_art.py`): zakładki Legendy (ze źródłem: boss albo skarbiec lochów),
+  Bossowie, Potwory (kraina i poziomy, liczba pokonanych, stopień w bestiariuszu, trofeum, legendy bossa, opis),
+  Zioła i mikstury, Przedmioty (linie po 5 tierów). Nieodkryte wpisy to ciemne sylwetki z „???” i licznik „Odkryto”;
+  przedmiot odkrywa się, gdy trafi do plecaka, na postać albo do magazynu (wylosowany liczy się jako jego baza),
+  potwora - gdy zostanie pokonany. W trybie deweloperskim widać wszystko, a kliknięcie przedmiotu daje jedną sztukę
+  (legendę z poziomem postaci). Nowy potwór wymaga wpisu w `Codex.MONSTERS`.
 
 ### Watra i Ostoja
 
