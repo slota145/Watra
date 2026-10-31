@@ -32,6 +32,8 @@ const DUNGEON := "dungeon"
 static func zone_name(zone: String) -> String:
 	if zone == DUNGEON:
 		return Dungeons.NAME
+	if zone == "world":
+		return "cały świat (wydarzenie)"
 	return DATA.get(zone, {}).get("name", zone)
 
 

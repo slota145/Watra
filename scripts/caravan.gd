@@ -1,7 +1,8 @@
 class_name Caravan
 extends Node
 ## Wóz kupiecki z eskortą strażników, jadący drogą przez osadę od jednego krańca mapy
-## do drugiego. Po dojechaniu do końca znika (sygnał `finished`).
+## do drugiego. Po dojechaniu do końca znika (sygnał `finished`). W wydarzeniu „karawana” (EventSite) wóz stoi,
+## gdy `waiting` (gracz został w tyle), a `wagon_position` / `progress` mówią, gdzie jest.
 
 signal finished
 
@@ -28,6 +29,8 @@ var _distance := 0.0
 var _anim := 0.0
 var _wagon: Sprite2D
 var _guards: Array[Sprite2D] = []
+## Eskorta: wóz czeka na gracza.
+var waiting := false
 
 
 ## points - droga w pikselach świata; entities - węzeł sortowany po Y.
@@ -61,6 +64,8 @@ func setup(points: PackedVector2Array, entities: Node2D) -> void:
 
 
 func _process(delta: float) -> void:
+	if waiting:
+		return
 	_distance += SPEED * delta
 	_anim += delta
 	if _distance > _length + 80.0:
@@ -93,6 +98,24 @@ func _update() -> void:
 		guard.position = _sample(_distance + ESCORT[i][0]) + direction.orthogonal() * ESCORT[i][1]
 		guard.flip_h = direction.x < 0.0
 		guard.frame = row * 4 + int(_anim * 7.0) % 4
+
+
+func wagon_position() -> Vector2:
+	return _wagon.position if is_instance_valid(_wagon) else Vector2.ZERO
+
+
+## Ile drogi przejechał (0..1).
+func progress() -> float:
+	return clampf(_distance / maxf(_length, 1.0), 0.0, 1.0)
+
+
+## Koniec bez dojazdu (wóz zniszczony): wóz i strażnicy znikają.
+func _exit_tree() -> void:
+	var nodes: Array = [_wagon]
+	nodes.append_array(_guards)
+	for node in nodes:
+		if is_instance_valid(node):
+			node.queue_free()
 
 
 func _set_wagon_texture(texture: Texture2D) -> void:

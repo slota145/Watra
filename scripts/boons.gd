@@ -30,6 +30,12 @@ const DEFS := {
 			"description": "+4 zdrowia i +2 many na sekundę, +5% maks. zdrowia", "gold": 60, "gold_per_level": 10},
 	"watra_glow": {"name": "Blask Watry", "group": "watra", "time": 1200.0, "stats": {"gold_find": 0.15, "xp_gain": 0.08},
 			"description": "+15% znajdowanego złota, +8% doświadczenia", "gold": 60, "gold_per_level": 10},
+	# wydarzenia w świecie (WorldEvents): święto w Ostoi i dowieziona karawana - tańsze sklepy i usługi (shop_discount)
+	"festival": {"name": "Święto w Ostoi", "group": "festival", "time": 600.0,
+			"stats": {"xp_gain": 0.2, "gold_find": 0.25, "shop_discount": 0.2},
+			"description": "+20% doświadczenia, +25% złota, kupcy i usługi w Ostoi 20% taniej"},
+	"caravan_trade": {"name": "Towar z karawany", "group": "trade", "time": 600.0, "stats": {"shop_discount": 0.15},
+			"description": "kupcy i usługi w Ostoi 15% taniej"},
 	# mikstury zielarki (Herbs): krócej niż posiłek, ale mocniej
 	"elixir_wort": {"name": "Wywar z dziurawca", "group": "elixir", "time": 300.0, "stats": {"health_percent": 0.25},
 			"description": "+25% maks. zdrowia"},
@@ -48,9 +54,11 @@ const DEFS := {
 			"description": "+2 zdrowia i +1 many na sekundę, +5% szybkości ruchu"},
 }
 const GROUP_NAMES := {"meal": "Posiłek", "blessing": "Błogosławieństwo", "rest": "Łaźnia", "watra": "Dar Watry",
-		"elixir": "Mikstura zielarki"}
+		"elixir": "Mikstura zielarki", "festival": "Święto", "trade": "Karawana"}
 const GROUP_COLORS := {"meal": Color(1.0, 0.72, 0.4), "blessing": Color(1.0, 0.92, 0.55), "rest": Color(0.6, 0.85, 1.0),
-		"watra": Color(1.0, 0.5, 0.22), "elixir": Color(0.55, 0.95, 0.5)}
+		"watra": Color(1.0, 0.5, 0.22), "elixir": Color(0.55, 0.95, 0.5), "festival": Color(1.0, 0.6, 0.85), "trade": Color(1.0, 0.85, 0.4)}
+## Najwyższa zniżka u kupców i w usługach (święto i karawana razem).
+const MAX_DISCOUNT := 0.35
 
 ## Watra: ile żaru trzeba do kolejnych poziomów (poziom 1 na start) i co daje każdy poziom.
 const WATRA_LEVELS: Array[int] = [0, 300, 900, 2200, 5000, 11000, 24000]
@@ -108,6 +116,11 @@ func grant(id: String) -> void:
 	var data: Dictionary = DEFS[id]
 	active[data["group"]] = {"id": id, "left": float(data["time"])}
 	changed.emit()
+
+
+## Cena po zniżce ze święta i karawany (sklepy, usługi w Ostoi, warsztat).
+func discounted(gold: int) -> int:
+	return maxi(1, roundi(gold * (1.0 - minf(bonus("shop_discount"), MAX_DISCOUNT)))) if gold > 0 else gold
 
 
 func has_group(group: String) -> bool:

@@ -492,6 +492,13 @@ var _forge_roof: Sprite2D
 var _celebration: Array[Node] = []
 var _celebration_left := 0.0
 var _fireworks := 0
+## Święto (wydarzenie w świecie - EventSite "festival"): ozdoby, kolorowe światła, tańce, fajerwerki; podróżnicy przy Watrze.
+var _festival: Array[Node] = []
+var _festival_left := 0.0
+var _festival_dance := 0.0
+var _festival_fire := 0.0
+const LINES_FESTIVAL: Array[String] = ["Hej, hej, do tańca!", "Niech Watra płonie!", "Zagrajcie coś skocznego!",
+		"Dziś świętujemy!", "Kto mnie zaprosi do tańca?", "Miodu! Więcej miodu!", "Dopóki płonie ogień, Ostoja trwa!"]
 var _firework_timer := 0.0
 var _rotation_timer := MERCHANT_ROTATION
 ## Wieże palisady (na platformach stają łucznicy z koszar).
@@ -549,6 +556,12 @@ func regen_bonus(world_pos: Vector2) -> float:
 ## Czy komórka (w kafelkach świata) leży za palisadą.
 ## Miejsca w Ostoi, między którymi spacerują inni podróżnicy (plac, Watra, karczma, sklep, gildia), w pikselach.
 func traveler_points() -> Array[Vector2]:
+	# święto - wszyscy tańczą wokół Watry
+	if is_festival():
+		var ring: Array[Vector2] = []
+		for i in 10:
+			ring.append(_px(WATRA_POS + Vector2.from_angle(TAU * i / 10.0) * Vector2(4.2, 3.0)))
+		return ring
 	var spots: Array[Vector2] = [WATRA_POS + Vector2(3.5, 2.5), WATRA_POS + Vector2(-2.0, 3.6), Vector2(19.0, 19.6),
 			Vector2(30.0, 22.5), Vector2(36.0, 22.0), Vector2(44.0, 34.4), Vector2(42.0, 21.0)]
 	if project_state("guild") == "built":
@@ -1240,6 +1253,68 @@ func celebrate() -> void:
 	_fireworks = 14
 
 
+# ---------------------------------------------------------------- święto (wydarzenie w świecie)
+func is_festival() -> bool:
+	return _festival_left > 0.0
+
+
+## Święto na `seconds` sekund: girlandy i chorągiewki wokół placu i Watry, kolorowe światła, tańce i fajerwerki.
+func start_festival(seconds: float) -> void:
+	stop_festival()
+	_festival_left = seconds
+	for i in 8:
+		var spot := PLAZA + Vector2.from_angle(TAU * i / 8.0 + 0.2) * (PLAZA_RADIUS + 2.4)
+		_festival.append(_body_of(_prop(["bunting", "garland"][i % 2], spot)))
+	for i in 6:
+		var spot := WATRA_POS + Vector2.from_angle(TAU * i / 6.0 + 0.5) * Vector2(5.2, 3.8)
+		_festival.append(_body_of(_prop(["garland", "bunting"][i % 2], spot)))
+	for i in 10:
+		var at := _px(WATRA_POS + Vector2.from_angle(TAU * i / 10.0) * Vector2(6.0, 4.4))
+		_festival.append(_glow_node(at, Color.from_hsv(float(i) / 10.0, 0.6, 1.0, 0.5), Vector2(60, 46)))
+	for node in _entities.get_children():
+		var npc := node as Npc
+		if npc != null and randf() < 0.4:
+			npc.say(LINES_FESTIVAL.pick_random())
+	_festival_fire = 1.0
+
+
+func stop_festival() -> void:
+	_festival_left = 0.0
+	for node in _festival:
+		if is_instance_valid(node):
+			node.queue_free()
+	_festival.clear()
+
+
+func _process_festival(delta: float) -> void:
+	if _festival_left <= 0.0:
+		return
+	_festival_left -= delta
+	if _festival_left <= 0.0:
+		stop_festival()
+		return
+	# tańce: co chwilę ktoś podskakuje i kręci się w miejscu
+	_festival_dance -= delta
+	if _festival_dance <= 0.0:
+		_festival_dance = randf_range(0.4, 1.0)
+		var dancers: Array = _entities.get_children().filter(func(n: Node) -> bool: return n is Npc and n.role != Npc.Role.WANDER)
+		if not dancers.is_empty():
+			var npc: Npc = dancers.pick_random()
+			var tween := npc.create_tween()
+			for hop in 4:
+				tween.tween_property(npc.sprite, "position:y", npc.sprite.position.y - 5.0, 0.14)
+				tween.tween_callback(func() -> void: npc.sprite.flip_h = not npc.sprite.flip_h)
+				tween.tween_property(npc.sprite, "position:y", npc.sprite.position.y, 0.14)
+			if randf() < 0.3:
+				npc.say(LINES_FESTIVAL.pick_random())
+	_festival_fire -= delta
+	if _festival_fire <= 0.0:
+		_festival_fire = randf_range(2.5, 5.0)
+		var at := _px(WATRA_POS) + Vector2(randf_range(-90, 90), randf_range(-110, -60))
+		SkillEffects.spark(_entities, at, Color.from_hsv(randf(), 0.6, 1.0), 18)
+		Sfx.play_at("explosion", at, -20.0)
+
+
 func _process_celebration(delta: float) -> void:
 	if _celebration_left <= 0.0:
 		return
@@ -1800,6 +1875,7 @@ func _process(delta: float) -> void:
 	if project_state("barracks") == "built":
 		_process_drill(delta)
 	_process_celebration(delta)
+	_process_festival(delta)
 	_process_watra(delta)
 	_process_forge_roof(delta)
 	if project_state("houses") == "built":

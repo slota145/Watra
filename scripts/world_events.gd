@@ -2,6 +2,9 @@ class_name WorldEvents
 extends Node
 ## Losowe wydarzenia w świecie - dziecko gracza, zapisywane. Co INTERVAL sekund w losowej odkrytej krainie (kapliczka)
 ## zaczyna się wydarzenie (TYPES): najazd na kapliczkę, wędrowny czempion, deszcz meteorytów albo polowanie na bossa.
+## Etap 2: world boss (WorldBoss - Żmij Gorynycz w wyższych krainach, Wij w niższych; ogłaszany WORLD_BOSS_WARNING s
+## wcześniej, rzadki - WEIGHTS), karawana do eskortowania (wóz na drodze krainy, po dojechaniu - tańsze sklepy) i święto
+## w Ostoi (tylko Gobliński Las: ozdoby, tańce, premia „Święto” - Boons; bez rankingu).
 ## Gracz dostaje komunikat (także w innej krainie), na mapach widać znacznik, a w krainie wydarzenia stawia je świat
 ## (EventSite): potwory, meteoryty i gromadę podróżników, którzy walczą razem z graczem i rywalizują o wkład.
 ## Bez gracza wydarzenie rozstrzyga się samo (poza oczami gracza - podróżnicy). Poziom wydarzenia: górny poziom krainy,
@@ -22,7 +25,19 @@ const TYPES := {
 			"text": "Nad krainą %s spadają meteoryty! Rozbijaj je i bij potwory z kraterów - uważaj na głowę."},
 	"hunt": {"name": "Polowanie na bossa", "duration": 360.0, "color": Color(0.85, 0.5, 1.0),
 			"text": "Ogłoszono polowanie: %s w krainie %s! Gromada podróżników już rusza."},
+	"world_boss": {"name": "World boss", "duration": 780.0, "color": Color(1.0, 0.35, 0.3),
+			"text": "Ziemia drży... %s pojawi się w krainie %s za minutę! Zbierają się wszyscy podróżnicy."},
+	"caravan": {"name": "Karawana kupiecka", "duration": 420.0, "color": Color(1.0, 0.85, 0.45),
+			"text": "Karawana kupiecka rusza drogą przez krainę %s. Eskortuj wóz do końca - kupcy w Ostoi się odwdzięczą."},
+	"festival": {"name": "Święto w Ostoi", "duration": 600.0, "color": Color(1.0, 0.6, 0.85),
+			"text": "W Ostoi zaczyna się święto! Tańce przy Watrze, więcej doświadczenia i złota, a kupcy sprzedają taniej."},
 }
+## Waga losowania rodzaju (pozostałe - 1): world boss rzadko (mniej więcej co 4-5 wydarzeń w danej krainie), święto czasem.
+const WEIGHTS := {"world_boss": 0.3, "festival": 0.5}
+## World boss: kto w której krainie i za ile sekund się pojawia po ogłoszeniu.
+const WORLD_BOSSES := {"zmij": ["mountains", "ancient", "cemetery"], "wij": ["forest", "fields", "swamp"]}
+const WORLD_BOSS_NAMES := {"zmij": "Żmij Gorynycz", "wij": "Wij"}
+const WORLD_BOSS_WARNING := 60.0
 ## Ile sekund między wydarzeniami (i do pierwszego po wczytaniu gry).
 const INTERVAL := Vector2(600.0, 900.0)
 const FIRST_DELAY := Vector2(240.0, 420.0)
@@ -75,19 +90,43 @@ func _process(delta: float) -> void:
 			start_random()
 		return
 	active["left"] = float(active["left"]) - delta
-	# poza krainą gracza (albo zanim świat je postawi) wydarzenie rozstrzyga się samo
+	if float(active.get("warn", 0.0)) > 0.0:
+		active["warn"] = float(active["warn"]) - delta
+	# poza krainą gracza (albo zanim świat je postawi) wydarzenie rozstrzyga się samo; święto po prostu się kończy
 	if active["left"] <= 0.0 and not active.get("built", false):
-		finish(randf() < OFFSCREEN_SUCCESS)
+		finish(active["type"] == "festival" or randf() < OFFSCREEN_SUCCESS)
 
 
 ## Wydarzenia możliwe w krainie.
 static func types_for(zone: String) -> Array[String]:
-	var result: Array[String] = ["champion", "meteors"]
+	var result: Array[String] = ["champion", "meteors", "caravan", "world_boss"]
 	if zone != "forest":
 		result.append("raid")
+	else:
+		result.append("festival")
 	if zone in HUNT_BOSSES.values():
 		result.append("hunt")
 	return result
+
+
+## Losowy rodzaj z wagami (WEIGHTS).
+static func pick_type(types: Array[String]) -> String:
+	var total := 0.0
+	for type: String in types:
+		total += float(WEIGHTS.get(type, 1.0))
+	var roll := randf() * total
+	for type: String in types:
+		roll -= float(WEIGHTS.get(type, 1.0))
+		if roll <= 0.0:
+			return type
+	return types[-1]
+
+
+static func world_boss_for(zone: String) -> String:
+	for boss: String in WORLD_BOSSES:
+		if zone in WORLD_BOSSES[boss]:
+			return boss
+	return "wij"
 
 
 func start_random() -> bool:
@@ -95,7 +134,7 @@ func start_random() -> bool:
 	if zones.is_empty():
 		return false
 	var zone: String = zones.pick_random()
-	return start(types_for(zone).pick_random(), zone)
+	return start(pick_type(types_for(zone)), zone)
 
 
 ## Początek wydarzenia (także z trybu deweloperskiego i testów).
@@ -118,6 +157,14 @@ func start(type: String, zone: String) -> bool:
 			for boss: String in HUNT_BOSSES:
 				if HUNT_BOSSES[boss] == zone:
 					active["boss"] = boss
+		"world_boss":
+			active["boss"] = world_boss_for(zone)
+			active["warn"] = WORLD_BOSS_WARNING
+			active["level"] = level + 3
+		"festival":
+			# premia działa w całym świecie
+			if _player != null:
+				_player.boons.grant("festival")
 	active["title"] = title_of(active)
 	started.emit(active)
 	changed.emit()
@@ -133,6 +180,8 @@ static func title_of(event: Dictionary) -> String:
 			return "Czempion: %s" % TRAITS[event["trait"]]["name"]
 		"hunt":
 			return "Polowanie: %s" % boss_title(event["boss"])
+		"world_boss":
+			return "World boss: %s" % WORLD_BOSS_NAMES.get(event["boss"], "?")
 	return info["name"]
 
 
@@ -152,6 +201,10 @@ static func announcement(event: Dictionary) -> String:
 			return text % [zone_name, "%s (%s)" % [data["name"], data["text"]]]
 		"hunt":
 			return text % [boss_title(event["boss"]), zone_name]
+		"world_boss":
+			return text % [WORLD_BOSS_NAMES.get(event["boss"], "?"), zone_name]
+		"festival":
+			return text
 	return text % zone_name
 
 
@@ -204,7 +257,7 @@ func finish(success: bool) -> Dictionary:
 		return {}
 	var event := active
 	active = {}
-	if not event.get("built", false) and event["contrib"].is_empty():
+	if not event.get("built", false) and event["contrib"].is_empty() and event["type"] != "festival":
 		_simulate_contrib_into(event)
 	var place := player_place(event)
 	var result := {"type": event["type"], "zone": event["zone"], "title": event["title"], "success": success,
@@ -212,6 +265,9 @@ func finish(success: bool) -> Dictionary:
 			"here": event.get("built", false)}
 	if place > 0 and _player != null:
 		var marks: int = MARKS[mini(place, MARKS.size()) - 1] if success else MARKS_FAIL
+		# world boss - podwójne znaki
+		if event["type"] == "world_boss":
+			marks *= 2
 		result["marks"] = marks
 		if _player.inventory.add_item(MARK, marks) > 0:
 			_player.storage.add_item(MARK, marks)

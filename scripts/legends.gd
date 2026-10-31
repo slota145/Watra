@@ -7,6 +7,19 @@ class_name Legends
 ## Efekty "skill" działają tylko z daną umiejętnością / rodzajem broni - opis to mówi.
 
 const DATA := {
+	# ---------------------------------------------------------------- world bossy (wydarzenia w świecie - WorldBoss)
+	"legend_zmij_fang": {"base": "sword_t5", "name": "Kieł Gorynycza",
+		"description": "Ostrze z kła środkowej głowy Żmija, wciąż gorące. Pokonani wrogowie wybuchają ogniem.",
+		"stats": {"strength": 14, "attack_speed": 0.06}, "effect": {"kind": "kaboom", "chance": 0.35, "per_level": 0.015}},
+	"legend_zmij_scales": {"base": "plate_t5", "name": "Łuski Żmija",
+		"description": "Pancerz z łusek trójgłowego smoka. Pociski odbijają się od niego jak od skały.",
+		"stats": {"vitality": 10, "health": 60}, "effect": {"kind": "wind_shield", "chance": 0.4, "per_level": 0.015}},
+	"legend_wij_lids": {"base": "hood_t5", "name": "Powieki Wija",
+		"description": "Kaptur z ciężkich powiek Wija. Kto go nosi, raz na jakiś czas nie daje się zabić.",
+		"stats": {"vitality": 8, "intelligence": 8, "health": 50}, "effect": {"kind": "undying", "chance": 0.35, "per_level": 0.015}},
+	"legend_wij_roots": {"base": "staff_t5", "name": "Korzeń Wija",
+		"description": "Kostur z korzenia, na którym stał Wij. Gdy stoisz w miejscu, ziemia leczy twoje rany.",
+		"stats": {"intelligence": 14, "mana": 40}, "effect": {"kind": "rooted_regen", "chance": 0.03, "per_level": 0.0015}},
 	# ---------------------------------------------------------------- lochy Watry (skarbiec strażnika, Dungeon)
 	"legend_endless_amulet": {"base": "amulet_t3", "name": "Amulet Wiecznego Wiru",
 		"description": "Wirujący bursztyn ze skarbca w płomieniach Watry. Kto go nosi, nie zatrzymuje się w tańcu ostrzy.",

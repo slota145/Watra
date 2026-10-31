@@ -65,7 +65,7 @@ func _process(_d: float) -> bool:
 				r["level"] = 20
 			p.stats.add_xp(400000)
 			ev.next_in = 9999.0
-			check("typy wydarzeń w Rozlewiskach", ev.types_for("swamp").size() == 4 and not "raid" in ev.types_for("forest"))
+			check("typy wydarzeń w Rozlewiskach", ev.types_for("swamp").size() == 6 and not "raid" in ev.types_for("forest"))
 			check("czempion zaczyna się", ev.start("champion", "swamp") and ev.active["trait"] != "" and ev.active["title"].begins_with("Czempion"))
 			check("komunikat", _world.hud.event_tracker._message.text != "")
 			_build()

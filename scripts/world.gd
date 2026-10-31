@@ -842,6 +842,9 @@ func _on_event_started(event: Dictionary) -> void:
 
 
 func _on_event_finished(result: Dictionary) -> void:
+	if result["type"] == "festival":
+		hud.show_banner("Święto w Ostoi dobiegło końca", WorldEvents.TYPES["festival"]["color"])
+		return
 	hud.event_result.show_result(result)
 
 
