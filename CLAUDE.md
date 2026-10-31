@@ -421,8 +421,12 @@ Oba systemy zależą od gildii poszukiwaczy przygód w Ostoi (budowla `guild` w 
   `fresh`): tańsza oferta z imieniem zbieracza, którą inni szybko wykupują. Łowcy rzucają hasła przy pracy
   (`Travelers.LINES_GATHER`), a czasem proszą o **osłonę** (`World.start_guard`): 40 s, co 8 s kilka pobliskich
   potworów rusza na zbieracza; nagroda - złoto, doświadczenie, część urobku i sława gildii.
-- [ ] Rynek: liczba ofert i przedmiotów rośnie z liczbą podróżników, a najkorzystniejsze oferty szybko znikają
-  wykupione przez innych (świeży towar od zbieraczy już tak działa).
+- [x] **Rynek rośnie z liczbą podróżników** (`Market.size_factor` z `Travelers.active_count`): oferty przedmiotów
+  od 8 (bez gildii) do 60 (pełna gildia, `listing_target`), 4-10 poziomów cen i większe ilości towarów (`book_depth`,
+  `volume` - duże transakcje mniej przesuwają cenę), częściej rzadkie i legendarne przedmioty, więcej kupujących
+  (`demand` - przedmioty gracza schodzą szybciej). Okazje (`Market.deal_of` - taniej od uczciwej ceny) inni wykupują
+  w kilka minut, przepłacone wiszą, a nowe oferty dochodzą stopniowo. Okno rynku: filtr rodzaju, sortowanie (okazja,
+  cena, poziom), przełącznik „Dla mnie” i znaczek okazji (np. „-20%”) przy każdej ofercie.
 - [x] **Rzemiosło statystyk przedmiotów** (`scripts/item_craft.gd`, okno `scripts/ui/workshop_window.gd` - przycisk
   „Warsztat” u kowala po zbudowaniu warsztatu płatnerza; ikony run z PixelLab przez `tools/rune_art.py`): przerzut
   wartości wybranej premii (ten sam tier), przekucie premii, usunięcie, dodanie losowej (do limitu rzadkości),
