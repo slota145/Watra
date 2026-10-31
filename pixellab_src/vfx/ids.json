@@ -185,5 +185,34 @@
       19,
       23
     ]
+  },
+  "spectral_blade": {
+    "effect": "f4844329-4b77-4249-830f-875c01391650",
+    "name": "Widmowe Ostrza - miecz",
+    "frame": [
+      56,
+      28
+    ],
+    "frames": 8,
+    "fps": 12,
+    "loop": true,
+    "anchor": [
+      32,
+      14
+    ]
+  },
+  "spectral_burst": {
+    "effect": "bc70e2ac-57e0-492c-8bfe-5ab9dbdd8843",
+    "name": "Widmowe Ostrza - rozblysk",
+    "frame": [
+      48,
+      48
+    ],
+    "frames": 6,
+    "fps": 18,
+    "anchor": [
+      24,
+      24
+    ]
   }
 }
