@@ -1425,8 +1425,7 @@ func _update_fireball_charge(delta: float, id: String) -> void:
 	if id != "fireball" or is_dashing():
 		_stop_fireball_charge()
 		return
-	var aim := get_global_mouse_position() - body_center()
-	var dir := aim.normalized() if aim != Vector2.ZERO else _facing_vector()
+	var dir := _aim_direction()
 	_ranged_pose(dir)
 	if not _skill_held:
 		var charge := _fireball_charge
@@ -1554,10 +1553,7 @@ func add_shake(amount: float) -> void:
 ## Salwa: więcej strzał z węzłów drzewka i Gradu, a w combo po Odskoku - Skills.VAULT_VOLLEY_ARROWS.
 func _cast(id: String, charge := 0.0, combo := false) -> void:
 	var weapon := equipment.weapon()
-	var aim := get_global_mouse_position() - body_center()
-	if aim == Vector2.ZERO:
-		aim = _facing_vector()
-	var dir := aim.normalized()
+	var dir := _aim_direction()
 	var level := skills.level_of(id)
 	note_skill(id)
 
