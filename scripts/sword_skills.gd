@@ -337,7 +337,7 @@ func _fire_smoke(rows: int, combo: bool) -> void:
 			var at := origin + aim.rotated((k - 1) * spread) * Skills.SMOKE_DISTANCE[ring]
 			var timer := _player.get_tree().create_timer(ring * SMOKE_RING_DELAY + k * 0.02, false)
 			var bonus := (1.0 + _player.skills.tree_bonus("melee", "smoke_damage")) * (_player.combo_damage() if combo else 1.0)
-			timer.timeout.connect(_burst.bind(at, Skills.SMOKE_RADIUS[ring], Skills.smoke_damage(level, ring) * bonus))
+			timer.timeout.connect(_burst.bind(at, Skills.SMOKE_RADIUS[ring] * _player.stats.area_multiplier(), Skills.smoke_damage(level, ring) * bonus))
 
 
 func _burst(at: Vector2, radius: float, multiplier: float) -> void:

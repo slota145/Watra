@@ -497,6 +497,9 @@ func _drop_loot() -> void:
 		_spawn_pickup("goblin_heart", 1)
 	if randf() < equipment_drop_chance * dungeon_mods.get("loot", 1.0):
 		_spawn_pickup(Loot.drop_at_level(level), 1)
+	# kamienie szlachetne po zadaniu jubilera (w lochach - lepsze, z szansą na trzecią premię)
+	if Gems.unlocked and randf() < Gems.DROP_CHANCE * dungeon_mods.get("loot", 1.0):
+		_spawn_pickup(Gems.roll("", Gems.cut_for_level(level), pathing != null), 1)
 
 
 func _spawn_pickup(item_id: String, amount: int) -> void:

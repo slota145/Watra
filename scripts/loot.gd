@@ -37,7 +37,7 @@ const TIER_VALUES := {
 	"physical_damage": [0.03, 0.40], "spell_damage": [0.03, 0.40],
 	"damage_percent": [0.02, 0.30], "crit_chance": [0.01, 0.12], "crit_damage": [0.05, 0.60],
 	"life_on_hit": [1.0, 15.0], "health_regen": [0.2, 8.0], "mana_regen": [0.2, 6.0], "dodge_chance": [0.01, 0.10],
-	"cooldown_reduction": [0.01, 0.15], "gold_find": [0.03, 0.40], "xp_gain": [0.02, 0.25],
+	"cooldown_reduction": [0.01, 0.15], "gold_find": [0.03, 0.40], "xp_gain": [0.02, 0.25], "area": [0.02, 0.25],
 }
 ## Mnożnik ceny sprzedaży wg jakości.
 ## Cena skupu przedmiotu z łupu: z poziomu przedmiotu i jakości (nie z poziomu bazy - dawniej rzadki
@@ -58,7 +58,7 @@ const POOLS := {
 	"chest": ["armor", "health", "vitality", "mana", "strength", "dexterity", "intelligence", "damage",
 			"health_regen", "dodge_chance"],
 	"gloves": ["armor", "health", "attack_speed", "strength", "dexterity", "intelligence", "vitality", "damage",
-			"crit_chance", "crit_damage", "life_on_hit", "cast_speed", "physical_damage"],
+			"crit_chance", "crit_damage", "life_on_hit", "cast_speed", "physical_damage", "area"],
 	"boots": ["armor", "health", "move_speed", "vitality", "mana", "strength", "dexterity", "intelligence",
 			"dodge_chance", "health_regen", "gold_find"],
 	"ring": ["health", "mana", "damage", "strength", "dexterity", "intelligence", "vitality", "attack_speed",
@@ -67,7 +67,7 @@ const POOLS := {
 	"earring": ["health", "mana", "strength", "dexterity", "intelligence", "vitality", "armor", "move_speed",
 			"health_regen", "mana_regen", "cooldown_reduction", "dodge_chance", "xp_gain"],
 	"necklace": ["health", "mana", "damage", "strength", "dexterity", "intelligence", "vitality", "armor",
-			"damage_percent", "crit_damage", "cooldown_reduction", "health_regen", "gold_find", "xp_gain"],
+			"damage_percent", "crit_damage", "cooldown_reduction", "health_regen", "gold_find", "xp_gain", "area"],
 }
 ## Dopisek do nazwy (dopełniacz - pasuje do każdego rodzaju przedmiotu).
 const SUFFIXES := {
@@ -76,6 +76,7 @@ const SUFFIXES := {
 	"armor": "Żółwia", "move_speed": "Zająca", "damage_percent": "Furii", "crit_chance": "Sokoła",
 	"crit_damage": "Kata", "life_on_hit": "Wampira", "health_regen": "Trolla", "mana_regen": "Źródła",
 	"dodge_chance": "Cienia", "cooldown_reduction": "Czasu", "gold_find": "Skarbnika", "xp_gain": "Mędrca",
+	"area": "Rozmachu",
 }
 
 
@@ -199,8 +200,11 @@ static func generate(base: String, quality: String, item_level: int) -> String:
 	if quality != LEGENDARY and not affixes.is_empty():
 		var names: Array = affixes.keys().slice(0, 2).map(func(stat: String) -> String: return SUFFIXES[stat])
 		item_name = "%s %s" % [item_name, " i ".join(names)]
-	return register({"base": base, "quality": quality, "level": item_level, "affixes": affixes, "tiers": tiers,
-			"name": item_name})
+	var recipe := {"base": base, "quality": quality, "level": item_level, "affixes": affixes, "tiers": tiers, "name": item_name}
+	# po zadaniu jubilera magiczne i rzadkie przedmioty czasem mają gniazdo na kamień szlachetny
+	if Gems.unlocked and quality in [MAGIC, RARE] and randf() < Gems.SOCKET_CHANCE:
+		recipe["sockets"] = [{}]
+	return register(recipe)
 
 
 ## Rejestruje przedmiot z przepisu; `id` podany przy wczytywaniu zapisu. Dawne przepisy (bez poziomu
@@ -258,6 +262,19 @@ static func register(recipe: Dictionary, id := "") -> String:
 	item["name"] = recipe["name"]
 	item["base"] = base
 	item["recipe"] = recipe
+	# gniazda na kamienie szlachetne (Gems): premie osadzonych kamieni liczą się osobno (Items.stats_of)
+	var sockets: Array = recipe.get("sockets", [])
+	if not sockets.is_empty():
+		var socket_stats := {}
+		for gem: Dictionary in sockets:
+			var gem_affixes: Dictionary = gem.get("affixes", {})
+			for stat: String in gem_affixes:
+				var value: float = gem_affixes[stat]
+				if _step(stat) == 0.0:
+					gem_affixes[stat] = int(value)
+				socket_stats[stat] = float(socket_stats.get(stat, 0.0)) + value
+		item["sockets"] = sockets
+		item["socket_stats"] = socket_stats
 	item.erase("price")  # nie ma go w sklepach
 	item["sell_price"] = sell_value(recipe["quality"], item_level)
 	Items.generated[id] = item
@@ -304,6 +321,10 @@ static func export_used(ids: Array) -> Dictionary:
 static func import(data: Dictionary) -> void:
 	for id: String in data:
 		var recipe: Dictionary = data[id]
+		if recipe.has("gem"):
+			Gems.register(recipe, id)
+			Items.generated_serial = maxi(Items.generated_serial, int(id.trim_prefix(PREFIX)))
+			continue
 		var affixes: Dictionary = recipe.get("affixes", {})
 		for stat: String in affixes:
 			if _step(stat) == 0.0:

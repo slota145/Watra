@@ -249,16 +249,18 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   - Esencja pasuje tylko do tego samego rodzaju miejsca (z pierścienia do biżuterii, z broni do broni); wyjęcie
     z gniazda niszczy esencję, chyba że zapłaci się kowalowi.
   - Dawne kamienie (zwykłe, doskonałe, uświęcone, miłosierdzia) zostają do zaklinania (`scripts/enchanting.gd`).
-  - **Kamienie szlachetne ze statystykami** (pomysł autora) do tych samych gniazd - od środka gry:
-    - drop kamieni i gniazd w rzadkich przedmiotach odblokowuje zadanie (mini samouczek, np. od kowala albo jubilera
-      w okolicy Wietrznych Turni: przynieś pierwszy kamień, kowal dorabia pierwsze gniazdo i pokazuje, jak go użyć);
-    - rodzaje kamieni (np. rubin, szafir, szmaragd, topaz, ametyst, onyks) z **częściowo losowymi premiami**:
-      każdy rodzaj ma własną pulę premii (np. rubin - zdrowie, regeneracja zdrowia), a część premii jest wspólna
-      dla wszystkich kamieni (np. szybkość ataku, szybkość rzucania, obszar umiejętności, szansa i obrażenia
-      krytyczne, regeneracja many);
-    - kilka szlifów (lepszy szlif - mocniejsze premie), trzy kamienie tego samego szlifu kowal łączy w lepszy;
-    - w końcówce gry (lochy) **lepsze kamienie**, np. z szansą na dodatkową premię;
-    - na co dzień gniazdo trzyma kamień szlachetny, a esencję zamiast niego.
+  - [x] **Kamienie szlachetne i gniazda w przedmiotach** (`scripts/gems.gd`, okno `scripts/ui/jeweler_window.gd`, ikony
+    z PixelLab przez `tools/gem_art.py`, jubiler przez `tools/npc_sheets.py`):
+    - jubiler Dobromir przy kapliczce w Orlej Przełęczy daje zadanie-samouczek „Pierwszy klejnot” (`jeweler_gem`):
+      surowy klejnot wyskakuje na pewno z rudy żelaza w Turniach; po zadaniu (`Gems.unlocked`) kamienie wypadają
+      z potworów (w lochach - lepsze, z szansą na trzecią premię; bossowie zawsze), magiczne i rzadkie przedmioty
+      czasem mają gniazdo, a pierwsze gniazdo u jubilera jest darmowe i gracz dostaje pierwszy kamień;
+    - 6 rodzajów (rubin, szafir, szmaragd, topaz, ametyst, onyks) i 5 szlifów (okruch, odłamek, kamień, szlifowany,
+      królewski - szlif rośnie z poziomem); 2 premie: z puli rodzaju i ze wspólnej (szybkość ataku i rzucania,
+      krytyki, nowy „obszar umiejętności” - `CharacterStats.area_multiplier`, regeneracja);
+    - u jubilera: wydrążenie gniazda (za złoto, jedno na przedmiot, bez legend), osadzenie, darmowe wyjęcie
+      (kamień wraca), łączenie 3 kamieni jednego szlifu w lepszy; gniazda i kamienie siedzą w przepisie
+      wylosowanego przedmiotu (`Loot.register`, `sockets`), premie w `Items.stats_of`.
   - **Gniazda w drzewkach broni** (pomysł autora, jak „jewel sockets” w PoE): w każdym drzewku 2-3 węzły-gniazda
     (`SkillTree`, na końcach gałęzi albo przy węzłach kluczowych), wybierane za punkt umiejętności; wkłada się w nie
     kamień szlachetny, który działa tylko z bronią tego drzewka. Wyjęty kamień wraca do plecaka, a zapomnienie drzewka

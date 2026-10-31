@@ -39,6 +39,7 @@ var offer_window: OfferWindow
 var watra_window: WatraWindow
 var dungeon_window: DungeonWindow
 var codex_window: CodexWindow
+var jeweler_window: JewelerWindow
 ## Paski szybkiego wyboru na dole ekranu i ikony działających efektów pod paskami zdrowia i many.
 var action_bars: ActionBars
 var status_row: StatusRow
@@ -124,6 +125,10 @@ func _ready() -> void:
 	codex_window.name = "CodexWindow"
 	add_child(codex_window)
 	move_child(codex_window, dungeon_window.get_index() + 1)
+	jeweler_window = JewelerWindow.new()
+	jeweler_window.name = "JewelerWindow"
+	add_child(jeweler_window)
+	move_child(jeweler_window, codex_window.get_index() + 1)
 	status_row = StatusRow.new()
 	status_row.name = "StatusRow"
 	status_row.position = Vector2(6, 52)
@@ -179,6 +184,7 @@ func connect_player(player: Player) -> void:
 	npc_dialog.setup(player)
 	storage_window.setup(player)
 	codex_window.setup(player)
+	jeweler_window.setup(player)
 	npc_dialog.rest_requested.connect(_on_rest)
 	npc_dialog.storage_requested.connect(storage_window.open)
 	build_window.setup(player)
@@ -190,6 +196,7 @@ func connect_player(player: Player) -> void:
 	forge_window.setup(player)
 	npc_dialog.forge_requested.connect(forge_window.open)
 	npc_dialog.enchant_requested.connect(_open_enchanting)
+	npc_dialog.jeweler_requested.connect(jeweler_window.open)
 	offer_window.setup(player)
 	npc_dialog.offers_requested.connect(offer_window.open)
 	watra_window.setup(player)
@@ -265,7 +272,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_window(codex_window, "ui_book")
 	elif event.is_action_pressed("ui_cancel"):
 		# Esc najpierw zamyka otwarte okna, a dopiero potem otwiera menu pauzy
-		var windows: Array[Control] = [character_window, inventory_window, big_map, shop_window, skill_window, enchant_window, crafting_window, build_window, board_window, sage_window, forge_window, watra_window, dungeon_window, help_window, quest_journal, npc_dialog, storage_window, codex_window]
+		var windows: Array[Control] = [character_window, inventory_window, big_map, shop_window, skill_window, enchant_window, crafting_window, build_window, board_window, sage_window, forge_window, watra_window, dungeon_window, help_window, quest_journal, npc_dialog, storage_window, codex_window, jeweler_window]
 		if windows.any(func(w: Control) -> bool: return w.visible):
 			Sfx.play("ui_close")
 			for w in windows:

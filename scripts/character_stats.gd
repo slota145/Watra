@@ -156,6 +156,11 @@ func crit_chance() -> float:
 	return minf(_bonus("crit_chance"), MAX_CRIT_CHANCE)
 
 
+## Mnożnik zasięgu umiejętności obszarowych (premia "Obszar umiejętności" z przedmiotów i kamieni szlachetnych).
+func area_multiplier() -> float:
+	return 1.0 + _bonus("area")
+
+
 ## Mnożnik obrażeń ciosu krytycznego (bazowo 1,5).
 func crit_multiplier() -> float:
 	return 1.0 + BASE_CRIT_DAMAGE + _bonus("crit_damage")

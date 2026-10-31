@@ -61,6 +61,22 @@ const DATA := {
 		"complete_text": "Wozy znów dojeżdżają całe! Należy ci się sowita zapłata.",
 		"done_text": "Interesy idą lepiej, odkąd gobliny siedzą cicho.",
 	},
+	"jeweler_gem": {
+		"title": "Pierwszy klejnot",
+		"giver": "Jubiler Dobromir",
+		"type": "gather",
+		"item": "rough_gem",
+		"target_name": "Surowy klejnot",
+		"count": 1,
+		"area": "",
+		"area_name": "złoża rudy żelaza w Wietrznych Turniach",
+		"gold": 300,
+		"xp": 2500,
+		"description": "Te góry kryją więcej niż żelazo, młody. W złożach rudy rodzą się klejnoty - rubiny, szafiry, szmaragdy. Rozbij kilofem złoże rudy żelaza tu, w Turniach, i przynieś mi surowy klejnot. Pokażę ci, co potrafi szlachetny kamień osadzony w orężu.",
+		"progress_text": "Złoża rudy żelaza - rdzawe skały na płaskowyżach. Rozbij jedno kilofem, a klejnot sam wyskoczy.",
+		"complete_text": "Oto i on! Patrz uważnie: oszlifuję go i wydrążę gniazdo w twoim przedmiocie - pierwsze za darmo. Odtąd kamienie szlachetne będą ci wypadać z potworów, a niektóre przedmioty znajdziesz już z gniazdem. Przychodź do mnie osadzać, wyjmować i łączyć kamienie - trzy jednego szlifu dadzą jeden lepszy.",
+		"done_text": "Kamień w gnieździe to jak drugi przedmiot w jednym. Przynieś, co znajdziesz - osadzę, wyjmę albo połączę.",
+	},
 }
 
 
