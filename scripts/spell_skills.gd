@@ -330,6 +330,7 @@ func _blizzard(at: Vector2, combo: bool) -> void:
 	var storm := _Blizzard.new()
 	storm.skills = self
 	storm.position = at
+	storm.radius = Skills.BLIZZARD_RADIUS * _player.stats.area_multiplier()
 	storm.time_left = Skills.BLIZZARD_TIME * (1.0 + _bonus("blizzard_time"))
 	storm.damage = Skills.blizzard_damage(_level("blizzard")) * (1.0 + _bonus("blizzard_damage")) * (_player.combo_damage() if combo else 1.0)
 	var legend := _player.equipment.effect_power("blizzard_freeze")
@@ -414,7 +415,7 @@ func _meteor(at: Vector2, combo: bool) -> void:
 	var star := _Meteor.new()
 	star.skills = self
 	star.position = at
-	star.radius = Skills.METEOR_RADIUS * (1.0 + _bonus("meteor_radius"))
+	star.radius = Skills.METEOR_RADIUS * (1.0 + _bonus("meteor_radius")) * _player.stats.area_multiplier()
 	star.damage = Skills.meteor_damage(_level("meteor")) * (2.0 * _player.combo_damage() if combo else 1.0)
 	_player.get_parent().add_child(star)
 	Sfx.play("fireball_launch", 0.0, 0.6)
@@ -530,6 +531,7 @@ class _Blizzard:
 	extends Node2D
 
 	var skills: SpellSkills
+	var radius := 60.0
 	var damage := 0.4
 	var time_left := 3.5
 	var freeze := 0.0
@@ -544,7 +546,7 @@ class _Blizzard:
 		_snow.lifetime = 0.9
 		_snow.preprocess = 0.9
 		_snow.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-		_snow.emission_rect_extents = Vector2(Skills.BLIZZARD_RADIUS, 6.0)
+		_snow.emission_rect_extents = Vector2(radius, 6.0)
 		_snow.position = Vector2(0, -50)
 		_snow.direction = Vector2(-0.3, 1.0)
 		_snow.spread = 10.0
@@ -565,7 +567,7 @@ class _Blizzard:
 					SkillEffects.spark(get_parent(), enemy.hurt_center(), SpellSkills.ICE_COLOR, 6)
 
 	func _inside(enemy: Goblin) -> bool:
-		return enemy.state != Goblin.State.DEAD and enemy.global_position.distance_to(global_position) <= Skills.BLIZZARD_RADIUS + enemy.hurt_radius
+		return enemy.state != Goblin.State.DEAD and enemy.global_position.distance_to(global_position) <= radius + enemy.hurt_radius
 
 	func _process(delta: float) -> void:
 		queue_redraw()
@@ -589,8 +591,8 @@ class _Blizzard:
 	func _draw() -> void:
 		var alpha := 1.0 if time_left > 0.0 else maxf(_fade / 0.4, 0.0)
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.6))
-		draw_circle(Vector2.ZERO, Skills.BLIZZARD_RADIUS, Color(0.85, 0.95, 1.0, 0.3 * alpha))
-		draw_arc(Vector2.ZERO, Skills.BLIZZARD_RADIUS, 0.0, TAU, 48, Color(0.85, 0.95, 1.0, 0.75 * alpha), 1.5)
+		draw_circle(Vector2.ZERO, radius, Color(0.85, 0.95, 1.0, 0.3 * alpha))
+		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 48, Color(0.85, 0.95, 1.0, 0.75 * alpha), 1.5)
 
 
 ## Kula Piorunów: leci powoli przed siebie, co chwilę razi wrogów obok; z combo na końcu wybucha.

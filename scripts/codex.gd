@@ -113,7 +113,7 @@ func kills_of(id: String) -> int:
 
 ## Baza przedmiotu (wylosowane przedmioty liczą się jako ich baza, np. legenda albo broń danego tieru).
 static func base_of(id: String) -> String:
-	if id == "" or id == "gold":
+	if id == "" or id == "gold" or Items.get_data(id).has("gem"):
 		return ""
 	return str(Items.get_data(id).get("base", id))
 

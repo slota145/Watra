@@ -291,6 +291,8 @@ func _drop_loot() -> void:
 	# (w trybie deweloperskim oba rzadkie)
 	_spawn_pickup(Loot.drop_at_level(level, 0.1, Loot.RARE if _dev_mode() else Loot.MAGIC, 2), 1)
 	_spawn_pickup(Loot.drop_at_level(level, 0.2, Loot.RARE if _dev_mode() else "", 2), 1)
+	if Gems.unlocked:
+		_spawn_pickup(Gems.roll("", mini(Gems.cut_for_level(level) + 1, Gems.CUTS.size() - 1)), 1)
 	for id in legendary_drops:
 		if _dev_mode() or randf() < legendary_drop_chance:
 			_spawn_pickup(Loot.legendary_at_level(id, level), 1)

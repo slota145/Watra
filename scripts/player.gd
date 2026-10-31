@@ -201,6 +201,8 @@ var boons := Boons.new()
 var hotbar := Hotbar.new()
 ## Encyklopedia: odkryte przedmioty i pokonane potwory.
 var codex := Codex.new()
+## Darmowe gniazda u jubilera (pierwsze - nagroda za zadanie "Pierwszy klejnot").
+var free_sockets := 0
 
 ## Plecak bez toreb i miejsca na torby (sakwy, plecaki) pod ekwipunkiem.
 const BASE_INVENTORY := 20
@@ -243,6 +245,8 @@ func _ready() -> void:
 	add_child(boons)
 	codex.name = "Codex"
 	add_child(codex)
+	Gems.unlocked = false
+	quests.quest_done.connect(_on_quest_done)
 	stats.boons = boons
 	spawn_point = position
 	set_hero(Game.hero)
@@ -411,7 +415,7 @@ func combo_fraction() -> float:
 
 ## Zasięg Młynka (poziom umiejętności i premia z drzewka) i mnożnik zużycia many (węzeł kluczowy Nieustający Wir).
 func whirl_radius() -> float:
-	return Skills.whirlwind_radius(skills.level_of("whirlwind")) * (1.0 + skills.tree_bonus("melee", "whirl_radius"))
+	return Skills.whirlwind_radius(skills.level_of("whirlwind")) * (1.0 + skills.tree_bonus("melee", "whirl_radius")) * stats.area_multiplier()
 
 
 func whirl_mana_factor() -> float:
@@ -957,6 +961,7 @@ func get_save_data() -> Dictionary:
 		"boons": boons.get_save_data(),
 		"hotbar": hotbar.get_save_data(),
 		"codex": codex.get_save_data(),
+		"free_sockets": free_sockets,
 		"generated_items": Loot.export_used(_owned_ids()),
 		"hero": hero,
 	}
@@ -971,6 +976,16 @@ func _owned_ids() -> Array:
 	for slot in Equipment.SLOTS:
 		ids.append(equipment.get_item(slot))
 	return ids
+
+
+## Zadanie jubilera wykonane: kamienie szlachetne i gniazda zaczynają wypadać, pierwsze gniazdo za darmo
+## i pierwszy kamień na próbę.
+func _on_quest_done(id: String) -> void:
+	if id != Gems.QUEST:
+		return
+	Gems.unlocked = true
+	free_sockets += 1
+	_gain_item(Gems.roll("", 0), 1)
 
 
 func load_save_data(data: Dictionary) -> void:
@@ -991,6 +1006,8 @@ func load_save_data(data: Dictionary) -> void:
 		skills.load_save_data(data["skills"])
 	if data.has("quests"):
 		quests.load_save_data(data["quests"])
+	Gems.unlocked = quests.state_of(Gems.QUEST) == Quests.STATE_DONE
+	free_sockets = int(data.get("free_sockets", 0))
 	if data.has("storage"):
 		storage.load_save_data(data["storage"])
 	boons.load_save_data(data.get("boons", {}))
@@ -1450,7 +1467,7 @@ func _cast(id: String, charge := 0.0, combo := false) -> void:
 		fireball.fire = true
 		fireball.pierce = 0
 		fireball.speed = 210.0
-		fireball.explosion_radius = Skills.fireball_radius(level) * Skills.fireball_charge_radius(charge)
+		fireball.explosion_radius = Skills.fireball_radius(level) * Skills.fireball_charge_radius(charge) * stats.area_multiplier()
 		fireball.size = lerpf(0.8, 1.7, charge)
 		multiplier *= stats.kind_multiplier(["spell"])
 		fireball.explosion_min = roundi(stats.damage_min() * multiplier)
@@ -1801,7 +1818,7 @@ func _start_crescent(level: int) -> void:
 	_hit_this_swing.clear()
 	_attack_length = 0.32 / _skill_speed()
 	_attack_cooldown_timer = 0.45 / _skill_speed()
-	_attack_reach = Skills.crescent_radius(level)
+	_attack_reach = Skills.crescent_radius(level) * stats.area_multiplier()
 	_attack_arc = deg_to_rad(Skills.CRESCENT_ARC_DEGREES)
 	_attack_multiplier = Skills.CRESCENT_DAMAGE * combo_damage()
 	_swing_sign = -_swing_sign
@@ -1946,7 +1963,7 @@ func _cast_wave(level: int) -> void:
 	_attack_timer = _attack_length
 	var origin := body_center()
 	var half := deg_to_rad(Skills.wave_half_angle(level))
-	var radius := Skills.wave_radius(level)
+	var radius := Skills.wave_radius(level) * stats.area_multiplier()
 	SkillEffects.cone(get_parent(), origin, dir.angle(), half, radius)
 	for i in 7:  # pioruny rozchodzące się po stożku
 		var angle := dir.angle() + lerpf(-half, half, (i + randf_range(-0.3, 0.3)) / 6.0)

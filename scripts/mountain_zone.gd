@@ -82,6 +82,10 @@ const MAP_SNOW := Color("e8eef4")
 const DEAD_TREES: Array[Texture2D] = [preload("res://assets/mountains/dead_tree_0.png"), preload("res://assets/mountains/dead_tree_1.png")]
 const DECOR := preload("res://assets/mountains/decor.png")
 const IRON_ORE := preload("res://scenes/props/iron_ore.tscn")
+const NPC_SCENE := preload("res://scenes/npc.tscn")
+const JEWELER_LINES: Array[String] = ["Każdy kamień ma swój blask - trzeba tylko umieć go wydobyć.",
+		"Rubin dla wojownika, szafir dla maga... a szmaragd dla tego, kto ucieka szybko.",
+		"Hej, młody! Masz może jakiś klejnot do oszlifowania?"]
 const STILT_HUTS: Array[Texture2D] = [preload("res://assets/mountains/stilt_hut_0.png"), preload("res://assets/mountains/stilt_hut_1.png")]
 const PILLAR_NESTS: Array[Texture2D] = [preload("res://assets/mountains/pillar_nest_0.png"), preload("res://assets/mountains/pillar_nest_1.png")]
 const PERCH_POLE := preload("res://assets/mountains/perch_pole.png")
@@ -237,8 +241,24 @@ func generate(world) -> void:
 	w._register_shrine("eagle_pass", shrine.position)
 	w._map_markers.append({"position": shrine.position, "color": Color("5fd3ff"), "size": 3.0})
 	w._spawn_point = shrine.position + Vector2(0, 20)
+	_spawn_jeweler(shrine.position)
 	w._add_exit(Rect2(0, size.y - 9, 3.5, 9), "swamp", "from:mountains", w._road_point_from_edge(true, 5.0) / TILE + Vector2(1.5, -2.0))
 	w._arrivals["from:swamp"] = w._road_point_from_edge(true, 9.0)
+
+
+## Jubiler Dobromir przy kapliczce: zadanie "Pierwszy klejnot" (Gems), potem osadzanie i łączenie kamieni.
+func _spawn_jeweler(shrine_pos: Vector2) -> void:
+	var npc: Npc = NPC_SCENE.instantiate()
+	npc.position = shrine_pos + Vector2(36, 10)
+	npc.role = Npc.Role.IDLE
+	npc.lines = JEWELER_LINES
+	npc.facing = Vector2.DOWN
+	npc.get_node("Sprite").texture = load("res://assets/npc/jeweler.png")
+	npc.display_name = "Jubiler Dobromir"
+	npc.services.assign(["jeweler"])
+	npc.quest_id = Gems.QUEST
+	npc.dialog_greeting = "Osadzę ci kamień w orężu, wyjmę go albo połączę trzy w jeden lepszy. Pokaż, co masz!"
+	w.entities.add_child(npc)
 
 
 # ---------------------------------------------------------------- plan

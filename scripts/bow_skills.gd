@@ -256,7 +256,7 @@ func _arrow_rain() -> void:
 	var rain := _Rain.new()
 	rain.player = _player
 	rain.position = at
-	rain.radius = Skills.RAIN_RADIUS * (1.0 + _bonus("rain_area"))
+	rain.radius = Skills.RAIN_RADIUS * (1.0 + _bonus("rain_area")) * _player.stats.area_multiplier()
 	rain.tick = Skills.RAIN_TICK / (2.0 if combo else 1.0) / (HAIL_DENSITY if hail else 1.0)
 	rain.damage = Skills.rain_damage(level) * (1.0 + _bonus("rain_damage")) * (HAIL_DAMAGE if hail else 1.0) \
 			* (_player.combo_damage() if combo else 1.0)

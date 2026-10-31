@@ -110,7 +110,7 @@ const EFFECT_TEXTS := {
 }
 const SLOT_TYPE_NAMES := {
 	"weapon": "Broń", "helmet": "Hełm", "chest": "Napierśnik", "gloves": "Rękawice", "boots": "Buty",
-	"earring": "Kolczyk", "ring": "Pierścień", "necklace": "Naszyjnik",
+	"earring": "Kolczyk", "ring": "Pierścień", "necklace": "Naszyjnik", "gem": "Kamień szlachetny",
 }
 const STAT_NAMES := {
 	"armor": "Pancerz", "health": "Zdrowie", "mana": "Mana", "damage": "Obrażenia",
@@ -121,11 +121,12 @@ const STAT_NAMES := {
 	"crit_damage": "Obrażenia krytyczne", "life_on_hit": "Zdrowie za trafienie",
 	"health_regen": "Regeneracja zdrowia/s", "mana_regen": "Regeneracja many/s", "dodge_chance": "Szansa na unik",
 	"cooldown_reduction": "Skrócenie odnowienia", "gold_find": "Więcej złota", "xp_gain": "Więcej doświadczenia",
+	"area": "Obszar umiejętności",
 }
 ## Statystyki podawane w procentach.
 const PERCENT_STATS: Array[String] = ["attack_speed", "move_speed", "damage_percent", "crit_chance", "crit_damage",
 		"cast_speed", "physical_damage", "spell_damage",
-		"dodge_chance", "cooldown_reduction", "gold_find", "xp_gain"]
+		"dodge_chance", "cooldown_reduction", "gold_find", "xp_gain", "area"]
 ## Statystyki z częścią ułamkową (regeneracja na sekundę) - pokazywane z jednym miejscem po przecinku.
 const DECIMAL_STATS: Array[String] = ["health_regen", "mana_regen"]
 ## Porównanie z założonym przedmiotem: lepsze / gorsze wartości, tier premii i nagłówek panelu założonego.
@@ -139,6 +140,12 @@ const COMPARE_SPLIT := "\u001f"
 
 const DATA := {
 	# ---------------------------------------------------------------- łupy i mikstury
+	"rough_gem": {
+		"name": "Surowy klejnot",
+		"description": "Szara bryłka, w której coś kolorowo połyskuje. Jubiler Dobromir w Orlej Przełęczy będzie wiedział, co z tym zrobić.",
+		"icon": preload("res://assets/items/rough_gem.png"),
+		"sell_price": 5,
+	},
 	"goblin_heart": {
 		"name": "Serce goblina",
 		"description": "Jeszcze ciepłe. Ponoć alchemicy dobrze za nie płacą.",
@@ -789,6 +796,10 @@ static func base_stats(id: String) -> Dictionary:
 ## które ma przedmiot bazowy.
 static func stats_of(id: String, enchant := 0) -> Dictionary:
 	var stats: Dictionary = get_data(id).get("stats", {}).duplicate()
+	# kamienie szlachetne w gniazdach (Gems)
+	var socket_stats: Dictionary = get_data(id).get("socket_stats", {})
+	for stat: String in socket_stats:
+		stats[stat] = stats.get(stat, 0) + (socket_stats[stat] if Loot._step(stat) > 0.0 else int(socket_stats[stat]))
 	var bonus := Enchanting.bonus(enchant)
 	if bonus == 0:
 		return stats
@@ -798,7 +809,7 @@ static func stats_of(id: String, enchant := 0) -> Dictionary:
 		"jewelry":
 			for stat: String in base_stats(id):
 				if not stat in PERCENT_STATS:
-					stats[stat] += bonus
+					stats[stat] = stats.get(stat, 0) + bonus
 	return stats
 
 
@@ -845,6 +856,8 @@ static func describe(id: String, enchant := 0, against := {}) -> String:
 		lines.append("%s - %s" % [RARITY_NAMES.get(item.get("rarity", "common"), ""), SLOT_TYPE_NAMES[item["slot"]]])
 		if item.has("item_level"):
 			lines.append("Poziom przedmiotu: %d" % item["item_level"])
+	if item.has("gem"):
+		lines.append("%s - Kamień szlachetny" % RARITY_NAMES.get(item.get("rarity", "magic"), ""))
 	var bonus := Enchanting.bonus(enchant)
 	if item.has("weapon"):
 		var weapon: Dictionary = item["weapon"]
@@ -861,9 +874,10 @@ static func describe(id: String, enchant := 0, against := {}) -> String:
 	# statystyki bazowe z zaklęciem (w nawiasie jego premia), potem niebieskie premie z tierem
 	var base := base_stats(id)
 	var affixes: Dictionary = item.get("affixes", {})
+	var socket_stats: Dictionary = item.get("socket_stats", {})
 	var stats := stats_of(id, enchant)
 	for stat: String in stats:
-		var value: float = float(stats[stat]) - float(affixes.get(stat, 0))
+		var value: float = float(stats[stat]) - float(affixes.get(stat, 0)) - float(socket_stats.get(stat, 0))
 		if not base.has(stat) and value <= 0.0:
 			continue
 		var added := value - float(base.get(stat, 0))
@@ -880,6 +894,8 @@ static func describe(id: String, enchant := 0, against := {}) -> String:
 		if other != "":
 			text += _marker(float(stats[stat]), float(other_stats.get(stat, 0)))
 		lines.append(text)
+	for gem: Dictionary in item.get("sockets", []):
+		lines.append("[img=8x8]%s[/img] %s" % [Gems.SOCKET_ICON.resource_path, Gems.socket_text(gem)])
 	if item.get("use", {}).has("summon"):
 		lines.append("Przedmiot przyzwania - PPM w leżu bossa")
 	if item.has("effect"):
