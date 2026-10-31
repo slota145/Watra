@@ -249,6 +249,11 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   - Esencja pasuje tylko do tego samego rodzaju miejsca (z pierścienia do biżuterii, z broni do broni); wyjęcie
     z gniazda niszczy esencję, chyba że zapłaci się kowalowi.
   - Dawne kamienie (zwykłe, doskonałe, uświęcone, miłosierdzia) zostają do zaklinania (`scripts/enchanting.gd`).
+  - **Kamienie szlachetne ze statystykami** (pomysł autora) do tych samych gniazd: np. rubin (zdrowie), szafir (mana),
+    szmaragd (zręczność), topaz (siła), ametyst (inteligencja), onyks (pancerz); kilka szlifów, trzy kamienie tego
+    samego szlifu kowal łączy w lepszy. Na co dzień gniazdo trzyma kamień szlachetny, a esencję zamiast niego.
+    Do ustalenia z autorem: czy kamienie szlachetne i gniazda w rzadkich przedmiotach są od środka gry
+    (np. od Wietrznych Turni), czy wszystko dopiero w lochach.
 - [ ] Nowe bronie: kosa, kostur (nekromanta), młoty, chainblade'y, sztylety, włócznie, rapier, hydrosfera.
   Każda broń to nowy rodzaj z własnym drzewkiem, a nie tylko nowy przedmiot, więc wymaga szczegółów od autora.
 
