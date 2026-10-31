@@ -30,6 +30,11 @@ FEET_Y = 62  # stopy w komórce (od góry), przed zmniejszeniem
 ## Postać z PixelLab jest za duża przy reszcie świata - zmniejszamy ją do ok. 30 px wzrostu
 ## (trochę więcej niż dawna, 24-pikselowa postać). Wynikowa komórka i stopy:
 SCALE = 0.75
+## Znaczniki, którym nie da się ufać: Mira trzyma znacznik za plecami i w chodzie bokiem przekłada go przez ciało.
+## STEADY_WALK - w chodzie broń zostaje w dłoni z pozy spoczynku (kołysze się z sylwetką); IDLE_GRIP_FROM - spoczynek
+## w danym kierunku bierze chwyt z innego kierunku.
+STEADY_WALK = {"mira": ("east", "south-east")}
+IDLE_GRIP_FROM = {"mira": {"south-east": "east"}}
 OUT_CELL = round(CELL * SCALE)
 OUT_FEET_Y = round(FEET_Y * SCALE)
 
@@ -138,6 +143,7 @@ def build(hero):
     folder = os.path.join(SRC, hero)
     sheet = Image.new("RGBA", (CELL * FRAMES, CELL * len(ANIMS) * len(DIRS)))
     grips = {}
+    tops = {}  # (animacja, kierunek, klatka) -> czubek głowy względem stóp (kołysanie przy chodzie)
     for a, anim in enumerate(ANIMS):
         grips[anim] = []
         for d, direction in enumerate(DIRS):
@@ -150,6 +156,7 @@ def build(hero):
                 x0 = CELL / 2.0 - img.width / 2.0
                 y0 = FEET_Y - feet
                 sheet.alpha_composite(img, (int(f * CELL + x0), int((a * len(DIRS) + d) * CELL + y0)))
+                tops[(anim, d, f)] = img.getbbox()[1] + y0 - FEET_Y
                 # znacznik chwytu (tylko spoczynek i chód)
                 mk_name = "mk_idle_%s.png" % direction if anim == "idle" else "mk_%s_%s_%d.png" % (anim, direction, f)
                 mk_path = os.path.join(folder, mk_name)
@@ -166,9 +173,13 @@ def build(hero):
                         gy = my - oy + y0 - FEET_Y
                         angle = math.atan2(cy - my, cx - mx)
                         # bokiem broń ma celować przed postać - PixelLab bywa, że rysuje znacznik
-                        # trzymany za plecami (Mira); odbijamy wtedy kąt w poziomie
+                        # trzymany za plecami (Mira); odbijamy wtedy kąt i dłoń w poziomie względem
+                        # środka sylwetki, żeby rękojeść była w przedniej dłoni
                         if direction in ("east", "south-east") and math.cos(angle) < 0:
                             angle = math.atan2(math.sin(angle), -math.cos(angle))
+                            box = img.getbbox()
+                            body_x = (box[0] + box[2]) / 2.0 + x0 - CELL / 2.0
+                            gx = 2.0 * body_x - gx
                         grip = [round(gx * SCALE, 1), round(gy * SCALE, 1), round(angle, 3)]
                 dir_grips.append(grip)
             # brakujące klatki biorą chwyt z poprzedniej (albo z najbliższej znalezionej)
@@ -190,6 +201,15 @@ def build(hero):
             grips["idle"][d] = [grips["walk"][d][0]] * FRAMES
         elif not grips["walk"][d] and grips["idle"][d]:
             grips["walk"][d] = list(grips["idle"][d])
+    for d, direction in enumerate(DIRS):
+        source = IDLE_GRIP_FROM.get(hero, {}).get(direction)
+        if source:
+            grips["idle"][d] = list(grips["idle"][DIRS.index(source)])
+        if direction in STEADY_WALK.get(hero, ()) and grips["idle"][d]:
+            # chwyt spoczynku, który unosi się i opada razem z sylwetką
+            hold = grips["idle"][d][0]
+            grips["walk"][d] = [[hold[0], round(hold[1] + (tops[("walk", d, f)] - tops[("idle", d, 0)]) * SCALE, 1), hold[2]]
+                                for f in range(FRAMES)]
     os.makedirs(OUT, exist_ok=True)
     _shrink(sheet).save(os.path.join(OUT, hero + ".png"))
     return grips
