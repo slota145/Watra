@@ -1,7 +1,8 @@
 class_name SwordSkills
 extends Node
 ## Umiejętności drzewka miecza (SkillTree "melee") z własną obsługą - dziecko gracza, jak LegendaryEffects:
-## - Mgnienie: dopóki trzymasz klawisz, postać doskakuje do najbliższego widocznego wroga i tnie (mana za każdy skok).
+## - Mgnienie: dopóki trzymasz klawisz, postać przeskakuje na wylot przez najbliższego widocznego wroga (za każdym razem
+##   innego, jeśli jest wybór) i tnie wszystkich na drodze (mana za każdy skok); jednego wroga przebija tam i z powrotem.
 ##   Combo z Młynkiem: Mgnienie w trakcie Młynka to wirujące Mgnienie - seria szybkich skoków od wroga do wroga
 ##   z odnowieniem; węzeł kluczowy Nieustający Wir znosi odnowienie (skoki trwają, dopóki trzymasz klawisz).
 ## - Dymne Wybuchy: przytrzymanie ładuje (1-3 rzędy po 3 wybuchy dymu w stożku przed postacią), puszczenie odpala.
@@ -21,6 +22,9 @@ const FLICKER_COLOR := Color(0.6, 0.85, 1.0)
 ## Odstęp między rzędami wybuchów (s) i promień cięcia po skoku Mgnienia.
 const SMOKE_RING_DELAY := 0.12
 const FLICKER_HIT_RADIUS := 30.0
+## Mgnienie na wylot: jak daleko za celem ląduje postać i jak szeroki jest pas cięcia wzdłuż drogi skoku.
+const FLICKER_OVERSHOOT := 18.0
+const FLICKER_PATH_WIDTH := 12.0
 const BLOOD_COLOR := Color(0.8, 0.1, 0.1)
 const SPECTRAL_COLOR := Color(0.65, 0.85, 1.0)
 const PERUN_COLOR := Color(1.0, 0.85, 0.35)
@@ -193,7 +197,8 @@ func _process_flicker(delta: float) -> void:
 	_flicker_timer = Skills.FLICKER_INTERVAL / _player._skill_speed()
 
 
-## Skok do najbliższego widocznego wroga (innego niż poprzedni, jeśli jest wybór) i cięcie wokół niego.
+## Skok na wylot przez najbliższego widocznego wroga (innego niż poprzedni, jeśli jest wybór): postać ląduje za nim
+## i rani wszystkich na swojej drodze i wokół celu - przy jednym wrogu przebija go tam i z powrotem.
 func _jump(reach: float, level: int, spinning: bool) -> bool:
 	var origin := _player.body_center()
 	var space := _player.get_world_2d().direct_space_state
@@ -222,21 +227,27 @@ func _jump(reach: float, level: int, spinning: bool) -> bool:
 	_player.reset_physics_interpolation()
 	_player._invulnerable_timer = maxf(_player._invulnerable_timer, 0.15)
 	_last_target = best
-	var to_target := best.hurt_center() - _player.body_center()
-	_player._face_direction(to_target)
+	var travel := spot - from
+	_player._face_direction(travel)
 	SkillEffects.bolt(_player.get_parent(), from + Player.BODY_OFFSET, _player.body_center(), 0.18, 3.0)
-	SkillEffects.crescent(_player.get_parent(), _player.body_center(), to_target.angle(), PI * 0.45, FLICKER_HIT_RADIUS + 6.0)
+	SkillEffects.crescent(_player.get_parent(), best.hurt_center(), travel.angle(), PI * 0.45, FLICKER_HIT_RADIUS + 6.0)
 	Sfx.play("dash" if spinning else "swing", 0.0, 1.2)
 	var multiplier := Skills.flicker_damage(level) * (1.0 + _player.skills.tree_bonus("melee", "flicker_damage")
 			+ _player.equipment.effect_power("endless_whirl"))
+	# cięcie wokół celu i wzdłuż drogi skoku (odrzut od postaci, która już stoi za celem)
+	var path_from := from + Player.BODY_OFFSET
+	var path_to := _player.body_center()
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
-		if enemy.hurt_center().distance_to(best.hurt_center()) <= FLICKER_HIT_RADIUS + enemy.hurt_radius:
+		var center := enemy.hurt_center()
+		var on_path := Geometry2D.get_closest_point_to_segment(center, path_from, path_to).distance_to(center) <= FLICKER_PATH_WIDTH + enemy.hurt_radius
+		if on_path or center.distance_to(best.hurt_center()) <= FLICKER_HIT_RADIUS + enemy.hurt_radius:
 			_player.hit_enemy(enemy, _player._skill_damage(multiplier), _player.global_position, 90.0)
 	SkillEffects.spark(_player.get_parent(), best.hurt_center(), FLICKER_COLOR, 6)
 	return true
 
 
-## Wolne miejsce obok celu: najpierw z tej strony, z której przychodzimy, potem dookoła.
+## Wolne miejsce za celem (na wylot): najpierw dokładnie na przedłużeniu skoku, potem coraz bardziej z boku,
+## a na końcu - gdy za celem ściana - od strony, z której przychodzimy.
 func _landing_spot(target: Goblin) -> Vector2:
 	var shape := CircleShape2D.new()
 	shape.radius = 6.0
@@ -244,12 +255,12 @@ func _landing_spot(target: Goblin) -> Vector2:
 	query.shape = shape
 	query.collision_mask = 1
 	var space := _player.get_world_2d().direct_space_state
-	var back := (_player.global_position - target.global_position).normalized()
-	if back == Vector2.ZERO:
-		back = Vector2.LEFT
-	var distance := target.hurt_radius + 12.0
-	for turn in [0.0, 0.8, -0.8, 1.6, -1.6, PI]:
-		var spot: Vector2 = target.global_position + back.rotated(turn) * distance
+	var through := (target.global_position - _player.global_position).normalized()
+	if through == Vector2.ZERO:
+		through = _player.facing_dir
+	var distance := target.hurt_radius + FLICKER_OVERSHOOT
+	for turn in [0.0, 0.5, -0.5, 1.0, -1.0, 1.6, -1.6, PI]:
+		var spot: Vector2 = target.global_position + through.rotated(turn) * distance
 		query.transform = Transform2D(0.0, spot)
 		if space.intersect_shape(query, 1).is_empty():
 			var ray := PhysicsRayQueryParameters2D.create(target.global_position, spot, 1)

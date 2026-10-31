@@ -25,7 +25,7 @@ const DATA := {
 	"flicker": {
 		"name": "Mgnienie", "weapon": "melee", "type": "skill",
 		"icon": preload("res://assets/skills/flicker.png"),
-		"description": "Przytrzymaj klawisz - doskakujesz do najbliższego wroga i tniesz, potem do kolejnego, dopóki starcza many. Combo: w trakcie Młynka wirujesz od wroga do wroga (odnowienie).",
+		"description": "Przytrzymaj klawisz - przeskakujesz na wylot przez najbliższego wroga, tnąc wszystkich na drodze, potem przez kolejnego, dopóki starcza many. Combo: w trakcie Młynka wirujesz od wroga do wroga (odnowienie).",
 	},
 	"rend": {
 		"name": "Rozpłatanie", "weapon": "melee", "type": "skill",
