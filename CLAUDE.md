@@ -194,6 +194,9 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   w postać i powtarza uderzenie, po ziemi rozchodzi się fala z wyładowaniami na cały zasięg strachu; w czasie premii
   wokół postaci trzaskają złote wyładowania. `tools/vfx_art.py` przyjmuje siatkę klatek (`columns` w `ids.json`)
   dla efektów szerszych niż 1024 px w jednym rzędzie.
+- [x] Widmowe Ostrza z kreatora efektów (`assets/effects/spectral_blade.png`, `spectral_burst.png`,
+  `scripts/spectral_blades.gd`): migoczący widmowy miecz ze smugą drobinek zamiast przyciemnionej broni gracza
+  (obracany w kierunku lotu), widmowy rozbłysk przy przywołaniu, dotknięciu i trafieniu wystrzelonym ostrzem.
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 
