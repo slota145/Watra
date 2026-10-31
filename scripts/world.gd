@@ -537,6 +537,7 @@ func _ready() -> void:
 	hud.setup_world_map(self, _seed, zone, map_texture)
 	# obszary zadań podświetlane na mapie (w kafelkach lasu)
 	hud.setup_quest_areas(_forest_quest_areas())
+	player.died.connect(_on_player_died_pk)
 
 	if not save.is_empty():
 		_apply_save(save)
@@ -903,6 +904,20 @@ func _process_party_offers(delta: float) -> void:
 	var group: Array = near.filter(func(t: Traveler) -> bool: return t.global_position.distance_to(leader.global_position) < 140.0)
 	group = group.slice(0, Travelers.PARTY_MAX)
 	_party_cooldown = PARTY_OFFER_COOLDOWN
+	# tryby świata: zbój napada bez ostrzeżenia, pojedynkowicz wyzywa na pojedynek
+	match roster.behavior(leader.data):
+		"bandit":
+			_start_fight(leader, "pk")
+			return
+		"duelist":
+			if randf() < DUEL_CHANCE:
+				var text := "%s [%d] wyzywa cię na pojedynek! Walka trwa, aż ktoś spadnie do 10%% zdrowia - nikt nie ginie. Nagroda dla zwycięzcy: %d zł i sława gildii." % [
+						leader.data["name"], leader.data["level"], _duel_prize(leader.data)]
+				leader.say("Zmierzysz się ze mną?")
+				hud.party_offer.ask(text, _start_fight.bind(leader, "duel"), func() -> void:
+					if is_instance_valid(leader):
+						leader.say(["Tchórz!", "Ha, boisz się?", "Następnym razem nie odpuszczę!"].pick_random()), "Przyjmij")
+				return
 	var names: Array = group.map(func(t: Traveler) -> String: return t.data["name"])
 	var task := {}
 	if randf() < HELP_CHANCE and player.quests.active_help() == "" and Levels.ZONES.has(zone):
@@ -918,6 +933,72 @@ func _process_party_offers(delta: float) -> void:
 				task["description"], task["gold"], task["xp"]]
 		leader.say("Pomożesz nam?")
 	hud.party_offer.ask(text, _accept_party.bind(group, task), _decline_party.bind(group))
+
+
+## Pojedynki i napady (WorldModes): podróżnik zamienia się na czas walki w rywala (Rival - potwór z jego wyglądem).
+const DUEL_CHANCE := 0.5
+var _rival: Rival
+
+
+func _duel_prize(data: Dictionary) -> int:
+	return roundi(Levels.gold(int(data["level"])) * 60.0)
+
+
+func _start_fight(leader: Traveler, kind: String) -> void:
+	if not is_instance_valid(leader) or not leader.is_alive() or (_rival != null and is_instance_valid(_rival)):
+		return
+	var data := leader.data
+	var at := leader.global_position
+	leader.hide_for_fight()
+	_rival = Rival.create(data, kind)
+	_rival.position = at
+	entities.add_child(_rival)
+	if kind == "pk":
+		Sfx.play("ui_error")
+		hud.show_banner("%s atakuje cię!\nZbój (PK) - walczy na śmierć" % data["name"], Color(1.0, 0.45, 0.4))
+		_rival.say(["Sakiewka albo życie!", "Twoje złoto będzie moje!", "Nikt cię tu nie usłyszy..."].pick_random())
+		_rival.died.connect(_on_bandit_died.bind(data))
+	else:
+		_rival.say("Do boju!")
+	_rival.finished.connect(_on_fight_finished.bind(data, kind, leader))
+
+
+## Koniec pojedynku (albo odejście zbója po wygranej): nagroda, przechwałki, podróżnik wraca do łowów.
+func _on_fight_finished(result: String, data: Dictionary, kind: String, leader: Traveler) -> void:
+	if kind == "duel":
+		if result == "won":
+			var prize := _duel_prize(data)
+			player.stats.add_gold(prize)
+			player.travelers.guild_fame += 5
+			Sfx.play("quest_done")
+			_rival.say(["Poddaję się! Dobra walka.", "Uznaję twoją wyższość!", "Wystarczy! Wygrałeś uczciwie."].pick_random())
+			DamageNumber.spawn_text(player.get_parent(), player.body_center() + Vector2(0, -14), "Wygrany pojedynek! +%d zł" % prize, Color(1.0, 0.85, 0.3), 9)
+		else:
+			_rival.say(["Ha! Może następnym razem.", "Za słabo, wędrowcze!", "Wygrałem! Opowiem w karczmie."].pick_random())
+			DamageNumber.spawn_text(player.get_parent(), player.body_center() + Vector2(0, -14), "Przegrany pojedynek", Color(1.0, 0.5, 0.45), 9)
+	if is_instance_valid(leader):
+		leader.show_after_fight(_rival.global_position if is_instance_valid(_rival) else leader.global_position)
+
+
+## Zbój pokonany: sława „pogromcy zbójów”, a on sam wstaje potem w Ostoi.
+func _on_bandit_died(_foe: Goblin, data: Dictionary) -> void:
+	player.travelers.guild_fame += 10
+	player.travelers.die(data)
+	hud.show_banner("Zbój %s pokonany!\nSława pogromcy zbójów rośnie" % data["name"], Color(1.0, 0.85, 0.4))
+
+
+## Gracz padł w walce ze zbójem: zbój zabiera część złota z sakiewki i odchodzi.
+func _on_player_died_pk() -> void:
+	if _rival == null or not is_instance_valid(_rival):
+		return
+	# pojedynek przerwany śmiercią (np. od potworów) - rywal odchodzi
+	if _rival.kind != "pk":
+		_rival.end("lost")
+		return
+	var stolen := roundi(player.stats.gold * WorldModes.PK_STEAL)
+	player.stats.add_gold(-stolen)
+	_rival.say("Dzięki za złoto! (-%d zł)" % stolen)
+	_rival.end("lost")
 
 
 ## Zadanie z drużyną: mniejsze zlecenie w tej krainie (potwory, boss albo surowce), nagroda od zleceniodawcy.

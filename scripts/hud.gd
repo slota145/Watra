@@ -214,6 +214,7 @@ func connect_player(player: Player) -> void:
 	market_window.setup(player)
 	travelers_window.setup(player)
 	npc_dialog.market_requested.connect(market_window.open)
+	npc_dialog.world_mode_requested.connect(open_world_modes)
 	npc_dialog.travelers_requested.connect(travelers_window.open)
 	npc_dialog.essence_requested.connect(essence_window.open)
 	npc_dialog.rest_requested.connect(_on_rest)
@@ -479,6 +480,33 @@ func _update_points() -> void:
 
 func setup_quest_areas(areas: Dictionary) -> void:
 	_quest_areas = areas
+
+
+## Wybór trybu świata u żercy (WorldModePicker): zmiana od razu, kolory imion podróżników się odświeżają.
+func open_world_modes() -> void:
+	var panel := PanelContainer.new()
+	panel.name = "WorldModeWindow"
+	panel.theme = UiStyle.make_theme()
+	panel.add_theme_stylebox_override("panel", UiStyle.panel(Color(UiStyle.BG, 1.0)))
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+	panel.add_child(box)
+	var picker := WorldModePicker.new()
+	picker.current = _player.travelers.world_mode
+	picker.chosen.connect(func(mode: String) -> void:
+		_player.travelers.world_mode = mode
+		for node in get_tree().get_nodes_in_group("travelers"):
+			node.refresh_color()
+		Sfx.play("magic")
+		show_banner("Tryb świata: %s\n%s" % [WorldModes.MODES[mode]["name"], WorldModes.MODES[mode]["short"]], WorldModes.MODES[mode]["color"])
+		panel.queue_free())
+	box.add_child(picker)
+	var close := UiStyle.menu_button("Zamknij", func() -> void: panel.queue_free())
+	close.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	box.add_child(close)
+	add_child(panel)
+	panel.reset_size()
+	panel.position = ((get_viewport().get_visible_rect().size - panel.size) / 2.0).floor()
 
 
 ## Otwiera mapę z podświetlonym obszarem zadania.

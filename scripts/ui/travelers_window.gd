@@ -27,7 +27,7 @@ func _ready() -> void:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	box.add_child(scroll)
 	_list = GridContainer.new()
-	_list.columns = 7
+	_list.columns = 8
 	_list.add_theme_constant_override("h_separation", 8)
 	_list.add_theme_constant_override("v_separation", 1)
 	scroll.add_child(_list)
@@ -76,17 +76,19 @@ func _refresh() -> void:
 		_list.remove_child(child)
 		child.queue_free()
 	var travelers := _player.travelers
-	for header in ["Imię", "Poz.", "Broń", "Ekwipunek", "Gdzie", "Zabójstwa", "Śmierci"]:
+	for header in ["Imię", "Poz.", "Broń", "Charakter", "Ekwipunek", "Gdzie", "Zabójstwa", "Śmierci"]:
 		_list.add_child(UiStyle.label(header, 7, UiStyle.TITLE_COLOR))
 	var list := travelers.active()
 	list.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a["fame"]) > int(b["fame"]))
 	for traveler: Dictionary in list:
-		var name := UiStyle.label(traveler["name"], 7, Traveler.NAME_COLOR)
+		var temper: Dictionary = WorldModes.TEMPERS[travelers.behavior(traveler)]
+		var name := UiStyle.label(traveler["name"], 7, temper["color"])
 		name.custom_minimum_size.x = 100
 		name.clip_text = true
 		_list.add_child(name)
 		_list.add_child(UiStyle.label(str(traveler["level"]), 7))
 		_list.add_child(UiStyle.label(Travelers.WEAPON_NAMES[traveler["weapon"]], 7))
+		_list.add_child(UiStyle.label(temper["name"], 7, temper["color"]))
 		var gear: String = traveler["gear"]
 		var rarity: String = {"zwykły": "common", "magiczny": "magic", "rzadki": "rare", "legendarny": "legendary"}.get(gear, "common")
 		_list.add_child(UiStyle.label(gear, 7, Items.RARITY_COLORS[rarity]))
@@ -94,8 +96,8 @@ func _refresh() -> void:
 		_list.add_child(UiStyle.label(str(traveler["kills"]), 7))
 		_list.add_child(UiStyle.label(str(traveler["deaths"]), 7))
 	var rank := travelers.guild_rank
-	_rank.text = "Ranga gildii: %d/%d - sława: %d - aktywnych podróżników: %d, najwyższy poziom: %d" % [rank, Travelers.MAX_RANK,
-			travelers.guild_fame, travelers.active_count(), travelers.level_cap()]
+	_rank.text = "Ranga gildii: %d/%d - sława: %d - aktywnych podróżników: %d, najwyższy poziom: %d - tryb świata: %s" % [rank,
+			Travelers.MAX_RANK, travelers.guild_fame, travelers.active_count(), travelers.level_cap(), WorldModes.MODES[travelers.world_mode]["name"]]
 	_upgrade.visible = rank >= 1 and rank < Travelers.MAX_RANK
 	if _upgrade.visible:
 		var cost: Dictionary = Travelers.RANK_COSTS[rank + 1]

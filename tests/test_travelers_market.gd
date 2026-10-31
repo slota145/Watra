@@ -182,4 +182,4 @@ func _market(p) -> void:
 	for tab in ["goods", "items", "mine"]:
 		hud.market_window._show(tab)
 	hud.travelers_window.open()
-	check("okna rynku i podróżników", hud.market_window.visible and hud.travelers_window._list.get_child_count() > 7 * 10)
+	check("okna rynku i podróżników", hud.market_window.visible and hud.travelers_window._list.get_child_count() > 8 * 10)

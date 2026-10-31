@@ -77,6 +77,12 @@ var guild_fame := 0
 ## Drużyna gracza: imiona członków i ile jeszcze minut (tików) zostanie.
 var party: Array[String] = []
 var party_ticks := 0
+## Tryb świata (WorldModes): nowa gra bierze go z menu (Game.world_mode), starsze zapisy - spokojny.
+var world_mode := "calm"
+
+
+func _ready() -> void:
+	world_mode = Game.world_mode
 var _timer := TICK
 
 
@@ -92,6 +98,11 @@ func ensure_roster() -> void:
 	if not roster.is_empty():
 		return
 	var used := {}
+	# charaktery w stałych proporcjach (12% zbójów, 28% pojedynkowiczów), przetasowane
+	var tempers: Array[String] = []
+	for i in SIZE:
+		tempers.append("bandit" if i < roundi(SIZE * 0.12) else "duelist" if i < roundi(SIZE * 0.4) else "friendly")
+	tempers.shuffle()
 	for i in SIZE:
 		var female := randf() < 0.45
 		var pool: Array = FEMALE if female else MALE
@@ -103,11 +114,28 @@ func ensure_roster() -> void:
 		used[name] = true
 		var weapon: String = ["melee", "melee", "bow", "spell"].pick_random()
 		var level := clampi(roundi(pow(randf(), 1.6) * 44.0) + 1, 1, 45)
-		roster.append({"name": name, "female": female, "look": LOOKS[weapon].pick_random(), "weapon": weapon,
+		roster.append({"name": name, "female": female, "look": LOOKS[weapon].pick_random(), "weapon": weapon, "temper": tempers[i],
 				"level": level, "xp": 0, "zone": "forest", "state": "town", "wait": randi_range(0, 3),
 				"kills": randi_range(0, 40) * level, "deaths": randi_range(0, level / 3), "gear": _gear_for(level), "fame": level * randi_range(5, 12)})
 	# od najsłabszych - przed gildią i przy niskiej randze krążą tylko początkujący
 	roster.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a["level"]) < int(b["level"]))
+
+
+## Charakter: 60% przyjaznych, 28% pojedynkowiczów, 12% zbójów.
+static func _roll_temper() -> String:
+	var roll := randf()
+	return "friendly" if roll < 0.6 else "duelist" if roll < 0.88 else "bandit"
+
+
+## Jak podróżnik zachowuje się wobec gracza w obecnym trybie świata: "friendly", "duelist" albo "bandit".
+func behavior(traveler: Dictionary) -> String:
+	var temper: String = traveler.get("temper", "friendly")
+	match world_mode:
+		"realistic":
+			return "friendly" if temper == "friendly" else "duelist"
+		"hardcore":
+			return temper
+	return "friendly"
 
 
 func active_count() -> int:
@@ -281,7 +309,8 @@ func upgrade_rank(player: Player) -> String:
 
 
 func get_save_data() -> Dictionary:
-	return {"roster": roster.duplicate(true), "rank": guild_rank, "fame": guild_fame, "party": party.duplicate(), "party_ticks": party_ticks}
+	return {"roster": roster.duplicate(true), "rank": guild_rank, "fame": guild_fame, "party": party.duplicate(), "party_ticks": party_ticks,
+			"mode": world_mode}
 
 
 func load_save_data(data: Dictionary) -> void:
@@ -289,6 +318,9 @@ func load_save_data(data: Dictionary) -> void:
 	for entry: Dictionary in data.get("roster", []):
 		for key in ["level", "xp", "wait", "kills", "deaths", "fame"]:
 			entry[key] = int(entry.get(key, 0))
+		# starsze spisy nie znały charakterów
+		if not entry.has("temper"):
+			entry["temper"] = _roll_temper()
 		roster.append(entry)
 	guild_rank = int(data.get("rank", 0))
 	guild_fame = int(data.get("fame", 0))
@@ -297,4 +329,7 @@ func load_save_data(data: Dictionary) -> void:
 		if not find(str(name)).is_empty():
 			party.append(str(name))
 	party_ticks = int(data.get("party_ticks", 0))
+	world_mode = str(data.get("mode", "calm"))
+	if not WorldModes.MODES.has(world_mode):
+		world_mode = "calm"
 	changed.emit()

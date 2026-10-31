@@ -34,6 +34,8 @@ var _traveling := false
 var hero := "wojciech"
 ## Tryb deweloperski (Hud.set_dev_mode) - trwa także po przejściu do innej krainy albo lochu.
 var dev_mode := false
+## Tryb świata wybrany przy nowej grze (WorldModes) - zapisuje go spis podróżników (Travelers.world_mode).
+var world_mode := "calm"
 
 
 func _ready() -> void:

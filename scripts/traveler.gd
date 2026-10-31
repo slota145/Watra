@@ -53,6 +53,7 @@ var _last_pos := Vector2.ZERO
 var _calm := 0.0
 var _talk := 0.0
 var _leaving := false
+var _fighting := false
 ## Kraina (do wskazówek) i miejsce w szyku drużyny.
 var zone_key := "forest"
 var slot := Vector2(-24, 14)
@@ -103,6 +104,8 @@ func _ready() -> void:
 	_player = get_tree().get_first_node_in_group("player") as Node2D
 	if mode == "party":
 		_label.add_theme_color_override("font_color", PARTY_COLOR)
+	else:
+		refresh_color()
 
 
 func _make_label(text: String, font_size: int, color: Color) -> Label:
@@ -120,7 +123,7 @@ func _make_label(text: String, font_size: int, color: Color) -> Label:
 
 
 func is_alive() -> bool:
-	return health > 0.0 and not _leaving
+	return health > 0.0 and not _leaving and not _fighting
 
 
 ## Cios potwora (Goblin.objective).
@@ -136,7 +139,7 @@ func take_hit(amount: float) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if _leaving:
+	if _leaving or _fighting:
 		return
 	_cooldown = maxf(_cooldown - delta, 0.0)
 	_strike = maxf(_strike - delta, 0.0)
@@ -305,6 +308,33 @@ func become_party(at_slot: Vector2) -> void:
 	slot = at_slot
 	_target = null
 	_label.add_theme_color_override("font_color", PARTY_COLOR)
+
+
+## Kolor imienia ostrzega: zielone - przyjazny, żółte - pojedynkowicz, czerwone - zbój (zależnie od trybu świata).
+func refresh_color() -> void:
+	if mode == "party":
+		_label.add_theme_color_override("font_color", PARTY_COLOR)
+	elif travelers != null:
+		_label.add_theme_color_override("font_color", WorldModes.TEMPERS[travelers.behavior(data)]["color"])
+
+
+## Walka z graczem (pojedynek, napad): na jej czas podróżnika zastępuje rywal (Rival) - tu znika i czeka.
+func hide_for_fight() -> void:
+	visible = false
+	_fighting = true
+	velocity = Vector2.ZERO
+
+
+func show_after_fight(at: Vector2) -> void:
+	if travelers != null and data.get("state", "") == "dead":
+		queue_free()
+		return
+	global_position = at
+	reset_physics_interpolation()
+	visible = true
+	_fighting = false
+	_target = null
+	_greet = 30.0
 
 
 ## Odmowa gracza: łowcy przenoszą się na inny spot (znikają; świat postawi ich gdzie indziej).

@@ -143,7 +143,7 @@ func _make_hero_picker() -> VBoxContainer:
 	for id: String in HeroRig.HEROES:
 		var card := Button.new()
 		card.custom_minimum_size = Vector2(96, 124)
-		card.pressed.connect(Game.new_game.bind(id))
+		card.pressed.connect(_show_modes.bind(id))
 		var inner := VBoxContainer.new()
 		inner.set_anchors_preset(Control.PRESET_FULL_RECT)
 		inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -169,6 +169,29 @@ func _make_hero_picker() -> VBoxContainer:
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	box.add_child(back)
 	return box
+
+
+## Po wyborze bohatera: tryb świata (WorldModes) z wyjaśnieniem, potem nowa gra.
+func _show_modes(hero_id: String) -> void:
+	_heroes.visible = false
+	var panel := PanelContainer.new()
+	panel.theme = UiStyle.make_theme()
+	panel.add_theme_stylebox_override("panel", UiStyle.panel(Color(UiStyle.BG, 0.92)))
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+	panel.add_child(box)
+	var picker := WorldModePicker.new()
+	picker.current = Game.world_mode
+	picker.chosen.connect(func(mode: String) -> void:
+		Game.world_mode = mode
+		Game.new_game(hero_id))
+	box.add_child(picker)
+	var back := UiStyle.menu_button("Wróć", func() -> void:
+		panel.queue_free()
+		_show_heroes())
+	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	box.add_child(back)
+	_heroes.get_parent().add_child(panel)
 
 
 func _show_heroes() -> void:
