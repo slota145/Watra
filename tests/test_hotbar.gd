@@ -101,6 +101,36 @@ func _process(_d: float) -> bool:
 		check("zapis odrzuca złe wpisy", copy.items[0] == "" and copy.items[1] == "health_potion" \
 				and copy.skill_bar("melee")[0] == "" and copy.skill_bar("melee")[1] == "attack")
 		check("starszy zapis bez paska", load("res://scripts/hotbar.gd").new().items[1] == "mana_potion")
+		# wszystko wszędzie: mikstura pod R, uderzenie pod 3, umiejętność innej broni czeka na pasku 1-0
+		var Hb = load("res://scripts/hotbar.gd")
+		bar.put("melee", 4, "health_potion")
+		check("mikstura na pasku umiejętności (przeniesiona z 1)", bar.skill_bar("melee")[4] == "health_potion" and bar.items[0] == "")
+		p.health = 10
+		var potions: int = p.inventory.count_of("health_potion")
+		p._unhandled_input(_action("skill_r", true))
+		p._input(_action("skill_r", false))
+		check("R pije miksturę", p.inventory.count_of("health_potion") == potions - 1)
+		bar.put("melee", 9, "lunge")
+		check("uderzenie pod 3 (przeniesione z LPM)", bar.items[2] == "lunge" and bar.skill_bar("melee")[0] == "")
+		p._strike_cooldown = 0.0
+		p._unhandled_input(_action("item_3", true))
+		p._input(_action("item_3", false))
+		check("3 - uderzenie", p._strike_request)
+		p._strike_request = false
+		check("na pasek 1-0 pasuje umiejętność innej broni", Hb.fits("multishot", 10, "melee") and not Hb.fits("multishot", 2, "melee"))
+		bar.put("melee", 10, "multishot")
+		p._skill_held = false
+		p._unhandled_input(_action("item_4", true))
+		p._input(_action("item_4", false))
+		check("umiejętność innej broni czeka", not p._skill_held and not p._attack_held)
+		check("przygaszona na pasku", hud.action_bars._item_slots[3].tooltip_text.contains("działa z bronią"))
+		bar.move("melee", 4, 7)
+		check("zamiana między paskami", bar.items[0] == "health_potion" and bar.skill_bar("melee")[4] == "")
+		bar.move("melee", 10, 2)
+		check("umiejętność innej broni nie wejdzie na górny pasek", bar.skill_bar("melee")[2] == "" and bar.items[3] == "multishot")
+		var mixed = Hb.new()
+		mixed.load_save_data(JSON.parse_string(JSON.stringify(bar.get_save_data())))
+		check("zapis mieszanych pasków", mixed.items == bar.items and mixed.skill_bar("melee") == bar.skill_bar("melee"))
 		# interakcja pod F
 		var interact: InputEventKey = InputMap.action_get_events("interact")[0]
 		check("interakcja pod F", interact.physical_keycode == KEY_F)
