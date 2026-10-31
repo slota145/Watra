@@ -578,6 +578,8 @@ func _on_boss_died(_boss_node: Goblin = null) -> void:
 	_drop(at, "blessed_stone", roundi(_rng.randi_range(1, 3) * treasure))
 	if int(config.get("tier", 1)) >= Essences.HEART_MIN_TIER and _rng.randf() < Essences.HEART_VAULT_CHANCE * treasure:
 		_drop(at, Essences.HEART, 1)
+	if _rng.randf() < ItemCraft.RUNE_VAULT_CHANCE * treasure:
+		_drop(at, "rune_seal" if int(config.get("tier", 1)) >= 4 and _rng.randf() < 0.35 else "rune_chaos", 1)
 	if _rng.randf() < Gems.RADIUS_VAULT_CHANCE * treasure:
 		_drop(at, Gems.roll_radius(int(config.get("tier", 1))), 1)
 	if _rng.randf() < Dungeons.VAULT_LEGEND_CHANCE * treasure:

@@ -42,6 +42,7 @@ var codex_window: CodexWindow
 var jeweler_window: JewelerWindow
 var essence_window: EssenceWindow
 var market_window: MarketWindow
+var workshop_window: WorkshopWindow
 var travelers_window: TravelersWindow
 ## Paski szybkiego wyboru na dole ekranu i ikony działających efektów pod paskami zdrowia i many.
 var action_bars: ActionBars
@@ -138,6 +139,9 @@ func _ready() -> void:
 	essence_window.name = "EssenceWindow"
 	add_child(essence_window)
 	move_child(essence_window, jeweler_window.get_index() + 1)
+	workshop_window = WorkshopWindow.new()
+	workshop_window.name = "WorkshopWindow"
+	add_child(workshop_window)
 	market_window = MarketWindow.new()
 	market_window.name = "MarketWindow"
 	add_child(market_window)
@@ -212,6 +216,8 @@ func connect_player(player: Player) -> void:
 	jeweler_window.setup(player)
 	essence_window.setup(player)
 	market_window.setup(player)
+	workshop_window.setup(player)
+	npc_dialog.workshop_requested.connect(workshop_window.open)
 	travelers_window.setup(player)
 	npc_dialog.market_requested.connect(market_window.open)
 	npc_dialog.world_mode_requested.connect(open_world_modes)
@@ -306,7 +312,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_window(codex_window, "ui_book")
 	elif event.is_action_pressed("ui_cancel"):
 		# Esc najpierw zamyka otwarte okna, a dopiero potem otwiera menu pauzy
-		var windows: Array[Control] = [character_window, inventory_window, big_map, shop_window, skill_window, enchant_window, crafting_window, build_window, board_window, sage_window, forge_window, watra_window, dungeon_window, help_window, quest_journal, npc_dialog, storage_window, codex_window, jeweler_window, essence_window, market_window, travelers_window]
+		var windows: Array[Control] = [character_window, inventory_window, big_map, shop_window, skill_window, enchant_window, crafting_window, build_window, board_window, sage_window, forge_window, watra_window, dungeon_window, help_window, quest_journal, npc_dialog, storage_window, codex_window, jeweler_window, essence_window, market_window, travelers_window, workshop_window]
 		if windows.any(func(w: Control) -> bool: return w.visible):
 			Sfx.play("ui_close")
 			for w in windows:

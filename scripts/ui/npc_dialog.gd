@@ -15,6 +15,7 @@ signal jeweler_requested(npc: Npc)
 signal watra_requested
 signal market_requested
 signal world_mode_requested
+signal workshop_requested
 signal travelers_requested
 ## Okno esencji: "smith" (kowal) albo "altar" (Ołtarz Welesa w lochu).
 signal essence_requested(mode: String)
@@ -151,7 +152,13 @@ func _refresh() -> void:
 				_buttons.add_child(_button("Podróżnicy", func() -> void:
 					close()
 					travelers_requested.emit()))
-			"meals", "blessing", "bestiary", "reforge", "elixirs", "respec":
+			"reforge":
+				var workshop := _button("Warsztat", func() -> void:
+					close()
+					workshop_requested.emit())
+				workshop.tooltip_text = "Rzemiosło premii: przerzut, przekucie, usuwanie i dodawanie premii, ulepszanie rzadkości, runy z lochów"
+				_buttons.add_child(workshop)
+			"meals", "blessing", "bestiary", "elixirs", "respec":
 				_buttons.add_child(_button(OFFER_SERVICES[service], _offers.bind(service)))
 			"build":
 				# plany budowy dopiero po zadaniu sołtysa z prośbą o pomoc

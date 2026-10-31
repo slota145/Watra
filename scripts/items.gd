@@ -583,6 +583,16 @@ const DATA := {
 		"description": "Złoty i ciepły w dłoni. Zebrane razem gwarantują zaklęcie: 100 szt. na III, 200 na IV, 300 na V.",
 		"icon": preload("res://assets/items/blessed_stone.png"), "price": 40, "sell_price": 2, "enchant_aid": "blessed",
 	},
+	"rune_chaos": {
+		"name": "Runa Zmiany",
+		"description": "Wirujący kamień z runą przemiany, z lochów Watry. W warsztacie kowala przelosuje wszystkie premie przedmiotu.",
+		"icon": preload("res://assets/items/rune_chaos.png"), "sell_price": 120,
+	},
+	"rune_seal": {
+		"name": "Runa Pieczęci",
+		"description": "Złoty kamień z runą ochronną, z lochów Watry. W warsztacie kowala zapieczętuje jedną premię, a pozostałe przelosuje (potrzebne też Serce Kryształu).",
+		"icon": preload("res://assets/items/rune_seal.png"), "sell_price": 400,
+	},
 	"crystal_heart": {
 		"name": "Serce Kryształu",
 		"description": "Bijące żarem jądro Kryształu Watry (lochy od 3. stopnia). Kowal Bronisław wykuwa nim gniazdo na esencję legendy.",
