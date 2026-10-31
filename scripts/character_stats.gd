@@ -157,6 +157,11 @@ func crit_chance() -> float:
 
 
 ## Mnożnik zasięgu umiejętności obszarowych (premia "Obszar umiejętności" z przedmiotów i kamieni szlachetnych).
+## Mnożnik leczenia mikstur zdrowia i many (premia "siła mikstur" z pasów).
+func potion_multiplier() -> float:
+	return 1.0 + _bonus("potion_power")
+
+
 func area_multiplier() -> float:
 	return 1.0 + _bonus("area")
 

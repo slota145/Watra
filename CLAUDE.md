@@ -283,7 +283,11 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     przeciągnięty na przedmiot z pustym gniazdem (w plecaku albo założony) się osadza; zajęte gniazdo odmawia (kamień
     wyjmuje jubiler), Kamień Promienia nie pasuje; esencja - do pustego gniazda esencji tego samego rodzaju (wyjmuje
     kowal); przedmiot bez gniazda - zwykła zamiana miejsc.
-  - **Nowe miejsce na pas** w ekwipunku postaci i pasy jako nowe przedmioty (linia w `tools/item_catalog.py`).
+  - [x] **Miejsce na pas** (`Equipment.SLOTS` - „belt”, okno plecaka): dwie linie w `tools/item_catalog.py` - pas
+    skórzany i okuty, po 5 poziomów i 3 rzadkości (ikony z PixelLab, `tools/pixellab_items.py`); własna pula premii
+    (`Loot.POOLS["belt"]`) z nową „siłą mikstur” (`CharacterStats.potion_multiplier` - mikstury zdrowia i many leczą
+    mocniej); zaklinanie i esencje jak zbroja; pierwszy poziom u kowala. Legendy ze skarbca lochów: **Pas Mokoszy**
+    (szansa, że mikstura nie ubędzie) i **Pas Bogatyra** (po miksturze premia do obrażeń - `LegendaryEffects.on_potion`).
   - **Ładniejszy widok ekwipunku** (okno postaci): większe ramki przedmiotów, ładne tło między nimi, a pusty slot
     pokazuje ikonę rodzaju przedmiotu, który tam pasuje (hełm, pierścień...).
 - [ ] Nowe bronie: kosa, kostur (nekromanta), młoty, chainblade'y, sztylety, włócznie, rapier, hydrosfera.

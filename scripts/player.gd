@@ -638,17 +638,23 @@ func use_item(id: String) -> bool:
 		_flash(Color(0.5, 1.0, 0.5))
 		return true
 
-	inventory.remove_item(id, 1)
+	# Pas Mokoszy: mikstura może nie ubyć; Pas Bogatyra: gniew po wypiciu
+	var saved := legendary.on_potion() if (effect.has("health") or effect.has("mana")) else false
+	if not saved:
+		inventory.remove_item(id, 1)
+	else:
+		DamageNumber.spawn_text(get_parent(), text_pos + Vector2(0, -10), "Mikstura ocalała", Color(0.6, 1.0, 0.6), 8)
 	Sfx.play("potion")
-	# mikstury leczą stałą wartość i procent maksimum - nie słabną z poziomem postaci
+	# mikstury leczą stałą wartość i procent maksimum - nie słabną z poziomem postaci; pasy wzmacniają (siła mikstur)
+	var potion := stats.potion_multiplier()
 	if effect.has("health"):
-		var amount := int(effect["health"]) + roundi(float(effect.get("health_percent", 0.0)) * stats.max_health())
+		var amount := roundi((int(effect["health"]) + float(effect.get("health_percent", 0.0)) * stats.max_health()) * potion)
 		var healed := mini(amount, stats.max_health() - health)
 		health += healed
 		DamageNumber.spawn_text(get_parent(), text_pos, "+%d HP" % healed, Color(0.5, 1, 0.5))
 		_flash(Color(0.4, 1, 0.4))
 	if effect.has("mana"):
-		var amount := float(effect["mana"]) + float(effect.get("mana_percent", 0.0)) * stats.max_mana()
+		var amount := (float(effect["mana"]) + float(effect.get("mana_percent", 0.0)) * stats.max_mana()) * potion
 		var restored := minf(amount, stats.max_mana() - mana)
 		mana += restored
 		DamageNumber.spawn_text(get_parent(), text_pos, "+%d many" % roundi(restored), Color(0.5, 0.7, 1))

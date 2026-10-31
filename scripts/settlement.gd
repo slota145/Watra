@@ -1542,7 +1542,7 @@ func _build_npcs() -> void:
 	smith.display_name = "Kowal Bronisław"
 	smith.trade_greeting = "Broń i zbroja, prosto z kowadła!"
 	smith.shop_sells.assign(["iron_sword", "war_axe", "leather_cap", "iron_helmet", "leather_armor",
-			"chainmail", "leather_gloves", "leather_boots"])
+			"chainmail", "leather_gloves", "leather_boots", "belt_t1", "girdle_t1"])
 	_entities.add_child(smith)
 
 	var hunter := _npc("hunter", Vector2(27.9, 30.4), Npc.Role.WORKER, LINES_HUNTER, Vector2.RIGHT)

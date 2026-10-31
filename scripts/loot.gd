@@ -38,6 +38,7 @@ const TIER_VALUES := {
 	"damage_percent": [0.02, 0.30], "crit_chance": [0.01, 0.12], "crit_damage": [0.05, 0.60],
 	"life_on_hit": [1.0, 15.0], "health_regen": [0.2, 8.0], "mana_regen": [0.2, 6.0], "dodge_chance": [0.01, 0.10],
 	"cooldown_reduction": [0.01, 0.15], "gold_find": [0.03, 0.40], "xp_gain": [0.02, 0.25], "area": [0.02, 0.25],
+	"potion_power": [0.04, 0.50],
 }
 ## Mnożnik ceny sprzedaży wg jakości.
 ## Cena skupu przedmiotu z łupu: z poziomu przedmiotu i jakości (nie z poziomu bazy - dawniej rzadki
@@ -66,6 +67,8 @@ const POOLS := {
 			"physical_damage", "spell_damage", "cast_speed"],
 	"earring": ["health", "mana", "strength", "dexterity", "intelligence", "vitality", "armor", "move_speed",
 			"health_regen", "mana_regen", "cooldown_reduction", "dodge_chance", "xp_gain"],
+	"belt": ["health", "armor", "vitality", "strength", "dexterity", "intelligence", "mana", "health_regen",
+			"mana_regen", "potion_power", "life_on_hit", "dodge_chance"],
 	"necklace": ["health", "mana", "damage", "strength", "dexterity", "intelligence", "vitality", "armor",
 			"damage_percent", "crit_damage", "cooldown_reduction", "health_regen", "gold_find", "xp_gain", "area"],
 }
@@ -76,7 +79,7 @@ const SUFFIXES := {
 	"armor": "Żółwia", "move_speed": "Zająca", "damage_percent": "Furii", "crit_chance": "Sokoła",
 	"crit_damage": "Kata", "life_on_hit": "Wampira", "health_regen": "Trolla", "mana_regen": "Źródła",
 	"dodge_chance": "Cienia", "cooldown_reduction": "Czasu", "gold_find": "Skarbnika", "xp_gain": "Mędrca",
-	"area": "Rozmachu",
+	"area": "Rozmachu", "potion_power": "Zielarza",
 }
 
 

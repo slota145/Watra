@@ -25,15 +25,16 @@ const PAPERDOLL: Array[String] = [
 	"earring_1", "helmet", "earring_2",
 	"weapon", "chest", "gloves",
 	"ring_1", "necklace", "ring_2",
-	"", "boots", "",
+	"belt", "boots", "",
 ]
 const SLOT_LABELS := {
 	"weapon": "Broń", "helmet": "Hełm", "chest": "Zbroja", "gloves": "Ręk.", "boots": "Buty",
-	"earring_1": "Kolcz.", "earring_2": "Kolcz.", "ring_1": "Pierś.", "ring_2": "Pierś.", "necklace": "Nasz.",
+	"earring_1": "Kolcz.", "earring_2": "Kolcz.", "ring_1": "Pierś.", "ring_2": "Pierś.", "necklace": "Nasz.", "belt": "Pas",
 }
 const SLOT_TOOLTIPS := {
 	"weapon": "Broń", "helmet": "Hełm", "chest": "Napierśnik", "gloves": "Rękawice", "boots": "Buty",
 	"earring_1": "Kolczyk", "earring_2": "Kolczyk", "ring_1": "Pierścień", "ring_2": "Pierścień", "necklace": "Naszyjnik",
+	"belt": "Pas",
 }
 
 ## Ustawiane przez HUD - gdy jest otwarte, PPM trafia do niego.

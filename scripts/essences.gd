@@ -10,7 +10,7 @@ class_name Essences
 ## w sztukach - najsilniejszy plus połowa reszty).
 
 const GROUPS := {"weapon": "weapon", "helmet": "armor", "chest": "armor", "gloves": "armor", "boots": "armor",
-		"earring": "jewelry", "ring": "jewelry", "necklace": "jewelry"}
+		"earring": "jewelry", "ring": "jewelry", "necklace": "jewelry", "belt": "armor"}
 const GROUP_NAMES := {"weapon": "broń", "armor": "zbroja", "jewelry": "biżuteria"}
 const COLORS := {"weapon": "ff8a4a", "armor": "6fb4ff", "jewelry": "c58bff"}
 const SOCKET_ICON := preload("res://assets/ui/socket_legend.png")

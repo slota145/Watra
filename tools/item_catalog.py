@@ -118,6 +118,15 @@ LINES = [
      "names": ["Żelazne trzewiki", "Stalowe trzewiki", "Mithrilowe trzewiki", "Runiczne trzewiki", "Smocze trzewiki"],
      "t1": None, "sell": 25, "stats": {"armor": 3, "move_speed": 0.02},
      "description": "Ciężkie, okute buty."},
+    # ---------------------------------------------------------------- pasy (premia "siła mikstur" - Loot.POOLS)
+    {"id": "belt", "slot": "belt", "material": "leather", "prompt": "belt with a buckle and small pouches, coiled",
+     "names": ["Skórzany pas", "Pas wędrowca", "Elfi pas", "Pas cienia", "Pas ze smoczej skóry"],
+     "t1": None, "sell": 12, "stats": {"health": 6, "dexterity": 1},
+     "description": "Sakiewki na zioła i mikstury zawsze pod ręką."},
+    {"id": "girdle", "slot": "belt", "material": "metal", "prompt": "heavy war belt with riveted plates and a big buckle, coiled",
+     "names": ["Okuty pas", "Stalowy pas", "Mithrilowy pas", "Runiczny pas", "Smoczy pas"],
+     "t1": None, "sell": 20, "stats": {"armor": 2, "health": 4},
+     "description": "Szeroki pas wojownika, okuty żelazem."},
     # ---------------------------------------------------------------- biżuteria
     {"id": "band", "slot": "ring", "material": "jewel", "prompt": "ring with a gemstone",
      "names": ["Miedziany pierścień", "Srebrny pierścień", "Złoty pierścień", "Platynowy pierścień", "Gwiezdny pierścień"],
@@ -252,7 +261,7 @@ UI_ICONS = [
 SHOP_PRICES = {"iron_sword": 80, "war_axe": 140, "short_bow": 90, "spellbook": 120, "leather_cap": 30,
                "iron_helmet": 90, "leather_armor": 50, "chainmail": 160, "leather_gloves": 35, "leather_boots": 35,
                "copper_ring": 45, "ring_of_strength": 60, "silver_earring": 35, "fang_earring": 35,
-               "amber_necklace": 70}
+               "amber_necklace": 70, "belt_t1": 40, "girdle_t1": 60}
 
 
 def base_id(line, tier):

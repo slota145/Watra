@@ -11,7 +11,7 @@ signal rearranged(old_to_new: Dictionary)
 
 ## Kolejność przy sortowaniu: najpierw wyposażenie (w kolejności miejsc na postaci), potem torby,
 ## przedmioty do użycia, kamienie zaklinające i wspierające, a na końcu reszta.
-const SORT_SLOTS: Array[String] = ["weapon", "helmet", "chest", "gloves", "boots", "earring", "ring", "necklace"]
+const SORT_SLOTS: Array[String] = ["weapon", "helmet", "chest", "gloves", "boots", "belt", "earring", "ring", "necklace"]
 const SORT_RARITY: Array[String] = ["legendary", "rare", "magic", "common"]
 
 @export var slot_count := 20
