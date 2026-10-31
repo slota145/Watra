@@ -39,10 +39,15 @@ const FLICKER_SPIN_TRAIL_ANCHOR := Vector2(15, 13)
 const FLICKER_SPIN_TRAIL_LENGTH := 70.0
 const SPIN_FX_TIME := 0.35
 ## Dymny Wybuch z kreatora efektów PixelLab: klin dymu i smug buchający z punktu do przodu (rysowany w prawo).
-## Podstawa klina (punkt zaczepienia) stoi z tyłu kręgu obrażeń, a długość klina w klatce to około 2 x SMOKE_FX_RADIUS.
+## Podstawa klina (punkt zaczepienia) stoi z tyłu kręgu obrażeń; klin ma w klatce około 1,3 x SMOKE_FX_RADIUS długości,
+## żeby kolejne rzędy (co około 38 px) nie zlewały się w jeden strumień.
 const SMOKE_FX := preload("res://assets/effects/smoke_burst.png")
-const SMOKE_FX_ANCHOR := Vector2(14, 38)
-const SMOKE_FX_RADIUS := 28.0
+const SMOKE_FX_ANCHOR := Vector2(14, 26)
+const SMOKE_FX_RADIUS := 32.0
+## Kierunek wybuchu: kolejne rzędy na przemian odchylone o SMOKE_FX_ZIGZAG (rad) w lewo i w prawo, do tego mały losowy
+## rozrzut - wybuchy kolejnych rzędów nie układają się w jedną linię.
+const SMOKE_FX_ZIGZAG := 0.4
+const SMOKE_FX_JITTER := 0.12
 ## Klin jest narysowany lekko pod górę (około 14 stopni) - obrót o tyle w drugą stronę kieruje go wzdłuż lotu.
 const SMOKE_FX_LEAN := 0.25
 const BLOOD_COLOR := Color(0.8, 0.1, 0.1)
@@ -388,7 +393,7 @@ func _fire_smoke(rows: int, combo: bool) -> void:
 			var at := origin + aim.rotated((k - 1) * spread) * Skills.SMOKE_DISTANCE[ring]
 			var timer := _player.get_tree().create_timer(ring * SMOKE_RING_DELAY + k * 0.02, false)
 			var bonus := (1.0 + _player.skills.tree_bonus("melee", "smoke_damage")) * (_player.combo_damage() if combo else 1.0)
-			timer.timeout.connect(_burst.bind(at, aim.rotated((k - 1) * spread), Skills.SMOKE_RADIUS[ring] * _player.stats.area_multiplier(),
+			timer.timeout.connect(_burst.bind(at, aim.rotated((k - 1) * spread + SMOKE_FX_ZIGZAG * (1.0 if ring % 2 == 0 else -1.0)), Skills.SMOKE_RADIUS[ring] * _player.stats.area_multiplier(),
 					Skills.smoke_damage(level, ring) * bonus))
 
 
@@ -398,7 +403,8 @@ func _burst(at: Vector2, dir: Vector2, radius: float, multiplier: float) -> void
 		return
 	var parent := _player.get_parent()
 	var size := radius / SMOKE_FX_RADIUS
-	SkillEffects.sheet_once(parent, SMOKE_FX, 10, 16.0, at - dir * radius * 0.9, SMOKE_FX_ANCHOR, dir.angle(), 1.0, size,
+	var fx_dir := dir.rotated(randf_range(-SMOKE_FX_JITTER, SMOKE_FX_JITTER))
+	SkillEffects.sheet_once(parent, SMOKE_FX, 10, 16.0, at - fx_dir * radius * 0.6, SMOKE_FX_ANCHOR, fx_dir.angle(), 1.0, size,
 			SMOKE_FX_LEAN)
 	Sfx.play_at("explosion", at, -12.0)
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):

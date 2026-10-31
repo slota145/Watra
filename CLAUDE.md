@@ -180,6 +180,8 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 - [x] Dymne Wybuchy z kreatora efektów (`assets/effects/smoke_burst.png`, `SwordSkills._burst`): zamiast kółka i chmury
   kropek - klin dymu i smug buchający z punktu do przodu (wg szkicu autora), obrócony w kierunku lotu każdego wybuchu
   i skalowany do jego promienia; `SkillEffects.sheet_once` ma `size` (skala) i `lean` (korekta pochylonego rysunku).
+  Poszarpany rozbłysk na starcie (bez okrągłej kuli); krótki klin, a kolejne rzędy buchają zygzakiem
+  (`SwordSkills.SMOKE_FX_ZIGZAG`, mały losowy rozrzut), żeby 9 wybuchów nie zlewało się w 3 strumienie.
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

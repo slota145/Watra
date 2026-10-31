@@ -75,14 +75,14 @@
     "effect": "1142ef1f-b5ca-4b61-80da-d2da96d6b842",
     "name": "Dymny Wybuch",
     "frame": [
-      86,
-      60
+      58,
+      47
     ],
     "frames": 10,
     "fps": 16,
     "anchor": [
       14,
-      38
+      26
     ]
   }
 }
