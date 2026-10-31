@@ -1,4 +1,4 @@
-class_name Settlement
+﻿class_name Settlement
 extends Node
 ## Osada Ostoja - ostatnie schronienie ludzi przed hordami potworów, które zalały świat.
 ## Otoczona owalną palisadą z trzema bramami (zachód, wschód, południe), z karczmą
@@ -108,71 +108,71 @@ const UNLOCK_QUEST := "village_help"
 ## czas budowy (odpoczynek w karczmie kończy ją od razu).
 const PROJECTS := {
 	"barracks": {"pos": BARRACKS_POS, "size": BARRACKS_SIZE, "color": BARRACKS_COLOR,
-			"time": 180.0, "art": "construction", "cost": {"wood": 150, "stone": 150},
+			"time": 180.0, "art": "construction", "cost": {"wood": 80, "stone": 80},
 			"description": "Za południową bramą. Ostoja dostanie własnych żołnierzy - ćwiczą na placu, a łucznicy obsadzą wieże palisady i strzelają do potworów pod osadą.",
 			"start_line": "Zaczynamy budowę koszar! Zajrzyj za południową bramę.",
 			"done_line": "Koszary gotowe! Ostoja ma wreszcie własne wojsko!",
 			"banner": "Koszary zbudowane!
 Ostoja ma własne wojsko"},
 	"lodge": {"pos": LODGE_POS, "size": LODGE_SIZE, "color": LODGE_COLOR,
-			"time": 150.0, "art": "construction_lodge", "cost": {"wood": 100, "stone": 50},
+			"time": 150.0, "art": "construction_lodge", "cost": {"wood": 50, "stone": 20},
 			"description": "Za palisadą na północnym wschodzie. Trzech myśliwych poluje i znosi do magazynu skóry i mięso.",
 			"start_line": "Budujemy chatkę myśliwych! Za palisadą, na północnym wschodzie.",
 			"done_line": "Chatka myśliwych gotowa! Będzie co jeść i czym handlować.",
 			"banner": "Chatka myśliwych zbudowana!
 Trzech myśliwych rusza na łowy"},
 	"sage_hut": {"pos": SAGE_POS, "size": SAGE_SIZE, "color": SAGE_COLOR,
-			"time": 160.0, "art": "construction_sage", "cost": {"wood": 120, "stone": 60},
+			"time": 160.0, "art": "construction_sage", "cost": {"wood": 60, "stone": 30},
 			"description": "Na uboczu za palisadą, na północnym zachodzie. Zamieszka w niej mędrzec ze swoimi księgami.",
 			"start_line": "Stawiamy chatę dla mędrca! Na uboczu, za palisadą od północnego zachodu.",
 			"done_line": "Chata mędrca gotowa. Ponoć już ślęczy nad księgami.",
 			"banner": "Chata mędrca zbudowana!\nMędrzec zgłębia swoje księgi"},
 	"guild": {"pos": GUILD_POS, "size": GUILD_SIZE, "color": GUILD_COLOR,
-			"time": 220.0, "art": "construction_guild", "cost": {"wood": 200, "stone": 200},
+			"time": 220.0, "art": "construction_guild", "cost": {"wood": 100, "stone": 100},
 			"description": "Przy drodze od południowej bramy. Siedziba poszukiwaczy przygód z tablicą ogłoszeń przed wejściem.",
 			"start_line": "Budujemy gildię poszukiwaczy przygód! Przy drodze od południowej bramy.",
 			"done_line": "Gildia otwarta! Poszukiwacze przygód już oblegają tablicę ogłoszeń.",
 			"banner": "Gildia poszukiwaczy przygód zbudowana!\nTablica ogłoszeń czeka na zlecenia"},
 	# budowle bez wnętrza (grafika z zewnątrz) - "fit": plac budowy dopasowany do ich rozmiaru
 	"infirmary": {"pos": Vector2i(19, 35), "size": Vector2i(5, 4), "color": Color("4f8a4a"), "fit": true,
-			"time": 150.0, "art": "construction_lodge", "cost": {"wood": 120, "stone": 80},
+			"time": 150.0, "art": "construction_lodge", "cost": {"wood": 60, "stone": 40},
 			"description": "W południowo-zachodnim kącie osady, za kuźnią. Za palisadą szybciej odzyskasz zdrowie i manę (3% na sekundę), a zielarka sprzeda wielkie mikstury i uwarzy z dzikich ziół mikstury wzmacniające.",
 			"start_line": "Budujemy lecznicę! W kącie za kuźnią.",
 			"done_line": "Lecznica gotowa. Ranni wreszcie mają gdzie leżeć.",
 			"banner": "Lecznica zielarki zbudowana!\nW osadzie szybciej wracasz do sił"},
 	"chapel": {"pos": Vector2i(35, 27), "size": Vector2i(5, 4), "color": Color("b8a46a"), "fit": true,
-			"time": 180.0, "art": "construction_lodge", "cost": {"wood": 100, "stone": 150},
+			"time": 180.0, "art": "construction_lodge", "cost": {"wood": 50, "stone": 80},
 			"description": "Przy drodze do bramy południowej, obok sklepu. Kapłan za datek udzieli błogosławieństwa: +10% doświadczenia albo +5% obrażeń na 20 minut.",
 			"start_line": "Stawiamy kaplicę! Przy drodze do południowej bramy.",
 			"done_line": "Kaplica stoi. Ludzie znów mają gdzie się modlić.",
 			"banner": "Kaplica zbudowana!\nKapłan udziela błogosławieństw"},
 	"houses": {"pos": Vector2i(38, 34), "size": Vector2i(8, 4), "color": Color("9a7a4a"), "fit": true,
-			"time": 200.0, "art": "construction_lodge", "cost": {"wood": 200, "stone": 100},
+			"time": 200.0, "art": "construction_lodge", "cost": {"wood": 100, "stone": 50},
 			"description": "W obozie uchodźców. Namioty zamienią się w chaty, a wdzięczni osadnicy co 5 minut wpłacą trochę złota.",
 			"start_line": "Budujemy chaty dla uchodźców! Koniec spania pod płótnem.",
 			"done_line": "Chaty gotowe! Uchodźcy mają wreszcie dach nad głową.",
 			"banner": "Chaty osadników zbudowane!\nOsadnicy dzielą się zarobkiem"},
 	"market": {"pos": Vector2i(45, 17), "size": Vector2i(5, 4), "color": Color("c28a3a"), "fit": true,
-			"time": 140.0, "art": "construction_lodge", "cost": {"wood": 150, "stone": 50},
+			"time": 140.0, "art": "construction_lodge", "cost": {"wood": 80, "stone": 20},
 			"description": "Przy rynku, obok magazynu. Zjedzie się wędrowny kupiec z rzadkim towarem - doskonałymi kamieniami, wielkimi miksturami - zmienianym co 10 minut.",
 			"start_line": "Szykujemy miejsce na targowisko! Przy rynku, obok magazynu.",
 			"done_line": "Targowisko gotowe! Już ktoś zajechał wozem.",
 			"banner": "Targowisko zbudowane!\nWędrowny kupiec rozłożył towar"},
 	"bathhouse": {"pos": Vector2i(49, 29), "size": Vector2i(5, 4), "color": Color("6a8aa8"), "fit": true,
-			"time": 140.0, "art": "construction_lodge", "cost": {"wood": 120, "stone": 60},
+			"time": 140.0, "art": "construction_lodge", "cost": {"wood": 60, "stone": 30},
 			"description": "Na wschodzie osady, obok sklepu. Po odpoczynku w karczmie będziesz Wypoczęty: +2 zdrowia i +1 many na sekundę, +5% szybkości ruchu przez 10 minut.",
 			"start_line": "Budujemy łaźnię! Na wschodzie, obok sklepu.",
 			"done_line": "Łaźnia gotowa. Gorąca woda czeka!",
 			"banner": "Łaźnia zbudowana!\nPo odpoczynku jesteś Wypoczęty"},
 	"armory": {"pos": Vector2i(23, 25), "size": Vector2i(4, 3), "color": Color("5a5f75"), "fit": true,
-			"time": 160.0, "art": "construction_lodge", "cost": {"wood": 80, "stone": 120, "iron_ore": 20},
+			"time": 160.0, "art": "construction_lodge", "cost": {"wood": 40, "stone": 60, "iron_ore": 10},
 			"description": "Obok kuźni. Kowal otworzy warsztat rzemiosła premii: przerzut wartości, przekucie, usuwanie i dodawanie premii, ulepszanie rzadkości (za złoto i trofea potworów) oraz runy z lochów.",
 			"start_line": "Rozbudowujemy kuźnię o warsztat płatnerza!",
 			"done_line": "Warsztat gotowy. Kowal już ostrzy narzędzia.",
 			"banner": "Warsztat płatnerza zbudowany!\nKowal przekuwa przedmioty"},
 	# po zadaniu "Pierwszy klejnot" (Gems) jubiler Dobromir przeprowadza się z Orlej Przełęczy
 	"jeweler": {"pos": Vector2i(26, 31), "size": Vector2i(5, 4), "color": Color("3f8f9a"), "fit": true,
-			"time": 170.0, "art": "construction_lodge", "cost": {"wood": 120, "stone": 150, "iron_ore": 30},
+			"time": 170.0, "art": "construction_lodge", "cost": {"wood": 60, "stone": 80, "iron_ore": 15},
 			"requires_quest": "jeweler_gem",
 			"description": "Między kuźnią a drogą do bramy południowej. Jubiler Dobromir przeprowadzi się tu z Orlej Przełęczy - osadzi i połączy kamienie, a w nowym warsztacie także przeszlifuje kamień (nowe premie za złoto).",
 			"start_line": "Stawiamy chatę dla jubilera! Dobromir już pakuje narzędzia.",
@@ -254,7 +254,7 @@ const PLAZA_RADIUS := 3.2
 ## do Watry drewno z magazynu; po każdym naręczu i po każdej ofierze gracza (Boons.ember) ogień buchnie.
 ## Im wyższy poziom Watry, tym jaśniej i szerzej świeci.
 const WATRA_POS := Vector2(32.0, 16.6)
-const WATRA_SHRINE := Vector2(37.2, 18.4)
+const WATRA_SHRINE := Vector2(38.0, 16.6)
 const WATRA_FPS := 7.0
 const LINES_FIREWOOD: Array[String] = [
 	"Dopóki płonie ogień, Ostoja trwa.",

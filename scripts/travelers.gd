@@ -239,10 +239,20 @@ func add_kills(traveler: Dictionary, count: int) -> void:
 
 
 func die(traveler: Dictionary) -> void:
+	var in_party := party.has(traveler["name"])
 	party.erase(traveler["name"])
 	traveler["state"] = "dead"
 	traveler["deaths"] = int(traveler["deaths"]) + 1
 	traveler["wait"] = randi_range(2, 4)
+	if in_party:
+		# prośba drużyny przepada, gdy zginie proszący albo cała drużyna
+		var player := get_parent() as Player
+		var help := player.quests.active_help() if player != null else ""
+		if party.is_empty() or (help != "" and Quests.get_data(help).get("poster", "") == traveler["name"]):
+			_fail_party_help()
+		if party.is_empty():
+			party_ticks = 0
+		changed.emit()
 
 
 # ---------------------------------------------------------------- drużyna
@@ -267,7 +277,22 @@ func disband() -> void:
 			traveler["wait"] = randi_range(1, 3)
 	party.clear()
 	party_ticks = 0
+	_fail_party_help()
 	changed.emit()
+
+
+## Drużyna odeszła (albo zginął proszący), zanim prośba o pomoc została wykonana - zadanie przepada i znika spod minimapy.
+func _fail_party_help() -> void:
+	var player := get_parent() as Player
+	if player == null:
+		return
+	var help := player.quests.active_help()
+	if help == "" or player.quests.state_of(help) != Quests.STATE_ACTIVE:
+		return
+	player.quests.abandon_bounty(help)
+	if player.is_inside_tree():
+		DamageNumber.spawn_text(player.get_parent(), player.body_center() + Vector2(0, -14),
+				"Prośba drużyny nieudana", Color(1.0, 0.5, 0.45), 9)
 
 
 func party_members() -> Array[Dictionary]:

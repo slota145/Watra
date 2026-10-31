@@ -66,7 +66,8 @@ func _ostoja() -> void:
 	p.quests.states["jeweler_gem"] = "done"
 	var wood: int = p.count_owned("wood")
 	check("budowa po zadaniu", s.project_locked("jeweler", p) == "" and s.start_project("jeweler", p)
-			and p.count_owned("wood") == wood - 120 and p.count_owned("iron_ore") == 170)
+			and p.count_owned("wood") == wood - int(s.PROJECTS["jeweler"]["cost"]["wood"])
+			and p.count_owned("iron_ore") == 200 - int(s.PROJECTS["jeweler"]["cost"]["iron_ore"]))
 	s._finish_construction("jeweler")
 	check("chata zbudowana", s.project_state("jeweler") == "built" and _world.village_built("jeweler"))
 	var jeweler = null

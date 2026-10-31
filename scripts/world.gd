@@ -1039,10 +1039,7 @@ func _process_guard(delta: float) -> void:
 	if _guard.is_empty():
 		return
 	var node: Traveler = _guard["node"] if is_instance_valid(_guard["node"]) else null
-	if node == null or not node.is_inside_tree():
-		_guard = {}
-		return
-	if not node.is_alive():
+	if node == null or not node.is_inside_tree() or not node.is_alive():
 		_end_guard(false)
 		return
 	_guard["left"] = float(_guard["left"]) - delta

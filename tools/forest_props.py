@@ -132,7 +132,7 @@ def build(name, pack, index, scale, base):
 VARIANTS = {
     "oak": ((64, 64), 0.75, [("trees", 0), ("trees", 1), ("trees", 2), ("trees2", 4), ("trees2", 5), ("trees2", 7),
                              ("trees", 3), ("trees2", 6)]),
-    "pine": ((48, 64), 0.75, [("trees2", 0), ("trees2", 1), ("trees2", 3), ("trees2", 10), ("trees2", 8)]),
+    "pine": ((48, 64), 0.75, [("trees2", 0), ("trees2", 1), ("trees2", 3), ("trees2", 2), ("trees2", 8)]),
     "bush": ((36, 30), 0.45, [("trees2", 12), ("trees2", 15), ("trees2", 11)]),
     "rock": ((24, 20), 0.75, [("small", 2), ("small", 3), ("small", 62)]),
     "stump": ((24, 20), 0.75, [("small", 12), ("small", 35)]),

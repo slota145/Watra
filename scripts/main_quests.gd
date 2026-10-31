@@ -4,7 +4,7 @@ class_name MainQuests
 ## i pod minimapą - złoty tytuł. Każdy krok (CHAIN, kolejno) daje `giver`, a nagrodę wydaje `receiver` (domyślnie ten sam). Krok jest
 ## wykonany, gdy spełni się jego warunek `check` (sprawdzany co chwilę - QuestLog.update_main), np.:
 ## ["talk"] - od razu (rozmowa z `receiver`), ["level", 5], ["quest", id] (inne zadanie oddane), ["built", n],
-## ["herb"], ["nodes", n] (węzły drzewek), ["boss", nazwa sceny] (Codex.kills), ["watra", poziom], ["shrine", id],
+## ["herb"], ["project", id] (budowla Ostoi), ["nodes", n] (węzły drzewek), ["boss", nazwa sceny] (Codex.kills), ["watra", poziom], ["shrine", id],
 ## ["event", nazwa, n] (QuestLog.note_event: dungeon_clear, crystal_done, codex), ["enchant", n], ["essence"].
 ## Nagrody: złoto, doświadczenie, przedmioty (reward_items) i punkty umiejętności (skill_points - SkillBook).
 ## Lochy Watry odblokowuje krok DUNGEON_STEP. Starsze zapisy (bez zadań głównych) zaliczają po wczytaniu kroki,
@@ -17,7 +17,7 @@ const COLOR_DIM := Color(0.62, 0.55, 0.36)
 const DUNGEON_STEP := "main_watra"
 
 const CHAIN: Array[String] = [
-	"main_ember", "main_village", "main_build", "main_herbs", "main_tree", "main_codex", "main_wolves", "main_gruzlog",
+	"main_ember", "main_village", "main_build", "main_herbs", "main_tree", "main_codex", "main_gruzlog", "main_wolves",
 	"main_watra", "main_dungeon", "main_fields", "main_bombardier", "main_swamp", "main_hydra", "main_pass",
 	"main_gem", "main_eagle", "main_ancient", "main_crystal", "main_enchant", "main_cemetery", "main_essence", "main_finale",
 ]
@@ -25,59 +25,59 @@ const CHAIN: Array[String] = [
 const DATA := {
 	# ---------------------------------------------------------------- Akt I: Ostoja i Gobliński Las
 	"main_ember": {"title": "Iskra w popiele", "giver": ZERCA, "receiver": "Sołtys Mirosław", "check": ["talk"],
-		"target_name": "Rozmowa z sołtysem", "area_name": "Ostoja - dom sołtysa przy placu", "gold": 50, "xp": 150,
+		"target_name": "Rozmowa z sołtysem", "area_name": "Ostoja - dom sołtysa przy placu", "gold": 50, "xp": 25,
 		"description": "Podejdź bliżej, wędrowcze. Jestem Wszebor, żerca tej Watry. Póki ogień płonie, horda nie wejdzie za palisadę - ale płomień słabnie z każdą nocą, a ludzi przybywa. Potrzebujemy kogoś, kto stanie między Ostoją a ciemnością. Idź do sołtysa Mirosława, powiedz, że przysyła cię Wszebor.",
 		"progress_text": "Sołtys mieszka w domu przy placu, na północ od Watry.",
 		"complete_text": "Wszebor cię przysłał? To dobrze, bardzo dobrze. Ostoja potrzebuje rąk do pracy i miecza do obrony.",
 		"done_text": "Ogień płonie, póki ktoś go pilnuje."},
 	"main_village": {"title": "Ręce do pracy", "giver": "Sołtys Mirosław", "check": ["quest", "village_help"],
-		"target_name": "Zadanie „Ostoja prosi o pomoc”", "area_name": "las wokół Ostoi", "gold": 120, "xp": 400,
+		"target_name": "Zadanie „Ostoja prosi o pomoc”", "area_name": "las wokół Ostoi", "gold": 120, "xp": 60,
 		"reward_items": {"health_potion": 5},
 		"description": "Zanim pomyślimy o walce, musimy przetrwać. Palisada się sypie, a cieśle siedzą bezczynnie. Pomóż mi z drewnem i kamieniem - przyjmij moją prośbę i zbierz, co trzeba.",
 		"progress_text": "Trzydzieści kłód i dwadzieścia kamieni. Przyjmij ode mnie zadanie „Ostoja prosi o pomoc”, jeśli jeszcze go nie masz.",
 		"complete_text": "Cieśle już ostrzą siekiery! Masz tu mikstury na drogę - las nie jest łaskawy.",
 		"done_text": "Ostoja rośnie dzięki tobie."},
-	"main_build": {"title": "Pierwsza budowla", "giver": "Sołtys Mirosław", "check": ["built", 1],
-		"target_name": "Zbudowane budowle", "area_name": "Ostoja - plany budowy u sołtysa", "gold": 200, "xp": 600,
+	"main_build": {"title": "Pierwsza budowla", "giver": "Sołtys Mirosław", "check": ["project", "infirmary"],
+		"target_name": "Lecznica", "area_name": "Ostoja - plany budowy u sołtysa", "gold": 200, "xp": 120,
 		"skill_points": 1,
-		"description": "Mamy surowce, mamy ludzi. Wybierz z moich planów, co postawimy najpierw - koszary, lecznicę, chatkę myśliwych... Każda budowla da Ostoi coś nowego.",
-		"progress_text": "Plany budowy pokażę ci w rozmowie - przycisk „Budowa”. Odpoczynek w karczmie kończy budowę od razu.",
-		"complete_text": "Stoi! Ludzie patrzą na to z nadzieją, jakiej dawno nie widziałem. Wszebor chciał cię widzieć - wróć do Watry.",
+		"description": "Mamy surowce, mamy ludzi. Najpierw postawmy lecznicę - ranni nie mają gdzie się podziać, a zielarka Jadwiga od dawna prosi o własny kąt. Z ziół uwarzy mikstury, jakich nie zrobi nikt inny.",
+		"progress_text": "Lecznicę wybierzesz z planów budowy - przycisk „Budowa” w rozmowie ze mną. Odpoczynek w karczmie kończy budowę od razu.",
+		"complete_text": "Lecznica stoi, a Jadwiga już rozkłada zioła! Ludzie patrzą na to z nadzieją, jakiej dawno nie widziałem. Wszebor chciał cię widzieć - wróć do Watry.",
 		"done_text": "Każda nowa budowla to jeden powód więcej, by nie uciekać."},
 	"main_herbs": {"title": "Zioła na rany", "giver": ZERCA, "check": ["herb"],
-		"target_name": "Zerwane zioło", "area_name": "każda kraina - świecące rośliny (klawisz F)", "gold": 100, "xp": 500,
+		"target_name": "Zerwane zioło", "area_name": "każda kraina - świecące rośliny (klawisz F)", "gold": 100, "xp": 80,
 		"reward_items": {"herb_wort": 3},
 		"description": "Ogień nie leczy ran - robią to zioła. W lesie rosną rośliny, nad którymi tańczą iskierki. Zerwij choć jedno zioło - zielarka uwarzy z nich mikstury silniejsze niż posiłek z karczmy.",
 		"progress_text": "Szukaj roślin z iskierkami nad liśćmi i zerwij je klawiszem F.",
-		"complete_text": "Dziurawiec... dobry początek. Zielarka Jadwiga zamieszka w lecznicy, gdy ją zbudujecie - z trzech ziół uwarzy miksturę.",
+		"complete_text": "Dziurawiec... dobry początek. Zanieś zioła Jadwidze do lecznicy - z trzech ziół uwarzy miksturę.",
 		"done_text": "Las daje, gdy umiesz brać."},
 	"main_tree": {"title": "Ścieżka oręża", "giver": ZERCA, "check": ["nodes", 3],
-		"target_name": "Wybrane węzły drzewka", "area_name": "okno umiejętności (klawisz K)", "gold": 150, "xp": 700,
+		"target_name": "Wybrane węzły drzewka", "area_name": "okno umiejętności (klawisz K)", "gold": 150, "xp": 100,
 		"skill_points": 1,
 		"description": "Każda broń ma swoją ścieżkę - miecz, łuk i księga. Za każdy zdobyty poziom dostajesz punkt, którym otwierasz kolejne węzły. Wybierz trzy węzły na ścieżce swojego oręża.",
 		"progress_text": "Klawisz K - drzewko umiejętności. Węzeł wybierasz obok już wybranego.",
 		"complete_text": "Czuję to w tobie - oręż słucha twojej ręki. Masz, jeszcze jeden punkt ode mnie.",
 		"done_text": "Ścieżka oręża nie ma końca."},
 	"main_codex": {"title": "Księga świata", "giver": ZERCA, "check": ["event", "codex", 1],
-		"target_name": "Otwarta encyklopedia", "area_name": "encyklopedia (klawisz L)", "gold": 60, "xp": 300,
+		"target_name": "Otwarta encyklopedia", "area_name": "encyklopedia (klawisz L)", "gold": 60, "xp": 40,
 		"description": "Mądry wojownik zna wroga, zanim go spotka. Spisuję wszystko, co wiemy o potworach, legendach i ziołach. Zajrzyj do tej księgi - każdy pokonany wróg i znaleziony przedmiot ją uzupełnia.",
 		"progress_text": "Encyklopedię otwiera klawisz L.",
 		"complete_text": "Pusta jeszcze, co? Zapełnisz ją. Każdy wpis to dowód, że ktoś tu przeszedł i przeżył.",
 		"done_text": "Wiedza to też broń."},
-	"main_wolves": {"title": "Wilcze wycie", "giver": "Myśliwy Radek", "check": ["boss", "alpha_wolf"],
-		"target_name": "Szarokieł, Wilk Alfa", "area_name": "siedlisko wilków (południowy wschód Goblińskiego Lasu)",
-		"gold": 300, "xp": 1500, "reward_items": {"greater_health_potion": 3},
-		"description": "Żerca mówi, że horda ma przewodników. U wilków to Szarokieł - wielki basior z siedliska na południowym wschodzie. Dopóki żyje, wataha nie da nam spokoju. Ubij go.",
-		"progress_text": "Szarokieł prowadzi watahę z serca siedliska. Uważaj na jego wycie - zwołuje resztę.",
-		"complete_text": "Szarokieł nie żyje? Ha! Wataha rozpierzchnie się po lesie. Należy ci się porządna nagroda.",
-		"done_text": "W lesie wreszcie cicho po nocach."},
-	"main_gruzlog": {"title": "Wódz goblinów", "giver": "Kupiec Bogdan", "receiver": ZERCA, "check": ["boss", "goblin_chief"],
-		"target_name": "Gruzłog, Wódz Goblinów", "area_name": "obóz wodza goblinów (Gobliński Las)", "gold": 350, "xp": 1800,
-		"skill_points": 1,
-		"description": "Gobliny nie napadają same z siebie - ktoś je prowadzi. Gruzłog, ich wódz, siedzi w sercu obozu otoczony strażą. Pokonaj go, a potem powiedz o tym Wszeborowi. Coś mi mówi, że on już wie więcej.",
-		"progress_text": "Gruzłog siedzi w największym obozie goblinów. Po zwycięstwie idź prosto do Watry.",
-		"complete_text": "Gruzłog padł... A jednak horda nie słabnie. Bo to nie wodzowie ją ślą - coś się budzi głębiej. Płomień musi być silniejszy.",
+	"main_gruzlog": {"title": "Wódz goblinów", "giver": "Kupiec Bogdan", "check": ["boss", "goblin_chief"],
+		"target_name": "Gruzłog, Wódz Goblinów", "area_name": "obóz wodza goblinów (Gobliński Las)", "gold": 300, "xp": 1500,
+		"reward_items": {"greater_health_potion": 3},
+		"description": "Żerca mówi, że horda ma przewodników. U goblinów to Gruzłog - ich wódz siedzi w sercu obozu, otoczony strażą. Dopóki żyje, gobliny będą napadać na moje wozy. Pokonaj go.",
+		"progress_text": "Gruzłog siedzi w największym obozie goblinów. Uważaj na jego straż.",
+		"complete_text": "Gruzłog padł? Ha! Wozy znów dojadą całe. Należy ci się porządna nagroda - a myśliwy Radek pytał o ciebie, wilki nie dają mu spokoju.",
 		"done_text": "Gobliński Las znów należy do ludzi."},
+	"main_wolves": {"title": "Wilcze wycie", "giver": "Myśliwy Radek", "receiver": ZERCA, "check": ["boss", "alpha_wolf"],
+		"target_name": "Szarokieł, Wilk Alfa", "area_name": "siedlisko wilków (południowy wschód Goblińskiego Lasu)", "gold": 350, "xp": 1800,
+		"skill_points": 1,
+		"description": "Gobliny bez wodza się rozpierzchły, ale wilki nie. Prowadzi je Szarokieł - wielki basior z siedliska na południowym wschodzie. Ubij go, a potem powiedz o tym Wszeborowi. Coś mi mówi, że on już wie więcej.",
+		"progress_text": "Szarokieł prowadzi watahę z serca siedliska. Uważaj na jego wycie - zwołuje resztę. Po zwycięstwie idź prosto do Watry.",
+		"complete_text": "Szarokieł padł... A jednak horda nie słabnie. Bo to nie wodzowie ją ślą - coś się budzi głębiej. Płomień musi być silniejszy.",
+		"done_text": "W lesie wreszcie cicho po nocach."},
 	"main_watra": {"title": "Płomień Watry", "giver": ZERCA, "check": ["watra", 2],
 		"target_name": "Poziom Watry", "area_name": "Watra na placu Ostoi - ofiary ze złota i przedmiotów", "gold": 250, "xp": 1500,
 		"reward_items": {"blessed_stone": 5},
@@ -267,6 +267,9 @@ static func progress(player: Player, id: String) -> Array:
 			return [1 if player.quests.state_of(check[1]) == Quests.STATE_DONE else 0, 1]
 		"built":
 			return [mini(_built_count(player), check[1]), check[1]]
+		"project":
+			var world := player.get_tree().get_first_node_in_group("world") if player.is_inside_tree() else null
+			return [1 if world != null and world.village_built(check[1]) else 0, 1]
 		"herb":
 			return [1 if player.codex.discovered.keys().any(func(item: String) -> bool: return item.begins_with("herb_")) else 0, 1]
 		"nodes":

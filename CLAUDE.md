@@ -135,6 +135,14 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 - [x] Drzewa ścina mała siekiera (`assets/weapons/hatchet.png`, `tools/settlement_art.py`) zamiast topora bojowego;
   kilof ma szpice zagięte w stronę trzonka.
 - [x] Łuki legendarne (Hydry, Burzy, Swaroga) cięciwą do postaci - `tools/pixellab_items.py` (`_bow_reversed`) odbija odwrócone.
+- [x] Kapliczka Ostoi przesunięta na północ (`Settlement.WATRA_SHRINE`) - zasłaniał ją stragan; ucięta sosna
+  (`pine_3`) zastąpiona smukłą sosną z PixelLab (`tools/forest_props.py`); sarna w skali 1:1 (`tools/forest_sheets.py`
+  - `SIZE["roe"]`), bo po zmniejszeniu była rozmazana.
+- [x] Dach budynku nie wraca półprzezroczysty po wejściu (`Building` - dach z meta `no_occlusion`).
+- [x] Zwykłe Mgnienie bez zegara odnowienia na slocie (odnowienie ma tylko wirujące Mgnienie w trakcie Młynka).
+- [x] Zadania na start: mniej doświadczenia za pierwsze kroki zbierackie, kolejność gobliny (Gruzłog) przed wilkami
+  (Szarokieł), „Pierwsza budowla” wymaga lecznicy (warunek ["project", id]), budowle Ostoi o połowę tańsze;
+  niewykonana prośba drużyny przepada, gdy drużyna odejdzie albo zginie proszący (`Travelers._fail_party_help`).
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 
