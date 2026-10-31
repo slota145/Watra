@@ -559,6 +559,20 @@ Oba systemy zależą od gildii poszukiwaczy przygód w Ostoi (budowla `guild` w 
 - [ ] **Druga Watra** (pomysł autora, późna gra): odnaleziona druga Watra i wielki system budowy nowego schronienia
   wokół niej - duże ujście surowców.
 
+### Tłumaczenie na angielski
+
+- [ ] **Krok 1: przygotowanie gry do tłumaczeń** (zaplanowane jako następne zadanie po efektach łuku i księgi magii):
+  wbudowane tłumaczenia Godota (plik CSV „klucz / pl / en”, `tr()`), wybór języka w Ustawieniach
+  (`user://settings.cfg`), owinięcie około 2400 napisów (około 15 tys. słów, 87 plików w `scripts/`) - nazwy
+  i opisy przedmiotów, umiejętności, zadań, dialogi, okna, hasła podróżników; przejrzenie miejsc, gdzie zdania
+  składa się z kawałków (polska odmiana liczebników - „3 ostrza / 5 ostrzy”, imiona), oraz sprawdzenie,
+  czy zapisy gry nie przechowują nazw jako tekstu (np. nazwy wylosowanych przedmiotów). Od tego momentu nowe teksty
+  pisać od razu gotowe do tłumaczenia.
+- [ ] Krok 2: samo tłumaczenie (Claude ze słowniczkiem nazw, autor czyta i poprawia). Zasady nazewnictwa: imiona
+  bogów i postaci zostają (Perun, Weles, Marzanna, Swaróg, Mokosz, Wszebor, Dobromir), nazwy opisowe się tłumaczy
+  (Gobliński Las - Goblin Forest, Zew Peruna - Perun's Call, Kula ognia - Fireball), kilka nazw kluczowych może
+  zostać z krótkim wyjaśnieniem jako znak rozpoznawczy gry (do decyzji autora: Watra, Ostoja).
+
 ### Świat
 
 - [ ] Budowa i rozbudowa obozów w innych krainach, które pasywnie dają surowce albo inne korzyści.
