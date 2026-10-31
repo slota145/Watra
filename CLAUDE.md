@@ -402,10 +402,19 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     w kreatorze PixelLab: efekt `70533e5e-74fc-4e0c-bcf5-842dde7d4d03`;
   - **kosa** (w stylu Sorceress z BDO) i **włócznia** - raczej jako odnogi (specjalizacje) istniejących drzewek
     z kilkoma własnymi umiejętnościami, jak wniebowstąpienia w PoE, niż osobne bronie;
-  - przed nowymi broniami warto rozważyć **combo między broniami** (np. zmiana z łuku na miecz zaraz po Sidłach
-    daje specjalne cięcie) i **szybką zmianę broni** (dwie bronie pod ręką) - mnoży możliwości obecnych drzewek;
-  - proponowana kolejność: efekty łuku i księgi -> combo między broniami i szybka zmiana broni -> kostur nekromanty
-    -> hydrosfera albo chainblade'y, kosa jako odnoga miecza.
+  - **przełączania broni NIE będzie** - autor chce, żeby gracz przywiązał się do jednego stylu gry.
+- [ ] **Drzewka klas i przebudzenia** (plan autora, inspirowany przebudzeniem z Black Desert; szczegóły do ustalenia):
+  - drzewka broni stają się drzewkami klas: wojownik (miecz), łucznik (łuk), mag (księga); do ustalenia, czy klasa
+    to wybór broni (bohaterowie Mira, Bogdan, Jaga, Wojciech zostają tylko wyglądem), czy wybór bohatera;
+  - **nekromancja w podstawowym drzewku maga** - przywołańcy jako kolejna gałąź magii (obok ognia, lodu, piorunów);
+  - **przebudzenie** dokłada klasie to, czego jej brakuje: wojownik - magia cieni w stylu Sorceress z BDO (kosa),
+    łucznik - chainblade'y (szybkie, zwinne, walka wręcz), mag - broń do walki wręcz („bojowy mag”: glewia albo
+    runiczny rapier);
+  - pomysły na wykonanie: przebudzenie przez zadanie główne u żercy Wszebora przy Watrze (rytuał, poziom około
+    30-35); broń przebudzenia jako jedna ulepszana broń (kowal / Watra, zaklinanie) zamiast linii łupu; przy
+    umiejętnościach przebudzenia broń w ręku zmienia się sama (gracz niczego nie przełącza); combo między
+    umiejętnościami podstawowymi i przebudzenia (np. Mgnienie, a zaraz po nim cień kosą);
+  - proponowana kolejność: efekty łuku i księgi -> nekromancja w drzewku maga -> przebudzenia (jedna klasa naraz).
 
 ### Interfejs i walka
 
