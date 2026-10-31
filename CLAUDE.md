@@ -209,6 +209,22 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   celuje przez `Player._aim_direction` (uwzględnia `aim_override`, jak umiejętności).
   Na każdym wrogu trafionym cięciem (zwykły atak, Półksiężyc - `Player._hit_enemies_in_arc`) błysk trafienia
   (`assets/effects/sword_hit.png`: ukośny ślad ostrza, gwiazdka, odpryski).
+- [x] Łuk z kreatora efektów (`assets/effects/bow_*.png`, wpisy "bow_*" w `pixellab_src/vfx/ids.json`, stałe w
+  `BowSkills`): każda strzała z łuku ma zapętloną smugę (`BowSkills.arrow_trail`, węzeł "Trail" pocisku - zielona
+  w czasie Jadowych Grotów, złoto-zielona przy Strzale tropiącej, płonąca przy Grocie Swaroga) i błysk trafienia;
+  wystrzał Salwy, Szybkiej salwy, Odskoku i Balisty (`BowSkills.release`); żar napinania i wybuch Grotu Swaroga;
+  znacznik i uderzenia Deszczu Strzał; trawa i pył Odskoku; Sidła jako zapętlona pętla z pnączy (zamiast obrazków),
+  zatrzaśnięcie - oplatające pnącza; smuga nurkowania i szpony Sokoła (sokół i balista zostają); jad Jadowych
+  Grotów i bąble zatrucia; podmuch Strzały Wichru (w combo trzy wachlarzem). Zapętlone efekty -
+  `SkillEffects.looping` (AnimatedSprite2D bez skryptu).
+- [x] Efekty księgi magii z kreatora efektów (kolor żywiołu; wpisy w `pixellab_src/vfx/ids.json`, `scripts/fx_loop.gd` -
+  zapętlony efekt): animowany magiczny pocisk z trafieniem, płonąca Kula ognia (w dłoniach i w locie) i nowy wybuch ognia
+  (też Spadająca Gwiazda - `Projectile.FX`, `fx_kind`, `_explode`), złoto-niebieskie pioruny rozciągane między punktami
+  (`SpellSkills.lightning` / `zap_flash`: Łańcuch błyskawic, Burza Peruna - piorun z nieba, Kula Piorunów), stożek Fali
+  piorunów, lodowy grot Włóczni Marzanny z rozpryskiem, śnieżyca Zamieci, żywa Kula Piorunów z wybuchem, płonący kamień
+  Spadającej Gwiazdy, fioletowa mgła Kroku, bańka z heksagonów Tarczy Many, Kamień Runiczny z kręgiem run. Grafiki
+  `assets/spell/` (włócznia, kula, gwiazda, kamień) zastąpione animacjami (`frost_lance.png` i `meteor.png` zostają
+  tylko jako obrazek zapasowy pocisku).
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 
@@ -390,6 +406,31 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   Sakwa i Plecak zniknęły ze sklepu (działają w starszych zapisach); wymiana Znaków Zwycięstwa daje Plecak wyprawowy.
 - [ ] Nowe bronie: kosa, kostur (nekromanta), młoty, chainblade'y, sztylety, włócznie, rapier, hydrosfera.
   Każda broń to nowy rodzaj z własnym drzewkiem, a nie tylko nowy przedmiot, więc wymaga szczegółów od autora.
+  Ustalenia z rozmowy z autorem (pomysły, nie decyzje):
+  - nowa broń to koszt całego drzewka (około 12 umiejętności, 35 pasywnych, 4 kluczowe), broni w ręku 4 postaci,
+    linii przedmiotów (5 poziomów x 3 rzadkości), legend i efektów - dodawać po jednej i taką, która gra inaczej
+    niż miecz, łuk i księga;
+  - **kostur nekromanty** - najmocniejszy kandydat: przywołańcy (upiory, strzygi walczące za gracza), czego gra nie ma;
+  - **hydrosfera** - kontrola pola wodą: fale odpychające, wiry ściągające, kałuże spowalniające, lód z księgą
+    (Wodnik, rusałki);
+  - **chainblade'y** (dwa miecze na łańcuchach) - efektowne, ale bliskie mieczowi; potrzebują własnego pomysłu
+    (przyciąganie łańcuchem, ataki na średni dystans). Próbka efektu „dwa szybkie obroty z czerwoną poświatą”
+    w kreatorze PixelLab: efekt `70533e5e-74fc-4e0c-bcf5-842dde7d4d03`;
+  - **kosa** (w stylu Sorceress z BDO) i **włócznia** - raczej jako odnogi (specjalizacje) istniejących drzewek
+    z kilkoma własnymi umiejętnościami, jak wniebowstąpienia w PoE, niż osobne bronie;
+  - **przełączania broni NIE będzie** - autor chce, żeby gracz przywiązał się do jednego stylu gry.
+- [ ] **Drzewka klas i przebudzenia** (plan autora, inspirowany przebudzeniem z Black Desert; szczegóły do ustalenia):
+  - drzewka broni stają się drzewkami klas: wojownik (miecz), łucznik (łuk), mag (księga); do ustalenia, czy klasa
+    to wybór broni (bohaterowie Mira, Bogdan, Jaga, Wojciech zostają tylko wyglądem), czy wybór bohatera;
+  - **nekromancja w podstawowym drzewku maga** - przywołańcy jako kolejna gałąź magii (obok ognia, lodu, piorunów);
+  - **przebudzenie** dokłada klasie to, czego jej brakuje: wojownik - magia cieni w stylu Sorceress z BDO (kosa),
+    łucznik - chainblade'y (szybkie, zwinne, walka wręcz), mag - broń do walki wręcz („bojowy mag”: glewia albo
+    runiczny rapier);
+  - pomysły na wykonanie: przebudzenie przez zadanie główne u żercy Wszebora przy Watrze (rytuał, poziom około
+    30-35); broń przebudzenia jako jedna ulepszana broń (kowal / Watra, zaklinanie) zamiast linii łupu; przy
+    umiejętnościach przebudzenia broń w ręku zmienia się sama (gracz niczego nie przełącza); combo między
+    umiejętnościami podstawowymi i przebudzenia (np. Mgnienie, a zaraz po nim cień kosą);
+  - proponowana kolejność: efekty łuku i księgi -> nekromancja w drzewku maga -> przebudzenia (jedna klasa naraz).
 
 ### Interfejs i walka
 
@@ -533,6 +574,20 @@ Oba systemy zależą od gildii poszukiwaczy przygód w Ostoi (budowla `guild` w 
   nowa) i **Runa Pieczęci** (z Sercem Kryształu: wybrana premia zostaje, reszta od nowa). Działa też na legendach - 3 razy drożej.
 - [ ] **Druga Watra** (pomysł autora, późna gra): odnaleziona druga Watra i wielki system budowy nowego schronienia
   wokół niej - duże ujście surowców.
+
+### Tłumaczenie na angielski
+
+- [ ] **Krok 1: przygotowanie gry do tłumaczeń** (zaplanowane jako następne zadanie po efektach łuku i księgi magii):
+  wbudowane tłumaczenia Godota (plik CSV „klucz / pl / en”, `tr()`), wybór języka w Ustawieniach
+  (`user://settings.cfg`), owinięcie około 2400 napisów (około 15 tys. słów, 87 plików w `scripts/`) - nazwy
+  i opisy przedmiotów, umiejętności, zadań, dialogi, okna, hasła podróżników; przejrzenie miejsc, gdzie zdania
+  składa się z kawałków (polska odmiana liczebników - „3 ostrza / 5 ostrzy”, imiona), oraz sprawdzenie,
+  czy zapisy gry nie przechowują nazw jako tekstu (np. nazwy wylosowanych przedmiotów). Od tego momentu nowe teksty
+  pisać od razu gotowe do tłumaczenia.
+- [ ] Krok 2: samo tłumaczenie (Claude ze słowniczkiem nazw, autor czyta i poprawia). Zasady nazewnictwa: imiona
+  bogów i postaci zostają (Perun, Weles, Marzanna, Swaróg, Mokosz, Wszebor, Dobromir), nazwy opisowe się tłumaczy
+  (Gobliński Las - Goblin Forest, Zew Peruna - Perun's Call, Kula ognia - Fireball), kilka nazw kluczowych może
+  zostać z krótkim wyjaśnieniem jako znak rozpoznawczy gry (do decyzji autora: Watra, Ostoja).
 
 ### Świat
 

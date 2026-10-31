@@ -54,6 +54,11 @@ const PROJECTILE := preload("res://scenes/projectile.tscn")
 ## Jak długo widać broń dystansową w ręku po strzale.
 const RANGED_POSE_TIME := 0.2
 const FIREBALL_TEXTURE := preload("res://assets/projectiles/fireball.png")
+## Płonąca kula ognia z kreatora efektów PixelLab (w dłoniach w czasie ładowania i w locie - Projectile.FX["fire"]).
+const FIREBALL_FX := preload("res://assets/effects/fireball.png")
+## Fala piorunów z kreatora efektów: stożek błyskawic rysowany w prawo, zasięg w klatce WAVE_FX_RADIUS.
+const WAVE_FX := preload("res://assets/effects/thunder_wave.png")
+const WAVE_FX_RADIUS := 112.0
 ## Prędkość obrotu w młynku (rad/s) i spowolnienie ruchu podczas niego.
 const WHIRL_SPIN_SPEED := 16.0
 const WHIRL_MOVE_FACTOR := 0.7
@@ -1344,6 +1349,10 @@ func _make_projectile(weapon: Dictionary, dir: Vector2) -> Projectile:
 	if weapon["type"] == "bow":
 		projectile.pierce += roundi(skills.tree_bonus("bow", "arrow_pierce"))
 		projectile.max_range *= 1.0 + skills.tree_bonus("bow", "arrow_range")
+		# smuga strzały (jadowa w czasie Jadowych Grotów) i błysk trafienia (BowSkills)
+		projectile.add_child(BowSkills.arrow_trail(BowSkills.VENOM_TRAIL_FX if bow_skills.venom_active() else BowSkills.ARROW_TRAIL_FX, dir))
+		projectile.enemy_hit.connect(func(enemy: Goblin) -> void:
+			BowSkills.arrow_hit(projectile.get_parent(), enemy.hurt_center(), dir.angle()))
 	var kind := stats.kind_multiplier(basic_tags())
 	projectile.damage_min = maxi(1, roundi(stats.damage_min() * kind))
 	projectile.damage_max = maxi(1, roundi(stats.damage_max() * kind))
@@ -1416,8 +1425,7 @@ func _update_fireball_charge(delta: float, id: String) -> void:
 	if id != "fireball" or is_dashing():
 		_stop_fireball_charge()
 		return
-	var aim := get_global_mouse_position() - body_center()
-	var dir := aim.normalized() if aim != Vector2.ZERO else _facing_vector()
+	var dir := _aim_direction()
 	_ranged_pose(dir)
 	if not _skill_held:
 		var charge := _fireball_charge
@@ -1439,9 +1447,8 @@ func _update_fireball_charge(delta: float, id: String) -> void:
 	# kula w dłoniach: rośnie, pulsuje, a po pełnym naładowaniu nagle się powiększa
 	var pulse := 1.0 + (0.1 if _fireball_full else 0.05) * sin(_fireball_time * (22.0 if _fireball_full else 14.0))
 	var grow := lerpf(0.35, 1.0, _fireball_charge) * (1.45 if _fireball_full else 1.0)
-	_fireball_orb.scale = Vector2.ONE * grow * pulse * _fireball_pop
+	_fireball_orb.scale = Vector2.ONE * grow * pulse * _fireball_pop * 0.5  # rysunek ma około 2x tyle co dawny obrazek
 	_fireball_orb.position = to_local(body_center() + dir * 11.0)
-	_fireball_orb.rotation += delta * 6.0
 	_fireball_embers.position = _fireball_orb.position
 	_fireball_embers.emission_sphere_radius = 8.0 + 8.0 * _fireball_charge
 
@@ -1489,13 +1496,9 @@ func _stop_fireball_charge() -> void:
 
 ## Kula ognia w dłoniach (ukryta, dopóki nie ładujemy) i jej dźwięki.
 func _make_fireball_orb() -> void:
-	_fireball_orb = Sprite2D.new()
-	_fireball_orb.texture = FIREBALL_TEXTURE
+	_fireball_orb = FxLoop.make(FIREBALL_FX, 8, 16.0, Vector2(18, 18))
 	_fireball_orb.visible = false
 	_fireball_orb.z_index = 1
-	var glow := CanvasItemMaterial.new()
-	glow.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-	_fireball_orb.material = glow
 	add_child(_fireball_orb)
 	# żar wciągany do kuli
 	_fireball_embers = CPUParticles2D.new()
@@ -1550,10 +1553,7 @@ func add_shake(amount: float) -> void:
 ## Salwa: więcej strzał z węzłów drzewka i Gradu, a w combo po Odskoku - Skills.VAULT_VOLLEY_ARROWS.
 func _cast(id: String, charge := 0.0, combo := false) -> void:
 	var weapon := equipment.weapon()
-	var aim := get_global_mouse_position() - body_center()
-	if aim == Vector2.ZERO:
-		aim = _facing_vector()
-	var dir := aim.normalized()
+	var dir := _aim_direction()
 	var level := skills.level_of(id)
 	note_skill(id)
 
@@ -1584,6 +1584,7 @@ func _cast(id: String, charge := 0.0, combo := false) -> void:
 			arrow.damage_min = roundi(arrow.damage_min * multiplier)
 			arrow.damage_max = roundi(arrow.damage_max * multiplier)
 			get_parent().add_child(arrow)
+		BowSkills.release(get_parent(), body_center() + dir * 6.0, dir.angle(), 1.0 + 0.1 * (count - Skills.MULTISHOT_ARROWS))
 		Sfx.play("bow", 2.0, 0.9)
 	else:
 		_skill_cooldown_timer = _cooldown(Skills.FIREBALL_COOLDOWN, ["spell"])
@@ -1593,6 +1594,7 @@ func _cast(id: String, charge := 0.0, combo := false) -> void:
 		fireball.texture = FIREBALL_TEXTURE
 		fireball.magic = false
 		fireball.fire = true
+		fireball.fx_kind = "fire"
 		fireball.pierce = 0
 		fireball.speed = 210.0
 		fireball.explosion_radius = Skills.fireball_radius(level) * Skills.fireball_charge_radius(charge) * stats.area_multiplier()
@@ -2075,6 +2077,7 @@ func _volley_arrow() -> void:
 	arrow.damage_max = maxi(1, roundi(arrow.damage_max * Skills.VOLLEY_DAMAGE))
 	arrow.speed *= 1.25
 	get_parent().add_child(arrow)
+	BowSkills.release(get_parent(), body_center() + dir * 6.0, dir.angle(), 0.55)
 	Sfx.play("bow", -2.0, randf_range(1.0, 1.15))
 
 
@@ -2100,7 +2103,7 @@ func _cast_chain(level: int) -> void:
 			first = enemy
 	if first == null:
 		# nikogo w zasięgu - błyskawica strzela w powietrze
-		SkillEffects.bolt(get_parent(), origin, origin + dir * 90.0)
+		SpellSkills.lightning(get_parent(), origin, origin + dir * 90.0)
 		Sfx.play("zap")
 		return
 	targets.append(first)
@@ -2132,7 +2135,8 @@ func _zap(from: Vector2, target: Goblin, multiplier: float) -> void:
 	if not is_instance_valid(target) or target.state == Goblin.State.DEAD:
 		return
 	var to := target.hurt_center()
-	SkillEffects.bolt(get_parent(), from, to)
+	SpellSkills.lightning(get_parent(), from, to)
+	SpellSkills.zap_flash(get_parent(), to)
 	Sfx.play("zap")
 	hit_enemy(target, _skill_damage(multiplier, ["spell"]), from, 40.0)
 
@@ -2147,17 +2151,14 @@ func _cast_wave(level: int) -> void:
 	var origin := body_center()
 	var half := deg_to_rad(Skills.wave_half_angle(level))
 	var radius := Skills.wave_radius(level) * stats.area_multiplier()
-	SkillEffects.cone(get_parent(), origin, dir.angle(), half, radius)
-	for i in 7:  # pioruny rozchodzące się po stożku
-		var angle := dir.angle() + lerpf(-half, half, (i + randf_range(-0.3, 0.3)) / 6.0)
-		SkillEffects.bolt(get_parent(), origin, origin + Vector2.from_angle(angle) * radius * randf_range(0.7, 1.0), 0.35, 9.0)
+	SkillEffects.sheet_once(get_parent(), WAVE_FX, 7, 20.0, origin, Vector2(6, 74), dir.angle(), 1.0, radius / WAVE_FX_RADIUS)
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
 		var to_enemy := enemy.hurt_center() - origin
 		if to_enemy.length() > radius + enemy.hurt_radius:
 			continue
 		if to_enemy.length() > enemy.hurt_radius and absf(angle_difference(dir.angle(), to_enemy.angle())) > half:
 			continue
-		SkillEffects.bolt(get_parent(), origin, enemy.hurt_center(), 0.3, 7.0)
+		SpellSkills.zap_flash(get_parent(), enemy.hurt_center())
 		hit_enemy(enemy, _skill_damage(Skills.WAVE_DAMAGE, ["spell"]), global_position, 140.0)
 	Sfx.play("thunder")
 	_shake = maxf(_shake, 4.0)
