@@ -55,9 +55,8 @@ var _rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	_rng.seed = hash(global_position)
 	_sprite = Sprite2D.new()
-	_sprite.texture = TEXTURE
-	_sprite.offset = Vector2(0, -TEXTURE.get_height() / 2.0 + 6.0)
-	_sprite.scale = Vector2.ONE * (0.8 if variant == "crystal" else 0.6)
+	_set_texture(TEXTURE)
+	_sprite.scale = Vector2.ONE * (0.65 if variant == "crystal" else 0.5)
 	add_child(_sprite)
 	max_health = Levels.damage(level) * CRYSTAL_HITS
 	health = max_health
@@ -74,6 +73,12 @@ func _ready() -> void:
 
 func is_alive() -> bool:
 	return state != "done" and health > 0.0
+
+
+## Grafika stoi podstawą na ziemi (pozycja kryształu) - także gruz, który jest niższy.
+func _set_texture(texture: Texture2D) -> void:
+	_sprite.texture = texture
+	_sprite.offset = Vector2(0, -texture.get_height() / 2.0 + 4.0)
 
 
 ## Cios potwora w kryształ (wariant "crystal").
@@ -189,7 +194,7 @@ func _finish(success: bool) -> void:
 			miner.mining = false
 	elif not success:
 		factor = FAIL_REWARD
-	_sprite.texture = RUBBLE if success and variant == "crystal" else TEXTURE_DIM
+	_set_texture(RUBBLE if success and variant == "crystal" else TEXTURE_DIM)
 	SkillEffects.shockwave(get_parent(), global_position, 70.0, Color(1.0, 0.55, 0.25))
 	SkillEffects.spark(get_parent(), global_position + Vector2(0, -20), Color(1.0, 0.7, 0.35), 24)
 	Sfx.play("rock_break", 2.0)
