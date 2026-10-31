@@ -406,9 +406,14 @@ Oba systemy zależą od gildii poszukiwaczy przygód w Ostoi (budowla `guild` w 
   Czasem zamiast zaproszenia **prośba o pomoc** - zadanie z drużyną w tej krainie (potwory, boss albo surowce,
   `QuestLog.take_help`), po wykonaniu nagroda i podziękowanie same. Łowcy pozdrawiają przechodzącego gracza i dają
   wskazówki o krainie (`Travelers.GREETINGS` / `HINTS`).
-- [ ] **Tryby symulacji świata** (pomysł autora, wybór przy nowej grze / w ustawieniach) i **charaktery podróżników**:
-  spokojny (tylko zaproszenia do drużyny, po odmowie odchodzą), realistyczny (niektórzy wyzywają na pojedynek, po
-  odmowie polują dalej), hardcorowy (dodatkowo niektórzy atakują bez ostrzeżenia - PK).
+- [x] **Tryby świata** (`scripts/world_modes.gd`, wybór `scripts/ui/world_mode_picker.gd` - w menu nowej gry po wyborze
+  bohatera i u żercy Wszebora w Ostoi; `Travelers.world_mode`, starsze zapisy - spokojny) i **charaktery podróżników**
+  (`temper`: 60% przyjaznych, 28% pojedynkowiczów, 12% zbójów; kolor imienia: zielone / żółte / czerwone):
+  spokojny - wszyscy życzliwi; realistyczny - pojedynkowicze (i zbóje) wyzywają na **pojedynek do 10% zdrowia**
+  (nikt nie ginie; wygrana: złoto i sława, odmowa - „Tchórz!”, polują dalej); hardcorowy - dodatkowo **zbóje (PK)**
+  napadają bez ostrzeżenia: pokonany zbój zostawia złoto, doświadczenie i czasem przedmiot, a gdy wygra - zabiera
+  10% złota. W walce podróżnika zastępuje **rywal** (`scripts/rival.gd` - potwór z jego wyglądem, więc działają na niego
+  wszystkie umiejętności gracza).
 - [ ] Podróżnicy zbierają surowce (drzewa, rudy, zioła) - z limitem, żeby mapa nie była łysa.
 - [ ] Rynek: liczba ofert i przedmiotów rośnie z liczbą podróżników, a najkorzystniejsze oferty szybko znikają
   wykupione przez innych.

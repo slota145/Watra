@@ -14,6 +14,7 @@ signal enchant_requested
 signal jeweler_requested(npc: Npc)
 signal watra_requested
 signal market_requested
+signal world_mode_requested
 signal travelers_requested
 ## Okno esencji: "smith" (kowal) albo "altar" (Ołtarz Welesa w lochu).
 signal essence_requested(mode: String)
@@ -136,6 +137,12 @@ func _refresh() -> void:
 				_buttons.add_child(essences)
 			"disenchant":
 				_buttons.add_child(_button("Odczarowanie", _sage))
+			"world_mode":
+				var mode_button := _button("Tryb świata", func() -> void:
+					close()
+					world_mode_requested.emit())
+				mode_button.tooltip_text = "Jak zachowują się inni podróżnicy: spokojnie, z pojedynkami albo ze zbójami (PK)"
+				_buttons.add_child(mode_button)
 			"market":
 				_buttons.add_child(_button("Rynek", func() -> void:
 					close()

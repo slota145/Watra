@@ -1453,6 +1453,8 @@ func _build_watra() -> void:
 	# żerca Wszebor - strażnik ognia, prowadzi zadania główne (MainQuests)
 	var zerca := _npc("zerca", WATRA_POS + Vector2(-3.4, 1.4), Npc.Role.IDLE, LINES_ZERCA, Vector2.RIGHT)
 	zerca.display_name = MainQuests.ZERCA
+	# zmiana trybu świata (WorldModes) - tylko tu, w Ostoi
+	zerca.services.assign(["world_mode"])
 	zerca.looks_around = false
 	zerca.dialog_greeting = "Póki płonie ogień, Ostoja trwa. Pilnuję go, odkąd pamiętam - i będę pilnował, póki starczy mi sił."
 	# dopiero po wygenerowaniu świata - postać losuje przy starcie, a świat z tego samego ziarna ma zostać taki sam

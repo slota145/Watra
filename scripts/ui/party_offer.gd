@@ -10,6 +10,7 @@ var _accept: Callable
 var _decline: Callable
 var _left := 0.0
 var _time: Label
+var _yes: Button
 
 
 func _ready() -> void:
@@ -34,12 +35,15 @@ func _ready() -> void:
 		button.add_theme_font_size_override("font_size", 8)
 		button.pressed.connect(_answer.bind(entry[1]))
 		buttons.add_child(button)
+		if entry[1]:
+			_yes = button
 	_time = UiStyle.label("", 6, UiStyle.DIM_COLOR)
 	buttons.add_child(_time)
 
 
-func ask(text: String, on_accept: Callable, on_decline: Callable) -> void:
+func ask(text: String, on_accept: Callable, on_decline: Callable, accept_label := "Dołącz") -> void:
 	_text.text = text
+	_yes.text = accept_label
 	_accept = on_accept
 	_decline = on_decline
 	_left = TIMEOUT
