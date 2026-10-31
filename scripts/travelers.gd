@@ -6,6 +6,9 @@ extends Node
 ## podróżnik żyje dalej: z Ostoi rusza na łowy do krainy pasującej do poziomu, poluje (zabójstwa, doświadczenie,
 ## awanse, czasem łup wystawiony na rynku), wraca albo ginie i po chwili wstaje w Ostoi.
 ## Widocznych w krainie i w Ostoi stawia świat (Traveler, World._sync_travelers); ich walki też trafiają do spisu.
+## Drużyna gracza (party - stan "party"): 1-3 podróżników chodzi za graczem przez krainy i lochy, ich zabójstwa dają
+## graczowi łup i doświadczenie z premią za każdego (party_xp_factor); odchodzą po party_ticks minutach, po powrocie
+## do Ostoi albo po rozwiązaniu. Zaproszenia i prośby o pomoc (zadanie z drużyną) - World._process_party_offers.
 
 signal changed
 
@@ -39,6 +42,27 @@ const LOOKS := {
 const WEAPON_NAMES := {"melee": "miecz", "bow": "łuk", "spell": "księga"}
 const ZONE_ORDER: Array[String] = ["forest", "fields", "swamp", "mountains", "ancient", "cemetery"]
 const GEAR := ["zwykły", "magiczny", "rzadki", "legendarny"]
+const PARTY_MAX := 3
+const PARTY_XP_BONUS := 0.1
+## Pozdrowienia napotkanych łowców i wskazówki o krainie (w dymkach, gdy gracz przechodzi obok).
+const GREETINGS: Array[String] = ["Witaj, wędrowcze!", "Dobrych łowów!", "Niech Perun cię prowadzi.", "Hej! Uważaj na siebie.",
+		"Ty też z Ostoi? Pozdrów Wszebora!", "Gorąco tu dziś, co?", "Ostrożnie, dużo ich tu."]
+const HINTS := {
+	"forest": ["Szarokieł wyje przed atakiem - wtedy zbiega się cała wataha.", "Goblińscy łucznicy trzymają się z tyłu - bij ich pierwszych.",
+			"Osiłki goblinów są wolne, ale biją jak młotem.", "Zioła z iskierkami zerwiesz klawiszem F - zielarka zrobi z nich mikstury."],
+	"fields": ["Uważaj na beczki bombiarzy - wybuchają po chwili.", "Czerwie polne wyskakują spod ziemi tuż pod nogami!",
+			"Bombardier siedzi za barykadą na północy obozu.", "Gryf ze wzgórza jest dużo silniejszy, niż się wydaje."],
+	"swamp": ["Uważaj na utopce - lubią wyskakiwać z wody tuż przed twarzą.", "Ogniki zwodzą na bagna. Nie idź za nimi!",
+			"Hydra śpi na północnym skraju bagien. Nie budź jej za wcześnie.", "Plujące żabołaki trafiają z daleka - podchodź zygzakiem."],
+	"mountains": ["Ptakoludzie skaczą z góry na wroga - patrz w niebo.", "Fletnia satyra miesza w głowie - sterowanie się odwraca!",
+			"Gromoskrzydły ciska piorunami z gniazda nad wioską.", "W rudzie żelaza czasem błyszczy klejnot."],
+	"ancient": ["Niszcz kokony, zanim wylęgną się pajączki.", "Pajęcze sieci spowalniają - nie stój w miejscu.",
+			"Prastare drzewa smagają korzeniami z daleka.", "Leszy otacza się drzewcami - wytnij je najpierw."],
+	"cemetery": ["Mortan wskrzesza szkielety - im dłużej walczysz, tym ich więcej.", "Ghul z trupowiska zieje smrodem i gniciem.",
+			"Kruki zrywają się z krakaniem - mogą zwabić umarłych.", "Znicze przy grobach dają trochę światła w mroku."],
+	"dungeon": ["Strażnik czeka w najdalszej komnacie.", "Kryształ Watry trzeba bronić do ostatniej fali!",
+			"Płomienie powrotu są przy wejściu."],
+}
 const LINES_TOWN: Array[String] = ["Ktoś na Hydrę? Szukam drużyny!", "Sprzedam pancerz, tanio!", "Watra dziś huczy jak nigdy.",
 		"Byłeś już w lochach? Ja ledwo wyszedłem.", "Gromoskrzydły znów mnie ubił...", "Kupię kamienie miłosierdzia!",
 		"W Prastarym Lesie pełno pająków.", "Kto widział Leszego, ten wie, co to strach.", "Jutro idę na Cmentarz.",
@@ -50,6 +74,9 @@ var roster: Array[Dictionary] = []
 var guild_rank := 0
 ## Sława gildii - za zlecenia z tablicy ogłoszeń (Bounties); od niej zależą kolejne rangi.
 var guild_fame := 0
+## Drużyna gracza: imiona członków i ile jeszcze minut (tików) zostanie.
+var party: Array[String] = []
+var party_ticks := 0
 var _timer := TICK
 
 
@@ -112,9 +139,15 @@ static func zone_for(level: int) -> String:
 
 ## Jedna chwila życia świata: wymarsze, łowy, awanse, powroty i śmierci.
 func tick() -> void:
+	if not party.is_empty():
+		party_ticks -= 1
+		if party_ticks <= 0:
+			disband()
 	for traveler: Dictionary in active():
 		traveler["wait"] = maxi(int(traveler["wait"]) - 1, 0)
 		match str(traveler["state"]):
+			"party":
+				add_kills(traveler, randi_range(1, 4))
 			"dead":
 				if traveler["wait"] == 0:
 					traveler["state"] = "town"
@@ -149,9 +182,49 @@ func add_kills(traveler: Dictionary, count: int) -> void:
 
 
 func die(traveler: Dictionary) -> void:
+	party.erase(traveler["name"])
 	traveler["state"] = "dead"
 	traveler["deaths"] = int(traveler["deaths"]) + 1
 	traveler["wait"] = randi_range(2, 4)
+
+
+# ---------------------------------------------------------------- drużyna
+## Dołączenie podróżników do drużyny gracza (najwyżej PARTY_MAX).
+func join_party(members: Array) -> void:
+	for traveler: Dictionary in members:
+		if party.size() >= PARTY_MAX or party.has(traveler["name"]):
+			continue
+		party.append(traveler["name"])
+		traveler["state"] = "party"
+	party_ticks = maxi(party_ticks, randi_range(15, 30))
+	changed.emit()
+
+
+## Koniec wspólnych łowów: członkowie wracają do Ostoi.
+func disband() -> void:
+	for name in party:
+		var traveler := find(name)
+		if not traveler.is_empty() and traveler["state"] == "party":
+			traveler["state"] = "town"
+			traveler["zone"] = "forest"
+			traveler["wait"] = randi_range(1, 3)
+	party.clear()
+	party_ticks = 0
+	changed.emit()
+
+
+func party_members() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for name in party:
+		var traveler := find(name)
+		if not traveler.is_empty():
+			result.append(traveler)
+	return result
+
+
+## Premia do doświadczenia za drużynę: +10% za każdego członka.
+func party_xp_factor() -> float:
+	return 1.0 + PARTY_XP_BONUS * party.size()
 
 
 func find(name: String) -> Dictionary:
@@ -208,7 +281,7 @@ func upgrade_rank(player: Player) -> String:
 
 
 func get_save_data() -> Dictionary:
-	return {"roster": roster.duplicate(true), "rank": guild_rank, "fame": guild_fame}
+	return {"roster": roster.duplicate(true), "rank": guild_rank, "fame": guild_fame, "party": party.duplicate(), "party_ticks": party_ticks}
 
 
 func load_save_data(data: Dictionary) -> void:
@@ -219,4 +292,9 @@ func load_save_data(data: Dictionary) -> void:
 		roster.append(entry)
 	guild_rank = int(data.get("rank", 0))
 	guild_fame = int(data.get("fame", 0))
+	party.clear()
+	for name in data.get("party", []):
+		if not find(str(name)).is_empty():
+			party.append(str(name))
+	party_ticks = int(data.get("party_ticks", 0))
 	changed.emit()

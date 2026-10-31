@@ -46,6 +46,8 @@ var travelers_window: TravelersWindow
 ## Paski szybkiego wyboru na dole ekranu i ikony działających efektów pod paskami zdrowia i many.
 var action_bars: ActionBars
 var status_row: StatusRow
+var party_frames: PartyFrames
+var party_offer: PartyOffer
 var _player: Player
 ## [przycisk, okno] - przyciski paska ikon w prawym dolnym rogu
 var _icon_buttons: Array[Array] = []
@@ -150,6 +152,14 @@ func _ready() -> void:
 	status_row.size = Vector2(150, 0)
 	add_child(status_row)
 	move_child(status_row, $Bars.get_index() + 1)
+	# drużyna z podróżnikami: ramki pod efektami i okienko zaproszeń
+	party_frames = PartyFrames.new()
+	party_frames.name = "PartyFrames"
+	party_frames.position = Vector2(6, 92)
+	add_child(party_frames)
+	party_offer = PartyOffer.new()
+	party_offer.name = "PartyOffer"
+	add_child(party_offer)
 	action_bars = ActionBars.new()
 	action_bars.name = "ActionBars"
 	add_child(action_bars)
@@ -226,6 +236,7 @@ func connect_player(player: Player) -> void:
 	watra_window.dungeon_requested.connect(dungeon_window.open)
 	watra_window.essence_requested.connect(essence_window.open.bind("watra"))
 	status_row.setup(player)
+	party_frames.setup(player)
 	action_bars.setup(player)
 	quest_tracker.area_requested.connect(show_quest_area)
 	quest_journal.area_requested.connect(show_quest_area)

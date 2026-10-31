@@ -258,6 +258,7 @@ func _ready() -> void:
 	add_child(market)
 	Gems.unlocked = false
 	quests.quest_done.connect(_on_quest_done)
+	quests.quest_ready.connect(_on_quest_ready)
 	stats.boons = boons
 	spawn_point = position
 	set_hero(Game.hero)
@@ -1003,6 +1004,25 @@ func _owned_ids() -> Array:
 
 ## Zadanie jubilera wykonane: kamienie szlachetne i gniazda zaczynają wypadać, pierwsze gniazdo za darmo
 ## i pierwszy kamień na próbę.
+## Prośba drużyny o pomoc wykonana: nagroda wypłaca się sama, a zleceniodawca dziękuje.
+func _on_quest_ready(id: String) -> void:
+	if Quests.get_data(id).get("help", false):
+		_finish_help.call_deferred(id)
+
+
+func _finish_help(id: String) -> void:
+	var quest := Quests.get_data(id).duplicate()
+	if not quests.finish_bounty(id, self):
+		return
+	Sfx.play("quest_done")
+	DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -14), "+%d zł  +%d exp" % [quest["gold"], quest["xp"]],
+			Color(1.0, 0.85, 0.3), 10)
+	for node in get_tree().get_nodes_in_group("travelers"):
+		if node.data.get("name", "") == quest.get("poster", ""):
+			node.say(["Dzięki, bez ciebie byśmy nie dali rady!", "Dobra robota! Należy ci się nagroda.",
+					"Świetnie się z tobą walczy. Dziękujemy!"].pick_random())
+
+
 func _on_quest_done(id: String) -> void:
 	# zadania główne: przedmioty i punkty umiejętności
 	if MainQuests.is_main(id):
