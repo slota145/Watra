@@ -18,13 +18,21 @@ extends Node
 
 const SMOKE_TAGS := ["attack", "spell"]
 const SMOKE_COLOR := Color(0.78, 0.78, 0.82)
-const FLICKER_COLOR := Color(0.6, 0.85, 1.0)
 ## Odstęp między rzędami wybuchów (s) i promień cięcia po skoku Mgnienia.
 const SMOKE_RING_DELAY := 0.12
 const FLICKER_HIT_RADIUS := 30.0
 ## Mgnienie na wylot: jak daleko za celem ląduje postać i jak szeroki jest pas cięcia wzdłuż drogi skoku.
 const FLICKER_OVERSHOOT := 18.0
 const FLICKER_PATH_WIDTH := 12.0
+## Efekty Mgnienia z kreatora efektów PixelLab (tools/vfx_art.py): smuga za postacią (błysk w miejscu startu,
+## rysowana w prawo; długość pasa w klatce - FLICKER_TRAIL_LENGTH) i proste cięcie z błyskiem na trafionym celu.
+const FLICKER_TRAIL := preload("res://assets/effects/flicker_trail.png")
+const FLICKER_TRAIL_ANCHOR := Vector2(8, 10)
+const FLICKER_TRAIL_LENGTH := 62.0
+const FLICKER_SLASH := preload("res://assets/effects/flicker_hit.png")
+const FLICKER_SLASH_ANCHOR := Vector2(43, 16)
+## Cięcie na celu ukośnie do drogi skoku (losowo w jedną lub drugą stronę), żeby nie zlewało się ze smugą.
+const FLICKER_SLASH_TILT := 0.6
 const BLOOD_COLOR := Color(0.8, 0.1, 0.1)
 const SPECTRAL_COLOR := Color(0.65, 0.85, 1.0)
 const PERUN_COLOR := Color(1.0, 0.85, 0.35)
@@ -229,8 +237,12 @@ func _jump(reach: float, level: int, spinning: bool) -> bool:
 	_last_target = best
 	var travel := spot - from
 	_player._face_direction(travel)
-	SkillEffects.bolt(_player.get_parent(), from + Player.BODY_OFFSET, _player.body_center(), 0.18, 3.0)
-	SkillEffects.crescent(_player.get_parent(), best.hurt_center(), travel.angle(), PI * 0.45, FLICKER_HIT_RADIUS + 6.0)
+	var trail_from := from + Player.BODY_OFFSET
+	var trail := _player.body_center() - trail_from
+	SkillEffects.sheet_once(_player.get_parent(), FLICKER_TRAIL, 7, 16.0, trail_from, FLICKER_TRAIL_ANCHOR,
+			trail.angle(), maxf(0.5, (trail.length() - 8.0) / FLICKER_TRAIL_LENGTH))
+	SkillEffects.sheet_once(_player.get_parent(), FLICKER_SLASH, 8, 16.0, best.hurt_center(), FLICKER_SLASH_ANCHOR,
+			travel.angle() + FLICKER_SLASH_TILT * (1.0 if randf() < 0.5 else -1.0))
 	Sfx.play("dash" if spinning else "swing", 0.0, 1.2)
 	var multiplier := Skills.flicker_damage(level) * (1.0 + _player.skills.tree_bonus("melee", "flicker_damage")
 			+ _player.equipment.effect_power("endless_whirl"))
@@ -242,7 +254,6 @@ func _jump(reach: float, level: int, spinning: bool) -> bool:
 		var on_path := Geometry2D.get_closest_point_to_segment(center, path_from, path_to).distance_to(center) <= FLICKER_PATH_WIDTH + enemy.hurt_radius
 		if on_path or center.distance_to(best.hurt_center()) <= FLICKER_HIT_RADIUS + enemy.hurt_radius:
 			_player.hit_enemy(enemy, _player._skill_damage(multiplier), _player.global_position, 90.0)
-	SkillEffects.spark(_player.get_parent(), best.hurt_center(), FLICKER_COLOR, 6)
 	return true
 
 
