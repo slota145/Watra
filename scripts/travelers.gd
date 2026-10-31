@@ -1,0 +1,207 @@
+class_name Travelers
+extends Node
+## Inni podróżnicy (świat jak w MMO, wszystko symulowane) - dziecko gracza, zapisywane. Spis 40 poszukiwaczy przygód
+## z imionami, wyglądem (arkusze NPC), bronią, poziomem, sławą i ekwipunkiem; aktywnych jest tylu, ile pozwala ranga
+## gildii (RANK_ACTIVE - przed zbudowaniem gildii tylko kilku samotnych wędrowców). Co TICK sekund każdy aktywny
+## podróżnik żyje dalej: z Ostoi rusza na łowy do krainy pasującej do poziomu, poluje (zabójstwa, doświadczenie,
+## awanse, czasem łup wystawiony na rynku), wraca albo ginie i po chwili wstaje w Ostoi.
+## Widocznych w krainie i w Ostoi stawia świat (Traveler, World._sync_travelers); ich walki też trafiają do spisu.
+
+signal changed
+
+const TICK := 60.0
+const SIZE := 40
+## Ilu podróżników jest aktywnych wg rangi gildii (0 - gildii nie ma).
+const RANK_ACTIVE: Array[int] = [4, 14, 26, 40]
+const MAX_RANK := 3
+## Najwyższy poziom podróżników wg rangi gildii (wyższa ranga ściąga silniejszych).
+const RANK_LEVEL_CAP: Array[int] = [12, 24, 36, 45]
+## Ulepszenia gildii (u pisarza gildii): koszt kolejnej rangi - surowce i złoto.
+const RANK_COSTS := [{}, {}, {"wood": 200, "stone": 200, "gold": 2000}, {"wood": 400, "stone": 400, "iron_ore": 60, "gold": 8000}]
+const MALE := ["Bogumił", "Radomir", "Wojsław", "Ziemowit", "Lubomir", "Gniewko", "Mścisław", "Dobrosław", "Sobiesław",
+		"Jaromir", "Czcibor", "Świętosław", "Wszemir", "Racibor", "Bożydar", "Stanimir", "Witosław", "Krzesimir", "Dalibor", "Unisław"]
+const FEMALE := ["Dobrawa", "Milena", "Wiesława", "Ludmiła", "Bogna", "Jarosława", "Zlata", "Radosława", "Świętomira", "Wanda",
+		"Dobromiła", "Grzymisława", "Bożena", "Sława", "Wojsława", "Zbysława", "Miłosława", "Czesława", "Jagna", "Rościsława"]
+const NICKNAMES := ["Rudy", "z Gór", "Czarny", "Wilczy", "Bystry", "Cichy", "z Bagien", "Kruk", "Siwy", "Młody", "Mocny", "Łowca"]
+const NICKNAMES_F := ["Ruda", "z Gór", "Czarna", "Wilcza", "Bystra", "Cicha", "z Bagien", "Krucza", "Siwa", "Młoda", "Mocna", "Łowczyni"]
+## Wygląd (arkusz NPC) i broń: wojownicy, łucznicy, magowie.
+const LOOKS := {
+	"melee": ["soldier_a", "soldier_b", "soldier_c", "guard", "adventurer_a"],
+	"bow": ["hunter", "hunter_b", "hunter_c", "hunter_d"],
+	"spell": ["sage", "adventurer_b"],
+}
+const WEAPON_NAMES := {"melee": "miecz", "bow": "łuk", "spell": "księga"}
+const ZONE_ORDER: Array[String] = ["forest", "fields", "swamp", "mountains", "ancient", "cemetery"]
+const GEAR := ["zwykły", "magiczny", "rzadki", "legendarny"]
+const LINES_TOWN: Array[String] = ["Ktoś na Hydrę? Szukam drużyny!", "Sprzedam pancerz, tanio!", "Watra dziś huczy jak nigdy.",
+		"Byłeś już w lochach? Ja ledwo wyszedłem.", "Gromoskrzydły znów mnie ubił...", "Kupię kamienie miłosierdzia!",
+		"W Prastarym Lesie pełno pająków.", "Kto widział Leszego, ten wie, co to strach.", "Jutro idę na Cmentarz.",
+		"Pisarz gildii płaci za każde zlecenie.", "Wymienię esencję na esencję!", "Zielarka warzy najlepsze mikstury."]
+
+## Spis: [{name, female, look, weapon, level, xp, zone, state ("town"/"hunt"/"dead"), wait, kills, deaths, gear, fame}]
+var roster: Array[Dictionary] = []
+## Ranga gildii (0 - brak gildii; 1 po zbudowaniu, dalej ulepszenia u pisarza gildii).
+var guild_rank := 0
+var _timer := TICK
+
+
+func _process(delta: float) -> void:
+	_timer -= delta
+	if _timer <= 0.0:
+		_timer = TICK
+		tick()
+
+
+## Spis tworzy się raz (pierwsze wywołanie) - poziomy rozłożone od 1 do 45, z przewagą niskich.
+func ensure_roster() -> void:
+	if not roster.is_empty():
+		return
+	var used := {}
+	for i in SIZE:
+		var female := randf() < 0.45
+		var pool: Array = FEMALE if female else MALE
+		var name: String = pool.pick_random()
+		if used.has(name) or randf() < 0.35:
+			name += " " + (NICKNAMES_F if female else NICKNAMES).pick_random()
+		while used.has(name):
+			name += " " + str(randi_range(2, 9))
+		used[name] = true
+		var weapon: String = ["melee", "melee", "bow", "spell"].pick_random()
+		var level := clampi(roundi(pow(randf(), 1.6) * 44.0) + 1, 1, 45)
+		roster.append({"name": name, "female": female, "look": LOOKS[weapon].pick_random(), "weapon": weapon,
+				"level": level, "xp": 0, "zone": "forest", "state": "town", "wait": randi_range(0, 3),
+				"kills": randi_range(0, 40) * level, "deaths": randi_range(0, level / 3), "gear": _gear_for(level), "fame": level * randi_range(5, 12)})
+	# od najsłabszych - przed gildią i przy niskiej randze krążą tylko początkujący
+	roster.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a["level"]) < int(b["level"]))
+
+
+func active_count() -> int:
+	return RANK_ACTIVE[clampi(guild_rank, 0, MAX_RANK)]
+
+
+## Aktywni podróżnicy (pierwsi z listy - przed gildią tylko kilku).
+func active() -> Array[Dictionary]:
+	ensure_roster()
+	return roster.slice(0, active_count())
+
+
+func level_cap() -> int:
+	return RANK_LEVEL_CAP[clampi(guild_rank, 0, MAX_RANK)]
+
+
+static func _gear_for(level: int) -> String:
+	return GEAR[clampi(level / 12 + (1 if randf() < 0.3 else 0), 0, GEAR.size() - 1)]
+
+
+## Kraina, w której poluje ktoś na tym poziomie.
+static func zone_for(level: int) -> String:
+	var best := "forest"
+	for zone: String in ZONE_ORDER:
+		if level >= Levels.ZONES[zone][0] - 1:
+			best = zone
+	return best
+
+
+## Jedna chwila życia świata: wymarsze, łowy, awanse, powroty i śmierci.
+func tick() -> void:
+	for traveler: Dictionary in active():
+		traveler["wait"] = maxi(int(traveler["wait"]) - 1, 0)
+		match str(traveler["state"]):
+			"dead":
+				if traveler["wait"] == 0:
+					traveler["state"] = "town"
+					traveler["zone"] = "forest"
+			"town":
+				if traveler["wait"] == 0 and randf() < 0.45:
+					traveler["state"] = "hunt"
+					traveler["zone"] = zone_for(int(traveler["level"]))
+					traveler["wait"] = randi_range(2, 5)
+			"hunt":
+				add_kills(traveler, randi_range(3, 15))
+				if randf() < 0.025:
+					die(traveler)
+				elif traveler["wait"] == 0 and randf() < 0.35:
+					traveler["state"] = "town"
+					traveler["zone"] = "forest"
+					traveler["wait"] = randi_range(1, 3)
+	changed.emit()
+
+
+## Zabójstwa (z symulacji albo z walki na oczach gracza): sława, doświadczenie i awanse do limitu rangi gildii.
+func add_kills(traveler: Dictionary, count: int) -> void:
+	traveler["kills"] = int(traveler["kills"]) + count
+	traveler["fame"] = int(traveler["fame"]) + count
+	traveler["xp"] = int(traveler["xp"]) + count
+	var need := 20 + int(traveler["level"]) * 4
+	if int(traveler["xp"]) >= need and int(traveler["level"]) < level_cap():
+		traveler["xp"] = 0
+		traveler["level"] = int(traveler["level"]) + 1
+		if randf() < 0.15:
+			traveler["gear"] = _gear_for(int(traveler["level"]))
+
+
+func die(traveler: Dictionary) -> void:
+	traveler["state"] = "dead"
+	traveler["deaths"] = int(traveler["deaths"]) + 1
+	traveler["wait"] = randi_range(2, 4)
+
+
+func find(name: String) -> Dictionary:
+	for traveler: Dictionary in roster:
+		if traveler["name"] == name:
+			return traveler
+	return {}
+
+
+## Kto teraz poluje w danej krainie / przebywa w Ostoi.
+func in_zone(zone: String) -> Array[Dictionary]:
+	return active().filter(func(t: Dictionary) -> bool: return t["state"] == "hunt" and t["zone"] == zone)
+
+
+func in_town() -> Array[Dictionary]:
+	return active().filter(func(t: Dictionary) -> bool: return t["state"] == "town")
+
+
+## Gdzie jest (do listy podróżników).
+static func place_text(traveler: Dictionary) -> String:
+	match str(traveler["state"]):
+		"town":
+			return "w Ostoi"
+		"dead":
+			return "poległ, wraca do Ostoi" if not traveler["female"] else "poległa, wraca do Ostoi"
+	return "poluje: %s" % Zones.DATA[traveler["zone"]]["name"]
+
+
+## Ulepszenie gildii do następnej rangi (koszt RANK_COSTS) - "" albo powód odmowy.
+func upgrade_rank(player: Player) -> String:
+	if guild_rank >= MAX_RANK:
+		return "Gildia ma już najwyższą rangę."
+	if guild_rank == 0:
+		return "Najpierw trzeba zbudować gildię."
+	var cost: Dictionary = RANK_COSTS[guild_rank + 1]
+	for id: String in cost:
+		var have: int = player.stats.gold if id == "gold" else player.count_owned(id)
+		if have < int(cost[id]):
+			return "Brakuje: %s" % ("złota" if id == "gold" else Items.get_data(id)["name"])
+	for id: String in cost:
+		if id == "gold":
+			player.stats.add_gold(-int(cost[id]))
+		else:
+			player.take_owned(id, int(cost[id]))
+	guild_rank += 1
+	changed.emit()
+	return ""
+
+
+func get_save_data() -> Dictionary:
+	return {"roster": roster.duplicate(true), "rank": guild_rank}
+
+
+func load_save_data(data: Dictionary) -> void:
+	roster.clear()
+	for entry: Dictionary in data.get("roster", []):
+		for key in ["level", "xp", "wait", "kills", "deaths", "fame"]:
+			entry[key] = int(entry.get(key, 0))
+		roster.append(entry)
+	guild_rank = int(data.get("rank", 0))
+	changed.emit()

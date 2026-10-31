@@ -98,6 +98,8 @@ var _stun_marker: StunMarker
 ## Cel do zniszczenia (Kryształ Watry albo górnik w lochu - WatraCrystal): potwór z fali idzie do niego i go bije
 ## (take_hit), chyba że gracz jest blisko - wtedy walczy z graczem. Cel ma is_alive() i hit_radius.
 var objective: Node2D
+## Obrażenia od innych podróżników (Traveler) - gdy to oni zadali większość, gracz nie dostaje łupu ani doświadczenia.
+var traveler_damage := 0
 const OBJECTIVE_PLAYER_RANGE := 60.0
 ## Spowolnienie lodem (księga magii, SpellSkills): mnożnik prędkości i do kiedy trwa (Time.get_ticks_msec); wróg sinieje.
 var _chill_until := 0
@@ -465,6 +467,12 @@ func _die() -> void:
 			Engine.set_meta("celebrate", true)
 	Sfx.play_at("enemy_die", global_position)
 	_spawn_poof()
+	if slain_by_travelers():
+		var gone := create_tween().set_parallel()
+		gone.tween_property(sprite, "scale", Vector2(1.3, 0.6), 0.15)
+		gone.tween_property(self, "modulate:a", 0.0, 0.3).set_delay(0.1)
+		gone.chain().tween_callback(queue_free)
+		return
 	_drop_loot()
 	# Kieł Hydry: każdy padający w pobliżu wróg (także od efektów) może wybuchnąć trucizną
 	if _player != null and is_instance_valid(_player.legendary):
@@ -477,6 +485,11 @@ func _die() -> void:
 	tween.tween_property(sprite, "scale", Vector2(1.3, 0.6), 0.15)
 	tween.tween_property(self, "modulate:a", 0.0, 0.3).set_delay(0.1)
 	tween.chain().tween_callback(queue_free)
+
+
+## Czy pokonali go głównie inni podróżnicy (wtedy bez łupu i doświadczenia dla gracza).
+func slain_by_travelers() -> bool:
+	return traveler_damage * 2 >= max_health
 
 
 ## Płynne pojawienie się (np. po odrodzeniu w obozie).

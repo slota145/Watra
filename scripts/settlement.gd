@@ -547,6 +547,18 @@ func regen_bonus(world_pos: Vector2) -> float:
 
 
 ## Czy komórka (w kafelkach świata) leży za palisadą.
+## Miejsca w Ostoi, między którymi spacerują inni podróżnicy (plac, Watra, karczma, sklep, gildia), w pikselach.
+func traveler_points() -> Array[Vector2]:
+	var spots: Array[Vector2] = [WATRA_POS + Vector2(3.5, 2.5), WATRA_POS + Vector2(-2.0, 3.6), Vector2(19.0, 19.6),
+			Vector2(30.0, 22.5), Vector2(36.0, 22.0), Vector2(44.0, 34.4), Vector2(42.0, 21.0)]
+	if project_state("guild") == "built":
+		spots.append_array([Vector2(21.4, 53.8), Vector2(25.0, 52.6)])
+	var result: Array[Vector2] = []
+	for spot in spots:
+		result.append(_px(spot))
+	return result
+
+
 func is_inside_palisade(cell: Vector2i) -> bool:
 	return _inside.has(cell - origin_tile)
 
@@ -2139,6 +2151,10 @@ func _build_guild() -> void:
 
 	var clerk := _npc("guild_clerk", _in("guild", Vector2(3.2, 2.6)), Npc.Role.IDLE, LINES_CLERK, Vector2.DOWN)
 	clerk.looks_around = false
+	# rynek gildii i lista podróżników (Market, Travelers)
+	clerk.display_name = "Pisarz gildii Gniewko"
+	clerk.services.assign(["market", "travelers"])
+	clerk.dialog_greeting = "Witaj w gildii! Tu spisuję każdego poszukiwacza przygód, a na rynku kupisz i sprzedasz, co dusza zapragnie - podróżnicy handlują dzień i noc."
 	_entities.add_child(clerk)
 	nodes.append(clerk)
 
