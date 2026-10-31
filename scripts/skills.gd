@@ -460,7 +460,7 @@ static func whirlwind_damage(level: int) -> float:
 
 
 static func whirlwind_radius(level: int) -> float:
-	return 30.0 + 3.0 * level
+	return 40.0 + 3.0 * level
 
 
 ## Salwa: procent obrażeń broni na strzałę.

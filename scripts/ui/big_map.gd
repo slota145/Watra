@@ -90,6 +90,8 @@ func refresh() -> void:
 	var tiles := _view.view_tiles()
 	_view.pixels_per_tile = clampf(minf(room.x / tiles.x, room.y / tiles.y), 0.5, MAX_PIXELS_PER_TILE)
 	_view.setup(_seed, _zone, _texture, _player, _markers, _shrines)
+	# z lochu nie widać mapy świata (loch leży poza nią)
+	_tabs[1].visible = _zone != Zones.DUNGEON
 	_title.text = "Mapa - " + (Zones.zone_name(_zone) if _view.mode == "zone" else "Świat")
 	for i in _tabs.size():
 		_tabs[i].set_pressed_no_signal(["zone", "world"][i] == _view.mode)
@@ -97,7 +99,7 @@ func refresh() -> void:
 
 ## Przełącza zakładkę: "zone" (bieżąca kraina) albo "world" (wszystkie krainy).
 func set_mode(mode: String) -> void:
-	_view.mode = mode
+	_view.mode = "zone" if _zone == Zones.DUNGEON else mode
 	refresh()
 	reset_size()
 	position = ((get_viewport_rect().size - size) / 2.0).floor()

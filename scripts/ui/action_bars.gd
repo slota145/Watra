@@ -79,7 +79,7 @@ func refresh() -> void:
 			slot.icon.texture = Items.get_data(id)["icon"]
 			slot.count_label.text = str(count)
 			slot.modulate = Color.WHITE if count > 0 else Color(1, 1, 1, 0.45)
-			slot.tooltip_text = "%s [%s]\n%s" % [Items.get_data(id)["name"], key, Items.describe(id)]
+			slot.tooltip_text = "%s [%s]\n%s" % [Items.get_data(id)["name"], key, Items.strip_icon(Items.describe(id))]
 		else:
 			slot.icon.texture = _attack_icon() if id == Hotbar.ATTACK else Hotbar.skill_icon(id)
 			slot.tooltip_text = _skill_tooltip(id, key, weapon_type)

@@ -69,6 +69,8 @@ var next_in := 0.0
 var shrine_down := {}
 ## Krainy, w których może zacząć się wydarzenie (odkryte kapliczki) - ustawia świat.
 var known_zones: Array = []
+## Czy gildia w Ostoi stoi - wydarzenia (sława gildii, Znaki Zwycięstwa) zaczynają się dopiero po jej zbudowaniu.
+var guild_ready := false
 var last_result := {}
 var _player: Player
 
@@ -86,7 +88,8 @@ func _process(delta: float) -> void:
 	if active.is_empty():
 		next_in -= delta
 		if next_in <= 0.0:
-			next_in = randf_range(INTERVAL.x, INTERVAL.y)
+			# bez gildii sprawdzamy co minutę, żeby pierwsze wydarzenie przyszło niedługo po jej zbudowaniu
+			next_in = randf_range(INTERVAL.x, INTERVAL.y) if guild_ready else 60.0
 			start_random()
 		return
 	active["left"] = float(active["left"]) - delta
@@ -130,6 +133,8 @@ static func world_boss_for(zone: String) -> String:
 
 
 func start_random() -> bool:
+	if not guild_ready:
+		return false
 	var zones := known_zones.filter(func(z: String) -> bool: return Levels.ZONES.has(z))
 	if zones.is_empty():
 		return false

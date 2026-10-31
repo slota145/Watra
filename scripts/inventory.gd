@@ -72,11 +72,17 @@ func remove_item(id: String, amount: int) -> bool:
 
 ## Wyjmuje jedną sztukę z podanego slotu: {"id": String, "enchant": int} ({} jeśli slot pusty).
 func take_one(index: int) -> Dictionary:
+	return take(index, 1)
+
+
+## Zabiera do `amount` sztuk ze stosu naraz (jeden sygnał zmiany) - {"id", "enchant", "count"} albo {}.
+func take(index: int, amount: int) -> Dictionary:
 	var slot := slots[index]
-	if slot.is_empty():
+	if slot.is_empty() or amount <= 0:
 		return {}
-	var taken := {"id": slot["id"], "enchant": slot.get("enchant", 0)}
-	slot["count"] -= 1
+	var count := mini(amount, int(slot.get("count", 1)))
+	var taken := {"id": slot["id"], "enchant": slot.get("enchant", 0), "count": count}
+	slot["count"] = int(slot.get("count", 1)) - count
 	if slot["count"] <= 0:
 		slots[index] = {}
 	changed.emit()

@@ -243,12 +243,11 @@ func _offer_gold(amount: int) -> void:
 
 
 func _burn(index: int, count: int) -> void:
-	var ember := 0
-	for k in count:
-		var taken := _player.inventory.take_one(index)
-		if taken.is_empty():
-			break
-		ember += _item_ember(taken["id"], int(taken["enchant"]))
+	# cały stos naraz - pojedyncze zdejmowanie przebudowywało okna setki razy i gra stawała
+	var taken := _player.inventory.take(index, count)
+	if taken.is_empty():
+		return
+	var ember := _item_ember(taken["id"], int(taken["enchant"])) * int(taken["count"])
 	if ember > 0:
 		_add(ember, "Ogień pochłania ofiarę")
 

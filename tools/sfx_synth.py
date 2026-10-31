@@ -541,14 +541,15 @@ def big_slash(_variant):
 
 
 def seeker_whistle(_variant):
-    """Strzała tropiąca: brzdęk cięciwy i wznoszący się, magiczny gwizd."""
+    """Strzała tropiąca: brzdęk cięciwy i miękki, równy szum lotu z cichym, stałym tonem (bez gwizdu i falowania)."""
     rng = np.random.default_rng(710)
-    n = int(RATE * 0.8)
+    n = int(RATE * 0.6)
     t = np.arange(n) / RATE
-    whistle = np.sin(2 * np.pi * np.cumsum(1400 + 900 * t / 0.8 + 60 * np.sin(2 * np.pi * 9 * t)) / RATE)
-    whistle *= np.minimum(t / 0.05, 1) * np.exp(-t * 2.5) * 0.35
+    envelope = np.minimum(t / 0.08, 1) * np.exp(-t * 3.0)
+    air = band(rng.standard_normal(n), 500, 1800) * envelope * 0.5
+    hum = (np.sin(2 * np.pi * 520 * t) + 0.4 * np.sin(2 * np.pi * 780 * t)) * envelope * 0.08
     twang = modes(n, [(110, 1.0, 16.0), (220, 0.6, 20.0), (330, 0.3, 26.0)], rng, 0.01) * 0.4
-    return room(whistle + twang, 71, 0.5, 0.2)
+    return room(air + hum + twang, 71, 0.5, 0.2)
 
 
 def lightning_zap(variant):

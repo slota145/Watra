@@ -251,7 +251,7 @@ func _show_details(id: String) -> void:
 		return
 	_name.add_theme_color_override("font_color", Items.rarity_color(id))
 	# opis przedmiotu bez nazwy (jest w nagłówku)
-	var lines := Items.describe(id).split("\n")
+	var lines := Items.strip_icon(Items.describe(id)).split("\n")
 	var text := "\n".join(lines.slice(1))
 	if _tab == "legends":
 		text += "\n\n[color=#ffd773]Źródło:[/color] " + Codex.legend_source(id)

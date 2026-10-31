@@ -818,6 +818,7 @@ func _process_events(delta: float) -> void:
 	for id: String in shrines:
 		known[Zones.SHRINES[id]["zone"]] = true
 	events.known_zones = known.keys()
+	events.guild_ready = village_built("guild")
 	if zone == Zones.DUNGEON or _traveling or not events.is_active_in(zone) or events.active.get("built", false):
 		return
 	event_site = EventSite.new()
@@ -964,8 +965,10 @@ func _process_party_offers(delta: float) -> void:
 	var group: Array = near.filter(func(t: Traveler) -> bool: return t.global_position.distance_to(leader.global_position) < 140.0)
 	group = group.slice(0, Travelers.PARTY_MAX)
 	_party_cooldown = PARTY_OFFER_COOLDOWN
-	# tryby świata: zbój napada bez ostrzeżenia, pojedynkowicz wyzywa na pojedynek
-	match roster.behavior(leader.data):
+	# tryby świata: zbój napada bez ostrzeżenia, pojedynkowicz wyzywa na pojedynek; wszystko, co daje sławę
+	# gildii (pojedynki, zbóje, osłona, prośby o pomoc), zaczyna się dopiero po zbudowaniu gildii
+	var guild := village_built("guild")
+	match roster.behavior(leader.data) if guild else "friendly":
 		"bandit":
 			_start_fight(leader, "pk")
 			return
@@ -979,7 +982,7 @@ func _process_party_offers(delta: float) -> void:
 						leader.say(["Tchórz!", "Ha, boisz się?", "Następnym razem nie odpuszczę!"].pick_random()), "Przyjmij")
 				return
 	# zbierający łowca prosi o osłonę przed potworami
-	if leader.is_gathering() and _guard.is_empty() and randf() < GUARD_CHANCE:
+	if guild and leader.is_gathering() and _guard.is_empty() and randf() < GUARD_CHANCE:
 		var reward := guard_reward(leader)
 		var text := "%s [%d] zbiera %s, ale potwory nie dają spokoju. Osłonisz %s przez %d sekund?\nNagroda: %d zł, %d exp i część urobku." % [
 				leader.data["name"], leader.data["level"], GUARD_GOODS[leader.gather_kind()], "ją" if leader.data.get("female", false) else "go",
@@ -991,7 +994,7 @@ func _process_party_offers(delta: float) -> void:
 		return
 	var names: Array = group.map(func(t: Traveler) -> String: return t.data["name"])
 	var task := {}
-	if randf() < HELP_CHANCE and player.quests.active_help() == "" and Levels.ZONES.has(zone):
+	if guild and randf() < HELP_CHANCE and player.quests.active_help() == "" and Levels.ZONES.has(zone):
 		task = _help_task(leader.data["name"])
 	var text := ""
 	if task.is_empty():

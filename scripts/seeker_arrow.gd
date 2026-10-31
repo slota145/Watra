@@ -30,6 +30,8 @@ var _since_hit := 0.0
 var _life := LIFETIME
 var _sprite: Sprite2D
 var _done := false
+## Wiek strzały liczony w _process - zapas na wypadek, gdyby lot (w _physics_process) stanął i strzała zostałaby na ziemi.
+var _age := 0.0
 
 
 
@@ -59,6 +61,12 @@ func _ready() -> void:
 	trail.color_ramp = fade
 	add_child(trail)
 	_target = _find_target(_last_hit)
+
+
+func _process(delta: float) -> void:
+	_age += delta
+	if _age > LIFETIME + 1.0:
+		queue_free()
 
 
 func _physics_process(delta: float) -> void:
@@ -140,7 +148,10 @@ func _find_target(exclude: Goblin) -> Goblin:
 
 
 func _finish() -> void:
+	if _done:
+		return
 	_done = true
+	_age = maxf(_age, LIFETIME + 0.5)
 	var tween := create_tween()
 	tween.tween_property(self, "modulate:a", 0.0, 0.2)
 	tween.tween_callback(queue_free)

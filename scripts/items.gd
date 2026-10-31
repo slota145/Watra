@@ -139,6 +139,8 @@ const HEADER_COLOR := "#d8c890"
 ## Oddziela w dymku opis przedmiotu od opisu założonego, z którym go porównujemy (RichTooltip
 ## rysuje je obok siebie).
 const COMPARE_SPLIT := "\u001f"
+## Znacznik ikony w opisie: ICON_MARK + id + ICON_MARK na początku opisu - RichTooltip rysuje tam ikonę przedmiotu.
+const ICON_MARK := "\u001e"
 
 const DATA := {
 	# ---------------------------------------------------------------- łupy i mikstury
@@ -924,6 +926,8 @@ static func describe(id: String, enchant := 0, against := {}) -> String:
 	var lines: Array[String] = [display_name(id, enchant)]
 	if rarity_of(id) != "common":
 		lines[0] = "[color=#%s]%s[/color]" % [rarity_color(id).to_html(false), lines[0]]
+	if item.get("icon") != null:
+		lines[0] = ICON_MARK + id + ICON_MARK + lines[0]
 	if item.has("slot"):
 		lines.append("%s - %s" % [RARITY_NAMES.get(item.get("rarity", "common"), ""), SLOT_TYPE_NAMES[item["slot"]]])
 		if item.has("item_level"):
@@ -981,19 +985,34 @@ static func describe(id: String, enchant := 0, against := {}) -> String:
 
 
 ## Dymek przedmiotu, który można założyć: obok jego opisu - opis założonego przedmiotu, który zastąpi
-## (ten sam rodzaj miejsca; przy wolnym miejscu nie ma z czym porównać). `extra` - dopiski pod opisem
-## (np. "PPM - załóż").
+## (ten sam rodzaj miejsca), a przy kolczykach i pierścieniach także drugiej założonej sztuki. `extra` - dopiski
+## pod opisem (np. "PPM - załóż").
 static func tooltip(id: String, enchant := 0, extra := "") -> String:
 	var worn_id := ""
 	var worn_enchant := 0
+	var second_id := ""
+	var second_enchant := 0
 	if worn != null and is_equippable(id):
 		var slot := worn.slot_for(id)
 		worn_id = worn.get_item(slot)
 		worn_enchant = worn.get_enchant(slot)
-	if worn_id == "":
-		return describe(id, enchant) + extra
-	return describe(id, enchant, {"id": worn_id, "enchant": worn_enchant}) + extra + COMPARE_SPLIT \
-			+ "[color=%s]Założony[/color]\n" % HEADER_COLOR + describe(worn_id, worn_enchant)
+		for other_slot: String in Equipment.SLOTS:
+			if other_slot != slot and Equipment.SLOT_TYPES[other_slot] == Equipment.SLOT_TYPES.get(slot, "") \
+					and worn.get_item(other_slot) != "":
+				second_id = worn.get_item(other_slot)
+				second_enchant = worn.get_enchant(other_slot)
+	var text := describe(id, enchant, {"id": worn_id, "enchant": worn_enchant} if worn_id != "" else {}) + extra
+	if worn_id != "":
+		var header := "Założony - zamienisz" if second_id != "" else "Założony"
+		text += COMPARE_SPLIT + "[color=%s]%s[/color]\n" % [HEADER_COLOR, header] + describe(worn_id, worn_enchant)
+	if second_id != "":
+		text += COMPARE_SPLIT + "[color=%s]Założony - drugi[/color]\n" % HEADER_COLOR + describe(second_id, second_enchant)
+	return text
+
+
+## Opis bez znaczników ikony (do zwykłych napisów, które nie rysują ikon).
+static func strip_icon(text: String) -> String:
+	return RegEx.create_from_string(ICON_MARK + "[^" + ICON_MARK + "]*" + ICON_MARK).sub(text, "", true)
 
 
 ## "+12 zdrowie" albo "+5% szybkość ruchu".
