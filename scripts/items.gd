@@ -43,7 +43,7 @@ const COUNT_EFFECTS := ["hydra_seekers", "seeker_split", "ballista_volley", "bal
 const CHANCE_EFFECTS := ["shockwave", "tide", "claws", "echo", "thunder", "whirlpool", "roots", "thorns", "venom", "brood", "fear",
 		"bomb", "blast_shot", "earth_arrow", "kaboom", "devour", "burrow", "raise_dead", "rend", "plunder", "pack_call", "tongue",
 		"storm_arrows", "web_burst", "corpse_blast", "venom_chain", "feather_storm", "wind_shield",
-		"dance", "vine_snare", "pan_echo"]
+		"dance", "vine_snare", "pan_echo", "potion_saver"]
 const EFFECT_TEXTS := {
 	"endless_whirl": "Wirujące Mgnienie (Mgnienie w trakcie Młynka) nie ma odnowienia, a Mgnienie zadaje +%s obrażeń",
 	"shockwave": "%s szans przy trafieniu: fala uderzeniowa rani trafionego i wszystkich wokół, ogłuszając ich",
@@ -106,11 +106,13 @@ const EFFECT_TEXTS := {
 	"rooted_regen": "Stojąc w miejscu, odzyskujesz %s maksymalnego zdrowia na sekundę",
 	"web_burst": "%s szans przy trafieniu: wrogów wokół trafionego oplątuje sieć (nie mogą się ruszać przez 1 s)",
 	"berserk": "Gdy masz mniej niż 40%% zdrowia, zadajesz +%s obrażeń",
+	"potion_saver": "%s szans, że wypita mikstura zdrowia albo many nie ubędzie z plecaka",
+	"potion_fury": "Po wypiciu mikstury zdrowia albo many przez 6 s zadajesz +%s obrażeń",
 	"bile_spit": "Co 5. trafienie plujesz żółcią przed siebie - trujące kałuże ranią wrogów za %s obrażeń broni co pół sekundy",
 }
 const SLOT_TYPE_NAMES := {
 	"weapon": "Broń", "helmet": "Hełm", "chest": "Napierśnik", "gloves": "Rękawice", "boots": "Buty",
-	"earring": "Kolczyk", "ring": "Pierścień", "necklace": "Naszyjnik", "gem": "Kamień szlachetny",
+	"earring": "Kolczyk", "ring": "Pierścień", "necklace": "Naszyjnik", "belt": "Pas", "gem": "Kamień szlachetny",
 }
 const STAT_NAMES := {
 	"armor": "Pancerz", "health": "Zdrowie", "mana": "Mana", "damage": "Obrażenia",
@@ -121,10 +123,10 @@ const STAT_NAMES := {
 	"crit_damage": "Obrażenia krytyczne", "life_on_hit": "Zdrowie za trafienie",
 	"health_regen": "Regeneracja zdrowia/s", "mana_regen": "Regeneracja many/s", "dodge_chance": "Szansa na unik",
 	"cooldown_reduction": "Skrócenie odnowienia", "gold_find": "Więcej złota", "xp_gain": "Więcej doświadczenia",
-	"area": "Obszar umiejętności",
+	"area": "Obszar umiejętności", "potion_power": "Siła mikstur",
 }
 ## Statystyki podawane w procentach.
-const PERCENT_STATS: Array[String] = ["attack_speed", "move_speed", "damage_percent", "crit_chance", "crit_damage",
+const PERCENT_STATS: Array[String] = ["potion_power", "attack_speed", "move_speed", "damage_percent", "crit_chance", "crit_damage",
 		"cast_speed", "physical_damage", "spell_damage",
 		"dodge_chance", "cooldown_reduction", "gold_find", "xp_gain", "area"]
 ## Statystyki z częścią ułamkową (regeneracja na sekundę) - pokazywane z jednym miejscem po przecinku.

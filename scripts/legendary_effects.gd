@@ -170,6 +170,9 @@ const BLOODLUST_STACKS := 5
 var _player: Player
 var _bloodlust := 0
 var _bloodlust_time := 0.0
+## Pas Bogatyra: ile sekund jeszcze trwa gniew po wypiciu mikstury.
+var _potion_fury := 0.0
+const POTION_FURY_TIME := 6.0
 ## rodzaj efektu -> pozostały czas odnowienia
 var _cooldowns := {}
 
@@ -189,6 +192,10 @@ func _process(delta: float) -> void:
 		_bloodlust_time -= delta
 		if _bloodlust_time <= 0.0:
 			_bloodlust = 0
+	if _potion_fury > 0.0:
+		_potion_fury -= delta
+		if _potion_fury <= 0.0:
+			_player.stats.set_temp("potion_fury", {})
 
 
 ## Czasowe stany z legendarnych przedmiotów do listy efektów pod paskami zdrowia i many:
@@ -204,6 +211,10 @@ func statuses() -> Array[Dictionary]:
 	if berserk > 0.0 and _player.health < _player.stats.max_health() * BERSERK_THRESHOLD:
 		result.append({"name": "Szał", "kind": "good", "left": -1.0, "icon": _effect_icon("berserk"),
 				"description": "+%d%% obrażeń, dopóki masz mniej niż %d%% zdrowia" % [roundi(berserk * 100.0), roundi(BERSERK_THRESHOLD * 100.0)]})
+	if _potion_fury > 0.0:
+		result.append({"name": "Gniew Bogatyra", "kind": "good", "left": _potion_fury, "total": POTION_FURY_TIME,
+				"icon": _effect_icon("potion_fury"),
+				"description": "+%d%% obrażeń po wypiciu mikstury" % roundi(_player.equipment.effect_power("potion_fury") * 100.0)})
 	if _bone_orbit != null:
 		result.append({"name": "Kościana tarcza", "kind": "good", "left": -1.0, "icon": _effect_icon("bone_armor"),
 				"description": "Pochłonie następny cios do %d%% maks. zdrowia" % roundi(_player.equipment.effect_power("bone_armor") * 100.0)})
@@ -231,6 +242,16 @@ func _effect_icon(kind: String) -> Texture2D:
 	if tree.get("kind", "") == kind:
 		return Essences.ICONS[tree["group"]]
 	return null
+
+
+## Wypita mikstura zdrowia albo many: Pas Bogatyra daje premię do obrażeń, a Pas Mokoszy może ją oszczędzić.
+## Zwraca true, gdy mikstura nie ubywa z plecaka.
+func on_potion() -> bool:
+	var fury := _player.equipment.effect_power("potion_fury")
+	if fury > 0.0:
+		_potion_fury = POTION_FURY_TIME
+		_player.stats.set_temp("potion_fury", {"damage_percent": fury})
+	return randf() < chance("potion_saver")
 
 
 ## Szansa (0..1) na efekt danego rodzaju z założonych przedmiotów, powiększona przez Łzę Bulgora.

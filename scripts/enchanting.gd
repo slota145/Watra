@@ -25,7 +25,7 @@ const BONUS_PER_PERFECT := 5
 
 const CATEGORY_BY_SLOT := {
 	"weapon": "weapon",
-	"helmet": "armor", "chest": "armor", "gloves": "armor", "boots": "armor",
+	"helmet": "armor", "chest": "armor", "gloves": "armor", "boots": "armor", "belt": "armor",
 	"earring": "jewelry", "ring": "jewelry", "necklace": "jewelry",
 }
 ## Odmiana do komunikatów: "kamień do zaklinania ...".

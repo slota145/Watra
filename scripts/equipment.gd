@@ -1,19 +1,20 @@
 class_name Equipment
 extends Node
 ## Przedmioty założone na postać: broń, hełm, napierśnik, rękawice, buty,
-## dwa kolczyki, dwa pierścienie i naszyjnik. Sumuje premie do statystyk
+## dwa kolczyki, dwa pierścienie, naszyjnik i pas. Sumuje premie do statystyk
 ## (z uwzględnieniem poziomu zaklęcia każdego przedmiotu).
 
 signal changed
 
 const SLOTS: Array[String] = [
 	"weapon", "helmet", "chest", "gloves", "boots",
-	"earring_1", "earring_2", "ring_1", "ring_2", "necklace",
+	"earring_1", "earring_2", "ring_1", "ring_2", "necklace", "belt",
 ]
 ## Typ przedmiotu, który pasuje do danego miejsca.
 const SLOT_TYPES := {
 	"weapon": "weapon", "helmet": "helmet", "chest": "chest", "gloves": "gloves", "boots": "boots",
 	"earring_1": "earring", "earring_2": "earring", "ring_1": "ring", "ring_2": "ring", "necklace": "necklace",
+	"belt": "belt",
 }
 
 ## Broń, z którą zaczyna się nowa gra.
