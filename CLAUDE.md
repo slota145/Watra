@@ -467,8 +467,20 @@ Oba systemy zależą od gildii poszukiwaczy przygód w Ostoi (budowla `guild` w 
   (obrażenia potworom wydarzenia, rozbite skały); bez gracza wydarzenie rozstrzyga się samo. Na koniec ranking
   i nagrody wg miejsca: skrzynia z łupem na miejscu, sława gildii, **Znaki Zwycięstwa** (`victory_mark`) - wymiana
   u pisarza gildii (`VillageServices.MARK_OFFERS`: kamień, runy, kamień miłosierdzia, plecak, Serce Kryształu, legenda).
-- [ ] **Wydarzenia w świecie, etap 2**: karawana do eskortowania, święto w Ostoi, world bossy (nowe, wielkie potwory
-  z PixelLab z własnymi atakami i legendą, walka z gromadą podróżników); kolejni bossowie polowań.
+- [x] **Wydarzenia w świecie, etap 2** (`WorldEvents.WEIGHTS` - losowanie z wagami):
+  - **World bossy** (`scripts/world_boss.gd`, sceny `scenes/world_boss_*.tscn`, grafiki z PixelLab przez
+    `tools/world_boss_art.py`): **Żmij Gorynycz** w wyższych krainach (zionięcie ogniem, trzy kule ognia, skok
+    z wstrząsem) i **Wij** w niższych (wzrok spod powiek - stożek, szpony korzeni, wezwanie upiorów); ogłaszane minutę
+    wcześniej, rzadkie, 8x zdrowia, 3 fazy (66% i 33%), 10-15 podróżników (słabe ciosy - `Traveler.WORLD_BOSS_FACTOR`),
+    po porażce gracza nie leczą ran; podwójne Znaki Zwycięstwa, legendy: Kieł Gorynycza, Łuski Żmija, Powieki Wija,
+    Korzeń Wija.
+  - **Karawana kupiecka**: wóz (`Caravan.waiting`) jedzie odcinkiem drogi krainy i czeka, gdy gracz zostaje w tyle;
+    fale potworów idą na wóz; dojazd - skrzynia i premia „Towar z karawany” (kupcy i usługi 15% taniej -
+    `Boons.discounted`).
+  - **Święto w Ostoi** (`Settlement.start_festival`): girlandy, kolorowe światła, tańce, fajerwerki, podróżnicy przy
+    Watrze; premia „Święto” w całym świecie (+20% doświadczenia, +25% złota, 20% taniej); zniżki łączą się do 35%.
+- [ ] Wydarzenia w świecie - dalsze pomysły: kolejni world bossi (np. Baba Jaga w chacie na kurzych nogach), kolejni
+  bossowie polowań, zawody na święcie (strzelanie do tarcz, manekiny na czas).
 - [ ] Uzupełnienie siatki mapy świata (dziś krainy stoją w kształcie krzyża) o 6 krain:
   - 2 nad Polami Zbożowymi (`map_offset` (-200,-150) i (-200,-300)),
   - 2 nad Rozlewiskami ((200,-150) i (200,-300)),

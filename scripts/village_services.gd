@@ -37,7 +37,7 @@ static func _meals(player: Player, npc: Node) -> Dictionary:
 	for id: String in ["stew", "roast", "broth"]:
 		var data: Dictionary = Boons.DEFS[id]
 		var meat: int = data["meat"]
-		var gold := Boons.gold_cost(id, player.stats.level)
+		var gold := player.boons.discounted(Boons.gold_cost(id, player.stats.level))
 		var have := player.count_owned(MEAT)
 		rows.append({
 			"name": data["name"], "icon": Items.get_data(MEAT)["icon"],
@@ -61,7 +61,7 @@ static func _meals(player: Player, npc: Node) -> Dictionary:
 ## Warsztat zielarki: mikstura wzmacniająca z 3 ziół (z plecaka albo magazynu) i trochę złota - trafia do plecaka.
 static func _elixirs(player: Player, npc: Node) -> Dictionary:
 	var rows: Array = []
-	var gold := Herbs.brew_gold(player.stats.level)
+	var gold := player.boons.discounted(Herbs.brew_gold(player.stats.level))
 	var need := Herbs.HERBS_PER_ELIXIR
 	for kind in Herbs.ORDER:
 		var herb: Dictionary = Herbs.KINDS[kind]
@@ -163,7 +163,7 @@ static func _blessings(player: Player, npc: Node) -> Dictionary:
 	var rows: Array = []
 	for id: String in ["bless_wisdom", "bless_might"]:
 		var data: Dictionary = Boons.DEFS[id]
-		var gold := Boons.gold_cost(id, player.stats.level)
+		var gold := player.boons.discounted(Boons.gold_cost(id, player.stats.level))
 		rows.append({
 			"name": data["name"],
 			"text": "%s przez %d min." % [data["description"], int(data["time"] / 60.0)],

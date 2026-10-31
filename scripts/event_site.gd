@@ -8,6 +8,12 @@ extends Node2D
 ## - "meteors": w okolicy spadają meteoryty (Meteor): rażą gracza, zostawiają skałę do rozbicia (MeteorRock - ruda,
 ##   kamienie) i czasem potwory z krateru; sukces na koniec czasu,
 ## - "hunt": boss polowania (Hydra, Gryf) wraca rozwścieczony (więcej zdrowia i obrażeń); sukces - pokonany.
+## - "world_boss": po zapowiedzi (WorldEvents.WORLD_BOSS_WARNING - pulsujący krąg) pojawia się WorldBoss z ogromnym
+##   zdrowiem (WORLD_BOSS_HEALTH), 10-15 podróżników; sukces - pokonany, czas - odchodzi,
+## - "caravan": wóz kupiecki (Caravan, `waiting`) jedzie odcinkiem drogi krainy (CARAVAN_LENGTH), czeka, gdy gracz jest
+##   daleko; fale potworów idą na wóz (ten węzeł ma zdrowie wozu i stoi przy nim); sukces - dojazd (premia
+##   „Towar z karawany” - tańsze sklepy), porażka - wóz zniszczony albo czas minął,
+## - "festival": święto w Ostoi (Settlement.start_festival - ozdoby, tańce, podróżnicy przy Watrze); bez walki.
 ## Przybywa gromada podróżników (Traveler w trybie "event") - walczą z potworami wydarzenia i rywalizują o wkład.
 ## Wkład gracza: obrażenia zadane potworom wydarzenia (bez części podróżników - Goblin.event_damage) i rozbite skały.
 ## Po sukcesie skrzynia z łupem wg miejsca gracza w rankingu.
@@ -22,6 +28,13 @@ const CHAMPION_DAMAGE := 1.6
 const HUNT_HEALTH := 3.0
 const HUNT_DAMAGE := 1.3
 const ROAM_EVERY := 25.0
+const WORLD_BOSS_HEALTH := 8.0
+const CARAVAN_LENGTH := 2600.0
+## Wóz rusza kawałek w głębi drogi, z dala od wyjścia z krainy (żeby eskorta nie wpadała w przejście).
+const CARAVAN_SKIP := 480.0
+const CARAVAN_WAVE_GAP := 15.0
+## Wóz rusza dalej, gdy gracz jest bliżej niż tyle.
+const CARAVAN_LEASH := 300.0
 const CHEST := preload("res://assets/village/chest.png")
 const CHEST_LIFE := 240.0
 ## Potwory z własnym zachowaniem, które nie pasują do wydarzeń (ognik odlatuje i sam wybucha).
@@ -51,6 +64,7 @@ var _roam := ROAM_EVERY
 var _aura := 0.0
 var _summon := 12.0
 var _boss_base := {}
+var caravan: Caravan
 var _type := ""
 var _level := 1
 var _flash := 0.0
@@ -93,6 +107,21 @@ func _ready() -> void:
 		"hunt":
 			_build_hunt()
 			_travelers_left = randi_range(6, 10)
+		"world_boss":
+			center = _far_spawn(300.0)
+			_travelers_left = randi_range(10, 15)
+			_traveler_timer = 0.3
+		"caravan":
+			_build_caravan()
+			_travelers_left = randi_range(2, 4)
+			_wave_timer = 8.0
+		"festival":
+			if w._settlement != null and w._settlement.is_inside_tree():
+				center = w._settlement._px(Settlement.WATRA_POS)
+				w._settlement.start_festival(float(event["left"]))
+				_refresh_town_points()
+			else:
+				center = w.player.global_position
 	position = center
 
 
@@ -232,7 +261,7 @@ func _build_hunt() -> void:
 
 # ---------------------------------------------------------------- kapliczka (cel najazdu)
 func is_alive() -> bool:
-	return _type == "raid" and not done and health > 0.0
+	return _type in ["raid", "caravan"] and not done and health > 0.0
 
 
 func take_hit(amount: float) -> void:
@@ -272,6 +301,10 @@ func _process(delta: float) -> void:
 			_process_champion(delta)
 		"meteors":
 			_process_meteors(delta)
+		"world_boss":
+			_process_world_boss()
+		"caravan":
+			_process_caravan(delta)
 	if _type == "hunt" and is_instance_valid(boss):
 		center = boss.global_position
 	for node: Traveler in get_tree().get_nodes_in_group("travelers"):
@@ -279,7 +312,7 @@ func _process(delta: float) -> void:
 			node.home = center
 	queue_redraw()
 	if not done and float(event["left"]) <= 0.0:
-		_finish(_type == "raid" or _type == "meteors")
+		_finish(_type in ["raid", "meteors", "festival"])
 
 
 func _process_raid(delta: float) -> void:
@@ -362,6 +395,107 @@ func on_meteor_landed(at: Vector2) -> void:
 			mob.aggro.call_deferred()
 
 
+# ---------------------------------------------------------------- world boss
+func _process_world_boss() -> void:
+	if is_instance_valid(boss):
+		if boss.state != Goblin.State.DEAD:
+			center = boss.global_position
+			position = center
+		return
+	if float(event.get("warn", 0.0)) > 0.0:
+		return
+	var scene: PackedScene = load("res://scenes/world_boss_%s.tscn" % event["boss"])
+	boss = scene.instantiate()
+	boss.level = _level
+	boss.position = center
+	boss.set("site", self)
+	boss.set_meta("event", true)
+	boss.set_meta("elite", true)
+	boss.died.connect(_on_mob_died)
+	w.entities.add_child(boss)
+	boss.max_health = roundi(boss.max_health * WORLD_BOSS_HEALTH)
+	boss.health = boss.max_health
+	boss.appear()
+	boss.phase_changed.connect(func(phase: int) -> void:
+		w.hud.show_banner("%s wpada w szał - faza %d!" % [boss.boss_name, phase], WorldEvents.TYPES["world_boss"]["color"]))
+	mobs.append(boss)
+	SkillEffects.shockwave(w.entities, center, 120.0, WorldEvents.TYPES["world_boss"]["color"])
+	Sfx.play_at("summon", center)
+	w.player.add_shake(10.0)
+	w.hud.show_banner("%s nadchodzi!" % boss.boss_name, WorldEvents.TYPES["world_boss"]["color"])
+
+
+## Wezwanie world bossa (Wij): potwory krainy wokół niego od razu ruszają do walki.
+func summon_minions(at: Vector2, count: int) -> void:
+	var kinds := _common_types()
+	for i in count:
+		var mob := _spawn_mob(kinds.pick_random(), at + Vector2.from_angle(randf() * TAU) * randf_range(50.0, 110.0), _level - 2)
+		mob.modulate = Color(0.75, 0.9, 0.8, 0.9)
+		mob.aggro.call_deferred()
+	SkillEffects.spark(w.entities, at, Color(0.6, 1.0, 0.7), 24)
+
+
+## Spacerowicze w Ostoi idą tam, gdzie teraz trzeba (w święto - wokół Watry).
+func _refresh_town_points() -> void:
+	for node: Traveler in get_tree().get_nodes_in_group("travelers"):
+		if node.mode == "town":
+			node.town_points = w._settlement.traveler_points()
+
+
+# ---------------------------------------------------------------- karawana
+func _build_caravan() -> void:
+	var points := PackedVector2Array()
+	for point: Vector2 in w._road:
+		points.append(point * w.TILE)
+	if points.size() < 2:
+		var from := _far_spawn(0.0)
+		points = PackedVector2Array([from, from + Vector2(CARAVAN_LENGTH * 0.5, 0)])
+	if randf() < 0.5:
+		points.reverse()
+	# odcinek drogi o długości CARAVAN_LENGTH, zaczynający się CARAVAN_SKIP od wyjścia z krainy
+	var trimmed := PackedVector2Array()
+	var length := 0.0
+	for i in points.size():
+		if i > 0:
+			length += points[i].distance_to(points[i - 1])
+		if length < CARAVAN_SKIP and i < points.size() - 2:
+			continue
+		trimmed.append(points[i])
+		if length >= CARAVAN_SKIP + CARAVAN_LENGTH:
+			break
+	if trimmed.size() < 2:
+		trimmed = points
+	caravan = Caravan.new()
+	add_child(caravan)
+	caravan.setup(trimmed, w.entities)
+	caravan.finished.connect(func() -> void:
+		caravan = null
+		_finish(true))
+	max_health = Levels.damage(_level) * 180.0
+	health = max_health
+	center = caravan.wagon_position()
+
+
+func _process_caravan(delta: float) -> void:
+	if caravan == null:
+		return
+	center = caravan.wagon_position()
+	position = center
+	caravan.waiting = w.player.global_position.distance_to(center) > CARAVAN_LEASH
+	# eskorta to też wkład - gracz przy wozie zbiera punkty
+	if not caravan.waiting:
+		events.add_points(WorldEvents.PLAYER, Levels.health(_level) * 0.05 * delta)
+	_wave_timer -= delta
+	if _wave_timer <= 0.0:
+		_wave_timer = CARAVAN_WAVE_GAP
+		var from := _clear_spot(center, 200.0, 320.0)
+		var kinds := _common_types()
+		for i in randi_range(3, 5):
+			var mob := _spawn_mob(kinds.pick_random(), from + Vector2(randf_range(-30, 30), randf_range(-20, 20)), _level)
+			mob.objective = self
+			mob.state = Goblin.State.CHASE
+
+
 func _alive_mobs() -> int:
 	var count := 0
 	for mob in mobs:
@@ -386,7 +520,7 @@ func _on_mob_died(mob: Goblin) -> void:
 	if done:
 		return
 	_account(mob)
-	if mob != boss:
+	if mob != boss or _type == "world_boss":
 		w.note_event_kill(mob)
 	if mob == champion or mob == boss:
 		_finish(true)
@@ -406,7 +540,7 @@ func _process_travelers(delta: float) -> void:
 	_traveler_timer -= delta
 	if _traveler_timer > 0.0:
 		return
-	_traveler_timer = TRAVELER_GAP
+	_traveler_timer = TRAVELER_GAP * (0.4 if _type == "world_boss" else 1.0)
 	var present := get_tree().get_nodes_in_group("travelers").filter(func(t: Traveler) -> bool:
 		return t.mode == "event" and t.is_alive()).size()
 	if present >= _travelers_left:
@@ -450,11 +584,23 @@ func _finish(success: bool) -> void:
 	var result := events.finish(success)
 	if success and int(result.get("place", 0)) > 0:
 		_chest(int(result["place"]))
+		if _type == "caravan":
+			w.player.boons.grant("caravan_trade")
 	_cleanup(success)
 
 
 func _cleanup(success: bool) -> void:
-	# czempion odchodzi, boss się uspokaja, podróżnicy wracają do Ostoi
+	# czempion i world boss odchodzą, boss się uspokaja, wóz staje, święto gaśnie, podróżnicy wracają do Ostoi
+	if _type == "world_boss" and not success and is_instance_valid(boss) and boss.state != Goblin.State.DEAD:
+		var gone := boss.create_tween()
+		gone.tween_property(boss, "modulate:a", 0.0, 1.5)
+		gone.tween_callback(boss.queue_free)
+	if is_instance_valid(caravan):
+		caravan.queue_free()
+		caravan = null
+	if _type == "festival" and w._settlement != null and w._settlement.is_inside_tree():
+		w._settlement.stop_festival()
+		_refresh_town_points()
 	if not success and is_instance_valid(champion) and champion.state != Goblin.State.DEAD:
 		var tween := champion.create_tween()
 		tween.tween_property(champion, "modulate:a", 0.0, 1.0)
@@ -534,14 +680,39 @@ func objective_text() -> String:
 				return "%s: %d%% zdrowia" % [WorldEvents.boss_title(event["boss"]), roundi(100.0 * boss.health / maxf(1.0, boss.max_health))]
 		"meteors":
 			return "Rozbijaj meteoryty i bij potwory z kraterów"
+		"world_boss":
+			if float(event.get("warn", 0.0)) > 0.0:
+				return "Pojawi się za %d s - zbierz siły!" % ceili(float(event["warn"]))
+			if is_instance_valid(boss):
+				return "%s: %d%% zdrowia (faza %d)" % [boss.boss_name, roundi(100.0 * boss.health / maxf(1.0, boss.max_health)), boss.phase]
+		"caravan":
+			if caravan != null:
+				return "Wóz: %d%%  -  droga %d%%%s" % [roundi(health / max_health * 100.0), roundi(caravan.progress() * 100.0),
+						"  (czeka na ciebie)" if caravan.waiting else ""]
+		"festival":
+			return "Tańce przy Watrze, premie i tańsi kupcy"
 	return ""
 
 
 func _draw() -> void:
-	if _type != "raid" or done:
+	if done:
+		return
+	var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() / 200.0)
+	if _type == "world_boss" and float(event.get("warn", 0.0)) > 0.0:
+		# zapowiedź: drżący krąg, w którym pojawi się boss
+		var color: Color = WorldEvents.TYPES["world_boss"]["color"]
+		draw_circle(Vector2.ZERO, 90.0, Color(color, 0.08 + 0.08 * pulse))
+		draw_arc(Vector2.ZERO, 90.0 + 6.0 * pulse, 0.0, TAU, 48, Color(color, 0.6), 2.0)
+		return
+	if _type == "caravan":
+		var cart := Rect2(-22, -46, 44, 4)
+		draw_rect(cart.grow(1), Color(0.1, 0.11, 0.17))
+		draw_rect(Rect2(cart.position, Vector2(cart.size.x * health / max_health, cart.size.y)),
+				Color(1, 1, 1) if _flash > 0.0 else Color(1.0, 0.8, 0.35))
+		return
+	if _type != "raid":
 		return
 	# pasek zdrowia kapliczki i krąg obrony
-	var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() / 200.0)
 	draw_arc(Vector2.ZERO, 46.0, 0.0, TAU, 40, Color(1.0, 0.5, 0.35, 0.25 + 0.25 * pulse), 2.0)
 	var bar := Rect2(-20, -58, 40, 4)
 	draw_rect(bar.grow(1), Color(0.1, 0.11, 0.17))

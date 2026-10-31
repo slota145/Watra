@@ -89,7 +89,7 @@ func _refresh() -> void:
 	var gold := _player.stats.gold
 	for id in _merchant.shop_sells:
 		var item := Items.get_data(id)
-		var price: int = item["price"]
+		var price: int = _player.boons.discounted(int(item["price"]))
 		var row := _item_row(id, "%s - %d zł" % [item["name"], price])
 		var buy := _button("Kup", _buy.bind(id))
 		buy.disabled = gold < price
@@ -172,7 +172,7 @@ func _button(text: String, on_pressed: Callable) -> Button:
 
 
 func _buy(id: String) -> void:
-	var price: int = Items.get_data(id)["price"]
+	var price: int = _player.boons.discounted(int(Items.get_data(id)["price"]))
 	if _player.stats.gold < price:
 		_set_status("Za mało złota!", Color(1, 0.4, 0.4))
 		Sfx.play("ui_error")

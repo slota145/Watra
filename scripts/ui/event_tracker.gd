@@ -78,7 +78,7 @@ func _refresh() -> void:
 	_goal.text = site.objective_text() if here else "Wydarzenie w innej krainie - idź tam albo teleportuj się (M)"
 	var place := events.player_place()
 	var count := events.ranking().size()
-	_place.visible = here
+	_place.visible = here and event["type"] != "festival"
 	_place.text = ("Twoje miejsce: %d/%d" % [place, count]) if place > 0 else "Walcz, żeby trafić do rankingu"
 	_message.visible = _message_left > 0.0
 	reset_size()

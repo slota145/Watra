@@ -24,6 +24,8 @@ const MONSTERS := {
 	"kobold_bombardier": {"zone": "fields", "note": "Szalony bombardier z barykady w obozie koboldów."},
 	"giant_worm": {"zone": "fields", "note": "Olbrzymi czerw, który pożera całe pola."},
 	"gryf": {"zone": "fields", "note": "Gryf strzegący wzgórza nad polami."},
+	"world_boss_zmij": {"zone": "world", "note": "Trójgłowy smok - world boss z wydarzeń w wyższych krainach. Zieje ogniem, ciska kulami ognia i spada z nieba."},
+	"world_boss_wij": {"zone": "world", "note": "Olbrzym o powiekach do ziemi - world boss z wydarzeń w niższych krainach. Jego wzrok pali, a korzenie chwytają."},
 	"frogman": {"name": "Żabołak", "zone": "swamp", "note": "Mieszkaniec rozlewisk z włócznią."},
 	"frog_spitter": {"name": "Żabołak plujący", "zone": "swamp", "note": "Pluje żrącym śluzem z daleka."},
 	"drowner": {"name": "Utopiec", "zone": "swamp", "note": "Czai się pod wodą sadzawek i wynurza, gdy ktoś podejdzie."},

@@ -120,7 +120,7 @@ func _refresh() -> void:
 	for service in _npc.services:
 		match service:
 			"rest":
-				_buttons.add_child(_button("Odpocznij (%d zł)" % rest_price(_player.stats.level), _rest))
+				_buttons.add_child(_button("Odpocznij (%d zł)" % _player.boons.discounted(rest_price(_player.stats.level)), _rest))
 			"forge":
 				_buttons.add_child(_button("Wykuwanie", _forge))
 			"jeweler":
@@ -257,7 +257,7 @@ func _offers(kind: String) -> void:
 
 
 func _rest() -> void:
-	var price := rest_price(_player.stats.level)
+	var price := _player.boons.discounted(rest_price(_player.stats.level))
 	if _player.stats.gold < price:
 		_npc.say("Najpierw zapłać, przyjacielu. %d złota." % price)
 		Sfx.play("ui_error")

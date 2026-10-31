@@ -18,6 +18,8 @@ const BOON_ICONS := {
 	"bless_wisdom": preload("res://assets/items/bless_wisdom.png"),
 	"bless_might": preload("res://assets/items/bless_might.png"),
 	"rested": preload("res://assets/items/rested.png"),
+	"festival": preload("res://assets/items/victory_mark.png"),
+	"caravan_trade": preload("res://assets/items/bag_satchel.png"),
 }
 
 

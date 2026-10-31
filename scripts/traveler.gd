@@ -32,6 +32,8 @@ const PARTY_COLOR := Color(0.55, 0.8, 1.0)
 const BOSS_FACTOR := 0.12
 ## Czempion i boss polowania mają wielokrotne zdrowie - gromada podróżników bez gracza bije ich kilka minut.
 const EVENT_ELITE_FACTOR := 0.012
+## World boss ma ogromne zdrowie - podróżnicy sami biliby go kilkanaście minut, gracz musi pomóc.
+const WORLD_BOSS_FACTOR := 0.0025
 ## Jak daleko od miejsca wydarzenia podróżnik szuka jego potworów.
 const EVENT_RANGE := 380.0
 ## W wydarzeniu przybywają doświadczeni łowcy (lepiej opancerzeni) - ciosy bolą ich słabiej.
@@ -260,7 +262,8 @@ func _attack(weapon: String) -> void:
 	_calm = 0.0
 	var level := int(data.get("level", 1))
 	var ratio := clampf(1.0 + (level - _target.level) * 0.06, 0.4, 2.5)
-	var factor := EVENT_ELITE_FACTOR if _target.has_meta("elite") else BOSS_FACTOR if _target is Boss else 1.0
+	var factor := WORLD_BOSS_FACTOR if _target.has_meta("world_boss") else EVENT_ELITE_FACTOR if _target.has_meta("elite") \
+			else BOSS_FACTOR if _target is Boss else 1.0
 	var amount := maxi(1, roundi(_target.max_health * HIT_FRACTION[weapon] * ratio * randf_range(0.85, 1.15) * factor))
 	var at := _target.hurt_center()
 	match weapon:
@@ -397,7 +400,7 @@ func _start_gather(target: Harvestable) -> void:
 func _drop_gather() -> void:
 	if gather_target != null and is_instance_valid(gather_target):
 		var owner_node = gather_target.get_meta("gatherer", null)
-		if not is_instance_valid(owner_node) or owner_node == self:
+		if gather_target.has_meta("gatherer") and (not is_instance_valid(owner_node) or owner_node == self):
 			gather_target.remove_meta("gatherer")
 		gather_target.set_progress(0.0)
 	gather_target = null
