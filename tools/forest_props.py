@@ -167,7 +167,18 @@ def _main_box(img):
             top = y + 1
         elif y - top > 6:
             break
-    return (box[0], top, box[2], box[3])
+    # okruchy z boków (wąski pasek oddzielony pustymi kolumnami, np. kawałek sąsiedniej klatki przy dębie)
+    cols = [alpha.crop((x, top, x + 1, box[3])).getbbox() is not None for x in range(img.width)]
+    left, right = box[0], box[2]
+    for x in range(left, min(left + 10, right)):
+        if not cols[x] and any(cols[x + 1:right]):
+            left = x + 1
+            break
+    for x in range(right - 1, max(right - 11, left), -1):
+        if not cols[x] and any(cols[left:x]):
+            right = x
+            break
+    return (left, top, right, box[3])
 
 
 def variants():

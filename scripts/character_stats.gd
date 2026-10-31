@@ -40,8 +40,9 @@ const MAX_COOLDOWN_REDUCTION := 0.5
 
 @export var base_health := 100
 @export var base_mana := 50
-## Exp potrzebny na 2. poziom; kolejne progi rosną wykładniczo.
-@export var xp_base := 40.0
+## Exp potrzebny na 2. poziom; kolejne progi rosną wykładniczo. Około 30 zwykłych potworów na poziom na początku
+## i 200 pod koniec (tests/balance_sim.gd) - przy siedliskach z dziesiątkami potworów mniej dawało awans za awansem.
+@export var xp_base := 120.0
 @export var xp_exponent := 1.5
 
 var level := 1
