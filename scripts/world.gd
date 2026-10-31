@@ -1152,6 +1152,7 @@ func _on_goblin_died(goblin: Goblin, spawn: Dictionary) -> void:
 	if goblin.quest_kind != "animal":
 		hud.on_enemy_killed(goblin)
 	player.quests.on_enemy_killed(goblin.quest_kind)
+	player.codex.note_kill(goblin)
 	# w lochu nic się nie odradza
 	if zone != Zones.DUNGEON:
 		_respawn_queue.append({"spawn": spawn, "time": spawn.get("respawn", goblin_respawn_time)})

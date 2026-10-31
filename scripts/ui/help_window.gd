@@ -13,6 +13,7 @@ const CONTROLS := [
 	["C", "postać i atrybuty"],
 	["K", "umiejętności"],
 	["J", "dziennik zadań"],
+	["L", "encyklopedia (legendy, bossowie, potwory, zioła, przedmioty)"],
 	["M", "mapa"],
 	["Esc", "zamknij okna / menu gry"],
 ]

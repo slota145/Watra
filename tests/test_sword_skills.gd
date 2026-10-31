@@ -55,7 +55,10 @@ func _process(_d: float) -> bool:
 			ss.press("riposte")
 			var hp: int = p.health
 			p._invulnerable_timer = 0.0
+			# bez losowego uniku z węzłów drzewka - cios ma trafić w zasłonę
+			p.stats.set_temp("test", {"dodge_chance": -1.0})
 			p.take_damage(30, _enemy.global_position)
+			p.stats.set_temp("test", {})
 			check("Riposta przyjmuje cios", p.health == hp)
 			check("po Ripoście darmowa Szarża", p.combo_with("lunge"))
 			var mana: float = p.mana
