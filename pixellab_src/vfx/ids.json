@@ -822,5 +822,65 @@
       22
     ],
     "loop": true
+  },
+  "boss_appear": {
+    "effect": "eeb50edc-ca0b-415c-b527-07f38581726a",
+    "name": "Boss - pojawienie sie",
+    "frame": [
+      144,
+      96
+    ],
+    "frames": 11,
+    "columns": 6,
+    "fps": 18,
+    "anchor": [
+      72,
+      58
+    ]
+  },
+  "boss_death": {
+    "effect": "71116e7c-6939-49cd-bc7e-da25ac1ad7e3",
+    "name": "Boss - smierc",
+    "frame": [
+      126,
+      122
+    ],
+    "frames": 15,
+    "columns": 8,
+    "fps": 16,
+    "anchor": [
+      63,
+      88
+    ]
+  },
+  "boss_phase": {
+    "effect": "a23645f1-7471-4b81-acf4-3dd5c070e1be",
+    "name": "Boss - przejscie fazy",
+    "frame": [
+      128,
+      113
+    ],
+    "frames": 12,
+    "columns": 6,
+    "fps": 16,
+    "anchor": [
+      65,
+      76
+    ]
+  },
+  "boss_enrage": {
+    "effect": "c53bf802-f9ad-4096-a24c-28b162ce9c89",
+    "name": "Boss - aura wscieklosci",
+    "frame": [
+      62,
+      94
+    ],
+    "frames": 8,
+    "fps": 12,
+    "loop": true,
+    "anchor": [
+      31,
+      80
+    ]
   }
 }

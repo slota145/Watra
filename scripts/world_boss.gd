@@ -69,6 +69,7 @@ func take_damage(amount: int, from_position: Vector2, knockback := 0.0) -> void:
 			speed *= 1.1
 			Sfx.play_at("bear_roar" if kind == "wij" else "storm_eagle_screech", global_position)
 			_shake_camera(8.0)
+			_fx_phase()
 			phase_changed.emit(phase)
 
 

@@ -26,6 +26,24 @@ var _telegraph: Telegraph
 var _hit_player := false
 ## Jak długo boss wraca do leża - po RETURN_TIMEOUT s (np. zablokowany o drzewo) przenosi się do niego.
 var _return_time := 0.0
+## Rozwścieczony boss (np. polowanie na bossa w wydarzeniu) - stała aura wściekłości.
+var enraged := false
+## Zapętlona aura wściekłości (podklasa może podać własne klatki w aura_texture / aura_frames / aura_anchor).
+var aura_texture: Texture2D = FX_ENRAGE
+var aura_frames := 8
+var aura_anchor := Vector2(31, 80)
+var _aura: Sprite2D
+var _aura_time := 0.0
+
+## Wspólne efekty bossów z kreatora efektów PixelLab (tools/vfx_art.py): ryk z falą przy wejściu do walki, wybuch
+## z duszami przy śmierci, wybuch mocy przy zmianie fazy i zapętlona aura wściekłości. Podklasy mogą podmienić każdy
+## z nich (_fx_engage / _fx_death / _fx_phase / aura_texture), np. wynurzenie się z wody zamiast ryku.
+const FX_ENGAGE := preload("res://assets/effects/boss_appear.png")
+const FX_DEATH := preload("res://assets/effects/boss_death.png")
+const FX_PHASE := preload("res://assets/effects/boss_phase.png")
+const FX_ENRAGE := preload("res://assets/effects/boss_enrage.png")
+## Poniżej tej części zdrowia (w walce) boss pokazuje aurę wściekłości (tylko wygląd).
+const ENRAGE_HEALTH := 0.3
 
 const RETURN_TIMEOUT := 6.0
 ## Ogłuszenie trwa u bossa tylko tyle (część pełnego czasu).
@@ -40,6 +58,65 @@ func _ready() -> void:
 
 func is_engaged() -> bool:
 	return state == State.CHASE
+
+
+## Wejście do walki: efekt pojawienia się (raz na każde podejście gracza).
+func aggro() -> void:
+	var was_idle := state == State.IDLE
+	super()
+	if was_idle and state == State.CHASE:
+		_fx_engage()
+
+
+## Skala wspólnych efektów - z wysokości klatki bossa (około 64 px = 1).
+func fx_scale() -> float:
+	if sprite == null or sprite.texture == null:
+		return 1.0
+	var height := sprite.texture.get_height() / float(maxi(sprite.vframes, 1)) * absf(sprite.scale.y)
+	return clampf(height / 64.0, 0.8, 2.5)
+
+
+## Ryk z falą i pyłem przy wejściu do walki (podklasy mogą podmienić).
+func _fx_engage() -> void:
+	SkillEffects.sheet_once(get_parent(), FX_ENGAGE, 11, 18.0, global_position, Vector2(72, 58), 0.0, 1.0, fx_scale())
+
+
+## Wybuch, dym, odłamki i unoszące się dusze przy śmierci (podklasy mogą podmienić).
+func _fx_death() -> void:
+	SkillEffects.sheet_once(get_parent(), FX_DEATH, 15, 16.0, global_position, Vector2(63, 88), 0.0, 1.0, fx_scale())
+
+
+## Wybuch mocy przy zmianie fazy walki (wołane przez bossów z fazami; podklasy mogą podmienić).
+func _fx_phase() -> void:
+	SkillEffects.sheet_once(get_parent(), FX_PHASE, 12, 16.0, global_position, Vector2(65, 76), 0.0, 1.0, fx_scale())
+
+
+## Aura wściekłości za bossem: rozwścieczony albo w walce poniżej ENRAGE_HEALTH zdrowia.
+func _update_aura(delta: float) -> void:
+	var show := state != State.DEAD and (enraged or (is_engaged() and health < max_health * ENRAGE_HEALTH))
+	if not show:
+		if _aura != null:
+			_aura.visible = false
+		return
+	if _aura == null:
+		_aura = Sprite2D.new()
+		_aura.texture = aura_texture
+		_aura.hframes = aura_frames
+		_aura.centered = false
+		_aura.offset = -aura_anchor
+		_aura.scale = Vector2.ONE * fx_scale()
+		add_child(_aura)
+		move_child(_aura, sprite.get_index())
+	_aura.visible = true
+	_aura_time += delta
+	_aura.frame = int(_aura_time * 12.0) % aura_frames
+
+
+func _die() -> void:
+	_fx_death()
+	if _aura != null:
+		_aura.visible = false
+	super()
 
 
 ## Bossa nie odpycha cios i nie przerywa jego ataku.
@@ -57,6 +134,7 @@ func take_damage(amount: int, _from_position: Vector2, _knockback := 0.0) -> voi
 
 
 func _physics_process(delta: float) -> void:
+	_update_aura(delta)
 	if state == State.DEAD or _process_stun(delta):
 		return
 	match state:
