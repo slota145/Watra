@@ -264,6 +264,10 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     kamień szlachetny, który działa tylko z bronią tego drzewka. Wyjęty kamień wraca do plecaka, a zapomnienie drzewka
     u mędrca zwraca kamienie. W końcówce gry specjalne kamienie tylko do drzewka, np. wzmacniające węzły pasywne
     w swoim promieniu (jak „radius jewels”).
+    Esencje legend też pasują do gniazd w drzewku (w końcówce gry, np. jedno „gniazdo legendarne” na drzewko przy
+    węźle kluczowym); kilka esencji tego samego efektu (z drzewka, gniazd przedmiotów i założonych legend) sumuje się
+    jak niezależne losowania - tak jak dziś `Equipment.effect_power`, więc szansa rośnie coraz wolniej i nie dochodzi
+    do 100%; efekty liczone w sztukach (np. dodatkowe strzały) z mniejszym przyrostem albo z górnym limitem.
 - [ ] Nowe bronie: kosa, kostur (nekromanta), młoty, chainblade'y, sztylety, włócznie, rapier, hydrosfera.
   Każda broń to nowy rodzaj z własnym drzewkiem, a nie tylko nowy przedmiot, więc wymaga szczegółów od autora.
 
