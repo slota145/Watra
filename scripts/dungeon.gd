@@ -582,6 +582,9 @@ func _on_boss_died(_boss_node: Goblin = null) -> void:
 		_drop(at, "rune_seal" if int(config.get("tier", 1)) >= 4 and _rng.randf() < 0.35 else "rune_chaos", 1)
 	if _rng.randf() < Gems.RADIUS_VAULT_CHANCE * treasure:
 		_drop(at, Gems.roll_radius(int(config.get("tier", 1))), 1)
+	var bag := Bags.roll_vault(loot_level, treasure)
+	if bag != "":
+		_drop(at, bag, 1)
 	if _rng.randf() < Dungeons.VAULT_LEGEND_CHANCE * treasure:
 		_drop(at, Loot.legendary_at_level(Dungeons.VAULT_LEGENDS.pick_random(), loot_level), 1)
 	Sfx.play("quest_ready")

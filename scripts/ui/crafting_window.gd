@@ -1,7 +1,7 @@
 class_name CraftingWindow
 extends PanelContainer
-## Okno rzemiosła (przycisk pod "Zaklinaniem" w ekwipunku): lista receptur, przy każdej
-## składniki z liczbą posiadanych / potrzebnych i przycisk "Wytwórz". Składniki z plecaka.
+## Okno rzemiosła (przycisk w ekwipunku): zakładki (Crafting.GROUPS - przyzwania bossów, torby), lista receptur,
+## przy każdej składniki z liczbą posiadanych / potrzebnych i przycisk "Wytwórz". Składniki z plecaka.
 
 const SLOT_SIZE := Vector2(22, 22)
 const OK_COLOR := Color(0.6, 1.0, 0.55)
@@ -10,8 +10,11 @@ const MISSING_COLOR := Color(1.0, 0.45, 0.45)
 var _player: Player
 var _list: VBoxContainer
 var _status: Label
-## indeks receptury -> {"button": Button, "counts": {id: Label}}
+## indeks receptury -> {"button": Button, "counts": {id: Label}, "row": PanelContainer}
 var _rows := {}
+var _group := "summon"
+var _tabs := {}
+const LIST_HEIGHT := 230.0
 
 
 func _ready() -> void:
@@ -25,11 +28,30 @@ func _ready() -> void:
 	var hint := UiStyle.label("Składniki bierzesz z plecaka.", 7, UiStyle.DIM_COLOR)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(hint)
+	var tabs := HBoxContainer.new()
+	tabs.alignment = BoxContainer.ALIGNMENT_CENTER
+	tabs.add_theme_constant_override("separation", 3)
+	box.add_child(tabs)
+	for group: String in Crafting.GROUPS:
+		var tab := Button.new()
+		tab.text = Crafting.GROUPS[group]
+		tab.toggle_mode = true
+		tab.focus_mode = Control.FOCUS_NONE
+		tab.add_theme_font_size_override("font_size", 8)
+		tab.pressed.connect(show_group.bind(group))
+		tabs.add_child(tab)
+		_tabs[group] = tab
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.custom_minimum_size.y = LIST_HEIGHT
+	box.add_child(scroll)
 	_list = VBoxContainer.new()
 	_list.add_theme_constant_override("separation", 3)
-	box.add_child(_list)
+	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(_list)
 	for i in Crafting.RECIPES.size():
 		_list.add_child(_make_row(i))
+	show_group(_group)
 	_status = UiStyle.label("", 8, UiStyle.DIM_COLOR)
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(_status)
@@ -78,7 +100,10 @@ func _make_row(index: int) -> PanelContainer:
 	middle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	middle.mouse_filter = Control.MOUSE_FILTER_PASS
 	line.add_child(middle)
-	var name_label := UiStyle.label(Items.get_data(result)["name"], 8, Color(0.85, 0.65, 1.0))
+	var title: String = Items.get_data(result)["name"]
+	if Items.is_bag(result):
+		title += "  (+%d miejsc)" % int(Items.get_data(result)["bag"])
+	var name_label := UiStyle.label(title, 8, Color(0.85, 0.65, 1.0))
 	name_label.mouse_filter = Control.MOUSE_FILTER_PASS
 	middle.add_child(name_label)
 	var parts := HBoxContainer.new()
@@ -105,8 +130,20 @@ func _make_row(index: int) -> PanelContainer:
 	button.add_theme_font_size_override("font_size", 8)
 	button.pressed.connect(_craft.bind(index))
 	line.add_child(button)
-	_rows[index] = {"button": button, "counts": counts}
+	_rows[index] = {"button": button, "counts": counts, "row": row}
 	return row
+
+
+## Zakładka: widać tylko receptury jej grupy.
+func show_group(group: String) -> void:
+	_group = group
+	for tab: String in _tabs:
+		_tabs[tab].set_pressed_no_signal(tab == group)
+	for index: int in _rows:
+		_rows[index]["row"].visible = Crafting.RECIPES[index].get("group", "summon") == group
+	if _status != null:
+		_status.text = ""
+	reset_size()
 
 
 func _refresh() -> void:

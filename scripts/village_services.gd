@@ -93,7 +93,7 @@ const MARK_OFFERS := [
 	["gem", 6, 1, "Losowy kamień szlachetny o szlifie na twój poziom (po zadaniu jubilera)."],
 	["rune_chaos", 12, 1, "W warsztacie kowala przelosuje wszystkie premie przedmiotu."],
 	["mercy_stone", 10, 1, "Przy nieudanym zaklinaniu przedmiot nie traci poziomu."],
-	["backpack", 15, 1, "+20 miejsc w plecaku (załóż PPM)."],
+	["bag_expedition", 25, 1, "+24 miejsca w plecaku (załóż PPM)."],
 	["crystal_heart", 20, 1, "Gniazdo na esencję u kowala i Pieczęć w warsztacie."],
 	["rune_seal", 45, 1, "Zapieczętuje jedną premię, a resztę przelosuje (z Sercem Kryształu)."],
 	["legend", 80, 1, "Losowa legenda ze skarbca lochów na twoim poziomie."],

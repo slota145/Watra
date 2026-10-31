@@ -1,6 +1,7 @@
 class_name Crafting
-## Receptury rzemiosła. Na razie przedmioty przyzwania bossów - każdy robi się z łupu
-## zdobywanego tam, gdzie mieszka dany boss. Składniki bierzemy z plecaka.
+## Receptury rzemiosła (okno Rzemiosła w plecaku, zakładki wg "group"): przedmioty przyzwania bossów - każdy robi się
+## z łupu zdobywanego tam, gdzie mieszka dany boss - i torby (Bags) szyte ze skór i surowców kolejnych krain.
+## Składniki bierzemy z plecaka.
 
 const RECIPES: Array[Dictionary] = [
 	{"result": "summon_chief", "amount": 1, "ingredients": {"goblin_heart": 20}},
@@ -18,7 +19,16 @@ const RECIPES: Array[Dictionary] = [
 	{"result": "summon_hydra", "amount": 1, "ingredients": {"hydra_scale": 5}},
 	{"result": "summon_satyr_king", "amount": 1, "ingredients": {"satyr_horn": 15}},
 	{"result": "summon_gryf", "amount": 1, "ingredients": {"gryf_feather": 5}},
+	{"result": "bag_purse", "amount": 1, "group": "bags", "ingredients": {"deer_hide": 3, "wolf_pelt": 2}},
+	{"result": "bag_satchel", "amount": 1, "group": "bags", "ingredients": {"boar_hide": 5, "wolf_pelt": 5}},
+	{"result": "bag_wanderer", "amount": 1, "group": "bags", "ingredients": {"goat_hide": 6, "boar_hide": 6, "frog_tongue": 6}},
+	{"result": "bag_hunter", "amount": 1, "group": "bags", "ingredients": {"goat_hide": 12, "spider_silk": 12, "satyr_horn": 6}},
+	{"result": "bag_expedition", "amount": 1, "group": "bags", "ingredients": {"spider_silk": 25, "goat_hide": 15, "bone_dust": 20}},
+	{"result": "bag_legendary", "amount": 1, "group": "bags",
+			"ingredients": {"hydra_scale": 10, "gryf_feather": 10, "storm_feather": 15, "crystal_heart": 2}},
 ]
+## Zakładki okna Rzemiosła.
+const GROUPS := {"summon": "Przyzwania bossów", "bags": "Torby"}
 
 
 static func can_craft(recipe: Dictionary, inventory: Inventory) -> bool:

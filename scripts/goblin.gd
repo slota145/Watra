@@ -476,6 +476,7 @@ func _die() -> void:
 		gone.chain().tween_callback(queue_free)
 		return
 	_drop_loot()
+	_drop_bag()
 	# Kieł Hydry: każdy padający w pobliżu wróg (także od efektów) może wybuchnąć trucizną
 	if _player != null and is_instance_valid(_player.legendary):
 		_player.legendary.on_enemy_died(self)
@@ -517,6 +518,15 @@ func _drop_loot() -> void:
 	# kamienie szlachetne po zadaniu jubilera (w lochach - lepsze, z szansą na trzecią premię)
 	if Gems.unlocked and randf() < Gems.DROP_CHANCE * dungeon_mods.get("loot", 1.0):
 		_spawn_pickup(Gems.roll("", Gems.cut_for_level(level), pathing != null), 1)
+
+
+## Torba z łupu (Bags) - wspólna dla wszystkich potworów (bossowie częściej), zwierzyna jej nie nosi.
+func _drop_bag() -> void:
+	if quest_kind == "animal" or scene_file_path.contains("dummy"):
+		return
+	var bag := Bags.roll_drop(level, self is Boss)
+	if bag != "":
+		_spawn_pickup(bag, 1)
 
 
 func _spawn_pickup(item_id: String, amount: int) -> void:

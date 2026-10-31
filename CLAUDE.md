@@ -298,9 +298,12 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   „unid_<rodzaj>_<rzadkość>_<poziom>” (dane z id - `Items.get_data`), stosy w plecaku, tańszy skup; zwykłe przedmioty
   i legendy - zawsze zidentyfikowane. Identyfikacja (`Player.identify`): PPM - jeden, Shift+PPM - cały stos, przycisk
   „Zidentyfikuj wszystko” w plecaku (`identify_all`) - losuje przedmiot tego rodzaju, rzadkości i poziomu.
-- [ ] **Plecaki i sakwy** (pomysł autora): wypadają z potworów i powiększają plecak - niskopoziomowe 4-6 miejsc,
-  wysokopoziomowe 15-25, najrzadsze 30-40; można też wytwarzać nowe ze skór i innych surowców. Dziś są już
-  miejsca na torby (`Player.bags`, 5 miejsc) oraz Sakwa (+10) i Plecak (+20) w sklepie (`Items` - pole „bag”).
+- [x] **Torby z łupu** (`scripts/bags.gd`, ikony z PixelLab przez `tools/bag_art.py`): 6 rodzajów o stałej pojemności -
+  Mieszek 5, Skórzana sakwa 8, Torba wędrowca 12, Plecak łowcy 18, Plecak wyprawowy 24 i Legendarny tobół 35
+  (`Items` - pole „bag”); 5 miejsc na torby (`Player.bags`). Wypadają z potworów (`Goblin._drop_bag`, rodzaj wg poziomu
+  - `Bags.for_level`, rzadko), częściej z bossów (czasem tobół), ze skarbca lochów i najlepszej skrzyni wydarzenia;
+  szyte w oknie Rzemiosła (zakładka „Torby”, `Crafting.RECIPES` z grupą „bags”) ze skór i surowców kolejnych krain.
+  Sakwa i Plecak zniknęły ze sklepu (działają w starszych zapisach); wymiana Znaków Zwycięstwa daje Plecak wyprawowy.
 - [ ] Nowe bronie: kosa, kostur (nekromanta), młoty, chainblade'y, sztylety, włócznie, rapier, hydrosfera.
   Każda broń to nowy rodzaj z własnym drzewkiem, a nie tylko nowy przedmiot, więc wymaga szczegółów od autora.
 
