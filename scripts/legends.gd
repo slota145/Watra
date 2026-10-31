@@ -1,7 +1,8 @@
 class_name Legends
 ## Legendarne przedmioty bossów na miejsca inne niż pierścień i kolczyk (broń, zbroja, naszyjnik). Każdy stoi
 ## na przedmiocie bazowym (ItemBases: statystyki rosnące z poziomem, broń w ręku, rodzaj broni) i nadpisuje
-## nazwę, opis, ikonę (assets/items/legends/<id>.png, jeśli jest - inaczej ikona bazy) i dokłada efekt
+## nazwę, opis, ikonę (assets/items/legends/<id>.png, jeśli jest - inaczej ikona bazy), broń w ręku
+## (assets/weapons/<id>.png z chwytem z LegendHeld - tools/legend_held.py) i dokłada efekt
 ## (LegendaryEffects). Dane składane raz, przy pierwszym użyciu (Items.get_data).
 ## Efekty "skill" działają tylko z daną umiejętnością / rodzajem broni - opis to mówi.
 
@@ -183,5 +184,9 @@ static func data(id: String) -> Dictionary:
 	var icon := "res://assets/items/legends/%s.png" % id
 	if ResourceLoader.exists(icon):
 		item["icon"] = load(icon)
+	# broń w ręku: sama legenda (tools/legend_held.py), a nie broń bazowa
+	if item.has("weapon") and LegendHeld.GRIPS.has(id):
+		item["weapon"]["held"] = load("res://assets/weapons/%s.png" % id)
+		item["weapon"]["grip"] = LegendHeld.GRIPS[id]
 	_cache[id] = item
 	return item

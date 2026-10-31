@@ -10,7 +10,6 @@ extends PanelContainer
 ## (zakładanie w wybrane miejsce), z postaci do plecaka, do okna magazynu i z powrotem, a upuszczone
 ## na koszu - wyrzucić (cenne po potwierdzeniu). Przycisk obok kosza sortuje plecak.
 
-signal enchant_requested
 signal crafting_requested
 
 const COLUMNS := 8
@@ -150,24 +149,14 @@ func _ready() -> void:
 	_gold_label = UiStyle.label("0", 8, Color(1.0, 0.85, 0.3))
 	_gold_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bottom.add_child(_gold_label)
-	var enchant_button := Button.new()
-	enchant_button.text = "Zaklinanie"
-	enchant_button.focus_mode = Control.FOCUS_NONE
-	enchant_button.add_theme_font_size_override("font_size", 8)
-	enchant_button.tooltip_text = "Otwiera okno zaklinania przedmiotów kamieniami"
-	enchant_button.pressed.connect(enchant_requested.emit)
 	var craft_button := Button.new()
 	craft_button.text = "Rzemiosło"
 	craft_button.focus_mode = Control.FOCUS_NONE
 	craft_button.add_theme_font_size_override("font_size", 8)
 	craft_button.tooltip_text = "Otwiera okno rzemiosła (np. przedmioty przyzywające bossów)"
 	craft_button.pressed.connect(crafting_requested.emit)
-	# Rzemiosło pod Zaklinaniem
-	var buttons := VBoxContainer.new()
-	buttons.add_theme_constant_override("separation", 2)
-	buttons.add_child(enchant_button)
-	buttons.add_child(craft_button)
-	bottom.add_child(buttons)
+	# zaklinanie jest u kowala w Ostoi (NpcDialog), tu tylko rzemiosło
+	bottom.add_child(craft_button)
 	box.add_child(bottom)
 	var hint := UiStyle.label("PPM - załóż / użyj / zdejmij   •   przeciągnij - przenieś / do kosza", 7, UiStyle.DIM_COLOR)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT

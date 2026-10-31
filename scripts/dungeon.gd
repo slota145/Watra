@@ -38,6 +38,10 @@ var floor_cells := {}
 var rooms: Array[Rect2i] = []
 var start_room := Rect2i()
 var boss_room := Rect2i()
+## Komnata Kryształu Watry (pusta do czasu zdarzenia) i jego wariant ("" - loch bez kryształu).
+var event_room := Rect2i()
+var event := ""
+var crystal: WatraCrystal
 var _corridors: Array[PackedVector2Array] = []
 var _rng := RandomNumberGenerator.new()
 var _portals: Array[Dictionary] = []
@@ -69,6 +73,7 @@ func generate(world, settings: Dictionary) -> void:
 	_connect_rooms()
 	_fix_corners()
 	_pick_rooms()
+	_pick_event()
 	_build_tiles()
 	_build_collision()
 	_build_map()
@@ -78,6 +83,7 @@ func generate(world, settings: Dictionary) -> void:
 	_build_entrance()
 	_populate(Dungeons.multiplier(mods, "count"))
 	_build_vault()
+	_build_event()
 	Goblin.pathing = self
 
 
@@ -193,6 +199,41 @@ func _pick_rooms() -> void:
 		if score > best_score:
 			best_score = score
 			boss_room = room
+
+
+## Kryształ Watry: losowo (zawsze w trybie deweloperskim albo gdy wyprawa ma "event") w największej komnacie
+## poza wejściową i komnatą strażnika.
+func _pick_event() -> void:
+	event = str(config.get("event", ""))
+	if event == "":
+		if not Game.dev_mode and _rng.randf() >= Dungeons.EVENT_CHANCE:
+			return
+		event = Dungeons.EVENTS[_rng.randi() % Dungeons.EVENTS.size()]
+	var best := -1
+	for room in rooms:
+		if room == start_room or room == boss_room:
+			continue
+		if room.get_area() > best:
+			best = room.get_area()
+			event_room = room
+	if best < 0:
+		event = ""
+
+
+func _build_event() -> void:
+	if event == "":
+		return
+	crystal = WatraCrystal.new()
+	crystal.dungeon = self
+	crystal.variant = event
+	crystal.room = event_room
+	crystal.level = level
+	crystal.tier = int(config.get("tier", 1))
+	crystal.count_mult = Dungeons.multiplier(config.get("mods", []), "count")
+	crystal.position = Vector2(event_room.get_center()) * CELL + Vector2(0, CELL / 2.0)
+	w.entities.add_child(crystal)
+	_glow(crystal.position + Vector2(0, -16), Color(1.0, 0.45, 0.2, 0.6), Vector2(200, 140))
+	w._map_markers.append({"position": crystal.position, "color": Color(1.0, 0.45, 0.25), "size": 3.0})
 
 
 ## Odległość (w krokach po podłodze) od wierzchołka do wszystkich innych.
@@ -381,7 +422,7 @@ func _populate(count_mult: float) -> void:
 	for d: int in distance.values():
 		far = maxi(far, d)
 	for room in rooms:
-		if room == start_room:
+		if room == start_room or (event != "" and room == event_room):
 			continue
 		var depth: float = float(distance.get(room.position + room.size / 2, 0)) / far
 		var lvl := level + (1 if depth > 0.6 else 0)
@@ -399,6 +440,9 @@ func _populate(count_mult: float) -> void:
 		if path.size() < 9:
 			continue
 		var mid := (path[path.size() / 2] + Vector2(0.5, 0.5)) * CELL
+		# korytarz przez komnatę Kryształu Watry - ta zostaje pusta do czasu zdarzenia
+		if event != "" and Rect2(Vector2(event_room.position) * CELL, Vector2(event_room.size) * CELL).grow(CELL).has_point(mid):
+			continue
 		for i in roundi(_rng.randi_range(2, 4) * count_mult):
 			_spawn(_pick(weights), mid + Vector2(_rng.randf_range(-16, 16), _rng.randf_range(-16, 16)), mid, level)
 

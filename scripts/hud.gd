@@ -24,7 +24,7 @@ const INTRO_TEXT := "Hordy potworów zalały świat.\nOstatni ludzie schronili s
 
 var kills := 0
 ## Tryb deweloperski do testowania (nie zapisuje się).
-var dev_mode := false
+var dev_mode := Game.dev_mode
 var _banner_tween: Tween
 ## Okno rzemiosła - budowane w kodzie, otwierane przyciskiem pod "Zaklinaniem".
 var crafting_window: CraftingWindow
@@ -87,6 +87,7 @@ var _quest_areas := {}
 
 func _ready() -> void:
 	add_to_group("hud")
+	dev_badge.visible = dev_mode
 	crafting_window = CraftingWindow.new()
 	crafting_window.name = "CraftingWindow"
 	add_child(crafting_window)
@@ -163,7 +164,6 @@ func connect_player(player: Player) -> void:
 	skill_window.setup(player)
 	enchant_window.setup(player)
 	inventory_window.enchant_window = enchant_window
-	inventory_window.enchant_requested.connect(_open_enchanting)
 	crafting_window.setup(player)
 	inventory_window.crafting_requested.connect(_open_crafting)
 	player.item_picked.connect(loot_feed.show_item)
@@ -189,6 +189,7 @@ func connect_player(player: Player) -> void:
 	npc_dialog.sage_requested.connect(sage_window.open)
 	forge_window.setup(player)
 	npc_dialog.forge_requested.connect(forge_window.open)
+	npc_dialog.enchant_requested.connect(_open_enchanting)
 	offer_window.setup(player)
 	npc_dialog.offers_requested.connect(offer_window.open)
 	watra_window.setup(player)
@@ -366,6 +367,7 @@ func _give_dev_resources() -> void:
 
 func set_dev_mode(enabled: bool) -> void:
 	dev_mode = enabled
+	Game.dev_mode = enabled
 	dev_badge.visible = enabled
 	if enabled:
 		_show_banner("Tryb deweloperski WŁĄCZONY\n[F1] 1000 złota    [F2] awans    [F3] kamienie zaklinające    [F4] drewno i kamień", DEV_COLOR)

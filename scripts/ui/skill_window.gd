@@ -294,8 +294,8 @@ func _drag_skill(_at: Vector2, id: String, card: Control) -> Variant:
 
 ## " [Q]" - pod jakim klawiszem paska leży umiejętność dla danej broni ("" - nie ma jej na pasku).
 func _key_of(id: String, weapon_type: String) -> String:
-	var index := _player.hotbar.skill_bar(weapon_type).find(id)
-	return "  [%s]" % Hotbar.SKILL_KEYS[index] if index >= 0 else ""
+	var index := _player.hotbar.find(weapon_type, id)
+	return "  [%s]" % Hotbar.SLOT_KEYS[index] if index >= 0 else ""
 
 
 func _upgrade(id: String) -> void:

@@ -166,6 +166,3 @@ func _drop_loot() -> void:
 		_spawn_pickup("gold", randi_range(gold_min, gold_max))
 	_spawn_pickup("beast_fang", randi_range(2, 3))
 	_spawn_pickup(Loot.drop_at_level(level, 0.1, Loot.MAGIC, 2), 1)
-	if randf() < 0.5:
-		_spawn_pickup(Enchanting.stone_id(["weapon", "armor", "jewelry"].pick_random(), randf() < 0.15), 1)
-	_spawn_pickup("blessed_stone", randi_range(3, 6))

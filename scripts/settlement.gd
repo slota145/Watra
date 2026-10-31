@@ -177,10 +177,9 @@ const TAX_GOLD := 15
 const TAX_PER_LEVEL := 4
 ## Wędrowny kupiec: co tyle sekund nowy towar, ile pozycji i z czego losuje.
 const MERCHANT_ROTATION := 600.0
-const MERCHANT_STOCK := 5
-const MERCHANT_POOL: Array[String] = ["greater_health_potion", "greater_mana_potion", "weapon_stone", "armor_stone",
-		"jewelry_stone", "weapon_stone_perfect", "armor_stone_perfect", "jewelry_stone_perfect", "blessed_stone",
-		"mercy_stone", "backpack", "guard_horn"]
+## (kamienie zaklinające są tylko w lochach Watry - kupiec ich nie sprzedaje).
+const MERCHANT_STOCK := 4
+const MERCHANT_POOL: Array[String] = ["greater_health_potion", "greater_mana_potion", "pouch", "backpack", "guard_horn"]
 const LINES_HERBALIST: Array[String] = ["Rana się goi, gdy się ją czyści.", "Rumianek, babka, krwawnik - na wszystko coś rośnie.",
 		"Leż spokojnie, zaraz zmienię opatrunek."]
 const LINES_PRIEST: Array[String] = ["Światło nie opuściło Ostoi.", "Módlmy się za tych, którzy nie dotarli.",
@@ -1511,8 +1510,8 @@ func _build_npcs() -> void:
 	smith.work_effect_offset = Vector2(20, -14)
 	smith.work_period = 0.65
 	smith.display_name = "Kowal Bronisław"
-	smith.services.assign(["forge"])
-	smith.dialog_greeting = "Zwykłe żelazo każdy wykuje. Ale przynieś mi kamień, drewno i coś z tych potworów, a wykuję ci rzecz z charakterem!"
+	smith.services.assign(["forge", "enchant"])
+	smith.dialog_greeting = "Zwykłe żelazo każdy wykuje. Ale przynieś mi kamień, drewno i coś z tych potworów, a wykuję ci rzecz z charakterem! A kamienie z Kryształów Watry wbiję ci w oręż - jeśli się odważysz zejść po nie do lochów."
 	smith.work_sound = "anvil"
 	smith.display_name = "Kowal Bronisław"
 	smith.trade_greeting = "Broń i zbroja, prosto z kowadła!"

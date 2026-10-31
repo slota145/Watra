@@ -137,8 +137,8 @@ var _hit_this_swing: Dictionary[Node, bool] = {}
 var _skill_held := false
 var _skill_cooldown_timer := 0.0
 var _skill_cooldown_total := 0.0
-## Wciśnięte sloty paska umiejętności (indeksy jak Hotbar.SKILL_KEYS) i trzymane umiejętności drzewka (id -> true).
-var _held_slots: Array[bool] = [false, false, false, false, false, false, false]
+## Wciśnięte sloty pasków (wspólna numeracja jak Hotbar.SLOT_ACTIONS) i trzymane umiejętności drzewka (id -> true).
+var _held_slots: Array[bool] = []
 var _held_ids := {}
 ## Ostatnio użyta umiejętność i ile jeszcze trwa okno combo po niej (Skills.COMBOS).
 var _chain_skill := ""
@@ -223,6 +223,8 @@ func _init() -> void:
 
 func _ready() -> void:
 	add_to_group("player")
+	_held_slots.resize(Hotbar.slot_count())
+	_held_slots.fill(false)
 	Items.worn = equipment
 	legendary = LegendaryEffects.new(self)
 	add_child(legendary)
@@ -270,33 +272,37 @@ func _ready() -> void:
 ## Kliknięcie w okno ekwipunku / postaci jest przechwytywane przez interfejs
 ## i tutaj nie dociera, więc nie powoduje ataku.
 func _unhandled_input(event: InputEvent) -> void:
-	for i in Hotbar.SKILL_ACTIONS.size():
-		if event.is_action_pressed(Hotbar.SKILL_ACTIONS[i]):
-			_press_skill_slot(i)
+	for i in Hotbar.SLOT_ACTIONS.size():
+		if event.is_action_pressed(Hotbar.SLOT_ACTIONS[i]):
+			_press_slot(i)
 			return
 	if is_dead:
 		return
 	if event.is_action_pressed("interact"):
 		_interact()
 		return
-	for i in Hotbar.ITEM_SLOTS:
-		if event.is_action_pressed("item_%d" % (i + 1)):
-			use_hotbar_item(i)
-			return
 
 
 func _input(event: InputEvent) -> void:
-	for i in Hotbar.SKILL_ACTIONS.size():
-		if event.is_action_released(Hotbar.SKILL_ACTIONS[i]):
+	for i in Hotbar.SLOT_ACTIONS.size():
+		if event.is_action_released(Hotbar.SLOT_ACTIONS[i]):
 			_held_slots[i] = false
 			_update_held_slots()
 
 
-## Wciśnięty slot paska umiejętności: atak (albo dodatkowy cios zaraz po uderzeniu), umiejętność aktywna
-## (trzymana - młynek, ładowanie kuli ognia) albo uderzenie (jedno na wciśnięcie).
-func _press_skill_slot(index: int) -> void:
+## Wciśnięty slot paska (wspólna numeracja): przedmiot (np. mikstura), atak (albo dodatkowy cios zaraz po uderzeniu),
+## umiejętność aktywna (trzymana - młynek, ładowanie kuli ognia) albo uderzenie (jedno na wciśnięcie).
+## Umiejętność innej broni (z paska 1-0) czeka, aż ją założysz.
+func _press_slot(index: int) -> void:
 	_held_slots[index] = true
-	var id: String = hotbar.skill_bar(stats.weapon_type())[index]
+	var id := hotbar.entry(stats.weapon_type(), index)
+	if Hotbar.is_item(id):
+		if not is_dead:
+			use_item(id)
+		return
+	if id != "" and id != Hotbar.ATTACK and Skills.get_data(id)["weapon"] != stats.weapon_type():
+		_hint("%s działa z bronią: %s" % [Skills.get_data(id)["name"], Skills.WEAPON_NAMES[Skills.get_data(id)["weapon"]].to_lower()])
+		return
 	if id == Hotbar.ATTACK:
 		if combo_ready():
 			_combo_request = true
@@ -321,25 +327,28 @@ func _press_skill_slot(index: int) -> void:
 
 ## Atak i umiejętność aktywna trwają, dopóki trzymany jest któryś slot z nimi.
 func _update_held_slots() -> void:
-	var bar := hotbar.skill_bar(stats.weapon_type())
+	var weapon_type := stats.weapon_type()
 	_attack_held = false
 	_skill_held = false
 	_held_ids.clear()
 	for i in _held_slots.size():
-		if not _held_slots[i] or bar[i] == "":
+		var id := hotbar.entry(weapon_type, i)
+		if not _held_slots[i] or id == "" or Hotbar.is_item(id):
 			continue
-		if bar[i] == Hotbar.ATTACK:
+		if id == Hotbar.ATTACK:
 			_attack_held = true
-		elif Skills.get_data(bar[i])["type"] == "active":
+		elif Skills.get_data(id)["weapon"] != weapon_type:
+			continue
+		elif Skills.get_data(id)["type"] == "active":
 			_skill_held = true
-		elif Skills.get_data(bar[i])["type"] == "skill":
-			_held_ids[bar[i]] = true
+		elif Skills.get_data(id)["type"] == "skill":
+			_held_ids[id] = true
 
 
-## Przedmiot ze slotu 1-0 (np. mikstura).
+## Przedmiot ze slotu 1-0 (np. mikstura); umiejętność z tego slotu - jak wciśnięcie klawisza.
 func use_hotbar_item(index: int) -> bool:
 	var id := hotbar.items[index]
-	return use_item(id) if id != "" else false
+	return use_item(id) if Hotbar.is_item(id) else false
 
 
 ## Ile zostało do końca odnowienia umiejętności i ile trwa całe (Vector2(pozostało, całość); zero - gotowa).

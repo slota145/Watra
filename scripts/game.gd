@@ -32,6 +32,8 @@ var _fade: ColorRect
 var _traveling := false
 ## Postać wybrana do nowej gry (zapis pamięta ją w danych gracza).
 var hero := "wojciech"
+## Tryb deweloperski (Hud.set_dev_mode) - trwa także po przejściu do innej krainy albo lochu.
+var dev_mode := false
 
 
 func _ready() -> void:

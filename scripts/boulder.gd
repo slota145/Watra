@@ -1,10 +1,8 @@
 class_name Boulder
 extends Harvestable
 ## Głaz do rozbicia kilofem. Rozpada się na odłamki, zostawia gruz i daje kamień,
-## czasem trochę rudy żelaza, a czasem także kamień do zaklinania ukryty w skale.
+## a czasem trochę rudy żelaza.
 
-const STONE_CHANCE := 0.06
-const PERFECT_STONE_CHANCE := 0.006
 ## Żyła rudy żelaza w zwykłym głazie - kowal może wykuwać, zanim gracz dotrze w góry.
 const ORE_CHANCE := 0.3
 
@@ -21,11 +19,6 @@ func roll_loot() -> Array:
 	var loot := [["stone", randi_range(2, 4)]]
 	if randf() < ORE_CHANCE:
 		loot.append(["iron_ore", randi_range(1, 2)])
-	var category: String = ["weapon", "armor", "jewelry"].pick_random()
-	if randf() < PERFECT_STONE_CHANCE:
-		loot.append([Enchanting.stone_id(category, true), 1])
-	elif randf() < STONE_CHANCE:
-		loot.append([Enchanting.stone_id(category, false), 1])
 	return loot
 
 

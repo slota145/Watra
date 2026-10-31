@@ -10,6 +10,7 @@ signal build_requested
 signal board_requested
 signal sage_requested
 signal forge_requested
+signal enchant_requested
 signal watra_requested
 ## Usługi z listą ofert (OfferWindow): "meals", "blessing", "bestiary".
 signal offers_requested(kind: String, npc: Npc)
@@ -107,6 +108,10 @@ func _refresh() -> void:
 				_buttons.add_child(_button("Odpocznij (%d zł)" % rest_price(_player.stats.level), _rest))
 			"forge":
 				_buttons.add_child(_button("Wykuwanie", _forge))
+			"enchant":
+				var enchant := _button("Zaklinanie", _enchant)
+				enchant.tooltip_text = "Kowal wbija kamienie z Kryształów Watry (lochy) w broń, zbroję i biżuterię"
+				_buttons.add_child(enchant)
 			"disenchant":
 				_buttons.add_child(_button("Odczarowanie", _sage))
 			"meals", "blessing", "bestiary", "reforge", "elixirs", "respec":
@@ -225,6 +230,11 @@ func _upgrade_storage() -> void:
 func _forge() -> void:
 	close()
 	forge_requested.emit()
+
+
+func _enchant() -> void:
+	close()
+	enchant_requested.emit()
 
 
 func _sage() -> void:
