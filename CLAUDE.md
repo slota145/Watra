@@ -225,6 +225,12 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   Spadającej Gwiazdy, fioletowa mgła Kroku, bańka z heksagonów Tarczy Many, Kamień Runiczny z kręgiem run. Grafiki
   `assets/spell/` (włócznia, kula, gwiazda, kamień) zastąpione animacjami (`frost_lance.png` i `meteor.png` zostają
   tylko jako obrazek zapasowy pocisku).
+- [x] Ataki bossów Goblińskiego Lasu, Pól Zbożowych i bestii Prastarego Lasu z kreatora efektów (`scripts/boss_fx.gd` -
+  `BossFx`, wpisy `boss_slam`, `boss_claw`, `boss_cleave`, `bies_smoke`, `bies_roar`, `bomb_blast`, `acid_splash`,
+  `worm_burrow` w `ids.json`): uderzenia w ziemię (Gruzłog, Szarokieł, bestie, Pożeracz Pól, lądowanie Bombardiera),
+  krwawe pazury i cięcie pazurami w stożku, pył za szarżami, cienisty dym i ryk Biesa, wybuch każdej bomby kobolda
+  i rozprysk kwasu (`KoboldBomb._explode` - także pociski kwasu Hydry), fontanna ziemi Pożeracza przy zakopywaniu,
+  wynurzaniu, przywołaniu i wejściu do walki, kamienne kolce trzęsienia (efekt Rozłupania Ziemi).
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

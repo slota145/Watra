@@ -57,13 +57,9 @@ func _update_attack(delta: float) -> void:
 				_shake_camera(12.0)
 				_snap(Vector2(1.28, 0.78))
 				var at := global_position + Vector2(18.0 * (-1.0 if sprite.flip_h else 1.0), 2)
-				SkillEffects.shockwave(get_parent(), at, slam_radius, Color(1.0, 0.55, 0.2))
-				get_tree().create_timer(0.14).timeout.connect(func() -> void:
-					if is_instance_valid(self):
-						SkillEffects.shockwave(get_parent(), at, slam_radius * 1.45, Color(0.85, 0.6, 0.35)))
+				BossFx.slam(get_parent(), at, slam_radius * 1.2)
 				_ground_crack(at, slam_radius, 4.0)
-				_debris(at, 26, 220.0)
-				_burst(at, Color(0.6, 0.47, 0.32), 30, 140.0)
+				_debris(at, 10, 220.0)
 				Sfx.play_at("hit_heavy", global_position)
 				Sfx.play_at("rock_break", global_position, -2.0)
 				Sfx.play_at("shockwave", global_position, -4.0)
@@ -87,21 +83,20 @@ func _update_attack(delta: float) -> void:
 				_afterimage(Color(1.0, 0.55, 0.3, 0.45))
 			_dust_time -= delta
 			if _dust_time <= 0.0:
-				_dust_time = 0.06
-				_burst(global_position - _charge_dir * 10.0, Color(0.62, 0.52, 0.4, 0.8), 4, 40.0)
+				_dust_time = 0.14
+				BossFx.dust(get_parent(), global_position - _charge_dir * 10.0, 1.3)
 			if _player_alive() and not _hit_player and _player.global_position.distance_to(global_position) < CHARGE_WIDTH * 0.8:
 				_hurt_player(charge_damage, 340.0)
 				_shake_camera(8.0)
-				SkillEffects.spark(get_parent(), _player.global_position + Vector2(0, -12), Color(1.0, 0.8, 0.4), 14)
+				BossFx.slam(get_parent(), _player.global_position, 18.0)
 				Sfx.play_at("hit_heavy", global_position)
 			var blocked := get_slide_collision_count() > 0 and _charge_travelled > 24.0
 			if _charge_travelled >= charge_length or blocked or _stage_timer <= 0.0:
 				velocity = Vector2.ZERO
 				# hamowanie / zderzenie: fala i kurz
 				_shake_camera(7.0 if blocked else 4.0)
-				SkillEffects.shockwave(get_parent(), global_position, 40.0, Color(0.85, 0.6, 0.35))
-				_debris(global_position, 12 if blocked else 6, 150.0)
-				_burst(global_position, Color(0.6, 0.47, 0.32), 14, 80.0)
+				BossFx.slam(get_parent(), global_position, 40.0 if blocked else 28.0)
+				_debris(global_position, 6 if blocked else 3, 150.0)
 				Sfx.play_at("hit_heavy" if blocked else "rock_break", global_position, -4.0)
 				_set_stage("recover", 0.8)
 		[_, "recover"]:

@@ -18,6 +18,8 @@ const SLASH_ARC := 0.9
 
 var _dir := Vector2.RIGHT
 var _travel_left := 0.0
+## Odstęp między smugami cienia w czasie szarży (s).
+var _trail_time := 0.0
 
 
 func hurt_center() -> Vector2:
@@ -64,6 +66,7 @@ func _update_attack(delta: float) -> void:
 					_player.apply_slow(0.5, 2.5)
 					_player.apply_poison(8.0, 3.0)
 				_remove_telegraph()
+				BossFx.roar(get_parent(), global_position, ROAR_RADIUS)
 				_smoke(global_position)
 				_shake_camera(6.0)
 				Sfx.play_at("bies_roar", global_position)
@@ -77,9 +80,16 @@ func _update_attack(delta: float) -> void:
 			var step := minf(CHARGE_SPEED * delta, _travel_left)
 			_travel_left -= step
 			velocity = _dir * CHARGE_SPEED
+			# smuga cienia za szarżującym Biesem
+			_trail_time -= delta
+			if _trail_time <= 0.0:
+				_trail_time = 0.12
+				_afterimage(Color(0.35, 0.2, 0.5, 0.55))
+				BossFx.dust(get_parent(), global_position - _dir * 10.0, 1.2)
 			if not _hit_player and _player_alive() and global_position.distance_to(_player.global_position) < 26.0:
 				_hurt_player(charge_damage, 340.0)
 				_shake_camera(6.0)
+				BossFx.claw(get_parent(), _player.global_position + Vector2(0, -14), -1.0 if _dir.x < 0.0 else 1.0, 1.2)
 			if _travel_left <= 0.0 or _stage_timer <= 0.0:
 				_remove_telegraph()
 				_set_stage("recover", 0.8)
@@ -103,8 +113,8 @@ func _update_attack(delta: float) -> void:
 				if _player_in_telegraph():
 					_hurt_player(slash_damage, 220.0)
 				_remove_telegraph()
-				for side in [-1.0, 1.0]:
-					SkillEffects.claw(get_parent(), global_position + _dir * 34.0 + Vector2(0, -18), side, 34.0, Color(1.0, 0.4, 0.3))
+				BossFx.cleave(get_parent(), global_position + Vector2(0, -14), _dir.angle(), SLASH_RADIUS)
+				BossFx.claw(get_parent(), global_position + _dir * 34.0 + Vector2(0, -18), -1.0, 1.3)
 				Sfx.play_at("claw", global_position)
 				_set_stage("recover", 0.7)
 		[_, "recover"]:
@@ -113,27 +123,9 @@ func _update_attack(delta: float) -> void:
 				_end_attack()
 
 
-## Kłąb czarnego dymu (krok w cień, ryk).
+## Kłąb cienistego dymu z żarem oczu (krok w cień, ryk, śmierć) - efekt z kreatora efektów (BossFx.smoke).
 func _smoke(at: Vector2) -> void:
-	var p := CPUParticles2D.new()
-	p.global_position = at + Vector2(0, -16)
-	p.one_shot = true
-	p.explosiveness = 0.9
-	p.amount = 26
-	p.lifetime = 0.8
-	p.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-	p.emission_sphere_radius = 12.0
-	p.direction = Vector2.UP
-	p.spread = 180.0
-	p.gravity = Vector2(0, -20)
-	p.initial_velocity_min = 10.0
-	p.initial_velocity_max = 40.0
-	p.scale_amount_min = 3.0
-	p.scale_amount_max = 6.0
-	p.color = Color(0.08, 0.05, 0.07, 0.75)
-	p.emitting = true
-	get_parent().add_child(p)
-	p.finished.connect(p.queue_free)
+	BossFx.smoke(get_parent(), at, fx_scale())
 
 
 ## Klatki: 0-3 chód, 4 spoczynek, 5 ryk, 6 zamach, 7 cięcie.

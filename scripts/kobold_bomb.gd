@@ -85,12 +85,14 @@ func _explode() -> void:
 	var parent := get_parent()
 	var acid := style == "acid"
 	Sfx.play_at("spit_hit" if acid else "explosion", target, -2.0 if style == "barrel" else -6.0)
-	SkillEffects.shockwave(parent, target, radius, Color(0.5, 0.95, 0.3) if acid else Color(1.0, 0.55, 0.2))
+	# wybuch prochu albo rozprysk kwasu z kreatora efektów (BossFx), skalowany do promienia
+	if acid:
+		BossFx.acid(parent, target, radius)
+	else:
+		BossFx.bomb(parent, target, radius)
 	var layer := get_tree().get_first_node_in_group("floor_layer")
 	if not acid:
 		SkillEffects.ground_crack(layer if layer != null else parent, target, radius * 0.8, 2.5)
-	if not acid:
-		_fire_burst(parent)
 	var player: Player = get_tree().get_first_node_in_group("player")
 	if hurts_enemies:
 		for enemy: Node2D in get_tree().get_nodes_in_group("enemies"):
@@ -110,28 +112,3 @@ func _explode() -> void:
 		(layer if layer != null else parent).add_child(patch)
 		patch.global_position = target
 	queue_free()
-
-
-func _fire_burst(parent: Node) -> void:
-	for kind in 2:
-		var p := CPUParticles2D.new()
-		p.global_position = target
-		p.one_shot = true
-		p.explosiveness = 1.0
-		p.amount = 26 if kind == 0 else 14
-		p.lifetime = 0.5 if kind == 0 else 1.0
-		p.spread = 180.0
-		p.direction = Vector2.UP
-		p.initial_velocity_min = radius * 1.5
-		p.initial_velocity_max = radius * 3.5
-		p.gravity = Vector2(0, -20) if kind == 1 else Vector2(0, 60)
-		p.scale_amount_min = 2.0
-		p.scale_amount_max = 4.0 if kind == 0 else 6.0
-		var ramp := Gradient.new()
-		ramp.colors = PackedColorArray([Color(1.0, 0.9, 0.5), Color(1.0, 0.45, 0.1), Color(0.3, 0.25, 0.22, 0.0)]) if kind == 0 \
-				else PackedColorArray([Color(0.35, 0.32, 0.3, 0.7), Color(0.25, 0.23, 0.22, 0.0)])
-		p.color_ramp = ramp
-		p.z_index = 4
-		p.emitting = true
-		parent.add_child(p)
-		p.finished.connect(p.queue_free)

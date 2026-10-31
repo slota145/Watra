@@ -157,7 +157,8 @@ func _update_attack(delta: float) -> void:
 			if _stage_timer <= 0.0:
 				sprite.position.y = 0.0
 				$CollisionShape2D.set_deferred("disabled", false)
-				_debris(global_position, 10, 120.0)
+				_debris(global_position, 4, 120.0)
+				BossFx.slam(get_parent(), global_position, 30.0)
 				_shake_camera(4.0)
 				_set_stage("recover", 0.5)
 		["call", "telegraph"]:
@@ -224,7 +225,7 @@ func _animate(delta: float) -> void:
 func _die() -> void:
 	super()
 	# ostatnia bomba z worka wybucha przy upadku (już nie rani gracza - tylko efekt)
-	SkillEffects.shockwave(get_parent(), global_position, 60.0, Color(1.0, 0.55, 0.2))
+	BossFx.bomb(get_parent(), global_position, 40.0)
 	Sfx.play_at("explosion", global_position)
 
 

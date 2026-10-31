@@ -882,5 +882,119 @@
       31,
       80
     ]
+  },
+  "boss_slam": {
+    "effect": "251a781c-9bf9-4b02-aa21-388a2160f697",
+    "name": "Boss A - uderzenie w ziemie",
+    "frame": [
+      75,
+      48
+    ],
+    "frames": 12,
+    "fps": 16,
+    "anchor": [
+      37,
+      25
+    ]
+  },
+  "boss_claw": {
+    "effect": "09698442-9855-410d-954f-83d3f5e90adc",
+    "name": "Boss A - pazury",
+    "frame": [
+      38,
+      38
+    ],
+    "frames": 8,
+    "fps": 16,
+    "anchor": [
+      22,
+      15
+    ]
+  },
+  "boss_cleave": {
+    "effect": "59856147-6ac7-4235-9ff2-cf4ac7734730",
+    "name": "Boss A - ciecie pazurami",
+    "frame": [
+      47,
+      69
+    ],
+    "frames": 8,
+    "fps": 18,
+    "anchor": [
+      -13,
+      33
+    ]
+  },
+  "bies_smoke": {
+    "effect": "538f22d5-6c1b-4fdb-ad31-d5b6d55d6317",
+    "name": "Bies - dym",
+    "frame": [
+      66,
+      61
+    ],
+    "frames": 12,
+    "fps": 16,
+    "anchor": [
+      35,
+      40
+    ]
+  },
+  "bies_roar": {
+    "effect": "3cadf253-af69-452c-8967-ee45d9925e60",
+    "name": "Bies - ryk",
+    "frame": [
+      144,
+      84
+    ],
+    "frames": 10,
+    "columns": 5,
+    "fps": 16,
+    "anchor": [
+      73,
+      42
+    ]
+  },
+  "bomb_blast": {
+    "effect": "48d54876-8b81-49e9-850d-416884f0b980",
+    "name": "Boss A - wybuch bomby",
+    "frame": [
+      78,
+      66
+    ],
+    "frames": 12,
+    "fps": 16,
+    "anchor": [
+      34,
+      22
+    ]
+  },
+  "acid_splash": {
+    "effect": "dde87436-b9d3-4e95-93a7-837e4eed7594",
+    "name": "Boss A - rozprysk kwasu",
+    "frame": [
+      46,
+      38
+    ],
+    "frames": 10,
+    "fps": 14,
+    "anchor": [
+      23,
+      19
+    ]
+  },
+  "worm_burrow": {
+    "effect": "1a08ad67-271e-4b75-8c05-ef6294897816",
+    "name": "Pozeracz Pol - fontanna ziemi",
+    "frame": [
+      99,
+      68
+    ],
+    "frames": 12,
+    "columns": 10,
+    "fps": 16,
+    "anchor": [
+      48,
+      49
+    ]
   }
 }

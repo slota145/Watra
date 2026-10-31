@@ -140,7 +140,9 @@ func _update_attack(delta: float) -> void:
 				for k in 4:
 					var spot := global_position + _slam_dir * SLAM_LENGTH * (k + 1) / 4.0
 					_ground_crack(spot, 22.0)
-					_debris(spot, 6, 110.0)
+					get_tree().create_timer(0.05 * k, false).timeout.connect(func() -> void:
+						if is_instance_valid(self):
+							BossFx.slam(get_parent(), spot, 24.0))
 				Sfx.play_at("rock_break", global_position)
 				_set_stage("recover", 1.0)
 		["acid", "telegraph"]:
@@ -195,7 +197,7 @@ func _update_attack(delta: float) -> void:
 					worm.appear()
 					worm.aggro()
 					_brood.append(worm)
-				_burst(global_position, Color(0.45, 0.32, 0.2), 20, 120.0)
+				BossFx.burrow(get_parent(), global_position, fx_scale())
 				_set_stage("recover", 0.6)
 		[_, "recover"]:
 			if _stage_timer <= 0.0:
@@ -215,7 +217,7 @@ func _earth_spike(spot: Vector2) -> void:
 			telegraph.queue_free()
 		if state == State.DEAD:
 			return
-		_debris(spot, 8, 140.0)
+		BossFx.spikes(get_parent(), spot, 0.9)
 		_ground_crack(spot, 18.0, 2.0)
 		if _player_alive() and _player.global_position.distance_to(spot) <= 22.0:
 			_player.take_damage(quake_damage, spot))
@@ -227,7 +229,7 @@ func _go_under() -> void:
 	sprite.visible = false
 	_mound.visible = true
 	$CollisionShape2D.set_deferred("disabled", true)
-	_burst(global_position, Color(0.45, 0.32, 0.2), 24, 120.0)
+	BossFx.burrow(get_parent(), global_position, fx_scale())
 
 
 func _erupt() -> void:
@@ -244,8 +246,8 @@ func _erupt() -> void:
 	_remove_telegraph()
 	_shake_camera(9.0)
 	_ground_crack(_aim_at, erupt_radius, 4.0)
-	_debris(_aim_at, 22, 200.0)
-	_burst(_aim_at, Color(0.45, 0.32, 0.2), 30, 160.0)
+	BossFx.burrow(get_parent(), _aim_at, fx_scale() * 1.3)
+	BossFx.slam(get_parent(), _aim_at, erupt_radius)
 	Sfx.play_at("rock_break", _aim_at, 2.0)
 
 
@@ -257,6 +259,11 @@ func _cancel_attack() -> void:
 		sprite.visible = true
 		_mound.visible = false
 		$CollisionShape2D.set_deferred("disabled", false)
+
+
+## Wejście do walki: robak wynurza się z fontanną ziemi (zamiast wspólnego ryku z falą).
+func _fx_engage() -> void:
+	BossFx.burrow(get_parent(), global_position, fx_scale() * 1.2)
 
 
 ## Klatki: 0-3 kołysanie, 4 nisko (zanurzanie), 5 wynurzanie, 6 zamach / ryk, 7 uderzenie.
