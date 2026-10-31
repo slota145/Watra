@@ -190,6 +190,10 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 - [x] Riposta z kreatora efektów (`assets/effects/riposte_guard.png`, `riposte_counter.png`): w czasie zasłony
   zapętlone złote łuki ostrzy krążące wokół postaci (`SwordSkills._ParryRing`, górna połowa za postacią), a kontra -
   ostry błysk zderzenia stali, pełne cięcie dookoła i fala.
+- [x] Zew Peruna z kreatora efektów (`assets/effects/war_cry.png`, `war_cry_buff.png`): złoty piorun uderza z nieba
+  w postać i powtarza uderzenie, po ziemi rozchodzi się fala z wyładowaniami na cały zasięg strachu; w czasie premii
+  wokół postaci trzaskają złote wyładowania. `tools/vfx_art.py` przyjmuje siatkę klatek (`columns` w `ids.json`)
+  dla efektów szerszych niż 1024 px w jednym rzędzie.
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

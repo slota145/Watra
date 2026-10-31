@@ -67,8 +67,16 @@ const RIPOSTE_GUARD_FX := preload("res://assets/effects/riposte_guard.png")
 const RIPOSTE_COUNTER_FX := preload("res://assets/effects/riposte_counter.png")
 const RIPOSTE_COUNTER_ANCHOR := Vector2(65, 47)
 const RIPOSTE_FX_RADIUS := 56.0
+## Zew Peruna z kreatora efektów PixelLab: złoty piorun uderza z nieba w postać, a po ziemi rozchodzi się fala
+## z wyładowaniami (promień fali w klatce PERUN_FX_RADIUS, punkt zaczepienia pod stopami); w czasie premii wokół
+## postaci trzaskają złote wyładowania (zapętlone klatki).
+const PERUN_FX := preload("res://assets/effects/war_cry.png")
+const PERUN_FX_ANCHOR := Vector2(115, 156)
+const PERUN_FX_RADIUS := 110.0
+const PERUN_BUFF_FX := preload("res://assets/effects/war_cry_buff.png")
+const PERUN_BUFF_FRAMES := 12
+const PERUN_BUFF_FPS := 12.0
 const SPECTRAL_COLOR := Color(0.65, 0.85, 1.0)
-const PERUN_COLOR := Color(1.0, 0.85, 0.35)
 ## Taniec Ostrzy: premia za combo, ile razy się kumuluje i jak długo trwa; Dym i Cień: chmura; Krwawy Szał: leczenie.
 const DANCE_STEP := 0.05
 const DANCE_STACKS := 5
@@ -100,6 +108,8 @@ var _cooldowns := {}
 var _parry_time := 0.0
 var _parry_ring: Node2D
 var _cry_time := 0.0
+## Trzaskające wyładowania wokół postaci w czasie premii Zewu Peruna.
+var _cry_fx: Sprite2D
 var _forced_crits := 0
 var _dance_stacks := 0
 var _dance_time := 0.0
@@ -582,8 +592,16 @@ func _war_cry() -> void:
 	_forced_crits = Skills.CRY_CRITS
 	_player.note_skill("war_cry")
 	var origin := _player.global_position
-	SkillEffects.shockwave(_player.get_parent(), origin, Skills.CRY_RADIUS, PERUN_COLOR)
-	SkillEffects.bolt(_player.get_parent(), origin + Vector2(randf_range(-20, 20), -120), _player.body_center(), 0.3, 8.0)
+	SkillEffects.sheet_once(_player.get_parent(), PERUN_FX, 10, 20.0, origin, PERUN_FX_ANCHOR, 0.0, 1.0,
+			Skills.CRY_RADIUS / PERUN_FX_RADIUS)
+	if _cry_fx == null:
+		_cry_fx = Sprite2D.new()
+		_cry_fx.texture = PERUN_BUFF_FX
+		_cry_fx.hframes = PERUN_BUFF_FRAMES
+		_cry_fx.position = Player.BODY_OFFSET
+		_cry_fx.z_index = 1
+		_player.add_child(_cry_fx)
+	_cry_fx.visible = true
 	Sfx.play("thunder", -2.0)
 	_player.add_shake(3.0)
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
@@ -662,6 +680,9 @@ func _process_timed(delta: float) -> void:
 		if _parry_time <= 0.0 and _parry_ring != null:
 			_parry_ring.visible = false
 	_cry_time = maxf(_cry_time - delta, 0.0)
+	if _cry_fx != null:
+		_cry_fx.visible = _cry_time > 0.0
+		_cry_fx.frame = int((Skills.CRY_TIME - _cry_time) * PERUN_BUFF_FPS) % PERUN_BUFF_FRAMES
 	_dance_time = maxf(_dance_time - delta, 0.0)
 	if _dance_time <= 0.0:
 		_dance_stacks = 0

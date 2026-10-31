@@ -155,5 +155,35 @@
       65,
       47
     ]
+  },
+  "war_cry": {
+    "effect": "e84ff2ce-1aee-4177-8381-5261a8d66bde",
+    "name": "Zew Peruna",
+    "frame": [
+      230,
+      221
+    ],
+    "frames": 10,
+    "columns": 4,
+    "fps": 20,
+    "anchor": [
+      115,
+      156
+    ]
+  },
+  "war_cry_buff": {
+    "effect": "e2eb5f2f-2f55-4b8a-b50f-96c8ab2c15c7",
+    "name": "Zew Peruna - premia",
+    "frame": [
+      38,
+      43
+    ],
+    "frames": 12,
+    "fps": 12,
+    "loop": true,
+    "anchor": [
+      19,
+      23
+    ]
   }
 }
