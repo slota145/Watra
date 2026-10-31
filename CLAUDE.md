@@ -390,6 +390,22 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   Sakwa i Plecak zniknęły ze sklepu (działają w starszych zapisach); wymiana Znaków Zwycięstwa daje Plecak wyprawowy.
 - [ ] Nowe bronie: kosa, kostur (nekromanta), młoty, chainblade'y, sztylety, włócznie, rapier, hydrosfera.
   Każda broń to nowy rodzaj z własnym drzewkiem, a nie tylko nowy przedmiot, więc wymaga szczegółów od autora.
+  Ustalenia z rozmowy z autorem (pomysły, nie decyzje):
+  - nowa broń to koszt całego drzewka (około 12 umiejętności, 35 pasywnych, 4 kluczowe), broni w ręku 4 postaci,
+    linii przedmiotów (5 poziomów x 3 rzadkości), legend i efektów - dodawać po jednej i taką, która gra inaczej
+    niż miecz, łuk i księga;
+  - **kostur nekromanty** - najmocniejszy kandydat: przywołańcy (upiory, strzygi walczące za gracza), czego gra nie ma;
+  - **hydrosfera** - kontrola pola wodą: fale odpychające, wiry ściągające, kałuże spowalniające, lód z księgą
+    (Wodnik, rusałki);
+  - **chainblade'y** (dwa miecze na łańcuchach) - efektowne, ale bliskie mieczowi; potrzebują własnego pomysłu
+    (przyciąganie łańcuchem, ataki na średni dystans). Próbka efektu „dwa szybkie obroty z czerwoną poświatą”
+    w kreatorze PixelLab: efekt `70533e5e-74fc-4e0c-bcf5-842dde7d4d03`;
+  - **kosa** (w stylu Sorceress z BDO) i **włócznia** - raczej jako odnogi (specjalizacje) istniejących drzewek
+    z kilkoma własnymi umiejętnościami, jak wniebowstąpienia w PoE, niż osobne bronie;
+  - przed nowymi broniami warto rozważyć **combo między broniami** (np. zmiana z łuku na miecz zaraz po Sidłach
+    daje specjalne cięcie) i **szybką zmianę broni** (dwie bronie pod ręką) - mnoży możliwości obecnych drzewek;
+  - proponowana kolejność: efekty łuku i księgi -> combo między broniami i szybka zmiana broni -> kostur nekromanty
+    -> hydrosfera albo chainblade'y, kosa jako odnoga miecza.
 
 ### Interfejs i walka
 
