@@ -29,6 +29,8 @@ SIT_SCALE = 0.75
 ## Stworzenia mniejsze niż wychodzą z PixelLab (mnożnik do SCALE): wilki i wargi zlewały się w stadzie w jedną
 ## plamę, były większe od goblinów. Wilk Alfa zostaje duży - ma się wyróżniać.
 SIZE = {"wolf": 0.78, "warg": 0.8}
+## Sarna jest u PixelLab drobna (płótno 56 px) - po zmniejszeniu piksele zlewały się w rozmazaną plamę, więc zostaje 1:1.
+SIZE["roe"] = 1.0 / SCALE
 
 
 def _open(path):

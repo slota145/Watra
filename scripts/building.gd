@@ -39,6 +39,8 @@ func setup(building_name: String, floor_texture: Texture2D, roof_texture: Textur
 	_roof.centered = false
 	_roof.offset = Vector2(0, -size_px.y)
 	_roof.position = position + Vector2(0, size_px.y)
+	# dach chowa się sam po wejściu (_process) - prześwitywanie zasłon (Occlusion) by go z powrotem pokazało
+	_roof.set_meta("no_occlusion", true)
 	entities.add_child(_roof)
 
 	_build_walls()

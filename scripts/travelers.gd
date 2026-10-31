@@ -267,7 +267,22 @@ func disband() -> void:
 			traveler["wait"] = randi_range(1, 3)
 	party.clear()
 	party_ticks = 0
+	_fail_party_help()
 	changed.emit()
+
+
+## Drużyna odeszła, zanim prośba o pomoc została wykonana - zadanie przepada i znika spod minimapy.
+func _fail_party_help() -> void:
+	var player := get_parent() as Player
+	if player == null:
+		return
+	var help := player.quests.active_help()
+	if help == "" or player.quests.state_of(help) != Quests.STATE_ACTIVE:
+		return
+	player.quests.abandon_bounty(help)
+	if player.is_inside_tree():
+		DamageNumber.spawn_text(player.get_parent(), player.body_center() + Vector2(0, -14),
+				"Prośba drużyny nieudana", Color(1.0, 0.5, 0.45), 9)
 
 
 func party_members() -> Array[Dictionary]:

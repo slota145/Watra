@@ -120,15 +120,19 @@ func _process(_d: float) -> bool:
 			t2.load_save_data(saved)
 			check("zapis drużyny", t2.party == p.travelers.party and t2.party_ticks > 0)
 			t2.free()
+			# niewykonana prośba przepada, gdy drużyna odejdzie
+			_help = p.quests.take_help(load("res://scripts/bounties.gd").make("kill", "forest", 0, "Test"))
 			# powrót do Ostoi kończy wspólne łowy
 			var s = _world._settlement
 			p.global_position = s._px(s.WATRA_POS + Vector2(0, 4))
 			p.reset_physics_interpolation()
 		16:
 			check("powrót do Ostoi kończy drużynę", p.travelers.party.is_empty() and not hud.party_frames.visible)
+			check("prośba przepada z drużyną", p.quests.active_help() == "" and p.quests.state_of(_help) == "available")
 			print("WYNIK: ", "OK" if _fails == 0 else "%d bledow" % _fails)
 			quit()
 	return false
 
 
+var _help := ""
 var _gold := 0

@@ -106,6 +106,9 @@ func cancel() -> void:
 
 func cooldown_of(id: String) -> Vector2:
 	if id == "flicker":
+		# odnowienie ma tylko wirujące Mgnienie - poza Młynkiem zwykłe Mgnienie jest gotowe (sama mana)
+		if not _player.is_whirling():
+			return Vector2.ZERO
 		return Vector2(_whirl_cooldown, maxf(_whirl_cooldown_total, _whirl_cooldown))
 	var entry: Array = _cooldowns.get(id, [0.0, 0.0])
 	return Vector2(entry[0], maxf(entry[1], entry[0]))
