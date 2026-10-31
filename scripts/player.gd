@@ -240,6 +240,7 @@ func _ready() -> void:
 	spell_skills.name = "SpellSkills"
 	add_child(spell_skills)
 	stats.skill_book = skills
+	equipment.skill_book = skills
 	skills.character_level = stats.level
 	boons.name = "Boons"
 	add_child(boons)

@@ -103,7 +103,7 @@ static func _respec(player: Player, npc: Node) -> Dictionary:
 				player.stats.add_gold(-gold)
 				# kamienie z gniazd drzewka wracają do plecaka (gdy pełny - do magazynu)
 				for recipe: Dictionary in player.skills.reset_tree(weapon_type):
-					var gem_id := Gems.register(recipe.duplicate(true))
+					var gem_id := Essences.register(recipe.duplicate(true)) if recipe.has("essence") else Gems.register(recipe.duplicate(true))
 					if player.inventory.add_item(gem_id, 1) > 0:
 						player.storage.add_item(gem_id, 1)
 				Sfx.play("magic")

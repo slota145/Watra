@@ -238,16 +238,20 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
 - [x] Broń w ręku: łuki we właściwym rozmiarze (`tools/pixellab_items.py` sam dobiera obrót ikony), legendarne bronie
   trzymają w ręku siebie (`tools/legend_held.py`, `scripts/legend_held.gd`; Łuk Swaroga, Łuk Burzy i Księga
   Marzanny z osobnych rysunków PixelLab w `pixellab_src/legend_held/`).
-- [ ] **Esencje legend i gniazda** (pomysł autora, ustalony kierunek; szczegóły liczb do dopracowania przy realizacji):
-  - **Wyciąganie efektu w Watrze**: legenda wrzucona w płomienie (za dużo żaru) przepada, a gracz dostaje Esencję
-    z jej efektem legendarnym (np. „Esencja Kła Alfy”); siła efektu zależy od poziomu zaklęcia legendy.
-  - **Ołtarz Welesa** (nowa mechanika lochów): rzadkie ukryte pomieszczenie w lochu, w którym wyciągnięcie esencji
-    jest darmowe albo daje mocniejszą esencję.
-  - **Gniazda u kowala**: kowal Bronisław dorabia przedmiotowi jedno gniazdo na esencję; potrzebny jest nowy surowiec
-    z końcówki gry (np. Serce Kryształu z Kryształu Watry od wyższych stopni). Gniazdo w rzadkim przedmiocie
-    i - drożej - w legendzie (wtedy legenda ma dwa efekty legendarne).
-  - Esencja pasuje tylko do tego samego rodzaju miejsca (z pierścienia do biżuterii, z broni do broni); wyjęcie
-    z gniazda niszczy esencję, chyba że zapłaci się kowalowi.
+- [x] **Esencje legend i gniazda** (`scripts/essences.gd`, okno `scripts/ui/essence_window.gd`, grafiki z PixelLab przez
+  `tools/essence_art.py`):
+  - **Wyciąganie w Watrze** (przycisk „Esencje” w oknie Watry): legenda z plecaka przepada za żar (rośnie z poziomem
+    przedmiotu i zaklęciem, `Essences.ember_cost`), a w jej miejscu pojawia się Esencja z jej efektem - losowo 40-80%
+    siły legendy z jej poziomem zaklęcia; esencje w trzech rodzajach: broń, zbroja, biżuteria.
+  - **Ołtarz Welesa** (`Dungeon._plan_altar`, `Essences.ALTAR_CHANCE`, w trybie deweloperskim zawsze): ukryta komnata
+    w lochu bez potworów i pochodni; jedna legenda za darmo i mocniej (60-100%), potem ołtarz gaśnie.
+  - **Gniazda u kowala** (Bronisław, usługa „Esencje”): gniazdo esencji w rzadkim przedmiocie (1 Serce Kryształu
+    i złoto) albo w legendzie (3 Serca, więcej złota - wtedy dwa efekty legendarne); esencja tylko tego samego rodzaju;
+    wyjęcie za złoto, inaczej esencja przepada. **Serce Kryształu** (`crystal_heart`) z Kryształu Watry od 3. stopnia
+    lochu i ze skarbca strażnika.
+  - Esencja w **gnieździe legendarnym drzewka** broni (tylko tam, działa z bronią drzewka; wyjęcie za złoto albo zniszczenie).
+  - Kilka źródeł jednego efektu (legendy, esencje w przedmiotach i w drzewku) łączy `Essences.combine`
+    (w `Equipment.effect_power`): szanse jak niezależne losowania, efekty w sztukach - najsilniejszy plus połowa reszty.
   - Dawne kamienie (zwykłe, doskonałe, uświęcone, miłosierdzia) zostają do zaklinania (`scripts/enchanting.gd`).
   - [x] **Kamienie szlachetne i gniazda w przedmiotach** (`scripts/gems.gd`, okno `scripts/ui/jeweler_window.gd`, ikony
     z PixelLab przez `tools/gem_art.py`, jubiler przez `tools/npc_sheets.py`):
@@ -269,9 +273,6 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     **Kamień Promienia** (`Gems.roll_radius`, tylko do drzewka, ikona z PixelLab przez `tools/gem_art.py`) wzmacnia
     wybrane węzły pasywne w promieniu `SkillBook.RADIUS_RANGE` (turkusowy krąg w drzewku); wypada z Kryształu Watry
     i ze skarbca strażnika lochu.
-  - Esencje legend w gniazdach drzewka: gniazdo legendarne przyjmie esencję (w końcówce gry); kilka esencji tego samego efektu (z drzewka, gniazd przedmiotów i założonych legend) sumuje się
-    jak niezależne losowania - tak jak dziś `Equipment.effect_power`, więc szansa rośnie coraz wolniej i nie dochodzi
-    do 100%; efekty liczone w sztukach (np. dodatkowe strzały) z mniejszym przyrostem albo z górnym limitem.
 - [ ] **Po kamieniach i esencjach** (pomysły autora, kolejność: dopiero gdy systemy kamieni i esencji będą gotowe):
   - **Chata jubilera w Ostoi**: nowa budowla w menu budowy osady; po zbudowaniu jubiler Dobromir przeprowadza się
     z Orlej Przełęczy do swojej chaty w Ostoi.

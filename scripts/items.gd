@@ -581,6 +581,11 @@ const DATA := {
 		"description": "Złoty i ciepły w dłoni. Zebrane razem gwarantują zaklęcie: 100 szt. na III, 200 na IV, 300 na V.",
 		"icon": preload("res://assets/items/blessed_stone.png"), "price": 40, "sell_price": 2, "enchant_aid": "blessed",
 	},
+	"crystal_heart": {
+		"name": "Serce Kryształu",
+		"description": "Bijące żarem jądro Kryształu Watry (lochy od 3. stopnia). Kowal Bronisław wykuwa nim gniazdo na esencję legendy.",
+		"icon": preload("res://assets/items/crystal_heart.png"), "sell_price": 40,
+	},
 	"mercy_stone": {
 		"name": "Kamień miłosierdzia",
 		"description": "Lazurowa kula. Zebrane razem chronią przed utratą poziomu przy nieudanym zaklęciu: 10 szt. przy III, 20 przy IV, 30 przy V.",
@@ -896,6 +901,8 @@ static func describe(id: String, enchant := 0, against := {}) -> String:
 		lines.append(text)
 	for gem: Dictionary in item.get("sockets", []):
 		lines.append("[img=8x8]%s[/img] %s" % [Gems.SOCKET_ICON.resource_path, Gems.socket_text(gem)])
+	if item.has("essence_socket"):
+		lines.append("[img=8x8]%s[/img] %s" % [Essences.SOCKET_ICON.resource_path, Essences.socket_text(item["essence_socket"])])
 	if item.get("use", {}).has("summon"):
 		lines.append("Przedmiot przyzwania - PPM w leżu bossa")
 	if item.has("effect"):

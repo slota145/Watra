@@ -13,6 +13,8 @@ signal forge_requested
 signal enchant_requested
 signal jeweler_requested
 signal watra_requested
+## Okno esencji: "smith" (kowal) albo "altar" (Ołtarz Welesa w lochu).
+signal essence_requested(mode: String)
 ## Usługi z listą ofert (OfferWindow): "meals", "blessing", "bestiary".
 signal offers_requested(kind: String, npc: Npc)
 const OFFER_SERVICES := {"meals": "Kuchnia", "blessing": "Błogosławieństwo", "bestiary": "Bestiariusz", "reforge": "Przekuwanie",
@@ -71,6 +73,10 @@ func open(npc: Npc) -> void:
 	if "watra" in npc.services:
 		watra_requested.emit()
 		return
+	# Ołtarz Welesa od razu pokazuje legendy do złożenia
+	if "altar" in npc.services:
+		essence_requested.emit("altar")
+		return
 	_npc = npc
 	visible = true
 	_refresh()
@@ -117,6 +123,11 @@ func _refresh() -> void:
 				var enchant := _button("Zaklinanie", _enchant)
 				enchant.tooltip_text = "Kowal wbija kamienie z Kryształów Watry (lochy) w broń, zbroję i biżuterię"
 				_buttons.add_child(enchant)
+				var essences := _button("Esencje", func() -> void:
+					close()
+					essence_requested.emit("smith"))
+				essences.tooltip_text = "Gniazdo na esencję legendy (Serce Kryształu z lochów) - osadzanie i wyjmowanie esencji"
+				_buttons.add_child(essences)
 			"disenchant":
 				_buttons.add_child(_button("Odczarowanie", _sage))
 			"meals", "blessing", "bestiary", "reforge", "elixirs", "respec":

@@ -275,6 +275,12 @@ static func register(recipe: Dictionary, id := "") -> String:
 				socket_stats[stat] = float(socket_stats.get(stat, 0.0)) + value
 		item["sockets"] = sockets
 		item["socket_stats"] = socket_stats
+	# gniazdo esencji legendy (Essences, kowal): {} - puste, inaczej przepis esencji
+	if recipe.has("essence_socket"):
+		var essence: Dictionary = recipe["essence_socket"]
+		if not essence.is_empty():
+			essence["value"] = float(essence["value"])
+		item["essence_socket"] = essence
 	item.erase("price")  # nie ma go w sklepach
 	item["sell_price"] = sell_value(recipe["quality"], item_level)
 	Items.generated[id] = item
@@ -321,8 +327,11 @@ static func export_used(ids: Array) -> Dictionary:
 static func import(data: Dictionary) -> void:
 	for id: String in data:
 		var recipe: Dictionary = data[id]
-		if recipe.has("gem"):
-			Gems.register(recipe, id)
+		if recipe.has("gem") or recipe.has("essence"):
+			if recipe.has("gem"):
+				Gems.register(recipe, id)
+			else:
+				Essences.register(recipe, id)
 			Items.generated_serial = maxi(Items.generated_serial, int(id.trim_prefix(PREFIX)))
 			continue
 		var affixes: Dictionary = recipe.get("affixes", {})

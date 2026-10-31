@@ -21,6 +21,8 @@ const SLOT_TYPES := {
 
 ## miejsce -> {} (puste) albo {"id": String, "enchant": int}
 var items := {}
+## Księga umiejętności gracza - esencja w gnieździe legendarnym drzewka założonej broni (ustawia gracz).
+var skill_book: SkillBook
 
 
 func _ready() -> void:
@@ -113,17 +115,26 @@ func bonus(stat: String) -> float:
 	return total
 
 
-## Łączna moc efektu legendarnego danego rodzaju z założonych przedmiotów
-## (dwa takie same łączą się jak niezależne losowania).
+## Łączna moc efektu legendarnego danego rodzaju z założonych przedmiotów, esencji w ich gniazdach i esencji
+## w gnieździe legendarnym drzewka założonej broni (Essences.combine: szanse jak niezależne losowania).
 func effect_power(kind: String) -> float:
-	var miss := 1.0
+	var values := []
 	for slot in SLOTS:
 		if items[slot].is_empty():
 			continue
 		var id: String = items[slot]["id"]
-		if Items.get_data(id).get("effect", {}).get("kind", "") == kind:
-			miss *= 1.0 - Items.effect_chance(id, items[slot]["enchant"])
-	return 1.0 - miss
+		var data := Items.get_data(id)
+		var effect: Dictionary = data.get("effect", {})
+		if effect.get("kind", "") == kind:
+			values.append([Items.effect_chance(id, items[slot]["enchant"]), float(effect.get("per_level", 0.0)) < 0.0])
+		var essence: Variant = data.get("essence_socket")
+		if essence is Dictionary and essence.get("kind", "") == kind:
+			values.append([float(essence["value"]), essence.get("inverse", false)])
+	if skill_book != null:
+		var essence := skill_book.essence_in(weapon().get("type", "melee"))
+		if essence.get("kind", "") == kind:
+			values.append([float(essence["value"]), essence.get("inverse", false)])
+	return Essences.combine(kind, values)
 
 
 func get_save_data() -> Dictionary:

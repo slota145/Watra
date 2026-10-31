@@ -6,6 +6,8 @@ extends Node
 ## Punkty umiejętności: 1 za każdy poziom postaci plus SkillTree.START_POINTS, minus wybrane węzły.
 ## Gniazda drzewek (węzły "socket") trzymają kamienie szlachetne (przepisy Gems): premie kamienia działają o połowę
 ## mocniej (TREE_GEM_POWER), a kamień promienia wzmacnia wybrane węzły pasywne w promieniu RADIUS_RANGE.
+## Gniazdo legendarne przyjmuje też esencję legendy (Essences) - jej efekt działa z bronią drzewka
+## (Equipment.effect_power); wyjęcie esencji kosztuje złoto (Essences.save_gold), inaczej esencja przepada.
 
 signal changed
 
@@ -143,6 +145,19 @@ func gem_in(weapon_type: String, id: String) -> Dictionary:
 	return tree_gems.get(weapon_type, {}).get(id, {})
 
 
+## Esencja legendy w wybranym gnieździe legendarnym drzewka ({} - brak).
+func essence_in(weapon_type: String) -> Dictionary:
+	var gems: Dictionary = tree_gems.get(weapon_type, {})
+	for id: String in gems:
+		if gems[id].has("essence") and has_node_id(weapon_type, id):
+			return gems[id]
+	return {}
+
+
+func is_legendary_socket(weapon_type: String, id: String) -> bool:
+	return SkillTree.nodes(weapon_type).get(id, {}).get("legendary", false)
+
+
 ## Czy w węzeł da się włożyć kamień: wybrane gniazdo.
 func can_socket(weapon_type: String, id: String) -> bool:
 	return SkillTree.nodes(weapon_type).get(id, {}).get("kind", "") == "socket" and has_node_id(weapon_type, id)
@@ -172,9 +187,14 @@ func take_gem(weapon_type: String, id: String) -> Dictionary:
 func socket_from(inventory: Inventory, weapon_type: String, id: String, index: int) -> String:
 	if not can_socket(weapon_type, id):
 		return "Najpierw wybierz gniazdo w drzewku."
-	if index < 0 or index >= inventory.slots.size() or inventory.slots[index].is_empty() or not Gems.is_gem(inventory.slots[index]["id"]):
-		return "To nie jest kamień szlachetny."
+	if index < 0 or index >= inventory.slots.size() or inventory.slots[index].is_empty() \
+			or not (Gems.is_gem(inventory.slots[index]["id"]) or Essences.is_essence(inventory.slots[index]["id"])):
+		return "To nie jest kamień szlachetny ani esencja."
 	var gem_id: String = inventory.slots[index]["id"]
+	if Essences.is_essence(gem_id) and not is_legendary_socket(weapon_type, id):
+		return "Esencja pasuje tylko do gniazda legendarnego."
+	if gem_in(weapon_type, id).has("essence"):
+		return "Najpierw wyjmij esencję z gniazda."
 	inventory.take_one(index)
 	var old := set_gem(weapon_type, id, Items.generated[gem_id]["recipe"])
 	Items.generated.erase(gem_id)
@@ -183,14 +203,29 @@ func socket_from(inventory: Inventory, weapon_type: String, id: String, index: i
 	return ""
 
 
-## Wyjmuje kamień z gniazda drzewka do plecaka (za darmo). Zwraca "" albo powód, dla którego się nie da.
-func unsocket_to(inventory: Inventory, weapon_type: String, id: String) -> String:
-	if gem_in(weapon_type, id).is_empty():
+## Wyjmuje kamień z gniazda drzewka do plecaka (za darmo; esencję - za złoto z `stats`, Essences.save_gold).
+## Zwraca "" albo powód, dla którego się nie da.
+func unsocket_to(inventory: Inventory, weapon_type: String, id: String, stats: CharacterStats = null) -> String:
+	var gem := gem_in(weapon_type, id)
+	if gem.is_empty():
 		return "Gniazdo jest puste."
 	if not inventory.slots.any(func(slot: Dictionary) -> bool: return slot.is_empty()):
 		return "Plecak jest pełny."
+	if gem.has("essence"):
+		var price := Essences.save_gold(character_level)
+		if stats == null or stats.gold < price:
+			return "Wyjęcie esencji kosztuje %d zł." % price
+		stats.add_gold(-price)
+		inventory.add_item(Essences.register(take_gem(weapon_type, id).duplicate(true)), 1)
+		return ""
 	inventory.add_item(Gems.register(take_gem(weapon_type, id).duplicate(true)), 1)
 	return ""
+
+
+## Niszczy esencję w gnieździe drzewka (za darmo).
+func destroy_essence(weapon_type: String, id: String) -> void:
+	if gem_in(weapon_type, id).has("essence"):
+		take_gem(weapon_type, id)
 
 
 ## Kamienie promienia w wybranych gniazdach: [pozycja gniazda, moc].
@@ -262,7 +297,10 @@ func load_save_data(data: Dictionary) -> void:
 		for id: String in saved_gems[weapon_type]:
 			var recipe: Dictionary = saved_gems[weapon_type][id]
 			if tree.has(id) and recipe.has("kind"):
-				recipe["cut"] = int(recipe.get("cut", 0))
+				if recipe.has("essence"):
+					recipe["value"] = float(recipe["value"])
+				else:
+					recipe["cut"] = int(recipe.get("cut", 0))
 				if not tree_gems.has(weapon_type):
 					tree_gems[weapon_type] = {}
 				tree_gems[weapon_type][id] = recipe

@@ -8,6 +8,7 @@ extends PanelContainer
 
 signal offered(ember: int, level_up: bool)
 signal dungeon_requested
+signal essence_requested
 
 const WIDTH := 300.0
 const LIST_HEIGHT := 44.0
@@ -88,6 +89,9 @@ func _ready() -> void:
 	_status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	bottom.add_child(_status)
+	bottom.add_child(_button("Esencje", func() -> void:
+		visible = false
+		essence_requested.emit()))
 	bottom.add_child(_button("Lochy", func() -> void:
 		visible = false
 		dungeon_requested.emit()))

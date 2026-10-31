@@ -112,6 +112,8 @@ func icon_of(id: String) -> Texture2D:
 			return KEYSTONE_ICONS.get(id, Hotbar.ATTACK_ICON)
 		"socket":
 			var gem := _player.skills.gem_in(weapon_type, id) if _player != null else {}
+			if gem.has("essence"):
+				return Essences.ICONS.get(gem.get("group", ""), SOCKET_LEGEND_ICON)
 			if not gem.is_empty():
 				return Gems.icon_of(gem)
 			return SOCKET_LEGEND_ICON if node.get("legendary", false) else Gems.SOCKET_ICON
@@ -242,10 +244,13 @@ func describe(id: String) -> String:
 			if node.get("legendary", false):
 				lines[0] += "  (gniazdo legendarne)"
 			var gem := _player.skills.gem_in(weapon_type, id) if _player != null else {}
-			lines.append(Gems.plain_text(gem) if not gem.is_empty() else
-					"Puste gniazdo na kamień szlachetny - działa tylko z tą bronią, a jego premie są o połowę mocniejsze.")
+			if gem.has("essence"):
+				lines.append(Essences.plain_text(gem))
+			else:
+				lines.append(Gems.plain_text(gem) if not gem.is_empty() else
+						"Puste gniazdo na kamień szlachetny - działa tylko z tą bronią, a jego premie są o połowę mocniejsze.")
 			if node.get("legendary", false):
-				lines.append("Później przyjmie też esencję legendy.")
+				lines.append("Przyjmie też esencję legendy - jej efekt działa z tą bronią.")
 			if _player != null and _player.skills.has_node_id(weapon_type, id):
 				lines.append("Przeciągnij kamień z plecaka na gniazdo albo wybierz go obok.")
 	if not lines.is_empty() and kind_of(id) == "passive" and _player != null and _player.skills.radius_factor(weapon_type, id) > 1.0:
@@ -282,7 +287,9 @@ func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
 		return false
 	var slot: Dictionary = _player.inventory.slots[data["index"]]
 	var id := node_at(at_position)
-	return not slot.is_empty() and Gems.is_gem(slot["id"]) and id != "" and _player.skills.can_socket(weapon_type, id)
+	if slot.is_empty() or id == "" or not _player.skills.can_socket(weapon_type, id):
+		return false
+	return Gems.is_gem(slot["id"]) or (Essences.is_essence(slot["id"]) and _player.skills.is_legendary_socket(weapon_type, id))
 
 
 func _drop_data(at_position: Vector2, data: Variant) -> void:
