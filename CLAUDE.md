@@ -274,8 +274,11 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     wybrane węzły pasywne w promieniu `SkillBook.RADIUS_RANGE` (turkusowy krąg w drzewku); wypada z Kryształu Watry
     i ze skarbca strażnika lochu.
 - [ ] **Po kamieniach i esencjach** (pomysły autora, kolejność: dopiero gdy systemy kamieni i esencji będą gotowe):
-  - **Chata jubilera w Ostoi**: nowa budowla w menu budowy osady; po zbudowaniu jubiler Dobromir przeprowadza się
-    z Orlej Przełęczy do swojej chaty w Ostoi.
+  - [x] **Chata jubilera w Ostoi** (`Settlement.PROJECTS["jeweler"]`, `_build_jeweler`, grafiki z PixelLab przez
+    `tools/village_life.py`): w menu budowy dopiero po zadaniu „Pierwszy klejnot” (`requires_quest`,
+    `Settlement.project_locked`), koszt: drewno, kamień, ruda żelaza; Dobromir przeprowadza się do chaty między kuźnią
+    a bramą południową (z Orlej Przełęczy znika - `World.village_built`), a w Ostoi także przeszlifowuje kamienie
+    (usługa „reshape”, `Gems.reshape`: nowe premie, rodzaj, szlif i liczba premii zostają).
   - **Zakładanie kamienia przeciąganiem**: dziś kamień osadza tylko jubiler; przeciągnięcie kamienia z plecaka
     na przedmiot z pustym gniazdem (w plecaku albo założony) ma go osadzić.
   - **Nowe miejsce na pas** w ekwipunku postaci i pasy jako nowe przedmioty (linia w `tools/item_catalog.py`).

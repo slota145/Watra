@@ -11,7 +11,7 @@ signal board_requested
 signal sage_requested
 signal forge_requested
 signal enchant_requested
-signal jeweler_requested
+signal jeweler_requested(npc: Npc)
 signal watra_requested
 ## Okno esencji: "smith" (kowal) albo "altar" (Ołtarz Welesa w lochu).
 signal essence_requested(mode: String)
@@ -254,8 +254,9 @@ func _enchant() -> void:
 
 
 func _jeweler() -> void:
+	var npc := _npc
 	close()
-	jeweler_requested.emit()
+	jeweler_requested.emit(npc)
 
 
 func _sage() -> void:

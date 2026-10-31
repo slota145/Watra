@@ -33,6 +33,8 @@ PROPS = {
     "pig_sign": ("fences", 11, 20), "turnips": ("fences", 12, 14), "pitchfork": ("fences", 13, 22),
     "water_bucket": ("fences", 15, 12),
     # budowle z menu sołtysa (z zewnątrz) i ich otoczenie
+    "jeweler_hut": ("b_jeweler", 0, 100), "gem_bench": ("props_jeweler", 0, 26), "gem_wheel": ("props_jeweler", 1, 22),
+    "gem_case": ("props_jeweler", 2, 22), "crystal_crate": ("props_jeweler", 3, 18),
     "infirmary": ("b_infirmary", 1, 112), "chapel": ("b_chapel", 2, 112), "bathhouse": ("b_bathhouse", 1, 104),
     "cottage_0": ("b_cottage", 0, 64), "cottage_1": ("b_cottage", 2, 64),
     "cot_wounded_0": ("props3", 0, 30), "cot_wounded_1": ("props3", 1, 30), "cot_empty": ("props3", 2, 30),

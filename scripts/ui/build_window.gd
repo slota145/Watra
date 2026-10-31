@@ -161,8 +161,9 @@ func _refresh() -> void:
 		var button: Button = parts["button"]
 		var bar: ProgressBar = parts["bar"]
 		var state_label: Label = parts["state"]
+		var locked := settlement.project_locked(project, _player)
 		button.visible = state == "none"
-		button.disabled = not settlement.can_afford(project, _player)
+		button.disabled = not settlement.can_afford(project, _player) or locked != ""
 		bar.visible = state == "building"
 		bar.value = settlement.project_progress(project)
 		match state:
@@ -173,8 +174,8 @@ func _refresh() -> void:
 				state_label.text = "Zbudowano"
 				state_label.add_theme_color_override("font_color", OK_COLOR)
 			_:
-				state_label.text = "Do zbudowania"
-				state_label.add_theme_color_override("font_color", UiStyle.DIM_COLOR)
+				state_label.text = locked if locked != "" else "Do zbudowania"
+				state_label.add_theme_color_override("font_color", MISSING_COLOR if locked != "" else UiStyle.DIM_COLOR)
 
 
 func _build(project: String) -> void:

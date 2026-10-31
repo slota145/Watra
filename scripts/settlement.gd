@@ -83,7 +83,7 @@ const BUILDING_NAMES := {"tavern": "Karczma", "chief_house": "Dom sołtysa", "wa
 		"smithy": "Kuźnia", "shop": "Sklep", "barracks": "Koszary", "lodge": "Chatka myśliwych",
 		"sage_hut": "Chata mędrca", "guild": "Gildia poszukiwaczy przygód", "infirmary": "Lecznica zielarki",
 		"chapel": "Kaplica", "houses": "Chaty osadników", "market": "Targowisko", "bathhouse": "Łaźnia",
-		"armory": "Warsztat płatnerza"}
+		"armory": "Warsztat płatnerza", "jeweler": "Chata jubilera"}
 ## Koszary za południową bramą i chatka myśliwych za palisadą na północnym wschodzie.
 const BARRACKS_POS := Vector2i(38, 43)
 const BARRACKS_SIZE := Vector2i(12, 7)
@@ -170,6 +170,14 @@ Trzech myśliwych rusza na łowy"},
 			"start_line": "Rozbudowujemy kuźnię o warsztat płatnerza!",
 			"done_line": "Warsztat gotowy. Kowal już ostrzy narzędzia.",
 			"banner": "Warsztat płatnerza zbudowany!\nKowal przekuwa przedmioty"},
+	# po zadaniu "Pierwszy klejnot" (Gems) jubiler Dobromir przeprowadza się z Orlej Przełęczy
+	"jeweler": {"pos": Vector2i(26, 31), "size": Vector2i(5, 4), "color": Color("3f8f9a"), "fit": true,
+			"time": 170.0, "art": "construction_lodge", "cost": {"wood": 120, "stone": 150, "iron_ore": 30},
+			"requires_quest": "jeweler_gem",
+			"description": "Między kuźnią a drogą do bramy południowej. Jubiler Dobromir przeprowadzi się tu z Orlej Przełęczy - osadzi i połączy kamienie, a w nowym warsztacie także przeszlifuje kamień (nowe premie za złoto).",
+			"start_line": "Stawiamy chatę dla jubilera! Dobromir już pakuje narzędzia.",
+			"done_line": "Chata jubilera gotowa! Dobromir zjechał z gór z całym warsztatem.",
+			"banner": "Chata jubilera zbudowana!\nDobromir przeprowadził się do Ostoi"},
 }
 ## Podatek osadników (gdy stoją chaty): co tyle sekund i ile złota (rośnie z poziomem postaci).
 const TAX_TIME := 300.0
@@ -180,6 +188,8 @@ const MERCHANT_ROTATION := 600.0
 ## (kamienie zaklinające są tylko w lochach Watry - kupiec ich nie sprzedaje).
 const MERCHANT_STOCK := 4
 const MERCHANT_POOL: Array[String] = ["greater_health_potion", "greater_mana_potion", "pouch", "backpack", "guard_horn"]
+const LINES_JEWELER: Array[String] = ["Każdy kamień ma swoją duszę.", "Szlif to cierpliwość, nie siła.",
+		"W górach wiało, tu przynajmniej ciepło od Watry.", "Rubin do zdrowia, szafir do many - pamiętaj!"]
 const LINES_HERBALIST: Array[String] = ["Rana się goi, gdy się ją czyści.", "Rumianek, babka, krwawnik - na wszystko coś rośnie.",
 		"Leż spokojnie, zaraz zmienię opatrunek."]
 const LINES_PRIEST: Array[String] = ["Światło nie opuściło Ostoi.", "Módlmy się za tych, którzy nie dotarli.",
@@ -1339,6 +1349,22 @@ func _restock_traveler() -> void:
 	_traveler.say("Nowy towar! Podejdź, obejrzyj!")
 
 
+## Chata jubilera: warsztat przed wejściem (stół, szlifierka, gablota, skrzynia surowych kryształów) i Dobromir -
+## klejnoty i przeszlifowanie kamieni (usługa "reshape"). Z Orlej Przełęczy znika (MountainZone).
+func _build_jeweler() -> void:
+	var base := _exterior("jeweler", "jeweler_hut", Vector2(80, 14))
+	_extra("jeweler", "gem_bench", base + Vector2(-2.0, 1.5), Vector2(22, 5))
+	_extra("jeweler", "gem_wheel", base + Vector2(-3.4, 0.4), Vector2(14, 4))
+	_extra("jeweler", "gem_case", base + Vector2(2.3, 1.6), Vector2(18, 4))
+	_extra("jeweler", "crystal_crate", base + Vector2(3.0, 0.3), Vector2(14, 4))
+	var jeweler := _npc("jeweler", base + Vector2(-0.6, 2.2), Npc.Role.IDLE, LINES_JEWELER, Vector2.DOWN)
+	jeweler.display_name = "Jubiler Dobromir"
+	jeweler.services.assign(["jeweler", "reshape"])
+	jeweler.dialog_greeting = "W Ostoi lepiej się szlifuje niż na wietrznej przełęczy! Osadzę, połączę, a teraz i przeszlifuję kamień."
+	_extra_npc("jeweler", jeweler)
+	map_markers.append({"position": _px(base), "color": Color("6fe0e8"), "size": 2.0})
+
+
 ## Łaźnia: balia i ręczniki przed wejściem, para nad dachem. Wypoczynek po odpoczynku w karczmie (on_rest).
 func _build_bathhouse() -> void:
 	var base := _exterior("bathhouse", "bathhouse", Vector2(82, 14))
@@ -1646,7 +1672,8 @@ func _use_planks() -> void:
 ## Zlecenie budowy u sołtysa: zabiera surowce (najpierw z plecaka, potem z magazynu)
 ## i w wyznaczonym miejscu rusza plac budowy. Zwraca false, gdy czegoś brakuje.
 func start_project(project: String, player: Player) -> bool:
-	if project_state(project) != "none" or not building_unlocked(player) or not can_afford(project, player):
+	if project_state(project) != "none" or not building_unlocked(player) or not can_afford(project, player) \
+			or project_locked(project, player) != "":
 		return false
 	var cost: Dictionary = PROJECTS[project]["cost"]
 	for id: String in cost:
@@ -1659,6 +1686,14 @@ func start_project(project: String, player: Player) -> bool:
 ## Budowanie odblokowuje zadanie sołtysa (w starszych zapisach - już rozpoczęta budowa).
 func building_unlocked(player: Player) -> bool:
 	return player.quests.state_of(UNLOCK_QUEST) == Quests.STATE_DONE or not _projects.is_empty()
+
+
+## Powód, dla którego budowy nie da się jeszcze zlecić ("" - można), np. zadanie, które trzeba najpierw wykonać.
+func project_locked(project: String, player: Player) -> String:
+	var quest: String = PROJECTS[project].get("requires_quest", "")
+	if quest != "" and player.quests.state_of(quest) != Quests.STATE_DONE:
+		return "Najpierw zadanie: %s" % Quests.get_data(quest)["title"]
+	return ""
 
 
 func can_afford(project: String, player: Player) -> bool:

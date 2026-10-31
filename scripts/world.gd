@@ -667,6 +667,14 @@ func _zone_state() -> Dictionary:
 	return state
 
 
+## Czy budowla Ostoi stoi (także z innej krainy - wtedy ze stanu Goblińskiego Lasu w zapisie).
+func village_built(project: String) -> bool:
+	if zone == "forest" and _settlement != null and _settlement.is_inside_tree():
+		return _settlement.project_state(project) == "built"
+	var saved: Dictionary = (_zone_states.get("forest", {}) as Dictionary).get("settlement", {}).get("projects", {})
+	return saved.has(project) and str(saved[project][0]) == "built"
+
+
 func _apply_save(save: Dictionary) -> void:
 	player.load_save_data(save.get("player", {}))
 	hud.set_kills(int(save.get("kills", 0)))
