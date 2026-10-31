@@ -414,9 +414,15 @@ Oba systemy zależą od gildii poszukiwaczy przygód w Ostoi (budowla `guild` w 
   napadają bez ostrzeżenia: pokonany zbój zostawia złoto, doświadczenie i czasem przedmiot, a gdy wygra - zabiera
   10% złota. W walce podróżnika zastępuje **rywal** (`scripts/rival.gd` - potwór z jego wyglądem, więc działają na niego
   wszystkie umiejętności gracza).
-- [ ] Podróżnicy zbierają surowce (drzewa, rudy, zioła) - z limitem, żeby mapa nie była łysa.
+- [x] **Łowcy zbierają surowce** (`Traveler.find_gather_target` / `_process_gather`, `Travelers.GATHER`): przy okazji łowów
+  (po walce) ścinają drzewa, kują głazy i rudę, zrywają zioła przy siedlisku - nie bliżej gracza niż `PLAYER_SAFE`,
+  nie w Ostoi i tylko dopóki zebranych surowców w krainie jest mniej niż 20% (`MAX_DEPLETED`); napadnięci rzucają
+  pracę i walczą. Urobek (także łowców poza oczami gracza) trafia na rynek jako **świeży towar** (`Market.supply`,
+  `fresh`): tańsza oferta z imieniem zbieracza, którą inni szybko wykupują. Łowcy rzucają hasła przy pracy
+  (`Travelers.LINES_GATHER`), a czasem proszą o **osłonę** (`World.start_guard`): 40 s, co 8 s kilka pobliskich
+  potworów rusza na zbieracza; nagroda - złoto, doświadczenie, część urobku i sława gildii.
 - [ ] Rynek: liczba ofert i przedmiotów rośnie z liczbą podróżników, a najkorzystniejsze oferty szybko znikają
-  wykupione przez innych.
+  wykupione przez innych (świeży towar od zbieraczy już tak działa).
 - [x] **Rzemiosło statystyk przedmiotów** (`scripts/item_craft.gd`, okno `scripts/ui/workshop_window.gd` - przycisk
   „Warsztat” u kowala po zbudowaniu warsztatu płatnerza; ikony run z PixelLab przez `tools/rune_art.py`): przerzut
   wartości wybranej premii (ten sam tier), przekucie premii, usunięcie, dodanie losowej (do limitu rzadkości),

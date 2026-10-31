@@ -249,7 +249,12 @@ func _on_qty_changed(_value: float) -> void:
 func _book_row(grid: GridContainer, level: Array, color: Color) -> void:
 	grid.add_child(UiStyle.label("%d zł" % level[0], 7, color))
 	grid.add_child(UiStyle.label("x%d" % level[1], 7, UiStyle.TEXT_COLOR))
-	var who := UiStyle.label(str(level[2]), 7, Color(0.55, 1.0, 0.6) if level[2] == "Ty" else UiStyle.DIM_COLOR)
+	var is_fresh := level.size() > 3
+	var who := UiStyle.label(("%s - świeże" % level[2]) if is_fresh else str(level[2]), 7,
+			Color(0.55, 1.0, 0.6) if level[2] == "Ty" else Color(1.0, 0.8, 0.45) if is_fresh else UiStyle.DIM_COLOR)
+	if is_fresh:
+		who.tooltip_text = "Świeży towar prosto z krainy (zbieracz: %s). Taniej, ale szybko znika." % level[2]
+		who.mouse_filter = Control.MOUSE_FILTER_STOP
 	who.clip_text = true
 	who.custom_minimum_size.x = 100
 	grid.add_child(who)

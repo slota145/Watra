@@ -787,6 +787,7 @@ func _process(delta: float) -> void:
 		_traveler_check = 20.0
 		_sync_travelers()
 	_process_party_offers(delta)
+	_process_guard(delta)
 	# powrót do Ostoi kończy wspólne łowy
 	if zone == "forest" and not player.travelers.party.is_empty() and _settlement.is_inside_palisade(Vector2i((player.global_position / TILE).floor())):
 		for node: Traveler in get_tree().get_nodes_in_group("travelers"):
@@ -918,6 +919,17 @@ func _process_party_offers(delta: float) -> void:
 					if is_instance_valid(leader):
 						leader.say(["Tchórz!", "Ha, boisz się?", "Następnym razem nie odpuszczę!"].pick_random()), "Przyjmij")
 				return
+	# zbierający łowca prosi o osłonę przed potworami
+	if leader.is_gathering() and _guard.is_empty() and randf() < GUARD_CHANCE:
+		var reward := guard_reward(leader)
+		var text := "%s [%d] zbiera %s, ale potwory nie dają spokoju. Osłonisz %s przez %d sekund?\nNagroda: %d zł, %d exp i część urobku." % [
+				leader.data["name"], leader.data["level"], GUARD_GOODS[leader.gather_kind()], "ją" if leader.data.get("female", false) else "go",
+				roundi(GUARD_TIME), reward["gold"], reward["xp"]]
+		leader.say("Osłoń mnie!")
+		hud.party_offer.ask(text, start_guard.bind(leader), func() -> void:
+			if is_instance_valid(leader):
+				leader.say(["Trudno, jakoś sobie poradzę.", "Szkoda... Uważaj na siebie.", "Następnym razem!"].pick_random()), "Osłoń")
+		return
 	var names: Array = group.map(func(t: Traveler) -> String: return t.data["name"])
 	var task := {}
 	if randf() < HELP_CHANCE and player.quests.active_help() == "" and Levels.ZONES.has(zone):
@@ -933,6 +945,99 @@ func _process_party_offers(delta: float) -> void:
 				task["description"], task["gold"], task["xp"]]
 		leader.say("Pomożesz nam?")
 	hud.party_offer.ask(text, _accept_party.bind(group, task), _decline_party.bind(group))
+
+
+## Osłona zbieracza: łowca pracuje GUARD_TIME sekund, a co GUARD_WAVE sekund kilka pobliskich potworów rusza na niego
+## (Goblin.objective). Gdy przetrwa - nagroda (złoto, doświadczenie, część urobku, sława gildii); gdy padnie - nic.
+const GUARD_CHANCE := 0.6
+const GUARD_TIME := 40.0
+const GUARD_WAVE := 8.0
+const GUARD_GOODS := {"tree": "drewno", "stone": "kamień", "ore": "rudę żelaza", "herb": "zioła"}
+## Część urobku dla gracza: surowiec wg rodzaju (zioło - zioło krainy).
+const GUARD_ITEMS := {"tree": ["wood", 6, 12], "stone": ["stone", 6, 12], "ore": ["iron_ore", 4, 8]}
+var _guard := {}
+
+
+func guard_reward(_node: Traveler) -> Dictionary:
+	var level := player.stats.level
+	return {"gold": roundi(Levels.gold(level) * 25.0), "xp": roundi(Levels.xp(level) * 12.0)}
+
+
+func start_guard(node: Traveler) -> void:
+	if not is_instance_valid(node) or not _guard.is_empty():
+		return
+	if not node.is_gathering():
+		node.say("Już po wszystkim - ale dzięki!")
+		return
+	node.start_guard(GUARD_TIME)
+	node.say("Dzięki! Trzymaj je z dala ode mnie!")
+	_guard = {"node": node, "left": GUARD_TIME, "wave": 1.5, "kind": node.gather_kind(), "reward": guard_reward(node),
+			"name": node.data["name"]}
+	hud.show_banner("Osłoń: %s\nPotwory nadciągają!" % node.data["name"], Color(1.0, 0.8, 0.45))
+
+
+func _process_guard(delta: float) -> void:
+	if _guard.is_empty():
+		return
+	var node: Traveler = _guard["node"] if is_instance_valid(_guard["node"]) else null
+	if node == null or not node.is_inside_tree():
+		_guard = {}
+		return
+	if not node.is_alive():
+		_end_guard(false)
+		return
+	_guard["left"] = float(_guard["left"]) - delta
+	_guard["wave"] = float(_guard["wave"]) - delta
+	if _guard["wave"] <= 0.0:
+		_guard["wave"] = GUARD_WAVE
+		_guard_wave(node)
+	if _guard["left"] <= 0.0:
+		_end_guard(true)
+
+
+## Fala: kilka najbliższych zwykłych potworów (z siedliskami w pobliżu, żeby nie zawróciły na smyczy) rusza na zbieracza.
+func _guard_wave(node: Traveler) -> void:
+	var options: Array = get_tree().get_nodes_in_group("enemies").filter(func(e: Goblin) -> bool:
+		return not e is Boss and e.quest_kind != "animal" and e.state != Goblin.State.DEAD and e.objective == null \
+				and not e.scene_file_path.contains("dummy") and e.home.distance_to(node.global_position) < e.leash_radius * 0.9 \
+				and e.global_position.distance_to(node.global_position) < 420.0)
+	options.sort_custom(func(a: Goblin, b: Goblin) -> bool:
+		return a.global_position.distance_squared_to(node.global_position) < b.global_position.distance_squared_to(node.global_position))
+	for enemy: Goblin in options.slice(0, randi_range(3, 5)):
+		enemy.objective = node
+		enemy.sitting = false
+		enemy.state = Goblin.State.CHASE
+
+
+func _end_guard(success: bool) -> void:
+	var node: Traveler = _guard["node"] if is_instance_valid(_guard["node"]) else null
+	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if enemy.objective == node and node != null:
+			enemy.objective = null
+	var data := _guard
+	_guard = {}
+	if not success:
+		hud.show_banner("Nie udało się osłonić: %s" % data["name"], Color(1.0, 0.5, 0.45))
+		return
+	var reward: Dictionary = data["reward"]
+	player.stats.add_gold(int(reward["gold"]))
+	player.stats.add_xp(int(reward["xp"]))
+	player.travelers.guild_fame += 2
+	var share: Array = GUARD_ITEMS.get(data["kind"], [])
+	if share.is_empty():
+		var herb := Herbs.kind_in_zone(zone)
+		share = [Herbs.KINDS[herb]["item"], 2, 4] if herb != "" else []
+	var gift := ""
+	if not share.is_empty():
+		var qty := randi_range(share[1], share[2])
+		var left := player.inventory.add_item(share[0], qty)
+		if left > 0:
+			player.storage.add_item(share[0], left)
+		gift = ", %s x%d" % [Items.get_data(share[0])["name"], qty]
+	Sfx.play("quest_done")
+	if node != null:
+		node.say(["Dzięki! Bez ciebie by mnie zjadły.", "Udało się! Masz tu część urobku.", "Dobra robota! Opowiem o tobie w gildii."].pick_random())
+	hud.show_banner("Osłona udana! +%d zł, +%d exp%s" % [reward["gold"], reward["xp"], gift], Color(0.6, 1.0, 0.6))
 
 
 ## Pojedynki i napady (WorldModes): podróżnik zamienia się na czas walki w rywala (Rival - potwór z jego wyglądem).

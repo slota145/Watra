@@ -9,6 +9,8 @@ extends Node
 ## Drużyna gracza (party - stan "party"): 1-3 podróżników chodzi za graczem przez krainy i lochy, ich zabójstwa dają
 ## graczowi łup i doświadczenie z premią za każdego (party_xp_factor); odchodzą po party_ticks minutach, po powrocie
 ## do Ostoi albo po rozwiązaniu. Zaproszenia i prośby o pomoc (zadanie z drużyną) - World._process_party_offers.
+## Łowcy przy okazji zbierają surowce (drzewa, głazy, ruda, zioła - Traveler, z limitem MAX_DEPLETED), a urobek wystawiają
+## na rynku jako świeży towar (Market.supply; poza oczami gracza - GATHER w tick).
 
 signal changed
 
@@ -63,10 +65,32 @@ const HINTS := {
 	"dungeon": ["Strażnik czeka w najdalszej komnacie.", "Kryształ Watry trzeba bronić do ostatniej fali!",
 			"Płomienie powrotu są przy wejściu."],
 }
+## Surowce, które łowcy zbierają w krainie poza oczami gracza (tick) - trafiają na rynek jako świeży towar.
+const GATHER := {
+	"forest": [["wood", 3, 8], ["stone", 2, 6], ["herb_wort", 1, 3]],
+	"fields": [["wood", 3, 8], ["stone", 2, 6], ["herb_chamomile", 1, 3]],
+	"swamp": [["wood", 2, 6], ["herb_calamus", 1, 3], ["fish", 2, 5]],
+	"mountains": [["iron_ore", 2, 6], ["stone", 3, 8], ["herb_arnica", 1, 3]],
+	"ancient": [["wood", 4, 10], ["herb_fern", 1, 1], ["spider_silk", 2, 5]],
+	"cemetery": [["stone", 3, 8], ["herb_datura", 1, 3], ["bone_dust", 2, 5]],
+}
+const GATHER_CHANCE := 0.3
+## Co mówią łowcy przy zbieraniu (rodzaj surowca - Traveler.gather_kind).
+const LINES_GATHER := {
+	"tree": ["Dobry dąb, będzie na nowy łuk.", "Drewno na Watrę!", "Uwaga, drzewo leci!", "Jeszcze jedno i wracam do Ostoi.",
+			"Cieśla w Ostoi dobrze płaci za belki."],
+	"stone": ["Kamień na palisadę zawsze się przyda.", "Twardy ten głaz...", "Ładny kamień, sprzedam w gildii.",
+			"Kilof by się przydał nowy."],
+	"ore": ["Ruda! Kowal się ucieszy.", "Może tym razem błyśnie klejnot?", "Żelazo na nowe groty.", "Ciężka ta ruda, ale warta swego."],
+	"herb": ["Zielarka za to dobrze zapłaci.", "Pachnie jak u babki w ogródku.", "Ostrożnie, żeby nie zgnieść kwiatu.",
+			"Z tego będzie dobra mikstura."],
+}
 const LINES_TOWN: Array[String] = ["Ktoś na Hydrę? Szukam drużyny!", "Sprzedam pancerz, tanio!", "Watra dziś huczy jak nigdy.",
 		"Byłeś już w lochach? Ja ledwo wyszedłem.", "Gromoskrzydły znów mnie ubił...", "Kupię kamienie miłosierdzia!",
 		"W Prastarym Lesie pełno pająków.", "Kto widział Leszego, ten wie, co to strach.", "Jutro idę na Cmentarz.",
-		"Pisarz gildii płaci za każde zlecenie.", "Wymienię esencję na esencję!", "Zielarka warzy najlepsze mikstury."]
+		"Pisarz gildii płaci za każde zlecenie.", "Wymienię esencję na esencję!", "Zielarka warzy najlepsze mikstury.",
+		"Wystawiłem drewno na rynku - ledwo wystawiłem, a już poszło!", "Świeża ruda z Turni, tanio, pytajcie w gildii!",
+		"Kto osłoni mnie przy rąbaniu? Wilki nie dają spokoju."]
 
 ## Spis: [{name, female, look, weapon, level, xp, zone, state ("town"/"hunt"/"dead"), wait, kills, deaths, gear, fame}]
 var roster: Array[Dictionary] = []
@@ -79,6 +103,8 @@ var party: Array[String] = []
 var party_ticks := 0
 ## Tryb świata (WorldModes): nowa gra bierze go z menu (Game.world_mode), starsze zapisy - spokojny.
 var world_mode := "calm"
+## Rynek gracza (świeży towar od zbieraczy) - ustawia Player.
+var market: Market
 
 
 func _ready() -> void:
@@ -187,6 +213,9 @@ func tick() -> void:
 					traveler["wait"] = randi_range(2, 5)
 			"hunt":
 				add_kills(traveler, randi_range(3, 15))
+				if market != null and randf() < GATHER_CHANCE and GATHER.has(str(traveler["zone"])):
+					var pick: Array = (GATHER[str(traveler["zone"])] as Array).pick_random()
+					market.supply(pick[0], randi_range(pick[1], pick[2]), traveler["name"])
 				if randf() < 0.025:
 					die(traveler)
 				elif traveler["wait"] == 0 and randf() < 0.35:

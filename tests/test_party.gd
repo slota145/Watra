@@ -104,6 +104,9 @@ func _process(_d: float) -> bool:
 			check("prośba o pomoc", task["count"] >= 1 and task["gold"] > 0 and task.has("poster"))
 			var kill: Dictionary = load("res://scripts/bounties.gd").make("kill", "forest", 0, _member.data["name"])
 			kill["count"] = 10
+			# zaproszenie mogło już przynieść losową prośbę - test sprawdza własną
+			if p.quests.active_help() != "":
+				p.quests.abandon_bounty(p.quests.active_help())
 			var id: String = p.quests.take_help(kill)
 			check("zadanie drużyny poza tablicą", p.quests.active_help() == id and p.quests.active_bounties().is_empty())
 			_gold = p.stats.gold

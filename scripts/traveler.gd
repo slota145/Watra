@@ -9,6 +9,9 @@ extends CharacterBody2D
 ## - "party" (drużyna gracza): idzie za graczem (przez krainy i lochy - World), bije wrogów przy graczu, także bossów
 ##   (słabiej); jego zabójstwa liczą się graczowi (łup i doświadczenie - nie zapisuje Goblin.traveler_damage).
 ## Łowcy pozdrawiają przechodzącego gracza i dają wskazówki o krainie (Travelers.GREETINGS / HINTS).
+## Przy okazji łowów zbierają surowce (drzewo, głaz, ruda, zioło w pobliżu siedliska): nie ruszają surowców blisko gracza
+## (PLAYER_SAFE) ani w Ostoi, a gdy w krainie jest już zebrane MAX_DEPLETED surowców - czekają, aż odrosną. Urobek trafia
+## na rynek jako świeży towar (Market.supply). Zbierającego łowcę gracz może osłonić przed potworami (World._start_guard).
 ## Nad głową imię i poziom (jasnozielone jak inni gracze, drużyna - niebieskie) oraz pasek zdrowia w walce.
 
 const SHADOW := preload("res://assets/shadow.png")
@@ -25,6 +28,16 @@ const PARTY_COLOR := Color(0.55, 0.8, 1.0)
 ## Bossowie są dużo wytrzymalsi - drużyna pomaga, ale walka zostaje na graczu.
 const BOSS_FACTOR := 0.12
 const GREET_RANGE := 70.0
+## Zbieranie surowców: co ile sekund łowca bez wroga rozgląda się za surowcem, z jaką szansą, jak daleko od siedliska,
+## jak długo pracuje, w jakiej odległości od gracza nic nie zbiera i jaka część surowców krainy może być naraz zebrana.
+const GATHER_EVERY := Vector2(15.0, 35.0)
+const GATHER_CHANCE := 0.6
+const GATHER_RANGE := 260.0
+const GATHER_TIME := 6.0
+const PLAYER_SAFE := 320.0
+const MAX_DEPLETED := 0.2
+## Podczas osłony przez gracza łowca pracuje i się nie broni, ale ciosy bolą go mniej.
+const GUARD_DAMAGE := 0.5
 
 var data: Dictionary = {}
 var mode := "hunt"
@@ -59,6 +72,17 @@ var zone_key := "forest"
 var slot := Vector2(-24, 14)
 var _greet := 0.0
 var _player: Node2D
+## Zbierany surowiec, ile pracy zostało (s) i ile trwa całość; osłona gracza (s) - wtedy nie przerywa pracy.
+var gather_target: Harvestable
+var guard_time := 0.0
+var _gather_left := 0.0
+var _gather_total := 1.0
+var _gather_wait := 0.0
+var _gather_walk := 0.0
+var _chop := 0.0
+## Limit zbierania liczony dla całej krainy co kilka sekund (wspólny dla wszystkich łowców).
+static var _quota_at := -100000
+static var _quota_ok := true
 
 
 func _ready() -> void:
@@ -101,6 +125,7 @@ func _ready() -> void:
 	_waypoint = global_position
 	_last_pos = global_position
 	_talk = randf_range(6.0, 20.0)
+	_gather_wait = randf_range(GATHER_EVERY.x * 0.3, GATHER_EVERY.y)
 	_player = get_tree().get_first_node_in_group("player") as Node2D
 	if mode == "party":
 		_label.add_theme_color_override("font_color", PARTY_COLOR)
@@ -130,6 +155,11 @@ func is_alive() -> bool:
 func take_hit(amount: float) -> void:
 	if not is_alive():
 		return
+	if guard_time > 0.0:
+		amount *= GUARD_DAMAGE
+	elif gather_target != null:
+		# napadnięty przy pracy - rzuca narzędzie i się broni
+		_drop_gather()
 	health -= amount
 	_calm = 0.0
 	_sprite.modulate = Color(1, 0.5, 0.5)
@@ -162,8 +192,19 @@ func _process_hunt(delta: float) -> void:
 	# regeneracja poza walką
 	if _calm > 4.0:
 		health = minf(health + max_health * 0.04 * delta, max_health)
+	if gather_target != null:
+		_process_gather(delta)
+		return
 	if _target != null and (not is_instance_valid(_target) or _target.state == Goblin.State.DEAD):
 		_target = null
+	# co jakiś czas przerwa w łowach na zbieranie - gdy nie toczy walki (np. zaraz po pokonaniu potwora)
+	_gather_wait -= delta
+	if _gather_wait <= 0.0 and (_target == null or _target.objective != self):
+		_gather_wait = randf_range(GATHER_EVERY.x, GATHER_EVERY.y)
+		if randf() < GATHER_CHANCE:
+			_start_gather(find_gather_target())
+			if gather_target != null:
+				return
 	_scan -= delta
 	if _target == null and _scan <= 0.0:
 		_scan = 0.5
@@ -227,8 +268,140 @@ func _attack(weapon: String) -> void:
 		travelers.add_kills(data, 1)
 
 
+# ---------------------------------------------------------------- zbieranie surowców
+## Czy w krainie wolno jeszcze zbierać (zebranych surowców mniej niż MAX_DEPLETED) - liczone najwyżej co 3 s.
+func gather_allowed() -> bool:
+	var now := Time.get_ticks_msec()
+	if now - _quota_at > 3000:
+		_quota_at = now
+		var total := 0
+		var depleted := 0
+		for node: Harvestable in get_tree().get_nodes_in_group("harvestables"):
+			total += 1
+			if node.is_depleted:
+				depleted += 1
+		_quota_ok = total > 0 and float(depleted) / float(total) < MAX_DEPLETED
+	return _quota_ok
+
+
+## Najbliższy wolny surowiec przy siedlisku: nie zebrany, nie zajęty przez innego łowcę, daleko od gracza i poza Ostoją.
+func find_gather_target() -> Harvestable:
+	if not gather_allowed():
+		return null
+	var best: Harvestable = null
+	var best_d := GATHER_RANGE
+	for node: Harvestable in get_tree().get_nodes_in_group("harvestables"):
+		if node.is_depleted or not node.can_harvest():
+			continue
+		var d := node.global_position.distance_to(home)
+		if d >= best_d:
+			continue
+		if _player != null and is_instance_valid(_player) and node.global_position.distance_to(_player.global_position) < PLAYER_SAFE:
+			continue
+		if Goblin.safe_zone.has_point(node.global_position):
+			continue
+		var owner_node = node.get_meta("gatherer", null)
+		if is_instance_valid(owner_node) and owner_node != self:
+			continue
+		best_d = d
+		best = node
+	return best
+
+
+func _start_gather(target: Harvestable) -> void:
+	if target == null:
+		return
+	gather_target = target
+	target.set_meta("gatherer", self)
+	_gather_total = target.harvest_time * 2.5 if target.harvest_time > 0.0 else GATHER_TIME
+	_gather_left = _gather_total
+	_gather_walk = 0.0
+	_target = null
+
+
+## Przerwanie pracy (napad, surowiec zebrany przez kogoś innego).
+func _drop_gather() -> void:
+	if gather_target != null and is_instance_valid(gather_target):
+		var owner_node = gather_target.get_meta("gatherer", null)
+		if not is_instance_valid(owner_node) or owner_node == self:
+			gather_target.remove_meta("gatherer")
+		gather_target.set_progress(0.0)
+	gather_target = null
+	guard_time = 0.0
+
+
+func is_gathering() -> bool:
+	return gather_target != null and is_instance_valid(gather_target) and not gather_target.is_depleted
+
+
+## Rodzaj zbieranego surowca (do haseł i nagrody za osłonę): "tree", "stone", "ore", "herb".
+func gather_kind() -> String:
+	return _kind_of(gather_target)
+
+
+## Osłona przez gracza: łowca pracuje co najmniej `seconds` sekund i nie przerywa przy ciosach.
+func start_guard(seconds: float) -> void:
+	guard_time = seconds
+	_gather_total = maxf(_gather_left, seconds)
+	_gather_left = _gather_total
+
+
+func _process_gather(delta: float) -> void:
+	if not is_gathering():
+		_drop_gather()
+		return
+	var to := gather_target.global_position - global_position
+	if to.length() > 16.0:
+		_gather_walk += delta
+		# nie może dojść (przeszkoda) - szuka czegoś innego później
+		if _gather_walk > 12.0 and guard_time <= 0.0:
+			_drop_gather()
+			return
+		_move(to.normalized(), delta)
+		return
+	velocity = Vector2.ZERO
+	_facing = to.normalized()
+	guard_time = maxf(guard_time - delta, 0.0)
+	_gather_left -= delta
+	gather_target.set_progress(1.0 - _gather_left / _gather_total)
+	_chop -= delta
+	if _chop <= 0.0:
+		_chop = 0.8
+		_strike = 0.3
+		gather_target.shake()
+		if gather_target.hit_sound != "":
+			Sfx.play_at(gather_target.hit_sound, gather_target.global_position)
+	if _gather_left <= 0.0:
+		_finish_gather()
+
+
+## Surowiec zebrany: ślad (pieniek, gruz) jak po graczu, urobek na rynek, czasem hasło.
+func _finish_gather() -> void:
+	var target := gather_target
+	var loot := target.roll_loot()
+	_drop_gather()
+	target.harvest(global_position)
+	var market: Market = (_player as Player).market if _player is Player else null
+	for entry: Array in loot:
+		if market != null and Market.is_commodity(entry[0]):
+			market.supply(entry[0], int(entry[1]), data.get("name", "?"))
+	if randf() < 0.4:
+		_say((Travelers.LINES_GATHER[_kind_of(target)] as Array).pick_random())
+
+
+static func _kind_of(target: Harvestable) -> String:
+	if target is Herb:
+		return "herb"
+	if target is IronOre:
+		return "ore"
+	if target is Boulder:
+		return "stone"
+	return "tree"
+
+
 ## Padł: znika, a spis odsyła go do Ostoi (wstanie po chwili).
 func _fall() -> void:
+	_drop_gather()
 	if travelers != null:
 		travelers.die(data)
 	_leave(Color(0.6, 0.6, 0.65))
@@ -239,6 +412,7 @@ func _leave(color := Color(1.0, 0.6, 0.25)) -> void:
 	if _leaving:
 		return
 	_leaving = true
+	_drop_gather()
 	SkillEffects.spark(get_parent(), global_position + Vector2(0, -12), color, 14)
 	var tween := create_tween()
 	tween.tween_property(self, "modulate:a", 0.0, 0.6)
@@ -297,6 +471,9 @@ func _process_greeting(delta: float) -> void:
 	if _player.global_position.distance_to(global_position) < GREET_RANGE:
 		_greet = randf_range(50.0, 90.0)
 		var hints: Array = Travelers.HINTS.get(zone_key, [])
+		if is_gathering() and randf() < 0.6:
+			_say((Travelers.LINES_GATHER[gather_kind()] as Array).pick_random())
+			return
 		_say(hints.pick_random() if not hints.is_empty() and randf() < 0.55 else Travelers.GREETINGS.pick_random())
 	else:
 		_greet = 0.5
@@ -304,6 +481,7 @@ func _process_greeting(delta: float) -> void:
 
 ## Dołączenie do drużyny gracza (w miejscu, bez znikania).
 func become_party(at_slot: Vector2) -> void:
+	_drop_gather()
 	mode = "party"
 	slot = at_slot
 	_target = null
@@ -320,6 +498,7 @@ func refresh_color() -> void:
 
 ## Walka z graczem (pojedynek, napad): na jej czas podróżnika zastępuje rywal (Rival) - tu znika i czeka.
 func hide_for_fight() -> void:
+	_drop_gather()
 	visible = false
 	_fighting = true
 	velocity = Vector2.ZERO

@@ -256,6 +256,7 @@ func _ready() -> void:
 	market.name = "Market"
 	market.setup(self)
 	add_child(market)
+	travelers.market = market
 	Gems.unlocked = false
 	quests.quest_done.connect(_on_quest_done)
 	quests.quest_ready.connect(_on_quest_ready)

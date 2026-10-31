@@ -8,6 +8,8 @@ extends Node
 ##   realizują zamówienie z czasem (tym szybciej, im lepsza cena). Duże zakupy i sprzedaże przesuwają cenę.
 ## - Przedmioty: pojedyncze oferty podróżników (broń, zbroje, biżuteria, kamienie szlachetne, czasem legendy) z ceną
 ##   i sprzedawcą, odświeżane co jakiś czas; gracz może kupić albo wystawić własny przedmiot.
+## - Świeży towar (fresh): surowce zebrane przez podróżników (Traveler, Travelers.tick) trafiają do arkusza jako osobne,
+##   tańsze oferty sprzedaży z imieniem zbieracza i lekko obniżają cenę; inni podróżnicy szybko je wykupują.
 ## Kupione rzeczy trafiają do plecaka, a gdy jest pełny - do magazynu (albo czekają w zamówieniu do odbioru).
 
 signal changed
@@ -36,6 +38,9 @@ const CATEGORIES := {
 			"jewelry_stone_perfect", "blessed_stone", "mercy_stone", "crystal_heart", "rune_chaos", "rune_seal"],
 }
 const HISTORY := 24
+## Najwyżej tyle świeżych ofert jednego towaru naraz i szansa, że inni podróżnicy wykupią świeżą ofertę w jednej chwili rynku.
+const FRESH_MAX := 4
+const FRESH_SOLD_CHANCE := 0.35
 
 ## towar -> aktualna cena (float) i ostatnie ceny (do wykresu / trendu)
 var prices := {}
@@ -44,6 +49,8 @@ var history := {}
 var orders: Array[Dictionary] = []
 ## Oferty przedmiotów: [{id (wylosowany przedmiot), price, seller, mine}] - mine: wystawione przez gracza.
 var listings: Array[Dictionary] = []
+## Świeży towar od zbieraczy: towar -> [[ilość, imię zbieracza]...].
+var fresh := {}
 var _player: Player
 var _timer := TICK
 var _book_seed := 0
@@ -99,6 +106,10 @@ func book(id: String) -> Dictionary:
 		var buy_price := maxi(1, mini(floori(base * (0.97 - 0.03 * i)), roundi(base) - 1 - i))
 		sells.append([sell_price, maxi(1, roundi(rng.randf_range(2.0, 12.0) * scale)), names[rng.randi() % names.size()]])
 		buys.append([buy_price, maxi(1, roundi(rng.randf_range(2.0, 12.0) * scale)), names[rng.randi() % names.size()]])
+	# świeży towar od zbieraczy - taniej niż najtańsza zwykła oferta (ale drożej niż najlepsza oferta kupna)
+	var fresh_price := maxi(roundi(base), int(sells[0][0]) - maxi(1, roundi(base * 0.03)))
+	for entry: Array in fresh.get(id, []):
+		sells.append([fresh_price, int(entry[0]), str(entry[1]), true])
 	for order: Dictionary in orders:
 		# zamówienia gracza widać w arkuszu
 		if order["id"] == id and order["left"] > 0:
@@ -128,6 +139,7 @@ func buy_now(id: String, qty: int) -> String:
 		return "Za mało złota (%d zł)." % cost
 	_player.stats.add_gold(-cost)
 	_deliver(id, qty)
+	_take_fresh(id, qty)
 	_push(id, qty, 1.0)
 	changed.emit()
 	return ""
@@ -145,6 +157,33 @@ func sell_now(id: String, qty: int) -> String:
 	_push(id, qty, -1.0)
 	changed.emit()
 	return ""
+
+
+## Świeże oferty są najtańsze, więc kupno zabiera je pierwsze.
+func _take_fresh(id: String, qty: int) -> void:
+	var list: Array = fresh.get(id, [])
+	while qty > 0 and not list.is_empty():
+		var take := mini(qty, int(list[0][0]))
+		list[0][0] = int(list[0][0]) - take
+		qty -= take
+		if int(list[0][0]) <= 0:
+			list.pop_front()
+	if list.is_empty():
+		fresh.erase(id)
+
+
+## Podróżnik wystawia zebrany surowiec: świeża oferta w arkuszu i lekki spadek ceny.
+func supply(id: String, qty: int, seller: String) -> void:
+	if not COMMODITIES.has(id) or qty <= 0:
+		return
+	ensure()
+	var list: Array = fresh.get(id, [])
+	list.append([qty, seller])
+	while list.size() > FRESH_MAX:
+		list.pop_front()
+	fresh[id] = list
+	_push(id, qty, -0.5)
+	changed.emit()
 
 
 ## Koszt kupna `qty` sztuk po arkuszu (-1 - za mało ofert).
@@ -320,6 +359,13 @@ func tick() -> void:
 		if past.size() > HISTORY:
 			past.pop_front()
 	_book_seed += 1
+	# świeże oferty szybko znikają - wykupują je inni podróżnicy
+	for id: String in fresh.keys():
+		var list: Array = (fresh[id] as Array).filter(func(_e: Array) -> bool: return randf() >= FRESH_SOLD_CHANCE)
+		if list.is_empty():
+			fresh.erase(id)
+		else:
+			fresh[id] = list
 	for order: Dictionary in orders:
 		if order["left"] <= 0:
 			continue
@@ -358,7 +404,7 @@ func tick() -> void:
 func get_save_data() -> Dictionary:
 	var ids: Array = listings.map(func(l: Dictionary) -> String: return l["id"])
 	return {"prices": prices.duplicate(), "history": history.duplicate(true), "orders": orders.duplicate(true),
-			"listings": listings.duplicate(true), "items": Loot.export_used(ids)}
+			"listings": listings.duplicate(true), "items": Loot.export_used(ids), "fresh": fresh.duplicate(true)}
 
 
 func load_save_data(data: Dictionary) -> void:
@@ -369,6 +415,10 @@ func load_save_data(data: Dictionary) -> void:
 		if COMMODITIES.has(id):
 			prices[id] = float(data["prices"][id])
 			history[id] = (data.get("history", {}).get(id, [prices[id]]) as Array).map(func(v) -> float: return float(v))
+	fresh.clear()
+	for id: String in data.get("fresh", {}):
+		if COMMODITIES.has(id):
+			fresh[id] = (data["fresh"][id] as Array).map(func(e: Array) -> Array: return [int(e[0]), str(e[1])])
 	orders.clear()
 	for order: Dictionary in data.get("orders", []):
 		for key in ["qty", "left", "price", "ready"]:
