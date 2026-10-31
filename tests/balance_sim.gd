@@ -182,6 +182,11 @@ func _skills_report() -> void:
 		"sokół": sk.falcon_damage(lvl) * sk.FALCON_TIME / (sk.FALCON_INTERVAL + 0.3) / sk.FALCON_MANA,
 		"strzała wichru (3 wrogów)": sk.wind_damage(lvl) * 3.0 / sk.WIND_MANA,
 		"balista": sk.ballista_damage(lvl) * sk.BALLISTA_TIME / sk.BALLISTA_INTERVAL / sk.BALLISTA_MANA,
+		"włócznia marzanny (3 wrogów)": sk.lance_damage(lvl) * 3.0 / sk.LANCE_MANA,
+		"zamieć (3 wrogów)": sk.blizzard_damage(lvl) * sk.BLIZZARD_TIME / sk.BLIZZARD_TICK * 3.0 / sk.BLIZZARD_MANA,
+		"burza peruna": sk.storm_damage(lvl) * sk.STORM_TIME / sk.STORM_INTERVAL / sk.STORM_MANA,
+		"kula piorunów (2 wrogów)": sk.orb_damage(lvl) * sk.ORB_RANGE / sk.ORB_SPEED / sk.ORB_TICK * 2.0 / sk.ORB_MANA,
+		"spadająca gwiazda (3, z ogniem)": sk.meteor_damage(lvl) * (1.0 + sk.METEOR_BURN) * 3.0 / sk.METEOR_MANA,
 	}
 	print("Umiejętności (poz. 5) - obrażenia broni na punkt many:")
 	for name in efficiency:

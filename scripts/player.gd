@@ -143,9 +143,12 @@ var _held_ids := {}
 ## Ostatnio użyta umiejętność i ile jeszcze trwa okno combo po niej (Skills.COMBOS).
 var _chain_skill := ""
 var _chain_time := 0.0
-## Umiejętności drzewek: miecza (Mgnienie, Dymne Wybuchy...) i łuku (Grot Swaroga, Balista...).
+## Umiejętności drzewek: miecza (Mgnienie, Dymne Wybuchy...), łuku (Grot Swaroga, Balista...) i księgi (Zamieć...).
 var sword_skills: SwordSkills
 var bow_skills: BowSkills
+var spell_skills: SpellSkills
+## Ofiara Krwi: ułamek zdrowia do zapłacenia za umiejętności (koszty są ułamkowe, zdrowie - całkowite).
+var _blood_cost := 0.0
 var _whirling := false
 ## Ładowanie kuli ognia: postęp 0..1 (-1 = nie ładujemy), kula w dłoniach i jej dźwięki.
 var _fireball_charge := -1.0
@@ -227,6 +230,9 @@ func _ready() -> void:
 	bow_skills = BowSkills.new(self)
 	bow_skills.name = "BowSkills"
 	add_child(bow_skills)
+	spell_skills = SpellSkills.new(self)
+	spell_skills.name = "SpellSkills"
+	add_child(spell_skills)
 	stats.skill_book = skills
 	skills.character_level = stats.level
 	boons.name = "Boons"
@@ -298,10 +304,13 @@ func _press_skill_slot(index: int) -> void:
 				_strike_request = true
 			"skill":
 				_held_ids[id] = true
-				if Skills.get_data(id)["weapon"] == "bow":
-					bow_skills.press(id)
-				else:
-					sword_skills.press(id)
+				match Skills.get_data(id)["weapon"]:
+					"bow":
+						bow_skills.press(id)
+					"spell":
+						spell_skills.press(id)
+					_:
+						sword_skills.press(id)
 
 
 ## Atak i umiejętność aktywna trwają, dopóki trzymany jest któryś slot z nimi.
@@ -335,7 +344,12 @@ func cooldown_of(id: String) -> Vector2:
 		"strike":
 			return Vector2(_strike_cooldown, maxf(_strike_cooldown_total, _strike_cooldown))
 		"skill":
-			return bow_skills.cooldown_of(id) if Skills.get_data(id)["weapon"] == "bow" else sword_skills.cooldown_of(id)
+			match Skills.get_data(id)["weapon"]:
+				"bow":
+					return bow_skills.cooldown_of(id)
+				"spell":
+					return spell_skills.cooldown_of(id)
+			return sword_skills.cooldown_of(id)
 	return Vector2.ZERO
 
 
@@ -354,6 +368,7 @@ func combo_window() -> float:
 func note_skill(id: String) -> void:
 	_chain_skill = id
 	_chain_time = combo_window()
+	spell_skills.on_cast(id)
 
 
 ## Czy umiejętność użyta teraz zadziała jako combo (po pasującej umiejętności w oknie combo).
@@ -494,7 +509,19 @@ func skill_ready() -> bool:
 	return _skill_cooldown_timer == 0.0
 
 
+## Pełnia Mocy podraża umiejętności, a z Ofiarą Krwi płaci się zdrowiem (nigdy do zera).
 func spend_mana(amount: float) -> bool:
+	amount *= spell_skills.mana_cost_factor()
+	if spell_skills.blood_magic():
+		if health - (_blood_cost + amount) < 1.0:
+			return false
+		_blood_cost += amount
+		var whole := floori(_blood_cost)
+		if whole > 0:
+			_blood_cost -= whole
+			health -= whole
+			health_changed.emit(health, stats.max_health())
+		return true
 	if mana < amount:
 		return false
 	mana -= amount
@@ -529,6 +556,12 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 	if sword_skills.try_parry(from_position):
 		return
 	amount = stats.reduce_damage(amount)
+	# Tarcza Many: część ciosu (albo cały) zabiera mana
+	amount = spell_skills.absorb(amount)
+	if amount <= 0:
+		DamageNumber.spawn_text(get_parent(), body_center(), "Tarcza", Color(0.6, 0.8, 1.0), 9)
+		_invulnerable_timer = invulnerability_time
+		return
 	# Pancerz z Łusek Czerwia może pochłonąć cios zakopaniem się w ziemi
 	if legendary.on_hurt(amount):
 		return
@@ -1189,7 +1222,12 @@ func _process_skill(delta: float) -> void:
 			if not skill_ready() or is_attacking():
 				return
 			if spend_mana(Skills.FIREBALL_MANA):
-				_start_fireball_charge()
+				# Kula ognia zaraz po Kroku przez Mgłę: od razu w pełni naładowana
+				if combo_with("fireball"):
+					combo_used()
+					_cast("fireball", 1.0)
+				else:
+					_start_fireball_charge()
 			else:
 				_hint("Za mało many")
 
@@ -1224,7 +1262,7 @@ func _update_fireball_charge(delta: float, id: String) -> void:
 		return
 	_fireball_time += delta
 	if not _fireball_full:
-		var step := delta * _skill_speed(["spell"]) / Skills.FIREBALL_CHARGE_TIME
+		var step := delta * _skill_speed(["spell"]) * (1.0 + skills.tree_bonus("spell", "fireball_charge")) / Skills.FIREBALL_CHARGE_TIME
 		if spend_mana(Skills.FIREBALL_CHARGE_MANA * step):
 			_fireball_charge = minf(_fireball_charge + step, 1.0)
 			_charge_sound.stream_paused = false
@@ -1387,7 +1425,7 @@ func _cast(id: String, charge := 0.0, combo := false) -> void:
 		_skill_cooldown_timer = _cooldown(Skills.FIREBALL_COOLDOWN, ["spell"])
 		_skill_cooldown_total = _skill_cooldown_timer
 		var fireball := _make_projectile(weapon, dir)
-		var multiplier := Skills.fireball_damage(level) * Skills.fireball_charge_damage(charge)
+		var multiplier := Skills.fireball_damage(level) * Skills.fireball_charge_damage(charge) * (1.0 + skills.tree_bonus("spell", "fireball_damage"))
 		fireball.texture = FIREBALL_TEXTURE
 		fireball.magic = false
 		fireball.fire = true
@@ -1847,7 +1885,7 @@ func _cast_chain(level: int) -> void:
 		Sfx.play("zap")
 		return
 	targets.append(first)
-	while targets.size() < Skills.chain_targets(level):
+	while targets.size() < Skills.chain_targets(level) + roundi(skills.tree_bonus("spell", "chain_targets")):
 		var last := targets[-1]
 		var next: Goblin = null
 		var nearest := CHAIN_JUMP_RANGE
@@ -1919,6 +1957,7 @@ func _die() -> void:
 	if sword_skills != null:
 		sword_skills.cancel()
 		bow_skills.cancel()
+		spell_skills.cancel()
 	_lunge_time = 0.0
 	_combo_window = 0.0
 	_stop_whirl()

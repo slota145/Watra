@@ -46,7 +46,7 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
   - `settlement.gd`: Ostoja,
   - `player.gd`, `character_stats.gd`, `items.gd`, `item_bases.gd`, `loot.gd`, `legends.gd`, `legendary_effects.gd`, `skills.gd`, `skill_effects.gd`, `levels.gd`, `quests.gd`, `bounties.gd`,
   - `hotbar.gd`: paski szybkiego wyboru (dane), `status_effects.gd`: lista efektów działających na gracza,
-  - `skill_tree.gd`: drzewka umiejętności broni (dane), `sword_skills.gd` i `bow_skills.gd`: umiejętności drzewek miecza i łuku,
+  - `skill_tree.gd`: drzewka umiejętności broni (dane), `sword_skills.gd`, `bow_skills.gd` i `spell_skills.gd`: umiejętności drzewek miecza, łuku i księgi,
   - `dungeons.gd`: dane lochów (klimaty, stopnie, modyfikatory), `dungeon.gd`: generator lochu, okno `scripts/ui/dungeon_window.gd`,
   - `herbs.gd`: zioła i mikstury zielarki, `herb.gd`: zioło do zerwania (sadzone w każdej krainie przez `World._place_herbs`),
   - `scripts/ui/`: okna interfejsu (`ui_style.gd` to wspólny styl).
@@ -221,7 +221,20 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   Chwilowe premie źródeł łączy `CharacterStats.set_temp`. Legendy ze skarbca lochów: **Łuk Swaroga** (strzała tropiąca
   się rozszczepia), **Rękawice Cieśli Wojennego** (balista strzela salwą), **Talizman Tropiciela** (balista strzela
   strzałami tropiącymi).
-- [ ] **Etap 4**: drzewko księgi magii według tego samego wzoru (dziś ma jeszcze karty umiejętności za złoto).
+- [x] **Drzewko księgi magii, etap 4** (`SkillTree.TREES["spell"]`, `scripts/spell_skills.gd`, grafiki z PixelLab przez
+  `tools/spell_tree_art.py`): 13 umiejętności (Kula ognia, Łańcuch błyskawic, Fala piorunów i regeneracje przeszły do drzewka),
+  35 węzłów pasywnych, 4 kluczowe. Nowe czary (z combo):
+  - **Włócznia Marzanny**: przebija i spowalnia (`Goblin.chill`; po Kuli ognia - lodowe odłamki),
+  - **Zamieć**: śnieżyca pod kursorem (po Włóczni - od razu zamraża),
+  - **Burza Peruna**: pioruny w wrogów wokół (po Łańcuchu błyskawic - przeskakują dalej),
+  - **Kula Piorunów**: powolna kula razi wrogów obok (po Fali piorunów - wybuch na końcu),
+  - **Spadająca Gwiazda**: wybuch i podpalenie (po Zamieci - podwójne obrażenia),
+  - **Krok przez Mgłę**: teleport (potem Kula ognia od razu naładowana),
+  - **Tarcza Many**: część ciosów zabiera mana (po Kroku - przez chwilę całe ciosy),
+  - **Kamień Runiczny**: w jego kręgu czary mocniejsze i szybsze.
+  Węzły kluczowe: **Harmonia Żywiołów** (`Skills.ELEMENTS`), **Ofiara Krwi** (koszt zdrowiem w `Player.spend_mana`),
+  **Pełnia Mocy**, **Echo Run**. Legendy ze skarbca lochów: **Księga Marzanny** (Zamieć zawsze zamraża),
+  **Korona Peruna** (Burza trwa, dopóki trzymasz klawisz).
 - [ ] System kamieni wkładanych w przedmioty (gniazda).
   Istniejące kamienie (zwykłe, doskonałe, uświęcone, miłosierdzia) służą tylko do zaklinania (`scripts/enchanting.gd`, `scripts/ui/enchant_window.gd`), więc to byłby nowy system.
 - [ ] Nowe bronie: kosa, kostur (nekromanta), młoty, chainblade'y, sztylety, włócznie, rapier, hydrosfera.
