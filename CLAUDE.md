@@ -171,6 +171,10 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   do Wodnika zamiast za trudnej Hydry.
 - [x] Mgnienie z efektami z kreatora efektów PixelLab (`tools/vfx_art.py`, `SkillEffects.sheet_once`): smuga za postacią
   z błyskiem w miejscu startu (rozciągana wzdłuż skoku) i proste cięcie z błyskiem na celu, ukośnie do drogi skoku.
+- [x] Młynek z zapętlonym wirem z kreatora efektów (`Player._update_whirl_fx`, `assets/effects/whirl.png`: dwa łuki ostrzy,
+  górna połowa za postacią, dolna przed nią, skalowany do zasięgu Młynka); w trakcie wirującego Mgnienia szybszy wir
+  (`whirl_fast.png`: trzy ostrza z rozmyciem i odrzucane iskry, `SwordSkills.is_spin_flickering`) i mocniejsza smuga
+  skoku ze spiralą ostrza (`flicker_spin_trail.png`).
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

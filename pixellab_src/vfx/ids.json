@@ -1,4 +1,74 @@
 {
-  "flicker_hit": {"effect": "f5d629cb-a186-413b-9df2-089ed571d4b9", "name": "Mgnienie - cięcie trafienia", "frame": [82, 30], "frames": 8, "fps": 16, "anchor": [43, 16]},
-  "flicker_trail": {"effect": "18b878af-6fe1-4fe3-a5d5-2d7996542e29", "name": "Mgnienie - smuga", "frame": [74, 19], "frames": 7, "fps": 16, "anchor": [8, 10]}
+  "flicker_hit": {
+    "effect": "f5d629cb-a186-413b-9df2-089ed571d4b9",
+    "name": "Mgnienie - cięcie trafienia",
+    "frame": [
+      82,
+      30
+    ],
+    "frames": 8,
+    "fps": 16,
+    "anchor": [
+      43,
+      16
+    ]
+  },
+  "flicker_trail": {
+    "effect": "18b878af-6fe1-4fe3-a5d5-2d7996542e29",
+    "name": "Mgnienie - smuga",
+    "frame": [
+      74,
+      19
+    ],
+    "frames": 7,
+    "fps": 16,
+    "anchor": [
+      8,
+      10
+    ]
+  },
+  "whirl": {
+    "effect": "b3dbda83-0c49-4675-bec7-bc1e2af0413d",
+    "name": "Młynek",
+    "frame": [
+      96,
+      80
+    ],
+    "frames": 8,
+    "fps": 20,
+    "loop": true,
+    "anchor": [
+      48,
+      40
+    ]
+  },
+  "flicker_spin_trail": {
+    "effect": "2c7d8e6d-a0a2-4d48-8895-c275c6d62e3c",
+    "name": "Wirujace Mgnienie - smuga",
+    "frame": [
+      92,
+      25
+    ],
+    "frames": 7,
+    "fps": 16,
+    "anchor": [
+      15,
+      13
+    ]
+  },
+  "whirl_fast": {
+    "effect": "42ce4946-34b7-4edb-a567-720f354ea0cd",
+    "name": "Wirujace Mgnienie - wir",
+    "frame": [
+      112,
+      92
+    ],
+    "frames": 8,
+    "fps": 20,
+    "loop": true,
+    "anchor": [
+      56,
+      46
+    ]
+  }
 }

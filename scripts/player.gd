@@ -59,6 +59,14 @@ const WHIRL_SPIN_SPEED := 16.0
 const WHIRL_MOVE_FACTOR := 0.7
 ## W Młynku rękojeść krąży w wyciągniętej dłoni, z dala od osi obrotu (ostrze sięga dalej).
 const WHIRL_HAND_REACH := 10.0
+## Wir Młynka z kreatora efektów PixelLab (tools/vfx_art.py): zapętlone klatki wokół tułowia, górna połowa za postacią,
+## dolna przed nią. W trakcie wirującego Mgnienia szybszy wir (więcej ostrzy, rozmycie, iskry). Promień ostrzy w klatce
+## to WHIRL_FX_RADIUS - grafika skaluje się do zasięgu Młynka.
+const WHIRL_FX := preload("res://assets/effects/whirl.png")
+const WHIRL_FX_FAST := preload("res://assets/effects/whirl_fast.png")
+const WHIRL_FX_FRAMES := 8
+const WHIRL_FX_FPS := 20.0
+const WHIRL_FX_RADIUS := 35.0
 ## Zbieranie (drzewa, głazy): zasięg (od stóp do podstawy), czas i odstęp między uderzeniami.
 const HARVEST_RANGE := 26.0
 const HARVEST_TIME := 2.0
@@ -164,6 +172,9 @@ var _fireball_embers: CPUParticles2D
 var _charge_sound: AudioStreamPlayer
 var _hold_sound: AudioStreamPlayer
 var _whirl_tick := 0.0
+## Wir Młynka: [za postacią, przed postacią] i czas animacji.
+var _whirl_fx: Array[Sprite2D] = []
+var _whirl_fx_time := 0.0
 var _health_regen_progress := 0.0
 ## Żeby podpowiedź "za mało many" nie wyskakiwała co klatkę.
 var _hint_cooldown := 0.0
@@ -1586,16 +1597,16 @@ func _start_whirl() -> void:
 	sword.rotation = 0.0
 	sword.flip_v = false
 	sword.position = Vector2(WHIRL_HAND_REACH, 0.0)
-	slash.visible = true
-	slash.frame = 1
-	slash.flip_v = false
-	slash.scale = Vector2.ONE * (radius / 30.0)
+	_whirl_fx_time = 0.0
+	_update_whirl_fx(radius)
 
 
 ## Postać kręci się z bronią, a co chwilę rani wszystkich w promieniu.
 func _update_whirl(delta: float) -> void:
 	pivot.rotation += WHIRL_SPIN_SPEED * delta
 	_face_direction(Vector2.from_angle(pivot.rotation))
+	_whirl_fx_time += delta * _skill_speed()
+	_update_whirl_fx(whirl_radius())
 	_whirl_tick -= delta
 	if _whirl_tick > 0.0:
 		return
@@ -1615,6 +1626,39 @@ func _stop_whirl() -> void:
 	sword.position = Vector2.ZERO
 	slash.visible = false
 	slash.scale = Vector2.ONE
+	for fx in _whirl_fx:
+		fx.visible = false
+
+
+## Klatka wiru Młynka (zwykły albo szybki w trakcie wirującego Mgnienia), dopasowana do promienia.
+## Arkusz to jeden rząd klatek; tylna połowa (nad środkiem) stoi za postacią, przednia - przed nią.
+func _update_whirl_fx(radius: float) -> void:
+	if _whirl_fx.is_empty():
+		for front in [false, true]:
+			var fx := Sprite2D.new()
+			fx.centered = false
+			fx.region_enabled = true
+			fx.hframes = WHIRL_FX_FRAMES
+			if front:
+				fx.z_index = 1
+				add_child(fx)
+			else:
+				add_child(fx)
+				move_child(fx, sprite.get_index())
+			_whirl_fx.append(fx)
+	var texture: Texture2D = WHIRL_FX_FAST if sword_skills.is_spin_flickering() else WHIRL_FX
+	var size := Vector2(texture.get_width() / float(WHIRL_FX_FRAMES), texture.get_height())
+	var half := floorf(size.y / 2.0)
+	var scale_factor := radius / WHIRL_FX_RADIUS
+	var frame := int(_whirl_fx_time * WHIRL_FX_FPS) % WHIRL_FX_FRAMES
+	for i in 2:
+		var fx := _whirl_fx[i]
+		fx.texture = texture
+		fx.region_rect = Rect2(0, half if i == 1 else 0.0, texture.get_width(), size.y - half if i == 1 else half)
+		fx.frame = frame
+		fx.scale = Vector2.ONE * scale_factor
+		fx.position = BODY_OFFSET + Vector2(-size.x / 2.0, 0.0 if i == 1 else -half) * scale_factor
+		fx.visible = true
 
 
 func _hint(text: String) -> void:

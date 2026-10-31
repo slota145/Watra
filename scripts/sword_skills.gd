@@ -33,6 +33,11 @@ const FLICKER_SLASH := preload("res://assets/effects/flicker_hit.png")
 const FLICKER_SLASH_ANCHOR := Vector2(43, 16)
 ## Cięcie na celu ukośnie do drogi skoku (losowo w jedną lub drugą stronę), żeby nie zlewało się ze smugą.
 const FLICKER_SLASH_TILT := 0.6
+## Wirujące Mgnienie: mocniejsza smuga (spirala ostrza, więcej linii pędu) i szybszy wir Młynka przez chwilę po skoku.
+const FLICKER_SPIN_TRAIL := preload("res://assets/effects/flicker_spin_trail.png")
+const FLICKER_SPIN_TRAIL_ANCHOR := Vector2(15, 13)
+const FLICKER_SPIN_TRAIL_LENGTH := 70.0
+const SPIN_FX_TIME := 0.35
 const BLOOD_COLOR := Color(0.8, 0.1, 0.1)
 const SPECTRAL_COLOR := Color(0.65, 0.85, 1.0)
 const PERUN_COLOR := Color(1.0, 0.85, 0.35)
@@ -54,6 +59,8 @@ var _flicker_timer := 0.0
 var _whirl_cooldown := 0.0
 var _whirl_cooldown_total := 0.0
 var _whirl_jumps_left := 0
+## Ile jeszcze pokazywać szybki wir Młynka po skoku wirującego Mgnienia (s).
+var _spin_fx_time := 0.0
 var _whirl_jump_timer := 0.0
 var _last_target: Goblin
 ## Ładowanie Dymnych Wybuchów: sekundy ładowania (-1 - nie ładujemy) i ostatni osiągnięty rząd (do błysku).
@@ -109,9 +116,15 @@ func press(id: String) -> void:
 					_spectral_blades()
 
 
+## Czy Młynek ma teraz pokazywać szybszy wir (seria skoków wirującego Mgnienia trwa).
+func is_spin_flickering() -> bool:
+	return _spin_fx_time > 0.0 or _whirl_jumps_left > 0
+
+
 ## Przerwanie (śmierć, zmiana broni).
 func cancel() -> void:
 	_whirl_jumps_left = 0
+	_spin_fx_time = 0.0
 	_stop_smoke_charge()
 	_parry_time = 0.0
 
@@ -133,6 +146,7 @@ func _start_cooldown(id: String, base: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	_whirl_cooldown = maxf(_whirl_cooldown - delta, 0.0)
+	_spin_fx_time = maxf(_spin_fx_time - delta, 0.0)
 	for id: String in _cooldowns:
 		_cooldowns[id][0] = maxf(_cooldowns[id][0] - delta, 0.0)
 	_process_timed(delta)
@@ -239,8 +253,13 @@ func _jump(reach: float, level: int, spinning: bool) -> bool:
 	_player._face_direction(travel)
 	var trail_from := from + Player.BODY_OFFSET
 	var trail := _player.body_center() - trail_from
-	SkillEffects.sheet_once(_player.get_parent(), FLICKER_TRAIL, 7, 16.0, trail_from, FLICKER_TRAIL_ANCHOR,
-			trail.angle(), maxf(0.5, (trail.length() - 8.0) / FLICKER_TRAIL_LENGTH))
+	if spinning:
+		_spin_fx_time = SPIN_FX_TIME
+		SkillEffects.sheet_once(_player.get_parent(), FLICKER_SPIN_TRAIL, 7, 16.0, trail_from, FLICKER_SPIN_TRAIL_ANCHOR,
+				trail.angle(), maxf(0.5, (trail.length() - 8.0) / FLICKER_SPIN_TRAIL_LENGTH))
+	else:
+		SkillEffects.sheet_once(_player.get_parent(), FLICKER_TRAIL, 7, 16.0, trail_from, FLICKER_TRAIL_ANCHOR,
+				trail.angle(), maxf(0.5, (trail.length() - 8.0) / FLICKER_TRAIL_LENGTH))
 	SkillEffects.sheet_once(_player.get_parent(), FLICKER_SLASH, 8, 16.0, best.hurt_center(), FLICKER_SLASH_ANCHOR,
 			travel.angle() + FLICKER_SLASH_TILT * (1.0 if randf() < 0.5 else -1.0))
 	Sfx.play("dash" if spinning else "swing", 0.0, 1.2)
