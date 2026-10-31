@@ -11,13 +11,23 @@ extends Node
 ## - Świeży towar (fresh): surowce zebrane przez podróżników (Traveler, Travelers.tick) trafiają do arkusza jako osobne,
 ##   tańsze oferty sprzedaży z imieniem zbieracza i lekko obniżają cenę; inni podróżnicy szybko je wykupują.
 ## Kupione rzeczy trafiają do plecaka, a gdy jest pełny - do magazynu (albo czekają w zamówieniu do odbioru).
+## Rynek rośnie z liczbą aktywnych podróżników (Travelers.active_count, ranga gildii - size_factor): więcej ofert
+## przedmiotów (listing_target), więcej poziomów cen i większe ilości towarów (book_depth, volume - duże transakcje mniej
+## przesuwają cenę), lepsze przedmioty i więcej kupujących (przedmioty gracza schodzą szybciej). Okazje (oferty tańsze
+## od uczciwej ceny - deal_of) inni podróżnicy wykupują w kilka minut, przepłacone wiszą długo.
 
 signal changed
 
 const TICK := 30.0
 const TAX := 0.1
-const BOOK_DEPTH := 6
-const LISTINGS := 28
+## Liczba ofert przedmiotów i poziomów cen w arkuszu: od najmniejszego rynku (4 podróżników) do największego (40).
+const LISTINGS_RANGE := Vector2i(8, 60)
+const DEPTH_RANGE := Vector2i(4, 10)
+## Ile ofert przedmiotów najwyżej dochodzi w jednej chwili rynku (plus więcej przy dużym rynku).
+const NEW_LISTINGS := 2
+## Oferty przedmiotów: cena względem uczciwej (losowo) i po ilu chwilach rynku stara oferta może zniknąć.
+const PRICE_SPREAD := Vector2(0.75, 1.4)
+const STALE_TICKS := 40
 ## Towary i ich cena bazowa (złoto za sztukę).
 const COMMODITIES := {
 	"wood": 4, "stone": 5, "iron_ore": 14, "meat": 6, "wolf_pelt": 12, "deer_hide": 10, "boar_hide": 14, "goat_hide": 16,
@@ -99,8 +109,8 @@ func book(id: String) -> Dictionary:
 	var names := _names()
 	var sells := []
 	var buys := []
-	var scale := maxf(1.0, 400.0 / maxf(base, 1.0))
-	for i in BOOK_DEPTH:
+	var scale := maxf(1.0, 400.0 / maxf(base, 1.0)) * volume()
+	for i in book_depth():
 		# tanie towary też mają odstęp między kupnem a sprzedażą (co najmniej 1 zł na poziom)
 		var sell_price := maxi(ceili(base * (1.02 + 0.03 * i)), roundi(base) + 1 + i)
 		var buy_price := maxi(1, mini(floori(base * (0.97 - 0.03 * i)), roundi(base) - 1 - i))
@@ -117,6 +127,41 @@ func book(id: String) -> Dictionary:
 	sells.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
 	buys.sort_custom(func(a: Array, b: Array) -> bool: return a[0] > b[0])
 	return {"sell": sells, "buy": buys}
+
+
+# ---------------------------------------------------------------- wielkość rynku
+func traveler_count() -> int:
+	return _player.travelers.active_count() if _player != null else Travelers.RANK_ACTIVE[0]
+
+
+## Wielkość rynku 0..1 (4 podróżników - 0, 40 - 1).
+func size_factor() -> float:
+	var low := float(Travelers.RANK_ACTIVE[0])
+	return clampf((traveler_count() - low) / (float(Travelers.SIZE) - low), 0.0, 1.0)
+
+
+func listing_target() -> int:
+	return roundi(lerpf(LISTINGS_RANGE.x, LISTINGS_RANGE.y, size_factor()))
+
+
+func book_depth() -> int:
+	return roundi(lerpf(DEPTH_RANGE.x, DEPTH_RANGE.y, size_factor()))
+
+
+## Mnożnik ilości w arkuszu ofert (podaż i popyt towarów).
+func volume() -> float:
+	return lerpf(0.5, 2.5, size_factor())
+
+
+## Ilu kupujących: mnożnik szansy, że oferta (okazja albo przedmiot gracza) zostanie kupiona w jednej chwili rynku.
+func demand() -> float:
+	return lerpf(0.6, 1.6, size_factor())
+
+
+## Okazja oferty: o ile taniej od uczciwej ceny (0.2 = 20% taniej, ujemna - drożej).
+static func deal_of(listing: Dictionary) -> float:
+	var fair := float(fair_price(listing["id"]))
+	return 1.0 - float(listing["price"]) / fair
 
 
 func _names() -> Array:
@@ -211,7 +256,7 @@ func _walk(levels: Array, qty: int, factor: float) -> int:
 ## Duże transakcje przesuwają cenę (kupno w górę, sprzedaż w dół).
 func _push(id: String, qty: int, sign: float) -> void:
 	var base := float(COMMODITIES[id])
-	var depth := maxf(1.0, 400.0 / maxf(base, 1.0)) * 20.0
+	var depth := maxf(1.0, 400.0 / maxf(base, 1.0)) * 20.0 * volume()
 	prices[id] = clampf(prices[id] * (1.0 + sign * 0.04 * minf(qty / depth, 3.0)), base * 0.4, base * 3.0)
 	_book_seed += 1
 
@@ -274,32 +319,36 @@ func _deliver(id: String, qty: int) -> int:
 
 # ---------------------------------------------------------------- przedmioty
 ## Oferty przedmiotów od podróżników: broń, zbroje, biżuteria i kamienie na ich poziomach, rzadko legendy.
-func refresh_listings(all := false) -> void:
-	var keep: Array[Dictionary] = []
-	for listing: Dictionary in listings:
-		if listing.get("mine", false) or (not all and randf() < 0.75):
-			keep.append(listing)
-		elif not listing.get("mine", false):
-			Items.generated.erase(listing["id"])
-	listings = keep
+## all - wszystkie oferty podróżników od nowa (do listing_target); inaczej dochodzi najwyżej `limit` nowych.
+func refresh_listings(all := false, limit := 1000) -> void:
+	if all:
+		for listing: Dictionary in listings:
+			if not listing.get("mine", false):
+				Items.generated.erase(listing["id"])
+		listings = listings.filter(func(l: Dictionary) -> bool: return l.get("mine", false))
 	var names := _names()
 	var travelers: Array[Dictionary] = _player.travelers.active() if _player != null else []
-	while listings.filter(func(l: Dictionary) -> bool: return not l.get("mine", false)).size() < LISTINGS:
+	var count := listings.filter(func(l: Dictionary) -> bool: return not l.get("mine", false)).size()
+	var target := listing_target()
+	while count < target and limit > 0:
 		var level := int(travelers.pick_random()["level"]) if not travelers.is_empty() else 10
 		var id := _roll_item(level)
-		listings.append({"id": id, "price": fair_price(id) * randf_range(0.8, 1.4), "seller": names.pick_random(), "mine": false})
-	for listing: Dictionary in listings:
-		listing["price"] = roundi(float(listing["price"]))
+		listings.append({"id": id, "price": roundi(fair_price(id) * randf_range(PRICE_SPREAD.x, PRICE_SPREAD.y)),
+				"seller": names.pick_random(), "mine": false, "age": 0})
+		count += 1
+		limit -= 1
 	changed.emit()
 
 
+## Przedmiot od podróżnika: większy rynek (silniejsi podróżnicy) - częściej rzadkie i legendy.
 func _roll_item(level: int) -> String:
+	var f := size_factor()
 	var roll := randf()
 	if roll < 0.12 and Gems.unlocked:
 		return Gems.roll("", Gems.cut_for_level(level + 6))
-	if roll < 0.16 and level >= 20:
+	if roll < 0.14 + 0.08 * f and level >= 20:
 		return Loot.legendary_at_level(Dungeons.VAULT_LEGENDS.pick_random(), level)
-	return Loot.drop_at_level(level, 0.6, Loot.RARE if randf() < 0.45 else Loot.MAGIC)
+	return Loot.drop_at_level(level, 0.6, Loot.RARE if randf() < 0.35 + 0.35 * f else Loot.MAGIC)
 
 
 ## Uczciwa cena przedmiotu na rynku: z ceny skupu (rzadkie i legendy dużo drożej).
@@ -387,17 +436,28 @@ func tick() -> void:
 		if order["kind"] == "buy" and order["ready"] > 0:
 			order["ready"] = _deliver(order["id"], int(order["ready"]))
 	orders = orders.filter(func(o: Dictionary) -> bool: return o["left"] > 0 or o["ready"] > 0)
-	# przedmioty gracza: im taniej względem uczciwej ceny, tym szybciej się sprzedają
+	# przedmioty gracza: im taniej względem uczciwej ceny i im więcej kupujących, tym szybciej się sprzedają
+	var buyers := demand()
 	for listing: Dictionary in listings.duplicate():
 		if not listing.get("mine", false):
 			continue
 		var ratio := float(listing["price"]) / float(fair_price(listing["id"]))
-		if randf() < clampf(0.5 - (ratio - 1.0) * 0.6, 0.02, 0.9):
+		if randf() < clampf((0.5 - (ratio - 1.0) * 0.6) * buyers, 0.02, 0.95):
 			_player.stats.add_gold(roundi(float(listing["price"]) * (1.0 - TAX)))
 			Items.generated.erase(listing["id"])
 			listings.erase(listing)
-	if randf() < 0.3:
-		refresh_listings()
+	# oferty podróżników: okazje szybko wykupują inni, przepłacone wiszą (stare w końcu znikają)
+	for listing: Dictionary in listings.duplicate():
+		if listing.get("mine", false):
+			continue
+		listing["age"] = int(listing.get("age", 0)) + 1
+		var chance := clampf(0.02 + deal_of(listing) * 1.0, 0.005, 0.85) * buyers
+		if int(listing["age"]) > STALE_TICKS:
+			chance = maxf(chance, 0.15)
+		if randf() < chance:
+			Items.generated.erase(listing["id"])
+			listings.erase(listing)
+	refresh_listings(false, NEW_LISTINGS + roundi(size_factor() * 4.0))
 	changed.emit()
 
 

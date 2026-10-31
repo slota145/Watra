@@ -3,10 +3,17 @@ extends PanelContainer
 ## Rynek gildii (Market) - u pisarza gildii. Zakładki:
 ## - Towary: lista towarów z ceną i zmianą ceny, a dla zaznaczonego arkusz ofert (sprzedaż nad ceną, kupno pod nią),
 ##   kupno / sprzedaż od razu i wystawienie własnego zamówienia po swojej cenie (ilość i cena w polach),
-## - Przedmioty: oferty podróżników (kup) i przedmioty z plecaka do wystawienia,
+## - Przedmioty: oferty podróżników (kup) i przedmioty z plecaka do wystawienia; filtr rodzaju, sortowanie (cena, poziom,
+##   okazja), przełącznik „Dla mnie” (rzeczy do założenia: broń obecnego rodzaju, poziom nie wyższy niż postaci),
+##   przy ofercie - o ile jest taniej / drożej od uczciwej ceny (okazje szybko znikają),
 ## - Moje: zamówienia i wystawione przedmioty gracza (postęp, wycofanie, odbiór kupionych rzeczy).
 
-const LIST_SIZE := Vector2(200, 200)
+const LIST_SIZE := Vector2(250, 200)
+## Filtry rodzaju i sortowanie ofert przedmiotów.
+const FILTERS := [["all", "Wszystko"], ["weapon", "Broń"], ["armor", "Zbroja"], ["jewelry", "Biżuteria"], ["gem", "Kamienie"],
+		["legendary", "Legendy"]]
+const SORTS := [["deal", "Największa okazja"], ["price", "Cena rosnąco"], ["price_desc", "Cena malejąco"], ["level", "Poziom"]]
+const ARMOR_SLOTS := ["helmet", "chest", "gloves", "boots", "belt"]
 const SIDE_WIDTH := 230.0
 const UP := Color(0.55, 1.0, 0.55)
 const DOWN := Color(1.0, 0.5, 0.45)
@@ -22,6 +29,9 @@ var _status: Label
 var _gold: Label
 var _qty: SpinBox
 var _price: SpinBox
+var _filter := "all"
+var _sort := "deal"
+var _for_me := false
 
 
 func _ready() -> void:
@@ -269,22 +279,111 @@ func _result(message: String, done: String) -> void:
 
 
 # ---------------------------------------------------------------- przedmioty
+## Czy oferta pasuje do filtra rodzaju i przełącznika „Dla mnie”.
+func matches(id: String, filter: String, for_me: bool) -> bool:
+	var data := Items.get_data(id)
+	var slot: String = data.get("slot", "")
+	var ok := true
+	match filter:
+		"weapon":
+			ok = slot == "weapon"
+		"armor":
+			ok = slot in ARMOR_SLOTS
+		"jewelry":
+			ok = slot in ["ring", "earring", "necklace"]
+		"gem":
+			ok = Gems.is_gem(id) or Essences.is_essence(id)
+		"legendary":
+			ok = data.get("rarity", "") == "legendary"
+	if ok and for_me:
+		ok = Items.is_equippable(id) and Items.item_level(id) <= _player.stats.level \
+				and (slot != "weapon" or data.get("weapon", {}).get("type", "") == _player.stats.weapon_type())
+	return ok
+
+
+## Oferty podróżników po filtrze i sortowaniu.
+func shown_listings() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for listing: Dictionary in _player.market.listings:
+		if not listing.get("mine", false) and matches(listing["id"], _filter, _for_me):
+			result.append(listing)
+	match _sort:
+		"deal":
+			result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return Market.deal_of(a) > Market.deal_of(b))
+		"price":
+			result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a["price"]) < int(b["price"]))
+		"price_desc":
+			result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a["price"]) > int(b["price"]))
+		"level":
+			result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return Items.item_level(a["id"]) > Items.item_level(b["id"]))
+	return result
+
+
+func _option(entries: Array, current: String, on_pick: Callable) -> OptionButton:
+	var option := OptionButton.new()
+	option.focus_mode = Control.FOCUS_NONE
+	option.add_theme_font_size_override("font_size", 7)
+	for i in entries.size():
+		option.add_item(entries[i][1], i)
+		if entries[i][0] == current:
+			option.select(i)
+	option.item_selected.connect(func(index: int) -> void:
+		on_pick.call(entries[index][0])
+		Sfx.play("ui_click")
+		_refresh())
+	return option
+
+
 func _build_items() -> void:
 	var market := _player.market
-	_list.add_child(UiStyle.label("Oferty podróżników", 8, UiStyle.TITLE_COLOR))
-	for i in market.listings.size():
-		var listing: Dictionary = market.listings[i]
-		if listing.get("mine", false):
-			continue
+	var all_count := market.listings.filter(func(l: Dictionary) -> bool: return not l.get("mine", false)).size()
+	var shown := shown_listings()
+	var head := UiStyle.label("Oferty podróżników: %d/%d (podróżników: %d)" % [shown.size(), all_count, market.traveler_count()], 8, UiStyle.TITLE_COLOR)
+	head.tooltip_text = "Im więcej podróżników w gildii, tym więcej ofert i lepsze przedmioty. Okazje szybko wykupują inni!"
+	head.mouse_filter = Control.MOUSE_FILTER_STOP
+	_list.add_child(head)
+	var controls := HBoxContainer.new()
+	controls.add_theme_constant_override("separation", 2)
+	controls.add_child(_option(FILTERS, _filter, func(value: String) -> void: _filter = value))
+	controls.add_child(_option(SORTS, _sort, func(value: String) -> void: _sort = value))
+	var mine := CheckBox.new()
+	mine.text = "Dla mnie"
+	mine.focus_mode = Control.FOCUS_NONE
+	mine.add_theme_font_size_override("font_size", 7)
+	mine.button_pressed = _for_me
+	mine.tooltip_text = "Tylko rzeczy, które możesz założyć: broń twojego obecnego rodzaju, poziom nie wyższy niż twój."
+	mine.toggled.connect(func(on: bool) -> void:
+		_for_me = on
+		Sfx.play("ui_click")
+		_refresh())
+	controls.add_child(mine)
+	_list.add_child(controls)
+	if shown.is_empty():
+		_list.add_child(UiStyle.label("Brak ofert - zmień filtr albo zajrzyj później.", 7, UiStyle.DIM_COLOR))
+	for listing: Dictionary in shown:
 		var id: String = listing["id"]
 		var line := HBoxContainer.new()
 		line.add_theme_constant_override("separation", 2)
-		var row := _icon_row(id, "%s - %d zł" % [Items.get_data(id)["name"], listing["price"]], Items.rarity_color(id), func() -> void: pass)
-		row.custom_minimum_size.x = LIST_SIZE.x - 44.0
+		var row := _icon_row(id, Items.get_data(id)["name"], Items.rarity_color(id), func() -> void: pass)
+		row.custom_minimum_size.x = LIST_SIZE.x - 120.0
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.clip_text = true
 		row.toggle_mode = false
-		row.tooltip_text = "%s\n\nSprzedaje: %s" % [Items.describe(id), listing["seller"]]
+		row.tooltip_text = "%s\n\nSprzedaje: %s\nUczciwa cena: ok. %d zł" % [Items.describe(id), listing["seller"], Market.fair_price(id)]
 		UiStyle.rich_tooltip(row)
 		line.add_child(row)
+		var price := UiStyle.label("%d zł" % listing["price"], 7, Color(1.0, 0.85, 0.3))
+		price.custom_minimum_size.x = 40
+		price.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		line.add_child(price)
+		var deal := Market.deal_of(listing)
+		var tag := UiStyle.label("%+d%%" % -roundi(deal * 100.0), 7, UP if deal >= 0.1 else DOWN if deal <= -0.1 else UiStyle.DIM_COLOR)
+		tag.custom_minimum_size.x = 26
+		tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		tag.tooltip_text = "Okazja! Taniej o %d%% od uczciwej ceny - szybko zniknie." % roundi(deal * 100.0) if deal >= 0.1 \
+				else "Cena względem uczciwej wartości."
+		tag.mouse_filter = Control.MOUSE_FILTER_STOP
+		line.add_child(tag)
 		var buy := _button("Kup", func() -> void: _result(market.buy_listing(market.listings.find(listing)), "Kupiono: %s" % Items.get_data(id)["name"]))
 		buy.disabled = _player.stats.gold < int(listing["price"])
 		line.add_child(buy)
