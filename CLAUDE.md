@@ -259,6 +259,11 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     - kilka szlifów (lepszy szlif - mocniejsze premie), trzy kamienie tego samego szlifu kowal łączy w lepszy;
     - w końcówce gry (lochy) **lepsze kamienie**, np. z szansą na dodatkową premię;
     - na co dzień gniazdo trzyma kamień szlachetny, a esencję zamiast niego.
+  - **Gniazda w drzewkach broni** (pomysł autora, jak „jewel sockets” w PoE): w każdym drzewku 2-3 węzły-gniazda
+    (`SkillTree`, na końcach gałęzi albo przy węzłach kluczowych), wybierane za punkt umiejętności; wkłada się w nie
+    kamień szlachetny, który działa tylko z bronią tego drzewka. Wyjęty kamień wraca do plecaka, a zapomnienie drzewka
+    u mędrca zwraca kamienie. W końcówce gry specjalne kamienie tylko do drzewka, np. wzmacniające węzły pasywne
+    w swoim promieniu (jak „radius jewels”).
 - [ ] Nowe bronie: kosa, kostur (nekromanta), młoty, chainblade'y, sztylety, włócznie, rapier, hydrosfera.
   Każda broń to nowy rodzaj z własnym drzewkiem, a nie tylko nowy przedmiot, więc wymaga szczegółów od autora.
 
