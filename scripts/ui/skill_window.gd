@@ -169,10 +169,19 @@ func _make_tree_page(weapon_type: String) -> VBoxContainer:
 	unsocket.text = "Wyjmij kamień"
 	unsocket.pressed.connect(_unsocket.bind(weapon_type))
 	column.add_child(unsocket)
+	var destroy := Button.new()
+	destroy.focus_mode = Control.FOCUS_NONE
+	destroy.add_theme_font_size_override("font_size", 8)
+	destroy.text = "Zniszcz esencję"
+	destroy.pressed.connect(func() -> void:
+		_player.skills.destroy_essence(weapon_type, _trees[weapon_type]["view"].selected_id)
+		Sfx.play("ui_click")
+		_show_socket_result("", "Esencja rozwiała się."))
+	column.add_child(destroy)
 	view.selected.connect(func(_id: String) -> void: _refresh())
 	view.gem_dropped.connect(_show_socket_result)
 	_trees[weapon_type] = {"view": view, "points": points, "info": info, "take": take, "upgrade": upgrade,
-			"gems": gems, "unsocket": unsocket}
+			"gems": gems, "unsocket": unsocket, "destroy": destroy}
 	return page
 
 
@@ -194,9 +203,10 @@ func _socket(weapon_type: String, index: int) -> void:
 
 func _unsocket(weapon_type: String) -> void:
 	var view: SkillTreeView = _trees[weapon_type]["view"]
-	var message := _player.skills.unsocket_to(_player.inventory, weapon_type, view.selected_id)
+	var essence := _player.skills.gem_in(weapon_type, view.selected_id).has("essence")
+	var message := _player.skills.unsocket_to(_player.inventory, weapon_type, view.selected_id, _player.stats)
 	Sfx.play("ui_error" if message != "" else "pickup")
-	_show_socket_result(message, "Kamień wrócił do plecaka.")
+	_show_socket_result(message, "Esencja wróciła do plecaka." if essence else "Kamień wrócił do plecaka.")
 
 
 func _show_socket_result(message: String, done := "Kamień osadzony w gnieździe.") -> void:
@@ -222,11 +232,18 @@ func _refresh_tree(weapon_type: String) -> void:
 	var upgrade: Button = parts["upgrade"]
 	var gems: GridContainer = parts["gems"]
 	var unsocket: Button = parts["unsocket"]
+	var destroy: Button = parts["destroy"]
 	for child in gems.get_children():
 		gems.remove_child(child)
 		child.queue_free()
 	var id := view.selected_id
-	unsocket.visible = id != "" and not book.gem_in(weapon_type, id).is_empty()
+	var held := book.gem_in(weapon_type, id) if id != "" else {}
+	unsocket.visible = not held.is_empty()
+	destroy.visible = held.has("essence")
+	if held.has("essence"):
+		unsocket.text = "Wyjmij esencję (%d zł)" % Essences.save_gold(book.character_level)
+	else:
+		unsocket.text = "Wyjmij kamień"
 	gems.visible = id != "" and book.can_socket(weapon_type, id)
 	if id == "":
 		take.visible = false
@@ -235,7 +252,8 @@ func _refresh_tree(weapon_type: String) -> void:
 	if gems.visible:
 		for index in _player.inventory.slots.size():
 			var slot: Dictionary = _player.inventory.slots[index]
-			if slot.is_empty() or not Gems.is_gem(slot["id"]):
+			var essence := not slot.is_empty() and Essences.is_essence(slot["id"])
+			if slot.is_empty() or not (Gems.is_gem(slot["id"]) or (essence and book.is_legendary_socket(weapon_type, id))):
 				continue
 			var put := Button.new()
 			put.focus_mode = Control.FOCUS_NONE

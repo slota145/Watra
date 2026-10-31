@@ -220,6 +220,9 @@ static func reward(dungeon_tier: int, factor: float) -> Array:
 	result.append(["blessed_stone", maxi(1, roundi((6 + 4 * dungeon_tier) * factor))])
 	if dungeon_tier >= 2:
 		result.append(["mercy_stone", maxi(1, roundi((1 + dungeon_tier) * factor))])
+	# Serce Kryształu (gniazda esencji u kowala) od 3. stopnia
+	if dungeon_tier >= Essences.HEART_MIN_TIER and randf() < (Essences.HEART_CHANCE + Essences.HEART_PER_TIER * (dungeon_tier - Essences.HEART_MIN_TIER)) * factor:
+		result.append([Essences.HEART, 1 + (1 if dungeon_tier >= 6 and randf() < 0.5 else 0)])
 	if randf() < (Gems.RADIUS_CRYSTAL_CHANCE + Gems.RADIUS_CRYSTAL_PER_TIER * dungeon_tier) * factor:
 		result.append([Gems.roll_radius(dungeon_tier), 1])
 	return result

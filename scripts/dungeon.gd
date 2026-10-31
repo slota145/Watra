@@ -22,6 +22,8 @@ const WANG := {"llll": Vector2i(2, 2), "lllu": Vector2i(3, 2), "lluu": Vector2i(
 ## Lico ściany blokuje trochę niżej niż do połowy komórki - postać staje u jego stóp.
 const FACE_DEPTH := 40.0
 const PORTAL := preload("res://assets/village/watra.png")
+const ALTAR := preload("res://assets/dungeons/veles_altar.png")
+const NPC_SCENE := preload("res://scenes/npc.tscn")
 const CHEST := preload("res://assets/village/chest.png")
 const PORTAL_FPS := 7.0
 ## Ile potworów na wierzchołek podłogi komnaty i jak duże są gromady.
@@ -42,6 +44,11 @@ var boss_room := Rect2i()
 var event_room := Rect2i()
 var event := ""
 var crystal: WatraCrystal
+## Ołtarz Welesa (Essences): ukryta komnata poza listą komnat - bez potworów i pochodni (pusta - brak ołtarza).
+var altar_room := Rect2i()
+var altar: Npc
+var _altar_sprite: Sprite2D
+var _altar_glow: Sprite2D
 var _corridors: Array[PackedVector2Array] = []
 var _rng := RandomNumberGenerator.new()
 var _portals: Array[Dictionary] = []
@@ -70,6 +77,7 @@ func generate(world, settings: Dictionary) -> void:
 	for key in ["health", "damage", "xp", "gold", "loot"]:
 		Goblin.dungeon_mods[key] = Dungeons.multiplier(mods, key)
 	_plan_rooms()
+	_plan_altar()
 	_connect_rooms()
 	_fix_corners()
 	_pick_rooms()
@@ -84,6 +92,7 @@ func generate(world, settings: Dictionary) -> void:
 	_populate(Dungeons.multiplier(mods, "count"))
 	_build_vault()
 	_build_event()
+	_build_altar()
 	Goblin.pathing = self
 
 
@@ -103,6 +112,64 @@ func _plan_rooms() -> void:
 		for x in range(room.position.x, room.end.x):
 			for y in range(room.position.y, room.end.y):
 				floor_cells[Vector2i(x, y)] = true
+
+
+## Ołtarz Welesa: rzadko (Essences.ALTAR_CHANCE, w trybie deweloperskim albo z "altar" w ustawieniach zawsze)
+## mała komnata w wolnym miejscu mapy, połączona wąskim przejściem z najbliższą komnatą.
+func _plan_altar() -> void:
+	var wanted: bool = config.get("altar", Game.dev_mode or _rng.randf() < Essences.ALTAR_CHANCE)
+	if not wanted:
+		return
+	for tries in 1200:
+		var size := Vector2i(4, 4)
+		var pos := Vector2i(_rng.randi_range(2, GRID.x - size.x - 3), _rng.randi_range(2, GRID.y - size.y - 3))
+		var room := Rect2i(pos, size)
+		# odstęp od komnat: najpierw 2 wierzchołki, przy ciasnym lochu - 1
+		var gap := 2 if tries < 800 else 1
+		if rooms.any(func(other: Rect2i) -> bool: return other.grow(gap).intersects(room)):
+			continue
+		altar_room = room
+		for x in range(room.position.x, room.end.x):
+			for y in range(room.position.y, room.end.y):
+				floor_cells[Vector2i(x, y)] = true
+		var center := room.position + room.size / 2
+		var nearest := rooms[0]
+		for other in rooms:
+			if Vector2(other.get_center() - center).length() < Vector2(nearest.get_center() - center).length():
+				nearest = other
+		_dig(center, nearest.position + nearest.size / 2)
+		_corridors.pop_back()  # w przejściu do ołtarza nie stoją potwory
+		return
+
+
+func _build_altar() -> void:
+	if altar_room == Rect2i():
+		return
+	var pos := Vector2(altar_room.get_center()) * CELL + Vector2(0, CELL * 0.4)
+	_altar_sprite = w._village_prop(ALTAR, pos, Vector2(70, 26))
+	_altar_glow = _glow(pos + Vector2(0, -30), Color(0.35, 1.0, 0.45, 0.55), Vector2(220, 160))
+	altar = NPC_SCENE.instantiate()
+	altar.position = pos + Vector2(0, 26)
+	altar.role = Npc.Role.IDLE
+	altar.looks_around = false
+	altar.display_name = "Ołtarz Welesa"
+	altar.services.assign(["altar"])
+	w.entities.add_child(altar)
+	altar.get_node("Sprite").visible = false
+	altar.get_node("Shadow").visible = false
+	altar.prompt.text = "[F] Ołtarz Welesa"
+	w.hud.essence_window.altar_used.connect(_spend_altar)
+
+
+## Ołtarz przyjął ofiarę: gaśnie i nie da się go już użyć.
+func _spend_altar() -> void:
+	if altar == null or not is_instance_valid(altar):
+		return
+	altar.services.assign([])
+	altar.remove_from_group("interactables")
+	altar.prompt.visible = false
+	_altar_sprite.modulate = Color(0.55, 0.55, 0.6)
+	_altar_glow.visible = false
 
 
 ## Korytarze szerokości 2 wierzchołków: drzewo rozpinające komnat (najkrótsze połączenia) i dwie dodatkowe pętle.
@@ -508,6 +575,8 @@ func _on_boss_died(_boss_node: Goblin = null) -> void:
 		if _rng.randf() < 0.5 + chances[1] * 4.0:
 			_drop(at, Enchanting.stone_id(category, _rng.randf() < chances[1] * 6.0), roundi(_rng.randi_range(1, 2) * treasure))
 	_drop(at, "blessed_stone", roundi(_rng.randi_range(1, 3) * treasure))
+	if int(config.get("tier", 1)) >= Essences.HEART_MIN_TIER and _rng.randf() < Essences.HEART_VAULT_CHANCE * treasure:
+		_drop(at, Essences.HEART, 1)
 	if _rng.randf() < Gems.RADIUS_VAULT_CHANCE * treasure:
 		_drop(at, Gems.roll_radius(int(config.get("tier", 1))), 1)
 	if _rng.randf() < Dungeons.VAULT_LEGEND_CHANCE * treasure:
