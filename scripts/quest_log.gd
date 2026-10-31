@@ -18,6 +18,9 @@ var bounty_defs := {}
 var events := {}
 var bounties_done := 0
 var _bounty_serial := 0
+## Oferty wiszące na tablicy ogłoszeń (Bounties.generate) i czas (unix) ostatniego odświeżenia.
+var board_offers: Array[Dictionary] = []
+var board_time := 0
 
 
 func state_of(id: String) -> String:
@@ -154,21 +157,40 @@ func toggle_track(id: String) -> bool:
 
 func get_save_data() -> Dictionary:
 	return {"states": states.duplicate(), "progress": progress.duplicate(), "tracked": tracked.duplicate(), "events": events.duplicate(),
-			"bounties": {"defs": bounty_defs.duplicate(true), "done": bounties_done, "serial": _bounty_serial}}
+			"bounties": {"defs": bounty_defs.duplicate(true), "done": bounties_done, "serial": _bounty_serial,
+					"offers": board_offers.duplicate(true), "time": board_time}}
 
 
 # ---------------------------------------------------------------- zlecenia z tablicy
-## Przyjęte (w toku albo do odebrania) zlecenie - "" gdy żadnego.
-func active_bounty() -> String:
+## Przyjęte (w toku albo do odebrania) zlecenia.
+func active_bounties() -> Array[String]:
+	var result: Array[String] = []
 	for id: String in bounty_defs:
 		if state_of(id) in [Quests.STATE_ACTIVE, Quests.STATE_READY]:
-			return id
-	return ""
+			result.append(id)
+	return result
+
+
+## Pierwsze przyjęte zlecenie ("" - brak).
+func active_bounty() -> String:
+	var list := active_bounties()
+	return list[0] if not list.is_empty() else ""
+
+
+## Oferty na tablicy: nowe, gdy minęło Bounties.REFRESH sekund albo tablica jest pusta (liczba wg rangi gildii).
+func refresh_board(player: Player, force := false) -> void:
+	var now := int(Time.get_unix_time_from_system())
+	if not force and not board_offers.is_empty() and now - board_time < Bounties.REFRESH:
+		return
+	board_offers = Bounties.generate(player, Bounties.offer_count(maxi(player.travelers.guild_rank, 1)), bounties_done)
+	board_time = now
+	changed.emit()
 
 
 func take_bounty(definition: Dictionary) -> String:
-	if active_bounty() != "":
+	if active_bounties().size() >= Bounties.MAX_ACTIVE:
 		return ""
+	board_offers.erase(definition)
 	_bounty_serial += 1
 	var id := "bounty_%d" % _bounty_serial
 	bounty_defs[id] = definition
@@ -180,8 +202,22 @@ func take_bounty(definition: Dictionary) -> String:
 ## Odbiór nagrody za zlecenie: złoto i exp (turn_in), przedmioty do plecaka (nadmiar do magazynu).
 func finish_bounty(id: String, player: Player) -> bool:
 	var definition: Dictionary = bounty_defs.get(id, {})
-	if definition.is_empty() or not turn_in(id, player.stats):
+	if definition.is_empty() or state_of(id) != Quests.STATE_READY:
 		return false
+	# zamówienie surowców: oddajemy je zleceniodawcy (po wypłacie - zabranie surowców cofnęłoby stan zlecenia)
+	var needed: Dictionary = Quests.requirements(id) if definition.get("type", "") == "gather" else {}
+	for item: String in needed:
+		if player.count_owned(item) < int(needed[item]):
+			return false
+	if not turn_in(id, player.stats):
+		return false
+	for item: String in needed:
+		player.take_owned(item, int(needed[item]))
+	player.travelers.guild_fame += int(definition.get("fame", 0))
+	if Bounties.gem_bonus(definition):
+		var gem := Gems.roll("", Gems.cut_for_level(Levels.ZONES.get(definition.get("zone", "forest"), [1, 7])[1] + 4))
+		if player.inventory.add_item(gem, 1) > 0:
+			player.storage.add_item(gem, 1)
 	for item: String in definition["reward_items"]:
 		var left := player.inventory.add_item(item, int(definition["reward_items"][item]))
 		if left > 0:
@@ -195,6 +231,15 @@ func finish_bounty(id: String, player: Player) -> bool:
 func abandon_bounty(id: String) -> void:
 	_forget_bounty(id)
 	changed.emit()
+
+
+func _fix_bounty(definition: Dictionary) -> void:
+	for key in ["count", "gold", "xp", "fame"]:
+		if definition.has(key):
+			definition[key] = int(definition[key])
+	var items: Dictionary = definition.get("reward_items", {})
+	for item: String in items:
+		items[item] = int(items[item])
 
 
 func _forget_bounty(id: String) -> void:
@@ -220,13 +265,13 @@ func load_save_data(data: Dictionary) -> void:
 	_bounty_serial = int(bounties.get("serial", 0))
 	for id: String in bounty_defs:
 		# JSON wczytuje liczby jako float - przywracamy całkowite
-		var definition: Dictionary = bounty_defs[id]
-		for key in ["count", "gold", "xp"]:
-			definition[key] = int(definition[key])
-		var items: Dictionary = definition["reward_items"]
-		for item: String in items:
-			items[item] = int(items[item])
-		Quests.dynamic[id] = definition
+		_fix_bounty(bounty_defs[id])
+		Quests.dynamic[id] = bounty_defs[id]
+	board_offers.clear()
+	for offer: Dictionary in bounties.get("offers", []):
+		_fix_bounty(offer)
+		board_offers.append(offer)
+	board_time = int(bounties.get("time", 0))
 	for id: String in data.get("states", {}):
 		if not Quests.get_data(id).is_empty():
 			states[id] = str(data["states"][id])

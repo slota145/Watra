@@ -369,7 +369,6 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
 ### Gildia i świat jak w MMO
 
 Oba systemy zależą od gildii poszukiwaczy przygód w Ostoi (budowla `guild` w `scripts/settlement.gd`, tablica ogłoszeń w `scripts/bounties.gd` i `scripts/ui/board_window.gd`).
-Dziś tablica ma tylko zlecenia na wilki i gobliny w Goblińskim Lesie (komentarze w `settlement.gd` mówiące, że tablica „funkcje dostanie później”, są już nieaktualne).
 
 - [x] **Inni podróżnicy** (`scripts/travelers.gd` - spis i życie w czasie, dziecko gracza; `scripts/traveler.gd` - postać
   w świecie, `World._sync_travelers`): 40 poszukiwaczy przygód ze słowiańskimi imionami, wyglądem (arkusze NPC), bronią,
@@ -392,7 +391,27 @@ Dziś tablica ma tylko zlecenia na wilki i gobliny w Goblińskim Lesie (komentar
   `QuestLog.note_event`. Nagrody: złoto, doświadczenie, przedmioty i punkty umiejętności (`SkillBook.bonus_points`).
   Lochy Watry otwiera krok „Płomień Watry” (`MainQuests.dungeons_unlocked`); starsze zapisy zaliczają po wczytaniu
   kroki z już spełnionym warunkiem (`QuestLog.catch_up_main`, bez nagród).
-- [ ] Więcej rodzajów zleceń na tablicy (inne krainy, bossowie, zbieranie surowców), powiązanych z podróżnikami.
+- [x] **Więcej zleceń na tablicy** (`scripts/bounties.gd`, okno `scripts/ui/board_window.gd`): oferty wystawiają
+  podróżnicy i mieszkańcy - potwory, bossowie (cel „boss:<nazwa sceny>”) i surowce/trofea (oddawane przy odbiorze)
+  w odkrytych krainach (kapliczki) niewiele powyżej poziomu gracza; 4-8 ofert (wg rangi gildii), odświeżane co 10 minut,
+  najwyżej 3 przyjęte. Nagrody: złoto, doświadczenie, przedmioty, kamień szlachetny i **sława gildii**
+  (`Travelers.guild_fame`). Gildia ma **6 rang** (14, 21, 27, 32, 36, 40 aktywnych podróżników) - kolejne wymagają sławy
+  oraz złota i surowców.
+- [ ] **Drużyny z podróżnikami** (pomysł autora): przy spocie z łowcami gracz dostaje zaproszenie do drużyny - wspólna
+  walka i doświadczenie; po odmowie drużyna przenosi się na inny spot. Niektórzy proszą o pomoc przy konkretnym
+  spocie (zadanie z drużyną: zabić N potworów, pokonać bossa, zebrać materiały - potem nagroda i podziękowanie).
+  Napotkani podróżnicy pozdrawiają, zagadują i dają wskazówki o krainie (np. przy bagnach wodnika: „uważaj na utopce,
+  lubią wyskakiwać z wody tuż przed twarzą”).
+- [ ] **Tryby symulacji świata** (pomysł autora, wybór przy nowej grze / w ustawieniach) i **charaktery podróżników**:
+  spokojny (tylko zaproszenia do drużyny, po odmowie odchodzą), realistyczny (niektórzy wyzywają na pojedynek, po
+  odmowie polują dalej), hardcorowy (dodatkowo niektórzy atakują bez ostrzeżenia - PK).
+- [ ] Podróżnicy zbierają surowce (drzewa, rudy, zioła) - z limitem, żeby mapa nie była łysa.
+- [ ] Rynek: liczba ofert i przedmiotów rośnie z liczbą podróżników, a najkorzystniejsze oferty szybko znikają
+  wykupione przez innych.
+- [ ] **Rzemiosło statystyk przedmiotów** (pomysł autora, jak waluta w PoE): usuwanie niechcianych premii, dodawanie
+  nowych, przerzut wartości - jako ujście materiałów.
+- [ ] **Druga Watra** (pomysł autora, późna gra): odnaleziona druga Watra i wielki system budowy nowego schronienia
+  wokół niej - duże ujście surowców.
 
 ### Świat
 

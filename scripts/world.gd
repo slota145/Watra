@@ -1242,6 +1242,9 @@ func _on_goblin_died(goblin: Goblin, spawn: Dictionary) -> void:
 	if goblin.quest_kind != "animal":
 		hud.on_enemy_killed(goblin)
 	player.quests.on_enemy_killed(goblin.quest_kind)
+	# zlecenia z tablicy na bossów ("boss:<nazwa sceny>")
+	if goblin is Boss:
+		player.quests.on_enemy_killed("boss:" + Codex.monster_id(goblin))
 	player.codex.note_kill(goblin)
 	# w lochu nic się nie odradza
 	if zone != Zones.DUNGEON:
