@@ -128,6 +128,16 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   Przy zwiększaniu liczebności sprawdź wydajność (`tests/bench_combat.gd`, `tests/playtest_bot.gd`).
   Potwory w spoczynku, które się nie ruszają, pomijają `move_and_slide` (`scripts/goblin.gd`), żeby setki stojących potworów mało kosztowały.
 
+### Postacie i narzędzia
+
+- [x] Broń w ręku bokiem celuje przed postać (`tools/hero_sheets.py` odbija kąt znacznika trzymanego za plecami - Mira),
+  pojedyncze klatki z bronią obróconą w drugą stronę dostają kąt pozostałych (Bogdan idący na północ).
+- [x] Drzewa ścina mała siekiera (`assets/weapons/hatchet.png`, `tools/settlement_art.py`) zamiast topora bojowego;
+  kilof ma szpice zagięte w stronę trzonka.
+- [x] Łuki legendarne (Hydry, Burzy, Swaroga) cięciwą do postaci - `tools/pixellab_items.py` (`_bow_reversed`) odbija odwrócone.
+- [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
+  więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
+
 ### Gobliński Las i Prastary Las (`scripts/world.gd`, `scripts/ancient_forest.gd`)
 
 - [x] Gobliński Las: więcej grupek goblinów w lesie i większe siedlisko wilków - około 450 potworów (było około 340);
@@ -397,10 +407,12 @@ Oba systemy zależą od gildii poszukiwaczy przygód w Ostoi (budowla `guild` w 
   kamienie szlachetne, czasem legendy) i wystawianie własnych.
 - [x] **Zadania główne** (`scripts/main_quests.gd`, żerca Wszebor przy Watrze - postać z PixelLab przez `tools/npc_sheets.py`):
   łańcuch 23 kroków przez wszystkie krainy (bossowie, kapliczki) i mechaniki (budowa, zielarstwo, drzewka,
-  encyklopedia, Watra, lochy, Kryształ Watry, klejnoty, zaklinanie, esencje); niebieskie „!” i „?” nad postaciami,
-  niebieski tytuł w rozmowie, dzienniku i pod minimapą (zawsze śledzone). Krok daje `giver`, nagrodę wydaje
-  `receiver`; warunek `check` sprawdzany co pół sekundy (`QuestLog.update_main`), zdarzenia przez
-  `QuestLog.note_event`. Nagrody: złoto, doświadczenie, przedmioty i punkty umiejętności (`SkillBook.bonus_points`).
+  encyklopedia, Watra, lochy, Kryształ Watry, klejnoty, zaklinanie, esencje); złote „!” i „?” nad postaciami,
+  złoty tytuł w rozmowie, dzienniku i pod minimapą (zawsze śledzone); zadania poboczne mają znaczniki niebieskie.
+  Krok daje `giver`, nagrodę wydaje `receiver`; warunek `check` sprawdzany co pół sekundy (`QuestLog.update_main`),
+  zdarzenia przez `QuestLog.note_event`. Krok z warunkiem ["quest", id] (np. „Ręce do pracy”, „Szlachetny kamień”)
+  sam przyjmuje zadanie poboczne (`MainQuests.linked_quest`), pokazuje jego postęp (`MainQuests.progress_text`),
+  a postać daje je do oddania przed krokiem. Nagrody: złoto, doświadczenie, przedmioty i punkty umiejętności (`SkillBook.bonus_points`).
   Lochy Watry otwiera krok „Płomień Watry” (`MainQuests.dungeons_unlocked`); starsze zapisy zaliczają po wczytaniu
   kroki z już spełnionym warunkiem (`QuestLog.catch_up_main`, bez nagród).
 - [x] **Więcej zleceń na tablicy** (`scripts/bounties.gd`, okno `scripts/ui/board_window.gd`): oferty wystawiają

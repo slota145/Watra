@@ -90,7 +90,23 @@ def held_sprite(icon, held, kind):
     else:
         length = img.width
     sprite = _outline(_crop(_shrink(img, held["length"] * HELD_DENSITY / length)))
+    if held["grip"] == "bow" and _bow_reversed(sprite):
+        sprite = sprite.transpose(Image.FLIP_LEFT_RIGHT)
     return sprite, _grip(sprite, held["grip"])
+
+
+def _bow_reversed(img):
+    """Łuk cięciwą w prawo (do celu)? Prawidłowo cięciwa jest po lewej (przy postaci), a środek łuczyska
+    wygina się w prawo - środkowe wiersze leżą wtedy dalej w prawo niż końce ramion."""
+    alpha = img.split()[3].load()
+
+    def mean_x(y0, y1):
+        xs = [x for y in range(y0, y1) for x in range(img.width) if alpha[x, y]]
+        return sum(xs) / max(len(xs), 1)
+
+    h = img.height
+    ends = (mean_x(0, h // 6) + mean_x(h - h // 6, h)) / 2.0
+    return mean_x(h // 3, 2 * h // 3) < ends
 
 
 def _grip(img, rule):

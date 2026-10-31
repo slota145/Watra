@@ -1,6 +1,6 @@
-extends SceneTree
+﻿extends SceneTree
 ## Zadania główne (MainQuests): dane łańcucha (postacie, potwory, kapliczki, nagrody), żerca Wszebor przy Watrze
-## z niebieskim "!", przyjęcie i oddanie kroku u innej postaci (rozmowa), warunki (inne zadanie, zdarzenie),
+## ze złotym "!", przyjęcie i oddanie kroku u innej postaci (rozmowa), warunki (inne zadanie, zdarzenie),
 ## nagrody (przedmioty, punkty umiejętności), blokada lochów do „Płomienia Watry”, zaliczanie kroków w starszych
 ## zapisach, zapis zdarzeń i punktów.
 
@@ -63,9 +63,9 @@ func _process(_d: float) -> bool:
 		if c[0] == "shrine" and not Zones.SHRINES.has(c[1]):
 			bad.append(id + ":" + c[1])
 	check("łańcuch: %d kroków, dane poprawne" % Main.CHAIN.size(), bad.is_empty() and Main.CHAIN.size() >= 20, str(bad))
-	# żerca przy Watrze z niebieskim "!"
+	# żerca przy Watrze ze złotym "!"
 	var zerca = _npc("Żerca Wszebor")
-	check("żerca w Ostoi z niebieskim !", zerca != null and zerca._quest_marker != null and zerca._quest_marker.visible
+	check("żerca w Ostoi ze złotym !", zerca != null and zerca._quest_marker != null and zerca._quest_marker.visible
 			and zerca._quest_marker.text == "!" and zerca._quest_marker.get_theme_color("font_color") == Main.COLOR)
 	check("lochy zamknięte", not Main.dungeons_unlocked(p.quests))
 	# przyjęcie u żercy, oddanie u sołtysa
@@ -77,7 +77,7 @@ func _process(_d: float) -> bool:
 	var soltys = _npc("Sołtys Mirosław")
 	zerca._update_quest_marker(0.0)
 	soltys._update_quest_marker(0.0)
-	check("niebieski ? nad sołtysem", soltys._quest_marker.visible and soltys._quest_marker.text == "?"
+	check("złoty ? nad sołtysem", soltys._quest_marker.visible and soltys._quest_marker.text == "?"
 			and soltys._quest_marker.get_theme_color("font_color") == Main.COLOR)
 	dialog.close()
 	var gold: int = p.stats.gold
@@ -86,9 +86,21 @@ func _process(_d: float) -> bool:
 	check("nagroda u sołtysa", p.quests.state_of("main_ember") == "done" and p.stats.gold == gold + 50)
 	check("następny krok u sołtysa", Main.current(p.quests) == "main_village" and dialog._shown_quest == "main_village")
 	dialog._accept()
-	p.quests.states["village_help"] = "done"
+	check("krok przyjmuje zadanie poboczne", p.quests.state_of("village_help") == "active")
+	check("postęp kroku: surowce", Main.progress_text(p, "main_village").contains("0/30"), Main.progress_text(p, "main_village"))
+	p.inventory.add_item("wood", 30)
+	p.inventory.add_item("stone", 20)
+	p._update_gather_quests()
 	p.quests.update_main(p)
-	check("warunek: inne zadanie", p.quests.state_of("main_village") == "ready")
+	check("postęp kroku po zebraniu", p.quests.state_of("village_help") == "ready"
+			and p.quests.state_of("main_village") == "active" and dialog._shown_quest == "village_help", dialog._shown_quest)
+	soltys._update_quest_marker(0.0)
+	check("jasny złoty ? przy surowcach do oddania", soltys._quest_marker.text == "?"
+			and soltys._quest_marker.get_theme_color("font_color") == Main.COLOR)
+	dialog._turn_in()
+	p.quests.update_main(p)
+	check("warunek: inne zadanie", p.quests.state_of("village_help") == "done" and p.quests.state_of("main_village") == "ready"
+			and dialog._shown_quest == "main_village" and p.inventory.count_of("wood") == 0)
 	var potions: int = p.inventory.count_of("health_potion")
 	dialog._turn_in()
 	check("nagroda: przedmioty", p.inventory.count_of("health_potion") == potions + 5)

@@ -5,7 +5,8 @@ extends VBoxContainer
 
 signal area_requested(quest_id: String)
 
-const ACTIVE_COLOR := Color(1.0, 0.72, 0.38)
+## Zadania poboczne w toku - niebieskie (główne są złote - MainQuests.COLOR).
+const ACTIVE_COLOR := Color(0.55, 0.75, 1.0)
 const READY_COLOR := Color(0.6, 1.0, 0.5)
 
 var _player: Player
@@ -62,8 +63,7 @@ func _entry(id: String) -> Button:
 	var status := "Wróć do: %s" % Quests.receiver(id) if is_ready \
 			else "%s: %d/%d" % [quest["target_name"], _player.quests.progress_of(id), quest.get("count", 1)]
 	if main and not is_ready:
-		var have: Array = MainQuests.progress(_player, id)
-		status = "%s: %d/%d" % [quest["target_name"], have[0], have[1]] if have[1] > 1 else quest["target_name"]
+		status = MainQuests.progress_text(_player, id)
 	var detail := UiStyle.label(status, 7, UiStyle.TEXT_COLOR)
 	detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	detail.mouse_filter = Control.MOUSE_FILTER_IGNORE

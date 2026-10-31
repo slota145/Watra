@@ -107,7 +107,8 @@ func _process(_d: float) -> bool:
 		var gold0: int = p.stats.gold
 		s._collect_tax()
 		check("podatek", p.stats.gold > gold0)
-		check("kupiec ma towar", s._traveler != null and s._traveler.shop_sells.size() == 5)
+		check("kupiec ma towar", s._traveler != null and s._traveler.shop_sells.size() == mini(s.MERCHANT_STOCK, s.MERCHANT_POOL.size()),
+				str(s._traveler.shop_sells if s._traveler != null else "brak kupca"))
 		check("kowal przekuwa", "reforge" in s._smith.services)
 		var shooters := 0
 		for t in s._tower_sprites:

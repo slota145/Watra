@@ -119,7 +119,8 @@ func _entry(id: String, state: String, color: Color) -> PanelContainer:
 	lines.add_child(title)
 	var details := [
 		"Zleceniodawca: " + quest["giver"],
-		"Postęp: %s %d/%d" % [quest["target_name"], _player.quests.progress_of(id), quest.get("count", 1)],
+		"Postęp: " + (MainQuests.progress_text(_player, id) if MainQuests.is_main(id)
+				else "%s %d/%d" % [quest["target_name"], _player.quests.progress_of(id), quest.get("count", 1)]),
 		"Nagroda: " + Quests.reward_text(id),
 	]
 	if state == Quests.STATE_READY:

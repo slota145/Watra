@@ -57,6 +57,13 @@ func update_main(player: Player) -> void:
 	var id := MainQuests.current(self)
 	if id == "" or state_of(id) not in [Quests.STATE_ACTIVE, Quests.STATE_READY]:
 		return
+	# krok zależny od zadania pobocznego przyjmuje je od razu (bez osobnego śledzenia - postęp pokazuje krok)
+	var linked := MainQuests.linked_quest(id)
+	if linked != "" and state_of(linked) == Quests.STATE_AVAILABLE:
+		states[linked] = Quests.STATE_ACTIVE
+		progress[linked] = 0
+		update_gathered(player.count_owned)
+		changed.emit()
 	var have: Array = MainQuests.progress(player, id)
 	var state: String = Quests.STATE_READY if have[0] >= have[1] else Quests.STATE_ACTIVE
 	if have[0] == progress_of(id) and state == states[id]:

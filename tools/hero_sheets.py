@@ -164,13 +164,25 @@ def build(hero):
                         oy = (mk.height - img.height) / 2.0
                         gx = mx - ox + x0 - CELL / 2.0
                         gy = my - oy + y0 - FEET_Y
-                        grip = [round(gx * SCALE, 1), round(gy * SCALE, 1), round(math.atan2(cy - my, cx - mx), 3)]
+                        angle = math.atan2(cy - my, cx - mx)
+                        # bokiem broń ma celować przed postać - PixelLab bywa, że rysuje znacznik
+                        # trzymany za plecami (Mira); odbijamy wtedy kąt w poziomie
+                        if direction in ("east", "south-east") and math.cos(angle) < 0:
+                            angle = math.atan2(math.sin(angle), -math.cos(angle))
+                        grip = [round(gx * SCALE, 1), round(gy * SCALE, 1), round(angle, 3)]
                 dir_grips.append(grip)
             # brakujące klatki biorą chwyt z poprzedniej (albo z najbliższej znalezionej)
             known = [g for g in dir_grips if g]
             for i, g in enumerate(dir_grips):
                 if g is None and known:
                     dir_grips[i] = dir_grips[i - 1] if i > 0 and dir_grips[i - 1] else known[0]
+            # pojedyncza klatka z bronią obróconą w drugą stronę (np. Bogdan idący na północ) - kąt jak w pozostałych
+            if len(known) >= 3:
+                for i, g in enumerate(dir_grips):
+                    others = [o[2] for j, o in enumerate(dir_grips) if j != i]
+                    near = [a for a in others if abs(math.remainder(a - g[2], math.tau)) < math.pi / 3]
+                    if not near:
+                        dir_grips[i] = [g[0], g[1], sorted(others)[len(others) // 2]]
             grips[anim].append(dir_grips if known else [])
     # spoczynek bez znacznika bierze chwyt z pierwszej klatki chodu (i odwrotnie)
     for d in range(len(DIRS)):

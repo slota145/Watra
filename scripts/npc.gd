@@ -97,7 +97,8 @@ var services: Array[String] = []
 ## Powitanie w oknie rozmowy (dla NPC bez zadania).
 var dialog_greeting := ""
 
-const QUEST_GOLD := Color(1.0, 0.82, 0.25)
+## Znaczniki zadań pobocznych (główne są złote - MainQuests.COLOR).
+const QUEST_BLUE := Color(0.45, 0.7, 1.0)
 const QUEST_GRAY := Color(0.7, 0.72, 0.78)
 
 var _player: Player
@@ -254,7 +255,7 @@ func march_to(target: Vector2, duration: float) -> void:
 
 ## Znacznik zadania nad głową, lekko podskakujący.
 func _update_quest_marker(delta: float) -> void:
-	# zadanie główne ma pierwszeństwo - niebieskie znaczniki
+	# zadanie główne ma pierwszeństwo - złote znaczniki
 	var main := MainQuests.step_for(_player.quests, display_name) if _player != null else ""
 	var state := _player.quests.state_of(quest_id) if _player != null and quest_id != "" else Quests.STATE_DONE
 	_quest_marker.visible = state != Quests.STATE_DONE or main != ""
@@ -262,19 +263,23 @@ func _update_quest_marker(delta: float) -> void:
 		var main_state := _player.quests.state_of(main)
 		var giving := main_state == Quests.STATE_AVAILABLE
 		var waiting := main_state == Quests.STATE_ACTIVE or (main_state == Quests.STATE_READY and MainQuests.receiver_of(main) != display_name)
+		# krok czeka na zadanie poboczne, które właśnie można tu oddać
+		var linked := MainQuests.linked_quest(main)
+		if linked != "" and linked == quest_id and _player.quests.state_of(linked) == Quests.STATE_READY:
+			waiting = false
 		_quest_marker.text = "!" if giving else "?"
 		_quest_marker.add_theme_color_override("font_color", MainQuests.COLOR_DIM if waiting and not giving else MainQuests.COLOR)
 		state = "main"
 	match state:
 		Quests.STATE_AVAILABLE:
 			_quest_marker.text = "!"
-			_quest_marker.add_theme_color_override("font_color", QUEST_GOLD)
+			_quest_marker.add_theme_color_override("font_color", QUEST_BLUE)
 		Quests.STATE_ACTIVE:
 			_quest_marker.text = "?"
 			_quest_marker.add_theme_color_override("font_color", QUEST_GRAY)
 		Quests.STATE_READY:
 			_quest_marker.text = "?"
-			_quest_marker.add_theme_color_override("font_color", QUEST_GOLD)
+			_quest_marker.add_theme_color_override("font_color", QUEST_BLUE)
 	_marker_time += delta
 	# dymek z mową przesuwa znacznik wyżej, żeby się nie nakładały
 	# nad głową, a przy dymku nad dymkiem (znacznik nie wchodzi na postać)
