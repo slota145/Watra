@@ -417,8 +417,12 @@ Oba systemy zależą od gildii poszukiwaczy przygód w Ostoi (budowla `guild` w 
 - [ ] Podróżnicy zbierają surowce (drzewa, rudy, zioła) - z limitem, żeby mapa nie była łysa.
 - [ ] Rynek: liczba ofert i przedmiotów rośnie z liczbą podróżników, a najkorzystniejsze oferty szybko znikają
   wykupione przez innych.
-- [ ] **Rzemiosło statystyk przedmiotów** (pomysł autora, jak waluta w PoE): usuwanie niechcianych premii, dodawanie
-  nowych, przerzut wartości - jako ujście materiałów.
+- [x] **Rzemiosło statystyk przedmiotów** (`scripts/item_craft.gd`, okno `scripts/ui/workshop_window.gd` - przycisk
+  „Warsztat” u kowala po zbudowaniu warsztatu płatnerza; ikony run z PixelLab przez `tools/rune_art.py`): przerzut
+  wartości wybranej premii (ten sam tier), przekucie premii, usunięcie, dodanie losowej (do limitu rzadkości),
+  ulepszenie rzadkości (także zwykłych przedmiotów ze sklepu) - za złoto i trofea potworów z krainy pasującej do poziomu
+  przedmiotu (ujście trofeów); runy z lochów (skarbiec, Kryształ Watry, rynek): **Runa Zmiany** (wszystkie premie od
+  nowa) i **Runa Pieczęci** (z Sercem Kryształu: wybrana premia zostaje, reszta od nowa). Działa też na legendach - 3 razy drożej.
 - [ ] **Druga Watra** (pomysł autora, późna gra): odnaleziona druga Watra i wielki system budowy nowego schronienia
   wokół niej - duże ujście surowców.
 

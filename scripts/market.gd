@@ -24,15 +24,16 @@ const COMMODITIES := {
 	"weapon_stone": 60, "armor_stone": 60, "jewelry_stone": 70, "weapon_stone_perfect": 400, "armor_stone_perfect": 400,
 	"jewelry_stone_perfect": 450, "blessed_stone": 40, "mercy_stone": 180, "crystal_heart": 900,
 	"spider_silk": 18, "bone_dust": 16, "hydra_scale": 60, "storm_feather": 45,
+	"goblin_heart": 10, "kobold_fuse": 14, "frog_tongue": 16, "satyr_horn": 24, "rune_chaos": 500, "rune_seal": 2000,
 }
 ## Kategorie towarów do listy w oknie rynku.
 const CATEGORIES := {
 	"Surowce": ["wood", "stone", "iron_ore", "meat", "fish", "wolf_pelt", "deer_hide", "boar_hide", "goat_hide",
-			"spider_silk", "bone_dust", "hydra_scale", "storm_feather"],
+			"spider_silk", "bone_dust", "hydra_scale", "storm_feather", "goblin_heart", "kobold_fuse", "frog_tongue", "satyr_horn"],
 	"Zioła i mikstury": ["herb_wort", "herb_chamomile", "herb_calamus", "herb_arnica", "herb_fern", "herb_datura",
 			"health_potion", "mana_potion", "greater_health_potion", "greater_mana_potion"],
 	"Kamienie": ["weapon_stone", "armor_stone", "jewelry_stone", "weapon_stone_perfect", "armor_stone_perfect",
-			"jewelry_stone_perfect", "blessed_stone", "mercy_stone", "crystal_heart"],
+			"jewelry_stone_perfect", "blessed_stone", "mercy_stone", "crystal_heart", "rune_chaos", "rune_seal"],
 }
 const HISTORY := 24
 
