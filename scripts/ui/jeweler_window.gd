@@ -15,6 +15,10 @@ var _list: VBoxContainer
 var _details: RichTextLabel
 var _actions: VBoxContainer
 var _combine: HBoxContainer
+## Przeszlifowanie kamieni - tylko u jubilera w jego chacie w Ostoi (usługa "reshape").
+var reshape_enabled := false
+var _reshape_box: VBoxContainer
+var _reshape: HFlowContainer
 var _status: Label
 
 
@@ -63,6 +67,14 @@ func _ready() -> void:
 	_combine = HBoxContainer.new()
 	_combine.add_theme_constant_override("separation", 3)
 	box.add_child(_combine)
+	_reshape_box = VBoxContainer.new()
+	_reshape_box.add_theme_constant_override("separation", 2)
+	_reshape_box.add_child(UiStyle.label("Przeszlifowanie: kliknij kamień - nowe premie (rodzaj, szlif i liczba premii zostają)", 7, UiStyle.DIM_COLOR))
+	_reshape = HFlowContainer.new()
+	_reshape.add_theme_constant_override("h_separation", 2)
+	_reshape.add_theme_constant_override("v_separation", 2)
+	_reshape_box.add_child(_reshape)
+	box.add_child(_reshape_box)
 	var bottom := HBoxContainer.new()
 	_status = UiStyle.label("", 8, UiStyle.DIM_COLOR)
 	_status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -81,7 +93,8 @@ func setup(player: Player) -> void:
 				_refresh())
 
 
-func open() -> void:
+func open(npc: Npc = null) -> void:
+	reshape_enabled = npc != null and "reshape" in npc.services
 	visible = true
 	_selected = {}
 	_status.text = ""
@@ -139,7 +152,7 @@ func _replace(entry: Dictionary, id: String) -> void:
 func _refresh() -> void:
 	if _player == null:
 		return
-	for child in _list.get_children() + _actions.get_children() + _combine.get_children():
+	for child in _list.get_children() + _actions.get_children() + _combine.get_children() + _reshape.get_children():
 		child.get_parent().remove_child(child)
 		child.queue_free()
 	var list := entries()
@@ -149,6 +162,7 @@ func _refresh() -> void:
 		_list.add_child(_row(entry))
 	_show_selected()
 	_build_combine()
+	_build_reshape()
 
 
 func _row(entry: Dictionary) -> Button:
@@ -290,6 +304,44 @@ func _build_combine() -> void:
 				_combine_cut.bind(by_cut[cut].slice(0, 3), price))
 		button.disabled = _player.stats.gold < price
 		_combine.add_child(button)
+
+
+## Kamienie z plecaka do przeszlifowania (cena w dymku).
+func _build_reshape() -> void:
+	_reshape_box.visible = reshape_enabled
+	if not reshape_enabled:
+		return
+	var gems := _gems_in_bag()
+	if gems.is_empty():
+		_reshape.add_child(UiStyle.label("Nie masz kamieni w plecaku.", 7, UiStyle.DIM_COLOR))
+		return
+	for index in gems:
+		var gem_id: String = _player.inventory.slots[index]["id"]
+		var price: int = Gems.RESHAPE_GOLD[Items.get_data(gem_id)["gem"]["cut"]]
+		var button := Button.new()
+		button.focus_mode = Control.FOCUS_NONE
+		button.custom_minimum_size = Vector2(20, 20)
+		button.icon = Items.get_data(gem_id)["icon"]
+		button.expand_icon = true
+		button.disabled = _player.stats.gold < price
+		button.tooltip_text = "Przeszlifuj za %d zł:\n%s" % [price, Items.describe(gem_id)]
+		UiStyle.rich_tooltip(button)
+		button.pressed.connect(_reshape_gem.bind(index, price))
+		_reshape.add_child(button)
+
+
+func _reshape_gem(index: int, price: int) -> void:
+	var slot: Dictionary = _player.inventory.slots[index]
+	if slot.is_empty() or not Gems.is_gem(slot["id"]) or _player.stats.gold < price:
+		Sfx.play("ui_error")
+		return
+	_player.stats.add_gold(-price)
+	var result := Gems.reshape(slot["id"])
+	_player.inventory.slots[index] = {"id": result, "count": 1}
+	_player.inventory.changed.emit()
+	Sfx.play("enchant_success")
+	_status.text = "Przeszlifowany: %s" % Gems.plain_text(Items.get_data(result)["recipe"])
+	_refresh()
 
 
 func _combine_cut(indices: Array, price: int) -> void:

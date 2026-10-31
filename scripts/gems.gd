@@ -42,6 +42,8 @@ const EXTRA_AFFIX_CHANCE := 0.35
 const SOCKET_GOLD := 150
 const SOCKET_GOLD_PER_LEVEL := 12
 const COMBINE_GOLD: Array[int] = [40, 120, 300, 700]
+## Przeszlifowanie (jubiler w swojej chacie w Ostoi): nowe premie kamienia za złoto (wg szlifu).
+const RESHAPE_GOLD: Array[int] = [50, 120, 280, 600, 1200]
 const QUEST := "jeweler_gem"
 const ROUGH_GEM := "rough_gem"
 const SOCKET_ICON := preload("res://assets/ui/socket.png")
@@ -210,6 +212,27 @@ static func remove(id: String, index: int) -> String:
 	recipe["sockets"][index] = {}
 	Loot.register(recipe, id)
 	return register(gem.duplicate(true))
+
+
+## Przeszlifowanie: ten sam rodzaj, szlif i liczba premii, ale premie (i ich siła) losowane od nowa.
+## Kamień jako przedmiot dostaje nowe id (stary znika).
+static func reshape(gem_id: String) -> String:
+	var gem: Dictionary = Items.get_data(gem_id)["gem"]
+	var count: int = Items.get_data(gem_id)["stats"].size()
+	Items.generated.erase(gem_id)
+	var kind: String = gem["kind"]
+	var cut: int = gem["cut"]
+	var own: Array = KINDS[kind]["pool"]
+	var affixes := {}
+	affixes[own.pick_random()] = 0.0
+	var shared := SHARED.filter(func(stat: String) -> bool: return not affixes.has(stat))
+	affixes[shared.pick_random()] = 0.0
+	while affixes.size() < count:
+		var rest := (own + SHARED).filter(func(stat: String) -> bool: return not affixes.has(stat))
+		affixes[rest.pick_random()] = 0.0
+	for stat: String in affixes:
+		affixes[stat] = _value(stat, cut)
+	return register({"gem": true, "kind": kind, "cut": cut, "affixes": affixes})
 
 
 ## Łączenie: trzy kamienie tego samego szlifu (dowolnych rodzajów) -> jeden lepszego szlifu, rodzaju jednego z nich.

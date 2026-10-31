@@ -248,6 +248,9 @@ func generate(world) -> void:
 
 ## Jubiler Dobromir przy kapliczce: zadanie "Pierwszy klejnot" (Gems), potem osadzanie i łączenie kamieni.
 func _spawn_jeweler(shrine_pos: Vector2) -> void:
+	# po zbudowaniu chaty jubilera Dobromir mieszka w Ostoi
+	if w.village_built("jeweler"):
+		return
 	var npc: Npc = NPC_SCENE.instantiate()
 	npc.position = shrine_pos + Vector2(36, 10)
 	npc.role = Npc.Role.IDLE
