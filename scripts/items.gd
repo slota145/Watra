@@ -39,7 +39,7 @@ const LEGENDARY_COLOR := Color(1.0, 0.62, 0.15)
 const MODIFIED_COLOR := "#7cf07c"
 ## Efekty, których szanse zwiększa Łza Bulgora ("fortune").
 ## Efekty, których wartość to liczba sztuk (np. dodatkowe strzały), a nie procent.
-const COUNT_EFFECTS := ["hydra_seekers"]
+const COUNT_EFFECTS := ["hydra_seekers", "seeker_split", "ballista_volley", "ballista_seeker"]
 const CHANCE_EFFECTS := ["shockwave", "tide", "claws", "echo", "thunder", "whirlpool", "roots", "thorns", "venom", "brood", "fear",
 		"bomb", "blast_shot", "earth_arrow", "kaboom", "devour", "burrow", "raise_dead", "rend", "plunder", "pack_call", "tongue",
 		"storm_arrows", "web_burst", "corpse_blast", "venom_chain", "feather_storm", "wind_shield",
@@ -80,6 +80,9 @@ const EFFECT_TEXTS := {
 	"corpse_blast": "%s szans, że wróg padający w pobliżu (także od efektów) wybuchnie trucizną, raniąc wrogów obok",
 	"toxic_aura": "Trująca chmura wokół ciebie co pół sekundy rani wrogów za %s obrażeń broni",
 	"hydra_seekers": "Strzała tropiąca wylatuje razem z %s dodatkowymi strzałami (wachlarzem)",
+	"seeker_split": "Strzała tropiąca przy pierwszym trafieniu rozszczepia się na %s nowe strzały tropiące",
+	"ballista_volley": "Balista (drzewko łuku) strzela salwą - wypuszcza naraz %s bełty więcej",
+	"ballista_seeker": "Balista (drzewko łuku) strzela strzałami tropiącymi, a każda trafia do %s razy",
 	"regrowth": "Gdy masz mniej niż 50%% zdrowia, odzyskujesz %s maksymalnego zdrowia na sekundę",
 	"venom_chain": "%s szans przy trafieniu: jad zatruwa trafionego i przeskakuje na dwóch wrogów obok",
 	"acid_trail": "Idąc, zostawiasz żrące kałuże - ranią wrogów za %s obrażeń broni co pół sekundy",

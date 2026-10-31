@@ -52,6 +52,8 @@ static var safe_zone := Rect2()
 static var dungeon_mods := {}
 ## Droga przez loch (Dungeon.steer): goniący potwór idzie po niej zamiast prosto w ścianę; poza lochem null.
 static var pathing: Object = null
+## Myśliwy z Cienia (BowSkills): do tej chwili (Time.get_ticks_msec) potwory, poza bossami, nie widzą gracza.
+static var hidden_until := 0
 ## Pozycje potworów z bieżącej klatki (wspólne dla wszystkich, do rozpychania się).
 ## Pozycje potworów w kubełkach siatki (bok SEPARATION_RADIUS) - zbierane raz na klatkę fizyki tylko przez
 ## potwory, które potrzebują rozpychania; każdy sprawdza potem wyłącznie 9 sąsiednich kubełków.
@@ -356,7 +358,7 @@ func _player_alive() -> bool:
 
 
 func _player_is_safe() -> bool:
-	return safe_zone.has_point(_player.global_position)
+	return safe_zone.has_point(_player.global_position) or (Time.get_ticks_msec() < hidden_until and not self is Boss)
 
 
 func _animate(delta: float) -> void:

@@ -616,7 +616,7 @@ func _update_temp_bonus() -> void:
 		bonus["attack_speed"] = DANCE_STEP * _dance_stacks
 	if _in_cloud():
 		bonus["dodge_chance"] = CLOUD_DODGE
-	_player.stats.temp_bonus = bonus
+	_player.stats.set_temp("sword", bonus)
 
 
 ## Efekty do rzędu ikon pod paskami zdrowia i many (jak LegendaryEffects.statuses).

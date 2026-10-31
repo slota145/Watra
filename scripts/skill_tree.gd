@@ -6,21 +6,28 @@ class_name SkillTree
 ## - "passive": stałe premie (statystyki jak na przedmiotach albo premie do umiejętności - TREE_STATS),
 ## - "keystone": węzeł kluczowy - zmienia sposób gry (np. Nieustający Wir).
 ## Premie działają tylko z założoną bronią swojego rodzaju. Wybrane węzły cofa za złoto mędrzec w Ostoi.
-## Na razie drzewko ma miecz (broń biała); łuk i księga magii korzystają jeszcze z kart umiejętności za złoto.
+## Drzewka mają miecz (broń biała) i łuk; księga magii korzysta jeszcze z kart umiejętności za złoto.
 
 const START_POINTS := 1
 ## Ile złota kosztuje zapomnienie drzewka u mędrca (za każdy poziom postaci).
 const RESPEC_GOLD_PER_LEVEL := 25
 
 ## Premie z węzłów, które nie są statystykami postaci, tylko zmieniają umiejętności (czytane przez SkillBook.tree_bonus).
-## Wartości to ułamki (+0.2 = +20%), poza combo_window (sekundy) i blade_count (sztuki).
+## Wartości to ułamki (+0.2 = +20%), poza combo_window (sekundy) i COUNT_STATS (sztuki).
 const TREE_STATS := {
 	"whirl_radius": "Zasięg Młynka", "whirl_damage": "Obrażenia Młynka", "flicker_mana": "Mana za skok Mgnienia",
 	"flicker_damage": "Obrażenia Mgnienia", "smoke_charge": "Szybkość ładowania Dymnych Wybuchów",
 	"smoke_damage": "Obrażenia Dymnych Wybuchów", "combo_window": "Dłuższe okno combo", "combo_damage": "Obrażenia ciosów combo",
 	"bleed_damage": "Obrażenia krwawienia", "cry_power": "Premia Zewu Peruna", "slam_stun": "Ogłuszenie Rozłupania Ziemi",
 	"lunge_cooldown": "Odnowienie Szarży", "riposte_damage": "Obrażenia kontry Riposty", "blade_count": "Widmowe ostrza",
+	"multishot_arrows": "Strzały Salwy", "multishot_damage": "Obrażenia Salwy", "rain_damage": "Obrażenia Deszczu Strzał",
+	"rain_area": "Krąg Deszczu Strzał", "seeker_hits": "Trafienia Strzały tropiącej", "falcon_damage": "Obrażenia Sokoła",
+	"wind_damage": "Obrażenia Strzały Wichru", "power_charge": "Szybkość napinania Grotu Swaroga",
+	"power_damage": "Obrażenia Grotu Swaroga", "arrow_pierce": "Strzały przebijają wrogów", "arrow_range": "Zasięg strzał",
+	"ballista_damage": "Obrażenia Balisty", "ballista_time": "Czas Balisty", "snare_time": "Unieruchomienie Sideł",
+	"venom_damage": "Obrażenia Jadowych Grotów", "vault_cooldown": "Odnowienie Odskoku",
 }
+const COUNT_STATS := ["blade_count", "multishot_arrows", "seeker_hits", "arrow_pierce"]
 
 ## Węzły: pozycja w siatce drzewka (jednostki - SkillTreeView), połączenia, rodzaj, nazwa / umiejętność, premie, opis.
 ## Gałęzie miecza: zachód - Wir (Młynek, Mgnienie, Nieustający Wir), północny zachód - Krew i okrzyk (Zew Peruna,
@@ -91,6 +98,74 @@ const TREES := {
 		"dodge_1": {"pos": Vector2(-2.7, 4.4), "kind": "passive", "name": "Unik szermierza", "stats": {"dodge_chance": 0.03}, "links": []},
 		"mana_1": {"pos": Vector2(-0.1, 4.6), "kind": "passive", "name": "Głęboki oddech", "stats": {"mana": 20.0}, "links": []},
 	},
+	## Gałęzie łuku: zachód - Grad (Salwa, Deszcz Strzał, Grad), północny zachód - Sidła i zdrowie, południowy zachód -
+	## Jad i cień (Jadowe Groty, Odskok, Myśliwy z Cienia), północny wschód - Tropiciel (Strzała tropiąca, Sokół,
+	## Strzała Wichru, Oko Sokoła), południowy wschód - Myśliwy (Grot Swaroga, Balista, Strzelanie w biegu).
+	"bow": {
+		"start": {"pos": Vector2(0, 0), "kind": "start", "name": "Ścieżka łuku", "links": ["multishot", "seeker", "power_shot", "hunter_breath", "hunter_patience"],
+				"description": "Początek drzewka łuku (zwykły strzał). Wybieraj węzły połączone z już wybranymi."},
+		"hunter_breath": {"pos": Vector2(-1.1, -1.6), "kind": "skill", "skill": "hunter_breath", "links": ["hp_b1"]},
+		"hunter_patience": {"pos": Vector2(-1.1, 1.6), "kind": "skill", "skill": "hunter_patience", "links": ["venom_arrows", "mana_b1"]},
+		# ---- Grad
+		"multishot": {"pos": Vector2(-1.6, 0), "kind": "skill", "skill": "multishot", "links": ["phys_b1"]},
+		"phys_b1": {"pos": Vector2(-3.0, 0), "kind": "passive", "name": "Ostre groty", "stats": {"physical_damage": 0.08}, "links": ["multi_arrows", "arrow_rain"]},
+		"multi_arrows": {"pos": Vector2(-4.3, -1.0), "kind": "passive", "name": "Pełny kołczan", "stats": {"multishot_arrows": 1.0}, "links": ["multi_dmg"]},
+		"arrow_rain": {"pos": Vector2(-4.3, 1.0), "kind": "skill", "skill": "arrow_rain", "links": ["rain_dmg"]},
+		"multi_dmg": {"pos": Vector2(-5.6, -1.6), "kind": "passive", "name": "Zgrana cięciwa", "stats": {"multishot_damage": 0.2}, "links": ["hail", "aspd_b1"]},
+		"rain_dmg": {"pos": Vector2(-5.6, 1.6), "kind": "passive", "name": "Stalowa ulewa", "stats": {"rain_damage": 0.2}, "links": ["hail", "rain_area"]},
+		"hail": {"pos": Vector2(-6.6, 0), "kind": "keystone", "name": "Grad", "links": [],
+				"description": "Salwa wypuszcza 2 strzały więcej, a Deszcz Strzał pada o połowę gęściej, ale każda strzała zadaje 20% mniej obrażeń."},
+		"aspd_b1": {"pos": Vector2(-7.0, -2.6), "kind": "passive", "name": "Szybka cięciwa", "stats": {"attack_speed": 0.06}, "links": ["crit_b0"]},
+		"rain_area": {"pos": Vector2(-7.0, 2.6), "kind": "passive", "name": "Szeroka ulewa", "stats": {"rain_area": 0.25}, "links": ["crit_dmg_b"]},
+		"crit_b0": {"pos": Vector2(-8.4, -1.4), "kind": "passive", "name": "Celne oko", "stats": {"crit_chance": 0.04}, "links": []},
+		"crit_dmg_b": {"pos": Vector2(-8.4, 1.4), "kind": "passive", "name": "Grot w serce", "stats": {"crit_damage": 0.3}, "links": []},
+		# ---- Sidła i zdrowie
+		"hp_b1": {"pos": Vector2(-2.4, -2.7), "kind": "passive", "name": "Twardy myśliwy", "stats": {"health_percent": 0.05}, "links": ["snare", "regen_b1"]},
+		"snare": {"pos": Vector2(-3.8, -2.9), "kind": "skill", "skill": "snare", "links": ["snare_time"]},
+		"regen_b1": {"pos": Vector2(-1.4, -3.8), "kind": "passive", "name": "Leśne zioła", "stats": {"health_regen": 1.5}, "links": ["hp_b2"]},
+		"snare_time": {"pos": Vector2(-4.6, -4.1), "kind": "passive", "name": "Mocne sprężyny", "stats": {"snare_time": 0.3}, "links": ["hp_b2"]},
+		"hp_b2": {"pos": Vector2(-3.0, -4.6), "kind": "passive", "name": "Wytrwały", "stats": {"health": 40.0}, "links": []},
+		# ---- Jad i cień
+		"venom_arrows": {"pos": Vector2(-2.8, 2.7), "kind": "skill", "skill": "venom_arrows", "links": ["venom_dmg"]},
+		"venom_dmg": {"pos": Vector2(-4.2, 3.6), "kind": "passive", "name": "Jad żmii", "stats": {"venom_damage": 0.3}, "links": ["shadow_hunter"]},
+		"shadow_hunter": {"pos": Vector2(-5.7, 3.9), "kind": "keystone", "name": "Myśliwy z Cienia", "links": [],
+				"description": "Po Odskoku wrogowie na 2 s tracą cię z oczu, a pierwsze trafienie zadaje podwójne obrażenia."},
+		"mana_b1": {"pos": Vector2(-1.3, 3.5), "kind": "passive", "name": "Spokojny oddech", "stats": {"mana": 20.0}, "links": ["vault", "dodge_b1"]},
+		"vault": {"pos": Vector2(-2.7, 4.4), "kind": "skill", "skill": "vault", "links": ["vault_cd"]},
+		"vault_cd": {"pos": Vector2(-4.0, 4.9), "kind": "passive", "name": "Lekkie nogi", "stats": {"vault_cooldown": -0.25}, "links": ["shadow_hunter"]},
+		"dodge_b1": {"pos": Vector2(-0.1, 4.6), "kind": "passive", "name": "Zwinność rysia", "stats": {"dodge_chance": 0.03}, "links": []},
+		# ---- Tropiciel
+		"seeker": {"pos": Vector2(1.1, -1.4), "kind": "skill", "skill": "seeker", "links": ["rapid_volley", "speed_b1"]},
+		"rapid_volley": {"pos": Vector2(2.6, -1.4), "kind": "skill", "skill": "rapid_volley", "links": ["combo_b1", "crit_b1"]},
+		"speed_b1": {"pos": Vector2(1.1, -2.8), "kind": "passive", "name": "Szybkie palce", "stats": {"attack_speed": 0.06}, "links": ["combo_b1", "speed_b2"]},
+		"combo_b1": {"pos": Vector2(2.6, -2.8), "kind": "passive", "name": "Łowiecki rytm", "stats": {"combo_window": 0.4}, "links": ["falcon", "seeker_hits"]},
+		"crit_b1": {"pos": Vector2(4.0, -1.4), "kind": "passive", "name": "Oko tropiciela", "stats": {"crit_chance": 0.04}, "links": ["falcon", "crit_b2"]},
+		"falcon": {"pos": Vector2(4.0, -2.8), "kind": "skill", "skill": "falcon", "links": ["falcon_power"]},
+		"falcon_power": {"pos": Vector2(5.4, -3.6), "kind": "passive", "name": "Ostre szpony", "stats": {"falcon_damage": 0.3}, "links": ["falcon_eye", "combo_b2"]},
+		"speed_b2": {"pos": Vector2(1.1, -4.2), "kind": "passive", "name": "Błyskawiczna cięciwa", "stats": {"attack_speed": 0.06}, "links": ["seeker_hits"]},
+		"seeker_hits": {"pos": Vector2(2.6, -4.2), "kind": "passive", "name": "Uparta strzała", "stats": {"seeker_hits": 2.0}, "links": ["falcon_eye"]},
+		"falcon_eye": {"pos": Vector2(4.0, -4.5), "kind": "keystone", "name": "Oko Sokoła", "links": [],
+				"description": "Trafienia wrogów daleko od ciebie (ponad 150) są zawsze krytyczne, ale bliskie (do 70) zadają 30% mniej obrażeń."},
+		"combo_b2": {"pos": Vector2(6.8, -3.8), "kind": "passive", "name": "Mistrz łowów", "stats": {"combo_damage": 0.15}, "links": []},
+		"crit_b2": {"pos": Vector2(5.4, -1.4), "kind": "passive", "name": "Śmiertelny grot", "stats": {"crit_damage": 0.3}, "links": ["wind_arrow", "cdr_b"]},
+		"wind_arrow": {"pos": Vector2(6.8, -2.0), "kind": "skill", "skill": "wind_arrow", "links": ["wind_power", "spell_b1"]},
+		"wind_power": {"pos": Vector2(8.2, -2.6), "kind": "passive", "name": "Wicher Strzyboga", "stats": {"wind_damage": 0.3}, "links": []},
+		"spell_b1": {"pos": Vector2(8.2, -1.0), "kind": "passive", "name": "Szept wiatru", "stats": {"spell_damage": 0.1}, "links": []},
+		"cdr_b": {"pos": Vector2(6.8, -0.5), "kind": "passive", "name": "Rytm łowów", "stats": {"cooldown_reduction": 0.05}, "links": []},
+		# ---- Myśliwy
+		"power_shot": {"pos": Vector2(1.1, 1.4), "kind": "skill", "skill": "power_shot", "links": ["power_charge", "pierce_1"]},
+		"power_charge": {"pos": Vector2(2.6, 1.4), "kind": "passive", "name": "Silne ramię", "stats": {"power_charge": 0.25}, "links": ["range_1", "power_dmg"]},
+		"pierce_1": {"pos": Vector2(1.1, 2.8), "kind": "passive", "name": "Przeszywające groty", "stats": {"arrow_pierce": 1.0}, "links": ["range_1", "phys_b2"]},
+		"range_1": {"pos": Vector2(2.6, 2.8), "kind": "passive", "name": "Daleki strzał", "stats": {"arrow_range": 0.25}, "links": ["ballista", "phys_b3"]},
+		"power_dmg": {"pos": Vector2(4.0, 1.4), "kind": "passive", "name": "Gniew Swaroga", "stats": {"power_damage": 0.25}, "links": ["running_fire", "ballista"]},
+		"running_fire": {"pos": Vector2(5.5, 0.7), "kind": "keystone", "name": "Strzelanie w biegu", "links": [],
+				"description": "Strzelanie nie spowalnia ruchu, a gdy biegniesz, masz +15% szybkości ataku."},
+		"ballista": {"pos": Vector2(4.0, 2.8), "kind": "skill", "skill": "ballista", "links": ["ballista_power"]},
+		"ballista_power": {"pos": Vector2(5.4, 3.6), "kind": "passive", "name": "Napięte liny", "stats": {"ballista_damage": 0.3}, "links": ["ballista_time"]},
+		"phys_b2": {"pos": Vector2(1.1, 4.2), "kind": "passive", "name": "Hartowane groty", "stats": {"physical_damage": 0.1}, "links": ["phys_b3"]},
+		"phys_b3": {"pos": Vector2(2.6, 4.2), "kind": "passive", "name": "Ciężkie strzały", "stats": {"physical_damage": 0.1}, "links": ["ballista_time"]},
+		"ballista_time": {"pos": Vector2(4.0, 4.5), "kind": "passive", "name": "Solidna rama", "stats": {"ballista_time": 0.4}, "links": []},
+	},
 }
 
 
@@ -137,8 +212,10 @@ static func stats_text(stats: Dictionary) -> String:
 		var value: float = stats[stat]
 		if TREE_STATS.has(stat):
 			var shown := ("%+.1f s" % value).replace(".", ",") if stat == "combo_window" \
-					else "%+d" % roundi(value) if stat == "blade_count" else "%+d%%" % roundi(value * 100.0)
+					else "%+d" % roundi(value) if stat in COUNT_STATS else "%+d%%" % roundi(value * 100.0)
 			parts.append("%s %s" % [TREE_STATS[stat], shown])
+		elif stat == "health_percent":
+			parts.append("%+d%% maksymalnego zdrowia" % roundi(value * 100.0))
 		else:
 			parts.append(Items._stat_text(stat, value))
 	return ", ".join(parts)

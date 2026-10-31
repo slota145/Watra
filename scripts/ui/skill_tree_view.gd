@@ -31,10 +31,22 @@ const ICONS := {
 	"health_regen": preload("res://assets/skills/health_regen.png"), "mana": preload("res://assets/skills/mana_regen.png"),
 	"mana_regen": preload("res://assets/skills/mana_regen.png"), "cooldown_reduction": preload("res://assets/skills/node_combo.png"),
 	"armor": preload("res://assets/items/chainmail.png"), "dodge_chance": preload("res://assets/skills/flicker.png"),
+	"multishot_arrows": preload("res://assets/skills/multishot.png"), "multishot_damage": preload("res://assets/skills/multishot.png"),
+	"rain_damage": preload("res://assets/skills/arrow_rain.png"), "rain_area": preload("res://assets/skills/arrow_rain.png"),
+	"seeker_hits": preload("res://assets/skills/seeker.png"), "falcon_damage": preload("res://assets/skills/falcon.png"),
+	"wind_damage": preload("res://assets/skills/wind_arrow.png"), "power_charge": preload("res://assets/skills/power_shot.png"),
+	"power_damage": preload("res://assets/skills/power_shot.png"), "arrow_pierce": preload("res://assets/skills/node_pierce.png"),
+	"arrow_range": preload("res://assets/skills/node_range.png"), "ballista_damage": preload("res://assets/skills/ballista.png"),
+	"ballista_time": preload("res://assets/skills/ballista.png"), "snare_time": preload("res://assets/skills/snare.png"),
+	"venom_damage": preload("res://assets/skills/venom_arrows.png"), "vault_cooldown": preload("res://assets/skills/vault.png"),
 }
+## Ikona startu drzewka (zwykły atak tą bronią).
+const START_ICONS := {"bow": preload("res://assets/items/short_bow.png")}
 const KEYSTONE_ICONS := {"endless_whirl": preload("res://assets/skills/ks_endless_whirl.png"),
 		"blade_dance": preload("res://assets/skills/ks_blade_dance.png"), "smoke_shadow": preload("res://assets/skills/ks_smoke_shadow.png"),
-		"blood_frenzy": preload("res://assets/skills/ks_blood_frenzy.png")}
+		"blood_frenzy": preload("res://assets/skills/ks_blood_frenzy.png"),
+		"falcon_eye": preload("res://assets/skills/ks_falcon_eye.png"), "hail": preload("res://assets/skills/ks_hail.png"),
+		"shadow_hunter": preload("res://assets/skills/ks_shadow_hunter.png"), "running_fire": preload("res://assets/skills/ks_running_fire.png")}
 
 var weapon_type := "melee"
 var selected_id := ""
@@ -78,7 +90,7 @@ func icon_of(id: String) -> Texture2D:
 	var node: Dictionary = SkillTree.nodes(weapon_type)[id]
 	match node["kind"]:
 		"start":
-			return Hotbar.ATTACK_ICON
+			return START_ICONS.get(weapon_type, Hotbar.ATTACK_ICON)
 		"skill":
 			return Skills.get_data(node["skill"])["icon"]
 		"keystone":

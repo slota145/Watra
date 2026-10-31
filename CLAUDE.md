@@ -46,7 +46,7 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
   - `settlement.gd`: Ostoja,
   - `player.gd`, `character_stats.gd`, `items.gd`, `item_bases.gd`, `loot.gd`, `legends.gd`, `legendary_effects.gd`, `skills.gd`, `skill_effects.gd`, `levels.gd`, `quests.gd`, `bounties.gd`,
   - `hotbar.gd`: paski szybkiego wyboru (dane), `status_effects.gd`: lista efektów działających na gracza,
-  - `skill_tree.gd`: drzewka umiejętności broni (dane), `sword_skills.gd`: umiejętności drzewka miecza,
+  - `skill_tree.gd`: drzewka umiejętności broni (dane), `sword_skills.gd` i `bow_skills.gd`: umiejętności drzewek miecza i łuku,
   - `dungeons.gd`: dane lochów (klimaty, stopnie, modyfikatory), `dungeon.gd`: generator lochu, okno `scripts/ui/dungeon_window.gd`,
   - `herbs.gd`: zioła i mikstury zielarki, `herb.gd`: zioło do zerwania (sadzone w każdej krainie przez `World._place_herbs`),
   - `scripts/ui/`: okna interfejsu (`ui_style.gd` to wspólny styl).
@@ -206,7 +206,22 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   Węzły kluczowe: Nieustający Wir, **Taniec Ostrzy** (combo przyspiesza ataki), **Dym i Cień** (chmura po Dymnych Wybuchach:
   unik i darmowe Mgnienie), **Krwawy Szał** (krwawienie leczy). Chwilowe premie w `CharacterStats.temp_bonus` i w ikonach efektów.
   **Amulet Wiecznego Wiru** (legendarny, tylko ze skarbca strażnika w lochach): wirujące Mgnienie bez odnowienia.
-- [ ] **Etap 3**: drzewka łuku i księgi magii według tego samego wzoru (dziś mają jeszcze karty umiejętności za złoto).
+- [x] **Drzewko łuku, etap 3** (`SkillTree.TREES["bow"]`, `scripts/bow_skills.gd`, grafiki z PixelLab przez `tools/bow_tree_art.py`):
+  13 umiejętności (Salwa, Strzała tropiąca, Szybka salwa i regeneracje przeszły do drzewka), 35 węzłów pasywnych, 4 kluczowe.
+  Umiejętności łuku kupione wcześniej za złoto dostają węzły przy wczytaniu. Nowe umiejętności (z combo):
+  - **Grot Swaroga**: napinanie i przebijająca strzała (po Strzale tropiącej - wybuch ognia przy każdym trafieniu),
+  - **Deszcz Strzał**: krąg pod kursorem (po Salwie - dwa razy gęściej),
+  - **Odskok**: skok do tyłu i 3 strzały (potem Salwa darmowa, 5 strzał),
+  - **Sidła**: pułapka unieruchamia, trafienia unieruchomionych są krytyczne,
+  - **Sokół**: krąży i nurkuje na wrogów (po Strzale tropiącej - od razu, potrójnie),
+  - **Jadowe Groty**: strzały zatruwają (po Sidłach - jad przeskakuje),
+  - **Strzała Wichru** (atak i czar): odrzucający stożek (po Odskoku - dwa razy szerszy),
+  - **Balista**: wieżyczka strzelająca w najbliższych wrogów.
+  Węzły kluczowe: **Oko Sokoła**, **Grad**, **Myśliwy z Cienia** (`Goblin.hidden_until`), **Strzelanie w biegu**.
+  Chwilowe premie źródeł łączy `CharacterStats.set_temp`. Legendy ze skarbca lochów: **Łuk Swaroga** (strzała tropiąca
+  się rozszczepia), **Rękawice Cieśli Wojennego** (balista strzela salwą), **Talizman Tropiciela** (balista strzela
+  strzałami tropiącymi).
+- [ ] **Etap 4**: drzewko księgi magii według tego samego wzoru (dziś ma jeszcze karty umiejętności za złoto).
 - [ ] System kamieni wkładanych w przedmioty (gniazda).
   Istniejące kamienie (zwykłe, doskonałe, uświęcone, miłosierdzia) służą tylko do zaklinania (`scripts/enchanting.gd`, `scripts/ui/enchant_window.gd`), więc to byłby nowy system.
 - [ ] Nowe bronie: kosa, kostur (nekromanta), młoty, chainblade'y, sztylety, włócznie, rapier, hydrosfera.

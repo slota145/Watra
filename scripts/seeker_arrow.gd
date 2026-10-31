@@ -4,6 +4,7 @@ extends Node2D
 ## w miejscu, tylko skręca łagodnie (nawraca po łuku) w stronę celu. Przebija wrogów na wylot;
 ## po trafieniu wybiera kolejny cel - innego wroga niż ostatnio trafiony, jeśli jest w pobliżu,
 ## a gdy wróg jest tylko jeden, nawraca do niego. Znika po ustalonej liczbie trafień.
+## Łuk Swaroga (split): przy pierwszym trafieniu strzała rozszczepia się na kolejne strzały tropiące.
 
 const TEXTURE := preload("res://assets/projectiles/arrow.png")
 const SPEED := 280.0
@@ -20,6 +21,8 @@ var velocity := Vector2.RIGHT * SPEED
 var hits_left := 4
 var damage_min := 1
 var damage_max := 1
+## Na ile nowych strzał rozszczepi się przy pierwszym trafieniu (0 - wcale).
+var split := 0
 
 var _target: Goblin
 var _last_hit: Goblin
@@ -55,7 +58,7 @@ func _ready() -> void:
 	fade.colors = PackedColorArray([Color(0.85, 1.0, 0.5, 0.9), Color(0.4, 0.9, 0.3, 0.0)])
 	trail.color_ramp = fade
 	add_child(trail)
-	_target = _find_target(null)
+	_target = _find_target(_last_hit)
 
 
 func _physics_process(delta: float) -> void:
@@ -89,6 +92,8 @@ func _physics_process(delta: float) -> void:
 			_last_hit = enemy
 			_since_hit = 0.0
 			hits_left -= 1
+			if split > 0:
+				_split(enemy)
 			if hits_left <= 0:
 				_finish()
 				return
@@ -96,6 +101,22 @@ func _physics_process(delta: float) -> void:
 			break
 	if _life <= 0.0:
 		_finish()
+
+
+## Rozszczepienie: nowe strzały rozchodzą się wachlarzem i nie trafiają od razu tego samego wroga.
+func _split(enemy: Goblin) -> void:
+	for i in split:
+		var side := (i / 2 + 1) * (1 if i % 2 == 0 else -1)
+		var child := SeekerArrow.new()
+		child.position = position
+		child.velocity = velocity.rotated(side * 0.6)
+		child.hits_left = maxi(hits_left, 1)
+		child.damage_min = damage_min
+		child.damage_max = damage_max
+		child._last_hit = enemy
+		get_parent().add_child.call_deferred(child)
+	split = 0
+	SkillEffects.spark(get_parent(), global_position + Vector2(0, -HEIGHT), Color(1.0, 0.8, 0.3), 8)
 
 
 func _is_alive(enemy: Goblin) -> bool:
