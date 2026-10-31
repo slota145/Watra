@@ -273,7 +273,7 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     **Kamień Promienia** (`Gems.roll_radius`, tylko do drzewka, ikona z PixelLab przez `tools/gem_art.py`) wzmacnia
     wybrane węzły pasywne w promieniu `SkillBook.RADIUS_RANGE` (turkusowy krąg w drzewku); wypada z Kryształu Watry
     i ze skarbca strażnika lochu.
-- [ ] **Po kamieniach i esencjach** (pomysły autora, kolejność: dopiero gdy systemy kamieni i esencji będą gotowe):
+- [x] **Po kamieniach i esencjach** (pomysły autora, zrobione po systemach kamieni i esencji):
   - [x] **Chata jubilera w Ostoi** (`Settlement.PROJECTS["jeweler"]`, `_build_jeweler`, grafiki z PixelLab przez
     `tools/village_life.py`): w menu budowy dopiero po zadaniu „Pierwszy klejnot” (`requires_quest`,
     `Settlement.project_locked`), koszt: drewno, kamień, ruda żelaza; Dobromir przeprowadza się do chaty między kuźnią
@@ -288,8 +288,10 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     (`Loot.POOLS["belt"]`) z nową „siłą mikstur” (`CharacterStats.potion_multiplier` - mikstury zdrowia i many leczą
     mocniej); zaklinanie i esencje jak zbroja; pierwszy poziom u kowala. Legendy ze skarbca lochów: **Pas Mokoszy**
     (szansa, że mikstura nie ubędzie) i **Pas Bogatyra** (po miksturze premia do obrażeń - `LegendaryEffects.on_potion`).
-  - **Ładniejszy widok ekwipunku** (okno postaci): większe ramki przedmiotów, ładne tło między nimi, a pusty slot
-    pokazuje ikonę rodzaju przedmiotu, który tam pasuje (hełm, pierścień...).
+  - [x] **Ładniejszy widok ekwipunku** (okno plecaka, `InventoryWindow.DOLL`, grafiki z PixelLab przez
+    `tools/paperdoll_art.py`): sylwetka wojownika, a wokół niej miejsca na przedmioty (hełm przy głowie, buty przy
+    stopach), ramki 28 px, broń i napierśnik w wysokich ramkach; pusty slot pokazuje zarys pasującego przedmiotu,
+    ramka - kolor rzadkości (`LegendaryFrame`).
 - [ ] Nowe bronie: kosa, kostur (nekromanta), młoty, chainblade'y, sztylety, włócznie, rapier, hydrosfera.
   Każda broń to nowy rodzaj z własnym drzewkiem, a nie tylko nowy przedmiot, więc wymaga szczegółów od autora.
 

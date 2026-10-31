@@ -1,6 +1,8 @@
 class_name InventoryWindow
 extends PanelContainer
-## Okno ekwipunku (klawisz I): po lewej postać z założonymi przedmiotami,
+## Okno ekwipunku (klawisz I): po lewej sylwetka postaci z miejscami na przedmioty wokół niej (DOLL - hełm przy
+## głowie, buty przy stopach; broń i napierśnik w wysokich ramkach, puste miejsce pokazuje zarys pasującego
+## przedmiotu, ramka - kolor rzadkości),
 ## po prawej plecak (siatka slotów, przewijana, gdy torby go powiększą), pod nim 5 miejsc
 ## na torby (sakwy i plecaki) i sakiewka.
 ## PPM na przedmiocie w plecaku - użyj albo załóż, PPM na założonym - zdejmij (tak samo torby).
@@ -20,17 +22,18 @@ const BAG_SLOT_SIZE := Vector2(18, 18)
 const VISIBLE_ROWS := 5
 const TRASH_ICON := preload("res://assets/ui/trash.png")
 const SORT_ICON := preload("res://assets/ui/sort.png")
-## Układ miejsc na postaci (3 kolumny, "" = puste pole).
-const PAPERDOLL: Array[String] = [
-	"earring_1", "helmet", "earring_2",
-	"weapon", "chest", "gloves",
-	"ring_1", "necklace", "ring_2",
-	"belt", "boots", "",
-]
-const SLOT_LABELS := {
-	"weapon": "Broń", "helmet": "Hełm", "chest": "Zbroja", "gloves": "Ręk.", "boots": "Buty",
-	"earring_1": "Kolcz.", "earring_2": "Kolcz.", "ring_1": "Pierś.", "ring_2": "Pierś.", "necklace": "Nasz.", "belt": "Pas",
+## Miejsca wokół sylwetki postaci: pozycja (piksele w polu DOLL_SIZE) i rozmiar ramki (broń i napierśnik - wysokie).
+const DOLL_SIZE := Vector2(160, 158)
+const GEAR := Vector2(28, 28)
+const TALL := Vector2(28, 58)
+const DOLL := {
+	"helmet": [Vector2(66, 0), GEAR], "earring_1": [Vector2(34, 8), GEAR], "earring_2": [Vector2(98, 8), GEAR],
+	"weapon": [Vector2(2, 36), TALL], "chest": [Vector2(66, 32), TALL], "necklace": [Vector2(98, 40), GEAR],
+	"gloves": [Vector2(130, 36), GEAR], "ring_1": [Vector2(34, 72), GEAR], "ring_2": [Vector2(98, 72), GEAR],
+	"belt": [Vector2(66, 94), GEAR], "boots": [Vector2(66, 128), GEAR],
 }
+## Zarys przedmiotu w pustym miejscu (assets/ui/slot_<rodzaj>.png - tools/paperdoll_art.py).
+const SILHOUETTE := preload("res://assets/ui/paperdoll.png")
 const SLOT_TOOLTIPS := {
 	"weapon": "Broń", "helmet": "Hełm", "chest": "Napierśnik", "gloves": "Rękawice", "boots": "Buty",
 	"earring_1": "Kolczyk", "earring_2": "Kolczyk", "ring_1": "Pierścień", "ring_2": "Pierścień", "necklace": "Naszyjnik",
@@ -72,18 +75,20 @@ func _ready() -> void:
 	columns.add_theme_constant_override("separation", 8)
 	box.add_child(columns)
 
-	var doll := GridContainer.new()
-	doll.columns = 3
-	doll.add_theme_constant_override("h_separation", 2)
-	doll.add_theme_constant_override("v_separation", 2)
+	var doll := Control.new()
+	doll.custom_minimum_size = DOLL_SIZE
 	columns.add_child(doll)
-	for slot_name in PAPERDOLL:
-		if slot_name == "":
-			var spacer := Control.new()
-			spacer.custom_minimum_size = SLOT_SIZE
-			doll.add_child(spacer)
-		else:
-			_gear[slot_name] = _make_gear_slot(doll, slot_name)
+	var shade := TextureRect.new()
+	shade.texture = SILHOUETTE
+	shade.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	shade.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	shade.position = Vector2(22, 4)
+	shade.size = DOLL_SIZE - Vector2(44, 4)
+	shade.modulate = Color(1.15, 1.15, 1.2, 0.8)
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	doll.add_child(shade)
+	for slot_name: String in DOLL:
+		_gear[slot_name] = _make_gear_slot(doll, slot_name)
 
 	columns.add_child(VSeparator.new())
 	var right := VBoxContainer.new()
@@ -223,17 +228,23 @@ func _make_bag_slot(index: int) -> void:
 
 
 func _make_gear_slot(parent: Node, slot_name: String) -> Array:
-	var slot := _make_slot_panel(parent)
-	slot.add_theme_stylebox_override("panel", UiStyle.panel(Color(0.2, 0.17, 0.14), UiStyle.BORDER, 0))
+	var slot := _make_slot_panel(parent, DOLL[slot_name][1])
+	slot.position = DOLL[slot_name][0]
+	slot.size = DOLL[slot_name][1]
+	slot.add_theme_stylebox_override("panel", UiStyle.panel(Color(0.12, 0.1, 0.09, 0.92), UiStyle.BORDER, 1))
 	slot.gui_input.connect(_on_gear_input.bind(slot_name))
 	slot.set_drag_forwarding(_drag_from_gear.bind(slot_name), _can_drop_on_gear.bind(slot_name), _drop_on_gear.bind(slot_name))
-	var placeholder := UiStyle.label(SLOT_LABELS[slot_name], 6, Color(0.55, 0.5, 0.42))
-	placeholder.set_anchors_preset(Control.PRESET_FULL_RECT)
-	placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	placeholder.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	# zarys pasującego przedmiotu w pustym miejscu
+	var placeholder := TextureRect.new()
+	placeholder.texture = load("res://assets/ui/slot_%s.png" % Equipment.SLOT_TYPES[slot_name])
+	UiStyle.center_icon(placeholder, 22.0)
+	placeholder.modulate = Color(1, 1, 1, 0.45)
 	placeholder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	slot.add_child(placeholder)
-	var icon := _make_icon(slot)
+	var icon := TextureRect.new()
+	UiStyle.center_icon(icon, 26.0)
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	slot.add_child(icon)
 	return [slot, icon, placeholder, _make_level_label(slot)]
 
 
