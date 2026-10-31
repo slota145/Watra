@@ -281,18 +281,11 @@ func _face(target: Vector2) -> void:
 
 
 # ---------------------------------------------------------------- łup
-## Dużo więcej wszystkiego: złoto w wielu monetach, kamienie zaklinające i wspierające.
+## Dużo więcej wszystkiego: złoto w wielu monetach, trofea, przedmioty i legendy (kamienie zaklinające
+## wypadają tylko w lochach Watry).
 func _drop_loot() -> void:
 	for i in gold_coins:
 		_spawn_pickup("gold", randi_range(gold_min, gold_max))
-	# kamienie: zwykłe zawsze, doskonały i wspierające - jak u zwykłych potworów dopiero od wyższych poziomów
-	for i in 2:
-		_spawn_pickup(Enchanting.stone_id(["weapon", "armor", "jewelry"].pick_random(), false), 1)
-	if level >= 18:
-		_spawn_pickup(Enchanting.stone_id(["weapon", "armor", "jewelry"].pick_random(), true), 1)
-	if level >= 14:
-		_spawn_pickup("blessed_stone", randi_range(10, 18))
-		_spawn_pickup("mercy_stone", randi_range(3, 6))
 	_drop_trophies()
 	# dwa przedmioty z poziomu bossa: pierwszy co najmniej magiczny, drugi z dużą szansą na rzadki
 	# (w trybie deweloperskim oba rzadkie)

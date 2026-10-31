@@ -34,8 +34,8 @@ const DRILL_PERIOD := 1.6
 @export var gold_min := 1
 @export var gold_max := 4
 @export_range(0.0, 1.0) var heart_drop_chance := 0.3
-## Kamienie zaklinające: szanse wynikają z poziomu potwora (Levels.stone_chances), a to jest ich mnożnik
-## względem zwykłego potwora (0,1 = x1; 0 - nie wypadają wcale, np. pajączki).
+## Dawny mnożnik kamieni zaklinających - kamienie wypadają już tylko w lochach (Kryształ Watry, skarbiec),
+## a nie z potworów; pole zostaje, bo ustawiają je sceny.
 @export_range(0.0, 1.0) var stone_drop_chance := 0.1
 ## Ekwipunek (zwykły, magiczny albo rzadki - Loot) z poziomem potwora.
 @export_range(0.0, 1.0) var equipment_drop_chance := 0.04
@@ -95,6 +95,10 @@ var _fear_from := Vector2.ZERO
 ## Nieruchome "potwory" (prastare drzewa, kokony) nie uciekają w strachu.
 var fearless := false
 var _stun_marker: StunMarker
+## Cel do zniszczenia (Kryształ Watry albo górnik w lochu - WatraCrystal): potwór z fali idzie do niego i go bije
+## (take_hit), chyba że gracz jest blisko - wtedy walczy z graczem. Cel ma is_alive() i hit_radius.
+var objective: Node2D
+const OBJECTIVE_PLAYER_RANGE := 60.0
 ## Spowolnienie lodem (księga magii, SpellSkills): mnożnik prędkości i do kiedy trwa (Time.get_ticks_msec); wróg sinieje.
 var _chill_until := 0
 var _chill_factor := 1.0
@@ -313,6 +317,9 @@ func _process_chase() -> void:
 	if not _player_alive() or _player_is_safe() or position.distance_to(home) > leash_radius:
 		state = State.RETURN
 		return
+	if _wants_objective():
+		_process_objective()
+		return
 	var to_player := _player.global_position - global_position
 	if to_player.length() <= attack_range and _cooldown == 0.0:
 		state = State.ATTACK
@@ -321,6 +328,24 @@ func _process_chase() -> void:
 		return
 	var desired := _toward_player(to_player) * speed if to_player.length() > attack_range * 0.7 else Vector2.ZERO
 	velocity = desired + _separation() * speed
+
+
+func _wants_objective() -> bool:
+	return objective != null and is_instance_valid(objective) and objective.is_alive() \
+			and global_position.distance_to(_player.global_position) > OBJECTIVE_PLAYER_RANGE
+
+
+## Atak na cel (kryształ, górnik): podejście i ciosy co attack_cooldown.
+func _process_objective() -> void:
+	var to: Vector2 = objective.global_position - global_position
+	if to.length() <= attack_range + float(objective.hit_radius):
+		velocity = _separation() * speed * 0.5
+		if _cooldown == 0.0:
+			_cooldown = attack_cooldown
+			_strike_anim = 0.2
+			objective.take_hit(damage)
+		return
+	velocity = to.normalized() * speed + _separation() * speed
 
 
 ## Kierunek pogoni za graczem: w lochu po drodze omijającej ściany (gdy gracz jest dalej niż za rogiem), inaczej prosto.
@@ -470,18 +495,6 @@ func _drop_loot() -> void:
 		_spawn_pickup("gold", share)
 	if randf() < heart_drop_chance:
 		_spawn_pickup("goblin_heart", 1)
-	# kamienie wg poziomu potwora (Levels); stone_drop_chance sceny to mnożnik (0 - nie wypadają wcale)
-	var stone_category: String = ["weapon", "armor", "jewelry"].pick_random()
-	var chances := Levels.stone_chances(level)
-	var stone_scale := stone_drop_chance / 0.1
-	if randf() < chances[1] * stone_scale:
-		_spawn_pickup(Enchanting.stone_id(stone_category, true), 1)
-	elif randf() < chances[0] * stone_scale:
-		_spawn_pickup(Enchanting.stone_id(stone_category, false), 1)
-	if randf() < chances[2] * stone_scale:
-		_spawn_pickup("blessed_stone", randi_range(1, 3))
-	if randf() < chances[3] * stone_scale:
-		_spawn_pickup("mercy_stone", randi_range(1, 2))
 	if randf() < equipment_drop_chance * dungeon_mods.get("loot", 1.0):
 		_spawn_pickup(Loot.drop_at_level(level), 1)
 

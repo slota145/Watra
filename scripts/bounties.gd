@@ -27,11 +27,8 @@ const KINDS := {
 static func make(kind: String, tier: int) -> Dictionary:
 	var base: Dictionary = KINDS[kind]
 	var scale := 1.0 + TIER_STEP * tier
-	var rewards := {"blessed_stone": 10 + 2 * tier, "mercy_stone": 3 + tier,
-			Enchanting.stone_id(["weapon", "armor", "jewelry"][tier % 3], false): 2 + tier / 3}
-	# co trzecie zlecenie dorzuca doskonały kamień
-	if tier % 3 == 2:
-		rewards[Enchanting.stone_id(["weapon", "armor", "jewelry"][(tier / 3) % 3], true)] = 1
+	# mikstury zamiast kamieni zaklinających (te są tylko w lochach Watry)
+	var rewards := {"greater_health_potion": 2 + tier / 2, "greater_mana_potion": 2 + tier / 2}
 	return {
 		"title": "%s (zlecenie %d)" % [base["title"], tier + 1],
 		"giver": GIVER,

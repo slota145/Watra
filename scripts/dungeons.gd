@@ -54,6 +54,11 @@ const CLIMATES := {
 }
 const CLIMATE_ORDER: Array[String] = ["catacombs", "mine", "flooded", "roots"]
 
+## Kryształ Watry (scripts/watra_crystal.gd): szansa, że loch ma komnatę z kryształem, i warianty zdarzenia
+## (obrona kryształu albo górników). W trybie deweloperskim kryształ jest w każdym lochu.
+const EVENT_CHANCE := 0.5
+const EVENTS: Array[String] = ["crystal", "miners"]
+
 ## Poziom potworów na stopniach 1-7 (stopień wybiera gracz, najwyżej poziom Watry); strażnik ma o 2 więcej.
 const TIER_LEVELS: Array[int] = [5, 11, 17, 23, 29, 35, 41]
 const BOSS_BONUS := 2

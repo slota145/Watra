@@ -1,9 +1,6 @@
 class_name ChoppableTree
 extends Harvestable
-## Drzewo do ścięcia siekierą. Przewraca się, zostawia pieniek i daje drewno,
-## a czasem także uświęcone kamienie ukryte w korze starych drzew.
-
-const BLESSED_CHANCE := 0.04
+## Drzewo do ścięcia siekierą. Przewraca się, zostawia pieniek i daje drewno.
 
 
 func _init() -> void:
@@ -20,10 +17,7 @@ func _ready() -> void:
 
 
 func roll_loot() -> Array:
-	var loot := [["wood", randi_range(2, 4)]]
-	if randf() < BLESSED_CHANCE:
-		loot.append(["blessed_stone", randi_range(1, 3)])
-	return loot
+	return [["wood", randi_range(2, 4)]]
 
 
 ## Drzewo pada w przeciwną stronę niż stoi ścinający.
