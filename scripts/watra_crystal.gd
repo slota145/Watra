@@ -207,6 +207,8 @@ func _finish(success: bool) -> void:
 	else:
 		text = "Górnicy wykuli kamienie z Kryształu Watry!" if success else "Górnicy polegli - zostały tylko odłamki"
 	dungeon.w.hud.show_banner(text + "\nKowal w Ostoi wbije je w twój oręż", Color(1.0, 0.75, 0.4) if success else Color(1.0, 0.5, 0.4))
+	if success:
+		dungeon.w.player.quests.note_event("crystal_done")
 	finished.emit(success)
 
 

@@ -85,7 +85,17 @@ static var dynamic := {}
 
 
 static func get_data(id: String) -> Dictionary:
-	return DATA[id] if DATA.has(id) else dynamic.get(id, {})
+	if DATA.has(id):
+		return DATA[id]
+	if MainQuests.DATA.has(id):
+		return MainQuests.DATA[id]
+	return dynamic.get(id, {})
+
+
+## Komu oddać wykonane zadanie (zadania główne mogą wskazać inną postać niż zleceniodawca).
+static func receiver(id: String) -> String:
+	var quest := get_data(id)
+	return quest.get("receiver", quest.get("giver", ""))
 
 
 ## Co trzeba zebrać: id przedmiotu -> ilość.
@@ -108,4 +118,6 @@ static func reward_text(id: String) -> String:
 	var items: Dictionary = quest.get("reward_items", {})
 	for item: String in items:
 		parts.append("%s x%d" % [Items.get_data(item)["name"], items[item]])
+	if int(quest.get("skill_points", 0)) > 0:
+		parts.append("+%d pkt umiejętności" % int(quest["skill_points"]))
 	return ", ".join(parts)

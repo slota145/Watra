@@ -57,7 +57,9 @@ func _process(_d: float) -> bool:
 			found = true
 			break
 	check("siła mikstur na pasach", found and Items.describe(Loot.generate("belt_t1", "common", 5)).contains("Pas"))
-	# siła mikstur: mikstura leczy mocniej
+	# siła mikstur: mikstura leczy mocniej (bez pasa - rzadki pas mógł wylosować własną siłę mikstur)
+	p.equipment.items["belt"] = {}
+	p.equipment.changed.emit()
 	p.inventory.add_item("health_potion", 20)
 	p.health = 1
 	p.use_item("health_potion")

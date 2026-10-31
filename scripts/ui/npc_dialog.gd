@@ -29,6 +29,8 @@ const WIDTH := 230.0
 
 var _player: Player
 var _npc: Npc
+## Zadanie pokazane w rozmowie (główne ma pierwszeństwo przed zadaniem postaci).
+var _shown_quest := ""
 var _title: Label
 var _text: Label
 var _quest_box: VBoxContainer
@@ -105,8 +107,10 @@ func _refresh() -> void:
 		child.queue_free()
 
 	_title.text = _npc.display_name
-	if _npc.quest_id != "":
-		_quest_section(_npc.quest_id)
+	var main := MainQuests.step_for(_player.quests, _npc.display_name)
+	_shown_quest = main if main != "" else _npc.quest_id
+	if _shown_quest != "":
+		_quest_section(_shown_quest)
 	else:
 		_text.text = _npc.dialog_greeting
 	for service in _npc.services:
@@ -163,6 +167,10 @@ func _quest_section(id: String) -> void:
 		Quests.STATE_ACTIVE:
 			_text.text = quest["progress_text"]
 			_quest_info(id, true)
+		Quests.STATE_READY when Quests.receiver(id) != _npc.display_name:
+			# zadanie główne oddaje się innej postaci
+			_text.text = quest["progress_text"]
+			_quest_info(id, true)
 		Quests.STATE_READY:
 			_text.text = quest["complete_text"]
 			_quest_info(id, true)
@@ -173,10 +181,19 @@ func _quest_section(id: String) -> void:
 
 func _quest_info(id: String, show_progress: bool) -> void:
 	var quest := Quests.get_data(id)
-	_quest_box.add_child(UiStyle.label(quest["title"], 9, UiStyle.TITLE_COLOR))
+	var main := MainQuests.is_main(id)
+	_quest_box.add_child(UiStyle.label(("Zadanie główne: " if main else "") + quest["title"], 9, MainQuests.COLOR if main else UiStyle.TITLE_COLOR))
 	var verb := "zbierz" if Quests.is_gather(id) else "pokonaj"
-	var goal := "Cel: %s %d/%d" % [quest["target_name"], _player.quests.progress_of(id), quest["count"]] if show_progress \
-			else "Cel: %s %d (%s)" % [verb, quest["count"], quest["target_name"].to_lower()]
+	var goal := ""
+	if main:
+		var have: Array = MainQuests.progress(_player, id)
+		goal = "Cel: %s %d/%d" % [quest["target_name"], have[0], have[1]] if have[1] > 1 else "Cel: %s" % quest["target_name"]
+		if Quests.receiver(id) != quest["giver"]:
+			goal += "  (nagroda u: %s)" % Quests.receiver(id)
+	elif show_progress:
+		goal = "Cel: %s %d/%d" % [quest["target_name"], _player.quests.progress_of(id), quest["count"]]
+	else:
+		goal = "Cel: %s %d (%s)" % [verb, quest["count"], quest["target_name"].to_lower()]
 	if Quests.requirements(id).size() > 1:
 		# kilka surowców - każdy w osobnej linii
 		var parts: Array[String] = []
@@ -190,13 +207,14 @@ func _quest_info(id: String, show_progress: bool) -> void:
 
 
 func _accept() -> void:
-	_player.quests.accept(_npc.quest_id)
+	_player.quests.accept(_shown_quest)
+	_player.quests.update_main(_player)
 	Sfx.play("ui_confirm")
 	_npc.say("Liczę na ciebie!")
 
 
 func _turn_in() -> void:
-	var id := _npc.quest_id
+	var id := _shown_quest
 	if _player.quests.turn_in(id, _player.stats):
 		var quest := Quests.get_data(id)
 		if Quests.is_gather(id):

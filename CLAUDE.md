@@ -377,10 +377,14 @@ Dziś tablica ma tylko zlecenia na wilki i gobliny w Goblińskim Lesie (komentar
 - [ ] **Symulowany rynek**: setki ofert kupna i sprzedaży wystawianych przez podróżników, z cenami zmieniającymi się w czasie, w stylu rynku z BDO.
   Gracz może kupować, sprzedawać i składać zamówienia.
   Rynek działa przez gildię.
-- [ ] **Zadania główne** (pomysł autora, po kamieniach i esencjach): fabularny łańcuch z innym kolorem znaczników
-  „!” i „?” nad postaciami (np. niebieskim), prowadzący gracza po kolei przez wszystkie ważne miejsca i krainy;
-  każda mechanika dostaje swoje zadanie wprowadzające - jak „Pierwszy klejnot” u jubilera (zielarstwo, Watra,
-  lochy, Kryształ Watry, zaklinanie u kowala, drzewka umiejętności, budowa osady, encyklopedia...).
+- [x] **Zadania główne** (`scripts/main_quests.gd`, żerca Wszebor przy Watrze - postać z PixelLab przez `tools/npc_sheets.py`):
+  łańcuch 23 kroków przez wszystkie krainy (bossowie, kapliczki) i mechaniki (budowa, zielarstwo, drzewka,
+  encyklopedia, Watra, lochy, Kryształ Watry, klejnoty, zaklinanie, esencje); niebieskie „!” i „?” nad postaciami,
+  niebieski tytuł w rozmowie, dzienniku i pod minimapą (zawsze śledzone). Krok daje `giver`, nagrodę wydaje
+  `receiver`; warunek `check` sprawdzany co pół sekundy (`QuestLog.update_main`), zdarzenia przez
+  `QuestLog.note_event`. Nagrody: złoto, doświadczenie, przedmioty i punkty umiejętności (`SkillBook.bonus_points`).
+  Lochy Watry otwiera krok „Płomień Watry” (`MainQuests.dungeons_unlocked`); starsze zapisy zaliczają po wczytaniu
+  kroki z już spełnionym warunkiem (`QuestLog.catch_up_main`, bez nagród).
 - [ ] Więcej rodzajów zleceń na tablicy (inne krainy, bossowie, zbieranie surowców), powiązanych z podróżnikami.
 
 ### Świat

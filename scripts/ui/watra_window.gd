@@ -25,6 +25,8 @@ var _gold_row: HBoxContainer
 var _items: VBoxContainer
 var _gold_label: Label
 var _status: Label
+## Przycisk lochów - zablokowany do zadania głównego „Płomień Watry” (MainQuests.DUNGEON_STEP).
+var _dungeons: Button
 
 
 func _ready() -> void:
@@ -92,9 +94,10 @@ func _ready() -> void:
 	bottom.add_child(_button("Esencje", func() -> void:
 		visible = false
 		essence_requested.emit()))
-	bottom.add_child(_button("Lochy", func() -> void:
+	_dungeons = _button("Lochy", func() -> void:
 		visible = false
-		dungeon_requested.emit()))
+		dungeon_requested.emit())
+	bottom.add_child(_dungeons)
 	bottom.add_child(_button("Zamknij", func() -> void:
 		visible = false
 		Sfx.play("ui_close")))
@@ -132,6 +135,9 @@ func _refresh_if_open() -> void:
 func _refresh() -> void:
 	if _player == null:
 		return
+	var unlocked := MainQuests.dungeons_unlocked(_player.quests)
+	_dungeons.disabled = not unlocked
+	_dungeons.tooltip_text = "" if unlocked else "Żerca Wszebor otworzy lochy, gdy Watra urośnie (zadanie główne „Płomień Watry”)"
 	var boons := _player.boons
 	var level := boons.watra_level()
 	var next := boons.watra_next()
