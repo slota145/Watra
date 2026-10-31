@@ -131,7 +131,7 @@ static func register(recipe: Dictionary, id := "") -> String:
 	recipe["affixes"] = stats
 	Items.generated[id] = {
 		"name": "%s (%s)" % [KINDS[kind]["name"], CUTS[cut].to_lower()],
-		"description": "Kamień szlachetny. Jubiler Dobromir osadzi go w gnieździe przedmiotu - premie działają, dopóki kamień w nim tkwi.",
+		"description": "Kamień szlachetny. Przeciągnij go na przedmiot z pustym gniazdem (w plecaku albo założony) - premie działają, dopóki kamień w nim tkwi. Wyjmuje jubiler Dobromir.",
 		"icon": load("res://assets/items/gems/%s_%d.png" % [kind, cut + 1]),
 		"rarity": "rare" if stats.size() > 2 else "magic",
 		"gem": {"kind": kind, "cut": cut},
@@ -212,6 +212,46 @@ static func remove(id: String, index: int) -> String:
 	recipe["sockets"][index] = {}
 	Loot.register(recipe, id)
 	return register(gem.duplicate(true))
+
+
+# ---------------------------------------------------------------- przeciąganie na przedmiot
+## Kamień albo esencja przeciągnięta z plecaka na przedmiot (w plecaku albo założony - InventoryWindow):
+## "gem" / "essence" - da się osadzić, "" - nie dotyczy (zwykłe przeniesienie), inaczej powód odmowy.
+## Kamień trafia tylko do pustego gniazda (wyjmuje jubiler), esencja - do pustego gniazda esencji tego samego rodzaju.
+static func drag_target(source_id: String, item_id: String) -> String:
+	if source_id == "" or item_id == "" or source_id == item_id:
+		return ""
+	if is_gem(source_id):
+		if sockets_of(item_id).is_empty():
+			return ""
+		if is_radius(source_id):
+			return "Kamień Promienia pasuje tylko do gniazd drzewka umiejętności."
+		if not sockets_of(item_id).any(func(gem: Dictionary) -> bool: return gem.is_empty()):
+			return "Gniazdo zajęte - kamień wyjmie jubiler Dobromir."
+		return "gem"
+	if Essences.is_essence(source_id):
+		if not Essences.has_socket(item_id):
+			return ""
+		if not (Essences.socket_of(item_id) as Dictionary).is_empty():
+			return "Gniazdo esencji zajęte - esencję wyjmie kowal Bronisław."
+		if not Essences.fits(source_id, item_id):
+			return "Ta esencja pasuje tylko do: %s." % Essences.GROUP_NAMES[Items.get_data(source_id)["essence"]["group"]]
+		return "essence"
+	return ""
+
+
+## Osadza kamień / esencję z pola `index` plecaka w przedmiocie `item_id` (wg drag_target - "gem" albo "essence").
+static func drag_insert(inventory: Inventory, index: int, item_id: String, target: String) -> void:
+	var source_id: String = inventory.slots[index]["id"]
+	inventory.take_one(index)
+	if target == "essence":
+		Essences.insert(item_id, source_id)
+	else:
+		var sockets := sockets_of(item_id)
+		for i in sockets.size():
+			if (sockets[i] as Dictionary).is_empty():
+				insert(item_id, i, source_id)
+				return
 
 
 ## Przeszlifowanie: ten sam rodzaj, szlif i liczba premii, ale premie (i ich siła) losowane od nowa.
