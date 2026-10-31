@@ -38,6 +38,13 @@ const FLICKER_SPIN_TRAIL := preload("res://assets/effects/flicker_spin_trail.png
 const FLICKER_SPIN_TRAIL_ANCHOR := Vector2(15, 13)
 const FLICKER_SPIN_TRAIL_LENGTH := 70.0
 const SPIN_FX_TIME := 0.35
+## Dymny Wybuch z kreatora efektów PixelLab: klin dymu i smug buchający z punktu do przodu (rysowany w prawo).
+## Podstawa klina (punkt zaczepienia) stoi z tyłu kręgu obrażeń, a długość klina w klatce to około 2 x SMOKE_FX_RADIUS.
+const SMOKE_FX := preload("res://assets/effects/smoke_burst.png")
+const SMOKE_FX_ANCHOR := Vector2(14, 38)
+const SMOKE_FX_RADIUS := 28.0
+## Klin jest narysowany lekko pod górę (około 14 stopni) - obrót o tyle w drugą stronę kieruje go wzdłuż lotu.
+const SMOKE_FX_LEAN := 0.25
 const BLOOD_COLOR := Color(0.8, 0.1, 0.1)
 const SPECTRAL_COLOR := Color(0.65, 0.85, 1.0)
 const PERUN_COLOR := Color(1.0, 0.85, 0.35)
@@ -381,35 +388,18 @@ func _fire_smoke(rows: int, combo: bool) -> void:
 			var at := origin + aim.rotated((k - 1) * spread) * Skills.SMOKE_DISTANCE[ring]
 			var timer := _player.get_tree().create_timer(ring * SMOKE_RING_DELAY + k * 0.02, false)
 			var bonus := (1.0 + _player.skills.tree_bonus("melee", "smoke_damage")) * (_player.combo_damage() if combo else 1.0)
-			timer.timeout.connect(_burst.bind(at, Skills.SMOKE_RADIUS[ring] * _player.stats.area_multiplier(), Skills.smoke_damage(level, ring) * bonus))
+			timer.timeout.connect(_burst.bind(at, aim.rotated((k - 1) * spread), Skills.SMOKE_RADIUS[ring] * _player.stats.area_multiplier(),
+					Skills.smoke_damage(level, ring) * bonus))
 
 
-func _burst(at: Vector2, radius: float, multiplier: float) -> void:
+## Jeden Dymny Wybuch: klin dymu buchający w kierunku `dir` i obrażenia w kręgu o promieniu `radius`.
+func _burst(at: Vector2, dir: Vector2, radius: float, multiplier: float) -> void:
 	if not is_instance_valid(_player):
 		return
 	var parent := _player.get_parent()
-	SkillEffects.shockwave(parent, at, radius, SMOKE_COLOR)
-	var puff := CPUParticles2D.new()
-	puff.position = at + Vector2(0, -6)
-	puff.one_shot = true
-	puff.explosiveness = 0.85
-	puff.amount = 30
-	puff.lifetime = 1.3
-	puff.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-	puff.emission_sphere_radius = radius * 0.4
-	puff.direction = Vector2.UP
-	puff.spread = 180.0
-	puff.initial_velocity_min = 10.0
-	puff.initial_velocity_max = radius * 1.4
-	puff.damping_min = 30.0
-	puff.damping_max = 50.0
-	puff.gravity = Vector2(0, -14)
-	puff.scale_amount_min = 4.0
-	puff.scale_amount_max = 9.0
-	puff.color_ramp = _smoke_ramp(1.0)
-	puff.emitting = true
-	parent.add_child(puff)
-	puff.finished.connect(puff.queue_free)
+	var size := radius / SMOKE_FX_RADIUS
+	SkillEffects.sheet_once(parent, SMOKE_FX, 10, 16.0, at - dir * radius * 0.9, SMOKE_FX_ANCHOR, dir.angle(), 1.0, size,
+			SMOKE_FX_LEAN)
 	Sfx.play_at("explosion", at, -12.0)
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
 		if enemy.hurt_center().distance_to(at + Vector2(0, -6)) <= radius + enemy.hurt_radius:

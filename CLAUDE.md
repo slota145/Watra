@@ -177,6 +177,9 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   skoku ze spiralą ostrza (`flicker_spin_trail.png`).
 - [x] Smugi Mgnienia i wirującego Mgnienia bez równego ucięcia na końcu: własny kształt igły (zamiast pasa z części
   `thrust_streak`) - cienki ogon pogrubia się w stronę postaci, a gasnąc, ogon przesuwa się ku postaci.
+- [x] Dymne Wybuchy z kreatora efektów (`assets/effects/smoke_burst.png`, `SwordSkills._burst`): zamiast kółka i chmury
+  kropek - klin dymu i smug buchający z punktu do przodu (wg szkicu autora), obrócony w kierunku lotu każdego wybuchu
+  i skalowany do jego promienia; `SkillEffects.sheet_once` ma `size` (skala) i `lean` (korekta pochylonego rysunku).
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 
