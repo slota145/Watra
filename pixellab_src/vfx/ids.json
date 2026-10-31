@@ -112,5 +112,19 @@
       9,
       12
     ]
+  },
+  "ground_slam": {
+    "effect": "f1d97b16-e1a7-441f-aec6-500201744f66",
+    "name": "Rozlupanie Ziemi - erupcja",
+    "frame": [
+      47,
+      51
+    ],
+    "frames": 10,
+    "fps": 15,
+    "anchor": [
+      26,
+      35
+    ]
   }
 }

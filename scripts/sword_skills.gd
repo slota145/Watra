@@ -57,6 +57,10 @@ const REND_FX_ANCHOR := Vector2(-7, 38)
 const REND_FX_RADIUS := 36.0
 const REND_WOUND_FX := preload("res://assets/effects/rend_wound.png")
 const REND_WOUND_ANCHOR := Vector2(9, 12)
+## Rozłupanie Ziemi z kreatora efektów PixelLab: erupcja kamiennych kolców, odłamków i pyłu (nieobracana, punkt
+## zaczepienia na ziemi) w każdym kroku fali pęknięć - coraz większa; w combo erupcje w dwóch kręgach wokół postaci.
+const SLAM_FX := preload("res://assets/effects/ground_slam.png")
+const SLAM_FX_ANCHOR := Vector2(26, 35)
 const SPECTRAL_COLOR := Color(0.65, 0.85, 1.0)
 const PERUN_COLOR := Color(1.0, 0.85, 0.35)
 ## Taniec Ostrzy: premia za combo, ile razy się kumuluje i jak długo trwa; Dym i Cień: chmura; Krwawy Szał: leczenie.
@@ -490,6 +494,13 @@ func _ground_slam() -> void:
 	if combo:
 		SkillEffects.shockwave(_player.get_parent(), origin, Skills.SLAM_RING, Color(0.75, 0.6, 0.4))
 		SkillEffects.ground_crack(parent, origin, Skills.SLAM_RING * 0.7, 2.0)
+		# [promień jako część kręgu, liczba erupcji, opóźnienie, przesunięcie kąta w ułamku odstępu]
+		for ring in [[0.5, 9, 0.0, 0.0], [0.85, 14, 0.08, 0.5]]:
+			for k: int in ring[1]:
+				var spot: Vector2 = origin + Vector2.from_angle(TAU * (k + ring[3]) / ring[1]) * Skills.SLAM_RING * ring[0]
+				_player.get_tree().create_timer(ring[2] + randf() * 0.04, false).timeout.connect(func() -> void:
+					if is_instance_valid(_player):
+						SkillEffects.sheet_once(_player.get_parent(), SLAM_FX, 10, 15.0, spot, SLAM_FX_ANCHOR, 0.0, 1.0, 1.0))
 		for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
 			if enemy.global_position.distance_to(origin) <= Skills.SLAM_RING + enemy.hurt_radius:
 				_slam_hit(enemy, damage, stun, origin)
@@ -502,7 +513,8 @@ func _ground_slam() -> void:
 			if not is_instance_valid(_player):
 				return
 			SkillEffects.ground_crack(parent, at, Skills.SLAM_WIDTH, 1.6)
-			SkillEffects.spark(_player.get_parent(), at, Color(0.7, 0.55, 0.35), 5)
+			SkillEffects.sheet_once(_player.get_parent(), SLAM_FX, 10, 15.0, at, SLAM_FX_ANCHOR, 0.0, 1.0,
+					lerpf(0.75, 1.2, float(i) / (steps - 1)))
 			for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
 				if not hit.has(enemy) and enemy.global_position.distance_to(at) <= Skills.SLAM_WIDTH + enemy.hurt_radius:
 					hit[enemy] = true
