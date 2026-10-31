@@ -238,8 +238,17 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
 - [x] Broń w ręku: łuki we właściwym rozmiarze (`tools/pixellab_items.py` sam dobiera obrót ikony), legendarne bronie
   trzymają w ręku siebie (`tools/legend_held.py`, `scripts/legend_held.gd`; Łuk Swaroga, Łuk Burzy i Księga
   Marzanny z osobnych rysunków PixelLab w `pixellab_src/legend_held/`).
-- [ ] System kamieni wkładanych w przedmioty (gniazda).
-  Istniejące kamienie (zwykłe, doskonałe, uświęcone, miłosierdzia) służą tylko do zaklinania (`scripts/enchanting.gd`, `scripts/ui/enchant_window.gd`), więc to byłby nowy system.
+- [ ] **Esencje legend i gniazda** (pomysł autora, ustalony kierunek; szczegóły liczb do dopracowania przy realizacji):
+  - **Wyciąganie efektu w Watrze**: legenda wrzucona w płomienie (za dużo żaru) przepada, a gracz dostaje Esencję
+    z jej efektem legendarnym (np. „Esencja Kła Alfy”); siła efektu zależy od poziomu zaklęcia legendy.
+  - **Ołtarz Welesa** (nowa mechanika lochów): rzadkie ukryte pomieszczenie w lochu, w którym wyciągnięcie esencji
+    jest darmowe albo daje mocniejszą esencję.
+  - **Gniazda u kowala**: kowal Bronisław dorabia przedmiotowi jedno gniazdo na esencję; potrzebny jest nowy surowiec
+    z końcówki gry (np. Serce Kryształu z Kryształu Watry od wyższych stopni). Gniazdo w rzadkim przedmiocie
+    i - drożej - w legendzie (wtedy legenda ma dwa efekty legendarne).
+  - Esencja pasuje tylko do tego samego rodzaju miejsca (z pierścienia do biżuterii, z broni do broni); wyjęcie
+    z gniazda niszczy esencję, chyba że zapłaci się kowalowi.
+  - Dawne kamienie (zwykłe, doskonałe, uświęcone, miłosierdzia) zostają do zaklinania (`scripts/enchanting.gd`).
 - [ ] Nowe bronie: kosa, kostur (nekromanta), młoty, chainblade'y, sztylety, włócznie, rapier, hydrosfera.
   Każda broń to nowy rodzaj z własnym drzewkiem, a nie tylko nowy przedmiot, więc wymaga szczegółów od autora.
 
