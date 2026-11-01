@@ -20,6 +20,9 @@ const LEAP_TIME := 0.65
 const LEAP_HEIGHT := 46.0
 ## Wysokość pyska nad stopami (skąd wystrzeliwuje język).
 const MOUTH := Vector2(16, -30)
+## Plusk wody i błota z kreatora efektów PixelLab (lądowanie po skoku; promień kręgów w klatce SPLASH_RADIUS).
+const SPLASH_FX := preload("res://assets/effects/bulgor_splash.png")
+const SPLASH_RADIUS := 45.0
 
 var _tongue_dir := Vector2.RIGHT
 var _tongue: Line2D
@@ -87,6 +90,7 @@ func _update_attack(delta: float) -> void:
 					if _player_in_telegraph():
 						_hurt_player(tongue_damage)
 						_player._knockback = (global_position - _player.global_position).normalized() * 420.0
+						SkillEffects.sheet_once(get_parent(), SPLASH_FX, 12, 14.0, _player.global_position, Vector2(46, 35), 0.0, 1.0, 0.45)
 					_remove_telegraph()
 			_tongue.points = PackedVector2Array([Vector2.ZERO, _tongue_dir * tongue_length * reach])
 			if _stage_timer <= 0.0:
@@ -122,8 +126,8 @@ func _land() -> void:
 		_hurt_player(leap_damage, 220.0)
 	_remove_telegraph()
 	_shake_camera(8.0)
-	_burst(global_position, Color(0.6, 0.85, 0.9), 36, 170.0)
-	_burst(global_position, Color(0.4, 0.32, 0.2), 16, 110.0)
+	SkillEffects.sheet_once(get_parent(), SPLASH_FX, 12, 14.0, global_position, Vector2(46, 35), 0.0, 1.0,
+			leap_radius / SPLASH_RADIUS)
 	Sfx.play_at("boss_splash", global_position)
 	_set_stage("recover", 0.9)
 

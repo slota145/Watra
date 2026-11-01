@@ -231,6 +231,14 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   krwawe pazury i cięcie pazurami w stożku, pył za szarżami, cienisty dym i ryk Biesa, wybuch każdej bomby kobolda
   i rozprysk kwasu (`KoboldBomb._explode` - także pociski kwasu Hydry), fontanna ziemi Pożeracza przy zakopywaniu,
   wynurzaniu, przywołaniu i wejściu do walki, kamienne kolce trzęsienia (efekt Rozłupania Ziemi).
+- [x] Bossowie Rozlewisk i Turni z kreatora efektów (`assets/effects/bulgor_*`, `wodnik_*`, `hydra_*`, `eagle_*`,
+  `gryf_*`, `satyr_*`): Bulgor - plusk wody i błota przy lądowaniu i trafieniu językiem; Wodnik - zapętlony wir
+  (zamiast rysowanych kręgów), fala przetaczająca się pasem, plusk przy wynurzeniu (własne `_fx_engage`) i przy
+  topielcach; Hydra - kłapnięcie szczęk na końcach pasów kąsania, trujący oddech (klin), fala bagiennej wody,
+  przy odrastaniu `_fx_phase`; Gromoskrzydły - piorun z nieba (`storm_strike`) z trafieniem, smuga nurkowania,
+  podmuch z piórami, piorun w orła przy wejściu do walki; Gryf - stożek wiatru (`bow_wind_cone`), złote szpony
+  z pyłem, zapętlona trąba powietrzna (`GryfTornado`), krzyk - złote fale dźwięku; Faun-Król - fletnia (fale
+  melodii z nutami), pnącza spod ziemi, tupnięcie z pęknięciami i pyłem.
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

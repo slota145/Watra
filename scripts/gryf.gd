@@ -26,6 +26,16 @@ const GUST_ARC := 0.6
 const SLAM_RADIUS := 62.0
 const SLAM_TIME := 0.6
 const GOLD := Color(1.0, 0.85, 0.45)
+## Efekty z kreatora efektów PixelLab: stożek wiatru (ten sam co Strzała Wichru, długość w klatce WIND_FX_LENGTH),
+## złote szpony z pyłem (promień w klatce SLAM_FX_RADIUS), krzyk - złote fale dźwięku (promień w klatce
+## SCREECH_FX_RADIUS) i zapętlona trąba powietrzna.
+const WIND_FX := preload("res://assets/effects/bow_wind_cone.png")
+const WIND_FX_LENGTH := 104.0
+const SLAM_FX := preload("res://assets/effects/gryf_slam.png")
+const SLAM_FX_RADIUS := 36.0
+const SCREECH_FX := preload("res://assets/effects/gryf_screech.png")
+const SCREECH_FX_RADIUS := 104.0
+const TORNADO_FX := preload("res://assets/effects/gryf_tornado.png")
 
 var _patrol_angle := 0.0
 var _orbit_sign := 1.0
@@ -138,7 +148,8 @@ func _update_attack(delta: float) -> void:
 				if _player_in_telegraph():
 					_hurt_player(gust_damage, 420.0)
 				_remove_telegraph()
-				SkillEffects.cone(get_parent(), global_position, _dir.angle(), GUST_ARC, GUST_RADIUS)
+				SkillEffects.sheet_once(get_parent(), WIND_FX, 9, 18.0, global_position, Vector2(4, 53), _dir.angle(), 1.0,
+						GUST_RADIUS / WIND_FX_LENGTH)
 				for k in 5:
 					var feather := EnemySpit.new()
 					feather.style = "feather"
@@ -162,7 +173,8 @@ func _update_attack(delta: float) -> void:
 					_hurt_player(slam_damage, 300.0)
 				_remove_telegraph()
 				_ground_crack(global_position, SLAM_RADIUS, 3.0)
-				_debris(global_position, 20, 180.0)
+				SkillEffects.sheet_once(get_parent(), SLAM_FX, 10, 16.0, global_position, Vector2(36, 25), 0.0, 1.0,
+						SLAM_RADIUS / SLAM_FX_RADIUS)
 				_shake_camera(8.0)
 				Sfx.play_at("rock_break", global_position)
 				_set_stage("recover", 0.8)
@@ -181,7 +193,8 @@ func _update_attack(delta: float) -> void:
 			if _stage_timer <= 0.0:
 				_snap()
 				Sfx.play_at("storm_eagle_screech", global_position, 4.0)
-				SkillEffects.shockwave(get_parent(), global_position, 200.0, GOLD)
+				SkillEffects.sheet_once(get_parent(), SCREECH_FX, 12, 16.0, global_position, Vector2(110, 70), 0.0, 1.0,
+						200.0 / SCREECH_FX_RADIUS)
 				_shake_camera(5.0)
 				if _player_alive() and _player.global_position.distance_to(global_position) < 200.0:
 					_player.apply_slow(0.4, 2.0)
@@ -237,10 +250,16 @@ class GryfTornado extends Node2D:
 	var _time := 0.0
 	var _hit_cd := 0.0
 
+	func _ready() -> void:
+		var fx := SkillEffects.looping(TORNADO_FX, 8, 14.0, Vector2(23, 64))
+		fx.name = "Fx"
+		add_child(fx)
+
 	func _process(delta: float) -> void:
 		_time += delta
 		_hit_cd -= delta
-		queue_redraw()
+		# trąba pojawia się i znika płynnie (rysuje ją zapętlona animacja "Fx")
+		modulate.a = clampf(minf(_time * 4.0, (LIFE - _time) * 3.0), 0.0, 1.0)
 		if is_instance_valid(target):
 			global_position += (target.global_position - global_position).normalized() * SPEED * delta
 			if _hit_cd <= 0.0 and target.global_position.distance_to(global_position) < 18.0 and not target.is_dead:
@@ -248,9 +267,3 @@ class GryfTornado extends Node2D:
 				target.take_damage(damage, global_position)
 		if _time >= LIFE:
 			queue_free()
-
-	func _draw() -> void:
-		var fade := clampf(minf(_time * 4.0, (LIFE - _time) * 3.0), 0.0, 1.0)
-		for i in 6:
-			var wobble := sin(_time * 14.0 + i * 0.9) * 3.0
-			draw_arc(Vector2(wobble, -4.0 - i * 6.0), 5.0 + i * 3.0, 0.0, TAU, 16, Color(0.9, 0.85, 0.7, 0.55 * fade), 1.5)
