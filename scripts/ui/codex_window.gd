@@ -36,14 +36,14 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
-	box.add_child(UiStyle.title("Encyklopedia"))
+	box.add_child(UiStyle.title(tr("Encyklopedia")))
 	var tabs := HBoxContainer.new()
 	tabs.alignment = BoxContainer.ALIGNMENT_CENTER
 	tabs.add_theme_constant_override("separation", 4)
 	box.add_child(tabs)
 	for entry: Array in TABS:
 		var tab := Button.new()
-		tab.text = entry[1]
+		tab.text = tr(entry[1])
 		tab.toggle_mode = true
 		tab.focus_mode = Control.FOCUS_NONE
 		tab.add_theme_font_size_override("font_size", 8)
@@ -89,7 +89,7 @@ func _ready() -> void:
 	_body.add_theme_font_size_override("normal_font_size", 8)
 	_body.add_theme_color_override("default_color", UiStyle.TEXT_COLOR)
 	column.add_child(_body)
-	box.add_child(UiStyle.label("Kliknij wpis, by zobaczyć szczegóły. Nieznane wpisy odsłaniają się po zdobyciu przedmiotu albo pokonaniu potwora.", 7, UiStyle.DIM_COLOR))
+	box.add_child(UiStyle.label(tr("Kliknij wpis, by zobaczyć szczegóły. Nieznane wpisy odsłaniają się po zdobyciu przedmiotu albo pokonaniu potwora."), 7, UiStyle.DIM_COLOR))
 
 
 func setup(player: Player) -> void:
@@ -155,7 +155,7 @@ func _icon_of(id: String) -> Texture2D:
 
 
 func _name_of(id: String) -> String:
-	return Codex.monster_name(id) if _is_monster_tab() else str(Items.get_data(id).get("name", id))
+	return Codex.monster_name(id) if _is_monster_tab() else Lang.t(str(Items.get_data(id).get("name", id)))
 
 
 func _refresh() -> void:
@@ -175,7 +175,7 @@ func _refresh() -> void:
 		var slot := _make_slot(id, found)
 		_grid.add_child(slot)
 		_slots[id] = slot
-	_counter.text = "Odkryto: %d / %d" % [known, list.size()] + ("   (tryb deweloperski: kliknij przedmiot, by go dostać)" if _dev_mode() and not _is_monster_tab() else "")
+	_counter.text = tr("Odkryto: %d / %d") % [known, list.size()] + (tr("   (tryb deweloperski: kliknij przedmiot, by go dostać)") if _dev_mode() and not _is_monster_tab() else "")
 	if _selected == "" and not list.is_empty():
 		_selected = list[0]
 	_show_details(_selected)
@@ -239,10 +239,10 @@ func _show_details(id: String) -> void:
 	if not found:
 		_name.text = "???"
 		_name.add_theme_color_override("font_color", UiStyle.DIM_COLOR)
-		_body.text = "[color=#a6abbf]%s[/color]" % ("Pokonaj tego potwora, by poznać szczegóły." if _is_monster_tab()
-				else "Zdobądź ten przedmiot, by poznać szczegóły.")
+		_body.text = "[color=#a6abbf]%s[/color]" % (tr("Pokonaj tego potwora, by poznać szczegóły.") if _is_monster_tab()
+				else tr("Zdobądź ten przedmiot, by poznać szczegóły."))
 		if _tab == "legends":
-			_body.text += "\n\nŹródło: " + Codex.legend_source(id)
+			_body.text += "\n\n" + tr("Źródło: %s") % Codex.legend_source(id)
 		return
 	_name.text = _name_of(id)
 	if _is_monster_tab():
@@ -254,7 +254,7 @@ func _show_details(id: String) -> void:
 	var lines := Items.strip_icon(Items.describe(id)).split("\n")
 	var text := "\n".join(lines.slice(1))
 	if _tab == "legends":
-		text += "\n\n[color=#ffd773]Źródło:[/color] " + Codex.legend_source(id)
+		text += "\n\n[color=#ffd773]%s[/color] %s" % [tr("Źródło:"), Codex.legend_source(id)]
 	elif _tab == "herbs":
 		text += herb_text(id)
 	_body.text = text
@@ -267,26 +267,26 @@ func monster_text(id: String) -> String:
 	var lines: Array[String] = []
 	var zone: String = data["zone"]
 	if zone != "":
-		lines.append("[color=#ffd773]Kraina:[/color] %s (%s)" % [Zones.zone_name(zone), Codex.level_text(id)])
+		lines.append("[color=#ffd773]%s[/color] %s (%s)" % [tr("Kraina:"), Lang.t(Zones.zone_name(zone)), Codex.level_text(id)])
 	else:
-		lines.append("[color=#ffd773]Kraina:[/color] zwierzyna w wielu krainach")
-	lines.append("[color=#ffd773]Pokonano:[/color] %d" % _player.codex.kills_of(id))
+		lines.append("[color=#ffd773]%s[/color] %s" % [tr("Kraina:"), tr("zwierzyna w wielu krainach")])
+	lines.append("[color=#ffd773]%s[/color] %d" % [tr("Pokonano:"), _player.codex.kills_of(id)])
 	var kind: String = info.get("kind", "")
 	if Boons.BESTIARY.has(kind):
 		var entry: Dictionary = Boons.BESTIARY[kind]
 		var rank := _player.boons.rank(kind)
-		lines.append("[color=#ffd773]Bestiariusz:[/color] %s, stopień %d/%d (+%d%% obrażeń)" % [entry["name"], rank,
+		lines.append("[color=#ffd773]%s[/color] " % tr("Bestiariusz:") + tr("%s, stopień %d/%d (+%d%% obrażeń)") % [Boons.bestiary_name(kind), rank,
 				Boons.BESTIARY_COSTS.size(), roundi(rank * Boons.BESTIARY_STEP * 100.0)])
-		lines.append("[color=#ffd773]Trofeum:[/color] %s" % Items.get_data(entry["trophy"]).get("name", entry["trophy"]))
+		lines.append("[color=#ffd773]%s[/color] %s" % [tr("Trofeum:"), Lang.t(str(Items.get_data(entry["trophy"]).get("name", entry["trophy"])))])
 	var legends: Array = info.get("legends", [])
 	if not legends.is_empty():
 		var names: Array[String] = []
 		for legend: String in legends:
 			var known := _dev_mode() or _player.codex.is_item_known(legend)
-			names.append("[color=#ff9d33]%s[/color]" % Items.get_data(legend)["name"] if known else "???")
-		lines.append("[color=#ffd773]Legendy:[/color] " + ", ".join(names))
+			names.append("[color=#ff9d33]%s[/color]" % Lang.t(Items.get_data(legend)["name"]) if known else "???")
+		lines.append("[color=#ffd773]%s[/color] %s" % [tr("Legendy:"), ", ".join(names)])
 	lines.append("")
-	lines.append(data["note"])
+	lines.append(Codex.monster_note(id))
 	return "\n".join(lines)
 
 
@@ -295,7 +295,7 @@ func herb_text(id: String) -> String:
 	for kind: String in Herbs.KINDS:
 		var herb: Dictionary = Herbs.KINDS[kind]
 		if herb["item"] == id:
-			return "\n\n[color=#ffd773]Rośnie:[/color] %s" % Zones.zone_name(herb["zone"])
+			return "\n\n[color=#ffd773]%s[/color] %s" % [tr("Rośnie:"), Lang.t(Zones.zone_name(herb["zone"]))]
 		if herb["elixir"] == id:
-			return "\n\n[color=#ffd773]Warzy zielarka[/color] z %d ziół: %s" % [Herbs.HERBS_PER_ELIXIR, herb["name"]]
+			return "\n\n" + tr("[color=#ffd773]Warzy zielarka[/color] z %d ziół: %s") % [Herbs.HERBS_PER_ELIXIR, Lang.t(herb["name"])]
 	return ""

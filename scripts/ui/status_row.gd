@@ -61,8 +61,8 @@ func _refresh() -> void:
 		stacks.text = str(effect["stacks"]) if effect.get("stacks", 0) > 1 else ""
 		time.text = StatusEffects.time_text(left)
 		cell.modulate.a = blink if left >= 0.0 and left < BLINK_TIME and effect["kind"] != "cooldown" else 1.0
-		cell.tooltip_text = "%s\n%s%s" % [effect["name"], effect["description"],
-				("\nZostało: %s" % _long_time(left)) if left >= 0.0 else ""]
+		cell.tooltip_text = "%s\n%s%s" % [Lang.t(effect["name"]), Lang.t(effect["description"]),
+				("\n" + Lang.t("Zostało: %s") % _long_time(left)) if left >= 0.0 else ""]
 
 
 func _make_cell() -> Control:
@@ -100,5 +100,5 @@ func _make_cell() -> Control:
 static func _long_time(left: float) -> String:
 	var seconds := ceili(left)
 	if seconds >= 60:
-		return "%d min %02d s" % [seconds / 60, seconds % 60]
-	return "%d s" % seconds
+		return Lang.t("%d min %02d s") % [seconds / 60, seconds % 60]
+	return Lang.t("%d s") % seconds

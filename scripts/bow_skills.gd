@@ -91,12 +91,12 @@ func _init(player: Player) -> void:
 ## Naciśnięty slot umiejętności (trzymanie sprawdza Player.is_skill_held).
 func press(id: String) -> void:
 	if _player.skills.level_of(id) <= 0:
-		_player._hint("Wybierz %s w drzewku umiejętności (K)" % Skills.get_data(id)["name"])
+		_player._hint(Lang.t("Wybierz %s w drzewku umiejętności (K)") % Skills.name_of(id))
 		return
 	if _cooldowns.get(id, [0.0])[0] > 0.0 or _power_charge >= 0.0 or _player.is_dashing():
 		return
 	if not _player.spend_mana(Skills.mana_cost(id)):
-		_player._hint("Za mało many")
+		_player._hint(Lang.t("Za mało many"))
 		return
 	match id:
 		"power_shot":
@@ -508,20 +508,20 @@ func _update_running() -> void:
 func statuses() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	if _venom_time > 0.0:
-		result.append({"name": "Jadowe Groty", "kind": "good", "left": _venom_time, "total": Skills.VENOM_TIME, "icon": ICONS["venom_arrows"],
-				"description": "Strzały zatruwają wrogów" + (" - jad przeskakuje na wrogów obok" if _venom_spread else "")})
+		result.append({"name": Lang.t("Jadowe Groty"), "kind": "good", "left": _venom_time, "total": Skills.VENOM_TIME, "icon": ICONS["venom_arrows"],
+				"description": Lang.t("Strzały zatruwają wrogów - jad przeskakuje na wrogów obok") if _venom_spread else Lang.t("Strzały zatruwają wrogów")})
 	if is_instance_valid(_falcon) and not _falcon.leaving:
-		result.append({"name": "Sokół", "kind": "good", "left": _falcon.time_left, "total": Skills.FALCON_TIME, "icon": ICONS["falcon"],
-				"description": "Sokół krąży nad tobą i atakuje wrogów"})
+		result.append({"name": Lang.t("Sokół"), "kind": "good", "left": _falcon.time_left, "total": Skills.FALCON_TIME, "icon": ICONS["falcon"],
+				"description": Lang.t("Sokół krąży nad tobą i atakuje wrogów")})
 	if is_instance_valid(_ballista) and not _ballista.leaving:
-		result.append({"name": "Balista", "kind": "good", "left": _ballista.time_left, "total": _ballista.total, "icon": ICONS["ballista"],
-				"description": "Balista strzela w najbliższych wrogów"})
+		result.append({"name": Lang.t("Balista"), "kind": "good", "left": _ballista.time_left, "total": _ballista.total, "icon": ICONS["ballista"],
+				"description": Lang.t("Balista strzela w najbliższych wrogów")})
 	if _shadow_time > 0.0:
-		result.append({"name": "Myśliwy z Cienia", "kind": "good", "left": _shadow_time, "total": SHADOW_TIME, "icon": ICONS["shadow_hunter"],
-				"description": "Wrogowie cię nie widzą" + (", pierwsze trafienie podwójne" if _shadow_shot else "")})
+		result.append({"name": Lang.t("Myśliwy z Cienia"), "kind": "good", "left": _shadow_time, "total": SHADOW_TIME, "icon": ICONS["shadow_hunter"],
+				"description": Lang.t("Wrogowie cię nie widzą, pierwsze trafienie podwójne") if _shadow_shot else Lang.t("Wrogowie cię nie widzą")})
 	if _running:
-		result.append({"name": "Strzelanie w biegu", "kind": "good", "left": -1.0, "icon": ICONS["running_fire"],
-				"description": "+%d%% szybkości ataku w biegu" % roundi(RUN_SPEED * 100.0)})
+		result.append({"name": Lang.t("Strzelanie w biegu"), "kind": "good", "left": -1.0, "icon": ICONS["running_fire"],
+				"description": Lang.t("+%d%% szybkości ataku w biegu") % roundi(RUN_SPEED * 100.0)})
 	return result
 
 

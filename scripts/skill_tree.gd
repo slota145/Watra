@@ -285,11 +285,20 @@ static func node_for_skill(skill_id: String) -> String:
 	return ""
 
 
+## Nazwa węzła w obecnym języku.
 static func node_name(weapon_type: String, id: String) -> String:
 	var node: Dictionary = nodes(weapon_type)[id]
 	if node["kind"] == "skill":
-		return Skills.get_data(node["skill"])["name"]
-	return node["name"]
+		return Skills.name_of(node["skill"])
+	return Lang.t(node["name"])
+
+
+## Opis węzła w obecnym języku ("" - węzeł bez opisu).
+static func node_description(weapon_type: String, id: String) -> String:
+	var node: Dictionary = nodes(weapon_type)[id]
+	if node["kind"] == "skill":
+		return Skills.description_of(node["skill"])
+	return Lang.t(str(node.get("description", "")))
 
 
 ## Opis premii węzła ("+8% obrażeń fizycznych", "Zasięg Młynka +20%").
@@ -298,11 +307,12 @@ static func stats_text(stats: Dictionary) -> String:
 	for stat: String in stats:
 		var value: float = stats[stat]
 		if TREE_STATS.has(stat):
-			var shown := ("%+.1f s" % value).replace(".", ",") if stat == "combo_window" \
+			var seconds := "%+.1f s" % value
+			var shown := (seconds.replace(".", ",") if Lang.is_polish() else seconds) if stat == "combo_window" \
 					else "%+d" % roundi(value) if stat in COUNT_STATS else "%+d%%" % roundi(value * 100.0)
-			parts.append("%s %s" % [TREE_STATS[stat], shown])
+			parts.append(Lang.t("%s %s") % [Lang.t(TREE_STATS[stat]), shown])
 		elif stat == "health_percent":
-			parts.append("%+d%% maksymalnego zdrowia" % roundi(value * 100.0))
+			parts.append(Lang.t("%+d%% maksymalnego zdrowia") % roundi(value * 100.0))
 		else:
 			parts.append(Items._stat_text(stat, value))
 	return ", ".join(parts)

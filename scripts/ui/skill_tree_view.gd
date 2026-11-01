@@ -231,33 +231,33 @@ func describe(id: String) -> String:
 		"skill":
 			var skill: String = node["skill"]
 			var tags := Skills.tags_text(skill)
-			lines[0] += ("  (%s  •  %s)" % [tags, Skills.mana_cost_text(skill)]) if tags != "" else "  (umiejętność pasywna)"
-			lines.append(Skills.get_data(skill)["description"])
+			lines[0] += ("  (%s  •  %s)" % [tags, Skills.mana_cost_text(skill)]) if tags != "" else tr("  (umiejętność pasywna)")
+			lines.append(Skills.description_of(skill))
 		"passive":
 			lines.append(SkillTree.stats_text(node.get("stats", {})))
 		"keystone":
-			lines[0] += "  (węzeł kluczowy)"
-			lines.append(node["description"])
+			lines[0] += tr("  (węzeł kluczowy)")
+			lines.append(SkillTree.node_description(weapon_type, id))
 		"start":
-			lines.append(node["description"])
+			lines.append(SkillTree.node_description(weapon_type, id))
 		"socket":
 			if node.get("legendary", false):
-				lines[0] += "  (gniazdo legendarne)"
+				lines[0] += tr("  (gniazdo legendarne)")
 			var gem := _player.skills.gem_in(weapon_type, id) if _player != null else {}
 			if gem.has("essence"):
 				lines.append(Essences.plain_text(gem))
 			else:
 				lines.append(Gems.plain_text(gem) if not gem.is_empty() else
-						"Puste gniazdo na kamień szlachetny - działa tylko z tą bronią, a jego premie są o połowę mocniejsze.")
+						tr("Puste gniazdo na kamień szlachetny - działa tylko z tą bronią, a jego premie są o połowę mocniejsze."))
 			if node.get("legendary", false):
-				lines.append("Przyjmie też esencję legendy - jej efekt działa z tą bronią.")
+				lines.append(tr("Przyjmie też esencję legendy - jej efekt działa z tą bronią."))
 			if _player != null and _player.skills.has_node_id(weapon_type, id):
-				lines.append("Przeciągnij kamień z plecaka na gniazdo albo wybierz go obok.")
+				lines.append(tr("Przeciągnij kamień z plecaka na gniazdo albo wybierz go obok."))
 	if not lines.is_empty() and kind_of(id) == "passive" and _player != null and _player.skills.radius_factor(weapon_type, id) > 1.0:
-		lines.append("Wzmocniony kamieniem promienia: +%d%%" % roundi((_player.skills.radius_factor(weapon_type, id) - 1.0) * 100.0))
+		lines.append(tr("Wzmocniony kamieniem promienia: +%d%%") % roundi((_player.skills.radius_factor(weapon_type, id) - 1.0) * 100.0))
 	if _player != null and not _player.skills.has_node_id(weapon_type, id):
-		lines.append("Kliknij, a potem \"Wybierz\" (1 punkt)." if _player.skills.can_take(weapon_type, id)
-				else "Wybierz najpierw sąsiedni węzeł." if _player.skills.points_left() > 0 else "Brak punktów umiejętności.")
+		lines.append(tr("Kliknij, a potem \"Wybierz\" (1 punkt).") if _player.skills.can_take(weapon_type, id)
+				else tr("Wybierz najpierw sąsiedni węzeł.") if _player.skills.points_left() > 0 else tr("Brak punktów umiejętności."))
 	return "\n".join(lines)
 
 

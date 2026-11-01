@@ -74,7 +74,7 @@ func set_cooldown(left: float, total: float) -> void:
 	if fraction != cooldown:
 		cooldown = fraction
 		queue_redraw()
-	cooldown_label.text = ("%.1f" % left).replace(".", ",") if left > 0.0 and left < 1.0 \
+	cooldown_label.text = Skills.decimal(left, 1) if left > 0.0 and left < 1.0 \
 			else str(ceili(left)) if left > 0.0 else ""
 
 

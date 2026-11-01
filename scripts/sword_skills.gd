@@ -129,7 +129,7 @@ func _init(player: Player) -> void:
 ## Naciśnięty slot umiejętności (trzymanie sprawdza Player.is_skill_held).
 func press(id: String) -> void:
 	if _player.skills.level_of(id) <= 0:
-		_player._hint("Wybierz %s w drzewku umiejętności (K)" % Skills.get_data(id)["name"])
+		_player._hint(Lang.t("Wybierz %s w drzewku umiejętności (K)") % Skills.name_of(id))
 		return
 	match id:
 		"flicker":
@@ -141,7 +141,7 @@ func press(id: String) -> void:
 				return
 			var cost := Skills.mana_cost(id)
 			if not _player.spend_mana(cost):
-				_player._hint("Za mało many")
+				_player._hint(Lang.t("Za mało many"))
 				return
 			match id:
 				"rend":
@@ -203,7 +203,7 @@ func _press_flicker() -> void:
 		if _endless_whirl():
 			return
 		if _whirl_cooldown > 0.0:
-			_player._hint("Wirujące Mgnienie się odnawia")
+			_player._hint(Lang.t("Wirujące Mgnienie się odnawia"))
 			return
 		_whirl_jumps_left = Skills.whirl_flicker_jumps(_player.skills.level_of("flicker"))
 		_whirl_jump_timer = 0.0
@@ -247,11 +247,11 @@ func _process_flicker(delta: float) -> void:
 	if _in_cloud():
 		cost = 0.0
 	if _player.mana < cost:
-		_player._hint("Za mało many")
+		_player._hint(Lang.t("Za mało many"))
 		_flicker_timer = 0.3
 		return
 	if not _jump(Skills.FLICKER_RANGE, level, false):
-		_player._hint("Brak wrogów w zasięgu")
+		_player._hint(Lang.t("Brak wrogów w zasięgu"))
 		_flicker_timer = 0.3
 		return
 	_player.spend_mana(cost)
@@ -344,7 +344,7 @@ func _press_smoke() -> void:
 	if _smoke_charge >= 0.0:
 		return
 	if not _player.spend_mana(Skills.SMOKE_MANA):
-		_player._hint("Za mało many")
+		_player._hint(Lang.t("Za mało many"))
 		return
 	if _player.combo_with("smoke_burst"):
 		_player.combo_used()
@@ -557,7 +557,7 @@ func try_parry(from: Vector2) -> bool:
 	_player._face_direction(from - _player.global_position)
 	SkillEffects.sheet_once(_player.get_parent(), RIPOSTE_COUNTER_FX, 6, 18.0, origin, RIPOSTE_COUNTER_ANCHOR, 0.0, 1.0,
 			Skills.RIPOSTE_RADIUS / RIPOSTE_FX_RADIUS)
-	DamageNumber.spawn_text(_player.get_parent(), origin + Vector2(0, -14), "Riposta!", Color(1.0, 0.9, 0.5), 9)
+	DamageNumber.spawn_text(_player.get_parent(), origin + Vector2(0, -14), Lang.t("Riposta!"), Color(1.0, 0.9, 0.5), 9)
 	Sfx.play("hit_heavy", 2.0, 1.2)
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
 		if enemy.hurt_center().distance_to(origin) <= Skills.RIPOSTE_RADIUS + enemy.hurt_radius:
@@ -691,18 +691,18 @@ func _update_temp_bonus() -> void:
 func statuses() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	if _cry_time > 0.0:
-		result.append({"name": "Zew Peruna", "kind": "good", "left": _cry_time, "total": Skills.CRY_TIME, "icon": ICONS["war_cry"],
-				"stacks": _forced_crits, "description": "+%d%% zadawanych obrażeń; ciosy krytyczne w zapasie: %d" % [
+		result.append({"name": Lang.t("Zew Peruna"), "kind": "good", "left": _cry_time, "total": Skills.CRY_TIME, "icon": ICONS["war_cry"],
+				"stacks": _forced_crits, "description": Lang.t("+%d%% zadawanych obrażeń; ciosy krytyczne w zapasie: %d") % [
 					roundi(_player.stats.temp_bonus.get("damage_percent", 0.0) * 100.0), _forced_crits]})
 	if _dance_stacks > 0:
-		result.append({"name": "Taniec Ostrzy", "kind": "good", "left": _dance_time, "total": DANCE_TIME, "icon": ICONS["blade_dance"],
-				"stacks": _dance_stacks, "description": "+%d%% szybkości ataku (każde combo dokłada)" % roundi(DANCE_STEP * _dance_stacks * 100.0)})
+		result.append({"name": Lang.t("Taniec Ostrzy"), "kind": "good", "left": _dance_time, "total": DANCE_TIME, "icon": ICONS["blade_dance"],
+				"stacks": _dance_stacks, "description": Lang.t("+%d%% szybkości ataku (każde combo dokłada)") % roundi(DANCE_STEP * _dance_stacks * 100.0)})
 	if _in_cloud():
-		result.append({"name": "Dym i Cień", "kind": "good", "left": _cloud_time, "total": CLOUD_TIME, "icon": ICONS["smoke_shadow"],
-				"description": "+%d%% szansy na unik, Mgnienie nie zużywa many" % roundi(CLOUD_DODGE * 100.0)})
+		result.append({"name": Lang.t("Dym i Cień"), "kind": "good", "left": _cloud_time, "total": CLOUD_TIME, "icon": ICONS["smoke_shadow"],
+				"description": Lang.t("+%d%% szansy na unik, Mgnienie nie zużywa many") % roundi(CLOUD_DODGE * 100.0)})
 	if _parry_time > 0.0:
-		result.append({"name": "Riposta", "kind": "good", "left": _parry_time, "total": Skills.RIPOSTE_TIME, "icon": ICONS["riposte"],
-				"description": "Zasłona: następny cios nie zrani, a ty kontratakujesz"})
+		result.append({"name": Lang.t("Riposta"), "kind": "good", "left": _parry_time, "total": Skills.RIPOSTE_TIME, "icon": ICONS["riposte"],
+				"description": Lang.t("Zasłona: następny cios nie zrani, a ty kontratakujesz")})
 	return result
 
 
