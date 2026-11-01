@@ -58,6 +58,8 @@ var vsync := true
 var screen_shake := 1.0
 ## Łup magiczny i rzadki wypada niezidentyfikowany (Unidentified) - opcja rozgrywki, domyślnie wyłączona.
 var unidentified_loot := false
+## Język gry (Lang.LANGUAGES), zapisany w user://settings.cfg.
+var language := Lang.DEFAULT
 
 
 func _load_display_settings() -> void:
@@ -67,6 +69,8 @@ func _load_display_settings() -> void:
 		vsync = bool(config.get_value("display", "vsync", vsync))
 		screen_shake = clampf(float(config.get_value("display", "screen_shake", screen_shake)), 0.0, 1.0)
 		unidentified_loot = bool(config.get_value("gameplay", "unidentified_loot", unidentified_loot))
+		language = str(config.get_value("gameplay", "language", language))
+	Lang.set_language(language)
 	Unidentified.enabled = unidentified_loot
 	_apply_display()
 
@@ -88,6 +92,7 @@ func _save_display_settings() -> void:
 	config.set_value("display", "vsync", vsync)
 	config.set_value("display", "screen_shake", screen_shake)
 	config.set_value("gameplay", "unidentified_loot", unidentified_loot)
+	config.set_value("gameplay", "language", language)
 	config.save(SETTINGS_PATH)
 
 
@@ -106,6 +111,13 @@ func set_vsync(value: bool) -> void:
 func set_unidentified_loot(value: bool) -> void:
 	unidentified_loot = value
 	Unidentified.enabled = value
+	_save_display_settings()
+
+
+## Zmienia język gry. Napisy składane w kodzie zmieniają się przy kolejnym otwarciu okna albo wczytaniu gry.
+func set_language(code: String) -> void:
+	language = code if Lang.LANGUAGES.has(code) else Lang.DEFAULT
+	Lang.set_language(language)
 	_save_display_settings()
 
 

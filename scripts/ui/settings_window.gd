@@ -43,6 +43,7 @@ func _ready() -> void:
 	box.add_child(_check_row("Synchronizacja pionowa (V-Sync)", Game.vsync, Game.set_vsync))
 	box.add_child(_slider_row("Trzęsienie ekranu", Game.screen_shake, Game.set_screen_shake))
 	box.add_child(_header("Rozgrywka"))
+	box.add_child(_language_row())
 	var unidentified := _check_row("Łup niezidentyfikowany (stosy, PPM identyfikuje)", Game.unidentified_loot, Game.set_unidentified_loot)
 	unidentified.tooltip_text = "Magiczna i rzadka broń, zbroja i biżuteria wypada zawinięta w płótno: układa się w stosy\n(rodzaj, rzadkość i poziom), a PPM w plecaku ją identyfikuje (Shift+PPM - cały stos)."
 	box.add_child(unidentified)
@@ -92,6 +93,34 @@ func _slider_row(text: String, value: float, on_changed: Callable) -> HBoxContai
 	slider.value_changed.connect(func(v: float) -> void: percent.text = "%d%%" % roundi(v * 100.0))
 	row.add_child(percent)
 	return row
+
+
+## Wybór języka (Lang.LANGUAGES); okno ustawień otwiera się od nowa w nowym języku.
+func _language_row() -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	var label := UiStyle.label(tr("Język"), 8, UiStyle.TEXT_COLOR)
+	label.custom_minimum_size.x = 84
+	row.add_child(label)
+	var pick := OptionButton.new()
+	pick.focus_mode = Control.FOCUS_NONE
+	pick.add_theme_font_size_override("font_size", 8)
+	var codes: Array = Lang.LANGUAGES.keys()
+	for code: String in codes:
+		pick.add_item(Lang.LANGUAGES[code])
+	pick.selected = maxi(codes.find(Game.language), 0)
+	pick.item_selected.connect(func(index: int) -> void:
+		Game.set_language(codes[index])
+		_reopen())
+	row.add_child(pick)
+	return row
+
+
+func _reopen() -> void:
+	var fresh := SettingsWindow.new()
+	fresh.closed.connect(func() -> void: closed.emit())
+	get_parent().add_child(fresh)
+	queue_free()
 
 
 func _check_row(text: String, value: bool, on_toggled: Callable) -> CheckBox:
