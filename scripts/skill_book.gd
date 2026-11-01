@@ -131,6 +131,35 @@ func take(weapon_type: String, id: String) -> bool:
 	return true
 
 
+## Dlaczego węzła nie da się cofnąć ("" - da się): start, niewybrany, kamień w gnieździe albo węzeł, przez który
+## inne wybrane węzły łączą się ze startem.
+func refund_reason(weapon_type: String, id: String) -> String:
+	if id == "start" or not nodes.get(weapon_type, {}).has(id):
+		return Lang.t("Ten węzeł nie jest wybrany.")
+	if not gem_in(weapon_type, id).is_empty():
+		return Lang.t("Wyjmij najpierw kamień z gniazda.")
+	# przeszukanie od startu po wybranych węzłach bez cofanego - każdy musi zostać osiągalny
+	var reached := {"start": true}
+	var queue: Array[String] = ["start"]
+	while not queue.is_empty():
+		for other in SkillTree.neighbors(weapon_type, queue.pop_back()):
+			if other != id and not reached.has(other) and nodes[weapon_type].has(other):
+				reached[other] = true
+				queue.append(other)
+	if reached.size() - 1 < nodes[weapon_type].size() - 1:
+		return Lang.t("Inne wybrane węzły zależą od tego węzła.")
+	return ""
+
+
+## Cofa jeden węzeł (prawy przycisk w drzewku) - punkt wraca; kupione poziomy umiejętności zostają.
+func refund(weapon_type: String, id: String) -> bool:
+	if refund_reason(weapon_type, id) != "":
+		return false
+	nodes[weapon_type].erase(id)
+	changed.emit()
+	return true
+
+
 ## Zapomnienie drzewka (u mędrca): wszystkie węzły wracają jako punkty; kupione poziomy umiejętności zostają.
 ## Zwraca przepisy kamieni wyjętych z gniazd (wracają do plecaka - VillageServices._respec).
 func reset_tree(weapon_type: String) -> Array:
@@ -316,8 +345,10 @@ func load_save_data(data: Dictionary) -> void:
 		var tree := SkillTree.nodes(weapon_type)
 		nodes[weapon_type] = {}
 		for id in saved_nodes[weapon_type]:
-			if tree.has(str(id)) and str(id) != "start":
-				nodes[weapon_type][str(id)] = true
+			# dawny węzeł kluczowy Nieustający Wir zastąpiło Oko Cyklonu w tym samym miejscu
+			var node_id := "cyclone_eye" if str(id) == "endless_whirl" else str(id)
+			if tree.has(node_id) and node_id != "start":
+				nodes[weapon_type][node_id] = true
 	for id: String in levels:
 		var node := SkillTree.node_for_skill(id)
 		var weapon_type: String = Skills.get_data(id)["weapon"]

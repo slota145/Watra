@@ -105,7 +105,7 @@ func _process(_d: float) -> bool:
 			# Amulet Wiecznego Wiru
 			var amulet: String = load("res://scripts/loot.gd").legendary_at_level("legend_endless_amulet", 20)
 			p.equipment.equip(amulet, 0)
-			p.skills.nodes["melee"].erase("endless_whirl")
+			p.skills.nodes["melee"].erase("cyclone_eye")
 			check("Amulet Wiecznego Wiru", ss._endless_whirl() and p.equipment.effect_power("endless_whirl") > 0.0)
 			check("opis amuletu", load("res://scripts/items.gd").describe(amulet).contains("odnowienia"))
 			print("WYNIK: ", "OK" if _fails == 0 else "%d bledow" % _fails)

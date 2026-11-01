@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from herb_art import cells  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-NAMES = ["flicker", "smoke_burst", "rend", "ground_slam", "riposte", "war_cry", "spectral_blades", "ks_endless_whirl",
+NAMES = ["flicker", "smoke_burst", "rend", "ground_slam", "riposte", "war_cry", "spectral_blades", "ks_cyclone_eye",
          "ks_blade_dance", "ks_smoke_shadow", "ks_blood_frenzy", "node_physical", "node_attack_speed", "node_crit",
          "node_combo", "node_spell"]
 

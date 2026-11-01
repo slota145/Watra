@@ -43,6 +43,7 @@ func _ready() -> void:
 	_migrate_legacy_save()
 	_setup_cursor()
 	get_tree().root.size_changed.connect(_setup_cursor)
+	get_tree().root.size_changed.connect(_apply_ui_scale)
 	_load_display_settings()
 	# nad przyciskami kursor z rozżarzonym kamieniem
 	get_tree().node_added.connect(func(node: Node) -> void:
@@ -60,6 +61,13 @@ var screen_shake := 1.0
 var unidentified_loot := false
 ## Język gry (Lang.LANGUAGES), zapisany w user://settings.cfg.
 var language := Lang.DEFAULT
+## Skalowanie interfejsu (okno ustawień): 1 - jak dotąd, więcej - większe okna i napisy.
+var ui_scale := 1.0
+const UI_SCALE_RANGE := Vector2(0.75, 1.5)
+## Ustawienie okien przesuniętych lub przeskalowanych przez gracza: nazwa okna -> [x, y, skala] (WindowDrag).
+var window_layouts := {}
+## Zmiana skalowania interfejsu - kamera gracza oddala się o tyle samo, żeby świat wyglądał bez zmian.
+signal ui_scale_changed(value: float)
 
 
 func _load_display_settings() -> void:
@@ -70,7 +78,10 @@ func _load_display_settings() -> void:
 		screen_shake = clampf(float(config.get_value("display", "screen_shake", screen_shake)), 0.0, 1.0)
 		unidentified_loot = bool(config.get_value("gameplay", "unidentified_loot", unidentified_loot))
 		language = str(config.get_value("gameplay", "language", language))
+		ui_scale = clampf(float(config.get_value("display", "ui_scale", ui_scale)), UI_SCALE_RANGE.x, UI_SCALE_RANGE.y)
+		window_layouts = config.get_value("display", "windows", {})
 	Lang.set_language(language)
+	_apply_ui_scale()
 	Unidentified.enabled = unidentified_loot
 	_apply_display()
 
@@ -93,6 +104,8 @@ func _save_display_settings() -> void:
 	config.set_value("display", "screen_shake", screen_shake)
 	config.set_value("gameplay", "unidentified_loot", unidentified_loot)
 	config.set_value("gameplay", "language", language)
+	config.set_value("display", "ui_scale", ui_scale)
+	config.set_value("display", "windows", window_layouts)
 	config.save(SETTINGS_PATH)
 
 
@@ -118,6 +131,42 @@ func set_unidentified_loot(value: bool) -> void:
 func set_language(code: String) -> void:
 	language = code if Lang.LANGUAGES.has(code) else Lang.DEFAULT
 	Lang.set_language(language)
+	_save_display_settings()
+
+
+## Skalowanie interfejsu: obraz rośnie o całkowitą krotność (jak przy rozciąganiu "integer" w projekcie)
+## razy ui_scale, a kamera gracza oddala się o 1 / ui_scale - świat zostaje w całych pikselach, rośnie tylko interfejs.
+func _apply_ui_scale() -> void:
+	var root := get_tree().root
+	if DisplayServer.get_name() == "headless":
+		return
+	var base := Vector2(ProjectSettings.get_setting("display/window/size/viewport_width"),
+			ProjectSettings.get_setting("display/window/size/viewport_height"))
+	var raw := minf(root.size.x / base.x, root.size.y / base.y)
+	if raw <= 0.0:
+		return
+	root.content_scale_stretch = Window.CONTENT_SCALE_STRETCH_FRACTIONAL
+	root.content_scale_factor = maxf(floorf(raw), 1.0) * ui_scale / raw
+
+
+func set_ui_scale(value: float) -> void:
+	ui_scale = clampf(snappedf(value, 0.05), UI_SCALE_RANGE.x, UI_SCALE_RANGE.y)
+	_apply_ui_scale()
+	ui_scale_changed.emit(ui_scale)
+	_save_display_settings()
+
+
+## Zapamiętuje ustawienie okna (WindowDrag) albo je zapomina (pusta tablica).
+func set_window_layout(window_name: String, layout: Array) -> void:
+	if layout.is_empty():
+		window_layouts.erase(window_name)
+	else:
+		window_layouts[window_name] = layout
+	_save_display_settings()
+
+
+func reset_window_layouts() -> void:
+	window_layouts = {}
 	_save_display_settings()
 
 

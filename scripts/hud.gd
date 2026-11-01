@@ -196,6 +196,10 @@ func _ready() -> void:
 	rest_fade.visible = false
 	_update_kills()
 	_build_icon_bar()
+	# okna przesuwa się, chwytając za tło, a Ctrl + kółko je skaluje (duża mapa ma własne przewijanie)
+	for child in get_children():
+		if child is PanelContainer and child.name not in ["BigMap"]:
+			WindowDrag.attach(child)
 
 
 func connect_player(player: Player) -> void:

@@ -122,14 +122,32 @@ func _check_points(p) -> void:
 	# więcej punktów na resztę testu
 	p.stats.level = 20
 	book.character_level = 20
-	for id in ["phys_1", "flicker", "smoke_burst", "whirl_reach", "whirl_dmg", "endless_whirl"]:
+	for id in ["phys_1", "flicker", "smoke_burst", "whirl_reach", "whirl_dmg", "cyclone_eye"]:
 		book.take("melee", id)
 	check("drzewko na poziomie 20", book.has_node_id("melee", "flicker") and book.has_node_id("melee", "smoke_burst")
 			and book.points_left() == 21 - book.points_spent() + 0)
 	check("premia z węzła", is_equal_approx(p.stats.kind_multiplier(["attack"]), 1.08) and is_equal_approx(p.stats.kind_multiplier(["spell"]), 1.0))
 	check("ataki i czary", is_equal_approx(p.stats.skill_speed(["attack", "spell"]), (p.stats.attack_speed() + p.stats.cast_speed()) / 2.0))
-	check("węzeł kluczowy", book.has_keystone("melee", "endless_whirl") and p.whirl_mana_factor() == 2.0)
-	book.nodes["melee"].erase("endless_whirl")
+	check("węzeł kluczowy", book.has_keystone("melee", "cyclone_eye") and p.whirl_mana_factor() == 2.0)
+	p._whirl_time = 2.0
+	check("Oko Cyklonu rozkręca Młynek", is_equal_approx(p.whirl_spin_up(), 1.5))
+	p._whirl_time = 30.0
+	check("Oko Cyklonu - górna granica", is_equal_approx(p.whirl_spin_up(), 2.0))
+	var old_save = load("res://scripts/skill_book.gd").new()
+	old_save.load_save_data({"levels": {}, "nodes": {"melee": ["whirlwind", "phys_1", "whirl_reach", "whirl_dmg", "endless_whirl"]}})
+	check("dawny Nieustający Wir -> Oko Cyklonu", old_save.has_keystone("melee", "cyclone_eye"))
+	old_save.free()
+	book.nodes["melee"].erase("cyclone_eye")
+	check("bez węzła Młynek się nie rozkręca", p.whirl_spin_up() == 1.0)
+	# cofanie prawym przyciskiem: liść tak, węzeł, od którego zależą inne - nie
+	var spent: int = book.points_spent()
+	check("nie cofa węzła, od którego zależą inne", not book.refund("melee", "phys_1") and book.refund_reason("melee", "phys_1") != "")
+	check("cofa liść", book.refund("melee", "whirl_dmg") and book.points_spent() == spent - 1 and not book.has_node_id("melee", "whirl_dmg"))
+	book.take("melee", "whirl_dmg")
+	p.stats.unspent_points = 1
+	p.stats.spend_point("strength")
+	var strength: int = p.stats.attributes["strength"]
+	check("cofnięcie punktu atrybutu", p.stats.refund_point("strength") and p.stats.attributes["strength"] == strength - 1 and p.stats.unspent_points == 1)
 	var copy = load("res://scripts/skill_book.gd").new()
 	copy.load_save_data(JSON.parse_string(JSON.stringify(book.get_save_data())))
 	check("zapis drzewka", copy.nodes["melee"].size() == book.nodes["melee"].size() and copy.level_of("whirlwind") == 3)

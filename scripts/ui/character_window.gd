@@ -50,7 +50,7 @@ func _ready() -> void:
 	for id: String in CharacterStats.ATTRIBUTES:
 		var info: Dictionary = CharacterStats.ATTRIBUTES[id]
 		var row := HBoxContainer.new()
-		var description := Lang.t(info["description"])
+		var description := Lang.t(info["description"]) + "\n" + tr("Prawy przycisk myszy - cofnij punkt.")
 		row.tooltip_text = description
 		row.mouse_filter = Control.MOUSE_FILTER_PASS
 
@@ -73,6 +73,13 @@ func _ready() -> void:
 		plus.add_theme_font_size_override("font_size", 8)
 		plus.tooltip_text = description
 		plus.pressed.connect(func() -> void: _player.stats.spend_point(id))
+		# prawy przycisk na wierszu albo na plusie cofa punkt
+		var refund := func(event: InputEvent) -> void:
+			var click := event as InputEventMouseButton
+			if click != null and click.pressed and click.button_index == MOUSE_BUTTON_RIGHT:
+				_player.stats.refund_point(id)
+		plus.gui_input.connect(refund)
+		row.gui_input.connect(refund)
 		row.add_child(plus)
 		_plus_buttons[id] = plus
 
