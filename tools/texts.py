@@ -7,7 +7,7 @@ Napis trafia do pliku, gdy:
 - stoi w Lang.t(...), Lang.n(...) albo tr(...),
 - ma polską literę albo kilka słów (po usunięciu znaczników BBCode i %s / %d),
 - jest wartością w słowniku i zaczyna się wielką literą ("name": "Wodnik"),
-- w scenie jest tekstem kontrolki (text, tooltip_text, placeholder_text, title).
+- w scenie jest tekstem kontrolki (text, tooltip_text, placeholder_text, title) albo nazwą bossa (boss_name).
 Pomija: komunikaty print/push_error/assert, ścieżki plików, napisy z translations/pomijane.txt (jeden na linię).
 
 Uruchom: python tools/texts.py           - odświeża plik
@@ -25,7 +25,7 @@ SKIP_PATH = os.path.join(ROOT, "translations", "pomijane.txt")
 POLISH = re.compile(r"[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]")
 CALL = re.compile(r"(?:\bLang\.t|\bLang\.n|(?<![\w.])tr|\.tr)\(\s*$")
 DICT_VALUE = re.compile(r"[\"'\w]\s*:\s*$")
-LOG_CALL = re.compile(r"\b(print|prints|printerr|print_rich|push_error|push_warning|assert)\(")
+LOG_CALL = re.compile(r"\b(print|prints|printerr|print_rich|push_error|push_warning|assert)\(|@export_group|@export_category|@export_subgroup")
 SCENE_PROP = re.compile(r"^(text|tooltip_text|placeholder_text|title) = \"")
 ESCAPES = {"n": "\n", "t": "\t", "\"": "\"", "'": "'", "\\": "\\", "r": "\r"}
 
@@ -131,7 +131,7 @@ def _open_quote(line):
 def scan_scene(path, found):
     with open(path, encoding="utf-8-sig") as f:
         data = f.read()
-    for match in re.finditer(r"^(?:text|tooltip_text|placeholder_text|title) = \"((?:[^\"\\]|\\.)*)\"", data, re.M):
+    for match in re.finditer(r"^(?:text|tooltip_text|placeholder_text|title|boss_name) = \"((?:[^\"\\]|\\.)*)\"", data, re.M):
         text = unescape(match.group(1))
         if wordy(text):
             found.setdefault(text, set()).add(os.path.basename(path))

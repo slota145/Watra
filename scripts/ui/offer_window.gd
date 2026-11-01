@@ -47,7 +47,7 @@ func _ready() -> void:
 	_status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bottom.add_child(_status)
 	var close_button := Button.new()
-	close_button.text = "Zamknij"
+	close_button.text = Lang.t("Zamknij")
 	close_button.focus_mode = Control.FOCUS_NONE
 	close_button.add_theme_font_size_override("font_size", 8)
 	close_button.pressed.connect(close)
@@ -137,7 +137,7 @@ func _card(row: Dictionary) -> PanelContainer:
 	line.add_child(cost)
 	if row.has("action"):
 		var button := Button.new()
-		button.text = row.get("button", "Wybierz")
+		button.text = row.get("button", Lang.t("Wybierz"))
 		button.focus_mode = Control.FOCUS_NONE
 		button.add_theme_font_size_override("font_size", 8)
 		button.disabled = not row.get("enabled", false)

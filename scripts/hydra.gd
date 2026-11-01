@@ -179,7 +179,7 @@ func _update_attack(delta: float) -> void:
 				_snap()
 				health = mini(max_health, health + roundi(max_health * REGROW_HEAL))
 				attack_interval *= 0.85
-				DamageNumber.spawn_text(get_parent(), hurt_center() + Vector2(0, -20), "Głowy odrastają!", VENOM, 10)
+				DamageNumber.spawn_text(get_parent(), hurt_center() + Vector2(0, -20), Lang.t("Głowy odrastają!"), VENOM, 10)
 				Sfx.play_at("bies_roar", global_position, 3.0)
 				_fx_phase()
 				_shake_camera(6.0)

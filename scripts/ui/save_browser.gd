@@ -40,7 +40,7 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 6)
 	panel.add_child(box)
 
-	var title := UiStyle.title("Zapisz grę" if mode == "save" else "Wczytaj grę")
+	var title := UiStyle.title(Lang.t("Zapisz grę") if mode == "save" else Lang.t("Wczytaj grę"))
 	title.add_theme_font_size_override("font_size", 14)
 	box.add_child(title)
 	if mode == "save":
@@ -49,13 +49,13 @@ func _ready() -> void:
 		box.add_child(row)
 		_name_edit = LineEdit.new()
 		_name_edit.custom_minimum_size = Vector2(250, 22)
-		_name_edit.placeholder_text = "Nazwa zapisu"
+		_name_edit.placeholder_text = Lang.t("Nazwa zapisu")
 		_name_edit.text = Game.default_save_name(save_data)
 		_name_edit.max_length = 48
 		_name_edit.add_theme_font_size_override("font_size", 10)
 		_name_edit.text_submitted.connect(func(_text: String) -> void: _save_new())
 		row.add_child(_name_edit)
-		var save_button := UiStyle.menu_button("Nowy zapis", _save_new)
+		var save_button := UiStyle.menu_button(Lang.t("Nowy zapis"), _save_new)
 		save_button.custom_minimum_size = Vector2(90, 22)
 		row.add_child(save_button)
 
@@ -71,7 +71,7 @@ func _ready() -> void:
 	_status = UiStyle.label("", 8, UiStyle.DIM_COLOR)
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(_status)
-	var back := UiStyle.menu_button("Wróć", close)
+	var back := UiStyle.menu_button(Lang.t("Wróć"), close)
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	box.add_child(back)
 	_refresh()
@@ -99,7 +99,7 @@ func _refresh() -> void:
 		child.queue_free()
 	var saves := Game.list_saves()
 	if saves.is_empty():
-		var empty := UiStyle.label("Brak zapisów", 10, UiStyle.DIM_COLOR)
+		var empty := UiStyle.label(Lang.t("Brak zapisów"), 10, UiStyle.DIM_COLOR)
 		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_list.add_child(empty)
 	for meta in saves:
@@ -133,15 +133,15 @@ func _make_row(meta: Dictionary) -> Control:
 	info.add_child(UiStyle.label(Game.describe_save(meta), 8, UiStyle.DIM_COLOR))
 	var hero_name: String = HeroRig.NAMES.get(str(meta.get("hero", "")), "")
 	if hero_name != "":
-		info.add_child(UiStyle.label("Postać: " + hero_name, 8, UiStyle.DIM_COLOR))
+		info.add_child(UiStyle.label(Lang.t("Postać: %s") % hero_name, 8, UiStyle.DIM_COLOR))
 
 	var buttons := VBoxContainer.new()
 	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_child(buttons)
-	var main := _small_button("Nadpisz" if mode == "save" else "Wczytaj")
+	var main := _small_button(Lang.t("Nadpisz") if mode == "save" else Lang.t("Wczytaj"))
 	main.pressed.connect(_on_main.bind(main, slot))
 	buttons.add_child(main)
-	var delete := _small_button("Usuń")
+	var delete := _small_button(Lang.t("Usuń"))
 	delete.pressed.connect(_on_delete.bind(delete, slot))
 	buttons.add_child(delete)
 	return card
@@ -163,7 +163,7 @@ func _on_main(button: Button, slot: String) -> void:
 	if mode == "load":
 		Game.load_game(slot)
 		return
-	if _confirm(button, "Na pewno?"):
+	if _confirm(button, Lang.t("Na pewno?")):
 		var meta_name := ""
 		for meta in Game.list_saves():
 			if meta["id"] == slot:
@@ -173,9 +173,9 @@ func _on_main(button: Button, slot: String) -> void:
 
 
 func _on_delete(button: Button, slot: String) -> void:
-	if _confirm(button, "Usunąć?"):
+	if _confirm(button, Lang.t("Usunąć?")):
 		Game.delete_save(slot)
-		_status.text = "Zapis usunięty"
+		_status.text = Lang.t("Zapis usunięty")
 		_refresh()
 
 
@@ -194,10 +194,10 @@ func _confirm(button: Button, question: String) -> bool:
 func _write(save_name: String, slot: String) -> void:
 	var id := Game.save_game(save_data.duplicate(true), save_name, slot, snapshot)
 	if id == "":
-		_status.text = "Nie udało się zapisać gry"
+		_status.text = Lang.t("Nie udało się zapisać gry")
 		_status.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
 		return
-	_status.text = "Gra zapisana!"
+	_status.text = Lang.t("Gra zapisana!")
 	_status.add_theme_color_override("font_color", Color(0.6, 1, 0.55))
 	Sfx.play("quest_ready")
 	_refresh()

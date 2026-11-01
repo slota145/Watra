@@ -254,13 +254,13 @@ func _spawn_jeweler(shrine_pos: Vector2) -> void:
 	var npc: Npc = NPC_SCENE.instantiate()
 	npc.position = shrine_pos + Vector2(36, 10)
 	npc.role = Npc.Role.IDLE
-	npc.lines = JEWELER_LINES
+	npc.lines = Settlement.translated_lines(JEWELER_LINES)
 	npc.facing = Vector2.DOWN
 	npc.get_node("Sprite").texture = load("res://assets/npc/jeweler.png")
 	npc.display_name = "Jubiler Dobromir"
 	npc.services.assign(["jeweler"])
 	npc.quest_id = Gems.QUEST
-	npc.dialog_greeting = "Osadzę ci kamień w orężu, wyjmę go albo połączę trzy w jeden lepszy. Pokaż, co masz!"
+	npc.dialog_greeting = Lang.t("Osadzę ci kamień w orężu, wyjmę go albo połączę trzy w jeden lepszy. Pokaż, co masz!")
 	w.entities.add_child(npc)
 
 

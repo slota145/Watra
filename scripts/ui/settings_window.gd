@@ -27,28 +27,28 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 5)
 	panel.add_child(box)
 
-	var title := UiStyle.title("Ustawienia")
+	var title := UiStyle.title(Lang.t("Ustawienia"))
 	title.add_theme_font_size_override("font_size", 14)
 	box.add_child(title)
-	box.add_child(_header("Dźwięk"))
-	box.add_child(_slider_row("Ogólna", Sfx.master_volume, Sfx.set_master_volume))
-	box.add_child(_slider_row("Muzyka", Sfx.music_volume, Sfx.set_music_volume))
-	box.add_child(_slider_row("Efekty", Sfx.sfx_volume, func(v: float) -> void:
+	box.add_child(_header(Lang.t("Dźwięk")))
+	box.add_child(_slider_row(Lang.t("Ogólna"), Sfx.master_volume, Sfx.set_master_volume))
+	box.add_child(_slider_row(Lang.t("Muzyka"), Sfx.music_volume, Sfx.set_music_volume))
+	box.add_child(_slider_row(Lang.t("Efekty"), Sfx.sfx_volume, func(v: float) -> void:
 		Sfx.set_sfx_volume(v)
 		Sfx.play("ui_click")))
-	box.add_child(_slider_row("Otoczenie", Sfx.ambient_volume, Sfx.set_ambient_volume))
-	box.add_child(_header("Obraz"))
-	_fullscreen = _check_row("Pełny ekran", Game.fullscreen, Game.set_fullscreen)
+	box.add_child(_slider_row(Lang.t("Otoczenie"), Sfx.ambient_volume, Sfx.set_ambient_volume))
+	box.add_child(_header(Lang.t("Obraz")))
+	_fullscreen = _check_row(Lang.t("Pełny ekran"), Game.fullscreen, Game.set_fullscreen)
 	box.add_child(_fullscreen)
-	box.add_child(_check_row("Synchronizacja pionowa (V-Sync)", Game.vsync, Game.set_vsync))
-	box.add_child(_slider_row("Trzęsienie ekranu", Game.screen_shake, Game.set_screen_shake))
-	box.add_child(_header("Rozgrywka"))
+	box.add_child(_check_row(Lang.t("Synchronizacja pionowa (V-Sync)"), Game.vsync, Game.set_vsync))
+	box.add_child(_slider_row(Lang.t("Trzęsienie ekranu"), Game.screen_shake, Game.set_screen_shake))
+	box.add_child(_header(Lang.t("Rozgrywka")))
 	box.add_child(_language_row())
-	var unidentified := _check_row("Łup niezidentyfikowany (stosy, PPM identyfikuje)", Game.unidentified_loot, Game.set_unidentified_loot)
-	unidentified.tooltip_text = "Magiczna i rzadka broń, zbroja i biżuteria wypada zawinięta w płótno: układa się w stosy\n(rodzaj, rzadkość i poziom), a PPM w plecaku ją identyfikuje (Shift+PPM - cały stos)."
+	var unidentified := _check_row(Lang.t("Łup niezidentyfikowany (stosy, PPM identyfikuje)"), Game.unidentified_loot, Game.set_unidentified_loot)
+	unidentified.tooltip_text = Lang.t("Magiczna i rzadka broń, zbroja i biżuteria wypada zawinięta w płótno: układa się w stosy\n(rodzaj, rzadkość i poziom), a PPM w plecaku ją identyfikuje (Shift+PPM - cały stos).")
 	box.add_child(unidentified)
 	box.add_child(HSeparator.new())
-	var back := UiStyle.menu_button("Wróć", close)
+	var back := UiStyle.menu_button(Lang.t("Wróć"), close)
 	box.add_child(back)
 	back.grab_focus()
 
@@ -99,11 +99,14 @@ func _slider_row(text: String, value: float, on_changed: Callable) -> HBoxContai
 func _language_row() -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
-	var label := UiStyle.label(tr("Język"), 8, UiStyle.TEXT_COLOR)
+	var label := UiStyle.label(Lang.t("Język"), 8, UiStyle.TEXT_COLOR)
 	label.custom_minimum_size.x = 84
 	row.add_child(label)
 	var pick := OptionButton.new()
 	pick.focus_mode = Control.FOCUS_NONE
+	# nazwy języków zawsze w ich własnym języku
+	pick.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	pick.tooltip_text = tr("Część napisów w trwającej grze zmieni się dopiero po jej wczytaniu.")
 	pick.add_theme_font_size_override("font_size", 8)
 	var codes: Array = Lang.LANGUAGES.keys()
 	for code: String in codes:
@@ -118,7 +121,9 @@ func _language_row() -> HBoxContainer:
 
 func _reopen() -> void:
 	var fresh := SettingsWindow.new()
-	fresh.closed.connect(func() -> void: closed.emit())
+	# nowe okno przejmuje odbiorców sygnału closed (np. menu główne, które po zmianie języka buduje się od nowa)
+	for connection: Dictionary in closed.get_connections():
+		fresh.closed.connect(connection["callable"])
 	get_parent().add_child(fresh)
 	queue_free()
 

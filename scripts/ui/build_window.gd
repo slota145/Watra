@@ -23,8 +23,8 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
-	box.add_child(UiStyle.title("Budowa osady"))
-	var hint := UiStyle.label("Surowce bierzemy z plecaka, a resztę z magazynu.", 7, UiStyle.DIM_COLOR)
+	box.add_child(UiStyle.title(Lang.t("Budowa osady")))
+	var hint := UiStyle.label(Lang.t("Surowce bierzemy z plecaka, a resztę z magazynu."), 7, UiStyle.DIM_COLOR)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(hint)
 	# karty budowli w przewijanej liście - z każdą nową budowlą okno nie rośnie poza ekran
@@ -42,7 +42,7 @@ func _ready() -> void:
 	_status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bottom.add_child(_status)
 	var close_button := Button.new()
-	close_button.text = "Zamknij"
+	close_button.text = Lang.t("Zamknij")
 	close_button.focus_mode = Control.FOCUS_NONE
 	close_button.add_theme_font_size_override("font_size", 8)
 	close_button.pressed.connect(func() -> void:
@@ -91,13 +91,13 @@ func _make_card(project: String) -> PanelContainer:
 
 	var header := HBoxContainer.new()
 	content.add_child(header)
-	var name_label := UiStyle.label(Settlement.BUILDING_NAMES[project], 9, UiStyle.TITLE_COLOR)
+	var name_label := UiStyle.label(Lang.t(Settlement.BUILDING_NAMES[project]), 9, UiStyle.TITLE_COLOR)
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(name_label)
 	var state := UiStyle.label("", 7, UiStyle.DIM_COLOR)
 	header.add_child(state)
 
-	var description := UiStyle.label(data["description"], 7, UiStyle.DIM_COLOR)
+	var description := UiStyle.label(Lang.t(data["description"]), 7, UiStyle.DIM_COLOR)
 	description.custom_minimum_size.x = CARD_WIDTH
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(description)
@@ -105,13 +105,13 @@ func _make_card(project: String) -> PanelContainer:
 	var line := HBoxContainer.new()
 	line.add_theme_constant_override("separation", 3)
 	content.add_child(line)
-	line.add_child(UiStyle.label("Koszt:", 7, UiStyle.TEXT_COLOR))
+	line.add_child(UiStyle.label(Lang.t("Koszt:"), 7, UiStyle.TEXT_COLOR))
 	var counts := {}
 	for id: String in data["cost"]:
 		var icon := TextureRect.new()
 		icon.texture = Items.get_data(id)["icon"]
 		UiStyle.fit_icon(icon)
-		icon.tooltip_text = Items.get_data(id)["name"]
+		icon.tooltip_text = Lang.t(Items.get_data(id)["name"])
 		line.add_child(icon)
 		var count := UiStyle.label("", 7)
 		count.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -122,7 +122,7 @@ func _make_card(project: String) -> PanelContainer:
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	line.add_child(spacer)
 	var button := Button.new()
-	button.text = "Zbuduj"
+	button.text = Lang.t("Zbuduj")
 	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_font_size_override("font_size", 8)
 	button.pressed.connect(_build.bind(project))
@@ -168,13 +168,13 @@ func _refresh() -> void:
 		bar.value = settlement.project_progress(project)
 		match state:
 			"building":
-				state_label.text = "W budowie: %d%%" % roundi(bar.value * 100.0)
+				state_label.text = Lang.t("W budowie: %d%%") % roundi(bar.value * 100.0)
 				state_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4))
 			"built":
-				state_label.text = "Zbudowano"
+				state_label.text = Lang.t("Zbudowano")
 				state_label.add_theme_color_override("font_color", OK_COLOR)
 			_:
-				state_label.text = locked if locked != "" else "Do zbudowania"
+				state_label.text = locked if locked != "" else Lang.t("Do zbudowania")
 				state_label.add_theme_color_override("font_color", MISSING_COLOR if locked != "" else UiStyle.DIM_COLOR)
 
 
@@ -182,10 +182,10 @@ func _build(project: String) -> void:
 	if _settlement().start_project(project, _player):
 		Sfx.play("coins")
 		Sfx.play("hammer")
-		_status.text = "Rusza budowa: %s!" % Settlement.BUILDING_NAMES[project]
+		_status.text = Lang.t("Rusza budowa: %s!") % Lang.t(Settlement.BUILDING_NAMES[project])
 		_status.add_theme_color_override("font_color", OK_COLOR)
 	else:
 		Sfx.play("ui_error")
-		_status.text = "Za mało surowców"
+		_status.text = Lang.t("Za mało surowców")
 		_status.add_theme_color_override("font_color", MISSING_COLOR)
 	_refresh()

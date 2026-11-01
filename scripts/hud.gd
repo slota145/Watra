@@ -299,7 +299,7 @@ func set_kills(value: int) -> void:
 
 ## Fabularne wprowadzenie na początku nowej gry.
 func show_intro() -> void:
-	intro_label.text = INTRO_TEXT
+	intro_label.text = Lang.t(INTRO_TEXT)
 	intro_label.visible = true
 	intro_label.modulate.a = 0.0
 	var tween := intro_label.create_tween()
@@ -393,7 +393,7 @@ func _handle_dev_keys(event: InputEvent) -> bool:
 	match key.physical_keycode:
 		KEY_F1:
 			_player.stats.add_gold(DEV_GOLD)
-			_dev_feedback("+%d zł" % DEV_GOLD, Color(1.0, 0.85, 0.3))
+			_dev_feedback(Lang.t("+%d zł") % DEV_GOLD, Color(1.0, 0.85, 0.3))
 		KEY_F2:
 			var stats := _player.stats
 			stats.add_xp(stats.xp_to_next_level() - stats.xp)
@@ -404,9 +404,9 @@ func _handle_dev_keys(event: InputEvent) -> bool:
 		KEY_F5:
 			var world := get_tree().get_first_node_in_group("world")
 			if world != null and world.start_event_here():
-				_dev_feedback("Wydarzenie: %s" % _player.events.active["title"], WorldEvents.TYPES[_player.events.active["type"]]["color"])
+				_dev_feedback(Lang.t("Wydarzenie: %s") % Lang.t(_player.events.active["title"]), WorldEvents.TYPES[_player.events.active["type"]]["color"])
 			else:
-				_dev_feedback("Tu nie może zacząć się wydarzenie (albo jedno już trwa)", Color(1, 0.4, 0.4))
+				_dev_feedback(Lang.t("Tu nie może zacząć się wydarzenie (albo jedno już trwa)"), Color(1, 0.4, 0.4))
 		_:
 			return false
 	return true
@@ -420,18 +420,18 @@ func _give_dev_stones() -> void:
 	missing += _player.inventory.add_item("blessed_stone", DEV_BLESSED_STONES)
 	missing += _player.inventory.add_item("mercy_stone", DEV_MERCY_STONES)
 	if missing > 0:
-		_dev_feedback("Ekwipunek pełny! Brakło %d kamieni" % missing, Color(1, 0.4, 0.4))
+		_dev_feedback(Lang.t("Ekwipunek pełny! Brakło %d kamieni") % missing, Color(1, 0.4, 0.4))
 	else:
-		_dev_feedback("Kamienie: +%d zwykłych, +%d doskonałych, +%d uświęconych, +%d miłosierdzia" % [
+		_dev_feedback(Lang.t("Kamienie: +%d zwykłych, +%d doskonałych, +%d uświęconych, +%d miłosierdzia") % [
 			DEV_STONES, DEV_PERFECT_STONES, DEV_BLESSED_STONES, DEV_MERCY_STONES], Color(0.8, 0.6, 1.0))
 
 
 func _give_dev_resources() -> void:
 	var missing := _player.inventory.add_item("wood", DEV_RESOURCES) + _player.inventory.add_item("stone", DEV_RESOURCES)
 	if missing > 0:
-		_dev_feedback("Ekwipunek pełny! Brakło %d sztuk" % missing, Color(1, 0.4, 0.4))
+		_dev_feedback(Lang.t("Ekwipunek pełny! Brakło %d sztuk") % missing, Color(1, 0.4, 0.4))
 	else:
-		_dev_feedback("+%d drewna, +%d kamienia" % [DEV_RESOURCES, DEV_RESOURCES], Color(0.85, 0.7, 0.45))
+		_dev_feedback(Lang.t("+%d drewna, +%d kamienia") % [DEV_RESOURCES, DEV_RESOURCES], Color(0.85, 0.7, 0.45))
 
 
 func set_dev_mode(enabled: bool) -> void:
@@ -439,9 +439,9 @@ func set_dev_mode(enabled: bool) -> void:
 	Game.dev_mode = enabled
 	dev_badge.visible = enabled
 	if enabled:
-		_show_banner("Tryb deweloperski WŁĄCZONY\n[F1] 1000 złota    [F2] awans    [F3] kamienie zaklinające    [F4] drewno i kamień", DEV_COLOR)
+		_show_banner(Lang.t("Tryb deweloperski WŁĄCZONY\n[F1] 1000 złota    [F2] awans    [F3] kamienie zaklinające    [F4] drewno i kamień"), DEV_COLOR)
 	else:
-		_show_banner("Tryb deweloperski WYŁĄCZONY", Color(0.85, 0.85, 0.9))
+		_show_banner(Lang.t("Tryb deweloperski WYŁĄCZONY"), Color(0.85, 0.85, 0.9))
 
 
 ## Duży komunikat na środku ekranu (np. ukończona budowa).
@@ -481,13 +481,13 @@ func _on_mana_changed(current: int, maximum: int) -> void:
 func _on_xp_changed(xp: int, needed: int, level: int) -> void:
 	xp_bar.max_value = needed
 	xp_bar.value = xp
-	xp_bar.tooltip_text = "Exp: %d / %d" % [xp, needed]
-	xp_value.text = "%d / %d exp" % [xp, needed]
-	level_label.text = "Poz. %d" % level
+	xp_bar.tooltip_text = Lang.t("Exp: %d / %d") % [xp, needed]
+	xp_value.text = Lang.t("%d / %d exp") % [xp, needed]
+	level_label.text = Lang.t("Poz. %d") % level
 
 
 func _on_leveled_up(level: int) -> void:
-	level_up_label.text = "Nowy poziom: %d!\nNaciśnij C, aby rozdać punkt" % level
+	level_up_label.text = Lang.t("Nowy poziom: %d!\nNaciśnij C, aby rozdać punkt") % level
 	level_up_label.visible = true
 	level_up_label.modulate.a = 1.0
 	var tween := level_up_label.create_tween()
@@ -497,13 +497,13 @@ func _on_leveled_up(level: int) -> void:
 
 
 func _on_gold_changed(gold: int) -> void:
-	gold_label.text = "Złoto: %d" % gold
+	gold_label.text = Lang.t("Złoto: %d") % gold
 
 
 func _update_points() -> void:
 	var points := _player.stats.unspent_points
 	points_label.visible = points > 0
-	points_label.text = "+%d pkt [C]" % points
+	points_label.text = Lang.t("+%d pkt [C]") % points
 
 
 func setup_quest_areas(areas: Dictionary) -> void:
@@ -526,10 +526,10 @@ func open_world_modes() -> void:
 		for node in get_tree().get_nodes_in_group("travelers"):
 			node.refresh_color()
 		Sfx.play("magic")
-		show_banner("Tryb świata: %s\n%s" % [WorldModes.MODES[mode]["name"], WorldModes.MODES[mode]["short"]], WorldModes.MODES[mode]["color"])
+		show_banner(Lang.t("Tryb świata: %s\n%s") % [Lang.t(WorldModes.MODES[mode]["name"]), Lang.t(WorldModes.MODES[mode]["short"])], WorldModes.MODES[mode]["color"])
 		panel.queue_free())
 	box.add_child(picker)
-	var close := UiStyle.menu_button("Zamknij", func() -> void: panel.queue_free())
+	var close := UiStyle.menu_button(Lang.t("Zamknij"), func() -> void: panel.queue_free())
 	close.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	box.add_child(close)
 	add_child(panel)
@@ -569,19 +569,19 @@ func _rest_peak() -> void:
 func _on_quest_ready(id: String) -> void:
 	Sfx.play("quest_ready")
 	var quest := Quests.get_data(id)
-	_show_banner("Zadanie wykonane: %s\nWróć do: %s" % [quest["title"], quest["giver"]], Color(0.6, 1.0, 0.5))
+	_show_banner(Lang.t("Zadanie wykonane: %s\nWróć do: %s") % [Lang.t(quest["title"]), Lang.t(quest["giver"])], Color(0.6, 1.0, 0.5))
 
 
 ## Pasek ikon w prawym dolnym rogu: każda otwiera/zamyka swoje okno.
 func _build_icon_bar() -> void:
 	var buttons := [
-		["bag", "Ekwipunek", "I", inventory_window],
-		["character", "Postać", "C", character_window],
-		["skills", "Umiejętności", "K", skill_window],
-		["journal", "Dziennik zadań", "J", quest_journal],
-		["codex", "Encyklopedia", "L", codex_window],
-		["map", "Mapa", "M", big_map],
-		["help", "Pomoc i sterowanie", "?", help_window],
+		["bag", Lang.t("Ekwipunek"), "I", inventory_window],
+		["character", Lang.t("Postać"), "C", character_window],
+		["skills", Lang.t("Umiejętności"), "K", skill_window],
+		["journal", Lang.t("Dziennik zadań"), "J", quest_journal],
+		["codex", Lang.t("Encyklopedia"), "L", codex_window],
+		["map", Lang.t("Mapa"), "M", big_map],
+		["help", Lang.t("Pomoc i sterowanie"), "?", help_window],
 	]
 	var normal := UiStyle.panel(UiStyle.SLOT_BG, UiStyle.SLOT_BORDER, 2)
 	var hover := UiStyle.panel(Color(0.25, 0.26, 0.36), UiStyle.TITLE_COLOR, 2)
@@ -649,10 +649,10 @@ func _update_boss_bar() -> void:
 			break
 	boss_bar.visible = fighting != null
 	if fighting:
-		boss_name_label.text = "%s  (poz. %d)" % [fighting.boss_name, fighting.level]
+		boss_name_label.text = Lang.t("%s  (poz. %d)") % [Lang.t(fighting.boss_name), fighting.level]
 		boss_health.max_value = fighting.max_health
 		boss_health.value = maxi(fighting.health, 0)
 
 
 func _update_kills() -> void:
-	kills_label.text = "Pokonane potwory: %d" % kills
+	kills_label.text = Lang.t("Pokonane potwory: %d") % kills
