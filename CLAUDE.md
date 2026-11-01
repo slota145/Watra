@@ -42,7 +42,7 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
 - `scripts/`: cała logika. Najważniejsze pliki:
   - `game.gd` (autoload `Game`): zapisy (`user://saves/`) i przełączanie scen,
   - `sfx.gd` (autoload `Sfx`): dźwięki,
-  - `world.gd` i skrypty krain (`grain_fields.gd`, `drowned_grove.gd`, `mountain_zone.gd`, `ancient_forest.gd`, `forest_cemetery.gd`, `hydra_bog.gd`),
+  - `world.gd` i skrypty krain (`grain_fields.gd`, `drowned_grove.gd`, `frog_ponds.gd`, `mountain_zone.gd`, `ancient_forest.gd`, `forest_cemetery.gd`, `hydra_bog.gd`),
   - `settlement.gd`: Ostoja,
   - `player.gd`, `character_stats.gd`, `items.gd`, `item_bases.gd`, `loot.gd`, `legends.gd`, `legendary_effects.gd`, `skills.gd`, `skill_effects.gd`, `levels.gd`, `quests.gd`, `bounties.gd`,
   - `hotbar.gd`: paski szybkiego wyboru (dane), `status_effects.gd`: lista efektów działających na gracza,
@@ -173,7 +173,7 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   Plan uzgodniony z autorem: kraina po krainie (osobny PR), cel 600-800 wrogów na krainę, nowe siedliska z obecnych
   potworów na pustych terenach (z własnym wystrojem i sensem) i gęściej w istniejących. Liczy je `tests/bench_combat.gd`
   („spawns”); koszt rośnie z liczbą wrogów atakujących naraz (największa gromada), nie z liczbą w krainie.
-  Zrobione: Pola Zbożowe (626). Dalej: Rozlewiska (~300, pusty wschód), Wietrzne Turnie (~326, pusty zachód),
+  Zrobione: Pola Zbożowe (626), Rozlewiska (617). Dalej: Wietrzne Turnie (~326, pusty zachód),
   Gobliński Las (~380), Prastary Las (~409); Leśny Cmentarz ma już 682.
 
 ## Pomysły i rzeczy do zrobienia
