@@ -42,18 +42,18 @@ func _initialize() -> void:
 	var english := Translation.new()
 	english.locale = "en"
 	for pair: Array in [["Stalowy miecz", "Steel Sword"], ["Rysia", "of the Lynx"], ["Sowy", "of the Owl"], ["%s i %s", "%s and %s"],
-			["Rubin", "Ruby"], ["Odłamek", "Shard"], ["Łuk Swaroga", "Svarog's Bow"], ["Niezidentyfikowana broń", "Unidentified weapon"],
-			["rzadka", "rare"], ["%s (%s, poz. %d)", "%s (%s, lvl %d)"], ["Esencja: %s", "Essence: %s"]]:
+			["Rubin", "Ruby"], ["Odłamek", "Shard"], ["Łuk Swaroga", "Swaróg's Bow"], ["Niezidentyfikowana broń", "Unidentified Weapon"],
+			["rzadka", "rare"], ["%s (%s, poz. %d)", "%s (%s, Lv. %d)"], ["Esencja: %s", "Essence: %s"]]:
 		english.add_message(pair[0], pair[1])
 	TranslationServer.add_translation(english)
 	Lang.set_language("en")
 	check("angielska nazwa z dopiskami", Items.get_data(id)["name"] == "Steel Sword of the Lynx and of the Owl", Items.get_data(id)["name"])
 	check("angielska nazwa starszego zapisu", Items.display_name(old) == "Steel Sword of the Owl and of the Lynx", Items.display_name(old))
-	check("angielska legenda", Items.display_name(legend) == "Svarog's Bow", Items.display_name(legend))
+	check("angielska legenda", Items.display_name(legend) == "Swaróg's Bow", Items.display_name(legend))
 	check("angielski kamień", Items.display_name(gem) == "Ruby (shard)", Items.display_name(gem))
-	check("angielski niezidentyfikowany", Items.display_name(unid) == "Unidentified weapon (rare, lvl 12)", Items.display_name(unid))
+	check("angielski niezidentyfikowany", Items.display_name(unid) == "Unidentified Weapon (rare, Lv. 12)", Items.display_name(unid))
 	var essence: String = Essences.extract(legend)
-	check("angielska esencja", Items.display_name(essence) == "Essence: Svarog's Bow", Items.display_name(essence))
+	check("angielska esencja", Items.display_name(essence) == "Essence: Swaróg's Bow", Items.display_name(essence))
 	check("opis po angielsku bez błędów", Items.describe(id) != "" and Items.describe(essence) != "")
 	Lang.set_language("pl")
 	check("powrót do polskiego", [Items.get_data(generated)["name"], Items.get_data(gem)["name"], Items.get_data(unid)["name"]] == pl_names)

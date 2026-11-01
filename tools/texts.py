@@ -13,10 +13,15 @@ Napis trafia do pliku, gdy:
 Pomija: komunikaty print/push_error/assert, ścieżki plików, napisy z translations/pomijane.txt (jeden na linię).
 
 Uruchom: python tools/texts.py           - odświeża plik
-         python tools/texts.py --check   - tylko wypisuje, ile napisów nie ma tłumaczenia (nic nie zapisuje)"""
+         python tools/texts.py --check   - tylko wypisuje, ile napisów nie ma tłumaczenia (nic nie zapisuje)
+         python tools/texts.py --apply plik.json   - wpisuje tłumaczenia z pliku {"polski tekst": "angielski"}
+         python tools/texts.py --validate [plik.json] - sprawdza tłumaczenia: te same %s/%d w tej samej kolejności,
+                                         te same znaczniki [..], liczba \\n i spacje na brzegach (słownictwo:
+                                         translations/slowniczek.md)"""
 import csv
 import glob
 import io
+import json
 import os
 import re
 import sys
@@ -178,7 +183,75 @@ def scan_scene(path, found):
             found.setdefault(text, set()).add(os.path.basename(path))
 
 
+FORMAT = re.compile(r"%[-+0-9.]*[sdfix%]")
+TAG = re.compile(r"\[/?[a-z_]+(?:=[^\]]*)?\]")
+
+
+def problems(key, en):
+    """Lista błędów tłumaczenia (puste - w porządku)."""
+    found = []
+    if FORMAT.findall(key) != FORMAT.findall(en):
+        found.append("wzory %s -> %s" % (FORMAT.findall(key), FORMAT.findall(en)))
+    if sorted(TAG.findall(key)) != sorted(TAG.findall(en)):
+        found.append("znaczniki %s -> %s" % (TAG.findall(key), TAG.findall(en)))
+    if key.count("\n") != en.count("\n"):
+        found.append("nowe linie %d -> %d" % (key.count("\n"), en.count("\n")))
+    if (key[:1].isspace(), key[-1:].isspace()) != (en[:1].isspace(), en[-1:].isspace()):
+        found.append("spacje na brzegach")
+    return found
+
+
+def read_rows():
+    with open(CSV_PATH, encoding="utf-8", newline="") as f:
+        return list(csv.reader(f))
+
+
+def write_rows(rows):
+    buffer = io.StringIO()
+    csv.writer(buffer, quoting=csv.QUOTE_ALL, lineterminator="\n").writerows(rows)
+    with open(CSV_PATH, "w", encoding="utf-8", newline="") as f:
+        f.write(buffer.getvalue())
+
+
+def validate(pairs):
+    bad = 0
+    for key, en in pairs:
+        if not en:
+            continue
+        for problem in problems(key, en):
+            bad += 1
+            print("BŁĄD %r: %s" % (key[:70], problem))
+    print("sprawdzono %d tłumaczeń, błędów: %d" % (sum(1 for _k, en in pairs if en), bad))
+    return bad
+
+
+def apply(path):
+    with open(path, encoding="utf-8") as f:
+        given = json.load(f)
+    rows = read_rows()
+    keys = {row[0] for row in rows[1:]}
+    unknown = [k for k in given if k not in keys]
+    for row in rows[1:]:
+        if given.get(row[0]):
+            row[1] = given[row[0]]
+    write_rows(rows)
+    print("wpisano %d tłumaczeń, nieznanych kluczy: %d" % (len(given) - len(unknown), len(unknown)))
+    for key in unknown[:20]:
+        print("  nieznany klucz: %r" % key[:70])
+
+
 def main():
+    if "--apply" in sys.argv:
+        apply(sys.argv[sys.argv.index("--apply") + 1])
+        return
+    if "--validate" in sys.argv:
+        rest = sys.argv[sys.argv.index("--validate") + 1:]
+        if rest:
+            with open(rest[0], encoding="utf-8") as f:
+                pairs = list(json.load(f).items())
+        else:
+            pairs = [(row[0], row[1]) for row in read_rows()[1:]]
+        sys.exit(1 if validate(pairs) else 0)
     found = {}
     for path in sorted(glob.glob(os.path.join(ROOT, "scripts", "**", "*.gd"), recursive=True)):
         scan_script(path, found)

@@ -28,7 +28,7 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
 	box.add_child(UiStyle.title(Lang.t("Lochy w płomieniach Watry")))
-	box.add_child(_wrapped(Lang.t("Wkrocz w płomienie i zejdź do lochu. W najdalszej komnacie czeka strażnik ze skarbcem; płomienie wyprowadzą cię z powrotem do Ostoi. W co drugim lochu rośnie Kryształ Watry - obroń go przed falami potworów, a da kamienie zaklinające (wbija je kowal)."), UiStyle.DIM_COLOR))
+	box.add_child(_wrapped(Lang.t("Wkrocz w płomienie i zejdź do lochu. W najdalszej komnacie czeka strażnik ze skarbcem; płomienie wyprowadzą cię z powrotem do Ostoi. W co czwartym lochu rośnie Kryształ Watry - obroń go przed falami potworów, a da kamienie zaklinające (wbija je kowal)."), UiStyle.DIM_COLOR))
 
 	var climates := HBoxContainer.new()
 	climates.alignment = BoxContainer.ALIGNMENT_CENTER
