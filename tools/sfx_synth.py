@@ -10,6 +10,7 @@
 - frogman_croak_* / frog_attack / frog_death / spit / spit_hit - żaboludzie,
 - frog_boss_roar / tongue_lash / boss_splash - ich wódz,
 - big_slash / seeker_whistle / lightning_zap_* / thunder - umiejętności dodatkowe broni,
+- chain_cast / chain_zap_* - Łańcuch błyskawic: rzut (trzask, skwierczenie prądu, grzmot) i przeskoki,
 - legendary_drop / legendary_pickup - legendarny łup, shockwave / tide_wave / stun - ich efekty,
 - summon / craft - przyzwanie bossa magicznym kręgiem i wytworzenie przedmiotu,
 - claw - rozdzierające cięcie pazurami,
@@ -566,6 +567,54 @@ def lightning_zap(variant):
     return room(crackle + buzz + snap, 72 + variant, 0.4, 0.2)
 
 
+def electric_crackle(n, rng, density, lo=1800, hi=10000):
+    """Skwierczenie prądu: rzadkie, losowo głośne impulsy w paśmie wysokim (każdy to drobna iskra)."""
+    sparks = rng.standard_normal(n) * (rng.random(n) < density) * rng.random(n) ** 2 * 4.0
+    return band(sparks, lo, hi)
+
+
+def electric_buzz(n, rng, f0, jitter=0.15):
+    """Buczenie wyładowania: piłokształtny ton z drżącą wysokością i migotaniem głośności."""
+    wobble = 1 + jitter * band(rng.standard_normal(n), 5, 60) * 3
+    phase = np.cumsum(f0 * wobble) / RATE
+    flicker = 0.55 + 0.45 * (band(rng.standard_normal(n), 10, 90) > 0)
+    return band(2 * (phase % 1.0) - 1, 150, 4500) * flicker
+
+
+def chain_cast(_variant):
+    """Łańcuch błyskawic - rzut: ostre trzaśnięcie wyładowania, gęste skwierczenie i buczenie prądu,
+    a pod spodem krótki, toczący się grzmot."""
+    rng = np.random.default_rng(760)
+    dur = 1.1
+    n = int(RATE * dur)
+    t = np.arange(n) / RATE
+    snap = np.zeros(n)
+    k = int(0.006 * RATE)
+    snap[:k] = band(rng.standard_normal(k), 500, 12000) * np.linspace(1, 0, k) ** 2 * 3.0
+    crackle = electric_crackle(n, rng, 0.08) * np.exp(-t * 7) * 1.6
+    hiss = band(rng.standard_normal(n), 3000, 11000) * np.exp(-t * 18) * 0.5
+    buzz = electric_buzz(n, rng, 110) * np.exp(-t * 6) * 0.45
+    # grzmot: niski pomruk wchodzi tuż po trzasku i toczy się z falującą głośnością
+    delay = 1 - np.exp(-np.maximum(t - 0.04, 0) * 25)
+    rumble = band(rng.standard_normal(n), 35, 220) * np.exp(-t * 3.2) * delay * 2.6
+    roll = band(rng.standard_normal(n), 120, 600) * np.exp(-t * 4.0) * delay * (0.6 + 0.4 * np.sin(2 * np.pi * 5 * t)) * 0.6
+    mix = snap + crackle + hiss + buzz + rumble + roll
+    return room(np.tanh(mix * 1.4), 76, 0.8, 0.22)
+
+
+def chain_zap(variant):
+    """Łańcuch błyskawic - przeskok na kolejnego wroga: krótki, suchy trzask iskry z bzyczeniem."""
+    rng = np.random.default_rng(770 + variant)
+    n = int(RATE * 0.32)
+    t = np.arange(n) / RATE
+    snap = np.zeros(n)
+    k = int(0.003 * RATE)
+    snap[:k] = band(rng.standard_normal(k), 1500, 12000) * np.linspace(1, 0, k) * 2.5
+    crackle = electric_crackle(n, rng, 0.12, 2500, 11000) * np.exp(-t * 16) * 1.5
+    buzz = electric_buzz(n, rng, 140 + 25 * variant, 0.2) * np.exp(-t * 14) * 0.4
+    return room(np.tanh((snap + crackle + buzz) * 1.3), 77 + variant, 0.3, 0.15)
+
+
 def thunder(_variant):
     """Fala piorunów: trzask wyładowania przechodzący w toczący się grzmot."""
     rng = np.random.default_rng(730)
@@ -1060,9 +1109,11 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     only = set(sys.argv[1:])
     if only:
-        for fn, name in LEGENDARY:
+        for fn, name in LEGENDARY + ((chain_cast, "chain_cast"),):
             if name in only:
                 save(np.repeat(fn(0).reshape(-1, 1), 2, axis=1), name)
+        if "chain_zap" in only:
+            save_set(chain_zap, "chain_zap", 3)
         return
     save(charge(), "enchant_charge")
     save(strike(), "enchant_strike")
@@ -1078,6 +1129,8 @@ def main():
     save_set(water_step, "water_step", 3)
     save_set(frogman_croak, "frogman_croak", 2)
     save_set(lightning_zap, "lightning_zap", 2)
+    save_set(chain_zap, "chain_zap", 3)
+    save(np.repeat(chain_cast(0).reshape(-1, 1), 2, axis=1), "chain_cast")
     for fn, name in ((frog_attack, "frog_attack"), (frog_death, "frog_death"), (spit, "spit"), (spit_hit, "spit_hit"),
                      (frog_boss_roar, "frog_boss_roar"), (tongue_lash, "tongue_lash"), (boss_splash, "boss_splash"),
                      (big_slash, "big_slash"), (seeker_whistle, "seeker_whistle"), (thunder, "thunder")) + LEGENDARY:

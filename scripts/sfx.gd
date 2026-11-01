@@ -56,6 +56,8 @@ const SOUNDS := {
 	"big_slash": [["big_slash"], -3.0, 0.05, 0.1],
 	"seeker": [["seeker_whistle"], -7.0, 0.04, 0.1],
 	"zap": [["lightning_zap_1", "lightning_zap_2"], -7.0, 0.1, 0.04],
+	"chain_cast": [["chain_cast"], -5.0, 0.08, 0.12],
+	"chain_zap": [["chain_zap_1", "chain_zap_2", "chain_zap_3"], -8.0, 0.12, 0.04],
 	"thunder": [["thunder"], -2.0, 0.04, 0.3],
 	"legendary_drop": [["legendary_drop"], -2.0, 0.0, 1.0],
 	"legendary_pickup": [["legendary_pickup"], -2.0, 0.0, 1.0],

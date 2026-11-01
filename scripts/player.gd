@@ -2110,7 +2110,7 @@ func _cast_chain(level: int) -> void:
 	if first == null:
 		# nikogo w zasięgu - błyskawica strzela w powietrze
 		LightningArc.spawn(get_parent(), origin, origin + dir * 90.0, 1.5, 0.3)
-		Sfx.play("zap")
+		Sfx.play("chain_cast")
 		return
 	targets.append(first)
 	while targets.size() < Skills.chain_targets(level) + roundi(skills.tree_bonus("spell", "chain_targets")):
@@ -2127,6 +2127,8 @@ func _cast_chain(level: int) -> void:
 		if next == null:
 			break
 		targets.append(next)
+	# rzut: trzask wyładowania z grzmotem; każdy przeskok - osobny krótki trzask (_zap)
+	Sfx.play("chain_cast")
 	var tween := create_tween()
 	var from := origin
 	var multiplier := Skills.CHAIN_DAMAGE
@@ -2145,7 +2147,7 @@ func _zap(from: Vector2, target: Goblin, multiplier: float) -> void:
 	LightningArc.spawn(get_parent(), from, to, 1.5, 0.3)
 	SpellSkills.zap_flash(get_parent(), to)
 	ShockFx.apply(target, to, target.hurt_radius + 6.0)
-	Sfx.play("zap")
+	Sfx.play("chain_zap")
 	hit_enemy(target, _skill_damage(multiplier, ["spell"]), from, 40.0)
 
 
