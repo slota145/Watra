@@ -153,7 +153,8 @@ func _process(_d: float) -> bool:
 				bs.ballista().global_position = _enemy.global_position + Vector2(-60, 0)
 				bs.ballista()._next = 0.0
 		280:
-			check("Balista strzela", _hurt(), "%d -> %d" % [_hp, _now()])
+			# balista celuje w najbliższego potwora - czasem to inny z gromady niż _enemy, więc liczymy salwy
+			check("Balista strzela", bs.ballista() != null and bs.ballista().shots > 0, "%d -> %d" % [_hp, _now()])
 			_check_legends(p, bs)
 			# Strzelanie w biegu
 			var speed: float = p.stats.attack_speed()

@@ -395,10 +395,12 @@ func is_poisoned(enemy: Goblin) -> bool:
 
 
 func _process_poison(delta: float) -> void:
-	for enemy: Goblin in _poisoned.keys():
-		if not is_instance_valid(enemy) or enemy.state == Goblin.State.DEAD:
-			_poisoned.erase(enemy)
+	# klucz bez typu: zabity potwór jest już zwolniony, a przypisanie go do zmiennej Goblin to błąd
+	for key in _poisoned.keys():
+		if not is_instance_valid(key) or (key as Goblin).state == Goblin.State.DEAD:
+			_poisoned.erase(key)
 			continue
+		var enemy: Goblin = key
 		var entry: Array = _poisoned[enemy]
 		entry[1] -= delta
 		entry[2] -= delta
@@ -791,6 +793,8 @@ class _Ballista:
 	var total := 15.0
 	var interval := 1.1
 	var leaving := false
+	## Ile salw już oddała (do testów).
+	var shots := 0
 	var _next := 0.3
 	var _sprite: Sprite2D
 
@@ -842,6 +846,7 @@ class _Ballista:
 		var seekers := roundi(player.equipment.effect_power("ballista_seeker"))
 		var volley := roundi(player.equipment.effect_power("ballista_volley"))
 		var count := 1 + volley
+		shots += 1
 		for i in count:
 			var side := 0.0 if count == 1 else lerpf(-0.25, 0.25, float(i) / (count - 1))
 			if seekers > 0:

@@ -43,7 +43,8 @@ func _quantity(book: Dictionary) -> int:
 func _roll_share(m) -> float:
 	var rare := 0
 	var all := 0
-	for i in 400:
+	# dużo losowań: różnica między rynkami to kilka punktów, a przy 400 losowaniach szum był podobnej wielkości
+	for i in 3000:
 		var id: String = m._roll_item(30)
 		var rarity: String = I.get_data(id).get("rarity", "")
 		I.generated.erase(id)
@@ -92,7 +93,7 @@ func _process(_d: float) -> bool:
 	check("duże transakcje mniej przesuwają cenę", m.prices["iron_ore"] - 14.0 < small_push,
 			"%.2f < %.2f" % [m.prices["iron_ore"] - 14.0, small_push])
 	var big_rare := _roll_share(m)
-	check("lepsze przedmioty na dużym rynku", big_rare > small_rare + 0.05, "%.2f > %.2f" % [big_rare, small_rare])
+	check("lepsze przedmioty na dużym rynku", big_rare > small_rare + 0.025, "%.2f > %.2f" % [big_rare, small_rare])
 	check("więcej kupujących", m.demand() > 1.0)
 	# okazje znikają szybciej niż przepłacone oferty
 	var deals := 0
