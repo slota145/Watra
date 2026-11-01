@@ -25,6 +25,11 @@ extends Node
 ## tłocznia albo maj, gromada satyrów), połączone z nią ścieżkami. Od ścieżki z przełęczy pilnują
 ## wioski satyrowie osiłki, którzy szarżują z rogami.
 ##
+## Ptakoludzie rozlali się z wioski na płaskowyże: na każdym dalszym płaskowyżu orla czata (chata na palach
+## z ogniskiem, gniazdem i żerdzią, siedząca gromada i dwie stojące po bokach). Przy stadach kóz na halach
+## pasą satyrowie pasterze z grajkiem (namiot, siano, wino). Czaty i pasterze mają własne ziarno (_outpost_rng),
+## żeby reszta krainy wyglądała jak dawniej, i powstają na końcu (nowe numery miejsc potworów).
+##
 ## Węzeł żyje w świecie (orły potrzebują _process); generuje teren przez metody świata.
 
 const TILE := 16
@@ -135,6 +140,11 @@ const STREET_PACKS := 3
 const EAGLES := 7
 const GOAT_HERDS := 9
 const PLATEAUS := 20
+## Orle czaty na płaskowyżach: najmniejsza odległość od gniazda wodza (w kafelkach) i wolny promień wokół czaty.
+const OUTPOST_VILLAGE_DISTANCE := 40.0
+const OUTPOST_RADIUS := 5
+## Polujące gromady ptakoludzi na halach zachodniej części krainy.
+const HUNTING_PACKS := 14
 ## Odstęp płaskowyżu od drogi, wioski, pastwisk i innych płaskowyżów (w kafelkach).
 const PLATEAU_MARGIN := 3
 
@@ -179,6 +189,12 @@ var satyr_glade := Vector2.ZERO
 var _satyr_gate := Vector2.ZERO
 ## Środki przysiółków satyrów (w kafelkach).
 var satyr_hamlets: Array[Vector2] = []
+## Płaskowyże: [środek, komórki] (w kafelkach), orle czaty (środki) i pasterze satyrów: [miejsce, stado kóz].
+var _plateaus: Array = []
+var _outposts: Array[Vector2] = []
+var _shepherds: Array = []
+var _hunting_packs: Array[Vector2] = []
+var _outpost_rng := RandomNumberGenerator.new()
 
 
 func generate(world) -> void:
@@ -220,6 +236,7 @@ func generate(world) -> void:
 	_no_cliff.merge(_dilate(_lower_cells, 4))
 
 	_plan_plateaus(rng)
+	_plan_outposts()
 	_plan_rim()
 	_plan_fillets()
 	_build_cliffs(rng)
@@ -234,6 +251,12 @@ func generate(world) -> void:
 	_build_satyr_village(rng)
 	_place_peaks(rng)
 	_spawn_eagles(size)
+	for spot in _outposts:
+		_build_outpost(spot)
+	for shepherd: Array in _shepherds:
+		_build_shepherds(shepherd[0], shepherd[1])
+	for spot in _hunting_packs:
+		_pack(_outpost_rng, spot * TILE, _outpost_rng.randi_range(5, 7), Vector2(26, 18))
 
 	var shrine: Node2D = w.SHRINE.instantiate()
 	shrine.position = shrine_tile * TILE
@@ -482,6 +505,7 @@ func _plan_plateaus(rng: RandomNumberGenerator) -> void:
 		if _try_level(cells, 1, rng).is_empty():
 			continue
 		placed += 1
+		_plateaus.append([center, cells])
 		blocked.merge(_dilate(cells, PLATEAU_MARGIN + 2))
 		# wyższa półka w środku dużego płaskowyżu (z dala od jego krawędzi)
 		if radii.x > 12.0 and rng.randf() < 0.65:
@@ -492,6 +516,64 @@ func _plan_plateaus(rng: RandomNumberGenerator) -> void:
 					core[cell] = true
 			if core.size() >= 24:
 				_try_level(core, 2, rng)
+
+
+## Orle czaty: na każdym płaskowyżu z dala od wioski i satyrów - w miejscu najbliżej środka, gdzie wokół
+## (OUTPOST_RADIUS) jest równo jeden poziom (górna półka albo płaskowyż); pasterze przy stadach kóz (na hali,
+## z dala od drogi i płaskowyżów). Rezerwacje przed rozstawieniem drzew i głazów.
+func _plan_outposts() -> void:
+	_outpost_rng.seed = hash([w._seed, "mountain_outposts"])
+	for plateau: Array in _plateaus:
+		var center: Vector2 = plateau[0]
+		if center.distance_to(lair) < OUTPOST_VILLAGE_DISTANCE or _in_satyr_land(center, 10.0):
+			continue
+		var best := Vector2.INF
+		for cell: Vector2i in plateau[1]:
+			if _flat_around(cell) and Vector2(cell).distance_to(center) < best.distance_to(center):
+				best = Vector2(cell)
+		if best.is_finite():
+			_outposts.append(best)
+			w._reserve_area(best, OUTPOST_RADIUS)
+	for herd: Array in w._herds:
+		if herd[0] != "goat":
+			continue
+		for attempt in 12:
+			var spot: Vector2 = herd[1] + Vector2.from_angle(_outpost_rng.randf() * TAU) * _outpost_rng.randf_range(6.0, 8.0)
+			var cell := Vector2i(spot)
+			if not _flat_around(cell, 2) or level_of(cell) != 0 or w._reserved.has(cell) or Road.distance_to(spot, w._road) < 5.0:
+				continue
+			_shepherds.append([spot, herd[1]])
+			w._reserve_area(spot, 2.5)
+			break
+	# polujące gromady na halach: zachodnia część krainy, z dala od drogi, płaskowyżów, czat i pasterzy
+	var size := Vector2(w.map_size)
+	var area := Rect2(Vector2(w.border_thickness + 6, w.border_thickness + 6), Vector2(size.x * 0.6, size.y - w.border_thickness * 2 - 12))
+	for attempt in 300:
+		if _hunting_packs.size() >= HUNTING_PACKS:
+			break
+		var spot := Vector2(_outpost_rng.randf_range(area.position.x, area.end.x), _outpost_rng.randf_range(area.position.y, area.end.y))
+		if not _flat_around(Vector2i(spot), 3) or level_of(Vector2i(spot)) != 0 or Road.distance_to(spot, w._road) < 8.0:
+			continue
+		if spot.distance_to(lair) < OUTPOST_VILLAGE_DISTANCE or _in_satyr_land(spot, 8.0):
+			continue
+		var others: Array[Vector2] = _hunting_packs + _outposts
+		for shepherd: Array in _shepherds:
+			others.append(shepherd[0])
+		if others.any(func(o: Vector2) -> bool: return o.distance_to(spot) < 14.0):
+			continue
+		_hunting_packs.append(spot)
+		w._reserve_area(spot, 2.0)
+
+
+## Czy wokół komórki (w promieniu) teren jest równy: jeden poziom, bez ścian, krawędzi i rezerwacji.
+func _flat_around(cell: Vector2i, radius := OUTPOST_RADIUS) -> bool:
+	var level := level_of(cell)
+	for dy in range(-radius, radius + 1):
+		for dx in range(-radius, radius + 1):
+			var c := cell + Vector2i(dx, dy)
+			if level_of(c) != level or _cliff_cells.has(c) or w._reserved.has(c) or w._road_clear.has(c):
+				return false
+	return true
 
 
 ## Komórki poszarpanej, wygładzonej elipsy (bez wąskich wypustek i dziur).
@@ -1144,6 +1226,31 @@ func _pack(rng: RandomNumberGenerator, spot: Vector2, count: int, spread: Vector
 		var pos := spot + Vector2(rng.randf_range(-spread.x, spread.x), rng.randf_range(-spread.y, spread.y))
 		var kind: String = "birdman_thrower" if k % 3 == 1 else "birdman_shaman" if k == 3 else "birdman"
 		w._add_goblin_spawn({"type": kind, "position": pos, "sitting": false, "look_at": spot})
+
+
+## Orla czata na płaskowyżu: chata na palach z ogniskiem i siedzącą gromadą (_hut_camp), po bokach dwie stojące
+## gromady.
+func _build_outpost(tile: Vector2) -> void:
+	var rng := _outpost_rng
+	var hut := (tile + Vector2(0, -1.5)) * TILE
+	_hut_camp(rng, hut, rng.randi_range(6, 8))
+	for side in [-1.0, 1.0]:
+		_pack(rng, hut + Vector2(side * 90.0, 34), rng.randi_range(5, 6), Vector2(14, 14))
+
+
+## Satyrowie pasterze przy stadzie kóz: namiot, siano albo wino, grajek i kilku satyrów (czasem osiłek).
+func _build_shepherds(tile: Vector2, herd: Vector2) -> void:
+	var rng := _outpost_rng
+	var spot := tile * TILE
+	var away := (tile - herd).normalized()
+	w._spawn(SATYR_PROPS["tent"], spot + away * 36.0)
+	w._spawn(SATYR_PROPS["hay" if rng.randf() < 0.5 else "barrels"], spot + away * 30.0 + away.orthogonal() * 40.0)
+	w._map_markers.append({"position": spot, "color": w.MAP_TENT, "size": 2.0})
+	var count := rng.randi_range(5, 7)
+	for k in count:
+		var pos := spot + Vector2(rng.randf_range(-26, 26), rng.randf_range(-18, 18))
+		var kind := "satyr_piper" if k == 0 else "satyr_brute" if k == 1 and rng.randf() < 0.4 else "satyr"
+		w._add_goblin_spawn({"type": kind, "position": pos, "sitting": false, "look_at": herd * TILE})
 
 
 ## Dolna osada u stóp skarpy: chaty z ogniskami wzdłuż ulicy, totemy i żerdzie przy wejściu od drogi

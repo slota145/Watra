@@ -173,8 +173,9 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   Plan uzgodniony z autorem: kraina po krainie (osobny PR), cel 600-800 wrogów na krainę, nowe siedliska z obecnych
   potworów na pustych terenach (z własnym wystrojem i sensem) i gęściej w istniejących. Liczy je `tests/bench_combat.gd`
   („spawns”); koszt rośnie z liczbą wrogów atakujących naraz (największa gromada), nie z liczbą w krainie.
-  Zrobione: Pola Zbożowe (626), Rozlewiska (617). Dalej: Wietrzne Turnie (~326, pusty zachód),
-  Gobliński Las (~380), Prastary Las (~409); Leśny Cmentarz ma już 682.
+  Zrobione: Pola Zbożowe (626), Rozlewiska (617), Wietrzne Turnie (609). Dalej: Gobliński Las (~380),
+  Prastary Las (~409); Leśny Cmentarz ma już 682. Nowe siedliska losuj osobnym ziarnem (jak `FrogPonds`)
+  i buduj na końcu, żeby w starych zapisach reszta krainy się nie zmieniła.
 
 ## Pomysły i rzeczy do zrobienia
 

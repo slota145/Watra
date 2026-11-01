@@ -167,6 +167,11 @@ odpowiedniej sekcji.
 - [x] Wioska satyrów: większa polana (promień 22 zamiast 17 kafelków, 12 namiotów), wydeptana ścieżka wokół ogniska,
   3-4 przysiółki dookoła połączone ścieżkami (ognisko, namioty, tłocznia/maj/posąg/bębny, gromady satyrów, osiłek),
   około 120 satyrów (wcześniej 52).
+- [x] Dużo potworów (609 wrogów bez kóz, było 326): orle czaty na płaskowyżach dalej niż 40 kafelków od gniazda wodza
+  (`_plan_outposts`, `_build_outpost` - chata na palach z ogniskiem i siedzącą gromadą, dwie stojące gromady po bokach;
+  zwykle 7 czat po około 18 ptakoludzi), satyrowie pasterze przy stadach kóz (namiot, siano albo wino, grajek, czasem
+  osiłek; 5-7 satyrów), 14 polujących gromad ptakoludzi na halach zachodniej części. Własne ziarno (`_outpost_rng`),
+  budowane na końcu - kształt krainy i stare numery miejsc potworów w zapisach się nie zmieniają.
 
 ## Rozlewiska (`scripts/drowned_grove.gd`, `scripts/hydra_bog.gd`) (Do poprawy)
 - [x] Topielcze Uroczysko zajmuje cały obszar pod drogą i na zachód od rzeki: 16 sadzawek (było 7), mgła na całym obszarze,
