@@ -328,13 +328,13 @@ func default_save_name(data: Dictionary) -> String:
 	var player: Dictionary = data.get("player", {})
 	var hero_id := str(player.get("hero", hero))
 	var level := int(player.get("stats", {}).get("level", 1))
-	return "%s - %s, poz. %d" % [HeroRig.NAMES.get(hero_id, hero_id.capitalize()), Zones.zone_name(str(data.get("zone", "forest"))), level]
+	return Lang.t("%s - %s, poz. %d") % [HeroRig.NAMES.get(hero_id, hero_id.capitalize()), Zones.zone_name(str(data.get("zone", "forest"))), level]
 
 
 ## Krótki opis zapisu, np. "Poziom 3  •  Gobliński Las  •  2026-10-25 20:15".
 func describe_save(meta: Dictionary) -> String:
 	var date := str(meta.get("saved_at", "")).substr(0, 16)
-	return "Poziom %d  •  %s  •  %s" % [int(meta.get("level", 1)), Zones.zone_name(str(meta.get("zone", "forest"))), date]
+	return Lang.t("Poziom %d  •  %s  •  %s") % [int(meta.get("level", 1)), Zones.zone_name(str(meta.get("zone", "forest"))), date]
 
 
 func _slot_path(slot: String, ext: String) -> String:
@@ -353,7 +353,7 @@ func _migrate_legacy_save() -> void:
 	saves_dir = SAVES_DIR
 	var data: Dictionary = parsed
 	var saved_at := str(data.get("saved_at", ""))
-	save_game(data, "Stary zapis", LEGACY_SLOT)
+	save_game(data, Lang.t("Stary zapis"), LEGACY_SLOT)
 	# zachowujemy pierwotną datę zapisu
 	var meta_path := _slot_path(LEGACY_SLOT, "meta.json")
 	var meta: Variant = JSON.parse_string(FileAccess.get_file_as_string(meta_path))

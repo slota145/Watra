@@ -121,4 +121,4 @@ static func config(climate: String, tier: int, mods: Array, seed_value: int) -> 
 
 
 static func title(config_data: Dictionary) -> String:
-	return "%s - stopień %d (poz. %d)" % [CLIMATES[config_data["climate"]]["name"], config_data["tier"], tier_level(config_data["tier"])]
+	return Lang.t("%s - stopień %d (poz. %d)") % [Lang.t(CLIMATES[config_data["climate"]]["name"]), config_data["tier"], tier_level(config_data["tier"])]

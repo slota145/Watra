@@ -6,7 +6,7 @@ extends Boulder
 
 func _init() -> void:
 	super()
-	action_name = "Wydobądź"
+	action_name = Lang.t("Wydobądź")
 	chip_color = Color(0.72, 0.42, 0.22)
 
 

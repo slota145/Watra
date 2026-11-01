@@ -157,7 +157,7 @@ func _build_altar() -> void:
 	w.entities.add_child(altar)
 	altar.get_node("Sprite").visible = false
 	altar.get_node("Shadow").visible = false
-	altar.prompt.text = "[F] Ołtarz Welesa"
+	altar.prompt.text = Lang.t("[F] Ołtarz Welesa")
 	w.hud.essence_window.altar_used.connect(_spend_altar)
 
 
@@ -470,7 +470,7 @@ func _scatter_prop(tex: Texture2D, at: Vector2) -> void:
 func _build_entrance() -> void:
 	var center := Vector2(start_room.get_center()) * CELL
 	var pos := Vector2(center.x, start_room.position.y * CELL + 84.0)
-	_add_portal(pos, "Płomienie Watry - powrót do Ostoi")
+	_add_portal(pos, Lang.t("Płomienie Watry - powrót do Ostoi"))
 	w._spawn_point = pos + Vector2(0, 56)
 	w._arrivals["start"] = w._spawn_point
 
@@ -644,8 +644,8 @@ func _on_boss_died(_boss_node: Goblin = null) -> void:
 	if _rng.randf() < Dungeons.VAULT_LEGEND_CHANCE * treasure:
 		_drop(at, Loot.legendary_at_level(Dungeons.VAULT_LEGENDS.pick_random(), loot_level), 1)
 	Sfx.play("quest_ready")
-	_add_portal(Vector2(boss_room.get_center()) * CELL + Vector2(0, CELL * 1.2), "Płomienie Watry - powrót do Ostoi")
-	w.hud.show_banner("Strażnik pokonany! Skarbiec otwarty\nPłomienie Watry zabiorą cię do Ostoi", Color(1.0, 0.8, 0.4))
+	_add_portal(Vector2(boss_room.get_center()) * CELL + Vector2(0, CELL * 1.2), Lang.t("Płomienie Watry - powrót do Ostoi"))
+	w.hud.show_banner(Lang.t("Strażnik pokonany! Skarbiec otwarty\nPłomienie Watry zabiorą cię do Ostoi"), Color(1.0, 0.8, 0.4))
 
 
 # ---------------------------------------------------------------- droga przez loch

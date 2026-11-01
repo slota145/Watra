@@ -8,7 +8,7 @@ const ORE_CHANCE := 0.3
 
 
 func _init() -> void:
-	action_name = "Rozbij"
+	action_name = Lang.t("Rozbij")
 	tool_texture = preload("res://assets/weapons/pickaxe.png")
 	chip_color = Color(0.64, 0.66, 0.73)
 	hit_sound = "mine"

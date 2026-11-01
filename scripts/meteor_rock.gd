@@ -20,7 +20,7 @@ static func create(at: Vector2, rock_level: int) -> MeteorRock:
 
 
 func _init() -> void:
-	action_name = "Rozbij meteoryt"
+	action_name = Lang.t("Rozbij meteoryt")
 	tool_texture = preload("res://assets/weapons/pickaxe.png")
 	chip_color = Color(0.95, 0.55, 0.25)
 	hit_sound = "mine"

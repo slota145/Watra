@@ -60,7 +60,7 @@ func _ready() -> void:
 	flames.shader = LOGO_SHADER
 	_title.material = flames
 	logo.add_child(_title)
-	var subtitle := UiStyle.label(SUBTITLE, 9, Color(1.0, 0.92, 0.78))
+	var subtitle := UiStyle.label(Lang.t(SUBTITLE), 9, Color(1.0, 0.92, 0.78))
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.position = Vector2(-150, _title.position.y + LOGO.get_height() + 1)
 	subtitle.size = Vector2(300, 14)
@@ -88,20 +88,20 @@ func _ready() -> void:
 
 	# "Kontynuuj" wczytuje najnowszy zapis; pod nim jego nazwa i opis
 	var saves := Game.list_saves()
-	var continue_button := UiStyle.menu_button("Kontynuuj", Game.continue_game)
+	var continue_button := UiStyle.menu_button(Lang.t("Kontynuuj"), Game.continue_game)
 	continue_button.disabled = saves.is_empty()
 	box.add_child(continue_button)
 	var save_info := UiStyle.label("%s
-%s" % [saves[0].get("name", ""), Game.describe_save(saves[0])] if not saves.is_empty() else "Brak zapisów", 8, UiStyle.DIM_COLOR)
+%s" % [saves[0].get("name", ""), Game.describe_save(saves[0])] if not saves.is_empty() else Lang.t("Brak zapisów"), 8, UiStyle.DIM_COLOR)
 	save_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(save_info)
-	var new_game := UiStyle.menu_button("Nowa gra", _show_heroes)
+	var new_game := UiStyle.menu_button(Lang.t("Nowa gra"), _show_heroes)
 	box.add_child(new_game)
-	var load_game := UiStyle.menu_button("Wczytaj grę", _show_saves)
+	var load_game := UiStyle.menu_button(Lang.t("Wczytaj grę"), _show_saves)
 	load_game.disabled = saves.is_empty()
 	box.add_child(load_game)
-	box.add_child(UiStyle.menu_button("Ustawienia", _show_settings))
-	box.add_child(UiStyle.menu_button("Wyjdź z gry", Game.quit_game))
+	box.add_child(UiStyle.menu_button(Lang.t("Ustawienia"), _show_settings))
+	box.add_child(UiStyle.menu_button(Lang.t("Wyjdź z gry"), Game.quit_game))
 
 	(continue_button if not continue_button.disabled else new_game).grab_focus()
 
@@ -120,7 +120,7 @@ func _process(delta: float) -> void:
 func _make_hero_picker() -> VBoxContainer:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
-	var title := UiStyle.title("Wybierz postać")
+	var title := UiStyle.title(Lang.t("Wybierz postać"))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(title)
 	var row := HBoxContainer.new()
@@ -152,7 +152,7 @@ func _make_hero_picker() -> VBoxContainer:
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		inner.add_child(name_label)
 		row.add_child(card)
-	var back := UiStyle.menu_button("Wróć", _show_menu)
+	var back := UiStyle.menu_button(Lang.t("Wróć"), _show_menu)
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	box.add_child(back)
 	return box
@@ -173,7 +173,7 @@ func _show_modes(hero_id: String) -> void:
 		Game.world_mode = mode
 		Game.new_game(hero_id))
 	box.add_child(picker)
-	var back := UiStyle.menu_button("Wróć", func() -> void:
+	var back := UiStyle.menu_button(Lang.t("Wróć"), func() -> void:
 		panel.queue_free()
 		_show_heroes())
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -197,7 +197,13 @@ func _show_saves() -> void:
 
 func _show_settings() -> void:
 	var settings := SettingsWindow.new()
-	settings.closed.connect(func() -> void: (_menu.get_child(_menu.get_child_count() - 2) as Button).grab_focus())
+	var language := Game.language
+	settings.closed.connect(func() -> void:
+		# po zmianie języka menu buduje się od nowa, żeby napisy składane w kodzie też się zmieniły
+		if Game.language != language:
+			get_tree().reload_current_scene.call_deferred()
+			return
+		(_menu.get_child(_menu.get_child_count() - 2) as Button).grab_focus())
 	add_child(settings)
 
 
