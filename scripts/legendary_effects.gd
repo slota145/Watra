@@ -551,7 +551,7 @@ func on_kill(enemy: Goblin) -> void:
 		_cooldowns["kaboom"] = 0.15
 		_explosion(enemy.hurt_center(), KABOOM_RADIUS, KABOOM_DAMAGE, false)
 	if randf() < chance("plunder"):
-		var pickup: Pickup = load(Goblin.PICKUP_PATH).instantiate()
+		var pickup: Pickup = Goblin.pickup_scene().instantiate()
 		pickup.item_id = Loot.drop_at_level(enemy.level)
 		pickup.amount = 1
 		pickup.position = at

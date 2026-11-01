@@ -1655,7 +1655,7 @@ func _update_whirl(delta: float) -> void:
 	var multiplier := Skills.whirlwind_damage(level) * (1.0 + skills.tree_bonus("melee", "whirl_damage")) * whirl_spin_up()
 	# Oko Cyklonu wciąga trafionych (ujemny odrzut) i sięga połowę dalej po wrogów do wciągnięcia
 	var cyclone := skills.has_keystone("melee", "cyclone_eye")
-	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
+	for enemy: Goblin in Goblin.near(get_tree(), body_center(), radius * 1.5 + 40.0):
 		var dist := enemy.hurt_center().distance_to(body_center())
 		if dist <= radius + enemy.hurt_radius:
 			hit_enemy(enemy, _skill_damage(multiplier), global_position, -CYCLONE_PULL if cyclone else 70.0)
@@ -1737,7 +1737,7 @@ func _hold_of(weapon: Dictionary) -> String:
 ## Zadaje obrażenia każdemu wrogowi, którego dotyka łuk cięcia.
 func _hit_enemies_in_arc(half_arc: float) -> void:
 	var origin := body_center()
-	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
+	for enemy: Goblin in Goblin.near(get_tree(), origin, _attack_reach + 40.0):
 		if _hit_this_swing.has(enemy):
 			continue
 		var to_enemy := enemy.hurt_center() - origin
@@ -2122,7 +2122,7 @@ func _cast_chain(level: int) -> void:
 	var targets: Array[Goblin] = []
 	var first: Goblin = null
 	var best := INF
-	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
+	for enemy: Goblin in Goblin.near(get_tree(), origin, CHAIN_FIRST_RANGE + 40.0):
 		if enemy.hurt_center().distance_to(origin) > CHAIN_FIRST_RANGE:
 			continue
 		var d := enemy.hurt_center().distance_to(aim_point)
@@ -2139,7 +2139,7 @@ func _cast_chain(level: int) -> void:
 		var last := targets[-1]
 		var next: Goblin = null
 		var nearest := CHAIN_JUMP_RANGE
-		for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
+		for enemy: Goblin in Goblin.near(get_tree(), last.hurt_center(), CHAIN_JUMP_RANGE + 40.0):
 			if enemy in targets:
 				continue
 			var d := enemy.hurt_center().distance_to(last.hurt_center())

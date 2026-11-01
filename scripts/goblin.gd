@@ -44,6 +44,7 @@ var level := 0
 
 ## Ładowane przy użyciu, nie przez preload - unika cyklicznych zależności (Wolf dziedziczy po Goblin).
 const PICKUP_PATH := "res://scenes/pickup.tscn"
+static var _pickup_scene: PackedScene
 
 ## Obszar osady - gobliny nie gonią gracza, który się w nim schronił.
 static var safe_zone := Rect2()
@@ -59,6 +60,11 @@ static var hidden_until := 0
 ## potwory, które potrzebują rozpychania; każdy sprawdza potem wyłącznie 9 sąsiednich kubełków.
 static var _buckets := {}
 static var _positions_frame := -1
+## Siatka żywych wrogów do zapytań „kto jest blisko” (Goblin.near) - budowana raz na klatkę przy pierwszym
+## pytaniu, żeby umiejętności nie przeglądały wszystkich setek potworów krainy przy każdym ciosie.
+const NEAR_CELL := 64.0
+static var _near_cells := {}
+static var _near_frame := -1
 const SEPARATION_RADIUS := 12.0
 const XP_COLOR := Color(0.7, 0.55, 1.0)
 
@@ -263,7 +269,7 @@ func aggro() -> void:
 		return
 	state = State.CHASE
 	sitting = false
-	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
+	for other: Goblin in Goblin.near(get_tree(), global_position, alert_radius):
 		if other != self and other.global_position.distance_to(global_position) < alert_radius:
 			other.aggro()
 
@@ -531,8 +537,38 @@ func _drop_bag() -> void:
 		_spawn_pickup(bag, 1)
 
 
+## Żywi wrogowie, których środek leży najwyżej `radius` od `at` (plus zapas na promień trafienia: kto chce
+## dokładnie, sprawdza odległość sam - zwracani są wszyscy z komórek siatki, które dotyka koło).
+static func near(tree: SceneTree, at: Vector2, radius: float) -> Array[Goblin]:
+	var frame := Engine.get_process_frames()
+	if frame != _near_frame:
+		_near_frame = frame
+		_near_cells.clear()
+		for enemy: Goblin in tree.get_nodes_in_group("enemies"):
+			var key := Vector2i((enemy.global_position / NEAR_CELL).floor())
+			if not _near_cells.has(key):
+				_near_cells[key] = []
+			(_near_cells[key] as Array).append(enemy)
+	var result: Array[Goblin] = []
+	var low := Vector2i(((at - Vector2.ONE * radius) / NEAR_CELL).floor())
+	var high := Vector2i(((at + Vector2.ONE * radius) / NEAR_CELL).floor())
+	for y in range(low.y, high.y + 1):
+		for x in range(low.x, high.x + 1):
+			for enemy in _near_cells.get(Vector2i(x, y), []):
+				if is_instance_valid(enemy) and enemy.state != State.DEAD:
+					result.append(enemy)
+	return result
+
+
+## Scena łupu wczytana raz (World wczytuje ją przy starcie, żeby pierwsze zabicie nie przycinało gry).
+static func pickup_scene() -> PackedScene:
+	if _pickup_scene == null:
+		_pickup_scene = load(PICKUP_PATH)
+	return _pickup_scene
+
+
 func _spawn_pickup(item_id: String, amount: int) -> void:
-	var pickup: Pickup = load(PICKUP_PATH).instantiate()
+	var pickup: Pickup = pickup_scene().instantiate()
 	pickup.item_id = item_id
 	pickup.amount = amount
 	pickup.position = position

@@ -60,6 +60,7 @@ func _ready() -> void:
 func setup(player: Player) -> void:
 	_player = player
 	player.inventory.changed.connect(_refresh)
+	visibility_changed.connect(_refresh)
 	_refresh()
 
 
@@ -146,8 +147,9 @@ func show_group(group: String) -> void:
 	reset_size()
 
 
+## Zamknięte okno się nie przebudowuje (plecak zmienia się przy każdym podniesionym łupie) - robi to przy otwarciu.
 func _refresh() -> void:
-	if _player == null:
+	if _player == null or not is_visible_in_tree():
 		return
 	for index: int in _rows:
 		var recipe: Dictionary = Crafting.RECIPES[index]

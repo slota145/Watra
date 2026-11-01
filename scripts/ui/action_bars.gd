@@ -51,7 +51,8 @@ func _ready() -> void:
 func setup(player: Player) -> void:
 	_player = player
 	player.hotbar.changed.connect(refresh)
-	player.inventory.changed.connect(refresh)
+	# podnoszony łup zmienia plecak wiele razy na klatkę - liczniki mikstur wystarczy przeliczyć raz
+	player.inventory.changed.connect(_queue_refresh)
 	player.skills.changed.connect(refresh)
 	player.equipment.changed.connect(refresh)
 	refresh()
@@ -59,6 +60,17 @@ func setup(player: Player) -> void:
 
 func _entry(index: int) -> String:
 	return _player.hotbar.entry(_player.stats.weapon_type(), index)
+
+
+var _refresh_queued := false
+
+
+func _queue_refresh() -> void:
+	if not _refresh_queued:
+		_refresh_queued = true
+		(func() -> void:
+			_refresh_queued = false
+			refresh()).call_deferred()
 
 
 func refresh() -> void:

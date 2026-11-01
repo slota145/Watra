@@ -264,20 +264,23 @@ func _process_flicker(delta: float) -> void:
 func _jump(reach: float, level: int, spinning: bool) -> bool:
 	var origin := _player.body_center()
 	var space := _player.get_world_2d().direct_space_state
-	var best: Goblin = null
-	var best_d := INF
-	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
+	# kandydaci od najbliższego; promień (czy nie zasłania ściana) tylko do pierwszego widocznego -
+	# w gęstej gromadzie w zasięgu bywa ponad sto wrogów, a skoki w Młynku lecą kilka razy na sekundę
+	var candidates: Array = []
+	for enemy: Goblin in Goblin.near(_player.get_tree(), _player.global_position, reach):
 		var d := enemy.global_position.distance_to(_player.global_position)
 		if d > reach:
 			continue
 		if enemy == _last_target and is_instance_valid(_last_target):
 			d += reach  # poprzedni cel tylko wtedy, gdy nie ma innego
-		var ray := PhysicsRayQueryParameters2D.create(origin, enemy.hurt_center(), 1)
-		if not space.intersect_ray(ray).is_empty():
-			continue
-		if d < best_d:
-			best_d = d
-			best = enemy
+		candidates.append([d, enemy])
+	candidates.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
+	var best: Goblin = null
+	for candidate: Array in candidates:
+		var ray := PhysicsRayQueryParameters2D.create(origin, candidate[1].hurt_center(), 1)
+		if space.intersect_ray(ray).is_empty():
+			best = candidate[1]
+			break
 	if best == null:
 		return false
 	var spot := _landing_spot(best)
@@ -308,7 +311,8 @@ func _jump(reach: float, level: int, spinning: bool) -> bool:
 	# cięcie wokół celu i wzdłuż drogi skoku (odrzut od postaci, która już stoi za celem)
 	var path_from := from + Player.BODY_OFFSET
 	var path_to := _player.body_center()
-	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
+	var reach_hit := (path_to - path_from).length() / 2.0 + maxf(FLICKER_PATH_WIDTH, FLICKER_HIT_RADIUS) + 40.0
+	for enemy: Goblin in Goblin.near(_player.get_tree(), (path_from + path_to) / 2.0, reach_hit):
 		var center := enemy.hurt_center()
 		var on_path := Geometry2D.get_closest_point_to_segment(center, path_from, path_to).distance_to(center) <= FLICKER_PATH_WIDTH + enemy.hurt_radius
 		if on_path or center.distance_to(best.hurt_center()) <= FLICKER_HIT_RADIUS + enemy.hurt_radius:

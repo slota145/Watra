@@ -273,6 +273,22 @@ odpowiedniej sekcji.
 - [x] Wydajność wioski ptakoludzi: dawny pomiar 15 ms na klatkę jest nieaktualny - `bench_combat` daje w środku wioski
   (81 wrogów) średnio 7,3 ms, jak w innych krainach (7-8,5 ms).
 
+- [x] **Przycięcia przy walce w wiosce ptakoludzi (listopad 2026).** Pomiar z rysowaniem i umiejętnościami
+  (`tests/bench_village.gd`) pokazał pojedyncze klatki 30-60 ms przy czarach i Młynku z wirującym Mgnieniem.
+  Przyczyny i poprawki:
+  - podnoszenie łupu: każdy przedmiot zmieniał plecak, a na to odświeżało się kilkanaście okien, także zamkniętych
+    (rzemiosło 0,5 ms, paski, ekwipunek, zaklinanie) - 0,9 ms na przedmiot; zamknięte okna (`CraftingWindow`,
+    `InventoryWindow`, `EnchantWindow`, `CharacterWindow`) odświeżają się przy otwarciu (`visibility_changed`),
+    `ActionBars` przelicza plecak raz na klatkę (`_queue_refresh`) - teraz 0,02 ms;
+  - trafienie wroga 0,225 -> 0,055 ms: `Equipment.effect_power` i `bonus` pamiętają wynik na klatkę (efekty legend
+    przy trafieniu pytały o kilkanaście rodzajów, każdy przeglądał cały ekwipunek), `DamageNumber` to Node2D z
+    `draw_string` zamiast Label (wygląd ten sam);
+  - Mgnienie: promień widoczności tylko do kolejnych kandydatów od najbliższego (wcześniej do każdego wroga w zasięgu
+    228 px, kilka razy na sekundę w Młynku); siatka wrogów `Goblin.near` (komórki 64 px, budowana raz na klatkę)
+    zamiast przeglądania całej grupy `enemies` w Mgnieniu, Młynku, cięciu, Łańcuchu błyskawic i alarmowaniu kompanów;
+  - pierwsze zabicie nie wczytuje sceny łupu w walce (`Goblin.pickup_scene`, wczytywana w `World._ready`).
+  Młynek z Mgnieniem: najgorsza klatka 37-45 -> 18 ms, średnio 173 -> 187 FPS (1920x1080, komputer autora).
+
 ## Postać i przedmioty (Pomysły i rzeczy do zrobienia)
 - [x] **Drzewko miecza, etap 1** (`scripts/skill_tree.gd`, widok `scripts/ui/skill_tree_view.gd` w oknie K, `scripts/skill_book.gd`):
   sieć węzłów jak drzewko pasywne w PoE (umiejętności, pasywne, kluczowe), punkt umiejętności za każdy poziom postaci

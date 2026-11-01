@@ -58,6 +58,7 @@ func _process(_d: float) -> bool:
 		return false
 	var p = _world.player
 	var window = _world.hud.inventory_window
+	window.visible = true  # zamknięte okno się nie odświeża
 	for i in p.inventory.slots.size():
 		p.inventory.slots[i] = {}
 	p.inventory.changed.emit()

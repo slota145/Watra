@@ -23,7 +23,23 @@ const SLOT_TYPES := {
 ## miejsce -> {} (puste) albo {"id": String, "enchant": int}
 var items := {}
 ## Księga umiejętności gracza - esencja w gnieździe legendarnym drzewka założonej broni (ustawia gracz).
-var skill_book: SkillBook
+var skill_book: SkillBook:
+	set(value):
+		skill_book = value
+		# esencja w gnieździe drzewka też zmienia effect_power
+		if value != null and not value.changed.is_connected(_forget_powers):
+			value.changed.connect(_forget_powers)
+## Pamięć effect_power i bonus na bieżącą klatkę (czyszczona też przy każdej zmianie ekwipunku).
+var _power_cache := {}
+var _power_frame := -1
+
+
+func _init() -> void:
+	changed.connect(_forget_powers)
+
+
+func _forget_powers() -> void:
+	_power_cache.clear()
 
 
 func _ready() -> void:
@@ -109,6 +125,18 @@ func weapon_damage() -> Array:
 
 ## Suma premii danej statystyki ze wszystkich założonych przedmiotów.
 func bonus(stat: String) -> float:
+	# jak effect_power: pamięć na klatkę - statystyki postaci pytają o premie przy każdym trafieniu
+	var frame := Engine.get_process_frames()
+	if frame != _power_frame:
+		_power_frame = frame
+		_power_cache.clear()
+	var key := "bonus:" + stat
+	if not _power_cache.has(key):
+		_power_cache[key] = _bonus(stat)
+	return _power_cache[key]
+
+
+func _bonus(stat: String) -> float:
 	var total := 0.0
 	for slot in SLOTS:
 		if not items[slot].is_empty():
@@ -119,6 +147,18 @@ func bonus(stat: String) -> float:
 ## Łączna moc efektu legendarnego danego rodzaju z założonych przedmiotów, esencji w ich gniazdach i esencji
 ## w gnieździe legendarnym drzewka założonej broni (Essences.combine: szanse jak niezależne losowania).
 func effect_power(kind: String) -> float:
+	# wynik zapamiętany na jedną klatkę (i do zmiany ekwipunku) - efekty przy trafieniu pytają o kilkanaście
+	# rodzajów przy każdym trafionym wrogu, a czar potrafi trafić dziesiątki naraz
+	var frame := Engine.get_process_frames()
+	if frame != _power_frame:
+		_power_frame = frame
+		_power_cache.clear()
+	if not _power_cache.has(kind):
+		_power_cache[kind] = _effect_power(kind)
+	return _power_cache[kind]
+
+
+func _effect_power(kind: String) -> float:
 	var values := []
 	for slot in SLOTS:
 		if items[slot].is_empty():

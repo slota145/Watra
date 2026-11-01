@@ -122,6 +122,7 @@ func setup(player: Player) -> void:
 	player.stats.changed.connect(_refresh)
 	player.stats.xp_changed.connect(func(_xp: int, _needed: int, _level: int) -> void: _refresh())
 	player.stats.gold_changed.connect(func(_gold: int) -> void: _refresh())
+	visibility_changed.connect(_refresh)
 	_refresh()
 
 
@@ -133,8 +134,9 @@ func toggle() -> void:
 		position = Vector2(8, 76)  # pod szybkimi slotami mikstur
 
 
+## Zamknięte okno się nie odświeża (doświadczenie zmienia się przy każdym zabitym potworze) - robi to przy otwarciu.
 func _refresh() -> void:
-	if _player == null:
+	if _player == null or not is_visible_in_tree():
 		return
 	var s := _player.stats
 	_level_label.text = tr("Poziom %d") % s.level

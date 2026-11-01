@@ -183,13 +183,12 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   i buduj na końcu, żeby w starych zapisach reszta krainy się nie zmieniła. Przy przebudowie całej krainy podbij
   jej wersję układu (`World.ZONE_LAYOUTS`) - postać ze starego zapisu wróci do kapliczki.
   Walka w największej gromadzie każdej krainy kosztuje średnio 7-8,5 ms na klatkę.
+  Walkę z rysowaniem i umiejętnościami mierzy `tests/bench_village.gd` (z oknem, scena na uruchomienie:
+  stoi / miecz / ksiega / mgnienie) - wypisuje najwolniejsze klatki z liczbą zabitych i zmianą liczby węzłów.
+  Szukając, co kosztuje, mierz kawałki kodu stoperem (`Time.get_ticks_usec`) - profiler Godota działa tylko w edytorze.
 
 ### Zgłoszenia z listopada 2026
 
-- [ ] **Spadki FPS przy intensywnej walce w wiosce ptakoludzi.** `bench_combat` (gracz stoi, nie używa umiejętności,
-  bez rysowania) pokazuje 7,3 ms, więc winne jest coś, czego pomiar nie łapie: umiejętności gracza z efektami
-  (np. Łańcuch błyskawic), pioruny szamanów i oszczepy, liczby obrażeń, łup na ziemi, rysowanie gęstej sceny.
-  Potrzebny pomiar z rysowaniem i rzucaniem umiejętności (profiler Godota u autora albo rozszerzony bench).
 
 ## Pomysły i rzeczy do zrobienia
 

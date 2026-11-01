@@ -444,6 +444,7 @@ var _goblin_posts: GoblinPosts
 
 func _ready() -> void:
 	Sfx.start_ambient()
+	Goblin.pickup_scene()  # wczytana teraz, a nie przy pierwszym zabitym potworze
 	var save := Game.take_pending_load()
 	if not save.is_empty():
 		_seed = int(save["seed"])
