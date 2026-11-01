@@ -29,7 +29,7 @@ func _refresh() -> void:
 		child.queue_free()
 	if _player.quests.tracked.is_empty():
 		return
-	var header := UiStyle.label("Zadania", 8, UiStyle.TITLE_COLOR)
+	var header := UiStyle.label(tr("Zadania"), 8, UiStyle.TITLE_COLOR)
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(header)
 	for id in _player.quests.tracked:
@@ -41,7 +41,7 @@ func _entry(id: String) -> Button:
 	var is_ready := _player.quests.state_of(id) == Quests.STATE_READY
 	var button := Button.new()
 	button.focus_mode = Control.FOCUS_NONE
-	button.tooltip_text = "Kliknij, aby zobaczyć obszar zadania na mapie"
+	button.tooltip_text = tr("Kliknij, aby zobaczyć obszar zadania na mapie")
 	button.custom_minimum_size = Vector2(0, 24)
 	var empty := StyleBoxEmpty.new()
 	var hover := UiStyle.panel(Color(0.1, 0.11, 0.17, 0.6), Color(1, 1, 1, 0.0), 0)
@@ -56,12 +56,12 @@ func _entry(id: String) -> Button:
 	lines.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(lines)
 	var main := MainQuests.is_main(id)
-	var title := UiStyle.label(quest["title"], 8, MainQuests.COLOR if main else READY_COLOR if is_ready else ACTIVE_COLOR)
+	var title := UiStyle.label(Quests.text(quest, "title"), 8, MainQuests.COLOR if main else READY_COLOR if is_ready else ACTIVE_COLOR)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	lines.add_child(title)
-	var status := "Wróć do: %s" % Quests.receiver(id) if is_ready \
-			else "%s: %d/%d" % [quest["target_name"], _player.quests.progress_of(id), quest.get("count", 1)]
+	var status := tr("Wróć do: %s") % Quests.person(Quests.receiver(id)) if is_ready \
+			else "%s: %d/%d" % [Quests.text(quest, "target_name"), _player.quests.progress_of(id), quest.get("count", 1)]
 	if main and not is_ready:
 		status = MainQuests.progress_text(_player, id)
 	var detail := UiStyle.label(status, 7, UiStyle.TEXT_COLOR)

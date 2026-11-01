@@ -36,7 +36,7 @@ func _ready() -> void:
 		rows.append(row)
 	for i in Hotbar.slot_count():
 		var top := i < Hotbar.SKILL_KEYS.size()
-		var slot := HotbarSlot.new(SKILL_SIZE if top else ITEM_SIZE, Hotbar.SLOT_KEYS[i])
+		var slot := HotbarSlot.new(SKILL_SIZE if top else ITEM_SIZE, Hotbar.key_name(i))
 		slot.drag_data = func() -> Variant: return _drag(i)
 		slot.can_drop = func(data: Variant) -> bool: return _can_drop(i, data)
 		slot.drop = func(data: Variant) -> void: _drop(i, data)
@@ -68,18 +68,18 @@ func refresh() -> void:
 	for i in _slots.size():
 		var slot := _slots[i]
 		var id := _entry(i)
-		var key := Hotbar.SLOT_KEYS[i]
+		var key := Hotbar.key_name(i)
 		slot.count_label.text = ""
 		slot.modulate = Color.WHITE
 		if id == "":
 			slot.icon.texture = null
-			slot.tooltip_text = "Pusty slot [%s]\nPrzeciągnij tu umiejętność z okna umiejętności (K) albo przedmiot z plecaka (I)." % key
+			slot.tooltip_text = tr("Pusty slot [%s]\nPrzeciągnij tu umiejętność z okna umiejętności (K) albo przedmiot z plecaka (I).") % key
 		elif Hotbar.is_item(id):
 			var count := _player.inventory.count_of(id)
 			slot.icon.texture = Items.get_data(id)["icon"]
 			slot.count_label.text = str(count)
 			slot.modulate = Color.WHITE if count > 0 else Color(1, 1, 1, 0.45)
-			slot.tooltip_text = "%s [%s]\n%s" % [Items.get_data(id)["name"], key, Items.strip_icon(Items.describe(id))]
+			slot.tooltip_text = "%s [%s]\n%s" % [Lang.t(Items.get_data(id)["name"]), key, Items.strip_icon(Items.describe(id))]
 		else:
 			slot.icon.texture = _attack_icon() if id == Hotbar.ATTACK else Hotbar.skill_icon(id)
 			slot.tooltip_text = _skill_tooltip(id, key, weapon_type)
@@ -94,16 +94,16 @@ func _attack_icon() -> Texture2D:
 func _skill_tooltip(id: String, key: String, weapon_type: String) -> String:
 	if id == Hotbar.ATTACK:
 		var combo := _player.skills.combo_for(weapon_type)
-		var text := "%s [%s]\nZwykły atak założoną bronią w stronę kursora." % [Hotbar.ATTACK_NAME, key]
+		var text := tr("%s [%s]\nZwykły atak założoną bronią w stronę kursora.") % [Hotbar.attack_name(), key]
 		if combo != "":
-			text += "\nZaraz po uderzeniu: %s (%s)" % [Skills.get_data(combo)["name"], Skills.mana_cost_text(combo)]
+			text += "\n" + tr("Zaraz po uderzeniu: %s (%s)") % [Skills.name_of(combo), Skills.mana_cost_text(combo)]
 		return text
 	var data := Skills.get_data(id)
 	if data["weapon"] != weapon_type:
-		return "%s [%s] - działa z bronią: %s" % [data["name"], key, Skills.WEAPON_NAMES[data["weapon"]].to_lower()]
+		return tr("%s [%s] - działa z bronią: %s") % [Skills.name_of(id), key, Skills.weapon_name(data["weapon"]).to_lower()]
 	if _player.skills.level_of(id) <= 0:
-		return "%s [%s] - nieodblokowana (K)" % [data["name"], key]
-	return "%s [%s]  •  %s\n%s" % [data["name"], key, Skills.mana_cost_text(id), data["description"]]
+		return tr("%s [%s] - nieodblokowana (K)") % [Skills.name_of(id), key]
+	return "%s [%s]  •  %s\n%s" % [Skills.name_of(id), key, Skills.mana_cost_text(id), Skills.description_of(id)]
 
 
 func _process(_delta: float) -> void:

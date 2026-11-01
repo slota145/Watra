@@ -62,6 +62,12 @@ const FAME_FIRST := 5
 const OFFSCREEN_SUCCESS := 0.7
 const PLAYER := "Ty"
 
+
+## Imię w rankingu i na rynku do pokazania: gracz ("Ty") - przetłumaczony, podróżnicy - bez zmian.
+static func who(name: String) -> String:
+	return Lang.t("Ty") if name == PLAYER else (Lang.t("Wędrowiec") if name == "Wędrowiec" else name)
+
+
 ## Trwające wydarzenie: {type, zone, title, level, left, duration, trait, boss, shrine, contrib {imię: punkty}} albo {}.
 var active := {}
 var next_in := 0.0
@@ -176,38 +182,44 @@ func start(type: String, zone: String) -> bool:
 	return true
 
 
+## Tytuł wydarzenia (przetłumaczony) - składany z rodzaju i danych przy każdym pokazaniu, bo zapisany "title"
+## zostałby w języku z chwili zapisu. Działa też dla wyniku (finish) i starszych zapisów.
 static func title_of(event: Dictionary) -> String:
-	var info: Dictionary = TYPES[event["type"]]
+	var info: Dictionary = TYPES.get(event.get("type", ""), {})
+	if info.is_empty():
+		return Lang.t(str(event.get("title", "")))
 	match event["type"]:
 		"raid":
-			return "Najazd na %s" % Zones.SHRINES.get(event["shrine"], {}).get("name", "kapliczkę")
+			var shrine: Dictionary = Zones.SHRINES.get(event.get("shrine", ""), {})
+			return Lang.t("Najazd na %s") % Lang.t(shrine["name"]) if shrine.has("name") else Lang.t("Najazd na kapliczkę")
 		"champion":
-			return "Czempion: %s" % TRAITS[event["trait"]]["name"]
+			if TRAITS.has(event.get("trait", "")):
+				return Lang.t("Czempion: %s") % Lang.t(TRAITS[event["trait"]]["name"])
 		"hunt":
-			return "Polowanie: %s" % boss_title(event["boss"])
+			return Lang.t("Polowanie: %s") % boss_title(event.get("boss", ""))
 		"world_boss":
-			return "World boss: %s" % WORLD_BOSS_NAMES.get(event["boss"], "?")
-	return info["name"]
+			return Lang.t("World boss: %s") % Lang.t(WORLD_BOSS_NAMES.get(event.get("boss", ""), "?"))
+	return Lang.t(info["name"])
 
 
 static func boss_title(boss: String) -> String:
-	return {"hydra": "Rozwścieczona Hydra", "gryf": "Rozjuszony Gryf"}.get(boss, "Wściekły boss")
+	return Lang.t({"hydra": "Rozwścieczona Hydra", "gryf": "Rozjuszony Gryf"}.get(boss, "Wściekły boss"))
 
 
 ## Opis wydarzenia do komunikatu.
 static func announcement(event: Dictionary) -> String:
-	var zone_name := Zones.zone_name(event["zone"])
-	var text: String = TYPES[event["type"]]["text"]
+	var zone_name := Lang.t(Zones.zone_name(event["zone"]))
+	var text: String = Lang.t(TYPES[event["type"]]["text"])
 	match event["type"]:
 		"raid":
-			return text % Zones.SHRINES.get(event["shrine"], {}).get("name", "")
+			return text % Lang.t(Zones.SHRINES.get(event["shrine"], {}).get("name", ""))
 		"champion":
 			var data: Dictionary = TRAITS[event["trait"]]
-			return text % [zone_name, "%s (%s)" % [data["name"], data["text"]]]
+			return text % [zone_name, "%s (%s)" % [Lang.t(data["name"]), Lang.t(data["text"])]]
 		"hunt":
 			return text % [boss_title(event["boss"]), zone_name]
 		"world_boss":
-			return text % [WORLD_BOSS_NAMES.get(event["boss"], "?"), zone_name]
+			return text % [Lang.t(WORLD_BOSS_NAMES.get(event["boss"], "?")), zone_name]
 		"festival":
 			return text
 	return text % zone_name
@@ -266,6 +278,7 @@ func finish(success: bool) -> Dictionary:
 		_simulate_contrib_into(event)
 	var place := player_place(event)
 	var result := {"type": event["type"], "zone": event["zone"], "title": event["title"], "success": success,
+			"shrine": event.get("shrine", ""), "trait": event.get("trait", ""), "boss": event.get("boss", ""),
 			"ranking": ranking(event), "place": place, "marks": 0, "fame": 0, "level": event["level"],
 			"here": event.get("built", false)}
 	if place > 0 and _player != null:

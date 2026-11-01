@@ -637,8 +637,9 @@ func _process_town(delta: float) -> void:
 	_move(global_position.direction_to(_waypoint), delta, 0.6)
 
 
+## Dymek nad głową; gotowe hasła (bez wstawionych danych) tłumaczy sam.
 func _say(text: String) -> void:
-	_bubble.text = text
+	_bubble.text = tr(text)
 	_bubble.visible = true
 	_bubble.modulate.a = 1.0
 	var tween := create_tween()

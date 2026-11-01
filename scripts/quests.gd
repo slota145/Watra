@@ -114,10 +114,45 @@ static func is_gather(id: String) -> bool:
 
 static func reward_text(id: String) -> String:
 	var quest := get_data(id)
-	var parts: Array[String] = ["%d złota" % quest["gold"], "%d exp" % quest["xp"]]
+	var parts: Array[String] = [Lang.t("%d złota") % quest["gold"], Lang.t("%d exp") % quest["xp"]]
 	var items: Dictionary = quest.get("reward_items", {})
 	for item: String in items:
-		parts.append("%s x%d" % [Items.get_data(item)["name"], items[item]])
+		parts.append("%s x%d" % [Lang.t(Items.get_data(item)["name"]), items[item]])
 	if int(quest.get("skill_points", 0)) > 0:
-		parts.append("+%d pkt umiejętności" % int(quest["skill_points"]))
+		parts.append(Lang.t("+%d pkt umiejętności") % int(quest["skill_points"]))
 	return ", ".join(parts)
+
+
+## Tekst zadania do pokazania (tytuł, opis, cel, miejsce, wypowiedzi), przetłumaczony. `quest` - id albo dane.
+## Zadania stałe trzymają polski tekst, a zlecenia z tablicy i prośby drużyny - wzór z danymi (resolve), żeby
+## zapis gry nie przechowywał gotowego zdania (starsze zapisy mają zwykły tekst - też działa).
+static func text(quest: Variant, key: String, fallback := "") -> String:
+	var data: Dictionary = quest if quest is Dictionary else get_data(str(quest))
+	return resolve(data.get(key, fallback))
+
+
+## Nazwa postaci-zleceniodawcy do pokazania ("Kupiec Bogdan" -> tłumaczenie; imiona podróżników bez zmian).
+static func person(name: String) -> String:
+	return Lang.t(name)
+
+
+## Składa tekst z wzoru: napis - tłumaczenie; tablica [wzór, dane...] - przetłumaczony wzór z wstawionymi danymi
+## (napisy w danych też tłumaczone, liczby bez zmian, zagnieżdżone tablice rozwijane tak samo); słownik
+## {"t": napis, "lower": true, "slice": true} - tłumaczenie małą literą / do pierwszego przecinka
+## ("Gruzłog, Wódz Goblinów" -> "Gruzłog"). Wynik tablicy zaczyna się wielką literą.
+static func resolve(spec: Variant) -> String:
+	if spec is Array:
+		var parts: Array = spec
+		if parts.is_empty():
+			return ""
+		var args: Array = parts.slice(1).map(func(arg: Variant) -> Variant: return arg if arg is int or arg is float else resolve(arg))
+		var result: String = Lang.t(str(parts[0])) % args if not args.is_empty() else Lang.t(str(parts[0]))
+		return result.left(1).to_upper() + result.substr(1)
+	if spec is Dictionary:
+		var result := resolve(spec.get("t", ""))
+		if spec.get("slice", false):
+			result = result.get_slice(",", 0)
+		if spec.get("lower", false):
+			result = result.to_lower()
+		return result
+	return Lang.t(str(spec))

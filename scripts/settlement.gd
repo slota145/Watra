@@ -811,7 +811,7 @@ func _add_building(id: String, pos: Vector2i, size: Vector2i, map_color: Color, 
 	building.position = _px(Vector2(pos)) + Vector2(roundf((footprint.x - floor_texture.get_width()) / 2.0),
 			footprint.y - floor_texture.get_height())
 	_floors.add_child(building)
-	building.setup(BUILDING_NAMES[id], floor_texture, _tex(id + "_roof"), _entities, _player)
+	building.setup(Lang.t(BUILDING_NAMES[id]), floor_texture, _tex(id + "_roof"), _entities, _player)
 	# komin na grafice dachu z PixelLab (CHIMNEYS); `chimney` mówi tylko, czy budynek dymi
 	if chimney != null and CHIMNEYS.has(id):
 		building.add_chimney_smoke(CHIMNEYS[id])
@@ -1246,7 +1246,7 @@ func celebrate() -> void:
 		tween.tween_interval(delay)
 		tween.tween_callback(func() -> void:
 			if randf() < 0.5:
-				npc.say(LINES_CHEER.pick_random()))
+				npc.say(Lang.t(LINES_CHEER.pick_random())))
 		for hop in 3:
 			tween.tween_property(npc.sprite, "position:y", npc.sprite.position.y - 4.0, 0.12)
 			tween.tween_property(npc.sprite, "position:y", npc.sprite.position.y, 0.12)
@@ -1274,7 +1274,7 @@ func start_festival(seconds: float) -> void:
 	for node in _entities.get_children():
 		var npc := node as Npc
 		if npc != null and randf() < 0.4:
-			npc.say(LINES_FESTIVAL.pick_random())
+			npc.say(Lang.t(LINES_FESTIVAL.pick_random()))
 	_festival_fire = 1.0
 
 
@@ -1306,7 +1306,7 @@ func _process_festival(delta: float) -> void:
 				tween.tween_callback(func() -> void: npc.sprite.flip_h = not npc.sprite.flip_h)
 				tween.tween_property(npc.sprite, "position:y", npc.sprite.position.y, 0.14)
 			if randf() < 0.3:
-				npc.say(LINES_FESTIVAL.pick_random())
+				npc.say(Lang.t(LINES_FESTIVAL.pick_random()))
 	_festival_fire -= delta
 	if _festival_fire <= 0.0:
 		_festival_fire = randf_range(2.5, 5.0)
@@ -1368,7 +1368,7 @@ func _build_infirmary() -> void:
 	_extra("infirmary", "mortar_table", base + Vector2(4.2, -3.1), Vector2(18, 5))
 	var herbalist := _npc("herbalist", base + Vector2(2.5, -2.6), Npc.Role.IDLE, LINES_HERBALIST, Vector2.RIGHT)
 	herbalist.display_name = "Zielarka Jadwiga"
-	herbalist.trade_greeting = "Mikstury z ziół zbieranych o świcie. Pomogą, gdy zrobi się gorąco."
+	herbalist.trade_greeting = Lang.t("Mikstury z ziół zbieranych o świcie. Pomogą, gdy zrobi się gorąco.")
 	herbalist.shop_sells.assign(["greater_health_potion", "greater_mana_potion", "health_potion", "mana_potion"])
 	herbalist.services.assign(["elixirs"])
 	_extra_npc("infirmary", herbalist)
@@ -1385,7 +1385,7 @@ func _build_chapel() -> void:
 	var priest := _npc("priest", base + Vector2(0, 1.3), Npc.Role.IDLE, LINES_PRIEST, Vector2.DOWN)
 	priest.display_name = "Ojciec Bogumił"
 	priest.services.assign(["blessing"])
-	priest.dialog_greeting = "Witaj, dziecko. Za skromny datek pomodlę się za twoją drogę."
+	priest.dialog_greeting = Lang.t("Witaj, dziecko. Za skromny datek pomodlę się za twoją drogę.")
 	priest.looks_around = false
 	_extra_npc("chapel", priest)
 	for spot: Array in [["villager_red", base + Vector2(-0.8, 2.7)], ["refugee_old", base + Vector2(0.9, 2.8)]]:
@@ -1413,7 +1413,7 @@ func _collect_tax() -> void:
 	_player.stats.add_gold(gold)
 	Sfx.play("coins")
 	DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -16),
-			"+%d zł od osadników" % gold, Color(1.0, 0.85, 0.3), 8)
+			Lang.t("+%d zł od osadników") % gold, Color(1.0, 0.85, 0.3), 8)
 
 
 ## Targowisko: wóz wędrownego kupca, skrzynie z egzotycznym towarem i dywany - towar zmienia się co 10 minut.
@@ -1425,7 +1425,7 @@ func _build_market() -> void:
 	_trample(Vector2(47.8, 20.6), Vector2(2.6, 1.0))
 	_traveler = _npc("traveling_merchant", Vector2(48.4, 21.5), Npc.Role.IDLE, LINES_TRAVELER, Vector2.DOWN)
 	_traveler.display_name = "Wędrowny kupiec Hasan"
-	_traveler.trade_greeting = "Najlepszy towar po tej stronie gór! Co dziesięć minut coś nowego."
+	_traveler.trade_greeting = Lang.t("Najlepszy towar po tej stronie gór! Co dziesięć minut coś nowego.")
 	_extra_npc("market", _traveler)
 	_restock_traveler()
 	map_markers.append({"position": _px(Vector2(47.8, 20.6)), "color": MAP_MERCHANT, "size": 2.0})
@@ -1435,7 +1435,7 @@ func _restock_traveler() -> void:
 	var pool := MERCHANT_POOL.duplicate()
 	pool.shuffle()
 	_traveler.shop_sells.assign(pool.slice(0, MERCHANT_STOCK))
-	_traveler.say("Nowy towar! Podejdź, obejrzyj!")
+	_traveler.say(Lang.t("Nowy towar! Podejdź, obejrzyj!"))
 
 
 ## Chata jubilera: warsztat przed wejściem (stół, szlifierka, gablota, skrzynia surowych kryształów) i Dobromir -
@@ -1449,7 +1449,7 @@ func _build_jeweler() -> void:
 	var jeweler := _npc("jeweler", base + Vector2(-0.6, 2.2), Npc.Role.IDLE, LINES_JEWELER, Vector2.DOWN)
 	jeweler.display_name = "Jubiler Dobromir"
 	jeweler.services.assign(["jeweler", "reshape"])
-	jeweler.dialog_greeting = "W Ostoi lepiej się szlifuje niż na wietrznej przełęczy! Osadzę, połączę, a teraz i przeszlifuję kamień."
+	jeweler.dialog_greeting = Lang.t("W Ostoi lepiej się szlifuje niż na wietrznej przełęczy! Osadzę, połączę, a teraz i przeszlifuję kamień.")
 	_extra_npc("jeweler", jeweler)
 	map_markers.append({"position": _px(base), "color": Color("6fe0e8"), "size": 2.0})
 
@@ -1524,14 +1524,14 @@ func _build_watra() -> void:
 	_entities.add_child(spot)
 	spot.get_node("Sprite").visible = false
 	spot.get_node("Shadow").visible = false
-	spot.prompt.text = "[F] Watra"
+	spot.prompt.text = Lang.t("[F] Watra")
 	# żerca Wszebor - strażnik ognia, prowadzi zadania główne (MainQuests)
 	var zerca := _npc("zerca", WATRA_POS + Vector2(-3.4, 1.4), Npc.Role.IDLE, LINES_ZERCA, Vector2.RIGHT)
 	zerca.display_name = MainQuests.ZERCA
 	# zmiana trybu świata (WorldModes) - tylko tu, w Ostoi
 	zerca.services.assign(["world_mode"])
 	zerca.looks_around = false
-	zerca.dialog_greeting = "Póki płonie ogień, Ostoja trwa. Pilnuję go, odkąd pamiętam - i będę pilnował, póki starczy mi sił."
+	zerca.dialog_greeting = Lang.t("Póki płonie ogień, Ostoja trwa. Pilnuję go, odkąd pamiętam - i będę pilnował, póki starczy mi sił.")
 	# dopiero po wygenerowaniu świata - postać losuje przy starcie, a świat z tego samego ziarna ma zostać taki sam
 	_entities.add_child.call_deferred(zerca)
 	# tragarze drewna: magazyn -> Watra
@@ -1635,10 +1635,10 @@ func _build_npcs() -> void:
 	smith.work_period = 0.65
 	smith.display_name = "Kowal Bronisław"
 	smith.services.assign(["forge", "enchant"])
-	smith.dialog_greeting = "Zwykłe żelazo każdy wykuje. Ale przynieś mi kamień, drewno i coś z tych potworów, a wykuję ci rzecz z charakterem! A kamienie z Kryształów Watry wbiję ci w oręż - jeśli się odważysz zejść po nie do lochów."
+	smith.dialog_greeting = Lang.t("Zwykłe żelazo każdy wykuje. Ale przynieś mi kamień, drewno i coś z tych potworów, a wykuję ci rzecz z charakterem! A kamienie z Kryształów Watry wbiję ci w oręż - jeśli się odważysz zejść po nie do lochów.")
 	smith.work_sound = "anvil"
 	smith.display_name = "Kowal Bronisław"
-	smith.trade_greeting = "Broń i zbroja, prosto z kowadła!"
+	smith.trade_greeting = Lang.t("Broń i zbroja, prosto z kowadła!")
 	smith.shop_sells.assign(["iron_sword", "war_axe", "leather_cap", "iron_helmet", "leather_armor",
 			"chainmail", "leather_gloves", "leather_boots", "belt_t1", "girdle_t1"])
 	_entities.add_child(smith)
@@ -1647,7 +1647,7 @@ func _build_npcs() -> void:
 	hunter.work_gentle = true
 	hunter.work_period = 1.1
 	hunter.display_name = "Myśliwy Radek"
-	hunter.trade_greeting = "Łuk? Mam jeden zapasowy."
+	hunter.trade_greeting = Lang.t("Łuk? Mam jeden zapasowy.")
 	hunter.shop_sells.assign(["short_bow"])
 	hunter.quest_id = "wolf_hunt"
 	_entities.add_child(hunter)
@@ -1672,21 +1672,21 @@ func _build_npcs() -> void:
 	barkeep.looks_around = false
 	barkeep.display_name = "Karczmarz Wacław"
 	barkeep.services.assign(["rest", "meals"])
-	barkeep.dialog_greeting = "Witaj w Ostoi! Zmęczony? Za 25 złota przenocujesz w jednym z moich pokoi - wyśpisz się, a rano las wokół osady będzie jak nowy."
+	barkeep.dialog_greeting = Lang.t("Witaj w Ostoi! Zmęczony? Za 25 złota przenocujesz w jednym z moich pokoi - wyśpisz się, a rano las wokół osady będzie jak nowy.")
 	_entities.add_child(barkeep)
 
 	var storekeeper := _npc("storekeeper", _in("warehouse", Vector2(2.3, 4.0)), Npc.Role.IDLE, LINES_STOREKEEPER)
 	storekeeper.looks_around = false
 	storekeeper.display_name = "Magazynier Zenon"
 	storekeeper.services.assign(["storage"])
-	storekeeper.dialog_greeting = "Magazyn osady do twoich usług. Zostaw, co chcesz - przypilnuję. Drewno i kamień zawsze się przydadzą!"
+	storekeeper.dialog_greeting = Lang.t("Magazyn osady do twoich usług. Zostaw, co chcesz - przypilnuję. Drewno i kamień zawsze się przydadzą!")
 	_entities.add_child(storekeeper)
 
 	_chief = _npc("chief", Vector2(34.4, 13.6), Npc.Role.IDLE, LINES_CHIEF)
 	_chief.display_name = "Sołtys Mirosław"
 	_chief.quest_chain.assign([UNLOCK_QUEST])
 	_chief.services.assign(["build"])
-	_chief.dialog_greeting = "Ostoja rośnie dzięki tobie! Przynieś drewno i kamień - z plecaka albo z magazynu - a cieśle postawią, co zechcesz."
+	_chief.dialog_greeting = Lang.t("Ostoja rośnie dzięki tobie! Przynieś drewno i kamień - z plecaka albo z magazynu - a cieśle postawią, co zechcesz.")
 
 	_entities.add_child(_chief)
 	map_markers.append({"position": _chief.position, "color": MAP_CHIEF, "size": 2.0})
@@ -1777,7 +1777,7 @@ func start_project(project: String, player: Player) -> bool:
 	for id: String in cost:
 		player.take_owned(id, cost[id])
 	set_project(project, "building", PROJECTS[project]["time"])
-	_chief.say(PROJECTS[project]["start_line"])
+	_chief.say(Lang.t(PROJECTS[project]["start_line"]))
 	return true
 
 
@@ -1790,7 +1790,7 @@ func building_unlocked(player: Player) -> bool:
 func project_locked(project: String, player: Player) -> String:
 	var quest: String = PROJECTS[project].get("requires_quest", "")
 	if quest != "" and player.quests.state_of(quest) != Quests.STATE_DONE:
-		return "Najpierw zadanie: %s" % Quests.get_data(quest)["title"]
+		return Lang.t("Najpierw zadanie: %s") % Quests.get_data(quest)["title"]
 	return ""
 
 
@@ -1965,10 +1965,10 @@ func _finish_construction(project: String) -> void:
 	dust.finished.connect(dust.queue_free)
 	set_project(project, "built")
 	Sfx.play("barracks")
-	_chief.say(data["done_line"])
+	_chief.say(Lang.t(data["done_line"]))
 	var hud := get_tree().get_first_node_in_group("hud")
 	if hud != null:
-		hud.show_banner(data["banner"], Color(1.0, 0.85, 0.4))
+		hud.show_banner(Lang.t(data["banner"]), Color(1.0, 0.85, 0.4))
 
 
 func _marker_cell(project: String) -> Vector2i:
@@ -2026,7 +2026,7 @@ func _build_barracks() -> void:
 		_trample(TRAINING_YARD, Vector2(5.2, 3.4))
 		_trample(DRILL_SQUARE, Vector2(6.2, 2.6))
 		_trample_path([Vector2(50.2, 49.6), Vector2(52.0, 48.6)], 0.9)
-	_chief.lines = LINES_CHIEF_BUILT
+	_chief.lines = translated_lines(LINES_CHIEF_BUILT)
 
 	# na zewnątrz: sztandary, tarcza, stojak i trzy kukły z ćwiczącymi żołnierzami
 	for p in [Vector2(41.6, 50.6), Vector2(46.4, 50.6)]:
@@ -2064,7 +2064,7 @@ func _build_barracks() -> void:
 	_sergeant.looks_around = false
 	_sergeant.display_name = "Sierżant Bolko"
 	_sergeant.shop_sells.assign(["guard_horn"])
-	_sergeant.trade_greeting = "Zadmij w róg, a moi chłopcy przybiegną. Tylko nie nadużywaj!"
+	_sergeant.trade_greeting = Lang.t("Zadmij w róg, a moi chłopcy przybiegną. Tylko nie nadużywaj!")
 	_entities.add_child(_sergeant)
 	nodes.append(_sergeant)
 	_drill_step = 0
@@ -2089,7 +2089,7 @@ func _process_drill(delta: float) -> void:
 		return
 	_drill_timer = 3.0
 	var command: String = LINES_SERGEANT[_drill_step]
-	_sergeant.say(command)
+	_sergeant.say(Lang.t(command))
 	var facing: Vector2 = [Vector2.RIGHT, Vector2.UP, Vector2.UP, Vector2.DOWN, Vector2.DOWN, Vector2.RIGHT][_drill_step]
 	for i in _drill.size():
 		var soldier := _drill[i]
@@ -2133,7 +2133,7 @@ func _build_lodge() -> void:
 	for i in HUNTER_SHEETS.size():
 		var hunter := HUNTER_SCENE.instantiate() as Npc
 		hunter.position = _px(LODGE_SPOTS["door"] + Vector2(i * 1.2 - 1.2, 0.8))
-		hunter.lines = LINES_LODGE_HUNTER
+		hunter.lines = translated_lines(LINES_LODGE_HUNTER)
 		hunter.get_node("Sprite").texture = load("res://assets/npc/%s.png" % HUNTER_SHEETS[i])
 		hunter.set("lodge", self)
 		_entities.add_child(hunter)
@@ -2169,7 +2169,7 @@ func _build_sage_hut() -> void:
 	sage.looks_around = false
 	sage.display_name = "Mędrzec Teodor"
 	sage.services.assign(["disenchant", "bestiary", "respec"])
-	sage.dialog_greeting = "Zaklęcia to nie wieczność, młody wędrowcze. Za drobną opłatą zdejmę czar z twojego oręża i oddam ci kamienie, które go utrzymywały."
+	sage.dialog_greeting = Lang.t("Zaklęcia to nie wieczność, młody wędrowcze. Za drobną opłatą zdejmę czar z twojego oręża i oddam ci kamienie, które go utrzymywały.")
 	_entities.add_child(sage)
 	nodes.append(sage)
 
@@ -2232,7 +2232,7 @@ func _build_guild() -> void:
 	# rynek gildii i lista podróżników (Market, Travelers)
 	clerk.display_name = "Pisarz gildii Gniewko"
 	clerk.services.assign(["market", "travelers", "marks"])
-	clerk.dialog_greeting = "Witaj w gildii! Tu spisuję każdego poszukiwacza przygód, a na rynku kupisz i sprzedasz, co dusza zapragnie - podróżnicy handlują dzień i noc."
+	clerk.dialog_greeting = Lang.t("Witaj w gildii! Tu spisuję każdego poszukiwacza przygód, a na rynku kupisz i sprzedasz, co dusza zapragnie - podróżnicy handlują dzień i noc.")
 	_entities.add_child(clerk)
 	nodes.append(clerk)
 
@@ -2249,7 +2249,7 @@ func _build_guild() -> void:
 	_entities.add_child(board)
 	board.get_node("Sprite").visible = false
 	board.get_node("Shadow").visible = false
-	board.prompt.text = "[F] Tablica ogłoszeń"
+	board.prompt.text = Lang.t("[F] Tablica ogłoszeń")
 	nodes.append(board)
 	for spot: Array in [["adventurer_a", Vector2(20.0, 53.3)], ["adventurer_b", Vector2(21.4, 53.4)]]:
 		var adventurer := _npc(spot[0], spot[1], Npc.Role.IDLE, LINES_ADVENTURER, Vector2.UP)
@@ -2520,6 +2520,14 @@ func _glow(pos: Vector2, color: Color, size: Vector2) -> void:
 	_floors.add_child(glow)
 
 
+## Hasła mieszkańców w obecnym języku (stałe LINES_* są po polsku).
+static func translated_lines(lines: Array[String]) -> Array[String]:
+	var out: Array[String] = []
+	for line in lines:
+		out.append(Lang.t(line))
+	return out
+
+
 func _npc_sheet(sheet: String) -> Texture2D:
 	return load("res://assets/npc/%s.png" % sheet)
 
@@ -2528,7 +2536,7 @@ func _npc(sheet: String, tile_pos: Vector2, role: Npc.Role, lines: Array[String]
 	var npc: Npc = NPC_SCENE.instantiate()
 	npc.position = _px(tile_pos)
 	npc.role = role
-	npc.lines = lines
+	npc.lines = translated_lines(lines)
 	npc.facing = facing
 	npc.get_node("Sprite").texture = load("res://assets/npc/%s.png" % sheet)
 	return npc

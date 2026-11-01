@@ -4,7 +4,7 @@ extends Harvestable
 
 
 func _init() -> void:
-	action_name = "Zetnij"
+	action_name = Lang.t("Zetnij")
 	tool_texture = preload("res://assets/weapons/hatchet.png")
 	chip_color = Color(0.85, 0.65, 0.4)
 	hit_sound = "chop"

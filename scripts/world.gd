@@ -796,7 +796,7 @@ func _process(delta: float) -> void:
 	if zone == "forest" and not player.travelers.party.is_empty() and _settlement.is_inside_palisade(Vector2i((player.global_position / TILE).floor())):
 		for node: Traveler in get_tree().get_nodes_in_group("travelers"):
 			if node.mode == "party":
-				node.say("Dzięki za wspólne łowy! Do zobaczenia.")
+				node.say(Lang.t("Dzięki za wspólne łowy! Do zobaczenia."))
 				node.mode = "town"
 				node.town_points = _settlement.traveler_points()
 		player.travelers.disband()
@@ -838,13 +838,13 @@ func start_event_here(type := "") -> bool:
 
 func _on_event_started(event: Dictionary) -> void:
 	Sfx.play("summon")
-	hud.show_banner("%s\n%s" % [event["title"], Zones.zone_name(event["zone"])], WorldEvents.TYPES[event["type"]]["color"])
+	hud.show_banner("%s\n%s" % [WorldEvents.title_of(event), Lang.t(Zones.zone_name(event["zone"]))], WorldEvents.TYPES[event["type"]]["color"])
 	hud.event_tracker.show_message(WorldEvents.announcement(event))
 
 
 func _on_event_finished(result: Dictionary) -> void:
 	if result["type"] == "festival":
-		hud.show_banner("Święto w Ostoi dobiegło końca", WorldEvents.TYPES["festival"]["color"])
+		hud.show_banner(Lang.t("Święto w Ostoi dobiegło końca"), WorldEvents.TYPES["festival"]["color"])
 		return
 	hud.event_result.show_result(result)
 
@@ -974,23 +974,24 @@ func _process_party_offers(delta: float) -> void:
 			return
 		"duelist":
 			if randf() < DUEL_CHANCE:
-				var text := "%s [%d] wyzywa cię na pojedynek! Walka trwa, aż ktoś spadnie do 10%% zdrowia - nikt nie ginie. Nagroda dla zwycięzcy: %d zł i sława gildii." % [
+				var text := Lang.t("%s [%d] wyzywa cię na pojedynek! Walka trwa, aż ktoś spadnie do 10%% zdrowia - nikt nie ginie. Nagroda dla zwycięzcy: %d zł i sława gildii.") % [
 						leader.data["name"], leader.data["level"], _duel_prize(leader.data)]
-				leader.say("Zmierzysz się ze mną?")
+				leader.say(Lang.t("Zmierzysz się ze mną?"))
 				hud.party_offer.ask(text, _start_fight.bind(leader, "duel"), func() -> void:
 					if is_instance_valid(leader):
-						leader.say(["Tchórz!", "Ha, boisz się?", "Następnym razem nie odpuszczę!"].pick_random()), "Przyjmij")
+						leader.say([Lang.t("Tchórz!"), Lang.t("Ha, boisz się?"), Lang.t("Następnym razem nie odpuszczę!")].pick_random()), Lang.t("Przyjmij"))
 				return
 	# zbierający łowca prosi o osłonę przed potworami
 	if guild and leader.is_gathering() and _guard.is_empty() and randf() < GUARD_CHANCE:
 		var reward := guard_reward(leader)
-		var text := "%s [%d] zbiera %s, ale potwory nie dają spokoju. Osłonisz %s przez %d sekund?\nNagroda: %d zł, %d exp i część urobku." % [
-				leader.data["name"], leader.data["level"], GUARD_GOODS[leader.gather_kind()], "ją" if leader.data.get("female", false) else "go",
+		var ask := "%s [%d] zbiera %s, ale potwory nie dają spokoju. Osłonisz ją przez %d sekund?\nNagroda: %d zł, %d exp i część urobku." \
+				if leader.data.get("female", false) else "%s [%d] zbiera %s, ale potwory nie dają spokoju. Osłonisz go przez %d sekund?\nNagroda: %d zł, %d exp i część urobku."
+		var text := Lang.t(ask) % [leader.data["name"], leader.data["level"], Lang.t(GUARD_GOODS[leader.gather_kind()]),
 				roundi(GUARD_TIME), reward["gold"], reward["xp"]]
-		leader.say("Osłoń mnie!")
+		leader.say(Lang.t("Osłoń mnie!"))
 		hud.party_offer.ask(text, start_guard.bind(leader), func() -> void:
 			if is_instance_valid(leader):
-				leader.say(["Trudno, jakoś sobie poradzę.", "Szkoda... Uważaj na siebie.", "Następnym razem!"].pick_random()), "Osłoń")
+				leader.say([Lang.t("Trudno, jakoś sobie poradzę."), Lang.t("Szkoda... Uważaj na siebie."), Lang.t("Następnym razem!")].pick_random()), Lang.t("Osłoń"))
 		return
 	var names: Array = group.map(func(t: Traveler) -> String: return t.data["name"])
 	var task := {}
@@ -998,13 +999,13 @@ func _process_party_offers(delta: float) -> void:
 		task = _help_task(leader.data["name"])
 	var text := ""
 	if task.is_empty():
-		text = "%s [%d] zaprasza cię do drużyny%s. Wspólne łowy: +%d%% doświadczenia za każdego towarzysza." % [
-				leader.data["name"], leader.data["level"], (" (razem z: %s)" % ", ".join(names.slice(1))) if names.size() > 1 else "",
+		text = Lang.t("%s [%d] zaprasza cię do drużyny%s. Wspólne łowy: +%d%% doświadczenia za każdego towarzysza.") % [
+				leader.data["name"], leader.data["level"], (Lang.t(" (razem z: %s)") % ", ".join(names.slice(1))) if names.size() > 1 else "",
 				roundi(Travelers.PARTY_XP_BONUS * 100.0)]
-		leader.say("Hej! Chodź z nami polować!")
+		leader.say(Lang.t("Hej! Chodź z nami polować!"))
 	else:
-		text = "%s [%d] prosi o pomoc: %s\nNagroda: %d zł, %d exp." % [leader.data["name"], leader.data["level"],
-				task["description"], task["gold"], task["xp"]]
+		text = Lang.t("%s [%d] prosi o pomoc: %s\nNagroda: %d zł, %d exp.") % [leader.data["name"], leader.data["level"],
+				Quests.text(task, "description"), task["gold"], task["xp"]]
 		leader.say("Pomożesz nam?")
 	hud.party_offer.ask(text, _accept_party.bind(group, task), _decline_party.bind(group))
 
@@ -1029,13 +1030,13 @@ func start_guard(node: Traveler) -> void:
 	if not is_instance_valid(node) or not _guard.is_empty():
 		return
 	if not node.is_gathering():
-		node.say("Już po wszystkim - ale dzięki!")
+		node.say(Lang.t("Już po wszystkim - ale dzięki!"))
 		return
 	node.start_guard(GUARD_TIME)
-	node.say("Dzięki! Trzymaj je z dala ode mnie!")
+	node.say(Lang.t("Dzięki! Trzymaj je z dala ode mnie!"))
 	_guard = {"node": node, "left": GUARD_TIME, "wave": 1.5, "kind": node.gather_kind(), "reward": guard_reward(node),
 			"name": node.data["name"]}
-	hud.show_banner("Osłoń: %s\nPotwory nadciągają!" % node.data["name"], Color(1.0, 0.8, 0.45))
+	hud.show_banner(Lang.t("Osłoń: %s\nPotwory nadciągają!") % node.data["name"], Color(1.0, 0.8, 0.45))
 
 
 func _process_guard(delta: float) -> void:
@@ -1076,7 +1077,7 @@ func _end_guard(success: bool) -> void:
 	var data := _guard
 	_guard = {}
 	if not success:
-		hud.show_banner("Nie udało się osłonić: %s" % data["name"], Color(1.0, 0.5, 0.45))
+		hud.show_banner(Lang.t("Nie udało się osłonić: %s") % data["name"], Color(1.0, 0.5, 0.45))
 		return
 	var reward: Dictionary = data["reward"]
 	player.stats.add_gold(int(reward["gold"]))
@@ -1092,11 +1093,11 @@ func _end_guard(success: bool) -> void:
 		var left := player.inventory.add_item(share[0], qty)
 		if left > 0:
 			player.storage.add_item(share[0], left)
-		gift = ", %s x%d" % [Items.get_data(share[0])["name"], qty]
+		gift = ", %s x%d" % [Lang.t(Items.get_data(share[0])["name"]), qty]
 	Sfx.play("quest_done")
 	if node != null:
 		node.say(["Dzięki! Bez ciebie by mnie zjadły.", "Udało się! Masz tu część urobku.", "Dobra robota! Opowiem o tobie w gildii."].pick_random())
-	hud.show_banner("Osłona udana! +%d zł, +%d exp%s" % [reward["gold"], reward["xp"], gift], Color(0.6, 1.0, 0.6))
+	hud.show_banner(Lang.t("Osłona udana! +%d zł, +%d exp%s") % [reward["gold"], reward["xp"], gift], Color(0.6, 1.0, 0.6))
 
 
 ## Pojedynki i napady (WorldModes): podróżnik zamienia się na czas walki w rywala (Rival - potwór z jego wyglądem).
@@ -1119,11 +1120,11 @@ func _start_fight(leader: Traveler, kind: String) -> void:
 	entities.add_child(_rival)
 	if kind == "pk":
 		Sfx.play("ui_error")
-		hud.show_banner("%s atakuje cię!\nZbój (PK) - walczy na śmierć" % data["name"], Color(1.0, 0.45, 0.4))
+		hud.show_banner(Lang.t("%s atakuje cię!\nZbój (PK) - walczy na śmierć") % data["name"], Color(1.0, 0.45, 0.4))
 		_rival.say(["Sakiewka albo życie!", "Twoje złoto będzie moje!", "Nikt cię tu nie usłyszy..."].pick_random())
 		_rival.died.connect(_on_bandit_died.bind(data))
 	else:
-		_rival.say("Do boju!")
+		_rival.say(Lang.t("Do boju!"))
 	_rival.finished.connect(_on_fight_finished.bind(data, kind, leader))
 
 
@@ -1136,10 +1137,10 @@ func _on_fight_finished(result: String, data: Dictionary, kind: String, leader: 
 			player.travelers.guild_fame += 5
 			Sfx.play("quest_done")
 			_rival.say(["Poddaję się! Dobra walka.", "Uznaję twoją wyższość!", "Wystarczy! Wygrałeś uczciwie."].pick_random())
-			DamageNumber.spawn_text(player.get_parent(), player.body_center() + Vector2(0, -14), "Wygrany pojedynek! +%d zł" % prize, Color(1.0, 0.85, 0.3), 9)
+			DamageNumber.spawn_text(player.get_parent(), player.body_center() + Vector2(0, -14), Lang.t("Wygrany pojedynek! +%d zł") % prize, Color(1.0, 0.85, 0.3), 9)
 		else:
 			_rival.say(["Ha! Może następnym razem.", "Za słabo, wędrowcze!", "Wygrałem! Opowiem w karczmie."].pick_random())
-			DamageNumber.spawn_text(player.get_parent(), player.body_center() + Vector2(0, -14), "Przegrany pojedynek", Color(1.0, 0.5, 0.45), 9)
+			DamageNumber.spawn_text(player.get_parent(), player.body_center() + Vector2(0, -14), Lang.t("Przegrany pojedynek"), Color(1.0, 0.5, 0.45), 9)
 	if is_instance_valid(leader):
 		leader.show_after_fight(_rival.global_position if is_instance_valid(_rival) else leader.global_position)
 
@@ -1148,7 +1149,7 @@ func _on_fight_finished(result: String, data: Dictionary, kind: String, leader: 
 func _on_bandit_died(_foe: Goblin, data: Dictionary) -> void:
 	player.travelers.guild_fame += 10
 	player.travelers.die(data)
-	hud.show_banner("Zbój %s pokonany!\nSława pogromcy zbójów rośnie" % data["name"], Color(1.0, 0.85, 0.4))
+	hud.show_banner(Lang.t("Zbój %s pokonany!\nSława pogromcy zbójów rośnie") % data["name"], Color(1.0, 0.85, 0.4))
 
 
 ## Gracz padł w walce ze zbójem: zbój zabiera część złota z sakiewki i odchodzi.
@@ -1161,7 +1162,7 @@ func _on_player_died_pk() -> void:
 		return
 	var stolen := roundi(player.stats.gold * WorldModes.PK_STEAL)
 	player.stats.add_gold(-stolen)
-	_rival.say("Dzięki za złoto! (-%d zł)" % stolen)
+	_rival.say(Lang.t("Dzięki za złoto! (-%d zł)") % stolen)
 	_rival.end("lost")
 
 
@@ -1174,17 +1175,17 @@ func _help_task(poster: String) -> Dictionary:
 	if kind == "kill":
 		share = 0.25
 		task["count"] = maxi(10, roundi(task["count"] * share / 5.0) * 5)
-		task["description"] = "Przetrzebmy razem %s - jeszcze %d." % [task["target_name"].to_lower(), task["count"]]
+		task["description"] = ["Przetrzebmy razem %s - jeszcze %d.", {"t": task["target_name"], "lower": true}, task["count"]]
 	elif kind == "gather":
 		share = 0.4
 		task["count"] = maxi(2, roundi(task["count"] * share))
-		task["description"] = "Brakuje nam %s - zbierzmy razem %d." % [task["target_name"].to_lower(), task["count"]]
+		task["description"] = ["Brakuje nam %s - zbierzmy razem %d.", {"t": task["target_name"], "lower": true}, task["count"]]
 	else:
-		task["description"] = "Idziemy na %s. Bez ciebie nie damy rady!" % task["target_name"].get_slice(",", 0)
+		task["description"] = ["Idziemy na %s. Bez ciebie nie damy rady!", {"t": task["target_name"], "slice": true}]
 	task["gold"] = roundi(task["gold"] * share)
 	task["xp"] = roundi(task["xp"] * share)
 	task["fame"] = roundi(task["fame"] * 0.5)
-	task["title"] = "Prośba: %s" % poster
+	task["title"] = ["Prośba: %s", poster]
 	return task
 
 
@@ -1200,13 +1201,13 @@ func _accept_party(group: Array, task: Dictionary) -> void:
 			i += 1
 	if not task.is_empty():
 		player.quests.take_help(task)
-	(group[0] as Traveler).say("Świetnie! Trzymaj się blisko.")
+	(group[0] as Traveler).say(Lang.t("Świetnie! Trzymaj się blisko."))
 
 
 func _decline_party(group: Array) -> void:
 	for node in group:
 		if is_instance_valid(node) and node.is_alive():
-			node.say(["Szkoda. Poszukamy innego miejsca.", "Jak chcesz. Idziemy dalej.", "Trudno, może następnym razem!"].pick_random())
+			node.say([Lang.t("Szkoda. Poszukamy innego miejsca."), Lang.t("Jak chcesz. Idziemy dalej."), Lang.t("Trudno, może następnym razem!")].pick_random())
 			node.relocate()
 
 
@@ -1244,7 +1245,7 @@ func _process_warnings(delta: float) -> void:
 		if near and gap >= 6 and Time.get_ticks_msec() > _warned.get(spawn["id"], 0):
 			_warned[spawn["id"]] = Time.get_ticks_msec() + 30000
 			Sfx.play("telegraph")
-			hud.show_banner("Czujesz obecność czegoś potężnego (poziom %d).\nZawróć, zanim cię zauważy!" % boss.level, Color(1.0, 0.4, 0.3))
+			hud.show_banner(Lang.t("Czujesz obecność czegoś potężnego (poziom %d).\nZawróć, zanim cię zauważy!") % boss.level, Color(1.0, 0.4, 0.3))
 
 
 # ---------------------------------------------------------------- gobliny
@@ -1672,10 +1673,10 @@ func summon_boss(type: String) -> String:
 		var id: int = spawn["id"]
 		var lair: Vector2 = spawn["position"]
 		if player.global_position.distance_to(lair) > SUMMON_RADIUS:
-			return "Użyj " + LAIR_NAMES[type]
+			return Lang.t("Użyj %s") % Lang.t(LAIR_NAMES[type])
 		var boss: Goblin = _live_goblins.get(id)
 		if (boss != null and boss.state != Goblin.State.DEAD) or _summoning.has(id):
-			return "Boss już tu jest!"
+			return Lang.t("Boss już tu jest!")
 		for i in range(_respawn_queue.size() - 1, -1, -1):
 			if _respawn_queue[i]["spawn"]["id"] == id:
 				_respawn_queue.remove_at(i)
@@ -1686,7 +1687,7 @@ func summon_boss(type: String) -> String:
 		circle.summoned.connect(_finish_summon.bind(spawn))
 		Sfx.play_at("summon", lair)
 		return ""
-	return "Użyj " + LAIR_NAMES.get(type, "w leżu bossa")
+	return Lang.t("Użyj %s") % Lang.t(LAIR_NAMES.get(type, "w leżu bossa"))
 
 
 func _finish_summon(spawn: Dictionary) -> void:
@@ -1699,7 +1700,7 @@ func _finish_summon(spawn: Dictionary) -> void:
 	tween.tween_property(boss, "modulate", Color.WHITE, 0.6)
 	player.add_shake(6.0)
 	MiscVfx.ring(entities, spawn["position"], 46.0, SummonCircle.COLOR)
-	hud.show_banner("Przyzwano: %s!" % boss.get("boss_name"), SummonCircle.SHINE)
+	hud.show_banner(Lang.t("Przyzwano: %s!") % Lang.t(str(boss.get("boss_name"))), SummonCircle.SHINE)
 
 
 ## Odpoczynek w karczmie: wszyscy pokonani bossowie wracają do swoich leży - w tej krainie
@@ -2370,7 +2371,7 @@ func _process_shrines(delta: float) -> void:
 			var pos: Vector2 = _zone_shrines[id] / TILE
 			shrines[id] = [pos.x, pos.y]
 			Sfx.play("quest_ready")
-			hud.show_banner("Odkryto kapliczkę: %s\nTeleport z dużej mapy (M)" % Zones.SHRINES[id]["name"], Color(0.6, 0.9, 1.0))
+			hud.show_banner(Lang.t("Odkryto kapliczkę: %s\nTeleport z dużej mapy (M)") % Zones.shrine_name(id), Color(0.6, 0.9, 1.0))
 			hud.refresh_world_map()
 
 
@@ -2390,7 +2391,7 @@ func teleport_to(shrine_id: String) -> void:
 		return
 	# kapliczka zgasła po przegranym najeździe (WorldEvents)
 	if player.events.is_shrine_down(shrine_id):
-		hud.show_banner("Kapliczka %s zgasła po najeździe\nRozpali się za %d min" % [Zones.SHRINES[shrine_id]["name"],
+		hud.show_banner(Lang.t("Kapliczka %s zgasła po najeździe\nRozpali się za %d min") % [Zones.shrine_name(shrine_id),
 				ceili(float(player.events.shrine_down[shrine_id]) / 60.0)], Color(1.0, 0.5, 0.45))
 		Sfx.play("ui_error")
 		return

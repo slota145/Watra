@@ -242,18 +242,18 @@ static func progress_text(player: Player, id: String) -> String:
 	if linked != "" and player.quests.state_of(linked) != Quests.STATE_DONE:
 		match player.quests.state_of(linked):
 			Quests.STATE_AVAILABLE:
-				return "Przyjmij zadanie u: %s" % Quests.get_data(linked)["giver"]
+				return Lang.t("Przyjmij zadanie u: %s") % Quests.person(Quests.get_data(linked)["giver"])
 			Quests.STATE_READY:
-				return "Wróć do: %s" % Quests.receiver(linked)
+				return Lang.t("Wróć do: %s") % Quests.person(Quests.receiver(linked))
 		var needed: Dictionary = Quests.requirements(linked)
 		if needed.is_empty():
-			return "%s: %d/%d" % [Quests.get_data(linked)["target_name"], player.quests.progress_of(linked), Quests.get_data(linked)["count"]]
+			return "%s: %d/%d" % [Quests.text(linked, "target_name"), player.quests.progress_of(linked), Quests.get_data(linked)["count"]]
 		var parts: Array[String] = []
 		for item: String in needed:
-			parts.append("%s %d/%d" % [Items.get_data(item)["name"], mini(player.count_owned(item), needed[item]), needed[item]])
+			parts.append("%s %d/%d" % [Lang.t(Items.get_data(item)["name"]), mini(player.count_owned(item), needed[item]), needed[item]])
 		return ", ".join(parts)
 	var have: Array = progress(player, id)
-	return "%s: %d/%d" % [DATA[id]["target_name"], have[0], have[1]] if have[1] > 1 else DATA[id]["target_name"]
+	return "%s: %d/%d" % [Quests.text(id, "target_name"), have[0], have[1]] if have[1] > 1 else Quests.text(id, "target_name")
 
 
 ## Postęp kroku: [ile jest, ile trzeba].

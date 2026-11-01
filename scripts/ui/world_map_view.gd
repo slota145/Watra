@@ -140,7 +140,7 @@ func _draw() -> void:
 		_text(font, at + Vector2(10, 4), event_title, 8, event_color)
 	if _hovered != "":
 		var pos := _shrine_screen_pos(_hovered)
-		_text(font, pos + Vector2(10, -6), "Teleport: " + Zones.SHRINES[_hovered]["name"], 8, Color(0.6, 0.9, 1.0))
+		_text(font, pos + Vector2(10, -6), Lang.t("Teleport: %s") % Zones.shrine_name(_hovered), 8, Color(0.6, 0.9, 1.0))
 
 
 ## Nieodkryty teren wokół krain: ciemny, zamglony las (rysowany raz).

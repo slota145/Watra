@@ -145,15 +145,15 @@ static func legends() -> Array[String]:
 	return result
 
 
-## Skąd pochodzi legenda (boss albo skarbiec lochów).
+## Skąd pochodzi legenda (boss albo skarbiec lochów) - w obecnym języku.
 static func legend_source(id: String) -> String:
 	if _legend_sources.is_empty():
 		for monster: String in MONSTERS:
 			for legend: String in monster_info(monster).get("legends", []):
-				_legend_sources[legend] = monster_name(monster)
+				_legend_sources[legend] = monster
 	if _legend_sources.has(id):
-		return _legend_sources[id]
-	return VAULT_SOURCE if id in Dungeons.VAULT_LEGENDS else "nieznane"
+		return monster_name(_legend_sources[id])
+	return Lang.t(VAULT_SOURCE) if id in Dungeons.VAULT_LEGENDS else Lang.t("nieznane")
 
 
 static func bosses() -> Array[String]:
@@ -192,9 +192,15 @@ static func items() -> Array[String]:
 
 
 # ---------------------------------------------------------------- potwory
+## Nazwa potwora (u bossa - jego imię ze sceny) w obecnym języku.
 static func monster_name(id: String) -> String:
 	var info := monster_info(id)
-	return info.get("boss_name", MONSTERS.get(id, {}).get("name", id))
+	return Lang.t(str(info.get("boss_name", MONSTERS.get(id, {}).get("name", id))))
+
+
+## Opis potwora w encyklopedii w obecnym języku.
+static func monster_note(id: String) -> String:
+	return Lang.t(str(MONSTERS.get(id, {}).get("note", "")))
 
 
 ## Dane potwora ze sceny (raz, potem z pamięci): grafika (pierwsza klatka), boss, jego nazwa i legendy,
@@ -229,8 +235,8 @@ static func level_text(id: String) -> String:
 	if not Levels.ZONES.has(zone):
 		return ""
 	if monster_info(id).get("boss", false):
-		return "poz. %d" % Levels.boss_level(zone)
-	return "poz. %d-%d" % [Levels.ZONES[zone][0], Levels.ZONES[zone][1]]
+		return Lang.t("poz. %d") % Levels.boss_level(zone)
+	return Lang.t("poz. %d-%d") % [Levels.ZONES[zone][0], Levels.ZONES[zone][1]]
 
 
 # ---------------------------------------------------------------- zapis

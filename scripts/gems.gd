@@ -75,7 +75,7 @@ static func roll_radius(tier := 1) -> String:
 
 ## Opis działania kamienia promienia: "Wybrane węzły pasywne w promieniu: +30% premii".
 static func radius_text(power: float) -> String:
-	return "Wybrane węzły pasywne w promieniu: +%d%% premii" % roundi(power * 100.0)
+	return Lang.t("Wybrane węzły pasywne w promieniu: +%d%% premii") % roundi(power * 100.0)
 
 
 ## Szlif kamienia z poziomu potwora / lochu (0-4): poziom 16 - okruch, co około 7 poziomów lepszy.
@@ -117,11 +117,12 @@ static func register(recipe: Dictionary, id := "") -> String:
 	if kind == "radius":
 		recipe["affixes"] = {"radius_power": float(recipe["affixes"].get("radius_power", 0.25))}
 		Items.generated[id] = {
-			"name": KINDS[kind]["name"],
-			"description": "Kamień do gniazda w drzewku umiejętności broni (okno K). %s. Nie pasuje do przedmiotów."
+			"name": Lang.t(KINDS[kind]["name"]),
+			"description": Lang.t("Kamień do gniazda w drzewku umiejętności broni (okno K). %s. Nie pasuje do przedmiotów.")
 					% radius_text(recipe["affixes"]["radius_power"]),
 			"icon": RADIUS_ICON, "rarity": "rare",
 			"gem": {"kind": kind, "cut": cut}, "stats": {}, "sell_price": 400, "recipe": recipe,
+			"name_lang": TranslationServer.get_locale(),
 		}
 		return id
 	var stats := {}
@@ -130,14 +131,15 @@ static func register(recipe: Dictionary, id := "") -> String:
 		stats[stat] = value if Loot._step(stat) > 0.0 else int(value)
 	recipe["affixes"] = stats
 	Items.generated[id] = {
-		"name": "%s (%s)" % [KINDS[kind]["name"], CUTS[cut].to_lower()],
-		"description": "Kamień szlachetny. Przeciągnij go na przedmiot z pustym gniazdem (w plecaku albo założony) - premie działają, dopóki kamień w nim tkwi. Wyjmuje jubiler Dobromir.",
+		"name": "%s (%s)" % [Lang.t(KINDS[kind]["name"]), Lang.t(CUTS[cut]).to_lower()],
+		"description": Lang.t("Kamień szlachetny. Przeciągnij go na przedmiot z pustym gniazdem (w plecaku albo założony) - premie działają, dopóki kamień w nim tkwi. Wyjmuje jubiler Dobromir."),
 		"icon": load("res://assets/items/gems/%s_%d.png" % [kind, cut + 1]),
 		"rarity": "rare" if stats.size() > 2 else "magic",
 		"gem": {"kind": kind, "cut": cut},
 		"stats": stats,
 		"sell_price": 15 * (cut + 1) * (cut + 1),
 		"recipe": recipe,
+		"name_lang": TranslationServer.get_locale(),
 	}
 	return id
 
@@ -145,14 +147,14 @@ static func register(recipe: Dictionary, id := "") -> String:
 ## Krótki opis kamienia w gnieździe: "Rubin (okruch): +12 zdrowie, +2% szybkość ataku".
 static func socket_text(gem: Dictionary) -> String:
 	if gem.is_empty():
-		return "Puste gniazdo"
+		return Lang.t("Puste gniazdo")
 	if gem.get("kind", "") == "radius":
-		return "[color=#%s]%s[/color]: %s" % [COLORS["radius"], KINDS["radius"]["name"], radius_text(float(gem["affixes"].get("radius_power", 0.0)))]
+		return "[color=#%s]%s[/color]: %s" % [COLORS["radius"], Lang.t(KINDS["radius"]["name"]), radius_text(float(gem["affixes"].get("radius_power", 0.0)))]
 	var parts: Array[String] = []
 	for stat: String in gem["affixes"]:
 		parts.append(Items._stat_text(stat, gem["affixes"][stat]))
-	return "[color=#%s]%s (%s)[/color]: %s" % [COLORS[gem["kind"]], KINDS[gem["kind"]]["name"],
-			CUTS[int(gem["cut"])].to_lower(), ", ".join(parts)]
+	return "[color=#%s]%s (%s)[/color]: %s" % [COLORS[gem["kind"]], Lang.t(KINDS[gem["kind"]]["name"]),
+			Lang.t(CUTS[int(gem["cut"])]).to_lower(), ", ".join(parts)]
 
 
 ## Opis kamienia bez kolorów (zwykłe etykiety i dymki).
@@ -187,7 +189,7 @@ static func socket_price(id: String) -> int:
 static func _recipe_of(id: String) -> Dictionary:
 	if Items.generated.has(id):
 		return (Items.generated[id]["recipe"] as Dictionary).duplicate(true)
-	return {"base": id, "quality": "common", "level": 1, "affixes": {}, "tiers": {}, "name": Items.get_data(id)["name"]}
+	return {"base": id, "quality": "common", "level": 1, "affixes": {}, "tiers": {}, "name_stats": []}
 
 
 ## Dorabia gniazdo; zwraca id przedmiotu (zwykły przedmiot dostaje nowe id - trzeba je podmienić w plecaku/postaci).
@@ -225,17 +227,17 @@ static func drag_target(source_id: String, item_id: String) -> String:
 		if sockets_of(item_id).is_empty():
 			return ""
 		if is_radius(source_id):
-			return "Kamień Promienia pasuje tylko do gniazd drzewka umiejętności."
+			return Lang.t("Kamień Promienia pasuje tylko do gniazd drzewka umiejętności.")
 		if not sockets_of(item_id).any(func(gem: Dictionary) -> bool: return gem.is_empty()):
-			return "Gniazdo zajęte - kamień wyjmie jubiler Dobromir."
+			return Lang.t("Gniazdo zajęte - kamień wyjmie jubiler Dobromir.")
 		return "gem"
 	if Essences.is_essence(source_id):
 		if not Essences.has_socket(item_id):
 			return ""
 		if not (Essences.socket_of(item_id) as Dictionary).is_empty():
-			return "Gniazdo esencji zajęte - esencję wyjmie kowal Bronisław."
+			return Lang.t("Gniazdo esencji zajęte - esencję wyjmie kowal Bronisław.")
 		if not Essences.fits(source_id, item_id):
-			return "Ta esencja pasuje tylko do: %s." % Essences.GROUP_NAMES[Items.get_data(source_id)["essence"]["group"]]
+			return Lang.t("Ta esencja pasuje tylko do: %s.") % Lang.t(Essences.GROUP_NAMES[Items.get_data(source_id)["essence"]["group"]])
 		return "essence"
 	return ""
 

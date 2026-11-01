@@ -31,7 +31,7 @@ static func create(herb_kind: String, pos: Vector2) -> Herb:
 
 
 func _init() -> void:
-	action_name = "Zerwij"
+	action_name = Lang.t("Zerwij")
 	harvest_time = HARVEST_TIME
 	chip_color = Color(0.45, 0.8, 0.35)
 	hit_sound = "step_grass"

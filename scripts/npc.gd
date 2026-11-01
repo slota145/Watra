@@ -149,7 +149,7 @@ func _ready() -> void:
 	if has_dialog() or is_trader():
 		add_to_group("interactables")
 	if has_dialog():
-		prompt.text = "[F] Rozmowa"
+		prompt.text = tr("[F] Rozmowa")
 	if quest_id != "" or MainQuests.involves(display_name):
 		_quest_marker = _make_quest_marker()
 		add_child(_quest_marker)
@@ -288,7 +288,7 @@ func _update_quest_marker(delta: float) -> void:
 
 
 func say(text: String) -> void:
-	bubble.text = text
+	bubble.text = tr(text)
 	bubble.visible = true
 	bubble.reset_size()
 	bubble.position = Vector2(-bubble.size.x / 2.0, -38.0 - bubble.size.y + 12.0).round()

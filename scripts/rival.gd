@@ -131,8 +131,9 @@ func end(result: String) -> void:
 	tween.tween_callback(queue_free)
 
 
+## Okrzyk nad głową; gotowe hasła (bez wstawionych danych) tłumaczy sam.
 func say(text: String) -> void:
-	DamageNumber.spawn_text(get_parent(), global_position + Vector2(0, -44), text, map_color, 8)
+	DamageNumber.spawn_text(get_parent(), global_position + Vector2(0, -44), tr(text), map_color, 8)
 
 
 func _animate(delta: float) -> void:

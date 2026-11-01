@@ -99,7 +99,7 @@ func _ready() -> void:
 			champion.modulate = data["color"]
 			champion.speed *= {"swift": 1.7, "stone": 0.8}.get(event["trait"], 1.0)
 			champion.leash_radius = 700.0
-			_label(champion, "%s %s [%d]" % [data["name"], _monster_name(champion), _level + 2], WorldEvents.TYPES["champion"]["color"])
+			_label(champion, tr("%s %s [%d]") % [tr(data["name"]), _monster_name(champion), _level + 2], WorldEvents.TYPES["champion"]["color"])
 			_travelers_left = randi_range(3, 5)
 		"meteors":
 			center = _far_spawn(0.0)
@@ -183,7 +183,7 @@ func _far_spawn(min_player: float) -> Vector2:
 
 func _monster_name(goblin: Goblin) -> String:
 	var info: Dictionary = Codex.MONSTERS.get(Codex.monster_id(goblin), {})
-	return info.get("name", "Potwór")
+	return tr(info.get("name", "Potwór"))
 
 
 func _scale_damage(goblin: Goblin, factor: float) -> void:
@@ -327,7 +327,7 @@ func _process_raid(delta: float) -> void:
 			var mob := _spawn_mob(kinds.pick_random(), from + Vector2(randf_range(-40, 40), randf_range(-30, 30)), _level)
 			mob.objective = self
 			mob.state = Goblin.State.CHASE
-		w.hud.show_banner("Fala %d/%d nadciąga na kapliczkę!" % [_wave, RAID_WAVES], WorldEvents.TYPES["raid"]["color"])
+		w.hud.show_banner(tr("Fala %d/%d nadciąga na kapliczkę!") % [_wave, RAID_WAVES], WorldEvents.TYPES["raid"]["color"])
 	elif _wave >= RAID_WAVES and _alive_mobs() == 0:
 		_finish(true)
 
@@ -419,13 +419,13 @@ func _process_world_boss() -> void:
 	boss.health = boss.max_health
 	boss.appear()
 	boss.phase_changed.connect(func(phase: int) -> void:
-		w.hud.show_banner("%s wpada w szał - faza %d!" % [boss.boss_name, phase], WorldEvents.TYPES["world_boss"]["color"]))
+		w.hud.show_banner(tr("%s wpada w szał - faza %d!") % [tr(boss.boss_name), phase], WorldEvents.TYPES["world_boss"]["color"]))
 	mobs.append(boss)
 	MiscVfx.ring(w.entities, center, 120.0, WorldEvents.TYPES["world_boss"]["color"])
 	MiscVfx.debris(w.entities, center, Color(0.55, 0.45, 0.38), 2.0)
 	Sfx.play_at("summon", center)
 	w.player.add_shake(10.0)
-	w.hud.show_banner("%s nadchodzi!" % boss.boss_name, WorldEvents.TYPES["world_boss"]["color"])
+	w.hud.show_banner(tr("%s nadchodzi!") % tr(boss.boss_name), WorldEvents.TYPES["world_boss"]["color"])
 
 
 ## Wezwanie world bossa (Wij): potwory krainy wokół niego od razu ruszają do walki.
@@ -560,7 +560,7 @@ func _process_travelers(delta: float) -> void:
 	var node: Traveler = w._spawn_traveler(data, "event", at)
 	MiscVfx.traveler_flame(w.entities, at, 0.8)
 	if randf() < 0.5:
-		node.say.call_deferred(["Słyszałem o %s!" % event["title"].to_lower(), "Jestem! Gdzie oni są?", "Za Ostoję!",
+		node.say.call_deferred([tr("Słyszałem o %s!") % WorldEvents.title_of(event).to_lower(), "Jestem! Gdzie oni są?", "Za Ostoję!",
 				"Ten łup będzie mój!", "Razem damy radę!"].pick_random())
 
 
@@ -676,26 +676,26 @@ static func chest_loot(place: int, level: int) -> Array:
 func objective_text() -> String:
 	match _type:
 		"raid":
-			return "Kapliczka: %d%%  -  fala %d/%d" % [roundi(health / max_health * 100.0), _wave, RAID_WAVES]
+			return tr("Kapliczka: %d%%  -  fala %d/%d") % [roundi(health / max_health * 100.0), _wave, RAID_WAVES]
 		"champion":
 			if is_instance_valid(champion):
-				return "Czempion: %d%% zdrowia" % roundi(100.0 * champion.health / maxf(1.0, champion.max_health))
+				return tr("Czempion: %d%% zdrowia") % roundi(100.0 * champion.health / maxf(1.0, champion.max_health))
 		"hunt":
 			if is_instance_valid(boss):
-				return "%s: %d%% zdrowia" % [WorldEvents.boss_title(event["boss"]), roundi(100.0 * boss.health / maxf(1.0, boss.max_health))]
+				return tr("%s: %d%% zdrowia") % [WorldEvents.boss_title(event["boss"]), roundi(100.0 * boss.health / maxf(1.0, boss.max_health))]
 		"meteors":
-			return "Rozbijaj meteoryty i bij potwory z kraterów"
+			return tr("Rozbijaj meteoryty i bij potwory z kraterów")
 		"world_boss":
 			if float(event.get("warn", 0.0)) > 0.0:
-				return "Pojawi się za %d s - zbierz siły!" % ceili(float(event["warn"]))
+				return tr("Pojawi się za %d s - zbierz siły!") % ceili(float(event["warn"]))
 			if is_instance_valid(boss):
-				return "%s: %d%% zdrowia (faza %d)" % [boss.boss_name, roundi(100.0 * boss.health / maxf(1.0, boss.max_health)), boss.phase]
+				return tr("%s: %d%% zdrowia (faza %d)") % [tr(boss.boss_name), roundi(100.0 * boss.health / maxf(1.0, boss.max_health)), boss.phase]
 		"caravan":
 			if caravan != null:
-				return "Wóz: %d%%  -  droga %d%%%s" % [roundi(health / max_health * 100.0), roundi(caravan.progress() * 100.0),
-						"  (czeka na ciebie)" if caravan.waiting else ""]
+				return tr("Wóz: %d%%  -  droga %d%%%s") % [roundi(health / max_health * 100.0), roundi(caravan.progress() * 100.0),
+						tr("  (czeka na ciebie)") if caravan.waiting else ""]
 		"festival":
-			return "Tańce przy Watrze, premie i tańsi kupcy"
+			return tr("Tańce przy Watrze, premie i tańsi kupcy")
 	return ""
 
 

@@ -78,8 +78,24 @@ static func slot_count() -> int:
 	return SKILL_KEYS.size() + ITEM_SLOTS
 
 
+## Nazwa wpisu paska (umiejętność albo zwykły atak) w obecnym języku.
 static func skill_name(id: String) -> String:
-	return ATTACK_NAME if id == ATTACK else str(Skills.get_data(id).get("name", ""))
+	return attack_name() if id == ATTACK else Skills.name_of(id)
+
+
+static func attack_name() -> String:
+	return Lang.t(ATTACK_NAME)
+
+
+## Nazwa klawisza slotu `index` (wspólna numeracja) w obecnym języku - przyciski myszy mają skróty ("LPM", "PPM").
+static func key_name(index: int) -> String:
+	var key := SLOT_KEYS[index]
+	match key:
+		"LPM":
+			return Lang.t("LPM")
+		"PPM":
+			return Lang.t("PPM")
+	return key
 
 
 static func skill_icon(id: String) -> Texture2D:

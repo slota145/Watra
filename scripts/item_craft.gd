@@ -74,21 +74,21 @@ static func cost(id: String, action: String) -> Dictionary:
 ## Czy działanie da się wykonać (bez kosztu): "" albo powód.
 static func check(id: String, action: String, stat := "") -> String:
 	if not can_craft(id):
-		return "Tu przerabia się broń, zbroje i biżuterię."
+		return Lang.t("Tu przerabia się broń, zbroje i biżuterię.")
 	var affixes: Dictionary = Items.get_data(id).get("recipe", {}).get("affixes", {})
 	var quality := quality_of(id)
 	if ACTIONS[action]["stat"] and not affixes.has(stat):
-		return "Najpierw zaznacz premię."
+		return Lang.t("Najpierw zaznacz premię.")
 	match action:
 		"add":
 			if affixes.size() >= int(Loot.AFFIX_COUNTS[quality][1]):
-				return "Brak wolnego miejsca na premię (%s: najwyżej %d)." % [Items.RARITY_NAMES[quality].to_lower(), Loot.AFFIX_COUNTS[quality][1]]
+				return Lang.t("Brak wolnego miejsca na premię (%s: najwyżej %d).") % [Lang.t(Items.RARITY_NAMES[quality]).to_lower(), Loot.AFFIX_COUNTS[quality][1]]
 		"rarity":
 			if quality in [Loot.RARE, Loot.LEGENDARY]:
-				return "Rzadszy już się nie da."
+				return Lang.t("Rzadszy już się nie da.")
 		"chaos":
 			if affixes.is_empty() and quality == Loot.COMMON:
-				return "Zwykły przedmiot nie ma premii do przerzucenia."
+				return Lang.t("Zwykły przedmiot nie ma premii do przerzucenia.")
 	return ""
 
 
@@ -124,25 +124,25 @@ static func apply(id: String, action: String, stat := "") -> Dictionary:
 			var tier := int(recipe["tiers"].get(stat, Loot.roll_tier(level, quality)))
 			var before = recipe["affixes"][stat]
 			recipe["affixes"][stat] = _roll_value(stat, tier)
-			text = "%s: %s -> %s" % [Items.STAT_NAMES.get(stat, stat), Items._stat_text(stat, before), Items._stat_text(stat, recipe["affixes"][stat])]
+			text = "%s: %s -> %s" % [Items.stat_name(stat), Items._stat_text(stat, before), Items._stat_text(stat, recipe["affixes"][stat])]
 		"reforge":
 			var tier := Loot.roll_tier(level, quality)
 			recipe["affixes"][stat] = _roll_value(stat, tier)
 			recipe["tiers"][stat] = tier
-			text = "Przekuto: %s" % Items._stat_text(stat, recipe["affixes"][stat])
+			text = Lang.t("Przekuto: %s") % Items._stat_text(stat, recipe["affixes"][stat])
 		"remove":
 			recipe["affixes"].erase(stat)
 			recipe["tiers"].erase(stat)
-			text = "Usunięto: %s" % Items.STAT_NAMES.get(stat, stat)
+			text = Lang.t("Usunięto: %s") % Items.stat_name(stat)
 		"add":
 			var added := _add_random(recipe, slot, level, quality)
-			text = "Nowa premia: %s" % Items._stat_text(added, recipe["affixes"][added])
+			text = Lang.t("Nowa premia: %s") % Items._stat_text(added, recipe["affixes"][added])
 		"rarity":
 			quality = Loot.MAGIC if quality == Loot.COMMON else Loot.RARE
 			recipe["quality"] = quality
 			while recipe["affixes"].size() < int(Loot.AFFIX_COUNTS[quality][0]):
 				_add_random(recipe, slot, level, quality)
-			text = "Przedmiot jest teraz: %s" % Items.RARITY_NAMES[quality].to_lower()
+			text = Lang.t("Przedmiot jest teraz: %s") % Lang.t(Items.RARITY_NAMES[quality]).to_lower()
 		"chaos", "lock":
 			var keep := {}
 			if action == "lock":
@@ -157,7 +157,7 @@ static func apply(id: String, action: String, stat := "") -> Dictionary:
 			while recipe["affixes"].size() < target:
 				if _add_random(recipe, slot, level, quality) == "":
 					break
-			text = "Premie przelosowane%s." % (" - %s zostaje" % Items.STAT_NAMES.get(stat, stat) if action == "lock" else "")
+			text = Lang.t("Premie przelosowane%s.") % (Lang.t(" - %s zostaje") % Items.stat_name(stat) if action == "lock" else "")
 	_rename(recipe)
 	var new_id := Loot.register(recipe, id if Items.generated.has(id) else "")
 	return {"id": new_id, "text": text}
@@ -181,12 +181,7 @@ static func _add_random(recipe: Dictionary, slot: String, level: int, quality: S
 	return stat
 
 
-## Nazwa jak przy łupie: baza + dopisek z dwóch pierwszych premii (legendy zachowują swoją).
+## Nazwa jak przy łupie: dopiski z dwóch pierwszych premii (Loot.compose_name; legendy zachowują swoją).
 static func _rename(recipe: Dictionary) -> void:
-	if recipe["quality"] == Loot.LEGENDARY:
-		return
-	var name: String = Items.get_data(recipe["base"])["name"]
-	if not recipe["affixes"].is_empty():
-		var names: Array = recipe["affixes"].keys().slice(0, 2).map(func(s: String) -> String: return Loot.SUFFIXES[s])
-		name = "%s %s" % [name, " i ".join(names)]
-	recipe["name"] = name
+	recipe.erase("name")
+	recipe["name_stats"] = [] if recipe["quality"] == Loot.LEGENDARY else recipe["affixes"].keys().slice(0, 2)

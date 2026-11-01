@@ -38,8 +38,8 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
-	box.add_child(UiStyle.title("Umiejętności"))
-	var hint := UiStyle.label("Działają tylko z bronią swojego rodzaju. Przeciągnij umiejętność (start drzewka - zwykły atak) na pasek. Combo: umiejętność zaraz po innej działa mocniej.", 7, UiStyle.DIM_COLOR)
+	box.add_child(UiStyle.title(tr("Umiejętności")))
+	var hint := UiStyle.label(tr("Działają tylko z bronią swojego rodzaju. Przeciągnij umiejętność (start drzewka - zwykły atak) na pasek. Combo: umiejętność zaraz po innej działa mocniej."), 7, UiStyle.DIM_COLOR)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(hint)
 
@@ -142,7 +142,7 @@ func _make_tree_page(weapon_type: String) -> VBoxContainer:
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 4)
 	details.add_child(column)
-	var info := UiStyle.label("Kliknij węzeł, żeby zobaczyć szczegóły. Przeciągaj puste miejsce, żeby przesunąć drzewko; kółko myszy przybliża.", 7, UiStyle.TEXT_COLOR)
+	var info := UiStyle.label(tr("Kliknij węzeł, żeby zobaczyć szczegóły. Przeciągaj puste miejsce, żeby przesunąć drzewko; kółko myszy przybliża."), 7, UiStyle.TEXT_COLOR)
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	info.custom_minimum_size.x = DETAILS_WIDTH - 8.0
 	info.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -166,17 +166,17 @@ func _make_tree_page(weapon_type: String) -> VBoxContainer:
 	var unsocket := Button.new()
 	unsocket.focus_mode = Control.FOCUS_NONE
 	unsocket.add_theme_font_size_override("font_size", 8)
-	unsocket.text = "Wyjmij kamień"
+	unsocket.text = tr("Wyjmij kamień")
 	unsocket.pressed.connect(_unsocket.bind(weapon_type))
 	column.add_child(unsocket)
 	var destroy := Button.new()
 	destroy.focus_mode = Control.FOCUS_NONE
 	destroy.add_theme_font_size_override("font_size", 8)
-	destroy.text = "Zniszcz esencję"
+	destroy.text = tr("Zniszcz esencję")
 	destroy.pressed.connect(func() -> void:
 		_player.skills.destroy_essence(weapon_type, _trees[weapon_type]["view"].selected_id)
 		Sfx.play("ui_click")
-		_show_socket_result("", "Esencja rozwiała się."))
+		_show_socket_result("", tr("Esencja rozwiała się.")))
 	column.add_child(destroy)
 	view.selected.connect(func(_id: String) -> void: _refresh())
 	view.gem_dropped.connect(_show_socket_result)
@@ -189,7 +189,7 @@ func _take_node(weapon_type: String) -> void:
 	var view: SkillTreeView = _trees[weapon_type]["view"]
 	if _player.skills.take(weapon_type, view.selected_id):
 		Sfx.play("ui_confirm")
-		_status.text = "Wybrano: %s" % SkillTree.node_name(weapon_type, view.selected_id)
+		_status.text = tr("Wybrano: %s") % SkillTree.node_name(weapon_type, view.selected_id)
 		_status.add_theme_color_override("font_color", Color(0.6, 1, 0.55))
 
 
@@ -206,11 +206,11 @@ func _unsocket(weapon_type: String) -> void:
 	var essence := _player.skills.gem_in(weapon_type, view.selected_id).has("essence")
 	var message := _player.skills.unsocket_to(_player.inventory, weapon_type, view.selected_id, _player.stats)
 	Sfx.play("ui_error" if message != "" else "pickup")
-	_show_socket_result(message, "Esencja wróciła do plecaka." if essence else "Kamień wrócił do plecaka.")
+	_show_socket_result(message, tr("Esencja wróciła do plecaka.") if essence else tr("Kamień wrócił do plecaka."))
 
 
 func _show_socket_result(message: String, done := "Kamień osadzony w gnieździe.") -> void:
-	_status.text = message if message != "" else done
+	_status.text = Lang.t(message) if message != "" else tr(done)
 	_status.add_theme_color_override("font_color", Color(1, 0.5, 0.45) if message != "" else Color(0.6, 1, 0.55))
 	_refresh()
 
@@ -226,7 +226,7 @@ func _refresh_tree(weapon_type: String) -> void:
 	var parts: Dictionary = _trees[weapon_type]
 	var view: SkillTreeView = parts["view"]
 	var book := _player.skills
-	parts["points"].text = "Punkty umiejętności: %d   (1 za poziom postaci; zapomnieć drzewko można u mędrca)" % book.points_left()
+	parts["points"].text = tr("Punkty umiejętności: %d   (1 za poziom postaci; zapomnieć drzewko można u mędrca)") % book.points_left()
 	view.queue_redraw()
 	var take: Button = parts["take"]
 	var upgrade: Button = parts["upgrade"]
@@ -241,9 +241,9 @@ func _refresh_tree(weapon_type: String) -> void:
 	unsocket.visible = not held.is_empty()
 	destroy.visible = held.has("essence")
 	if held.has("essence"):
-		unsocket.text = "Wyjmij esencję (%d zł)" % Essences.save_gold(book.character_level)
+		unsocket.text = tr("Wyjmij esencję (%d zł)") % Essences.save_gold(book.character_level)
 	else:
-		unsocket.text = "Wyjmij kamień"
+		unsocket.text = tr("Wyjmij kamień")
 	gems.visible = id != "" and book.can_socket(weapon_type, id)
 	if id == "":
 		take.visible = false
@@ -260,30 +260,30 @@ func _refresh_tree(weapon_type: String) -> void:
 			put.custom_minimum_size = Vector2(20, 20)
 			put.icon = Items.get_data(slot["id"])["icon"]
 			put.expand_icon = true
-			put.tooltip_text = "Osadź: " + Items.describe(slot["id"])
+			put.tooltip_text = tr("Osadź: %s") % Items.describe(slot["id"])
 			UiStyle.rich_tooltip(put)
 			put.pressed.connect(_socket.bind(weapon_type, index))
 			gems.add_child(put)
 	var text := view.describe(id)
 	var node: Dictionary = SkillTree.nodes(weapon_type)[id]
 	take.visible = not book.has_node_id(weapon_type, id)
-	take.text = "Wybierz (1 pkt)"
+	take.text = tr("Wybierz (1 pkt)")
 	take.disabled = not book.can_take(weapon_type, id)
 	upgrade.visible = node["kind"] == "skill" and book.has_node_id(weapon_type, id)
 	if upgrade.visible:
 		var skill: String = node["skill"]
 		var level := book.level_of(skill)
 		var cost := book.next_cost(skill)
-		text += "\nPoz. %d/%d: %s" % [level, Skills.MAX_LEVEL, Skills.effect_text(skill, level)]
+		text += "\n" + tr("Poz. %d/%d: %s") % [level, Skills.MAX_LEVEL, Skills.effect_text(skill, level)]
 		if cost >= 0:
-			upgrade.tooltip_text = "Następny poziom: " + Skills.effect_text(skill, level + 1)
-		upgrade.text = "Poziom maksymalny" if cost < 0 else "Ulepsz - %d zł" % cost
+			upgrade.tooltip_text = tr("Następny poziom: %s") % Skills.effect_text(skill, level + 1)
+		upgrade.text = tr("Poziom maksymalny") if cost < 0 else tr("Ulepsz - %d zł") % cost
 		upgrade.disabled = cost < 0 or _player.stats.gold < cost
 		var key := _key_of(skill, weapon_type) if Hotbar.can_slot_skill(skill) else ""
 		if key != "":
-			text += "\nNa pasku:" + key
+			text += "\n" + tr("Na pasku:") + key
 	if gems.visible:
-		text += "\nKliknij kamień z plecaka, żeby go osadzić:" if gems.get_child_count() > 0 else "\nNie masz kamieni szlachetnych w plecaku."
+		text += "\n" + (tr("Kliknij kamień z plecaka, żeby go osadzić:") if gems.get_child_count() > 0 else tr("Nie masz kamieni szlachetnych w plecaku."))
 	parts["info"].text = text
 
 
@@ -308,7 +308,7 @@ func _make_card(id: String) -> PanelContainer:
 	var names := VBoxContainer.new()
 	names.add_theme_constant_override("separation", 0)
 	header.add_child(names)
-	var title := UiStyle.label(data["name"], 8, UiStyle.TEXT_COLOR)
+	var title := UiStyle.label(Skills.name_of(id), 8, UiStyle.TEXT_COLOR)
 	names.add_child(title)
 	var level := UiStyle.label("", 7, UiStyle.DIM_COLOR)
 	names.add_child(level)
@@ -336,7 +336,7 @@ func _make_attack_card(weapon_type: String) -> PanelContainer:
 	card.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.SLOT_BG, UiStyle.SLOT_BORDER, 3))
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
 	card.custom_minimum_size.x = CARD_WIDTH
-	card.tooltip_text = "%s\nZwykły atak założoną bronią w stronę kursora. Przeciągnij na pasek umiejętności." % Hotbar.ATTACK_NAME
+	card.tooltip_text = tr("%s\nZwykły atak założoną bronią w stronę kursora. Przeciągnij na pasek umiejętności.") % Hotbar.attack_name()
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 2)
 	card.add_child(content)
@@ -350,10 +350,10 @@ func _make_attack_card(weapon_type: String) -> PanelContainer:
 	var names := VBoxContainer.new()
 	names.add_theme_constant_override("separation", 0)
 	header.add_child(names)
-	var title := UiStyle.label(Hotbar.ATTACK_NAME, 8, UiStyle.TEXT_COLOR)
+	var title := UiStyle.label(Hotbar.attack_name(), 8, UiStyle.TEXT_COLOR)
 	names.add_child(title)
-	names.add_child(UiStyle.label("Zawsze dostępny", 7, UiStyle.DIM_COLOR))
-	var effect := UiStyle.label("Zwykły atak bronią. Zaraz po uderzeniu wyprowadza dodatkowy cios (combo).", 7, UiStyle.DIM_COLOR)
+	names.add_child(UiStyle.label(tr("Zawsze dostępny"), 7, UiStyle.DIM_COLOR))
+	var effect := UiStyle.label(tr("Zwykły atak bronią. Zaraz po uderzeniu wyprowadza dodatkowy cios (combo)."), 7, UiStyle.DIM_COLOR)
 	effect.custom_minimum_size.x = CARD_WIDTH - 8.0
 	effect.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(effect)
@@ -372,20 +372,20 @@ func _drag_skill(_at: Vector2, id: String, card: Control) -> Variant:
 ## " [Q]" - pod jakim klawiszem paska leży umiejętność dla danej broni ("" - nie ma jej na pasku).
 func _key_of(id: String, weapon_type: String) -> String:
 	var index := _player.hotbar.find(weapon_type, id)
-	return "  [%s]" % Hotbar.SLOT_KEYS[index] if index >= 0 else ""
+	return "  [%s]" % Hotbar.key_name(index) if index >= 0 else ""
 
 
 func _upgrade(id: String) -> void:
 	if not _player.skills.can_learn(id):
-		_status.text = "Najpierw odblokuj: %s" % Skills.get_data(Skills.get_data(id)["requires"])["name"]
+		_status.text = tr("Najpierw odblokuj: %s") % Skills.name_of(Skills.get_data(id)["requires"])
 		_status.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
 	elif _player.skills.upgrade(id, _player.stats):
 		var level := _player.skills.level_of(id)
-		var verb := "Odblokowano" if level == 1 else "Ulepszono"
-		_status.text = "%s: %s (poz. %d)" % [verb, Skills.get_data(id)["name"], level]
+		var pattern := tr("Odblokowano: %s (poz. %d)") if level == 1 else tr("Ulepszono: %s (poz. %d)")
+		_status.text = pattern % [Skills.name_of(id), level]
 		_status.add_theme_color_override("font_color", Color(0.6, 1, 0.55))
 	else:
-		_status.text = "Za mało złota!"
+		_status.text = tr("Za mało złota!")
 		_status.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
 
 
@@ -394,39 +394,39 @@ func _refresh() -> void:
 		return
 	var current_type := _player.stats.weapon_type()
 	for weapon_type: String in _tabs:
-		_tabs[weapon_type].text = Skills.WEAPON_NAMES[weapon_type] + (" (założona)" if weapon_type == current_type else "")
+		_tabs[weapon_type].text = tr("%s (założona)") % Skills.weapon_name(weapon_type) if weapon_type == current_type else Skills.weapon_name(weapon_type)
 
 	for weapon_type: String in _attack_titles:
-		_attack_titles[weapon_type].text = Hotbar.ATTACK_NAME + _key_of(Hotbar.ATTACK, weapon_type)
+		_attack_titles[weapon_type].text = Hotbar.attack_name() + _key_of(Hotbar.ATTACK, weapon_type)
 	for weapon_type: String in _trees:
 		_refresh_tree(weapon_type)
 	var gold := _player.stats.gold
 	for id: String in _cards:
 		var parts: Dictionary = _cards[id]
 		var data := Skills.get_data(id)
-		var suffix := "  [po uderzeniu]" if data["type"] == "combo" else _key_of(id, data["weapon"])
-		parts["title"].text = data["name"] + suffix
+		var suffix := tr("  [po uderzeniu]") if data["type"] == "combo" else _key_of(id, data["weapon"])
+		parts["title"].text = Skills.name_of(id) + suffix
 		var level := _player.skills.level_of(id)
 		var cost := _player.skills.next_cost(id)
 		var mana := Skills.mana_cost_text(id)
-		parts["level"].text = ("Poz. %d/%d" % [level, Skills.MAX_LEVEL]) + ("  •  " + mana if mana != "" else "")
+		parts["level"].text = (tr("Poz. %d/%d") % [level, Skills.MAX_LEVEL]) + ("  •  " + mana if mana != "" else "")
 
-		var effect := "Teraz: " + Skills.effect_text(id, level) if level > 0 else "Nie odblokowano"
+		var effect := tr("Teraz: %s") % Skills.effect_text(id, level) if level > 0 else tr("Nie odblokowano")
 		if cost >= 0:
-			effect += "\nNastępny: " + Skills.effect_text(id, level + 1)
+			effect += "\n" + tr("Następny: %s") % Skills.effect_text(id, level + 1)
 		parts["effect"].text = effect
 
 		var button: Button = parts["button"]
 		var learnable := _player.skills.can_learn(id)
 		if cost < 0:
-			button.text = "Poziom maksymalny"
+			button.text = tr("Poziom maksymalny")
 			button.disabled = true
 		elif not learnable:
-			button.text = "Wymaga: " + Skills.get_data(data["requires"])["name"]
+			button.text = tr("Wymaga: %s") % Skills.name_of(data["requires"])
 			button.disabled = true
 		else:
-			button.text = "%s - %d zł" % ["Odblokuj" if level == 0 else "Ulepsz", cost]
+			button.text = (tr("Odblokuj - %d zł") if level == 0 else tr("Ulepsz - %d zł")) % cost
 			button.disabled = gold < cost
-		parts["card"].tooltip_text = "%s\n%s" % [data["name"], data["description"]]
+		parts["card"].tooltip_text = "%s\n%s" % [Skills.name_of(id), Skills.description_of(id)]
 		parts["card"].modulate = Color.WHITE if level > 0 else Color(0.85, 0.85, 0.85)
-	_gold_label.text = "%d złota" % gold
+	_gold_label.text = tr("%d złota") % gold

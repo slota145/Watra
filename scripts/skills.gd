@@ -400,6 +400,21 @@ static func get_data(id: String) -> Dictionary:
 	return DATA.get(id, {})
 
 
+## Nazwa umiejętności w obecnym języku.
+static func name_of(id: String) -> String:
+	return Lang.t(str(DATA.get(id, {}).get("name", "")))
+
+
+## Opis umiejętności w obecnym języku.
+static func description_of(id: String) -> String:
+	return Lang.t(str(DATA.get(id, {}).get("description", "")))
+
+
+## Nazwa rodzaju broni w obecnym języku (WEAPON_NAMES).
+static func weapon_name(weapon_type: String) -> String:
+	return Lang.t(str(WEAPON_NAMES.get(weapon_type, "")))
+
+
 ## Ataki i czary (zwykły atak bronią: atak, a magiczny pocisk księgi - czar).
 const TAGS := {
 	"lunge": ["attack"], "crescent": ["attack"], "whirlwind": ["attack"], "flicker": ["attack"], "smoke_burst": ["attack", "spell"],
@@ -419,8 +434,11 @@ static func tags(id: String) -> Array:
 static func tags_text(id: String) -> String:
 	var names: Array[String] = []
 	for tag: String in tags(id):
-		names.append({"attack": "atak", "spell": "czar", "cry": "okrzyk"}[tag])
-	return " i ".join(names).capitalize() if not names.is_empty() else ""
+		names.append(Lang.t({"attack": "atak", "spell": "czar", "cry": "okrzyk"}[tag]))
+	if names.is_empty():
+		return ""
+	var text := Lang.join(names)
+	return text.left(1).to_upper() + text.substr(1)
 
 
 ## Combo umiejętności drzewka: po jakich umiejętnościach (użytych w oknie COMBO_WINDOW) zachowują się inaczej;
@@ -670,39 +688,39 @@ static func mana_cost(id: String) -> float:
 static func mana_cost_text(id: String) -> String:
 	match id:
 		"whirlwind":
-			return "%d many/s" % WHIRLWIND_MANA_PER_SECOND
+			return Lang.t("%d many/s") % WHIRLWIND_MANA_PER_SECOND
 		"multishot":
-			return "%d many" % MULTISHOT_MANA
+			return Lang.t("%d many") % MULTISHOT_MANA
 		"fireball":
-			return "%d many (+%d przy ładowaniu)" % [FIREBALL_MANA, FIREBALL_CHARGE_MANA]
+			return Lang.t("%d many (+%d przy ładowaniu)") % [FIREBALL_MANA, FIREBALL_CHARGE_MANA]
 		"lunge":
-			return "%d many" % LUNGE_MANA
+			return Lang.t("%d many") % LUNGE_MANA
 		"crescent":
-			return "%d many" % CRESCENT_MANA
+			return Lang.t("%d many") % CRESCENT_MANA
 		"seeker":
-			return "%d many" % SEEKER_MANA
+			return Lang.t("%d many") % SEEKER_MANA
 		"rapid_volley":
-			return "%d many" % VOLLEY_MANA
+			return Lang.t("%d many") % VOLLEY_MANA
 		"chain_lightning":
-			return "%d many" % CHAIN_MANA
+			return Lang.t("%d many") % CHAIN_MANA
 		"thunder_wave":
-			return "%d many" % WAVE_MANA
+			return Lang.t("%d many") % WAVE_MANA
 		"flicker":
-			return "%d many za skok" % FLICKER_MANA
+			return Lang.t("%d many za skok") % FLICKER_MANA
 		"smoke_burst":
-			return "%d many" % SMOKE_MANA
+			return Lang.t("%d many") % SMOKE_MANA
 		"rend":
-			return "%d many" % REND_MANA
+			return Lang.t("%d many") % REND_MANA
 		"ground_slam":
-			return "%d many" % SLAM_MANA
+			return Lang.t("%d many") % SLAM_MANA
 		"riposte":
-			return "%d many" % RIPOSTE_MANA
+			return Lang.t("%d many") % RIPOSTE_MANA
 		"war_cry":
-			return "%d many" % CRY_MANA
+			return Lang.t("%d many") % CRY_MANA
 		"spectral_blades":
-			return "%d many" % BLADES_MANA
+			return Lang.t("%d many") % BLADES_MANA
 	if mana_cost(id) > 0.0:
-		return "%d many" % mana_cost(id)
+		return Lang.t("%d many") % mana_cost(id)
 	return ""
 
 
@@ -712,94 +730,101 @@ static func effect_text(id: String, level: int) -> String:
 		return "-"
 	match id:
 		"whirlwind":
-			return "%d%% obrażeń co %s s, zasięg %d" % [roundi(whirlwind_damage(level) * 100), _decimal(WHIRLWIND_TICK, 2), whirlwind_radius(level)]
+			return Lang.t("%d%% obrażeń co %s s, zasięg %d") % [roundi(whirlwind_damage(level) * 100), _decimal(WHIRLWIND_TICK, 2), whirlwind_radius(level)]
 		"multishot":
-			return "3 strzały po %d%% obrażeń" % roundi(multishot_damage(level) * 100)
+			return Lang.n(MULTISHOT_ARROWS, "%d strzała po %d%% obrażeń", "%d strzały po %d%% obrażeń", "%d strzał po %d%% obrażeń") % [MULTISHOT_ARROWS, roundi(multishot_damage(level) * 100)]
 		"fireball":
-			return "Wybuch: %d%% obrażeń, promień %d (naładowana: %d%%, %d)" % [roundi(fireball_damage(level) * 100),
+			return Lang.t("Wybuch: %d%% obrażeń, promień %d (naładowana: %d%%, %d)") % [roundi(fireball_damage(level) * 100),
 					fireball_radius(level), roundi(fireball_damage(level) * FIREBALL_FULL_DAMAGE * 100),
 					roundi(fireball_radius(level) * FIREBALL_FULL_RADIUS)]
 		"lunge":
-			return "%d%% obrażeń, prędkość %d" % [roundi(lunge_damage(level) * 100), lunge_speed(level)]
+			return Lang.t("%d%% obrażeń, prędkość %d") % [roundi(lunge_damage(level) * 100), lunge_speed(level)]
 		"crescent":
-			return "Cięcie %d° o zasięgu %d, %d%% obrażeń" % [CRESCENT_ARC_DEGREES, crescent_radius(level), CRESCENT_DAMAGE * 100]
+			return Lang.t("Cięcie %d° o zasięgu %d, %d%% obrażeń") % [CRESCENT_ARC_DEGREES, crescent_radius(level), CRESCENT_DAMAGE * 100]
 		"seeker":
-			return "%d trafień po %d%% obrażeń" % [seeker_hits(level), roundi(SEEKER_DAMAGE * 100)]
+			return Lang.n(seeker_hits(level), "%d trafienie po %d%% obrażeń", "%d trafienia po %d%% obrażeń", "%d trafień po %d%% obrażeń") % [seeker_hits(level), roundi(SEEKER_DAMAGE * 100)]
 		"rapid_volley":
-			return "%d strzał po %d%% obrażeń" % [volley_arrows(level), roundi(VOLLEY_DAMAGE * 100)]
+			return Lang.n(volley_arrows(level), "%d strzała po %d%% obrażeń", "%d strzały po %d%% obrażeń", "%d strzał po %d%% obrażeń") % [volley_arrows(level), roundi(VOLLEY_DAMAGE * 100)]
 		"chain_lightning":
-			return "%d celów, %d%% obrażeń (każdy przeskok słabszy)" % [chain_targets(level), roundi(CHAIN_DAMAGE * 100)]
+			return Lang.n(chain_targets(level), "%d cel, %d%% obrażeń (każdy przeskok słabszy)", "%d cele, %d%% obrażeń (każdy przeskok słabszy)", "%d celów, %d%% obrażeń (każdy przeskok słabszy)") % [chain_targets(level), roundi(CHAIN_DAMAGE * 100)]
 		"thunder_wave":
-			return "Stożek %d°, zasięg %d, %d%% obrażeń" % [wave_half_angle(level) * 2, wave_radius(level), roundi(WAVE_DAMAGE * 100)]
+			return Lang.t("Stożek %d°, zasięg %d, %d%% obrażeń") % [wave_half_angle(level) * 2, wave_radius(level), roundi(WAVE_DAMAGE * 100)]
 		"flicker":
-			return "Skok i cięcie: %d%% obrażeń; wirujące Mgnienie: %d skoków (odnowienie %s s)" % [roundi(flicker_damage(level) * 100),
+			return Lang.n(whirl_flicker_jumps(level), "Skok i cięcie: %d%% obrażeń; wirujące Mgnienie: %d skok (odnowienie %s s)", "Skok i cięcie: %d%% obrażeń; wirujące Mgnienie: %d skoki (odnowienie %s s)", "Skok i cięcie: %d%% obrażeń; wirujące Mgnienie: %d skoków (odnowienie %s s)") % [roundi(flicker_damage(level) * 100),
 					whirl_flicker_jumps(level), _decimal(WHIRL_FLICKER_COOLDOWN, 0)]
 		"rend":
-			return "Cięcie %d%% obrażeń, krwawienie %d%% przez 3 s" % [roundi(rend_damage(level) * 100), roundi(rend_bleed(level) * 100)]
+			return Lang.t("Cięcie %d%% obrażeń, krwawienie %d%% przez 3 s") % [roundi(rend_damage(level) * 100), roundi(rend_bleed(level) * 100)]
 		"ground_slam":
-			return "Fala %d%% obrażeń, ogłuszenie %s s, odnowienie %s s" % [roundi(slam_damage(level) * 100),
+			return Lang.t("Fala %d%% obrażeń, ogłuszenie %s s, odnowienie %s s") % [roundi(slam_damage(level) * 100),
 					_decimal(slam_stun(level), 1), _decimal(SLAM_COOLDOWN, 0)]
 		"riposte":
-			return "Zasłona %s s, kontra %d%% obrażeń, odnowienie %s s" % [_decimal(RIPOSTE_TIME, 1),
+			return Lang.t("Zasłona %s s, kontra %d%% obrażeń, odnowienie %s s") % [_decimal(RIPOSTE_TIME, 1),
 					roundi(riposte_damage(level) * 100), _decimal(RIPOSTE_COOLDOWN, 0)]
 		"war_cry":
-			return "+%d%% obrażeń przez %s s, strach %s s, odnowienie %s s" % [roundi(cry_bonus(level) * 100),
+			return Lang.t("+%d%% obrażeń przez %s s, strach %s s, odnowienie %s s") % [roundi(cry_bonus(level) * 100),
 					_decimal(CRY_TIME, 0), _decimal(CRY_FEAR, 1), _decimal(CRY_COOLDOWN, 0)]
 		"spectral_blades":
-			return "%d ostrza po %d%% obrażeń przez %s s (wylot: %d%%)" % [BLADES_COUNT, roundi(blades_damage(level) * 100),
+			return Lang.n(BLADES_COUNT, "%d ostrze po %d%% obrażeń przez %s s (wylot: %d%%)", "%d ostrza po %d%% obrażeń przez %s s (wylot: %d%%)", "%d ostrzy po %d%% obrażeń przez %s s (wylot: %d%%)") % [BLADES_COUNT, roundi(blades_damage(level) * 100),
 					_decimal(BLADES_TIME, 0), roundi(blades_damage(level) * BLADES_LAUNCH * 100)]
 		"smoke_burst":
-			return "Wybuchy: %d%% / %d%% / %d%% obrażeń (rzędy 1-3), pełne ładowanie %s s" % [roundi(smoke_damage(level, 0) * 100),
+			return Lang.t("Wybuchy: %d%% / %d%% / %d%% obrażeń (rzędy 1-3), pełne ładowanie %s s") % [roundi(smoke_damage(level, 0) * 100),
 					roundi(smoke_damage(level, 1) * 100), roundi(smoke_damage(level, 2) * 100), _decimal(SMOKE_CHARGE_TIME * 3, 1)]
 		"power_shot":
-			return "%d%% obrażeń (napięta: %d%%), przebija %d wrogów" % [roundi(power_damage(level) * 100),
+			return Lang.n(power_pierce(level), "%d%% obrażeń (napięta: %d%%), przebija %d wroga", "%d%% obrażeń (napięta: %d%%), przebija %d wrogów", "%d%% obrażeń (napięta: %d%%), przebija %d wrogów") % [roundi(power_damage(level) * 100),
 					roundi(power_damage(level) * POWER_FULL_DAMAGE * 100), power_pierce(level)]
 		"arrow_rain":
-			return "%d%% obrażeń co %s s przez %s s, krąg %d" % [roundi(rain_damage(level) * 100), _decimal(RAIN_TICK, 2),
+			return Lang.t("%d%% obrażeń co %s s przez %s s, krąg %d") % [roundi(rain_damage(level) * 100), _decimal(RAIN_TICK, 2),
 					_decimal(RAIN_TIME, 0), RAIN_RADIUS]
 		"vault":
-			return "%d strzały po %d%% obrażeń, odnowienie %s s" % [VAULT_ARROWS, roundi(vault_damage(level) * 100), _decimal(VAULT_COOLDOWN, 0)]
+			return Lang.n(VAULT_ARROWS, "%d strzała po %d%% obrażeń, odnowienie %s s", "%d strzały po %d%% obrażeń, odnowienie %s s", "%d strzał po %d%% obrażeń, odnowienie %s s") % [VAULT_ARROWS, roundi(vault_damage(level) * 100), _decimal(VAULT_COOLDOWN, 0)]
 		"snare":
-			return "%d%% obrażeń, unieruchomienie %s s, do %d sideł naraz" % [roundi(snare_damage(level) * 100),
+			return Lang.n(SNARE_MAX, "%d%% obrażeń, unieruchomienie %s s, do %d sideł naraz", "%d%% obrażeń, unieruchomienie %s s, do %d sideł naraz", "%d%% obrażeń, unieruchomienie %s s, do %d sideł naraz") % [roundi(snare_damage(level) * 100),
 					_decimal(snare_time(level), 1), SNARE_MAX]
 		"falcon":
-			return "%d%% obrażeń co %s s przez %s s" % [roundi(falcon_damage(level) * 100), _decimal(FALCON_INTERVAL, 1), _decimal(FALCON_TIME, 0)]
+			return Lang.t("%d%% obrażeń co %s s przez %s s") % [roundi(falcon_damage(level) * 100), _decimal(FALCON_INTERVAL, 1), _decimal(FALCON_TIME, 0)]
 		"venom_arrows":
-			return "Trucizna: %d%% obrażeń strzały przez 3 s, działa %s s" % [roundi(venom_damage(level) * 100), _decimal(VENOM_TIME, 0)]
+			return Lang.t("Trucizna: %d%% obrażeń strzały przez 3 s, działa %s s") % [roundi(venom_damage(level) * 100), _decimal(VENOM_TIME, 0)]
 		"wind_arrow":
-			return "Stożek %d°, zasięg %d, %d%% obrażeń" % [WIND_HALF_ANGLE * 2, WIND_RANGE, roundi(wind_damage(level) * 100)]
+			return Lang.t("Stożek %d°, zasięg %d, %d%% obrażeń") % [WIND_HALF_ANGLE * 2, WIND_RANGE, roundi(wind_damage(level) * 100)]
 		"ballista":
-			return "%d%% obrażeń co %s s przez %s s" % [roundi(ballista_damage(level) * 100), _decimal(BALLISTA_INTERVAL, 1),
+			return Lang.t("%d%% obrażeń co %s s przez %s s") % [roundi(ballista_damage(level) * 100), _decimal(BALLISTA_INTERVAL, 1),
 					_decimal(BALLISTA_TIME, 0)]
 		"frost_lance":
-			return "%d%% obrażeń, przebija %d wrogów, spowolnienie %d%% na %s s" % [roundi(lance_damage(level) * 100), lance_pierce(level),
+			return Lang.n(lance_pierce(level), "%d%% obrażeń, przebija %d wroga, spowolnienie %d%% na %s s", "%d%% obrażeń, przebija %d wrogów, spowolnienie %d%% na %s s", "%d%% obrażeń, przebija %d wrogów, spowolnienie %d%% na %s s") % [roundi(lance_damage(level) * 100), lance_pierce(level),
 					roundi((1.0 - CHILL_FACTOR) * 100), _decimal(CHILL_TIME, 1)]
 		"blizzard":
-			return "%d%% obrażeń co %s s przez %s s, krąg %d" % [roundi(blizzard_damage(level) * 100), _decimal(BLIZZARD_TICK, 1),
+			return Lang.t("%d%% obrażeń co %s s przez %s s, krąg %d") % [roundi(blizzard_damage(level) * 100), _decimal(BLIZZARD_TICK, 1),
 					_decimal(BLIZZARD_TIME, 1), BLIZZARD_RADIUS]
 		"storm_call":
-			return "%d%% obrażeń za piorun co %s s przez %s s" % [roundi(storm_damage(level) * 100), _decimal(STORM_INTERVAL, 2),
+			return Lang.t("%d%% obrażeń za piorun co %s s przez %s s") % [roundi(storm_damage(level) * 100), _decimal(STORM_INTERVAL, 2),
 					_decimal(STORM_TIME, 0)]
 		"ball_lightning":
-			return "%d%% obrażeń co %s s, zasięg %d" % [roundi(orb_damage(level) * 100), _decimal(ORB_TICK, 1), ORB_RANGE]
+			return Lang.t("%d%% obrażeń co %s s, zasięg %d") % [roundi(orb_damage(level) * 100), _decimal(ORB_TICK, 1), ORB_RANGE]
 		"meteor":
-			return "Wybuch %d%% obrażeń, promień %d, podpalenie %d%% przez %s s" % [roundi(meteor_damage(level) * 100), METEOR_RADIUS,
+			return Lang.t("Wybuch %d%% obrażeń, promień %d, podpalenie %d%% przez %s s") % [roundi(meteor_damage(level) * 100), METEOR_RADIUS,
 					roundi(meteor_damage(level) * METEOR_BURN * 100), _decimal(BURN_TIME, 0)]
 		"blink":
-			return "Zasięg %d, odnowienie %s s" % [BLINK_RANGE, _decimal(BLINK_COOLDOWN, 0)]
+			return Lang.t("Zasięg %d, odnowienie %s s") % [BLINK_RANGE, _decimal(BLINK_COOLDOWN, 0)]
 		"mana_shield":
-			return "%d%% obrażeń zabiera mana przez %s s, odnowienie %s s" % [roundi(SHIELD_SHARE * 100), _decimal(SHIELD_TIME, 0),
+			return Lang.t("%d%% obrażeń zabiera mana przez %s s, odnowienie %s s") % [roundi(SHIELD_SHARE * 100), _decimal(SHIELD_TIME, 0),
 					_decimal(SHIELD_COOLDOWN, 0)]
 		"rune_stone":
-			return "+%d%% obrażeń magicznych i szybkości rzucania w kręgu, %s s" % [roundi(rune_bonus(level) * 100), _decimal(RUNE_TIME, 0)]
+			return Lang.t("+%d%% obrażeń magicznych i szybkości rzucania w kręgu, %s s") % [roundi(rune_bonus(level) * 100), _decimal(RUNE_TIME, 0)]
 	match DATA[id]["type"]:
 		"health_regen":
-			return "+%s zdrowia/s i %s%% maks. zdrowia/s" % [_decimal(0.4 * level, 1), _decimal(0.3 * level, 1)]
+			return Lang.t("+%s zdrowia/s i %s%% maks. zdrowia/s") % [_decimal(0.4 * level, 1), _decimal(0.3 * level, 1)]
 		"mana_regen":
-			return "+%s many/s i %s%% maks. many/s" % [_decimal(0.5 * level, 1), _decimal(0.4 * level, 1)]
+			return Lang.t("+%s many/s i %s%% maks. many/s") % [_decimal(0.5 * level, 1), _decimal(0.4 * level, 1)]
 	return ""
 
 
-## Liczba z polskim przecinkiem dziesiętnym, np. 0,25.
+## Liczba z przecinkiem dziesiętnym po polsku (0,25), z kropką w innych językach (0.25).
+static func decimal(value: float, decimals: int) -> String:
+	return _decimal(value, decimals)
+
+
 static func _decimal(value: float, decimals: int) -> String:
-	return String.num(value, decimals).replace(".", ",") if decimals > 0 else str(roundi(value))
+	if decimals <= 0:
+		return str(roundi(value))
+	var text := String.num(value, decimals)
+	return text.replace(".", ",") if Lang.is_polish() else text

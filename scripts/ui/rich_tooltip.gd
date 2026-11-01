@@ -49,6 +49,8 @@ func _panel(text: String) -> Control:
 
 func _label(text: String) -> RichTextLabel:
 	var label := RichTextLabel.new()
+	# tekst dymka jest już przetłumaczony (Lang.t przy składaniu) - etykieta nie tłumaczy go drugi raz
+	label.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	label.bbcode_enabled = true
 	label.fit_content = true
 	label.scroll_active = false

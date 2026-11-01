@@ -46,7 +46,7 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
-	box.add_child(UiStyle.title("Pomoc"))
+	box.add_child(UiStyle.title(Lang.t("Pomoc")))
 
 	var columns := HBoxContainer.new()
 	columns.add_theme_constant_override("separation", 10)
@@ -55,24 +55,24 @@ func _ready() -> void:
 	var controls := VBoxContainer.new()
 	controls.add_theme_constant_override("separation", 1)
 	columns.add_child(controls)
-	controls.add_child(UiStyle.label("Sterowanie", 8, UiStyle.TITLE_COLOR))
+	controls.add_child(UiStyle.label(Lang.t("Sterowanie"), 8, UiStyle.TITLE_COLOR))
 	var grid := GridContainer.new()
 	grid.columns = 2
 	grid.add_theme_constant_override("h_separation", 8)
 	grid.add_theme_constant_override("v_separation", 0)
 	controls.add_child(grid)
 	for entry: Array in CONTROLS:
-		grid.add_child(UiStyle.label(entry[0], 7, UiStyle.TITLE_COLOR))
-		grid.add_child(UiStyle.label(entry[1], 7, UiStyle.TEXT_COLOR))
+		grid.add_child(UiStyle.label(Lang.t(entry[0]), 7, UiStyle.TITLE_COLOR))
+		grid.add_child(UiStyle.label(Lang.t(entry[1]), 7, UiStyle.TEXT_COLOR))
 
 	columns.add_child(VSeparator.new())
 
 	var tips := VBoxContainer.new()
 	tips.add_theme_constant_override("separation", 2)
 	columns.add_child(tips)
-	tips.add_child(UiStyle.label("Wskazówki", 8, UiStyle.TITLE_COLOR))
+	tips.add_child(UiStyle.label(Lang.t("Wskazówki"), 8, UiStyle.TITLE_COLOR))
 	for tip: String in TIPS:
-		var label := UiStyle.label("• " + tip, 7, UiStyle.TEXT_COLOR)
+		var label := UiStyle.label("• " + Lang.t(tip), 7, UiStyle.TEXT_COLOR)
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		label.custom_minimum_size.x = 210
 		tips.add_child(label)

@@ -170,7 +170,7 @@ func _names() -> Array:
 		for traveler: Dictionary in _player.travelers.active():
 			names.append(traveler["name"])
 	if names.is_empty():
-		names = ["Wędrowiec"]
+		names = ["Wędrowiec"]  # tłumaczone przy pokazywaniu (tr nazwy sprzedawcy)
 	return names
 
 
@@ -179,9 +179,9 @@ func _names() -> Array:
 func buy_now(id: String, qty: int) -> String:
 	var cost := quote_buy(id, qty)
 	if cost < 0:
-		return "Za mało ofert sprzedaży."
+		return Lang.t("Za mało ofert sprzedaży.")
 	if _player.stats.gold < cost:
-		return "Za mało złota (%d zł)." % cost
+		return Lang.t("Za mało złota (%d zł).") % cost
 	_player.stats.add_gold(-cost)
 	_deliver(id, qty)
 	_take_fresh(id, qty)
@@ -193,10 +193,10 @@ func buy_now(id: String, qty: int) -> String:
 ## Sprzedaż od razu: `qty` sztuk z plecaka po kolejnych ofertach kupna, minus podatek.
 func sell_now(id: String, qty: int) -> String:
 	if _player.inventory.count_of(id) < qty:
-		return "Nie masz tyle w plecaku."
+		return Lang.t("Nie masz tyle w plecaku.")
 	var gain := quote_sell(id, qty)
 	if gain < 0:
-		return "Za mało ofert kupna."
+		return Lang.t("Za mało ofert kupna.")
 	_player.inventory.remove_item(id, qty)
 	_player.stats.add_gold(gain)
 	_push(id, qty, -1.0)
@@ -265,9 +265,9 @@ func _push(id: String, qty: int, sign: float) -> void:
 ## Wystawienie sprzedaży: towar z plecaka zostaje na rynku. "" albo powód odmowy.
 func place_sell(id: String, qty: int, price: int) -> String:
 	if qty <= 0 or price <= 0:
-		return "Podaj ilość i cenę."
+		return Lang.t("Podaj ilość i cenę.")
 	if _player.inventory.count_of(id) < qty:
-		return "Nie masz tyle w plecaku."
+		return Lang.t("Nie masz tyle w plecaku.")
 	_player.inventory.remove_item(id, qty)
 	orders.append({"kind": "sell", "id": id, "qty": qty, "left": qty, "price": price, "ready": 0})
 	changed.emit()
@@ -277,9 +277,9 @@ func place_sell(id: String, qty: int, price: int) -> String:
 ## Zamówienie kupna: złoto za całość zostaje na rynku.
 func place_buy(id: String, qty: int, price: int) -> String:
 	if qty <= 0 or price <= 0:
-		return "Podaj ilość i cenę."
+		return Lang.t("Podaj ilość i cenę.")
 	if _player.stats.gold < qty * price:
-		return "Za mało złota (%d zł)." % (qty * price)
+		return Lang.t("Za mało złota (%d zł).") % (qty * price)
 	_player.stats.add_gold(-qty * price)
 	orders.append({"kind": "buy", "id": id, "qty": qty, "left": qty, "price": price, "ready": 0})
 	changed.emit()
@@ -361,11 +361,11 @@ static func fair_price(id: String) -> int:
 func buy_listing(index: int) -> String:
 	var listing: Dictionary = listings[index]
 	if listing.get("mine", false):
-		return "To twoja oferta."
+		return Lang.t("To twoja oferta.")
 	if _player.stats.gold < int(listing["price"]):
-		return "Za mało złota."
+		return Lang.t("Za mało złota.")
 	if _player.inventory.add_item(listing["id"], 1) > 0:
-		return "Plecak jest pełny."
+		return Lang.t("Plecak jest pełny.")
 	_player.stats.add_gold(-int(listing["price"]))
 	listings.remove_at(index)
 	changed.emit()
@@ -376,9 +376,9 @@ func buy_listing(index: int) -> String:
 func list_item(index: int, price: int) -> String:
 	var slot: Dictionary = _player.inventory.slots[index]
 	if slot.is_empty() or price <= 0:
-		return "Wybierz przedmiot i cenę."
+		return Lang.t("Wybierz przedmiot i cenę.")
 	if not (Items.is_equippable(slot["id"]) or Gems.is_gem(slot["id"]) or Essences.is_essence(slot["id"])):
-		return "Tu wystawia się broń, zbroje, biżuterię i kamienie - towary sprzedasz w zakładce Towary."
+		return Lang.t("Tu wystawia się broń, zbroje, biżuterię i kamienie - towary sprzedasz w zakładce Towary.")
 	_player.inventory.take_one(index)
 	listings.append({"id": slot["id"], "enchant": int(slot.get("enchant", 0)), "price": price, "seller": "Ty", "mine": true})
 	changed.emit()
@@ -388,7 +388,7 @@ func list_item(index: int, price: int) -> String:
 func unlist(index: int) -> String:
 	var listing: Dictionary = listings[index]
 	if _player.inventory.add_item(listing["id"], 1, int(listing.get("enchant", 0))) > 0:
-		return "Plecak jest pełny."
+		return Lang.t("Plecak jest pełny.")
 	listings.remove_at(index)
 	changed.emit()
 	return ""

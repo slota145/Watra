@@ -485,7 +485,7 @@ func _die() -> void:
 		var xp := roundi(xp_reward * _player.stats.xp_multiplier() * Levels.xp_fraction(_player.stats.level, level)
 				* _player.travelers.party_xp_factor())
 		_player.stats.add_xp(xp)
-		DamageNumber.spawn_text(get_parent(), hurt_center() + Vector2(0, -8), "+%d exp" % xp, XP_COLOR, 8)
+		DamageNumber.spawn_text(get_parent(), hurt_center() + Vector2(0, -8), Lang.t("+%d exp") % xp, XP_COLOR, 8)
 	var tween := create_tween().set_parallel()
 	tween.tween_property(sprite, "scale", Vector2(1.3, 0.6), 0.15)
 	tween.tween_property(self, "modulate:a", 0.0, 0.3).set_delay(0.1)

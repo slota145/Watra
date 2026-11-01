@@ -31,11 +31,11 @@ func _ready() -> void:
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 4)
 	box.add_child(header)
-	_title = UiStyle.title("Mapa")
+	_title = UiStyle.title(Lang.t("Mapa"))
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	header.add_child(_title)
-	for tab: Array in [["Kraina", "zone"], ["Świat", "world"]]:
+	for tab: Array in [[Lang.t("Kraina"), "zone"], [Lang.t("Świat"), "world"]]:
 		var button := Button.new()
 		button.text = tab[0]
 		button.toggle_mode = true
@@ -54,16 +54,16 @@ func _ready() -> void:
 	legend.add_theme_constant_override("separation", 10)
 	for entry: Array in [
 		["Ty", MapView.PLAYER_COLOR],
-		["Gobliny", MapView.GOBLIN_COLOR],
-		["Wilki", Wolf.WOLF_COLOR],
-		["Zwierzyna", Animal.ANIMAL_COLOR],
-		["Żaboludzie", Frogman.FROG_COLOR],
-		["Boss", Color("c040ff")],
-		["Ogniska", Color("ff9a3c")],
+		[Lang.t("Gobliny"), MapView.GOBLIN_COLOR],
+		[Lang.t("Wilki"), Wolf.WOLF_COLOR],
+		[Lang.t("Zwierzyna"), Animal.ANIMAL_COLOR],
+		[Lang.t("Żaboludzie"), Frogman.FROG_COLOR],
+		[Lang.t("Boss"), Color("c040ff")],
+		[Lang.t("Ogniska"), Color("ff9a3c")],
 	]:
 		legend.add_child(UiStyle.label("■ " + entry[0], 8, entry[1]))
 	box.add_child(legend)
-	var hint := UiStyle.label("Kapliczka - kliknij, by się do niej przenieść", 7, Color(0.6, 0.9, 1.0))
+	var hint := UiStyle.label(Lang.t("Kapliczka - kliknij, by się do niej przenieść"), 7, Color(0.6, 0.9, 1.0))
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(hint)
 
@@ -92,7 +92,7 @@ func refresh() -> void:
 	_view.setup(_seed, _zone, _texture, _player, _markers, _shrines)
 	# z lochu nie widać mapy świata (loch leży poza nią)
 	_tabs[1].visible = _zone != Zones.DUNGEON
-	_title.text = "Mapa - " + (Zones.zone_name(_zone) if _view.mode == "zone" else "Świat")
+	_title.text = Lang.t("Mapa - %s") % (Zones.zone_name(_zone) if _view.mode == "zone" else Lang.t("Świat"))
 	for i in _tabs.size():
 		_tabs[i].set_pressed_no_signal(["zone", "world"][i] == _view.mode)
 
@@ -113,7 +113,7 @@ func show_area(area: Rect2, label: String) -> void:
 	if _zone != "forest":
 		set_mode("world")
 	_view.highlight = area
-	_view.highlight_label = label
+	_view.highlight_label = Lang.t(label)
 
 
 ## Trwające wydarzenie w świecie (WorldEvents) na mapie: kraina, miejsce w niej (INF - środek krainy), tytuł.
@@ -121,7 +121,7 @@ func set_event(zone: String, point: Vector2, title: String, color: Color) -> voi
 	if _view != null:
 		_view.event_zone = zone
 		_view.event_point = point
-		_view.event_title = title
+		_view.event_title = Lang.t(title)
 		_view.event_color = color
 
 

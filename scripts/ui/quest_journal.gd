@@ -30,7 +30,7 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
-	box.add_child(UiStyle.title("Dziennik zadań"))
+	box.add_child(UiStyle.title(tr("Dziennik zadań")))
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size.y = 190
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -39,7 +39,7 @@ func _ready() -> void:
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 4)
 	scroll.add_child(_list)
-	var hint := UiStyle.label("Oko - śledzenie pod minimapą (maks. %d)   •   tytuł - pokaż na mapie" % Quests.MAX_TRACKED, 7, UiStyle.DIM_COLOR)
+	var hint := UiStyle.label(tr("Oko - śledzenie pod minimapą (maks. %d)   •   tytuł - pokaż na mapie") % Quests.MAX_TRACKED, 7, UiStyle.DIM_COLOR)
 	box.add_child(hint)
 
 
@@ -72,11 +72,11 @@ func _refresh() -> void:
 		if ids.is_empty():
 			continue
 		any = true
-		_list.add_child(UiStyle.label(section[1], 8, section[2]))
+		_list.add_child(UiStyle.label(tr(section[1]), 8, section[2]))
 		for id in ids:
 			_list.add_child(_entry(id, section[0], section[2]))
 	if not any:
-		var empty := UiStyle.label("Nie masz jeszcze żadnych zadań.\nPoszukaj w osadzie postaci ze złotym \"!\" nad głową.", 8, UiStyle.DIM_COLOR)
+		var empty := UiStyle.label(tr("Nie masz jeszcze żadnych zadań.\nPoszukaj w osadzie postaci ze złotym \"!\" nad głową."), 8, UiStyle.DIM_COLOR)
 		_list.add_child(empty)
 
 
@@ -95,7 +95,7 @@ func _entry(id: String, state: String, color: Color) -> PanelContainer:
 		UiStyle.fit_button_icon(track, 12)
 		track.flat = true
 		track.focus_mode = Control.FOCUS_NONE
-		track.tooltip_text = "Przestań śledzić" if tracked else "Śledź pod minimapą"
+		track.tooltip_text = tr("Przestań śledzić") if tracked else tr("Śledź pod minimapą")
 		track.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		track.pressed.connect(_toggle_track.bind(id))
 		row.add_child(track)
@@ -105,26 +105,26 @@ func _entry(id: String, state: String, color: Color) -> PanelContainer:
 	lines.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(lines)
 	var title := Button.new()
-	title.text = quest["title"]
+	title.text = Quests.text(quest, "title")
 	title.flat = true
 	title.focus_mode = Control.FOCUS_NONE
 	title.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	title.add_theme_color_override("font_color", MainQuests.COLOR if MainQuests.is_main(id) and state != Quests.STATE_DONE else color)
 	if MainQuests.is_main(id):
-		title.text = "★ " + quest["title"]
+		title.text = "★ " + Quests.text(quest, "title")
 	title.add_theme_color_override("font_hover_color", Color.WHITE)
 	title.add_theme_font_size_override("font_size", 9)
-	title.tooltip_text = "Pokaż obszar zadania na mapie"
+	title.tooltip_text = tr("Pokaż obszar zadania na mapie")
 	title.pressed.connect(area_requested.emit.bind(id))
 	lines.add_child(title)
 	var details := [
-		"Zleceniodawca: " + quest["giver"],
-		"Postęp: " + (MainQuests.progress_text(_player, id) if MainQuests.is_main(id)
-				else "%s %d/%d" % [quest["target_name"], _player.quests.progress_of(id), quest.get("count", 1)]),
-		"Nagroda: " + Quests.reward_text(id),
+		tr("Zleceniodawca: %s") % Quests.person(quest["giver"]),
+		tr("Postęp: %s") % (MainQuests.progress_text(_player, id) if MainQuests.is_main(id)
+				else "%s %d/%d" % [Quests.text(quest, "target_name"), _player.quests.progress_of(id), quest.get("count", 1)]),
+		tr("Nagroda: %s") % Quests.reward_text(id),
 	]
 	if state == Quests.STATE_READY:
-		details[1] = "Wykonane! Wróć do: " + Quests.receiver(id)
+		details[1] = tr("Wykonane! Wróć do: %s") % Quests.person(Quests.receiver(id))
 	elif state == Quests.STATE_DONE:
 		details.remove_at(1)
 	for line: String in details:
@@ -135,4 +135,4 @@ func _entry(id: String, state: String, color: Color) -> PanelContainer:
 func _toggle_track(id: String) -> void:
 	if not _player.quests.toggle_track(id):
 		DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -10),
-				"Można śledzić najwyżej %d zadania" % Quests.MAX_TRACKED, Color(1, 0.5, 0.4), 8)
+				tr("Można śledzić najwyżej %d zadania") % Quests.MAX_TRACKED, Color(1, 0.5, 0.4), 8)

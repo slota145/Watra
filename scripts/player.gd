@@ -359,7 +359,7 @@ func _press_slot(index: int) -> void:
 			use_item(id)
 		return
 	if id != "" and id != Hotbar.ATTACK and Skills.get_data(id)["weapon"] != stats.weapon_type():
-		_hint("%s działa z bronią: %s" % [Skills.get_data(id)["name"], Skills.WEAPON_NAMES[Skills.get_data(id)["weapon"]].to_lower()])
+		_hint(tr("%s działa z bronią: %s") % [Skills.name_of(id), Skills.weapon_name(Skills.get_data(id)["weapon"]).to_lower()])
 		return
 	if id == Hotbar.ATTACK:
 		if combo_ready():
@@ -491,7 +491,7 @@ func identify(index: int, whole := false) -> int:
 		if current.is_empty() or current["id"] != id:
 			break
 		if current["count"] > 1 and not inventory.slots.any(func(s: Dictionary) -> bool: return s.is_empty()):
-			DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -10), "Plecak pełny", Color(1, 0.5, 0.5), 8)
+			DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -10), tr("Plecak pełny"), Color(1, 0.5, 0.5), 8)
 			break
 		inventory.take_one(index)
 		var item := Unidentified.identify(id)
@@ -663,7 +663,7 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 		return
 	# unik z przedmiotów: cios chybia, a chwilowa nietykalność jak po trafieniu chroni przed resztą zamachu
 	if randf() < stats.dodge_chance():
-		DamageNumber.spawn_text(get_parent(), body_center(), "Unik", DODGE_COLOR, 9)
+		DamageNumber.spawn_text(get_parent(), body_center(), tr("Unik"), DODGE_COLOR, 9)
 		_invulnerable_timer = invulnerability_time
 		return
 	# Riposta: zasłona przyjmuje cios i odpowiada kontrą
@@ -673,7 +673,7 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 	# Tarcza Many: część ciosu (albo cały) zabiera mana
 	amount = spell_skills.absorb(amount)
 	if amount <= 0:
-		DamageNumber.spawn_text(get_parent(), body_center(), "Tarcza", Color(0.6, 0.8, 1.0), 9)
+		DamageNumber.spawn_text(get_parent(), body_center(), tr("Tarcza"), Color(0.6, 0.8, 1.0), 9)
 		_invulnerable_timer = invulnerability_time
 		return
 	# Pancerz z Łusek Czerwia może pochłonąć cios zakopaniem się w ziemi
@@ -699,21 +699,21 @@ func use_item(id: String) -> bool:
 		return false
 	var text_pos := body_center() + Vector2(0, -10)
 	if inventory.count_of(id) == 0:
-		DamageNumber.spawn_text(get_parent(), text_pos, "Brak: %s" % Items.get_data(id)["name"], Color(1, 0.5, 0.5), 8)
+		DamageNumber.spawn_text(get_parent(), text_pos, tr("Brak: %s") % Lang.t(Items.get_data(id)["name"]), Color(1, 0.5, 0.5), 8)
 		return false
 	if effect.has("health") and health >= stats.max_health():
-		DamageNumber.spawn_text(get_parent(), text_pos, "Pełne zdrowie", Color(0.8, 0.8, 0.85), 8)
+		DamageNumber.spawn_text(get_parent(), text_pos, tr("Pełne zdrowie"), Color(0.8, 0.8, 0.85), 8)
 		return false
 	if effect.has("mana") and mana >= stats.max_mana():
-		DamageNumber.spawn_text(get_parent(), text_pos, "Pełna mana", Color(0.8, 0.8, 0.85), 8)
+		DamageNumber.spawn_text(get_parent(), text_pos, tr("Pełna mana"), Color(0.8, 0.8, 0.85), 8)
 		return false
 
 	if effect.has("summon"):
 		var world := get_tree().get_first_node_in_group("world")
-		var refusal: String = world.summon_boss(effect["summon"]) if world != null else "Tu nie da się nikogo przyzwać"
+		var refusal: String = world.summon_boss(effect["summon"]) if world != null else tr("Tu nie da się nikogo przyzwać")
 		if refusal != "":
 			Sfx.play("ui_error")
-			DamageNumber.spawn_text(get_parent(), text_pos, refusal, Color(1, 0.5, 0.5), 8)
+			DamageNumber.spawn_text(get_parent(), text_pos, Lang.t(refusal), Color(1, 0.5, 0.5), 8)
 			return false
 		inventory.remove_item(id, 1)
 		return true
@@ -728,7 +728,7 @@ func use_item(id: String) -> bool:
 		inventory.remove_item(id, 1)
 		boons.grant(effect["boon"])
 		Sfx.play("potion")
-		DamageNumber.spawn_text(get_parent(), text_pos, Boons.DEFS[effect["boon"]]["name"], Color(0.55, 0.95, 0.5), 8)
+		DamageNumber.spawn_text(get_parent(), text_pos, Boons.name_of(effect["boon"]), Color(0.55, 0.95, 0.5), 8)
 		_flash(Color(0.5, 1.0, 0.5))
 		return true
 
@@ -737,7 +737,7 @@ func use_item(id: String) -> bool:
 	if not saved:
 		inventory.remove_item(id, 1)
 	else:
-		DamageNumber.spawn_text(get_parent(), text_pos + Vector2(0, -10), "Mikstura ocalała", Color(0.6, 1.0, 0.6), 8)
+		DamageNumber.spawn_text(get_parent(), text_pos + Vector2(0, -10), tr("Mikstura ocalała"), Color(0.6, 1.0, 0.6), 8)
 	Sfx.play("potion")
 	# mikstury leczą stałą wartość i procent maksimum - nie słabną z poziomem postaci; pasy wzmacniają (siła mikstur)
 	var potion := stats.potion_multiplier()
@@ -745,13 +745,13 @@ func use_item(id: String) -> bool:
 		var amount := roundi((int(effect["health"]) + float(effect.get("health_percent", 0.0)) * stats.max_health()) * potion)
 		var healed := mini(amount, stats.max_health() - health)
 		health += healed
-		DamageNumber.spawn_text(get_parent(), text_pos, "+%d HP" % healed, Color(0.5, 1, 0.5))
+		DamageNumber.spawn_text(get_parent(), text_pos, tr("+%d HP") % healed, Color(0.5, 1, 0.5))
 		_flash(Color(0.4, 1, 0.4))
 	if effect.has("mana"):
 		var amount := (float(effect["mana"]) + float(effect.get("mana_percent", 0.0)) * stats.max_mana()) * potion
 		var restored := minf(amount, stats.max_mana() - mana)
 		mana += restored
-		DamageNumber.spawn_text(get_parent(), text_pos, "+%d many" % roundi(restored), Color(0.5, 0.7, 1))
+		DamageNumber.spawn_text(get_parent(), text_pos, tr("+%d many") % roundi(restored), Color(0.5, 0.7, 1))
 		_flash(Color(0.4, 0.6, 1))
 	_emit_resources()
 	return true
@@ -779,7 +779,7 @@ func equip_bag(index: int) -> void:
 		return
 	var free := bags.find("")
 	if free < 0:
-		DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -10), "Wszystkie miejsca na torby zajęte!", Color(1, 0.4, 0.4), 8)
+		DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -10), tr("Wszystkie miejsca na torby zajęte!"), Color(1, 0.4, 0.4), 8)
 		return
 	inventory.take_one(index)
 	bags[free] = id
@@ -800,7 +800,7 @@ func unequip_bag(bag_index: int) -> void:
 			has_room = true
 			break
 	if not inventory.is_empty_from(new_size) or not has_room:
-		DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -10), "Najpierw zrób miejsce w plecaku!", Color(1, 0.4, 0.4), 8)
+		DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -10), tr("Najpierw zrób miejsce w plecaku!"), Color(1, 0.4, 0.4), 8)
 		Sfx.play("ui_error")
 		return
 	bags[bag_index] = ""
@@ -825,7 +825,7 @@ func unequip(slot: String, index := -1) -> void:
 		return
 	var free := index >= 0 and index < inventory.slots.size() and inventory.slots[index].is_empty()
 	if not free and not inventory.can_add(id, 1):
-		DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -10), "Ekwipunek pełny!", Color(1, 0.4, 0.4), 8)
+		DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -10), tr("Ekwipunek pełny!"), Color(1, 0.4, 0.4), 8)
 		return
 	_cancel_attack()
 	var removed := equipment.unequip(slot)
@@ -1095,12 +1095,12 @@ func _finish_help(id: String) -> void:
 	if not quests.finish_bounty(id, self):
 		return
 	Sfx.play("quest_done")
-	DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -14), "+%d zł  +%d exp" % [quest["gold"], quest["xp"]],
+	DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -14), tr("+%d zł  +%d exp") % [quest["gold"], quest["xp"]],
 			Color(1.0, 0.85, 0.3), 10)
 	for node in get_tree().get_nodes_in_group("travelers"):
 		if node.data.get("name", "") == quest.get("poster", ""):
-			node.say(["Dzięki, bez ciebie byśmy nie dali rady!", "Dobra robota! Należy ci się nagroda.",
-					"Świetnie się z tobą walczy. Dziękujemy!"].pick_random())
+			node.say([tr("Dzięki, bez ciebie byśmy nie dali rady!"), tr("Dobra robota! Należy ci się nagroda."),
+					tr("Świetnie się z tobą walczy. Dziękujemy!")].pick_random())
 
 
 func _on_quest_done(id: String) -> void:
@@ -1187,7 +1187,7 @@ func _on_leveled_up(new_level: int) -> void:
 		health = stats.max_health()
 		mana = stats.max_mana()
 		_emit_resources()
-	DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -14), "Poziom %d!" % new_level, LEVEL_UP_COLOR, 12)
+	DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -14), tr("Poziom %d!") % new_level, LEVEL_UP_COLOR, 12)
 	Sfx.play("level_up")
 	_flash(LEVEL_UP_COLOR)
 
@@ -1372,14 +1372,14 @@ func _process_skill(delta: float) -> void:
 	if not _skill_held or is_dashing() or _harvest_target != null or _lunge_time > 0.0:
 		return
 	if id == "":
-		_hint("Odblokuj umiejętność tej broni (K)")
+		_hint(tr("Odblokuj umiejętność tej broni (K)"))
 		return
 	match id:
 		"whirlwind":
 			if mana >= Skills.WHIRLWIND_MANA_PER_SECOND * 0.3:
 				_start_whirl()
 			else:
-				_hint("Za mało many")
+				_hint(tr("Za mało many"))
 		"multishot":
 			if not skill_ready() or is_attacking():
 				return
@@ -1390,7 +1390,7 @@ func _process_skill(delta: float) -> void:
 					combo_used()
 				_cast(id, 0.0, combo)
 			else:
-				_hint("Za mało many")
+				_hint(tr("Za mało many"))
 		"fireball":
 			if not skill_ready() or is_attacking():
 				return
@@ -1402,7 +1402,7 @@ func _process_skill(delta: float) -> void:
 				else:
 					_start_fireball_charge()
 			else:
-				_hint("Za mało many")
+				_hint(tr("Za mało many"))
 
 
 func is_charging_fireball() -> bool:
@@ -1443,7 +1443,7 @@ func _update_fireball_charge(delta: float, id: String) -> void:
 		else:
 			# bez many kula przestaje rosnąć, ale wciąż można ją rzucić
 			_charge_sound.stream_paused = true
-			_hint("Za mało many")
+			_hint(tr("Za mało many"))
 	# kula w dłoniach: rośnie, pulsuje, a po pełnym naładowaniu nagle się powiększa
 	var pulse := 1.0 + (0.1 if _fireball_full else 0.05) * sin(_fireball_time * (22.0 if _fireball_full else 14.0))
 	var grow := lerpf(0.35, 1.0, _fireball_charge) * (1.45 if _fireball_full else 1.0)
@@ -1685,7 +1685,7 @@ func _hint(text: String) -> void:
 	if _hint_cooldown > 0.0:
 		return
 	_hint_cooldown = 1.5
-	DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -12), text, Color(0.7, 0.8, 1.0), 8)
+	DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -12), Lang.t(text), Color(0.7, 0.8, 1.0), 8)
 
 
 ## Tekstura broni w ręku zależy od założonej broni (bez broni - pięści).
@@ -1756,7 +1756,7 @@ func _strike_blocked() -> bool:
 func _use_strike() -> void:
 	var id := skills.strike_for(stats.weapon_type())
 	if id == "":
-		_hint("Odblokuj uderzenie tej broni (K)")
+		_hint(tr("Odblokuj uderzenie tej broni (K)"))
 		return
 	if _strike_blocked() or not strike_ready():
 		return
@@ -1767,7 +1767,7 @@ func _use_strike() -> void:
 		cost = 0.0
 		combo_used()
 	if not spend_mana(cost):
-		_hint("Za mało many")
+		_hint(tr("Za mało many"))
 		return
 	var level := skills.level_of(id)
 	match id:
@@ -1795,7 +1795,7 @@ func _use_combo() -> void:
 		return
 	var cost: float = {"crescent": Skills.CRESCENT_MANA, "rapid_volley": Skills.VOLLEY_MANA, "thunder_wave": Skills.WAVE_MANA}[id]
 	if not spend_mana(cost):
-		_hint("Za mało many")
+		_hint(tr("Za mało many"))
 		return
 	_combo_window = 0.0
 	var level := skills.level_of(id)
@@ -1829,7 +1829,7 @@ func confuse(seconds: float) -> void:
 	if is_dead:
 		return
 	_confused_time = maxf(_confused_time, seconds)
-	DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -16), "Oszołomienie!", Color(1.0, 0.8, 0.35), 9)
+	DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -16), tr("Oszołomienie!"), Color(1.0, 0.8, 0.35), 9)
 
 
 func apply_slow(factor: float, duration: float) -> void:

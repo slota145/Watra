@@ -72,7 +72,8 @@ const POOLS := {
 	"necklace": ["health", "mana", "damage", "strength", "dexterity", "intelligence", "vitality", "armor",
 			"damage_percent", "crit_damage", "cooldown_reduction", "health_regen", "gold_find", "xp_gain", "area"],
 }
-## Dopisek do nazwy (dopełniacz - pasuje do każdego rodzaju przedmiotu).
+## Dopisek do nazwy (dopełniacz - pasuje do każdego rodzaju przedmiotu). Tłumaczenie dopisku zawiera przyimek
+## ("of the Lynx"), bo nazwa to "<baza> <dopiski>" (compose_name).
 const SUFFIXES := {
 	"damage": "Rzezi", "attack_speed": "Wiatru", "strength": "Niedźwiedzia", "dexterity": "Rysia",
 	"intelligence": "Sowy", "vitality": "Tura", "health": "Dębu", "mana": "Gwiazd", "cast_speed": "Zaklinacza", "physical_damage": "Stali", "spell_damage": "Run",
@@ -199,11 +200,8 @@ static func generate(base: String, quality: String, item_level: int) -> String:
 		var step := _step(stat)
 		affixes[stat] = snappedf(randf_range(span[0], span[1]), step) if step > 0.0 else randi_range(span[0], span[1])
 		tiers[stat] = tier
-	var item_name: String = data["name"]
-	if quality != LEGENDARY and not affixes.is_empty():
-		var names: Array = affixes.keys().slice(0, 2).map(func(stat: String) -> String: return SUFFIXES[stat])
-		item_name = "%s %s" % [item_name, " i ".join(names)]
-	var recipe := {"base": base, "quality": quality, "level": item_level, "affixes": affixes, "tiers": tiers, "name": item_name}
+	var recipe := {"base": base, "quality": quality, "level": item_level, "affixes": affixes, "tiers": tiers,
+			"name_stats": affixes.keys().slice(0, 2) if quality != LEGENDARY else []}
 	# po zadaniu jubilera magiczne i rzadkie przedmioty czasem mają gniazdo na kamień szlachetny
 	if Gems.unlocked and quality in [MAGIC, RARE] and randf() < Gems.SOCKET_CHANCE:
 		recipe["sockets"] = [{}]
@@ -262,7 +260,8 @@ static func register(recipe: Dictionary, id := "") -> String:
 	item["tiers"] = tiers
 	item["item_level"] = item_level
 	item["rarity"] = recipe["quality"]
-	item["name"] = recipe["name"]
+	item["name"] = compose_name(recipe)
+	item["name_lang"] = TranslationServer.get_locale()
 	item["base"] = base
 	item["recipe"] = recipe
 	# gniazda na kamienie szlachetne (Gems): premie osadzonych kamieni liczą się osobno (Items.stats_of)
@@ -288,6 +287,37 @@ static func register(recipe: Dictionary, id := "") -> String:
 	item["sell_price"] = sell_value(recipe["quality"], item_level)
 	Items.generated[id] = item
 	return id
+
+
+## Premie, od których pochodzą dopiski nazwy (pierwsze dwie wylosowane - "name_stats" w przepisie). Starsze
+## zapisy trzymały gotową polską nazwę - wtedy dopiski odczytuje się z niej.
+static func name_stats(recipe: Dictionary) -> Array:
+	if recipe.has("name_stats"):
+		return recipe["name_stats"]
+	var stats := []
+	var old: String = recipe.get("name", "")
+	var base_name: String = Items.get_data(recipe.get("base", "")).get("name", "")
+	if recipe.get("quality", "") != LEGENDARY and base_name != "" and old.begins_with(base_name):
+		for piece: String in old.substr(base_name.length()).split(" i ", false):
+			var stat: Variant = SUFFIXES.find_key(piece.strip_edges())
+			if stat != null:
+				stats.append(stat)
+	recipe["name_stats"] = stats
+	recipe.erase("name")
+	return stats
+
+
+## Nazwa przedmiotu z przepisu w obecnym języku: baza + dopiski premii (np. "Stalowy miecz Rysia i Sowy");
+## legendy - nazwa legendy. Zapis gry nie przechowuje nazwy, tylko przepis.
+static func compose_name(recipe: Dictionary) -> String:
+	var base_name := Lang.t(Items.get_data(recipe.get("base", "")).get("name", ""))
+	if recipe.get("quality", "") == LEGENDARY:
+		return base_name
+	var suffixes := []
+	for stat: String in name_stats(recipe):
+		if SUFFIXES.has(stat):
+			suffixes.append(Lang.t(SUFFIXES[stat]))
+	return base_name if suffixes.is_empty() else "%s %s" % [base_name, Lang.join(suffixes)]
 
 
 ## Przekuwanie u kowala (warsztat płatnerza): jedna losowa premia przedmiotu losowana od nowa (nowy tier

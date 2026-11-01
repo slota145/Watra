@@ -58,6 +58,8 @@ var vsync := true
 var screen_shake := 1.0
 ## Łup magiczny i rzadki wypada niezidentyfikowany (Unidentified) - opcja rozgrywki, domyślnie wyłączona.
 var unidentified_loot := false
+## Język gry (Lang.LANGUAGES), zapisany w user://settings.cfg.
+var language := Lang.DEFAULT
 
 
 func _load_display_settings() -> void:
@@ -67,6 +69,8 @@ func _load_display_settings() -> void:
 		vsync = bool(config.get_value("display", "vsync", vsync))
 		screen_shake = clampf(float(config.get_value("display", "screen_shake", screen_shake)), 0.0, 1.0)
 		unidentified_loot = bool(config.get_value("gameplay", "unidentified_loot", unidentified_loot))
+		language = str(config.get_value("gameplay", "language", language))
+	Lang.set_language(language)
 	Unidentified.enabled = unidentified_loot
 	_apply_display()
 
@@ -88,6 +92,7 @@ func _save_display_settings() -> void:
 	config.set_value("display", "vsync", vsync)
 	config.set_value("display", "screen_shake", screen_shake)
 	config.set_value("gameplay", "unidentified_loot", unidentified_loot)
+	config.set_value("gameplay", "language", language)
 	config.save(SETTINGS_PATH)
 
 
@@ -106,6 +111,13 @@ func set_vsync(value: bool) -> void:
 func set_unidentified_loot(value: bool) -> void:
 	unidentified_loot = value
 	Unidentified.enabled = value
+	_save_display_settings()
+
+
+## Zmienia język gry. Napisy składane w kodzie zmieniają się przy kolejnym otwarciu okna albo wczytaniu gry.
+func set_language(code: String) -> void:
+	language = code if Lang.LANGUAGES.has(code) else Lang.DEFAULT
+	Lang.set_language(language)
 	_save_display_settings()
 
 
@@ -316,13 +328,13 @@ func default_save_name(data: Dictionary) -> String:
 	var player: Dictionary = data.get("player", {})
 	var hero_id := str(player.get("hero", hero))
 	var level := int(player.get("stats", {}).get("level", 1))
-	return "%s - %s, poz. %d" % [HeroRig.NAMES.get(hero_id, hero_id.capitalize()), Zones.zone_name(str(data.get("zone", "forest"))), level]
+	return Lang.t("%s - %s, poz. %d") % [HeroRig.NAMES.get(hero_id, hero_id.capitalize()), Zones.zone_name(str(data.get("zone", "forest"))), level]
 
 
 ## Krótki opis zapisu, np. "Poziom 3  •  Gobliński Las  •  2026-10-25 20:15".
 func describe_save(meta: Dictionary) -> String:
 	var date := str(meta.get("saved_at", "")).substr(0, 16)
-	return "Poziom %d  •  %s  •  %s" % [int(meta.get("level", 1)), Zones.zone_name(str(meta.get("zone", "forest"))), date]
+	return Lang.t("Poziom %d  •  %s  •  %s") % [int(meta.get("level", 1)), Zones.zone_name(str(meta.get("zone", "forest"))), date]
 
 
 func _slot_path(slot: String, ext: String) -> String:
@@ -341,7 +353,7 @@ func _migrate_legacy_save() -> void:
 	saves_dir = SAVES_DIR
 	var data: Dictionary = parsed
 	var saved_at := str(data.get("saved_at", ""))
-	save_game(data, "Stary zapis", LEGACY_SLOT)
+	save_game(data, Lang.t("Stary zapis"), LEGACY_SLOT)
 	# zachowujemy pierwotną datę zapisu
 	var meta_path := _slot_path(LEGACY_SLOT, "meta.json")
 	var meta: Variant = JSON.parse_string(FileAccess.get_file_as_string(meta_path))

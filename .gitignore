@@ -5,3 +5,6 @@
 # Python (generatory grafik w tools/)
 __pycache__/
 *.pyc
+
+# Tłumaczenia - Godot tworzy je z translations/teksty.csv przy imporcie
+translations/*.translation

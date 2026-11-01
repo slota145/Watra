@@ -29,12 +29,18 @@ const SHRINES := {
 const DUNGEON := "dungeon"
 
 
+## Nazwa krainy w obecnym języku.
 static func zone_name(zone: String) -> String:
 	if zone == DUNGEON:
-		return Dungeons.NAME
+		return Lang.t(Dungeons.NAME)
 	if zone == "world":
-		return "cały świat (wydarzenie)"
-	return DATA.get(zone, {}).get("name", zone)
+		return Lang.t("cały świat (wydarzenie)")
+	return Lang.t(DATA.get(zone, {}).get("name", zone))
+
+
+## Nazwa kapliczki w obecnym języku.
+static func shrine_name(id: String) -> String:
+	return Lang.t(SHRINES.get(id, {}).get("name", id))
 
 
 static func size_of(zone: String) -> Vector2i:
