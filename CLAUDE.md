@@ -112,6 +112,9 @@ efekt w „My effects” autora na pixellab.ai). Jego pliki też się nie pobier
 ## Konwencje
 
 - Komentarze, nazwy w interfejsie i opisy commitów piszemy po polsku.
+- Napisy dla gracza od razu gotowe do tłumaczenia (zasady w komentarzu `scripts/lang.gd`): `Lang.t("…")` albo `tr("…")`,
+  zdanie z liczbą jako jeden wzór (`Lang.t("Poziom %d") % lvl`), odmiana - `Lang.n`, stałe po polsku tłumaczone
+  przy pokazywaniu, zapis gry trzyma identyfikatory, a nie gotowe nazwy. Po dodaniu napisów: `python tools/texts.py`.
 - Opisy skryptów i funkcji dajemy w komentarzach `##`, na początku pliku zwięźle wyjaśniamy, co skrypt robi.
 - Wcięcia tabulatorami, typowanie statyczne (`var x := …`, `-> void`).
 - Pliki `.uid` commitujemy razem ze skryptami.
@@ -636,13 +639,16 @@ Oba systemy zależą od gildii poszukiwaczy przygód w Ostoi (budowla `guild` w 
 
 ### Tłumaczenie na angielski
 
-- [ ] **Krok 1: przygotowanie gry do tłumaczeń** (zaplanowane jako następne zadanie po efektach łuku i księgi magii):
-  wbudowane tłumaczenia Godota (plik CSV „klucz / pl / en”, `tr()`), wybór języka w Ustawieniach
-  (`user://settings.cfg`), owinięcie około 2400 napisów (około 15 tys. słów, 87 plików w `scripts/`) - nazwy
-  i opisy przedmiotów, umiejętności, zadań, dialogi, okna, hasła podróżników; przejrzenie miejsc, gdzie zdania
-  składa się z kawałków (polska odmiana liczebników - „3 ostrza / 5 ostrzy”, imiona), oraz sprawdzenie,
-  czy zapisy gry nie przechowują nazw jako tekstu (np. nazwy wylosowanych przedmiotów). Od tego momentu nowe teksty
-  pisać od razu gotowe do tłumaczenia.
+- [x] **Krok 1: przygotowanie gry do tłumaczeń** (`scripts/lang.gd` - `Lang.t`, `Lang.n`, `Lang.join`; plik
+  `translations/teksty.csv` - kolumny keys (polski tekst), en, _gdzie; odświeża go `python tools/texts.py`, gotowe
+  tłumaczenia zostają; `locale/fallback` = pl, więc brak tłumaczenia pokazuje polski tekst): wybór języka w Ustawieniach
+  (`Game.language` w `user://settings.cfg`, menu główne przebudowuje się po zmianie), około 2640 napisów przechodzi przez
+  tłumaczenie, zdania z liczbami i imionami jako całe wzory, odmiana liczebników, nazwy przedmiotów z łupu składane przy
+  pokazywaniu (`Loot.compose_name`, `name_stats` w przepisie, starsze zapisy - `Loot.name_stats` z dawnej nazwy;
+  po zmianie języka przedmiot rejestruje się od nowa - `Items._retranslate`), zlecenia i prośby drużyny zapisują wzory
+  z danymi (`Quests.resolve`, `Quests.text`), tytuły wydarzeń - `WorldEvents.title_of`. Sprawdzanie pominiętych napisów:
+  `TranslationServer.pseudolocalization_enabled = true` (przetłumaczony tekst ma nawiasy i akcenty). Testy:
+  `tests/test_lang.gd`, `tests/test_item_names.gd`.
 - [ ] Krok 2: samo tłumaczenie (Claude ze słowniczkiem nazw, autor czyta i poprawia). Zasady nazewnictwa: imiona
   bogów i postaci zostają (Perun, Weles, Marzanna, Swaróg, Mokosz, Wszebor, Dobromir), nazwy opisowe się tłumaczy
   (Gobliński Las - Goblin Forest, Zew Peruna - Perun's Call, Kula ognia - Fireball), kilka nazw kluczowych może
