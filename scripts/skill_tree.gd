@@ -4,7 +4,7 @@ class_name SkillTree
 ## wybrany zawsze). Rodzaje węzłów:
 ## - "skill": odblokowuje umiejętność (poziom 1; dalsze poziomy 2-5 za złoto jak dotąd),
 ## - "passive": stałe premie (statystyki jak na przedmiotach albo premie do umiejętności - TREE_STATS),
-## - "keystone": węzeł kluczowy - zmienia sposób gry (np. Nieustający Wir),
+## - "keystone": węzeł kluczowy - zmienia sposób gry (np. Oko Cyklonu),
 ## - "socket": gniazdo na kamień szlachetny (Gems) - kamień działa w drzewku o połowę mocniej (SkillBook.tree_bonus);
 ##   gniazdo "legendary" stoi za węzłem kluczowym (później przyjmie też esencję legendy), a kamień promienia wzmacnia
 ##   wybrane węzły pasywne w swoim promieniu.
@@ -39,7 +39,7 @@ const TREE_STATS := {
 const COUNT_STATS := ["blade_count", "multishot_arrows", "seeker_hits", "arrow_pierce", "chain_targets", "lance_pierce"]
 
 ## Węzły: pozycja w siatce drzewka (jednostki - SkillTreeView), połączenia, rodzaj, nazwa / umiejętność, premie, opis.
-## Gałęzie miecza: zachód - Wir (Młynek, Mgnienie, Nieustający Wir), północny zachód - Krew i okrzyk (Zew Peruna,
+## Gałęzie miecza: zachód - Wir (Młynek, Mgnienie, Oko Cyklonu), północny zachód - Krew i okrzyk (Zew Peruna,
 ## Krwawy Szał przez Rozpłatanie), północny wschód - Ostrze (Szarża, Półksiężyc, Rozłupanie Ziemi, Riposta, Taniec Ostrzy),
 ## południowy wschód - Dym (Dymne Wybuchy, Widmowe Ostrza, czary, Dym i Cień), południowy zachód - obrona.
 const TREES := {
@@ -49,17 +49,17 @@ const TREES := {
 		"warrior_blood": {"pos": Vector2(-1.1, -1.6), "kind": "skill", "skill": "warrior_blood", "links": ["hp_1"]},
 		"socket_1": {"pos": Vector2(-3.0, -1.5), "kind": "socket", "name": "Gniazdo", "links": ["hp_1", "whirl_reach"]},
 		"socket_2": {"pos": Vector2(3.5, 0.0), "kind": "socket", "name": "Gniazdo", "links": ["crit_1", "smoke_dmg"]},
-		"socket_legend": {"pos": Vector2(-8.0, 0.0), "kind": "socket", "legendary": true, "name": "Gniazdo legendarne", "links": ["endless_whirl"]},
+		"socket_legend": {"pos": Vector2(-8.0, 0.0), "kind": "socket", "legendary": true, "name": "Gniazdo legendarne", "links": ["cyclone_eye"]},
 		"battle_focus": {"pos": Vector2(-1.1, 1.6), "kind": "skill", "skill": "battle_focus", "links": ["rend", "armor_1"]},
 		# ---- Wir
 		"whirlwind": {"pos": Vector2(-1.6, 0), "kind": "skill", "skill": "whirlwind", "links": ["phys_1"]},
 		"phys_1": {"pos": Vector2(-3.0, 0), "kind": "passive", "name": "Ostra stal", "stats": {"physical_damage": 0.08}, "links": ["whirl_reach", "flicker"]},
 		"whirl_reach": {"pos": Vector2(-4.3, -1.0), "kind": "passive", "name": "Szeroki zamach", "stats": {"whirl_radius": 0.2}, "links": ["whirl_dmg"]},
 		"flicker": {"pos": Vector2(-4.3, 1.0), "kind": "skill", "skill": "flicker", "links": ["flicker_focus", "rend"]},
-		"whirl_dmg": {"pos": Vector2(-5.6, -1.6), "kind": "passive", "name": "Wirujące ostrze", "stats": {"whirl_damage": 0.2}, "links": ["endless_whirl", "phys_2"]},
-		"flicker_focus": {"pos": Vector2(-5.6, 1.6), "kind": "passive", "name": "Lekki krok", "stats": {"flicker_mana": -0.25}, "links": ["endless_whirl", "flicker_dmg"]},
-		"endless_whirl": {"pos": Vector2(-6.6, 0), "kind": "keystone", "name": "Nieustający Wir", "links": [],
-				"description": "Mgnienie w trakcie Młynka nie ma odnowienia - skaczesz, dopóki trzymasz klawisz. Młynek zużywa dwa razy więcej many."},
+		"whirl_dmg": {"pos": Vector2(-5.6, -1.6), "kind": "passive", "name": "Wirujące ostrze", "stats": {"whirl_damage": 0.2}, "links": ["cyclone_eye", "phys_2"]},
+		"flicker_focus": {"pos": Vector2(-5.6, 1.6), "kind": "passive", "name": "Lekki krok", "stats": {"flicker_mana": -0.25}, "links": ["cyclone_eye", "flicker_dmg"]},
+		"cyclone_eye": {"pos": Vector2(-6.6, 0), "kind": "keystone", "name": "Oko Cyklonu", "links": [],
+				"description": "Młynek wciąga wrogów do środka i rozkręca się: każda sekunda kręcenia to +25% jego obrażeń (najwyżej +100%). Młynek zużywa dwa razy więcej many."},
 		"phys_2": {"pos": Vector2(-7.0, -2.6), "kind": "passive", "name": "Hartowana stal", "stats": {"physical_damage": 0.1}, "links": ["life_hit"]},
 		"flicker_dmg": {"pos": Vector2(-7.0, 2.6), "kind": "passive", "name": "Cięcie z cienia", "stats": {"flicker_damage": 0.2}, "links": ["move_1"]},
 		"life_hit": {"pos": Vector2(-8.4, -1.4), "kind": "passive", "name": "Krew za krew", "stats": {"life_on_hit": 3.0}, "links": []},

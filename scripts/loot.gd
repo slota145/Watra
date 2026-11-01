@@ -176,6 +176,16 @@ static func drop_at_level(level: int, quality_bonus := 0.0, min_quality := "", l
 	return generate(base_for(ItemBases.LINES.keys().pick_random(), item_level), quality, item_level)
 
 
+## Bardzo mała szansa, że zwykły potwór upuści legendę (potworów są setki na krainę: średnio jedna
+## legenda na około 12 tysięcy zabitych, czyli mniej więcej co kilkanaście wyczyszczonych krain).
+const WORLD_LEGEND_CHANCE := 1.0 / 12000.0
+
+
+## Legenda ze zwykłego potwora: dowolna legenda z broni, zbroi lub naszyjnika na poziomie potwora.
+static func world_legend(level: int) -> String:
+	return legendary_at_level(Legends.DATA.keys().pick_random(), level)
+
+
 ## Legendarny łup z bossa o danym poziomie.
 static func legendary_at_level(base: String, level: int) -> String:
 	return generate(base, LEGENDARY, clampi(Levels.item_level(level) + 2, 1, MAX_ITEM_LEVEL))

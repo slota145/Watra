@@ -303,6 +303,16 @@ func spend_point(attribute: String) -> bool:
 	return true
 
 
+## Cofa jeden punkt atrybutu (prawy przycisk w oknie postaci).
+func refund_point(attribute: String) -> bool:
+	if attributes.get(attribute, 0) <= 0:
+		return false
+	attributes[attribute] -= 1
+	unspent_points += 1
+	changed.emit()
+	return true
+
+
 func add_gold(amount: int) -> void:
 	gold += amount
 	gold_changed.emit(gold)

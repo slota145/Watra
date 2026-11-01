@@ -42,6 +42,15 @@ func _ready() -> void:
 	box.add_child(_fullscreen)
 	box.add_child(_check_row(Lang.t("Synchronizacja pionowa (V-Sync)"), Game.vsync, Game.set_vsync))
 	box.add_child(_slider_row(Lang.t("Trzęsienie ekranu"), Game.screen_shake, Game.set_screen_shake))
+	box.add_child(_ui_scale_row())
+	var reset_windows := Button.new()
+	reset_windows.text = Lang.t("Przywróć położenie okien")
+	reset_windows.tooltip_text = Lang.t("Okna przesuwa się, chwytając za tło, a Ctrl + kółko myszy zmienia ich wielkość.")
+	reset_windows.focus_mode = Control.FOCUS_NONE
+	reset_windows.pressed.connect(func() -> void:
+		Game.reset_window_layouts()
+		Sfx.play("ui_click"))
+	box.add_child(reset_windows)
 	box.add_child(_header(Lang.t("Rozgrywka")))
 	box.add_child(_language_row())
 	var unidentified := _check_row(Lang.t("Łup niezidentyfikowany (stosy, PPM identyfikuje)"), Game.unidentified_loot, Game.set_unidentified_loot)
@@ -96,6 +105,29 @@ func _slider_row(text: String, value: float, on_changed: Callable) -> HBoxContai
 
 
 ## Wybór języka (Lang.LANGUAGES); okno ustawień otwiera się od nowa w nowym języku.
+## Skalowanie interfejsu (75-150%): wartość zmienia się po puszczeniu suwaka, żeby okno nie skakało pod kursorem.
+func _ui_scale_row() -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	var label := UiStyle.label(Lang.t("Skalowanie interfejsu"), 8, UiStyle.TEXT_COLOR)
+	label.custom_minimum_size.x = 84
+	row.add_child(label)
+	var slider := HSlider.new()
+	slider.min_value = Game.UI_SCALE_RANGE.x
+	slider.max_value = Game.UI_SCALE_RANGE.y
+	slider.step = 0.05
+	slider.value = Game.ui_scale
+	slider.custom_minimum_size = Vector2(110, 12)
+	slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	slider.focus_mode = Control.FOCUS_NONE
+	row.add_child(slider)
+	var value := UiStyle.label("%d%%" % roundi(Game.ui_scale * 100.0), 8, UiStyle.DIM_COLOR)
+	row.add_child(value)
+	slider.value_changed.connect(func(v: float) -> void: value.text = "%d%%" % roundi(v * 100.0))
+	slider.drag_ended.connect(func(_changed: bool) -> void: Game.set_ui_scale(slider.value))
+	return row
+
+
 func _language_row() -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)

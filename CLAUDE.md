@@ -148,6 +148,8 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
 - **Świat jak w MMO** (po zbudowaniu gildii): podróżnicy (`travelers.gd`, `traveler.gd`), drużyny i prośby o pomoc,
   tryby świata i rywale (`world_modes.gd`, `rival.gd`), rynek (`market.gd`), zlecenia (`bounties.gd`), zadania główne
   (`main_quests.gd`), wydarzenia w świecie (`world_events.gd`, `event_site.gd`).
+- **Interfejs:** okna przesuwane za tło i skalowane Ctrl + kółkiem (`ui/window_drag.gd`, ustawienie w `Game.window_layouts`),
+  skalowanie interfejsu w ustawieniach (`Game.ui_scale` - obraz rośnie, kamera gracza oddala się o tyle samo).
 - **Tłumaczenia:** `lang.gd`, `translations/teksty.csv` (pl/en), słowniczek `translations/slowniczek.md`.
 
 ## Oszczędzanie tokenów
@@ -181,6 +183,13 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   i buduj na końcu, żeby w starych zapisach reszta krainy się nie zmieniła. Przy przebudowie całej krainy podbij
   jej wersję układu (`World.ZONE_LAYOUTS`) - postać ze starego zapisu wróci do kapliczki.
   Walka w największej gromadzie każdej krainy kosztuje średnio 7-8,5 ms na klatkę.
+
+### Zgłoszenia z listopada 2026
+
+- [ ] **Spadki FPS przy intensywnej walce w wiosce ptakoludzi.** `bench_combat` (gracz stoi, nie używa umiejętności,
+  bez rysowania) pokazuje 7,3 ms, więc winne jest coś, czego pomiar nie łapie: umiejętności gracza z efektami
+  (np. Łańcuch błyskawic), pioruny szamanów i oszczepy, liczby obrażeń, łup na ziemi, rysowanie gęstej sceny.
+  Potrzebny pomiar z rysowaniem i rzucaniem umiejętności (profiler Godota u autora albo rozszerzony bench).
 
 ## Pomysły i rzeczy do zrobienia
 
@@ -217,6 +226,15 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     umiejętnościach przebudzenia broń w ręku zmienia się sama (gracz niczego nie przełącza); combo między
     umiejętnościami podstawowymi i przebudzenia (np. Mgnienie, a zaraz po nim cień kosą);
   - proponowana kolejność: efekty łuku i księgi -> nekromancja w drzewku maga -> przebudzenia (jedna klasa naraz).
+- [ ] **Animacje postaci z bronią** (listopad 2026): broń nie leży stabilnie w dłoni, za mało animacji ataków.
+  Dziś broń to osobny obracany sprite (`Player._update_weapon_sprite`, chwyt `weapon.grip`) w stałym punkcie,
+  a ciało się porusza. Pomysł: punkt dłoni zapisany dla każdej klatki ciała (broń za nim podąża) i proceduralne
+  ruchy broni (krzywe zamachu, pchnięcia, uderzenia z góry) - dużo wariantów ataków bez rysowania klatek.
+  Autor dopuszcza jedną grywalną postać animowaną porządnie; pozostałe sprite'y mogą zostać poszukiwaczami przygód (NPC).
+- [ ] Lepsze dźwięki trafień przeciwników (mięsiste, różne dla miecza, strzał i czarów), pod nowe animacje efektów.
+- [ ] **Przebudowa rozwoju postaci** (do ustalenia z autorem): po dodaniu nekromancji do drzewka księgi - nowe węzły
+  także w drzewkach miecza i łuku; może oddzielić umiejętności od drzewka (inny sposób odblokowania); więcej punktów
+  za awans albo osobne punkty statystyk i drzewka, albo statystyki tylko w drzewku (trudniejszy balans).
 
 ### Watra i Ostoja
 
@@ -230,6 +248,10 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
 - [ ] Pomysły na rozwój lochów: kolejne klimaty (lodowe jaskinie, wulkaniczna kuźnia, krasnoludzkie ruiny), kilka pięter
   w dół z coraz lepszym łupem, elitarne potwory z własnymi cechami, pułapki i zagadki, własni strażnicy lochów
   zamiast bossów z krain, sekretne komnaty, zlecenia gildii na lochy.
+- [ ] **Lochy ładne i bogate w środku** (listopad 2026): dokładniej przyjrzeć się wystrojowi lochów.
+- [ ] **Podział lochów na zwykłe i endgame'owe** (listopad 2026): zwykłe jak dziś; endgame'owe z przedmiotami w Watrze
+  (skaraby), drzewkami lochów i mechanik, losowymi mechanikami i bossami szczytowymi (pinnacle), plus system jak
+  atlas w PoE dający namacalny postęp. Wymaga projektu z autorem przed pracą.
 
 ### Zielarstwo
 

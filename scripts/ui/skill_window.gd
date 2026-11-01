@@ -179,6 +179,7 @@ func _make_tree_page(weapon_type: String) -> VBoxContainer:
 		_show_socket_result("", tr("Esencja rozwiała się.")))
 	column.add_child(destroy)
 	view.selected.connect(func(_id: String) -> void: _refresh())
+	view.refund_requested.connect(func(id: String) -> void: _refund_node(weapon_type, id))
 	view.gem_dropped.connect(_show_socket_result)
 	_trees[weapon_type] = {"view": view, "points": points, "info": info, "take": take, "upgrade": upgrade,
 			"gems": gems, "unsocket": unsocket, "destroy": destroy}
@@ -191,6 +192,21 @@ func _take_node(weapon_type: String) -> void:
 		Sfx.play("ui_confirm")
 		_status.text = tr("Wybrano: %s") % SkillTree.node_name(weapon_type, view.selected_id)
 		_status.add_theme_color_override("font_color", Color(0.6, 1, 0.55))
+
+
+## Cofa węzeł kliknięty prawym przyciskiem (albo mówi, czemu się nie da).
+func _refund_node(weapon_type: String, id: String) -> void:
+	var reason := _player.skills.refund_reason(weapon_type, id)
+	if reason == "":
+		_player.skills.refund(weapon_type, id)
+		Sfx.play("ui_click")
+		_status.text = tr("Cofnięto: %s") % SkillTree.node_name(weapon_type, id)
+		_status.add_theme_color_override("font_color", Color(0.6, 1, 0.55))
+	else:
+		Sfx.play("ui_error")
+		_status.text = reason
+		_status.add_theme_color_override("font_color", Color(1, 0.55, 0.45))
+	_refresh()
 
 
 ## Osadza kamień z pola `index` plecaka w zaznaczonym gnieździe (kamień, który tam był, wraca do plecaka).

@@ -34,7 +34,7 @@ heart_drop_chance = 0.0
 hurt_height = 50
 damage = 40
 attack_interval = 1.5
-legendary_drop_chance = 0.25
+legendary_drop_chance = 0.15
 
 [node name="Shadow" type="Sprite2D" parent="."]
 position = Vector2(0, -1)

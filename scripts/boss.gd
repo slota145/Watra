@@ -14,7 +14,7 @@ extends Goblin
 ## Unikalne, legendarne przedmioty bossa - każdy losowany osobno i naprawdę rzadko
 ## (w trybie deweloperskim wypadają zawsze, razem z całą resztą łupu).
 @export var legendary_drops: PackedStringArray = []
-@export_range(0.0, 1.0) var legendary_drop_chance := 0.02
+@export_range(0.0, 1.0) var legendary_drop_chance := 0.012
 
 ## Bieżący atak specjalny ("" = brak) i jego etap: telegraph / act / recover.
 var _attack := ""

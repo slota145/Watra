@@ -424,6 +424,24 @@ odpowiedniej sekcji.
   potwora - gdy zostanie pokonany. W trybie deweloperskim widać wszystko, a kliknięcie przedmiotu daje jedną sztukę
   (legendę z poziomem postaci). Nowy potwór wymaga wpisu w `Codex.MONSTERS`.
 
+- [x] **Szybkie poprawki z listopada 2026:**
+  - węzeł kluczowy miecza **Oko Cyklonu** (`cyclone_eye`) zamiast Nieustającego Wiru: Młynek wciąga wrogów
+    (ujemny odrzut trafionych, przyciąganie do 1,5 zasięgu) i rozkręca się o +25% obrażeń na sekundę, najwyżej +100%
+    (`Player.whirl_spin_up`, `CYCLONE_*`), za dwa razy więcej many. Wirujące Mgnienie bez odnowienia zostało tylko
+    na Amulecie Wiecznego Wiru; dawne zapisy z `endless_whirl` dostają Oko Cyklonu (`SkillBook.load_save_data`);
+    ikona `ks_endless_whirl.png` przemianowana na `ks_cyclone_eye.png` (ta sama grafika);
+  - cofanie punktów prawym przyciskiem: węzeł drzewka (`SkillBook.refund_reason` / `refund` - nie start, nie gniazdo
+    z kamieniem i nie węzeł, przez który inne łączą się ze startem) i punkt atrybutu (`CharacterStats.refund_point`);
+  - rzadsze legendy: bossowie 2% -> 1,2% za legendę, Gryf i Hydra 3% -> 2%, Żmij i Wij 25% -> 15%, skarbiec lochu
+    12% -> 7%; zwykły potwór ma `Loot.WORLD_LEGEND_CHANCE` = 1/12000 na dowolną legendę z `Legends.DATA`
+    (`Loot.world_legend`, bez zwierzyny i manekinów);
+  - okna przesuwane za tło i skalowane Ctrl + kółkiem (`scripts/ui/window_drag.gd`, podpięte w `HUD._ready` do
+    każdego `PanelContainer` poza dużą mapą; ustawienie w `Game.window_layouts` w `user://settings.cfg`, przycisk
+    „Przywróć położenie okien”) i suwak „Skalowanie interfejsu” 75-150% (`Game.ui_scale`, `_apply_ui_scale`: rozciąganie
+    ułamkowe z całkowitą krotnością razy skala, kamera gracza `zoom = 1 / ui_scale`, więc świat zostaje w całych
+    pikselach). W trybie integer Godot ucina `content_scale_factor` do całości - dlatego rozciąganie ułamkowe.
+    Test `tests/test_windows.gd` (z oknem).
+
 ## Watra i Ostoja (Pomysły i rzeczy do zrobienia)
 - [x] **Watra**: wielki, zawsze płonący ogień na placu Ostoi (`scripts/settlement.gd`, okno `scripts/ui/watra_window.gd`,
   grafika z PixelLab przez `tools/watra_art.py`). Dwóch mieszkańców donosi drewno, a ogień wtedy buchnie.

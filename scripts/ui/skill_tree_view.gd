@@ -9,6 +9,8 @@ extends Control
 ## się w nim osadza, a kamień promienia rysuje swój zasięg.
 
 signal selected(node_id: String)
+## Prawy przycisk na węźle - prośba o cofnięcie go (okno sprawdza, czy się da).
+signal refund_requested(node_id: String)
 ## Kamień z plecaka upuszczony na gniazdo (okno umiejętności pokazuje wynik).
 signal gem_dropped(message: String)
 
@@ -55,7 +57,7 @@ const ICONS := {
 }
 ## Ikona startu drzewka (zwykły atak tą bronią).
 const START_ICONS := {"bow": preload("res://assets/items/short_bow.png"), "spell": preload("res://assets/items/spellbook.png")}
-const KEYSTONE_ICONS := {"endless_whirl": preload("res://assets/skills/ks_endless_whirl.png"),
+const KEYSTONE_ICONS := {"cyclone_eye": preload("res://assets/skills/ks_cyclone_eye.png"),
 		"blade_dance": preload("res://assets/skills/ks_blade_dance.png"), "smoke_shadow": preload("res://assets/skills/ks_smoke_shadow.png"),
 		"blood_frenzy": preload("res://assets/skills/ks_blood_frenzy.png"),
 		"falcon_eye": preload("res://assets/skills/ks_falcon_eye.png"), "hail": preload("res://assets/skills/ks_hail.png"),
@@ -195,6 +197,12 @@ func _gui_input(event: InputEvent) -> void:
 		_clamp_offset()
 		accept_event()
 		return
+	if click.button_index == MOUSE_BUTTON_RIGHT and click.pressed:
+		var refunded := node_at(click.position)
+		if refunded != "":
+			refund_requested.emit(refunded)
+			accept_event()
+		return
 	if click.button_index != MOUSE_BUTTON_LEFT:
 		return
 	if not click.pressed:
@@ -258,6 +266,8 @@ func describe(id: String) -> String:
 	if _player != null and not _player.skills.has_node_id(weapon_type, id):
 		lines.append(tr("Kliknij, a potem \"Wybierz\" (1 punkt).") if _player.skills.can_take(weapon_type, id)
 				else tr("Wybierz najpierw sąsiedni węzeł.") if _player.skills.points_left() > 0 else tr("Brak punktów umiejętności."))
+	elif _player != null and id != "start":
+		lines.append(tr("Prawy przycisk myszy - cofnij węzeł (punkt wraca)."))
 	return "\n".join(lines)
 
 

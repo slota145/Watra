@@ -64,6 +64,10 @@ const WHIRL_SPIN_SPEED := 16.0
 const WHIRL_MOVE_FACTOR := 0.7
 ## W Młynku rękojeść krąży w wyciągniętej dłoni, z dala od osi obrotu (ostrze sięga dalej).
 const WHIRL_HAND_REACH := 10.0
+## Oko Cyklonu: przyrost obrażeń Młynka na sekundę kręcenia, górna granica i siła wciągania wrogów.
+const CYCLONE_SPIN_UP := 0.25
+const CYCLONE_SPIN_MAX := 1.0
+const CYCLONE_PULL := 90.0
 ## Wir Młynka z kreatora efektów PixelLab (tools/vfx_art.py): zapętlone klatki wokół tułowia, górna połowa za postacią,
 ## dolna przed nią. W trakcie wirującego Mgnienia szybszy wir (więcej ostrzy, rozmycie, iskry). Promień ostrzy w klatce
 ## to WHIRL_FX_RADIUS - grafika skaluje się do zasięgu Młynka.
@@ -195,6 +199,7 @@ var _fireball_embers: CPUParticles2D
 var _charge_sound: AudioStreamPlayer
 var _hold_sound: AudioStreamPlayer
 var _whirl_tick := 0.0
+var _whirl_time := 0.0
 ## Wir Młynka: [za postacią, przed postacią] i czas animacji.
 var _whirl_fx: Array[Sprite2D] = []
 var _whirl_fx_time := 0.0
@@ -307,6 +312,9 @@ func _ready() -> void:
 	stats.equipment = equipment
 	equipment.changed.connect(_update_weapon_sprite)
 	_update_weapon_sprite()
+	# skalowanie interfejsu powiększa cały obraz - kamera oddala się o tyle samo (Game._apply_ui_scale)
+	camera.zoom = Vector2.ONE / Game.ui_scale
+	Game.ui_scale_changed.connect(func(value: float) -> void: camera.zoom = Vector2.ONE / value)
 	health = stats.max_health()
 	mana = stats.max_mana()
 	_last_max_health = stats.max_health()
@@ -468,13 +476,20 @@ func combo_fraction() -> float:
 	return clampf(_chain_time / combo_window(), 0.0, 1.0)
 
 
-## Zasięg Młynka (poziom umiejętności i premia z drzewka) i mnożnik zużycia many (węzeł kluczowy Nieustający Wir).
+## Zasięg Młynka (poziom umiejętności i premia z drzewka) i mnożnik zużycia many (węzeł kluczowy Oko Cyklonu).
 func whirl_radius() -> float:
 	return Skills.whirlwind_radius(skills.level_of("whirlwind")) * (1.0 + skills.tree_bonus("melee", "whirl_radius")) * stats.area_multiplier()
 
 
 func whirl_mana_factor() -> float:
-	return 2.0 if skills.has_keystone("melee", "endless_whirl") else 1.0
+	return 2.0 if skills.has_keystone("melee", "cyclone_eye") else 1.0
+
+
+## Mnożnik obrażeń rozkręconego Młynka (Oko Cyklonu): +25% za sekundę kręcenia, najwyżej +100%.
+func whirl_spin_up() -> float:
+	if not skills.has_keystone("melee", "cyclone_eye"):
+		return 1.0
+	return 1.0 + minf(_whirl_time * CYCLONE_SPIN_UP, CYCLONE_SPIN_MAX)
 
 
 ## Rzeczy na start nowej postaci (mikstury leżą od razu na pasku pod 1 i 2).
@@ -1612,6 +1627,7 @@ func _start_whirl() -> void:
 	_cancel_attack()
 	_whirling = true
 	_whirl_tick = 0.0
+	_whirl_time = 0.0
 	note_skill("whirlwind")
 	var radius := whirl_radius()
 	sword.visible = sword.texture != null
@@ -1627,6 +1643,7 @@ func _update_whirl(delta: float) -> void:
 	pivot.rotation += WHIRL_SPIN_SPEED * delta
 	_face_direction(Vector2.from_angle(pivot.rotation))
 	_whirl_fx_time += delta * _skill_speed()
+	_whirl_time += delta
 	_update_whirl_fx(whirl_radius())
 	_whirl_tick -= delta
 	if _whirl_tick > 0.0:
@@ -1635,10 +1652,15 @@ func _update_whirl(delta: float) -> void:
 	Sfx.play("whirl")
 	var level := skills.level_of("whirlwind")
 	var radius := whirl_radius()
-	var multiplier := Skills.whirlwind_damage(level) * (1.0 + skills.tree_bonus("melee", "whirl_damage"))
+	var multiplier := Skills.whirlwind_damage(level) * (1.0 + skills.tree_bonus("melee", "whirl_damage")) * whirl_spin_up()
+	# Oko Cyklonu wciąga trafionych (ujemny odrzut) i sięga połowę dalej po wrogów do wciągnięcia
+	var cyclone := skills.has_keystone("melee", "cyclone_eye")
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
-		if enemy.hurt_center().distance_to(body_center()) <= radius + enemy.hurt_radius:
-			hit_enemy(enemy, _skill_damage(multiplier), global_position, 70.0)
+		var dist := enemy.hurt_center().distance_to(body_center())
+		if dist <= radius + enemy.hurt_radius:
+			hit_enemy(enemy, _skill_damage(multiplier), global_position, -CYCLONE_PULL if cyclone else 70.0)
+		elif cyclone and dist <= radius * 1.5 + enemy.hurt_radius and enemy.state != Goblin.State.DEAD:
+			enemy._knockback = (global_position - enemy.global_position).normalized() * CYCLONE_PULL
 
 
 func _stop_whirl() -> void:

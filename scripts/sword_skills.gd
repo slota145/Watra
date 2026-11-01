@@ -4,7 +4,7 @@ extends Node
 ## - Mgnienie: dopóki trzymasz klawisz, postać przeskakuje na wylot przez najbliższego widocznego wroga (za każdym razem
 ##   innego, jeśli jest wybór) i tnie wszystkich na drodze (mana za każdy skok); jednego wroga przebija tam i z powrotem.
 ##   Combo z Młynkiem: Mgnienie w trakcie Młynka to wirujące Mgnienie - seria szybkich skoków od wroga do wroga
-##   z odnowieniem; węzeł kluczowy Nieustający Wir znosi odnowienie (skoki trwają, dopóki trzymasz klawisz).
+##   z odnowieniem; Amulet Wiecznego Wiru znosi odnowienie (skoki trwają, dopóki trzymasz klawisz).
 ## - Dymne Wybuchy: przytrzymanie ładuje (1-3 rzędy po 3 wybuchy dymu w stożku przed postacią), puszczenie odpala.
 ##   Combo: zaraz po innej umiejętności wszystkie 9 wybuchów od razu, bez ładowania. Atak i czar jednocześnie.
 ## - Rozpłatanie: szerokie cięcie z krwawieniem (po Mgnieniu podwójnym).
@@ -12,7 +12,7 @@ extends Node
 ## - Riposta: krótka zasłona; cios w tym czasie nie rani, a postać kontratakuje wszystkich wokół (potem darmowa Szarża).
 ## - Zew Peruna: okrzyk - premia do obrażeń, strach wrogów wokół i 3 kolejne ciosy krytyczne.
 ## - Widmowe Ostrza (czar): krążące miecze raniące wrogów (po Młynku od razu wylatują we wrogów).
-## Węzły kluczowe: Nieustający Wir (wirujące Mgnienie bez odnowienia - albo Amulet Wiecznego Wiru), Taniec Ostrzy
+## Węzły kluczowe: Oko Cyklonu (Młynek wciąga i rozkręca się - `Player.whirl_spin_up`), Taniec Ostrzy
 ## (combo przyspiesza ataki), Dym i Cień (chmura po Dymnych Wybuchach: unik i darmowe Mgnienie), Krwawy Szał
 ## (krwawienie leczy). Chwilowe premie trafiają do CharacterStats.temp_bonus i na listę efektów (statuses).
 
@@ -215,7 +215,7 @@ func _press_flicker() -> void:
 
 
 func _endless_whirl() -> bool:
-	return _player.skills.has_keystone("melee", "endless_whirl") or _player.equipment.effect_power("endless_whirl") > 0.0
+	return _player.equipment.effect_power("endless_whirl") > 0.0
 
 
 func _process_flicker(delta: float) -> void:
@@ -226,7 +226,7 @@ func _process_flicker(delta: float) -> void:
 	if level <= 0 or _player.stats.weapon_type() != "melee":
 		_whirl_jumps_left = 0
 		return
-	# wirujące Mgnienie: seria skoków w trakcie Młynka (z Nieustającym Wirem - dopóki trzymasz klawisz)
+	# wirujące Mgnienie: seria skoków w trakcie Młynka (z Amuletem Wiecznego Wiru - dopóki trzymasz klawisz)
 	var endless := whirling and _endless_whirl() and _player.is_skill_held("flicker")
 	if whirling and (_whirl_jumps_left > 0 or endless):
 		if _whirl_jump_timer <= 0.0:

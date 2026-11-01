@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://27negscgu061"
-path="res://.godot/imported/ks_endless_whirl.png-b8c02055b88db6a0c7b907f6bf109546.ctex"
+uid="uid://cou0fbf702q1"
+path="res://.godot/imported/ks_cyclone_eye.png-ea2d6ba847b2626ebbce298f4022d954.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/skills/ks_endless_whirl.png"
-dest_files=["res://.godot/imported/ks_endless_whirl.png-b8c02055b88db6a0c7b907f6bf109546.ctex"]
+source_file="res://assets/skills/ks_cyclone_eye.png"
+dest_files=["res://.godot/imported/ks_cyclone_eye.png-ea2d6ba847b2626ebbce298f4022d954.ctex"]
 
 [params]
 

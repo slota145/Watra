@@ -60,6 +60,9 @@ func _run() -> void:
 	var ring: String = loot.generate("copper_ring", "common", 50)
 	var base_health: int = items.base_stats(ring)["health"]
 	_check(items.stats_of(ring, 3)["health"] == items.get_data(ring)["stats"]["health"] + 3, "zaklęcie biżuterii +3 (baza %d)" % base_health)
+	var world_legend: String = loot.world_legend(20)
+	_check(items.get_data(world_legend)["rarity"] == "legendary", "legenda ze zwykłego potwora")
+	_check(loot.WORLD_LEGEND_CHANCE * 700.0 < 0.1, "legenda z potwora bardzo rzadka (cała kraina < 10%)")
 	print("\n--- opis z porównaniem ---")
 	print(items.describe(high, 0, {"id": low, "enchant": 5}))
 	quit()
