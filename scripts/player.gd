@@ -107,6 +107,8 @@ const WEAPON_SCALE := {"melee": 1.0, "bow": 1.0, "spell": 1.0}
 const ATTACK_ANIMS := {"melee": "slash", "bow": "shoot", "spell": "cast"}
 ## O ile przesunąć grafikę broni w dłoni względem pozycji przy ataku (rękojeść w pięści).
 const HELD_GRIP_SHIFT := {"melee": 4.0, "bow": 7.0, "spell": 8.0}
+## Dodatkowa skala broni w dłoni według sposobu trzymania: miecz i księga były za duże przy postaci.
+const HOLD_SCALE := {"blade": 0.75, "book": 0.7}
 
 ## Efekty legendarnych pierścieni przy trafieniu.
 var legendary: LegendaryEffects
@@ -2321,26 +2323,28 @@ func set_hero(id: String) -> void:
 func _update_animation(delta: float) -> void:
 	var anim := "idle"
 	var frame := 0
+	var slash_frames := HeroRig.frames(hero, "slash")
 	if _whirling:
 		anim = "slash"
-		frame = int(Time.get_ticks_msec() / 70) % HeroRig.FRAMES
+		frame = int(Time.get_ticks_msec() / 70) % slash_frames
 	elif _lunge_time > 0.0:
 		anim = "slash"
-		frame = HeroRig.FRAMES - 1
+		frame = _hit_frame(slash_frames)
 	elif is_charging_fireball():
 		anim = "cast"
 		frame = 1
 	elif _harvest_target != null:
 		anim = "slash"
-		frame = clampi(int((1.0 - _harvest_hit / HARVEST_HIT_INTERVAL) * HeroRig.FRAMES), 0, HeroRig.FRAMES - 1)
+		frame = clampi(int((1.0 - _harvest_hit / HARVEST_HIT_INTERVAL) * slash_frames), 0, slash_frames - 1)
 	elif is_attacking():
 		anim = ATTACK_ANIMS.get(_attack_kind, "slash")
+		var count := HeroRig.frames(hero, anim)
 		var progress := 1.0 - _attack_timer / maxf(_attack_length, 0.001)
-		frame = clampi(int(progress * HeroRig.FRAMES), 0, HeroRig.FRAMES - 1)
+		frame = clampi(int(progress * count), 0, count - 1)
 	elif velocity.length() > 10.0:
 		anim = "walk"
 		_anim_time += delta * WALK_FPS * clampf(velocity.length() / max_speed, 0.5, 1.5)
-		frame = int(_anim_time) % HeroRig.FRAMES
+		frame = int(_anim_time) % HeroRig.frames(hero, "walk")
 	else:
 		_anim_time = 0.0
 	sprite.frame = HeroRig.frame_index(anim, _dir_row, frame)
@@ -2348,13 +2352,21 @@ func _update_animation(delta: float) -> void:
 	_update_silhouette(delta)
 
 
+## Klatka trafienia w animacji cięcia (wypad w Szarży): w 8-klatkowym cięciu ostrze jest wtedy z przodu.
+func _hit_frame(count: int) -> int:
+	return count / 2 if count > 4 else count - 1
+
+
 ## Broń w dłoni poza atakiem: chwyt i kąt z danych postaci (HeroRig), odbite dla kierunków
-## zachodnich. W trakcie ataku broń kręci się wokół barku jak dotąd (pivot/sword).
+## zachodnich. W ataku postaci z chwytem w klatkach ataku (Wojciech) broń też jest w dłoni
+## (_follow_hand), u pozostałych kręci się wokół barku jak dotąd (pivot/sword).
 func _update_held_weapon(anim: String, frame: int) -> void:
 	var swinging := _whirling or _lunge_time > 0.0 or is_charging_fireball() or _harvest_target != null or is_attacking()
 	var weapon := equipment.weapon()
-	# broń z PixelLab ma gęstszy piksel niż świat (held_scale 0,5); narzędzie do zbierania - zwykłą skalę
+	# broń z PixelLab ma gęstszy piksel niż świat (held_scale 0,5); narzędzie do zbierania - zwykłą skalę;
+	# miecz i księga dodatkowo mniejsze, żeby pasowały do postaci (HOLD_SCALE)
 	var held_scale: float = weapon.get("held_scale", WEAPON_SCALE.get(weapon.get("type", "melee"), 1.0))
+	held_scale *= HOLD_SCALE.get(_hold_of(weapon), 1.0)
 	sword.scale = Vector2.ONE * (1.0 if _harvest_target != null else held_scale)
 	if swinging:
 		pivot.position = BODY_OFFSET + facing_dir * 3.0
@@ -2362,6 +2374,10 @@ func _update_held_weapon(anim: String, frame: int) -> void:
 		_weapon_behind(false)
 		if _harvest_target == null:
 			sword.offset = _held_offset(weapon, sword.flip_v)
+		if is_attacking() and not is_dead and _follow_hand(weapon, anim, frame):
+			return
+		if not _whirling:
+			sword.position = Vector2.ZERO
 		return
 	var held: Texture2D = weapon.get("held")
 	var grip := HeroRig.grip(hero, anim, _dir_row, frame)
@@ -2379,6 +2395,7 @@ func _update_held_weapon(anim: String, frame: int) -> void:
 	if hold == "book":
 		pivot.rotation = 0.0
 	sword.rotation = 0.0
+	sword.position = Vector2.ZERO
 	sword.flip_v = flip and hold != "book"
 	sword.texture = held
 	# rękojeść (łęczysko, grzbiet księgi) w dłoni zamiast przy barku
@@ -2389,6 +2406,37 @@ func _update_held_weapon(anim: String, frame: int) -> void:
 	# idąc "od kamery" (północ) postać zasłania broń
 	pivot.z_index = 0
 	_weapon_behind(facing_dir.y < -0.1)
+
+
+## Broń w dłoni w trakcie ataku: punkt i kąt chwytu z klatki ataku (HeroRig - w cięciu pręt-znacznik
+## pokazał tor miecza). Łuk celuje w cel, księga stoi grzbietem w górę. Przesuwa się tylko sama broń
+## (sword) - pivot zostaje przy barku zwrócony w cel, bo niesie też efekt cięcia (slash).
+## false - postać nie ma chwytu w tej klatce (broń kręci się wokół barku jak dotąd).
+func _follow_hand(weapon: Dictionary, anim: String, frame: int) -> bool:
+	var grip := HeroRig.grip(hero, anim, _dir_row, frame)
+	if grip.is_empty() or weapon.get("held") == null:
+		return false
+	var flip := sprite.flip_h
+	var hand := Vector2(-grip[0] if flip else grip[0], grip[1])
+	var hold := _hold_of(weapon)
+	var angle: float = (PI - grip[2]) if flip else grip[2]
+	var flip_v := flip
+	if hold == "book":
+		angle = 0.0
+		flip_v = false
+	elif hold == "bow":
+		angle = _attack_angle
+		flip_v = absf(angle_difference(0.0, _attack_angle)) > PI / 2.0
+	sword.flip_v = flip_v
+	sword.offset = _held_offset(weapon, flip_v)
+	if not weapon.has("grip"):
+		sword.offset -= Vector2(HELD_GRIP_SHIFT.get(weapon.get("type", ""), 4.0), 0)
+	sword.position = pivot.transform.affine_inverse() * hand
+	sword.rotation = angle - pivot.rotation
+	sword.visible = true
+	pivot.z_index = 0
+	_weapon_behind(facing_dir.y < -0.1)
+	return true
 
 
 ## Broń za postacią (rysowana przed sprite'em) albo przed nią - kolejnością węzłów,

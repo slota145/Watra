@@ -419,6 +419,20 @@ odpowiedniej sekcji.
   szyte w oknie Rzemiosła (zakładka „Torby”, `Crafting.RECIPES` z grupą „bags”) ze skór i surowców kolejnych krain.
   Sakwa i Plecak zniknęły ze sklepu (działają w starszych zapisach); wymiana Znaków Zwycięstwa daje Plecak wyprawowy.
 
+- [x] **Etap 1 animacji postaci z bronią** (listopad 2026, Wojciech): ataki z ruchów szkieletowych PixelLab
+  (`animate_character` w trybie `skeleton-v3`, ruchy `slash` 1.3, `shoot_bow` z `side: left` i `cast` z `side: left` -
+  broń zawsze w prawej ręce), po 8 klatek na kierunek, opis „bare hands…, no weapon”, żeby model nie dorysował broni.
+  Klatki pobiera `pixelart_workbench join … --as sheet --columns 8`, tnie `tools/hero_frames_cut.py`
+  (`anim:kierunek` dla rzędu innej animacji). Chwyt i kąt broni: `edit_image` na adresach klatek z opisem pręta-znacznika
+  (`mk_<anim>_<kierunek>_<i>.png`; tekst opisu dla cięcia - „rod… magenta end inside the fist… wind-up points up and back”);
+  `tools/hero_sheets.py` dopasowuje przesunięcie przerysowanej klatki (`_align`, do 16 px) i przyciąga chwyt do sylwetki
+  (`_snap`, `SNAP_MAX` 7), kierunek bez znacznika (strzał na północ) bierze chwyt spoczynku, a klatki z wtopionym łukiem
+  poprawia `FRAME_FIX` (wymazanie kolorów albo kopia sąsiedniej klatki). `HeroRig.COUNTS` / `HeroRig.frames` - liczba
+  klatek animacji (arkusz ma 8 kolumn, chód 4). W grze `Player._follow_hand`: w ataku broń w dłoni z klatki (cięcie -
+  kąt z pręta, łuk celuje w cel, księga grzbietem w górę), pivot z efektem cięcia zostaje przy barku; pozostali bohaterowie
+  bez chwytu w atakach - jak dawniej. Miecz i księga w dłoni mniejsze (`Player.HOLD_SCALE`). Szarża pokazuje klatkę
+  trafienia (`_hit_frame`). Balans i działanie ataków bez zmian.
+
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)
   i 7 slotów umiejętności (LPM, PPM, Q, E, R, Z, X) z osobnym układem dla każdej broni. Każdy slot przyjmuje

@@ -112,7 +112,7 @@ func _process(delta: float) -> void:
 	# podglądy postaci: chód w stronę widza
 	for entry: Array in _hero_previews:
 		var atlas: AtlasTexture = entry[0]
-		var frame := HeroRig.frame_index("walk", 0, int(_time * 6.0) % HeroRig.FRAMES)
+		var frame := HeroRig.frame_index("walk", 0, int(_time * 6.0) % HeroRig.frames(HeroRig.HEROES[0], "walk"))
 		atlas.region = Rect2((frame % HeroRig.FRAMES) * HeroRig.CELL, (frame / HeroRig.FRAMES) * HeroRig.CELL, HeroRig.CELL, HeroRig.CELL)
 
 
