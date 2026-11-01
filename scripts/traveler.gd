@@ -27,7 +27,13 @@ const COOLDOWN := {"melee": 0.9, "bow": 1.0, "spell": 1.4}
 ## Ułamek zdrowia celu za cios (przy równym poziomie) - potwór pada po kilku-kilkunastu ciosach.
 const HIT_FRACTION := {"melee": 0.11, "bow": 0.09, "spell": 0.15}
 const SPELL_COLOR := Color(0.55, 0.75, 1.0)
+## Efekty ciosów z kreatora efektów PixelLab (te same co u gracza): cięcie miecza, błysk trafienia, trafienie czaru.
+const SLASH_FX := preload("res://assets/effects/sword_slash.png")
+const HIT_FX := preload("res://assets/effects/sword_hit.png")
+const SPELL_HIT_FX := preload("res://assets/effects/spell_hit.png")
 const PARTY_COLOR := Color(0.55, 0.8, 1.0)
+## Pokonany podróżnik znika w szarym dymie (inaczej - w płomieniu Watry).
+const DEFEAT_COLOR := Color(0.6, 0.6, 0.65)
 ## Bossowie są dużo wytrzymalsi - drużyna pomaga, ale walka zostaje na graczu.
 const BOSS_FACTOR := 0.12
 ## Czempion i boss polowania mają wielokrotne zdrowie - gromada podróżników bez gracza bije ich kilka minut.
@@ -268,13 +274,14 @@ func _attack(weapon: String) -> void:
 	var at := _target.hurt_center()
 	match weapon:
 		"melee":
-			SkillEffects.crescent(get_parent(), global_position + Vector2(0, -10), _facing.angle(), PI * 0.4, 22.0)
+			SkillEffects.sheet_once(get_parent(), SLASH_FX, 5, 24.0, global_position + Vector2(0, -9), Vector2(32, 32), _facing.angle(), 1.0, 0.7)
+			SkillEffects.sheet_once(get_parent(), HIT_FX, 5, 16.0, at, Vector2(14, 14), randf() * TAU, 1.0, 0.8)
 			Sfx.play_at("swing", global_position)
 		"bow":
-			SkillEffects.spark(get_parent(), at, Color(0.95, 0.85, 0.6), 4)
+			BowSkills.arrow_hit(get_parent(), at, (at - global_position).angle())
 			Sfx.play_at("bow", global_position)
 		"spell":
-			SkillEffects.spark(get_parent(), at, SPELL_COLOR, 8)
+			SkillEffects.sheet_once(get_parent(), SPELL_HIT_FX, 6, 18.0, at, Vector2(20, 20), 0.0, 1.0, 0.7)
 			Sfx.play_at("magic", global_position)
 	_target.objective = self
 	# zabójstwa drużyny liczą się graczowi; w wydarzeniu - punkty wkładu podróżnika
@@ -481,7 +488,7 @@ func _fall() -> void:
 	_drop_gather()
 	if travelers != null:
 		travelers.die(data)
-	_leave(Color(0.6, 0.6, 0.65))
+	_leave(DEFEAT_COLOR)
 
 
 ## Odejście z krainy (koniec łowów albo śmierć): błysk i zniknięcie.
@@ -490,7 +497,10 @@ func _leave(color := Color(1.0, 0.6, 0.25)) -> void:
 		return
 	_leaving = true
 	_drop_gather()
-	SkillEffects.spark(get_parent(), global_position + Vector2(0, -12), color, 14)
+	if color == DEFEAT_COLOR:
+		MiscVfx.puff(get_parent(), global_position + Vector2(0, -8), color, 0.6)
+	else:
+		MiscVfx.traveler_flame(get_parent(), global_position, 0.8)
 	var tween := create_tween()
 	tween.tween_property(self, "modulate:a", 0.0, 0.6)
 	tween.tween_callback(queue_free)

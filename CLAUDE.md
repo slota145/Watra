@@ -277,6 +277,13 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   topielicy jako zapętlona animacja, pociski z drzewcem ze smugą, rozpryski trafień; piorun szamana ptakoludzi
   (`storm_strike`), uderzenie osiłka (`BossFx.slam`), pył kopca i fontanna ziemi robaka, szkielet wygrzebujący się
   w pyle, plusk utopca, nuty rusałki, wybuch ognika.
+- [x] Pozostałe stare efekty z kreatora efektów (`scripts/misc_vfx.gd` - `MiscVfx`, wpisy `misc_*`, `meteor_*`,
+  `crystal_shatter`, `traveler_flame` w `ids.json`): iskry, kłąb dymu, odłamki i fala po ziemi narysowane w szarościach
+  i barwione kolorem źródła (zamiast `SkillEffects.spark` / `shockwave` i cząsteczek) - sojusznicy i przywołańcy,
+  `Boss._burst` / `_debris`, wydarzenia w świecie, Kryształ Watry, drobne iskry umiejętności; krąg przyzwania bossa
+  (`SummonCircle`), ognisty ogon i uderzenie meteorytu, rozprysk Kryształu Watry, płomień Watry przy przybyciu
+  i odejściu podróżnika, wirujący krąg dymu (ładowanie Dymnych Wybuchów, chmura Dym i Cień), trzask wyładowań
+  Gromoskrzydłego; podróżnicy i rywale tną i trafiają efektami gracza (`sword_slash`, `sword_hit`, `spell_hit`).
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

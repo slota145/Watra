@@ -154,7 +154,7 @@ func _update_attack(_delta: float) -> void:
 				for i in 6:
 					var at := global_position + _aim.rotated(randf_range(-BREATH_ARC, BREATH_ARC)) * randf_range(40.0, BREATH_RANGE)
 					_fire_patch(at)
-				SkillEffects.spark(get_parent(), global_position + _aim * 60.0, FIRE, 12)
+				MiscVfx.spark(get_parent(), global_position + _aim * 60.0, FIRE, 1.2)
 				SkillEffects.sheet_once(get_parent(), FX_BREATH, 8, 14.0, global_position + _aim * 10.0 + Vector2(0, -24),
 						Vector2(4, 25), _aim.angle(), 1.45, 1.4)
 				# faza 2+: zionięcie także za siebie

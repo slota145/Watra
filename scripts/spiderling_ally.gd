@@ -60,7 +60,7 @@ func _nearest_enemy() -> Goblin:
 
 
 func _burst(hit: bool) -> void:
-	SkillEffects.spark(get_parent(), global_position + Vector2(0, -4), LegendaryEffects.VENOM_COLOR, 10 if hit else 5)
+	MiscVfx.puff(get_parent(), global_position + Vector2(0, -2), LegendaryEffects.VENOM_COLOR, 0.45 if hit else 0.3)
 	if hit and is_instance_valid(player):
 		Sfx.play_at("spit_hit", global_position, -4.0)
 		for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):

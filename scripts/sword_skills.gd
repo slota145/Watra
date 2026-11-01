@@ -83,6 +83,8 @@ const DANCE_STACKS := 5
 const DANCE_TIME := 4.0
 const CLOUD_TIME := 5.0
 const CLOUD_RADIUS := 70.0
+## Wirujący krąg dymu u stóp w czasie ładowania Dymnych Wybuchów (skala efektu MiscVfx).
+const SWIRL_SIZE := 0.4
 const CLOUD_DODGE := 0.3
 const FRENZY_LEECH := 0.3
 const ICONS := {
@@ -102,7 +104,7 @@ var _last_target: Goblin
 ## Ładowanie Dymnych Wybuchów: sekundy ładowania (-1 - nie ładujemy) i ostatni osiągnięty rząd (do błysku).
 var _smoke_charge := -1.0
 var _smoke_stage := 0
-var _smoke_swirl: CPUParticles2D
+var _smoke_swirl: FxLoop
 ## odnowienia umiejętności: id -> [zostało, całość]
 var _cooldowns := {}
 var _parry_time := 0.0
@@ -116,7 +118,7 @@ var _dance_time := 0.0
 ## Chmura Dymu i Cienia: środek i ile jeszcze trwa.
 var _cloud_at := Vector2.ZERO
 var _cloud_time := 0.0
-var _cloud_node: CPUParticles2D
+var _cloud_node: FxLoop
 var _blades: SpectralBlades
 
 
@@ -350,18 +352,9 @@ func _press_smoke() -> void:
 		return
 	_smoke_charge = 0.0
 	_smoke_stage = 0
-	_smoke_swirl = CPUParticles2D.new()
-	_smoke_swirl.position = Player.BODY_OFFSET
-	_smoke_swirl.amount = 14
-	_smoke_swirl.lifetime = 0.6
-	_smoke_swirl.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-	_smoke_swirl.emission_sphere_radius = 14.0
-	_smoke_swirl.gravity = Vector2(0, -10)
-	_smoke_swirl.radial_accel_min = -40.0
-	_smoke_swirl.radial_accel_max = -30.0
-	_smoke_swirl.scale_amount_min = 2.0
-	_smoke_swirl.scale_amount_max = 4.0
-	_smoke_swirl.color_ramp = _smoke_ramp(0.6)
+	# wirujący krąg dymu u stóp w czasie ładowania (MiscVfx), rośnie z każdym rzędem
+	_smoke_swirl = MiscVfx.looping("smoke_ring")
+	_smoke_swirl.scale = Vector2.ONE * SWIRL_SIZE
 	_player.add_child(_smoke_swirl)
 	Sfx.play("magic", -4.0, 0.7)
 
@@ -385,9 +378,9 @@ func _process_smoke(delta: float) -> void:
 		if stage > _smoke_stage:
 			_smoke_stage = stage
 			Sfx.play("magic", -2.0, 0.8 + 0.2 * stage)
-			SkillEffects.spark(_player.get_parent(), _player.body_center(), SMOKE_COLOR, 6 + 4 * stage)
+			MiscVfx.puff(_player.get_parent(), _player.body_center(), SMOKE_COLOR, 0.4 + 0.15 * stage)
 			if _smoke_swirl != null:
-				_smoke_swirl.amount = 14 + 8 * stage
+				_smoke_swirl.scale = Vector2.ONE * SWIRL_SIZE * (1.0 + 0.25 * stage)
 		return
 	var rows := 1 + _smoke_stage
 	_stop_smoke_charge()
@@ -412,7 +405,7 @@ func _fire_smoke(rows: int, combo: bool) -> void:
 	if _player.skills.has_keystone("melee", "smoke_shadow"):
 		_start_cloud(origin + aim * Skills.SMOKE_DISTANCE[rows - 1] * 0.6)
 	if combo:
-		SkillEffects.spark(_player.get_parent(), _player.body_center(), Color(1.0, 0.9, 0.6), 12)
+		MiscVfx.spark(_player.get_parent(), _player.body_center(), Color(1.0, 0.9, 0.6), 1.4)
 	for ring in rows:
 		var spread := deg_to_rad(Skills.SMOKE_SPREAD_DEGREES[ring])
 		for k in 3:
@@ -436,14 +429,6 @@ func _burst(at: Vector2, dir: Vector2, radius: float, multiplier: float) -> void
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
 		if enemy.hurt_center().distance_to(at + Vector2(0, -6)) <= radius + enemy.hurt_radius:
 			_player.hit_enemy(enemy, _player._skill_damage(multiplier, SMOKE_TAGS), at, 110.0)
-
-
-static func _smoke_ramp(alpha: float) -> Gradient:
-	var ramp := Gradient.new()
-	ramp.colors = PackedColorArray([Color(0.92, 0.92, 0.95, alpha), Color(0.62, 0.62, 0.68, alpha * 0.85),
-			Color(0.42, 0.42, 0.48, alpha * 0.5), Color(0.35, 0.35, 0.4, 0.0)])
-	ramp.offsets = PackedFloat32Array([0.0, 0.35, 0.7, 1.0])
-	return ramp
 
 
 # ---------------------------------------------------------------- Rozpłatanie i krwawienie
@@ -484,7 +469,7 @@ func bleed_enemy(enemy: Goblin, multiplier: float) -> void:
 		_player.get_tree().create_timer(0.5 * (i + 1), false).timeout.connect(func() -> void:
 			if is_instance_valid(enemy) and enemy.state != Goblin.State.DEAD:
 				enemy.take_damage(per_tick, enemy.global_position, 0.0)
-				SkillEffects.spark(enemy.get_parent(), enemy.hurt_center(), Color(0.7, 0.05, 0.05), 2)
+				SkillEffects.sheet_once(enemy.get_parent(), REND_WOUND_FX, 9, 15.0, enemy.hurt_center(), REND_WOUND_ANCHOR, 0.0, 1.0, 0.45)
 				if frenzy and is_instance_valid(_player) and not _player.is_dead:
 					_player.heal(per_tick * FRENZY_LEECH))
 
@@ -508,7 +493,7 @@ func _ground_slam() -> void:
 	var parent: Node = layer if layer != null else _player.get_parent()
 	var hit := {}
 	if combo:
-		SkillEffects.shockwave(_player.get_parent(), origin, Skills.SLAM_RING, Color(0.75, 0.6, 0.4))
+		MiscVfx.ring(_player.get_parent(), origin, Skills.SLAM_RING, Color(0.75, 0.6, 0.4))
 		SkillEffects.ground_crack(parent, origin, Skills.SLAM_RING * 0.7, 2.0)
 		# [promień jako część kręgu, liczba erupcji, opóźnienie, przesunięcie kąta w ułamku odstępu]
 		for ring in [[0.5, 9, 0.0, 0.0], [0.85, 14, 0.08, 0.5]]:
@@ -654,17 +639,11 @@ func _start_cloud(at: Vector2) -> void:
 	_cloud_time = CLOUD_TIME
 	if is_instance_valid(_cloud_node):
 		_cloud_node.queue_free()
-	_cloud_node = CPUParticles2D.new()
+	# chmura dymu: wirujący krąg dymu na cały promień chmury (MiscVfx)
+	_cloud_node = MiscVfx.looping("smoke_ring")
 	_cloud_node.position = at
-	_cloud_node.amount = 40
-	_cloud_node.lifetime = 1.6
-	_cloud_node.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-	_cloud_node.emission_sphere_radius = CLOUD_RADIUS * 0.7
-	_cloud_node.gravity = Vector2(0, -6)
-	_cloud_node.initial_velocity_max = 8.0
-	_cloud_node.scale_amount_min = 5.0
-	_cloud_node.scale_amount_max = 10.0
-	_cloud_node.color_ramp = _smoke_ramp(0.45)
+	_cloud_node.scale = Vector2.ONE * CLOUD_RADIUS / MiscVfx.SMOKE_RING_RADIUS
+	_cloud_node.modulate = SMOKE_COLOR
 	_player.get_parent().add_child(_cloud_node)
 	_update_temp_bonus()
 
@@ -689,8 +668,9 @@ func _process_timed(delta: float) -> void:
 	if _cloud_time > 0.0:
 		_cloud_time -= delta
 		if _cloud_time <= 0.0 and is_instance_valid(_cloud_node):
-			_cloud_node.emitting = false
-			_player.get_tree().create_timer(1.6).timeout.connect(_cloud_node.queue_free)
+			var fade := _cloud_node.create_tween()
+			fade.tween_property(_cloud_node, "modulate:a", 0.0, 0.8)
+			fade.tween_callback(_cloud_node.queue_free)
 	if before != [_cry_time > 0.0, _dance_stacks, _in_cloud()]:
 		_update_temp_bonus()
 

@@ -41,27 +41,18 @@ var _bolts_left := 0
 var _bolt_timer := 0.0
 var _dive_dir := Vector2.RIGHT
 var _dive_left := 0.0
-var _crackle: CPUParticles2D
+var _crackle: FxLoop
 var _hover_time := 0.0
 
 
 func _ready() -> void:
 	super()
 	hurt_radius = 16.0
-	_crackle = CPUParticles2D.new()
+	# trzask wyładowań wokół orła (zapętlony efekt z kreatora efektów PixelLab - MiscVfx)
+	_crackle = MiscVfx.looping("crackle")
 	_crackle.position = Vector2(0, -30)
-	_crackle.amount = 10
-	_crackle.lifetime = 0.25
-	_crackle.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-	_crackle.emission_rect_extents = Vector2(26, 12)
-	_crackle.spread = 180.0
-	_crackle.gravity = Vector2.ZERO
-	_crackle.initial_velocity_max = 30.0
-	_crackle.scale_amount_max = 2.0
-	_crackle.color = Color(0.7, 0.9, 1.0)
-	var additive := CanvasItemMaterial.new()
-	additive.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-	_crackle.material = additive
+	_crackle.scale = Vector2(1.3, 0.9)
+	_crackle.z_index = 1
 	add_child(_crackle)
 
 
@@ -232,7 +223,7 @@ func _animate(delta: float) -> void:
 
 func _die() -> void:
 	super()
-	_crackle.emitting = false
+	_crackle.visible = false
 	Sfx.play_at("storm_eagle_screech", global_position, 3.0)
 	Sfx.play_at("thunder", global_position)
 

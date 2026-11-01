@@ -1947,5 +1947,167 @@
       24,
       14
     ]
+  },
+  "misc_spark": {
+    "effect": "e1c00b5f-77b5-4d3c-9280-b0da46141800",
+    "name": "Iskry trafienia (neutralne, barwione w grze)",
+    "frame": [
+      64,
+      43
+    ],
+    "frames": 6,
+    "fps": 16,
+    "anchor": [
+      33,
+      22
+    ]
+  },
+  "misc_puff": {
+    "effect": "d2b9c41a-cd39-42d5-a452-26e80427c38b",
+    "name": "Kłąb dymu (neutralny, barwiony w grze)",
+    "frame": [
+      76,
+      64
+    ],
+    "frames": 10,
+    "fps": 12,
+    "anchor": [
+      38,
+      34
+    ]
+  },
+  "misc_debris": {
+    "effect": "c1e256eb-5a1c-4c31-98f8-d2de9b51fcba",
+    "name": "Odłamki i grudy (neutralne, barwione w grze)",
+    "frame": [
+      87,
+      61
+    ],
+    "frames": 12,
+    "columns": 6,
+    "fps": 14,
+    "anchor": [
+      46,
+      24
+    ]
+  },
+  "misc_ring": {
+    "effect": "0c1593ad-f9d5-487e-b7ae-dfbb5b114546",
+    "name": "Fala po ziemi (neutralna, barwiona w grze)",
+    "frame": [
+      120,
+      64
+    ],
+    "frames": 9,
+    "columns": 5,
+    "fps": 16,
+    "anchor": [
+      60,
+      32
+    ]
+  },
+  "misc_summon": {
+    "effect": "1c019898-59f0-448f-becc-d03279dc16e0",
+    "name": "Krąg przyzwania bossa",
+    "frame": [
+      112,
+      136
+    ],
+    "frames": 16,
+    "columns": 8,
+    "fps": 8,
+    "anchor": [
+      56,
+      104
+    ]
+  },
+  "misc_smoke_ring": {
+    "effect": "8d5e8855-ed50-4480-b0e2-2a8cbad48e1d",
+    "name": "Wirujący krąg dymu",
+    "frame": [
+      112,
+      64
+    ],
+    "frames": 12,
+    "columns": 6,
+    "fps": 8,
+    "loop": true,
+    "anchor": [
+      56,
+      34
+    ]
+  },
+  "misc_crackle": {
+    "effect": "317e3e1a-5d29-43a2-af3d-3d7bdec8abc5",
+    "name": "Trzask wyładowań (Gromoskrzydły)",
+    "frame": [
+      43,
+      49
+    ],
+    "frames": 12,
+    "fps": 12,
+    "loop": true,
+    "anchor": [
+      21,
+      26
+    ]
+  },
+  "meteor_trail": {
+    "effect": "ada954cb-8269-4123-a343-f0fc9b3dbe46",
+    "name": "Meteoryt - ognisty ogon",
+    "frame": [
+      82,
+      28
+    ],
+    "frames": 8,
+    "fps": 12,
+    "loop": true,
+    "anchor": [
+      78,
+      16
+    ]
+  },
+  "meteor_impact": {
+    "effect": "401136e7-c25c-470f-a30e-581d9ff323b0",
+    "name": "Meteoryt - uderzenie",
+    "frame": [
+      83,
+      55
+    ],
+    "frames": 10,
+    "fps": 12,
+    "anchor": [
+      41,
+      35
+    ]
+  },
+  "crystal_shatter": {
+    "effect": "266ae940-afd6-4c92-a5be-7193e39cf2d5",
+    "name": "Kryształ Watry - rozprysk",
+    "frame": [
+      126,
+      82
+    ],
+    "frames": 12,
+    "columns": 6,
+    "fps": 14,
+    "anchor": [
+      67,
+      53
+    ]
+  },
+  "traveler_flame": {
+    "effect": "eaa55cb8-0b08-47d9-928a-3deb898ddf1f",
+    "name": "Podróżnik - płomień przybycia i odejścia",
+    "frame": [
+      72,
+      88
+    ],
+    "frames": 12,
+    "fps": 14,
+    "anchor": [
+      36,
+      74
+    ]
   }
 }
