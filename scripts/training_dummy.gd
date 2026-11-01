@@ -77,7 +77,7 @@ func _physics_process(delta: float) -> void:
 
 func _update_label() -> void:
 	if _count == 0:
-		_label.text = "Kukła treningowa"
+		_label.text = tr("Kukła treningowa")
 		return
 	while not _hits.is_empty() and _clock - float(_hits[0][0]) > DPS_WINDOW:
 		_hits.pop_front()
@@ -85,4 +85,4 @@ func _update_label() -> void:
 	for hit: Array in _hits:
 		recent += int(hit[1])
 	var span := clampf(_clock - float(_hits[0][0]) if not _hits.is_empty() else DPS_WINDOW, 1.0, DPS_WINDOW)
-	_label.text = "DPS: %d\nSuma: %d  •  trafień: %d" % [roundi(recent / span), _total, _count]
+	_label.text = tr("DPS: %d\nSuma: %d  •  trafień: %d") % [roundi(recent / span), _total, _count]

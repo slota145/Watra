@@ -27,27 +27,27 @@ static func list(player: Player) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	# osłabienia na początku - najważniejsze do zauważenia
 	if player._poison_time > 0.0:
-		result.append({"name": "Trucizna", "kind": "bad", "left": player._poison_time, "total": player._poison_time,
-				"icon": POISON_ICON, "description": "Tracisz %d zdrowia na sekundę" % roundi(player._poison_dps)})
+		result.append({"name": Lang.t("Trucizna"), "kind": "bad", "left": player._poison_time, "total": player._poison_time,
+				"icon": POISON_ICON, "description": Lang.t("Tracisz %d zdrowia na sekundę") % roundi(player._poison_dps)})
 	if player._slow_time > 0.0:
-		result.append({"name": "Spowolnienie", "kind": "bad", "left": player._slow_time, "total": player._slow_time,
-				"icon": SLOW_ICON, "description": "Ruch wolniejszy o %d%%" % roundi((1.0 - player._slow_factor) * 100.0)})
+		result.append({"name": Lang.t("Spowolnienie"), "kind": "bad", "left": player._slow_time, "total": player._slow_time,
+				"icon": SLOW_ICON, "description": Lang.t("Ruch wolniejszy o %d%%") % roundi((1.0 - player._slow_factor) * 100.0)})
 	if player._confused_time > 0.0:
-		result.append({"name": "Oszołomienie", "kind": "bad", "left": player._confused_time, "total": player._confused_time,
-				"icon": CONFUSE_ICON, "description": "Sterowanie odwrócone - postać biegnie w przeciwną stronę"})
+		result.append({"name": Lang.t("Oszołomienie"), "kind": "bad", "left": player._confused_time, "total": player._confused_time,
+				"icon": CONFUSE_ICON, "description": Lang.t("Sterowanie odwrócone - postać biegnie w przeciwną stronę")})
 	for group: String in player.boons.active:
 		var entry: Dictionary = player.boons.active[group]
 		var data: Dictionary = Boons.DEFS[entry["id"]]
-		result.append({"name": data["name"], "kind": "good", "left": float(entry["left"]), "total": float(data["time"]),
+		result.append({"name": Lang.t(data["name"]), "kind": "good", "left": float(entry["left"]), "total": float(data["time"]),
 				"icon": _boon_icon(entry["id"]),
-				"description": "%s: %s" % [Boons.GROUP_NAMES[group], data["description"]]})
+				"description": "%s: %s" % [Lang.t(Boons.GROUP_NAMES[group]), Lang.t(data["description"])]})
 	var level := player.boons.watra_level()
 	if level > 1:
 		var steps := level - 1
-		result.append({"name": "Watra - poziom %d" % level, "kind": "good", "left": -1.0, "icon": WATRA_ICON,
-				"description": "+%d%% złota, +%d%% doświadczenia, +%s zdrowia na sekundę" % [
+		result.append({"name": Lang.t("Watra - poziom %d") % level, "kind": "good", "left": -1.0, "icon": WATRA_ICON,
+				"description": Lang.t("+%d%% złota, +%d%% doświadczenia, +%s zdrowia na sekundę") % [
 					roundi(Boons.WATRA_PERKS["gold_find"] * steps * 100.0), roundi(Boons.WATRA_PERKS["xp_gain"] * steps * 100.0),
-					String.num(Boons.WATRA_PERKS["health_regen"] * steps, 1).replace(".", ",")]})
+					Skills.decimal(Boons.WATRA_PERKS["health_regen"] * steps, 1)]})
 	result.append_array(player.legendary.statuses())
 	result.append_array(player.sword_skills.statuses())
 	result.append_array(player.bow_skills.statuses())

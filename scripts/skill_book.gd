@@ -188,15 +188,15 @@ func take_gem(weapon_type: String, id: String) -> Dictionary:
 ## Zwraca "" albo powód, dla którego się nie da.
 func socket_from(inventory: Inventory, weapon_type: String, id: String, index: int) -> String:
 	if not can_socket(weapon_type, id):
-		return "Najpierw wybierz gniazdo w drzewku."
+		return Lang.t("Najpierw wybierz gniazdo w drzewku.")
 	if index < 0 or index >= inventory.slots.size() or inventory.slots[index].is_empty() \
 			or not (Gems.is_gem(inventory.slots[index]["id"]) or Essences.is_essence(inventory.slots[index]["id"])):
-		return "To nie jest kamień szlachetny ani esencja."
+		return Lang.t("To nie jest kamień szlachetny ani esencja.")
 	var gem_id: String = inventory.slots[index]["id"]
 	if Essences.is_essence(gem_id) and not is_legendary_socket(weapon_type, id):
-		return "Esencja pasuje tylko do gniazda legendarnego."
+		return Lang.t("Esencja pasuje tylko do gniazda legendarnego.")
 	if gem_in(weapon_type, id).has("essence"):
-		return "Najpierw wyjmij esencję z gniazda."
+		return Lang.t("Najpierw wyjmij esencję z gniazda.")
 	inventory.take_one(index)
 	var old := set_gem(weapon_type, id, Items.generated[gem_id]["recipe"])
 	Items.generated.erase(gem_id)
@@ -210,13 +210,13 @@ func socket_from(inventory: Inventory, weapon_type: String, id: String, index: i
 func unsocket_to(inventory: Inventory, weapon_type: String, id: String, stats: CharacterStats = null) -> String:
 	var gem := gem_in(weapon_type, id)
 	if gem.is_empty():
-		return "Gniazdo jest puste."
+		return Lang.t("Gniazdo jest puste.")
 	if not inventory.slots.any(func(slot: Dictionary) -> bool: return slot.is_empty()):
-		return "Plecak jest pełny."
+		return Lang.t("Plecak jest pełny.")
 	if gem.has("essence"):
 		var price := Essences.save_gold(character_level)
 		if stats == null or stats.gold < price:
-			return "Wyjęcie esencji kosztuje %d zł." % price
+			return Lang.t("Wyjęcie esencji kosztuje %d zł.") % price
 		stats.add_gold(-price)
 		inventory.add_item(Essences.register(take_gem(weapon_type, id).duplicate(true)), 1)
 		return ""

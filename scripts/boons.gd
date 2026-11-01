@@ -135,6 +135,24 @@ func bonus(stat: String) -> float:
 	return total
 
 
+## Nazwa, opis premii i nazwa grupy w obecnym języku (DEFS, GROUP_NAMES zostają po polsku).
+static func name_of(id: String) -> String:
+	return Lang.t(str(DEFS.get(id, {}).get("name", "")))
+
+
+static func description_of(id: String) -> String:
+	return Lang.t(str(DEFS.get(id, {}).get("description", "")))
+
+
+static func group_name(group: String) -> String:
+	return Lang.t(str(GROUP_NAMES.get(group, "")))
+
+
+## Nazwa gatunku w bestiariuszu w obecnym języku.
+static func bestiary_name(kind: String) -> String:
+	return Lang.t(str(BESTIARY.get(kind, {}).get("name", "")))
+
+
 ## Ile złota kosztuje premia dla postaci na danym poziomie.
 static func gold_cost(id: String, level: int) -> int:
 	var data: Dictionary = DEFS[id]

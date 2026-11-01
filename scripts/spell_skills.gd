@@ -81,12 +81,12 @@ func _init(player: Player) -> void:
 ## Naciśnięty slot umiejętności (trzymanie sprawdza Player.is_skill_held).
 func press(id: String) -> void:
 	if _player.skills.level_of(id) <= 0:
-		_player._hint("Wybierz %s w drzewku umiejętności (K)" % Skills.get_data(id)["name"])
+		_player._hint(Lang.t("Wybierz %s w drzewku umiejętności (K)") % Skills.name_of(id))
 		return
 	if _cooldowns.get(id, [0.0])[0] > 0.0 or _player.is_dashing():
 		return
 	if not _player.spend_mana(Skills.mana_cost(id)):
-		_player._hint("Za mało many" if not blood_magic() else "Za mało zdrowia")
+		_player._hint(Lang.t("Za mało many") if not blood_magic() else Lang.t("Za mało zdrowia"))
 		return
 	var combo := _player.combo_with(id)
 	if combo:
@@ -541,20 +541,20 @@ func rune() -> Node2D:
 func statuses() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	if _storm_time > 0.0:
-		result.append({"name": "Burza Peruna", "kind": "good", "left": _storm_time, "total": Skills.STORM_TIME, "icon": ICONS["storm_call"],
-				"description": "Pioruny biją w wrogów wokół ciebie" + (" i przeskakują dalej" if _storm_chain else "")})
+		result.append({"name": Lang.t("Burza Peruna"), "kind": "good", "left": _storm_time, "total": Skills.STORM_TIME, "icon": ICONS["storm_call"],
+				"description": Lang.t("Pioruny biją w wrogów wokół ciebie i przeskakują dalej") if _storm_chain else Lang.t("Pioruny biją w wrogów wokół ciebie")})
 	if _shield_time > 0.0:
-		result.append({"name": "Tarcza Many", "kind": "good", "left": _shield_time, "total": Skills.SHIELD_TIME, "icon": ICONS["mana_shield"],
-				"description": "Całe ciosy zabiera mana" if _shield_full > 0.0 else "Część ciosów zabiera mana zamiast zdrowia"})
+		result.append({"name": Lang.t("Tarcza Many"), "kind": "good", "left": _shield_time, "total": Skills.SHIELD_TIME, "icon": ICONS["mana_shield"],
+				"description": Lang.t("Całe ciosy zabiera mana") if _shield_full > 0.0 else Lang.t("Część ciosów zabiera mana zamiast zdrowia")})
 	if in_rune() and _player.stats.weapon_type() == "spell":
-		result.append({"name": "Kamień Runiczny", "kind": "good", "left": _rune.time_left, "total": Skills.RUNE_TIME, "icon": ICONS["rune_stone"],
-				"description": "+%d%% obrażeń magicznych i szybkości rzucania" % roundi(_temp.get("cast_speed", 0.0) * 100.0)})
+		result.append({"name": Lang.t("Kamień Runiczny"), "kind": "good", "left": _rune.time_left, "total": Skills.RUNE_TIME, "icon": ICONS["rune_stone"],
+				"description": Lang.t("+%d%% obrażeń magicznych i szybkości rzucania") % roundi(_temp.get("cast_speed", 0.0) * 100.0)})
 	if _harmony_time > 0.0 and _player.stats.weapon_type() == "spell":
-		result.append({"name": "Harmonia Żywiołów", "kind": "good", "left": _harmony_time, "total": HARMONY_TIME, "icon": ICONS["harmony"],
-				"description": "+%d%% obrażeń magicznych" % roundi(HARMONY_BONUS * 100.0)})
+		result.append({"name": Lang.t("Harmonia Żywiołów"), "kind": "good", "left": _harmony_time, "total": HARMONY_TIME, "icon": ICONS["harmony"],
+				"description": Lang.t("+%d%% obrażeń magicznych") % roundi(HARMONY_BONUS * 100.0)})
 	if _full_power():
-		result.append({"name": "Pełnia Mocy", "kind": "good", "left": -1.0, "icon": ICONS["full_power"],
-				"description": "+%d%% obrażeń magicznych przy pełnej manie" % roundi(FULL_POWER_BONUS * 100.0)})
+		result.append({"name": Lang.t("Pełnia Mocy"), "kind": "good", "left": -1.0, "icon": ICONS["full_power"],
+				"description": Lang.t("+%d%% obrażeń magicznych przy pełnej manie") % roundi(FULL_POWER_BONUS * 100.0)})
 	return result
 
 

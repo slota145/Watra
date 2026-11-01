@@ -24,8 +24,8 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
-	box.add_child(UiStyle.title("Odczarowanie"))
-	var hint := UiStyle.label("Mędrzec zdejmuje zaklęcie i oddaje kamienie, które dały kolejne poziomy.", 7, UiStyle.DIM_COLOR)
+	box.add_child(UiStyle.title(tr("Odczarowanie")))
+	var hint := UiStyle.label(tr("Mędrzec zdejmuje zaklęcie i oddaje kamienie, które dały kolejne poziomy."), 7, UiStyle.DIM_COLOR)
 	hint.custom_minimum_size.x = ROW_WIDTH
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -49,7 +49,7 @@ func _ready() -> void:
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	bottom.add_child(_status)
 	var close_button := Button.new()
-	close_button.text = "Zamknij"
+	close_button.text = tr("Zamknij")
 	close_button.focus_mode = Control.FOCUS_NONE
 	close_button.add_theme_font_size_override("font_size", 8)
 	close_button.pressed.connect(func() -> void:
@@ -104,11 +104,11 @@ func _enchanted() -> Array:
 		var id := _player.equipment.get_item(slot)
 		var level := _player.equipment.get_enchant(slot)
 		if id != "" and level > 0:
-			result.append(["założony", id, level, _player.equipment.set_enchant.bind(slot, 0)])
+			result.append([tr("założony"), id, level, _player.equipment.set_enchant.bind(slot, 0)])
 	for i in _player.inventory.slots.size():
 		var data: Dictionary = _player.inventory.slots[i]
 		if not data.is_empty() and int(data.get("enchant", 0)) > 0:
-			result.append(["w plecaku", data["id"], int(data["enchant"]), _clear_bag_slot.bind(i)])
+			result.append([tr("w plecaku"), data["id"], int(data["enchant"]), _clear_bag_slot.bind(i)])
 	return result
 
 
@@ -126,7 +126,7 @@ func _refresh() -> void:
 	_gold_label.text = "%d" % _player.stats.gold
 	var items := _enchanted()
 	if items.is_empty():
-		var empty := UiStyle.label("Nie masz żadnych zaklętych przedmiotów.", 8, UiStyle.DIM_COLOR)
+		var empty := UiStyle.label(tr("Nie masz żadnych zaklętych przedmiotów."), 8, UiStyle.DIM_COLOR)
 		empty.custom_minimum_size.x = ROW_WIDTH
 		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_list.add_child(empty)
@@ -161,7 +161,7 @@ func _row(entry: Array) -> Control:
 	middle.add_child(UiStyle.label("%s  (%s)" % [Items.display_name(id, level), entry[0]], 8, name_color))
 	var back := HBoxContainer.new()
 	back.add_theme_constant_override("separation", 2)
-	back.add_child(UiStyle.label("Zwrot:", 7, UiStyle.DIM_COLOR))
+	back.add_child(UiStyle.label(tr("Zwrot:"), 7, UiStyle.DIM_COLOR))
 	var stones := refund(level)
 	var category := Enchanting.category(id)
 	for perfect in [false, true]:
@@ -171,14 +171,14 @@ func _row(entry: Array) -> Control:
 		var stone_icon := TextureRect.new()
 		stone_icon.texture = Items.get_data(Enchanting.stone_id(category, perfect))["icon"]
 		UiStyle.fit_icon(stone_icon)
-		stone_icon.tooltip_text = Items.get_data(Enchanting.stone_id(category, perfect))["name"]
+		stone_icon.tooltip_text = Lang.t(Items.get_data(Enchanting.stone_id(category, perfect))["name"])
 		back.add_child(stone_icon)
 		back.add_child(UiStyle.label("x%d" % amount, 7, Color(0.6, 1.0, 0.55)))
 	middle.add_child(back)
 
 	var price := cost(level)
 	var button := Button.new()
-	button.text = "Odczaruj - %d zł" % price
+	button.text = tr("Odczaruj - %d zł") % price
 	button.focus_mode = Control.FOCUS_NONE
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.add_theme_font_size_override("font_size", 8)
@@ -210,6 +210,6 @@ func _disenchant(entry: Array) -> void:
 	(entry[3] as Callable).call()
 	Sfx.play("coins")
 	Sfx.play("enchant_drop")
-	_status.text = "Odczarowano: %s" % Items.get_data(id)["name"]
+	_status.text = tr("Odczarowano: %s") % Items.display_name(id)
 	_status.add_theme_color_override("font_color", Color(0.6, 1.0, 0.55))
 	_refresh()
