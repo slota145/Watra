@@ -29,8 +29,8 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
-	box.add_child(UiStyle.title("Magazyn osady"))
-	var hint := UiStyle.label("Kliknij przedmiot, aby przenieść cały stos na drugą stronę, albo przeciągnij go na wybraną kratkę.", 7, UiStyle.DIM_COLOR)
+	box.add_child(UiStyle.title(Lang.t("Magazyn osady")))
+	var hint := UiStyle.label(Lang.t("Kliknij przedmiot, aby przenieść cały stos na drugą stronę, albo przeciągnij go na wybraną kratkę."), 7, UiStyle.DIM_COLOR)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(hint)
 
@@ -39,13 +39,13 @@ func _ready() -> void:
 	box.add_child(columns)
 	var bag := VBoxContainer.new()
 	columns.add_child(bag)
-	bag.add_child(UiStyle.label("Plecak", 8, UiStyle.TITLE_COLOR))
+	bag.add_child(UiStyle.label(Lang.t("Plecak"), 8, UiStyle.TITLE_COLOR))
 	_bag_grid = _grid(5)
 	bag.add_child(_scrolled(_bag_grid, 5))
 	columns.add_child(VSeparator.new())
 	var store := VBoxContainer.new()
 	columns.add_child(store)
-	_store_label = UiStyle.label("Magazyn", 8, UiStyle.TITLE_COLOR)
+	_store_label = UiStyle.label(Lang.t("Magazyn"), 8, UiStyle.TITLE_COLOR)
 	store.add_child(_store_label)
 	_store_grid = _grid(8)
 	store.add_child(_scrolled(_store_grid, 8))
@@ -54,8 +54,8 @@ func _ready() -> void:
 	bottom.alignment = BoxContainer.ALIGNMENT_CENTER
 	bottom.add_theme_constant_override("separation", 6)
 	box.add_child(bottom)
-	bottom.add_child(_button("Złóż drewno i kamień", _deposit_wood))
-	bottom.add_child(_button("Zamknij", close))
+	bottom.add_child(_button(Lang.t("Złóż drewno i kamień"), _deposit_wood))
+	bottom.add_child(_button(Lang.t("Zamknij"), close))
 
 
 func setup(player: Player) -> void:
@@ -93,7 +93,7 @@ func _refresh() -> void:
 	_fill(_bag_grid, _player.inventory, _player.storage)
 	_fill(_store_grid, _player.storage, _player.inventory)
 	var used := _player.storage.slots.filter(func(s: Dictionary) -> bool: return not s.is_empty()).size()
-	_store_label.text = "Magazyn (%d/%d)   •   drewno: %d   •   kamień: %d" % [used, _player.storage.slots.size(),
+	_store_label.text = Lang.t("Magazyn (%d/%d)   •   drewno: %d   •   kamień: %d") % [used, _player.storage.slots.size(),
 			_player.storage.count_of("wood"), _player.storage.count_of("stone")]
 
 
@@ -112,7 +112,7 @@ func _fill(grid: GridContainer, from: Inventory, to: Inventory) -> void:
 		if data.is_empty():
 			continue
 		var enchant: int = data.get("enchant", 0)
-		slot.tooltip_text = Items.tooltip(data["id"], enchant, "\nKliknij - przenieś")
+		slot.tooltip_text = Items.tooltip(data["id"], enchant, "\n" + Lang.t("Kliknij - przenieś"))
 		slot.gui_input.connect(_on_slot_input.bind(from, i, to))
 		var icon := TextureRect.new()
 		icon.texture = Items.get_data(data["id"])["icon"]
@@ -159,7 +159,7 @@ func _on_slot_input(event: InputEvent, from: Inventory, index: int, to: Inventor
 			Sfx.play("deposit")
 		else:
 			Sfx.play("ui_error")
-			DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -10), "Brak miejsca!", Color(1, 0.4, 0.4), 8)
+			DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -10), Lang.t("Brak miejsca!"), Color(1, 0.4, 0.4), 8)
 
 
 func _deposit_wood() -> void:

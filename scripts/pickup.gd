@@ -117,7 +117,7 @@ func _collect() -> void:
 		var gold := roundi(amount * _player.stats.gold_multiplier())  # premia "więcej złota" z przedmiotów
 		_player.stats.add_gold(gold)
 		Sfx.play("coins")
-		DamageNumber.spawn_text(get_parent(), text_pos, "+%d zł" % gold, GOLD_COLOR)
+		DamageNumber.spawn_text(get_parent(), text_pos, Lang.t("+%d zł") % gold, GOLD_COLOR)
 		queue_free()
 		return
 
@@ -129,14 +129,14 @@ func _collect() -> void:
 			Sfx.play("legendary_pickup")
 			var hud := get_tree().get_first_node_in_group("hud")
 			if hud != null:
-				hud.show_banner("Przedmiot legendarny: %s!" % Items.get_data(item_id)["name"], Items.LEGENDARY_COLOR)
+				hud.show_banner(Lang.t("Przedmiot legendarny: %s!") % Items.display_name(item_id), Items.LEGENDARY_COLOR)
 		# lepsze przedmioty dostają powiadomienie w rogu ekranu zamiast napisu nad głową
 		if not LootFeed.is_notable(item_id):
-			DamageNumber.spawn_text(get_parent(), text_pos, "+%d %s" % [taken, Items.get_data(item_id)["name"]], Color(0.95, 0.6, 0.65))
+			DamageNumber.spawn_text(get_parent(), text_pos, "+%d %s" % [taken, Items.display_name(item_id)], Color(0.95, 0.6, 0.65))
 	if left == 0:
 		queue_free()
 		return
 	amount = left
 	_speed = 0.0
 	_retry_at = _age + 2.0
-	DamageNumber.spawn_text(get_parent(), text_pos, "Ekwipunek pełny!", Color(1, 0.4, 0.4))
+	DamageNumber.spawn_text(get_parent(), text_pos, Lang.t("Ekwipunek pełny!"), Color(1, 0.4, 0.4))

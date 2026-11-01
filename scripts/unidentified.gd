@@ -54,15 +54,17 @@ static func category_of_slot(slot: String) -> String:
 
 ## Dane przedmiotu (do Items.get_data): nazwa, opis, ikona rodzaju, rzadkość, poziom i cena skupu.
 static func data(id: String) -> Dictionary:
-	if _cache.has(id):
+	# nazwa w języku z chwili utworzenia - po zmianie języka powstaje od nowa
+	if _cache.has(id) and _cache[id]["name_lang"] == TranslationServer.get_locale():
 		return _cache[id]
 	var info := parse(id)
 	if info.is_empty():
 		return {}
 	var category: Dictionary = CATEGORIES[info["category"]]
 	var result := {
-		"name": "%s (%s, poz. %d)" % [category["name"], QUALITY_NAMES[info["quality"]], info["level"]],
-		"description": "Zawinięta w płótno i zapieczętowana - nie wiadomo, co kryje. PPM identyfikuje jeden przedmiot, Shift+PPM cały stos.",
+		"name": Lang.t("%s (%s, poz. %d)") % [Lang.t(category["name"]), Lang.t(QUALITY_NAMES[info["quality"]]), info["level"]],
+		"name_lang": TranslationServer.get_locale(),
+		"description": Lang.t("Zawinięta w płótno i zapieczętowana - nie wiadomo, co kryje. PPM identyfikuje jeden przedmiot, Shift+PPM cały stos."),
 		"icon": ICONS[info["category"]], "rarity": info["quality"], "item_level": info["level"],
 		"sell_price": maxi(1, roundi(Loot.sell_value(info["quality"], info["level"]) * SELL_FACTOR)),
 		"unidentified": info,

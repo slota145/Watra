@@ -23,14 +23,14 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
-	_title = UiStyle.title("Handel")
+	_title = UiStyle.title(Lang.t("Handel"))
 	box.add_child(_title)
 
-	box.add_child(UiStyle.label("Kup", 8, UiStyle.TITLE_COLOR))
+	box.add_child(UiStyle.label(Lang.t("Kup"), 8, UiStyle.TITLE_COLOR))
 	_buy_list = VBoxContainer.new()
 	box.add_child(_scroll(_buy_list, 116))
 	box.add_child(HSeparator.new())
-	box.add_child(UiStyle.label("Sprzedaj", 8, UiStyle.TITLE_COLOR))
+	box.add_child(UiStyle.label(Lang.t("Sprzedaj"), 8, UiStyle.TITLE_COLOR))
 	_sell_list = VBoxContainer.new()
 	box.add_child(_scroll(_sell_list, 64))
 	box.add_child(HSeparator.new())
@@ -43,7 +43,7 @@ func _ready() -> void:
 	_gold_label = UiStyle.label("", 8, Color(1.0, 0.85, 0.3))
 	_gold_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bottom.add_child(_gold_label)
-	var close_button := _button("Zamknij", close)
+	var close_button := _button(Lang.t("Zamknij"), close)
 	bottom.add_child(close_button)
 	box.add_child(bottom)
 
@@ -61,7 +61,7 @@ func setup(player: Player) -> void:
 
 func open(merchant: Npc) -> void:
 	_merchant = merchant
-	_title.text = merchant.display_name if merchant.display_name != "" else "Handel"
+	_title.text = merchant.display_name if merchant.display_name != "" else Lang.t("Handel")
 	_status.text = ""
 	visible = true
 	_refresh()
@@ -90,8 +90,8 @@ func _refresh() -> void:
 	for id in _merchant.shop_sells:
 		var item := Items.get_data(id)
 		var price: int = _player.boons.discounted(int(item["price"]))
-		var row := _item_row(id, "%s - %d zł" % [item["name"], price])
-		var buy := _button("Kup", _buy.bind(id))
+		var row := _item_row(id, Lang.t("%s - %d zł") % [Items.display_name(id), price])
+		var buy := _button(Lang.t("Kup"), _buy.bind(id))
 		buy.disabled = gold < price
 		row.add_child(buy)
 		_buy_list.add_child(row)
@@ -108,26 +108,26 @@ func _refresh() -> void:
 		elif not slot["id"] in sellable:
 			sellable.append(slot["id"])
 	if sellable.is_empty() and single_items.is_empty():
-		_sell_list.add_child(UiStyle.label("Nie masz nic na sprzedaż.", 8, UiStyle.DIM_COLOR))
+		_sell_list.add_child(UiStyle.label(Lang.t("Nie masz nic na sprzedaż."), 8, UiStyle.DIM_COLOR))
 	for index in single_items:
 		var slot: Dictionary = _player.inventory.slots[index]
 		var enchant: int = slot.get("enchant", 0)
-		var row := _item_row(slot["id"], "%s - %d zł" % [Items.display_name(slot["id"], enchant), _price_of(slot["id"], enchant)], enchant)
-		row.add_child(_button("Sprzedaj", _sell_slot.bind(index)))
+		var row := _item_row(slot["id"], Lang.t("%s - %d zł") % [Items.display_name(slot["id"], enchant), _price_of(slot["id"], enchant)], enchant)
+		row.add_child(_button(Lang.t("Sprzedaj"), _sell_slot.bind(index)))
 		_sell_list.add_child(row)
 	for id in sellable:
 		var item := Items.get_data(id)
 		var count := _player.inventory.count_of(id)
-		var row := _item_row(id, "%s x%d - %d zł/szt." % [item["name"], count, item["sell_price"]])
+		var row := _item_row(id, Lang.t("%s x%d - %d zł/szt.") % [Items.display_name(id), count, item["sell_price"]])
 		var sell_one := _button("1", _sell.bind(id, 1))
-		var sell_all := _button("Wszystkie", _sell.bind(id, -1))
+		var sell_all := _button(Lang.t("Wszystkie"), _sell.bind(id, -1))
 		sell_one.disabled = count == 0
 		sell_all.disabled = count == 0
 		row.add_child(sell_one)
 		row.add_child(sell_all)
 		_sell_list.add_child(row)
 
-	_gold_label.text = "%d złota" % gold
+	_gold_label.text = Lang.t("%d złota") % gold
 
 
 func _scroll(content: Control, height: float) -> ScrollContainer:
@@ -174,18 +174,18 @@ func _button(text: String, on_pressed: Callable) -> Button:
 func _buy(id: String) -> void:
 	var price: int = _player.boons.discounted(int(Items.get_data(id)["price"]))
 	if _player.stats.gold < price:
-		_set_status("Za mało złota!", Color(1, 0.4, 0.4))
+		_set_status(Lang.t("Za mało złota!"), Color(1, 0.4, 0.4))
 		Sfx.play("ui_error")
 		return
 	if not _player.inventory.can_add(id, 1):
-		_set_status("Ekwipunek pełny!", Color(1, 0.4, 0.4))
+		_set_status(Lang.t("Ekwipunek pełny!"), Color(1, 0.4, 0.4))
 		Sfx.play("ui_error")
 		return
 	_player.stats.add_gold(-price)
 	Sfx.play("coins")
 	_player.inventory.add_item(id, 1)
-	var hint := " - załóż w ekwipunku (I)" if Items.is_equippable(id) else ""
-	_set_status("Kupiono: %s%s" % [Items.get_data(id)["name"], hint], Color(0.6, 1, 0.55))
+	var hint := Lang.t(" - załóż w ekwipunku (I)") if Items.is_equippable(id) else ""
+	_set_status(Lang.t("Kupiono: %s%s") % [Items.display_name(id), hint], Color(0.6, 1, 0.55))
 
 
 ## amount -1 = wszystkie sztuki.
@@ -198,7 +198,7 @@ func _sell(id: String, amount: int) -> void:
 	var earned: int = Items.get_data(id)["sell_price"] * amount
 	_player.stats.add_gold(earned)
 	Sfx.play("coins")
-	_set_status("Sprzedano %d szt. za %d zł" % [amount, earned], Color(1.0, 0.85, 0.3))
+	_set_status(Lang.t("Sprzedano %d szt. za %d zł") % [amount, earned], Color(1.0, 0.85, 0.3))
 
 
 ## Cena skupu - zaklęty przedmiot jest wart więcej.
@@ -215,7 +215,7 @@ func _sell_slot(index: int) -> void:
 	_player.inventory.take_one(index)
 	_player.stats.add_gold(price)
 	Sfx.play("coins")
-	_set_status("Sprzedano %s za %d zł" % [item_name, price], Color(1.0, 0.85, 0.3))
+	_set_status(Lang.t("Sprzedano %s za %d zł") % [item_name, price], Color(1.0, 0.85, 0.3))
 
 
 func _set_status(text: String, color: Color) -> void:

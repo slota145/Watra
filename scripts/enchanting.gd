@@ -83,16 +83,16 @@ static func mercy_cost(level: int) -> int:
 ## Pusty napis, jeśli kamień pasuje do przedmiotu na danym poziomie, w przeciwnym razie powód.
 static func check(stone: String, item_id: String, level: int) -> String:
 	if item_id == "":
-		return "Włóż przedmiot (PPM na przedmiocie)"
+		return Lang.t("Włóż przedmiot (PPM na przedmiocie)")
 	if level >= MAX_LEVEL:
-		return "Przedmiot ma już maksymalny poziom"
+		return Lang.t("Przedmiot ma już maksymalny poziom")
 	if stone == "":
-		return "Włóż kamień (PPM na kamieniu)"
+		return Lang.t("Włóż kamień (PPM na kamieniu)")
 	var stone_data: Dictionary = Items.get_data(stone).get("stone", {})
 	if stone_data["category"] != category(item_id):
-		return "Ten kamień służy do zaklinania %s" % CATEGORY_NAMES[stone_data["category"]]
+		return Lang.t("Ten kamień służy do zaklinania %s") % Lang.t(CATEGORY_NAMES[stone_data["category"]])
 	if stone_data["perfect"] and level < MAX_NORMAL:
-		return "Kamień doskonały działa dopiero od +15"
+		return Lang.t("Kamień doskonały działa dopiero od +15")
 	if not stone_data["perfect"] and level >= MAX_NORMAL:
-		return "Od +15 potrzebny jest kamień doskonały"
+		return Lang.t("Od +15 potrzebny jest kamień doskonały")
 	return ""

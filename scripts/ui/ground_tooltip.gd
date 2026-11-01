@@ -60,7 +60,7 @@ func _hovered() -> Pickup:
 func _show(pickup: Pickup) -> void:
 	_hide()
 	_shown = pickup
-	var extra := "\nIlość: %d" % pickup.amount if pickup.amount > 1 else ""
+	var extra := "\n" + Lang.t("Ilość: %d") % pickup.amount if pickup.amount > 1 else ""
 	var content: Control = _builder._make_custom_tooltip(Items.tooltip(pickup.item_id, 0, extra))
 	add_child(content)
 	# dymek nie łapie myszy - inaczej sam byłby "oknem pod kursorem" i znikał

@@ -777,7 +777,25 @@ static func get_data(id: String) -> Dictionary:
 		return Legends.data(id)
 	if id.begins_with(Unidentified.PREFIX):
 		return Unidentified.data(id)
-	return generated.get(id, {})
+	var item: Dictionary = generated.get(id, {})
+	# nazwa i opis wylosowanego przedmiotu są w języku z chwili rejestracji - po zmianie języka powstają od nowa
+	if not item.is_empty() and item.get("name_lang", "") != TranslationServer.get_locale():
+		_retranslate(id, item)
+		return generated.get(id, {})
+	return item
+
+
+## Rejestruje wylosowany przedmiot od nowa z jego przepisu (nazwa i opis w obecnym języku).
+static func _retranslate(id: String, item: Dictionary) -> void:
+	var recipe: Dictionary = item.get("recipe", {})
+	if recipe.has("gem"):
+		Gems.register(recipe, id)
+	elif recipe.has("essence"):
+		Essences.register(recipe, id)
+	elif recipe.has("base"):
+		Loot.register(recipe, id)
+	else:
+		item["name_lang"] = TranslationServer.get_locale()
 
 
 static func rarity_of(id: String) -> String:
@@ -791,7 +809,7 @@ static func rarity_color(id: String) -> Color:
 ## Krótka nazwa do ciasnych miejsc (np. powiadomień o łupie).
 static func short_name(id: String) -> String:
 	var item := get_data(id)
-	return item.get("short_name", item.get("name", ""))
+	return Lang.t(item.get("short_name", item.get("name", "")))
 
 
 static func is_usable(id: String) -> bool:
@@ -850,7 +868,7 @@ static func max_stack(id: String) -> int:
 
 ## Nazwa z poziomem zaklęcia, np. "Żelazny miecz +7" albo "Kolczuga III".
 static func display_name(id: String, enchant := 0) -> String:
-	var item_name: String = get_data(id).get("name", "")
+	var item_name := Lang.t(get_data(id).get("name", ""))
 	return item_name if enchant <= 0 else "%s %s" % [item_name, Enchanting.level_name(enchant)]
 
 
@@ -901,16 +919,16 @@ static func stat_lines(id: String, enchant := 0) -> Array:
 	var lines := []
 	var damage := weapon_damage(id, enchant)
 	if not damage.is_empty():
-		lines.append(["Obrażenia", "%d-%d" % damage, damage[0]])
+		lines.append([Lang.t("Obrażenia"), "%d-%d" % damage, damage[0]])
 	var stats := stats_of(id, enchant)
 	for stat: String in stats:
 		var value: float = stats[stat]
 		if stat in PERCENT_STATS:
-			lines.append([STAT_NAMES[stat], "+%d%%" % roundi(value * 100.0), value])
+			lines.append([Lang.t(STAT_NAMES[stat]), "+%d%%" % roundi(value * 100.0), value])
 		elif stat in DECIMAL_STATS:
-			lines.append([STAT_NAMES[stat], "+%.1f" % value, value])
+			lines.append([Lang.t(STAT_NAMES[stat]), "+%.1f" % value, value])
 		else:
-			lines.append([STAT_NAMES[stat], "+%d" % value, value])
+			lines.append([Lang.t(STAT_NAMES[stat]), "+%d" % value, value])
 	return lines
 
 
@@ -929,24 +947,24 @@ static func describe(id: String, enchant := 0, against := {}) -> String:
 	if item.get("icon") != null:
 		lines[0] = ICON_MARK + id + ICON_MARK + lines[0]
 	if item.has("slot"):
-		lines.append("%s - %s" % [RARITY_NAMES.get(item.get("rarity", "common"), ""), SLOT_TYPE_NAMES[item["slot"]]])
+		lines.append("%s - %s" % [Lang.t(RARITY_NAMES.get(item.get("rarity", "common"), "")), Lang.t(SLOT_TYPE_NAMES[item["slot"]])])
 		if item.has("item_level"):
-			lines.append("Poziom przedmiotu: %d" % item["item_level"])
+			lines.append(Lang.t("Poziom przedmiotu: %d") % item["item_level"])
 	if item.has("gem"):
-		lines.append("%s - Kamień szlachetny" % RARITY_NAMES.get(item.get("rarity", "magic"), ""))
+		lines.append(Lang.t("%s - Kamień szlachetny") % Lang.t(RARITY_NAMES.get(item.get("rarity", "magic"), "")))
 	var bonus := Enchanting.bonus(enchant)
 	if item.has("weapon"):
 		var weapon: Dictionary = item["weapon"]
 		var damage := weapon_damage(id, enchant)
-		var text := "Obrażenia: %d-%d%s" % [damage[0], damage[1], " (+%d)" % bonus if bonus > 0 else ""]
+		var text := Lang.t("Obrażenia: %d-%d%s") % [damage[0], damage[1], " (+%d)" % bonus if bonus > 0 else ""]
 		if other != "":
-			text += _marker(_average(weapon_damage(id)), _average(weapon_damage(other)), "baza")
+			text += _marker(_average(weapon_damage(id)), _average(weapon_damage(other)), Lang.t("baza"))
 		lines.append(text)
 		var other_speed: float = get_data(other).get("weapon", {}).get("speed", 1.0) if other != "" else 1.0
 		if weapon["speed"] != 1.0 or other_speed != weapon["speed"]:
-			lines.append("Szybkość ataku: %d%%" % roundi(weapon["speed"] * 100.0)
+			lines.append(Lang.t("Szybkość ataku: %d%%") % roundi(weapon["speed"] * 100.0)
 					+ (_marker(weapon["speed"], other_speed) if other != "" else ""))
-		lines.append({"melee": "Broń biała", "bow": "Broń dystansowa", "spell": "Magia (bez kosztu many)"}[weapon["type"]])
+		lines.append(Lang.t({"melee": "Broń biała", "bow": "Broń dystansowa", "spell": "Magia (bez kosztu many)"}[weapon["type"]]))
 	# statystyki bazowe z zaklęciem (w nawiasie jego premia), potem niebieskie premie z tierem
 	var base := base_stats(id)
 	var affixes: Dictionary = item.get("affixes", {})
@@ -959,7 +977,7 @@ static func describe(id: String, enchant := 0, against := {}) -> String:
 		var added := value - float(base.get(stat, 0))
 		var text := _stat_text(stat, value) + (" (+%d)" % added if added > 0 and not stat in PERCENT_STATS else "")
 		if other != "":
-			text += _marker(float(base.get(stat, 0)), float(base_stats(other).get(stat, 0)), "baza")
+			text += _marker(float(base.get(stat, 0)), float(base_stats(other).get(stat, 0)), Lang.t("baza"))
 		lines.append(text)
 	var tiers: Dictionary = item.get("tiers", {})
 	var other_stats := stats_of(other, other_enchant) if other != "" else {}
@@ -975,10 +993,10 @@ static func describe(id: String, enchant := 0, against := {}) -> String:
 	if item.has("essence_socket"):
 		lines.append("[img=8x8]%s[/img] %s" % [Essences.SOCKET_ICON.resource_path, Essences.socket_text(item["essence_socket"])])
 	if item.get("use", {}).has("summon"):
-		lines.append("Przedmiot przyzwania - PPM w leżu bossa")
+		lines.append(Lang.t("Przedmiot przyzwania - PPM w leżu bossa"))
 	if item.has("effect"):
-		lines.append("Efekt: " + EFFECT_TEXTS[item["effect"]["kind"]] % _effect_value_text(id, enchant))
-	lines.append(item["description"])
+		lines.append(Lang.t("Efekt: %s") % effect_text(item["effect"]["kind"], _effect_value_text(id, enchant)))
+	lines.append(Lang.t(item["description"]))
 	if other != "":
 		lines.append_array(_changes(id, enchant, other, other_enchant))
 	return "\n".join(lines)
@@ -1003,11 +1021,21 @@ static func tooltip(id: String, enchant := 0, extra := "") -> String:
 				second_enchant = worn.get_enchant(other_slot)
 	var text := describe(id, enchant, {"id": worn_id, "enchant": worn_enchant} if worn_id != "" else {}) + extra
 	if worn_id != "":
-		var header := "Założony - zamienisz" if second_id != "" else "Założony"
+		var header := Lang.t("Założony - zamienisz") if second_id != "" else Lang.t("Założony")
 		text += COMPARE_SPLIT + "[color=%s]%s[/color]\n" % [HEADER_COLOR, header] + describe(worn_id, worn_enchant)
 	if second_id != "":
-		text += COMPARE_SPLIT + "[color=%s]Założony - drugi[/color]\n" % HEADER_COLOR + describe(second_id, second_enchant)
+		text += COMPARE_SPLIT + "[color=%s]%s[/color]\n" % [HEADER_COLOR, Lang.t("Założony - drugi")] + describe(second_id, second_enchant)
 	return text
+
+
+## Opis efektu legendarnego (EFFECT_TEXTS) w obecnym języku z wstawioną wartością (np. "20%").
+static func effect_text(kind: String, value: String) -> String:
+	return Lang.t(EFFECT_TEXTS.get(kind, "%s")) % value
+
+
+## Nazwa statystyki w obecnym języku (STAT_NAMES).
+static func stat_name(stat: String) -> String:
+	return Lang.t(STAT_NAMES.get(stat, stat))
 
 
 ## Opis bez znaczników ikony (do zwykłych napisów, które nie rysują ikon).
@@ -1018,10 +1046,10 @@ static func strip_icon(text: String) -> String:
 ## "+12 zdrowie" albo "+5% szybkość ruchu".
 static func _stat_text(stat: String, value: float) -> String:
 	if stat in PERCENT_STATS:
-		return "%+d%% %s" % [roundi(value * 100.0), STAT_NAMES[stat].to_lower()]
+		return "%+d%% %s" % [roundi(value * 100.0), stat_name(stat).to_lower()]
 	if stat in DECIMAL_STATS:
-		return "%+.1f %s" % [value, STAT_NAMES[stat].to_lower()]
-	return "%+d %s" % [roundi(value), STAT_NAMES[stat].to_lower()]
+		return "%+.1f %s" % [value, stat_name(stat).to_lower()]
+	return "%+d %s" % [roundi(value), stat_name(stat).to_lower()]
 
 
 ## Czy różnica statystyki jest widoczna po zaokrągleniu do sposobu jej wyświetlania.
@@ -1049,7 +1077,7 @@ static func _average(damage: Array) -> float:
 
 ## Zmiany statystyk po założeniu przedmiotu zamiast porównywanego (z zaklęciami obu).
 static func _changes(id: String, enchant: int, other: String, other_enchant: int) -> Array[String]:
-	var lines: Array[String] = ["[color=%s]Po założeniu:[/color]" % HEADER_COLOR]
+	var lines: Array[String] = ["[color=%s]%s[/color]" % [HEADER_COLOR, Lang.t("Po założeniu:")]]
 	var damage := weapon_damage(id, enchant)
 	var other_damage := weapon_damage(other, other_enchant)
 	if not damage.is_empty() or not other_damage.is_empty():
@@ -1057,7 +1085,7 @@ static func _changes(id: String, enchant: int, other: String, other_enchant: int
 		var high: int = (damage[1] if not damage.is_empty() else 0) - (other_damage[1] if not other_damage.is_empty() else 0)
 		if low != 0 or high != 0:
 			var color := BETTER_COLOR if low + high > 0 else WORSE_COLOR
-			lines.append("[color=%s]Obrażenia broni %+d / %+d[/color]" % [color, low, high])
+			lines.append("[color=%s]%s[/color]" % [color, Lang.t("Obrażenia broni %+d / %+d") % [low, high]])
 	var stats := stats_of(id, enchant)
 	var other_stats := stats_of(other, other_enchant)
 	for stat: String in STAT_NAMES:
@@ -1066,5 +1094,5 @@ static func _changes(id: String, enchant: int, other: String, other_enchant: int
 			continue
 		lines.append("[color=%s]%s[/color]" % [BETTER_COLOR if diff > 0 else WORSE_COLOR, _stat_text(stat, diff)])
 	if lines.size() == 1:
-		lines.append("bez zmian")
+		lines.append(Lang.t("bez zmian"))
 	return lines

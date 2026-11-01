@@ -24,8 +24,8 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
-	box.add_child(UiStyle.title("Kuźnia - wykuwanie"))
-	var hint := UiStyle.label("Kowal wykuje przedmiot z losowymi premiami. Magiczny: 1-2 premie, rzadki: 3-4.", 7, UiStyle.DIM_COLOR)
+	box.add_child(UiStyle.title(Lang.t("Kuźnia - wykuwanie")))
+	var hint := UiStyle.label(Lang.t("Kowal wykuje przedmiot z losowymi premiami. Magiczny: 1-2 premie, rzadki: 3-4."), 7, UiStyle.DIM_COLOR)
 	hint.custom_minimum_size.x = ROW_WIDTH
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -49,7 +49,7 @@ func _ready() -> void:
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	bottom.add_child(_status)
 	var close_button := Button.new()
-	close_button.text = "Zamknij"
+	close_button.text = Lang.t("Zamknij")
 	close_button.focus_mode = Control.FOCUS_NONE
 	close_button.add_theme_font_size_override("font_size", 8)
 	close_button.pressed.connect(func() -> void:
@@ -129,7 +129,7 @@ func _row(base: String) -> Control:
 	icon.texture = Items.get_data(base)["icon"]
 	UiStyle.fit_icon(icon)
 	header.add_child(icon)
-	header.add_child(UiStyle.label(Items.get_data(base)["name"], 8))
+	header.add_child(UiStyle.label(Items.display_name(base), 8))
 	for quality in [Loot.MAGIC, Loot.RARE]:
 		content.add_child(_option(base, quality))
 	return row
@@ -138,7 +138,7 @@ func _row(base: String) -> Control:
 func _option(base: String, quality: String) -> Control:
 	var line := HBoxContainer.new()
 	line.add_theme_constant_override("separation", 2)
-	var label := UiStyle.label(Items.RARITY_NAMES[quality], 7, Items.RARITY_COLORS[quality])
+	var label := UiStyle.label(Lang.t(Items.RARITY_NAMES[quality]), 7, Items.RARITY_COLORS[quality])
 	label.custom_minimum_size.x = 46
 	line.add_child(label)
 	var price := cost(base, quality, _player.stats.level)
@@ -146,7 +146,7 @@ func _option(base: String, quality: String) -> Control:
 		var icon := TextureRect.new()
 		icon.texture = Items.GOLD_ICON if id == "gold" else Items.get_data(id)["icon"]
 		UiStyle.fit_icon(icon)
-		icon.tooltip_text = "Złoto" if id == "gold" else Items.get_data(id)["name"]
+		icon.tooltip_text = Lang.t("Złoto") if id == "gold" else Items.display_name(id)
 		line.add_child(icon)
 		var have := _player.stats.gold if id == "gold" else _player.count_owned(id)
 		line.add_child(UiStyle.label(str(price[id]), 7, OK_COLOR if have >= int(price[id]) else MISSING_COLOR))
@@ -154,7 +154,7 @@ func _option(base: String, quality: String) -> Control:
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	line.add_child(spacer)
 	var button := Button.new()
-	button.text = "Wykuj"
+	button.text = Lang.t("Wykuj")
 	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_font_size_override("font_size", 8)
 	button.disabled = not _can_pay(price)
@@ -167,7 +167,7 @@ func _forge(base: String, quality: String) -> void:
 	var price := cost(base, quality, _player.stats.level)
 	if not _can_pay(price) or not _player.inventory.can_add(base, 1):
 		Sfx.play("ui_error")
-		_status.text = "Brak surowców albo miejsca w plecaku"
+		_status.text = Lang.t("Brak surowców albo miejsca w plecaku")
 		_status.add_theme_color_override("font_color", MISSING_COLOR)
 		return
 	for id: String in price:
@@ -181,6 +181,6 @@ func _forge(base: String, quality: String) -> void:
 	_player.item_picked.emit(item, 1)
 	Sfx.play("anvil")
 	Sfx.play("enchant_success")
-	_status.text = "Wykuto: %s" % Items.get_data(item)["name"]
+	_status.text = Lang.t("Wykuto: %s") % Items.display_name(item)
 	_status.add_theme_color_override("font_color", Items.rarity_color(item))
 	_refresh()

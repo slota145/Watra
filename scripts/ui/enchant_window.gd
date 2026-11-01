@@ -83,8 +83,8 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 3)
 	add_child(box)
-	box.add_child(UiStyle.title("Zaklinanie"))
-	var hint := UiStyle.label("PPM na kamieniu lub przedmiocie (w plecaku albo założonym) wkłada go tutaj.", 7, UiStyle.DIM_COLOR)
+	box.add_child(UiStyle.title(Lang.t("Zaklinanie")))
+	var hint := UiStyle.label(Lang.t("PPM na kamieniu lub przedmiocie (w plecaku albo założonym) wkłada go tutaj."), 7, UiStyle.DIM_COLOR)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(hint)
 	var worn_row := HBoxContainer.new()
@@ -104,7 +104,7 @@ func _ready() -> void:
 	var left := VBoxContainer.new()
 	left.custom_minimum_size.x = 104
 	main.add_child(left)
-	left.add_child(UiStyle.label("Teraz", 8, UiStyle.TITLE_COLOR))
+	left.add_child(UiStyle.label(Lang.t("Teraz"), 8, UiStyle.TITLE_COLOR))
 	_current_stats = UiStyle.label("", 7, UiStyle.TEXT_COLOR)
 	_current_stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_current_stats.custom_minimum_size.x = 104
@@ -121,7 +121,7 @@ func _ready() -> void:
 	_chance_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	center.add_child(_chance_label)
 
-	var mercy_parts := _make_aid_row(center, "Kamienie miłosierdzia - chronią poziom przy porażce")
+	var mercy_parts := _make_aid_row(center, Lang.t("Kamienie miłosierdzia - chronią poziom przy porażce"))
 	_mercy_slot = mercy_parts[0]
 	_mercy_icon = mercy_parts[1]
 	_mercy_label = mercy_parts[2]
@@ -131,7 +131,7 @@ func _ready() -> void:
 	slots.alignment = BoxContainer.ALIGNMENT_CENTER
 	slots.add_theme_constant_override("separation", 6)
 	center.add_child(slots)
-	var stone_parts := _make_slot(slots, SMALL_SLOT, "Kamień zaklinający")
+	var stone_parts := _make_slot(slots, SMALL_SLOT, Lang.t("Kamień zaklinający"))
 	_stone_slot = stone_parts[0]
 	_stone_icon = stone_parts[1]
 	_stone_count = stone_parts[2]
@@ -139,17 +139,17 @@ func _ready() -> void:
 	_stone_count.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 	_stone_slot.gui_input.connect(_on_slot_input.bind("stone"))
 	slots.add_child(_arrow())
-	var item_parts := _make_slot(slots, BIG_SLOT, "Przedmiot do zaklęcia")
+	var item_parts := _make_slot(slots, BIG_SLOT, Lang.t("Przedmiot do zaklęcia"))
 	_item_slot = item_parts[0]
 	_item_icon = item_parts[1]
 	_item_level = item_parts[2]
 	_item_slot.gui_input.connect(_on_slot_input.bind("item"))
 	slots.add_child(_arrow())
-	var result_parts := _make_slot(slots, SMALL_SLOT, "Wynik")
+	var result_parts := _make_slot(slots, SMALL_SLOT, Lang.t("Wynik"))
 	_result_icon = result_parts[1]
 	_result_level = result_parts[2]
 
-	var blessed_parts := _make_aid_row(center, "Uświęcone kamienie - pewne zaklęcie (III-V)")
+	var blessed_parts := _make_aid_row(center, Lang.t("Uświęcone kamienie - pewne zaklęcie (III-V)"))
 	_blessed_slot = blessed_parts[0]
 	_blessed_icon = blessed_parts[1]
 	_blessed_label = blessed_parts[2]
@@ -167,7 +167,7 @@ func _ready() -> void:
 	var right := VBoxContainer.new()
 	right.custom_minimum_size.x = 104
 	main.add_child(right)
-	right.add_child(UiStyle.label("Po zaklęciu", 8, UiStyle.TITLE_COLOR))
+	right.add_child(UiStyle.label(Lang.t("Po zaklęciu"), 8, UiStyle.TITLE_COLOR))
 	_next_stats = RichTextLabel.new()
 	_next_stats.bbcode_enabled = true
 	_next_stats.fit_content = true
@@ -189,15 +189,15 @@ func _ready() -> void:
 	var bottom := HBoxContainer.new()
 	bottom.add_theme_constant_override("separation", 8)
 	_button = Button.new()
-	_button.text = "Zaklnij"
+	_button.text = Lang.t("Zaklnij")
 	_button.focus_mode = Control.FOCUS_NONE
 	_button.custom_minimum_size = Vector2(70, 16)
 	_button.add_theme_font_size_override("font_size", 9)
 	_button.pressed.connect(_on_enchant_pressed)
 	bottom.add_child(_button)
-	_skip_box = _check_box("Pomiń animację", "Od razu pokazuje wynik zaklęcia")
+	_skip_box = _check_box(Lang.t("Pomiń animację"), Lang.t("Od razu pokazuje wynik zaklęcia"))
 	bottom.add_child(_skip_box)
-	_auto_box = _check_box("Auto do +15", "Zaklina raz za razem zwykłymi kamieniami, aż przedmiot osiągnie +15 albo skończą się kamienie")
+	_auto_box = _check_box(Lang.t("Auto do +15"), Lang.t("Zaklina raz za razem zwykłymi kamieniami, aż przedmiot osiągnie +15 albo skończą się kamienie"))
 	bottom.add_child(_auto_box)
 	box.add_child(bottom)
 	_status = UiStyle.label("", 8, UiStyle.DIM_COLOR)
@@ -269,7 +269,7 @@ func offer_bag_item(index: int) -> void:
 	elif Enchanting.category(id) != "":
 		_item_ref = {"bag": index, "id": id}
 	else:
-		_set_status("Tego nie da się zaklinać", UiStyle.DIM_COLOR)
+		_set_status(Lang.t("Tego nie da się zaklinać"), UiStyle.DIM_COLOR)
 	_refresh()
 
 
@@ -339,10 +339,10 @@ func _refresh() -> void:
 
 	_stone_icon.texture = Items.get_data(_stone_id)["icon"] if _stone_id != "" else null
 	_stone_count.text = str(_count(_stone_id)) if _stone_id != "" else ""
-	_stone_slot.tooltip_text = Items.describe(_stone_id) if _stone_id != "" else "Kamień zaklinający"
+	_stone_slot.tooltip_text = Items.describe(_stone_id) if _stone_id != "" else Lang.t("Kamień zaklinający")
 	_item_icon.texture = Items.get_data(id)["icon"] if id != "" else null
 	_item_level.text = Enchanting.level_name(level)
-	_item_slot.tooltip_text = Items.describe(id, level) if id != "" else "Przedmiot do zaklęcia"
+	_item_slot.tooltip_text = Items.describe(id, level) if id != "" else Lang.t("Przedmiot do zaklęcia")
 	_result_icon.texture = _item_icon.texture if can_upgrade else null
 	UiStyle.set_item_frame(_item_icon.get_parent(), id)
 	UiStyle.set_item_frame(_result_icon.get_parent(), id if can_upgrade else "")
@@ -355,25 +355,25 @@ func _refresh() -> void:
 	_update_aid(_mercy_icon, _mercy_label, "mercy_stone", _mercy_on, mercy_cost, MERCY_BLUE)
 
 	if plan["blessed"]:
-		_chance_label.text = "Szansa: 100% (uświęcone)"
+		_chance_label.text = Lang.t("Szansa: 100% (uświęcone)")
 		_chance_label.add_theme_color_override("font_color", GOLD)
 	elif can_upgrade:
-		_chance_label.text = "Szansa: %d%%" % plan["chance"]
+		_chance_label.text = Lang.t("Szansa: %d%%") % plan["chance"]
 		_chance_label.add_theme_color_override("font_color", FAIL_RED.lerp(GOOD_GREEN, plan["chance"] / 100.0))
 	else:
-		_chance_label.text = "Maksymalny poziom" if id != "" else ""
+		_chance_label.text = Lang.t("Maksymalny poziom") if id != "" else ""
 
 	var mercy_ready := _mercy_on and mercy_cost > 0 and _count("mercy_stone") >= mercy_cost
 	if plan["blessed"]:
-		_set_warning("Uświęcone kamienie: pewne zaklęcie (zużyje %d szt.)" % blessed_cost, GOLD)
+		_set_warning(Lang.t("Uświęcone kamienie: pewne zaklęcie (zużyje %d szt.)") % blessed_cost, GOLD)
 	elif plan["problem"] != "":
 		_set_warning(plan["problem"], UiStyle.DIM_COLOR)
 	elif Enchanting.failure_drops_level(level) and mercy_ready:
-		_set_warning("Kamienie miłosierdzia ochronią poziom (zużyje %d szt. przy porażce)" % mercy_cost, MERCY_BLUE)
+		_set_warning(Lang.t("Kamienie miłosierdzia ochronią poziom (zużyje %d szt. przy porażce)") % mercy_cost, MERCY_BLUE)
 	elif Enchanting.failure_drops_level(level):
-		_set_warning("Uwaga: porażka obniży poziom o 1!", FAIL_RED)
+		_set_warning(Lang.t("Uwaga: porażka obniży poziom o 1!"), FAIL_RED)
 	else:
-		_set_warning("Porażka zabierze tylko kamień.", UiStyle.DIM_COLOR)
+		_set_warning(Lang.t("Porażka zabierze tylko kamień."), UiStyle.DIM_COLOR)
 
 	_refresh_worn()
 	_current_stats.text = _stats_text(id, level) if id != "" else "-"
@@ -392,7 +392,7 @@ func _refresh_worn() -> void:
 		var level := _player.equipment.get_enchant(slot_name)
 		parts[1].texture = Items.get_data(id)["icon"]
 		parts[2].text = Enchanting.level_name(level)
-		parts[0].tooltip_text = Items.describe(id, level) + "\nKliknij - do zaklęcia"
+		parts[0].tooltip_text = Items.describe(id, level) + "\n" + Lang.t("Kliknij - do zaklęcia")
 		UiStyle.set_item_frame(parts[0], id)
 		parts[0].modulate = Color(1.35, 1.25, 0.8) if _item_ref.get("equip", "") == slot_name else Color.WHITE
 
@@ -417,10 +417,10 @@ func _update_aid(icon: TextureRect, label: Label, id: String, active: bool, cost
 
 func _update_button(plan: Dictionary) -> void:
 	if _auto_running:
-		_button.text = "Zatrzymaj"
+		_button.text = Lang.t("Zatrzymaj")
 		_button.disabled = false
 	else:
-		_button.text = "Zaklnij"
+		_button.text = Lang.t("Zaklnij")
 		_button.disabled = _busy or plan["problem"] != ""
 
 
@@ -447,7 +447,7 @@ func _diff_text(id: String, level: int) -> String:
 func _on_enchant_pressed() -> void:
 	if _auto_running:
 		_auto_running = false
-		_set_status("Automat zatrzymany", UiStyle.DIM_COLOR)
+		_set_status(Lang.t("Automat zatrzymany"), UiStyle.DIM_COLOR)
 		_refresh()
 		return
 	if _busy:
@@ -473,7 +473,7 @@ func _start_attempt() -> void:
 		_finish(success, plan["blessed"])
 		return
 
-	_set_status("Zaklinanie...", GOLD)
+	_set_status(Lang.t("Zaklinanie..."), GOLD)
 	_charge_sound.play()
 	_charge_fx.visible = true
 	_blessed_flow = plan["blessed"]
@@ -509,14 +509,14 @@ func _finish(success: bool, blessed: bool) -> void:
 			paid = _count(_stone_id) > 0 and _player.inventory.remove_item(_stone_id, 1)
 	if not paid:
 		_auto_running = false
-		_set_status("Zaklinanie przerwane", UiStyle.DIM_COLOR)
+		_set_status(Lang.t("Zaklinanie przerwane"), UiStyle.DIM_COLOR)
 		_refresh()
 		return
 
 	var new_level := level
 	if success:
 		new_level = level + 1
-		_set_status("Sukces! %s" % Items.display_name(item["id"], new_level), GOOD_GREEN)
+		_set_status(Lang.t("Sukces! %s") % Items.display_name(item["id"], new_level), GOOD_GREEN)
 		_play_success()
 		# wbicie poziomu - potężne uderzenie w kowadło, a przy najwyższych poziomach także fanfary
 		Sfx.play("enchant_success")
@@ -526,15 +526,15 @@ func _finish(success: bool, blessed: bool) -> void:
 		var mercy_cost := Enchanting.mercy_cost(level)
 		if _mercy_on and _count("mercy_stone") >= mercy_cost:
 			_player.inventory.remove_item("mercy_stone", mercy_cost)
-			_set_status("Porażka, ale kamienie miłosierdzia ochroniły poziom (-%d szt.)" % mercy_cost, MERCY_BLUE)
+			_set_status(Lang.t("Porażka, ale kamienie miłosierdzia ochroniły poziom (-%d szt.)") % mercy_cost, MERCY_BLUE)
 		else:
 			new_level = level - 1
-			_set_status("Porażka! Poziom spadł do %s" % Enchanting.level_name(new_level), FAIL_RED)
+			_set_status(Lang.t("Porażka! Poziom spadł do %s") % Enchanting.level_name(new_level), FAIL_RED)
 			Sfx.play("enchant_drop")
 		_play_failure()
 		Sfx.play("enchant_fail")
 	else:
-		_set_status("Porażka... kamień przepadł", FAIL_RED)
+		_set_status(Lang.t("Porażka... kamień przepadł"), FAIL_RED)
 		_play_failure()
 		Sfx.play("enchant_fail")
 	if new_level != level:
@@ -544,7 +544,7 @@ func _finish(success: bool, blessed: bool) -> void:
 	if _auto_running:
 		if new_level >= Enchanting.MAX_NORMAL or _plan()["problem"] != "":
 			_auto_running = false
-			_status.text += "  •  automat zakończony"
+			_status.text += Lang.t("  •  automat zakończony")
 			_refresh()
 		else:
 			var delay := AUTO_DELAY_FAST if _skip_box.button_pressed else AUTO_DELAY

@@ -71,7 +71,7 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
-	box.add_child(UiStyle.title("Ekwipunek"))
+	box.add_child(UiStyle.title(Lang.t("Ekwipunek")))
 
 	var columns := HBoxContainer.new()
 	columns.add_theme_constant_override("separation", 8)
@@ -113,7 +113,7 @@ func _ready() -> void:
 		var slot := _make_slot_panel(bag_row)
 		slot.add_theme_stylebox_override("panel", UiStyle.panel(Color(0.2, 0.17, 0.14), UiStyle.BORDER, 0))
 		slot.gui_input.connect(_on_bag_slot_input.bind(i))
-		var placeholder := UiStyle.label("Torba", 6, Color(0.55, 0.5, 0.42))
+		var placeholder := UiStyle.label(Lang.t("Torba"), 6, Color(0.55, 0.5, 0.42))
 		placeholder.set_anchors_preset(Control.PRESET_FULL_RECT)
 		placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		placeholder.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -129,7 +129,7 @@ func _ready() -> void:
 	UiStyle.fit_button_icon(sort_button)
 	sort_button.focus_mode = Control.FOCUS_NONE
 	sort_button.custom_minimum_size = SLOT_SIZE
-	sort_button.tooltip_text = "Sortuj plecak: wyposażenie (wg miejsca i jakości), torby, mikstury,\nkamienie, reszta - i połącz stosy"
+	sort_button.tooltip_text = Lang.t("Sortuj plecak: wyposażenie (wg miejsca i jakości), torby, mikstury,\nkamienie, reszta - i połącz stosy")
 	sort_button.pressed.connect(_on_sort_pressed)
 	bag_row.add_child(sort_button)
 	# identyfikacja wszystkich niezidentyfikowanych przedmiotów (opcja łupu w Ustawieniach)
@@ -138,7 +138,7 @@ func _ready() -> void:
 	UiStyle.fit_button_icon(_identify_button)
 	_identify_button.focus_mode = Control.FOCUS_NONE
 	_identify_button.custom_minimum_size = SLOT_SIZE
-	_identify_button.tooltip_text = "Zidentyfikuj wszystko: wszystkie przedmioty niezidentyfikowane w plecaku\n(tyle, ile zmieści się w plecaku)"
+	_identify_button.tooltip_text = Lang.t("Zidentyfikuj wszystko: wszystkie przedmioty niezidentyfikowane w plecaku\n(tyle, ile zmieści się w plecaku)")
 	_identify_button.pressed.connect(func() -> void:
 		if _player != null and _player.identify_all() == 0:
 			Sfx.play("ui_error"))
@@ -146,15 +146,15 @@ func _ready() -> void:
 	_trash = Panel.new()
 	_trash.custom_minimum_size = SLOT_SIZE
 	_trash.add_theme_stylebox_override("panel", UiStyle.panel(Color(0.22, 0.12, 0.1), UiStyle.BORDER, 0))
-	_trash.tooltip_text = "Kosz - przeciągnij tu przedmiot z plecaka, żeby go wyrzucić"
+	_trash.tooltip_text = Lang.t("Kosz - przeciągnij tu przedmiot z plecaka, żeby go wyrzucić")
 	_trash.set_drag_forwarding(Callable(), _can_drop_on_trash, _drop_on_trash)
 	var trash_icon := _make_icon(_trash)
 	trash_icon.texture = TRASH_ICON
 	bag_row.add_child(_trash)
 	_confirm = ConfirmationDialog.new()
-	_confirm.title = "Wyrzucić przedmiot?"
-	_confirm.ok_button_text = "Wyrzuć"
-	_confirm.cancel_button_text = "Zostaw"
+	_confirm.title = Lang.t("Wyrzucić przedmiot?")
+	_confirm.ok_button_text = Lang.t("Wyrzuć")
+	_confirm.cancel_button_text = Lang.t("Zostaw")
 	_confirm.confirmed.connect(_on_discard_confirmed)
 	_confirm.canceled.connect(func() -> void: _pending_discard = {})
 	add_child(_confirm)
@@ -169,15 +169,15 @@ func _ready() -> void:
 	_gold_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bottom.add_child(_gold_label)
 	var craft_button := Button.new()
-	craft_button.text = "Rzemiosło"
+	craft_button.text = Lang.t("Rzemiosło")
 	craft_button.focus_mode = Control.FOCUS_NONE
 	craft_button.add_theme_font_size_override("font_size", 8)
-	craft_button.tooltip_text = "Otwiera okno rzemiosła (np. przedmioty przyzywające bossów)"
+	craft_button.tooltip_text = Lang.t("Otwiera okno rzemiosła (np. przedmioty przyzywające bossów)")
 	craft_button.pressed.connect(crafting_requested.emit)
 	# zaklinanie jest u kowala w Ostoi (NpcDialog), tu tylko rzemiosło
 	bottom.add_child(craft_button)
 	box.add_child(bottom)
-	var hint := UiStyle.label("PPM - załóż / użyj / zdejmij / zidentyfikuj   •   przeciągnij - przenieś / do kosza", 7, UiStyle.DIM_COLOR)
+	var hint := UiStyle.label(Lang.t("PPM - załóż / użyj / zdejmij / zidentyfikuj   •   przeciągnij - przenieś / do kosza"), 7, UiStyle.DIM_COLOR)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	box.add_child(hint)
 
@@ -388,7 +388,7 @@ func _socket_by_drag(index: int, item_id: String, target: String, slot_name: Str
 		Sfx.play("ui_error")
 		DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -16), target, Color(1.0, 0.55, 0.45), 8)
 		return
-	var source_name: String = Items.get_data(_player.inventory.slots[index]["id"])["name"]
+	var source_name: String = Items.display_name(_player.inventory.slots[index]["id"])
 	Gems.drag_insert(_player.inventory, index, item_id, target)
 	if slot_name != "":
 		_player.equipment.changed.emit()
@@ -415,7 +415,7 @@ func _drop_on_trash(_at: Vector2, data: Variant) -> void:
 		return
 	_pending_discard = {"index": index, "id": id}
 	var item_name := Items.display_name(id, slot.get("enchant", 0))
-	_confirm.dialog_text = "%s%s zniknie na zawsze." % [item_name, " (x%d)" % slot["count"] if slot["count"] > 1 else ""]
+	_confirm.dialog_text = Lang.t("%s%s zniknie na zawsze.") % [item_name, " (x%d)" % slot["count"] if slot["count"] > 1 else ""]
 	_confirm.popup_centered()
 
 
@@ -468,19 +468,19 @@ func _refresh() -> void:
 		_levels[i].text = Enchanting.level_name(enchant)
 		var extra := ""
 		if data["count"] > 1:
-			extra += "\nIlość: %d" % data["count"]
+			extra += "\n" + Lang.t("Ilość: %d") % data["count"]
 		if Items.is_usable(id):
-			extra += "\nPPM - użyj"
+			extra += "\n" + Lang.t("PPM - użyj")
 		elif Items.is_equippable(id) or Items.is_bag(id):
-			extra += "\nPPM - załóż"
+			extra += "\n" + Lang.t("PPM - załóż")
 		_slots[i].tooltip_text = Items.tooltip(id, enchant, extra)
 
 	for i in _bag_slots.size():
 		var bag_id: String = _player.bags[i]
 		_bag_slots[i][1].texture = Items.get_data(bag_id)["icon"] if bag_id != "" else null
 		_bag_slots[i][2].visible = bag_id == ""
-		_bag_slots[i][0].tooltip_text = (Items.describe(bag_id) + "\nPPM - zdejmij") if bag_id != "" \
-				else "Miejsce na torbę (sakwa +10, plecak +20 miejsc)"
+		_bag_slots[i][0].tooltip_text = (Items.describe(bag_id) + "\n" + Lang.t("PPM - zdejmij")) if bag_id != "" \
+				else Lang.t("Miejsce na torbę (sakwa +10, plecak +20 miejsc)")
 
 	for slot_name: String in _gear:
 		var parts: Array = _gear[slot_name]
@@ -490,5 +490,5 @@ func _refresh() -> void:
 		UiStyle.set_item_frame(parts[0], id)
 		parts[2].visible = id == ""
 		parts[3].text = Enchanting.level_name(enchant)
-		parts[0].tooltip_text = (Items.describe(id, enchant) + "\nPPM - zdejmij") if id != "" else SLOT_TOOLTIPS[slot_name]
-	_gold_label.text = "%d złota" % _player.stats.gold
+		parts[0].tooltip_text = (Items.describe(id, enchant) + "\n" + Lang.t("PPM - zdejmij")) if id != "" else Lang.t(SLOT_TOOLTIPS[slot_name])
+	_gold_label.text = Lang.t("%d złota") % _player.stats.gold
