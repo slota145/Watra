@@ -109,6 +109,7 @@ func _process(_d: float) -> bool:
 		check("podatek", p.stats.gold > gold0)
 		check("kupiec ma towar", s._traveler != null and s._traveler.shop_sells.size() == mini(s.MERCHANT_STOCK, s.MERCHANT_POOL.size()),
 				str(s._traveler.shop_sells if s._traveler != null else "brak kupca"))
+		check("towary kupca mają cenę", s.MERCHANT_POOL.all(func(id: String) -> bool: return load("res://scripts/items.gd").get_data(id).has("price")))
 		check("kowal przekuwa", "reforge" in s._smith.services)
 		var shooters := 0
 		for t in s._tower_sprites:

@@ -243,13 +243,13 @@ const DATA := {
 		"name": "Wilczy Róg",
 		"description": "Róg owinięty wilczym futrem. Zadęty w leżu wilka alfa (prawy dolny róg lasu) natychmiast przyzywa Szarokła.",
 		"icon": preload("res://assets/items/summon_alpha.png"),
-		"use": {"summon": "alpha"}, "sell_price": 30, "notable": true,
+		"use": {"summon": "alpha"}, "price": 250, "sell_price": 30, "notable": true,
 	},
 	"summon_frog_chief": {
 		"name": "Muszla Bulgora",
 		"description": "Muszla wyłożona żabimi językami, szumiąca bagnem. Zadęta na wyspie wodza w wiosce żaboludzi (Rozlewiska) natychmiast przyzywa Bulgora.",
 		"icon": preload("res://assets/items/summon_frog_chief.png"),
-		"use": {"summon": "frog_chief"}, "sell_price": 30, "notable": true,
+		"use": {"summon": "frog_chief"}, "price": 300, "sell_price": 30, "notable": true,
 	},
 	"summon_storm_eagle": {
 		"name": "Burzowy Wabik",
@@ -551,13 +551,13 @@ const DATA := {
 		"name": "Kwiat paproci",
 		"description": "Legendarny kwiat, który zakwita w Prastarym Lesie. Rzadki - zielarka zrobi z niego eliksir szczęścia.",
 		"icon": preload("res://assets/items/herb_fern.png"),
-		"sell_price": 15,
+		"price": 150, "sell_price": 15,
 	},
 	"herb_datura": {
 		"name": "Bieluń",
 		"description": "Trujące ziele z Leśnego Cmentarza. W rękach zielarki - wywar przyspieszający ciosy.",
 		"icon": preload("res://assets/items/herb_datura.png"),
-		"sell_price": 10,
+		"price": 70, "sell_price": 10,
 	},
 	"elixir_wort": {
 		"name": "Wywar z dziurawca",
@@ -591,14 +591,14 @@ const DATA := {
 		"name": "Eliksir z kwiatu paproci",
 		"description": "Mieni się złotymi iskrami. Na 5 minut: +8% szansy na trafienie krytyczne i +30% znajdowanego złota. Działa jedna mikstura naraz.",
 		"icon": preload("res://assets/items/elixir_fern.png"),
-		"sell_price": 45,
+		"price": 250, "sell_price": 45,
 		"use": {"boon": "elixir_fern"},
 	},
 	"elixir_datura": {
 		"name": "Wywar z bielunia",
 		"description": "Ciemny, gorzki wywar. Na 5 minut: +20% szybkości ataku. Działa jedna mikstura naraz.",
 		"icon": preload("res://assets/items/elixir_datura.png"),
-		"sell_price": 30,
+		"price": 160, "sell_price": 30,
 		"use": {"boon": "elixir_datura"},
 	},
 
@@ -636,7 +636,7 @@ const DATA := {
 	"rune_chaos": {
 		"name": "Runa Zmiany",
 		"description": "Wirujący kamień z runą przemiany, z lochów Watry. W warsztacie kowala przelosuje wszystkie premie przedmiotu.",
-		"icon": preload("res://assets/items/rune_chaos.png"), "sell_price": 120,
+		"icon": preload("res://assets/items/rune_chaos.png"), "price": 900, "sell_price": 120,
 	},
 	"rune_seal": {
 		"name": "Runa Pieczęci",
