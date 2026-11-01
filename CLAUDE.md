@@ -225,6 +225,14 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   Spadającej Gwiazdy, fioletowa mgła Kroku, bańka z heksagonów Tarczy Many, Kamień Runiczny z kręgiem run. Grafiki
   `assets/spell/` (włócznia, kula, gwiazda, kamień) zastąpione animacjami (`frost_lance.png` i `meteor.png` zostają
   tylko jako obrazek zapasowy pocisku).
+- [x] Bossowie Rozlewisk i Turni z kreatora efektów (`assets/effects/bulgor_*`, `wodnik_*`, `hydra_*`, `eagle_*`,
+  `gryf_*`, `satyr_*`): Bulgor - plusk wody i błota przy lądowaniu i trafieniu językiem; Wodnik - zapętlony wir
+  (zamiast rysowanych kręgów), fala przetaczająca się pasem, plusk przy wynurzeniu (własne `_fx_engage`) i przy
+  topielcach; Hydra - kłapnięcie szczęk na końcach pasów kąsania, trujący oddech (klin), fala bagiennej wody,
+  przy odrastaniu `_fx_phase`; Gromoskrzydły - piorun z nieba (`storm_strike`) z trafieniem, smuga nurkowania,
+  podmuch z piórami, piorun w orła przy wejściu do walki; Gryf - stożek wiatru (`bow_wind_cone`), złote szpony
+  z pyłem, zapętlona trąba powietrzna (`GryfTornado`), krzyk - złote fale dźwięku; Faun-Król - fletnia (fale
+  melodii z nutami), pnącza spod ziemi, tupnięcie z pęknięciami i pyłem.
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

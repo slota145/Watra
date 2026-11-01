@@ -882,5 +882,212 @@
       31,
       80
     ]
+  },
+  "bulgor_splash": {
+    "effect": "4b09ce90-68d1-42ad-8320-dba97bc06d30",
+    "name": "Bulgor - plusk",
+    "frame": [
+      91,
+      73
+    ],
+    "frames": 12,
+    "fps": 14,
+    "anchor": [
+      46,
+      35
+    ],
+    "columns": 6
+  },
+  "wodnik_whirl": {
+    "effect": "5f9e8089-cbf2-4736-b4aa-6912d1e353ed",
+    "name": "Wodnik - wir",
+    "frame": [
+      136,
+      88
+    ],
+    "frames": 8,
+    "fps": 12,
+    "anchor": [
+      68,
+      44
+    ],
+    "columns": 4,
+    "loop": true
+  },
+  "wodnik_wave": {
+    "effect": "a6a2b47e-5dcf-4067-a106-407f8ac3e662",
+    "name": "Wodnik - fala",
+    "frame": [
+      256,
+      72
+    ],
+    "frames": 12,
+    "fps": 18,
+    "anchor": [
+      12,
+      36
+    ],
+    "columns": 4
+  },
+  "hydra_bite": {
+    "effect": "2344e514-1fa5-49b4-9642-660c0d69d33f",
+    "name": "Hydra - ukaszenie",
+    "frame": [
+      43,
+      50
+    ],
+    "frames": 6,
+    "fps": 18,
+    "anchor": [
+      18,
+      22
+    ]
+  },
+  "hydra_breath": {
+    "effect": "04cbf41b-3a6b-4711-9cd9-95e8c70db77a",
+    "name": "Hydra - zioniecie",
+    "frame": [
+      164,
+      138
+    ],
+    "frames": 12,
+    "fps": 16,
+    "anchor": [
+      6,
+      62
+    ],
+    "columns": 6
+  },
+  "hydra_slam": {
+    "effect": "7fad66a4-eeac-4ed5-a0f7-97bb89d0459d",
+    "name": "Hydra - uderzenie w bagno",
+    "frame": [
+      237,
+      151
+    ],
+    "frames": 12,
+    "fps": 16,
+    "anchor": [
+      119,
+      62
+    ],
+    "columns": 4
+  },
+  "eagle_dive": {
+    "effect": "1e3869bb-a231-4217-a7bf-94350424e741",
+    "name": "Gromoskrzydly - nurkowanie",
+    "frame": [
+      104,
+      31
+    ],
+    "frames": 8,
+    "fps": 16,
+    "anchor": [
+      1,
+      16
+    ]
+  },
+  "eagle_gust": {
+    "effect": "a9a4eda7-70d3-48d1-9d2d-92c0970c0f83",
+    "name": "Gromoskrzydly - podmuch",
+    "frame": [
+      180,
+      114
+    ],
+    "frames": 9,
+    "fps": 16,
+    "anchor": [
+      90,
+      60
+    ],
+    "columns": 5
+  },
+  "gryf_slam": {
+    "effect": "c3487ef4-324b-40ef-ae04-2cb8c1eab8e9",
+    "name": "Gryf - uderzenie szponami",
+    "frame": [
+      74,
+      46
+    ],
+    "frames": 10,
+    "fps": 16,
+    "anchor": [
+      36,
+      25
+    ]
+  },
+  "gryf_tornado": {
+    "effect": "e56c32f4-7f26-4b2d-8605-48430100efed",
+    "name": "Gryf - traba powietrzna",
+    "frame": [
+      46,
+      74
+    ],
+    "frames": 8,
+    "fps": 14,
+    "anchor": [
+      23,
+      64
+    ],
+    "loop": true
+  },
+  "gryf_screech": {
+    "effect": "6bdd0d2e-fcea-429d-9b47-cbc627dc7ffd",
+    "name": "Gryf - krzyk",
+    "frame": [
+      220,
+      140
+    ],
+    "frames": 12,
+    "fps": 16,
+    "anchor": [
+      110,
+      70
+    ],
+    "columns": 4
+  },
+  "satyr_flute": {
+    "effect": "3d3e22e3-bf48-4376-bad3-3a1399e76d58",
+    "name": "Faun-Krol - fletnia",
+    "frame": [
+      220,
+      140
+    ],
+    "frames": 12,
+    "fps": 16,
+    "anchor": [
+      110,
+      70
+    ],
+    "columns": 4
+  },
+  "satyr_vines": {
+    "effect": "9688ced3-c699-44a2-9ec9-6ac1a5b5651f",
+    "name": "Faun-Krol - pnacza",
+    "frame": [
+      44,
+      36
+    ],
+    "frames": 14,
+    "fps": 12,
+    "anchor": [
+      21,
+      26
+    ]
+  },
+  "satyr_stomp": {
+    "effect": "96837b6f-6dee-4b29-8693-a0f984f18130",
+    "name": "Faun-Krol - tupniecie",
+    "frame": [
+      106,
+      46
+    ],
+    "frames": 10,
+    "fps": 12,
+    "anchor": [
+      53,
+      23
+    ],
+    "columns": 5
   }
 }

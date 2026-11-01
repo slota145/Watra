@@ -23,6 +23,15 @@ const VINE_HOLD := 1.4
 const STOMP_RADIUS := 80.0
 const MAX_CALLED := 8
 const VINE_COLOR := Color(0.45, 0.8, 0.35)
+## Efekty z kreatora efektów PixelLab: fletnia - złote fale melodii z nutami (promień w klatce FLUTE_FX_RADIUS),
+## pnącza wyrastające spod ziemi (promień w klatce VINE_FX_RADIUS) i tupnięcie - pęknięcia z pyłem
+## (promień w klatce STOMP_FX_RADIUS).
+const FLUTE_FX := preload("res://assets/effects/satyr_flute.png")
+const FLUTE_FX_RADIUS := 104.0
+const VINE_FX := preload("res://assets/effects/satyr_vines.png")
+const VINE_FX_RADIUS := 18.0
+const STOMP_FX := preload("res://assets/effects/satyr_stomp.png")
+const STOMP_FX_RADIUS := 48.0
 
 var _charge_from := Vector2.ZERO
 var _charge_to := Vector2.ZERO
@@ -100,7 +109,8 @@ func _update_attack(delta: float) -> void:
 		["flute", "telegraph"]:
 			if _stage_timer <= 0.0:
 				_flute_cooldown = 11.0
-				SkillEffects.shockwave(get_parent(), global_position, FLUTE_RADIUS, Color(1.0, 0.8, 0.35))
+				SkillEffects.sheet_once(get_parent(), FLUTE_FX, 12, 16.0, global_position, Vector2(110, 70), 0.0, 1.0,
+						FLUTE_RADIUS / FLUTE_FX_RADIUS)
 				if _player_alive() and _player.global_position.distance_to(global_position) < FLUTE_RADIUS:
 					_player.confuse(CONFUSE_TIME)
 				if _called.size() < MAX_CALLED:
@@ -129,7 +139,8 @@ func _update_attack(delta: float) -> void:
 					_hurt_player(stomp_damage, 260.0)
 				_remove_telegraph()
 				_ground_crack(global_position, STOMP_RADIUS * 0.8)
-				_debris(global_position, 14, 150.0)
+				SkillEffects.sheet_once(get_parent(), STOMP_FX, 10, 12.0, global_position, Vector2(53, 23), 0.0, 1.0,
+						STOMP_RADIUS / STOMP_FX_RADIUS)
 				_shake_camera(6.0)
 				Sfx.play_at("rock_break", global_position)
 				_set_stage("recover", 0.6)
@@ -152,8 +163,7 @@ func _vine(spot: Vector2) -> void:
 			telegraph.queue_free()
 		if state == State.DEAD:
 			return
-		for i in 6:
-			SkillEffects.spark(get_parent(), spot + Vector2.from_angle(TAU * i / 6.0) * 12.0, VINE_COLOR, 3)
+		SkillEffects.sheet_once(get_parent(), VINE_FX, 14, 12.0, spot, Vector2(21, 26), 0.0, 1.0, VINE_RADIUS / VINE_FX_RADIUS)
 		Sfx.play_at("roots_burst", spot, -6.0)
 		if _player_alive() and _player.global_position.distance_to(spot) <= VINE_RADIUS:
 			_player.take_damage(vine_damage, spot)

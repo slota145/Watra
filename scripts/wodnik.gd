@@ -20,6 +20,13 @@ const WAVE_LENGTH := 230.0
 const WAVE_WIDTH := 44.0
 const SUMMON_TELEGRAPH := 1.1
 const DROWNER := preload("res://scenes/drowner.tscn")
+## Efekty z kreatora efektów PixelLab: zapętlony wir (promień w klatce WHIRL_FX_RADIUS), fala przetaczająca się pasem
+## (rysowana w prawo, czoło przebiega WAVE_FX_LENGTH px) i plusk przy wynurzeniu Wodnika i utopców.
+const WHIRL_FX := preload("res://assets/effects/wodnik_whirl.png")
+const WHIRL_FX_RADIUS := 62.0
+const WAVE_FX := preload("res://assets/effects/wodnik_wave.png")
+const WAVE_FX_LENGTH := 210.0
+const SPLASH_FX := preload("res://assets/effects/bulgor_splash.png")
 
 var _whirl_center := Vector2.ZERO
 var _whirl_left := 0.0
@@ -109,7 +116,8 @@ func _update_attack(delta: float) -> void:
 				if _player_in_telegraph():
 					_hurt_player(wave_damage, 320.0)
 				_remove_telegraph()
-				SkillEffects.tide(get_parent(), global_position, _wave_dir.angle(), 0.28, WAVE_LENGTH)
+				SkillEffects.sheet_once(get_parent(), WAVE_FX, 12, 18.0, global_position, Vector2(12, 36), _wave_dir.angle(),
+						WAVE_LENGTH / WAVE_FX_LENGTH, 1.0)
 				Sfx.play_at("tide_wave", global_position)
 				_shake_camera(5.0)
 				_set_stage("recover", 0.8)
@@ -129,6 +137,7 @@ func _update_attack(delta: float) -> void:
 					drowner.equipment_drop_chance = 0.0
 					get_parent().add_child(drowner)
 					drowner.emerge_now()
+					SkillEffects.sheet_once(get_parent(), SPLASH_FX, 12, 14.0, puddle.global_position, Vector2(46, 35), 0.0, 1.0, 0.6)
 					_adds.append(drowner)
 					puddle.queue_free()
 				_puddles.clear()
@@ -139,15 +148,25 @@ func _update_attack(delta: float) -> void:
 				_end_attack()
 
 
-## Wir na ziemi: obracające się, zwężające kręgi wody.
+## Wir na ziemi: zapętlona spirala wody z pianą (pojawia się i znika płynnie).
 func _make_whirl(center: Vector2) -> Node2D:
-	var fx := WhirlFx.new()
-	fx.radius = WHIRL_RADIUS
-	fx.life = WHIRL_TIME
+	var fx := SkillEffects.looping(WHIRL_FX, 8, 12.0, Vector2(68, 44))
+	fx.scale = Vector2.ONE * (WHIRL_RADIUS / WHIRL_FX_RADIUS)
+	fx.z_index = 1
+	fx.modulate.a = 0.0
 	var layer := get_tree().get_first_node_in_group("floor_layer")
 	(layer if layer != null else get_parent()).add_child(fx)
 	fx.global_position = center
+	var tween := fx.create_tween()
+	tween.tween_property(fx, "modulate:a", 1.0, 0.25)
+	tween.tween_interval(maxf(0.0, WHIRL_TIME - 0.6))
+	tween.tween_property(fx, "modulate:a", 0.0, 0.35)
 	return fx
+
+
+## Wodnik wynurza się z topieli: wielki plusk zamiast ryku z falą.
+func _fx_engage() -> void:
+	SkillEffects.sheet_once(get_parent(), SPLASH_FX, 12, 14.0, global_position, Vector2(46, 35), 0.0, 1.0, fx_scale() * 1.3)
 
 
 func _cancel_attack() -> void:
@@ -192,6 +211,7 @@ func _drop_trophies() -> void:
 	_spawn_pickup("drowned_pearl", 3)
 
 
+## Rysowany wir (używa go też legenda - LegendaryEffects).
 class WhirlFx:
 	extends Node2D
 	var radius := 60.0
