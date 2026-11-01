@@ -172,6 +172,14 @@ odpowiedniej sekcji.
   zwykle 7 czat po około 18 ptakoludzi), satyrowie pasterze przy stadach kóz (namiot, siano albo wino, grajek, czasem
   osiłek; 5-7 satyrów), 14 polujących gromad ptakoludzi na halach zachodniej części. Własne ziarno (`_outpost_rng`),
   budowane na końcu - kształt krainy i stare numery miejsc potworów w zapisach się nie zmieniają.
+- [x] Wioska ptakoludzi wciśnięta w północno-wschodni róg (`lair` (0.785, 0.245) rozmiaru mapy, było (0.74, 0.3)):
+  grań łukiem wokół narożnika (`RING_FROM`/`RING_TO`, od -150° do 48° przez północ), od zachodu wioska otwarta
+  na hale; zewnętrzny krąg chat (`BACK_HUTS` - 7 kątów, mniejsze gromady po 4-5) z tyłu i na zachodzie płaskowyżu.
+  Czaty na płaskowyżach z wolnym promieniem 4 (zwykle 8 czat). Razem około 650 wrogów bez kóz.
+  Zmiana przestawia całą krainę, więc stan krainy w zapisie ma wersję układu (`World.ZONE_LAYOUTS`,
+  `MountainZone.LAYOUT` = 2): postać zapisana w starym układzie pojawia się przy kapliczce, a pokonane potwory
+  i ścięte drzewa ze starego układu się nie liczą. Walka w środku wioski ptakoludzi kosztuje ok. 15 ms na klatkę
+  (dwa razy więcej niż gdzie indziej, tak było i przed przebudową - do sprawdzenia, co w niej tyle kosztuje).
 
 ## Rozlewiska (`scripts/drowned_grove.gd`, `scripts/hydra_bog.gd`) (Do poprawy)
 - [x] Topielcze Uroczysko zajmuje cały obszar pod drogą i na zachód od rzeki: 16 sadzawek (było 7), mgła na całym obszarze,

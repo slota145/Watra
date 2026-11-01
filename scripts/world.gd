@@ -657,6 +657,11 @@ func enter_dungeon(settings: Dictionary) -> void:
 
 
 ## Stan bieżącej krainy: pokonane potwory, ścięte drzewa / rozbite głazy, budowy w osadzie.
+## Wersje układu krain - po przebudowie krainy postać zapisana w starym układzie wraca do kapliczki, a pokonane
+## potwory i ścięte drzewa ze starego układu się nie liczą (numery i miejsca się zmieniły).
+const ZONE_LAYOUTS := {"mountains": MountainZone.LAYOUT}
+
+
 func _zone_state() -> Dictionary:
 	var dead_goblins: Array[Dictionary] = []
 	for entry in _respawn_queue:
@@ -668,6 +673,8 @@ func _zone_state() -> Dictionary:
 		if target.is_depleted:
 			stumps.append([target.position.x, target.position.y, target.regrow_left])
 	var state := {"dead_goblins": dead_goblins, "stumps": stumps}
+	if ZONE_LAYOUTS.has(zone):
+		state["layout"] = ZONE_LAYOUTS[zone]
 	if zone == "forest":
 		state["settlement"] = _settlement.get_save_data()
 	return state
@@ -687,6 +694,10 @@ func _apply_save(save: Dictionary) -> void:
 	player.quests.catch_up_main.call_deferred(player)
 	hud.set_kills(int(save.get("kills", 0)))
 	var state: Dictionary = _zone_states.get(zone, {})
+	if int(state.get("layout", 1)) < int(ZONE_LAYOUTS.get(zone, 1)):
+		state = {}
+		if not save.has("arrive"):
+			player.global_position = _spawn_point
 	var harvestables := {}
 	for target: Harvestable in get_tree().get_nodes_in_group("harvestables"):
 		harvestables[Vector2i(target.position.round())] = target
