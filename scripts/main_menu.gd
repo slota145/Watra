@@ -6,7 +6,8 @@ extends Control
 ## w świetle unoszą się drobinki, czasem przelatuje klucz ptaków, a całe tło lekko podąża za myszą.
 
 const BACKGROUND := preload("res://assets/menu/background.png")
-const PLAQUE := preload("res://assets/menu/plaque.png")
+const LOGO := preload("res://assets/menu/logo.png")
+const LOGO_SHADER := preload("res://shaders/logo_flames.gdshader")
 const BG_SIZE := Vector2(640, 360)
 ## Punkty na grafice tła (piksele): słońce, watra i kominy osady.
 const SUN := Vector2(300, 112)
@@ -15,7 +16,6 @@ const CHIMNEYS: Array[Vector2] = [Vector2(278, 196), Vector2(374, 186), Vector2(
 ## Jak daleko tło przesuwa się za myszą (piksele grafiki).
 const PARALLAX := 5.0
 const PAN_SHADER := preload("res://shaders/menu_pan.gdshader")
-const TITLE := "Watra"
 const SUBTITLE := "Dopóki płonie ogień, Ostoja trwa"
 
 var _time := 0.0
@@ -31,7 +31,7 @@ var _fire_glow: Sprite2D
 var _mists: Array[Sprite2D] = []
 var _birds := []
 var _bird_timer := 3.0
-var _title: Label
+var _title: TextureRect
 var _subtitle: Label
 var _menu: VBoxContainer
 var _heroes: VBoxContainer
@@ -47,35 +47,22 @@ func _ready() -> void:
 
 	_build_scene()
 
-	# logo: drewniana tablica z napisem u góry, nad niebem
+	# logo: płonący napis "WATRA" u góry, nad niebem (płomienie migoczą - shaders/logo_flames.gdshader)
 	var logo := Control.new()
 	logo.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(logo)
-	var plaque := TextureRect.new()
-	plaque.texture = PLAQUE
-	plaque.position = Vector2(-PLAQUE.get_width() / 2.0, 10)
-	plaque.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	logo.add_child(plaque)
-	_title = Label.new()
-	_title.text = TITLE.to_upper()
-	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_title.add_theme_font_size_override("font_size", 34)
-	_title.add_theme_color_override("font_color", Color(1.0, 0.78, 0.36))
-	_title.add_theme_color_override("font_outline_color", Color(0.18, 0.08, 0.03))
-	_title.add_theme_constant_override("outline_size", 8)
-	_title.add_theme_color_override("font_shadow_color", Color(0.9, 0.3, 0.05, 0.55))
-	_title.add_theme_constant_override("shadow_offset_x", 0)
-	_title.add_theme_constant_override("shadow_offset_y", 0)
-	_title.add_theme_constant_override("shadow_outline_size", 14)
-	_title.position = plaque.position + Vector2(0, 4)
-	_title.size = Vector2(PLAQUE.get_width(), PLAQUE.get_height() - 12)
+	_title = TextureRect.new()
+	_title.texture = LOGO
+	_title.position = Vector2(-LOGO.get_width() / 2.0, 6)
 	_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var flames := ShaderMaterial.new()
+	flames.shader = LOGO_SHADER
+	_title.material = flames
 	logo.add_child(_title)
 	var subtitle := UiStyle.label(SUBTITLE, 9, Color(1.0, 0.92, 0.78))
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	subtitle.position = Vector2(-150, plaque.position.y + PLAQUE.get_height() + 2)
+	subtitle.position = Vector2(-150, _title.position.y + LOGO.get_height() + 1)
 	subtitle.size = Vector2(300, 14)
 	logo.add_child(subtitle)
 	_subtitle = subtitle

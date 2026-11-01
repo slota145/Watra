@@ -1,5 +1,6 @@
 """Grafiki menu głównego i kursor z PixelLab (pixellab_src/menu/): tło ze świtem nad osadą (640x360 - rozmiar
-ekranu gry), drewniana tablica pod logo (napis "Watra" rysuje gra) i kursor (wybrany kandydat z paczki 64)
+ekranu gry), drewniana tablica (dziś nieużywana), płonący napis "WATRA" (logo.png - kandydat 4 z create_image_pro, migotanie
+płomieni robi shaders/logo_flames.gdshader) i kursor (wybrany kandydat z paczki 64)
 w dwóch wersjach: zwykły i nad przyciskiem (rozżarzony kamień). Plik hotspot: czubek strzałki.
 Wynik: assets/menu/*.png. Uruchom: python tools/menu_art.py (albo na końcu generate_art.py)"""
 import colorsys
@@ -37,6 +38,8 @@ def main():
     shutil.copy(os.path.join(SRC, "background.png"), os.path.join(OUT, "background.png"))
     plaque = Image.open(os.path.join(SRC, "plaque.png")).convert("RGBA")
     plaque.crop(plaque.getbbox()).save(os.path.join(OUT, "plaque.png"))
+    logo = Image.open(os.path.join(SRC, "logo_watra.png")).convert("RGBA")
+    logo.crop(logo.getbbox()).save(os.path.join(OUT, "logo.png"))
     cursor = Image.open(os.path.join(SRC, "cursors", "%d.png" % CURSOR)).convert("RGBA")
     box = cursor.getbbox()
     # strzałka od lewego górnego rogu płótna (hotspot w 1,1 - czubek z obrysem)
