@@ -42,7 +42,7 @@ func _ready() -> void:
 		_add_legendary_beam()
 		Sfx.play_at("legendary_drop", global_position)
 	elif item_id != "gold" and Items.rarity_of(item_id) in ["magic", "rare"]:
-		_add_quality_glint(Items.rarity_color(item_id))
+		_add_quality_glint(Items.rarity_of(item_id), Items.rarity_color(item_id))
 
 	# wyskok z ciała wroga w losową stronę
 	var target := position + Vector2(randf_range(-16, 16), randf_range(-8, 10))
@@ -75,28 +75,17 @@ func _physics_process(delta: float) -> void:
 		global_position += to_player.normalized() * minf(_speed * delta, to_player.length())
 
 
-## Migotanie w kolorze jakości wokół magicznego (niebieskie) albo rzadkiego (żółte) łupu.
-func _add_quality_glint(color: Color) -> void:
-	var glint := CPUParticles2D.new()
-	glint.position = Vector2(0, -4)
-	glint.amount = 6
-	glint.lifetime = 0.9
-	glint.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-	glint.emission_sphere_radius = 6.0
-	glint.gravity = Vector2(0, -12)
-	glint.initial_velocity_max = 4.0
-	glint.scale_amount_max = 1.5
-	var fade := Gradient.new()
-	fade.colors = PackedColorArray([Color(1, 1, 1, 0.0), color, Color(color, 0.0)])
-	glint.color_ramp = fade
-	var additive := CanvasItemMaterial.new()
-	additive.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-	glint.material = additive
+## Migotanie w kolorze jakości wokół magicznego (niebieskie) albo rzadkiego (złote) łupu - zapętlony błysk
+## z kreatora efektów PixelLab (WorldVfx.loot_glint; klatki wspólne dla wszystkich łupów, więc setki łupów mało kosztują).
+func _add_quality_glint(rarity: String, color: Color) -> void:
+	var glint := WorldVfx.loot_glint(rarity)
+	glint.position = Vector2(0, -3)
+	glint.frame = randi() % 16  # łupy obok siebie nie błyskają naraz
 	add_child(glint)
 	sprite.modulate = Color(1, 1, 1).lerp(color, 0.25) * 1.15
 
 
-## Słup pomarańczowo-złotego światła i iskry nad legendarnym łupem - widać go z daleka.
+## Słup pomarańczowo-złotego światła i iskry nad legendarnym łupem (iskry z kreatora efektów PixelLab) - widać go z daleka.
 func _add_legendary_beam() -> void:
 	var beam := Sprite2D.new()
 	var image := Image.create(13, 64, false, Image.FORMAT_RGBA8)
@@ -115,22 +104,9 @@ func _add_legendary_beam() -> void:
 	var pulse := beam.create_tween().set_loops()
 	pulse.tween_property(beam, "modulate:a", 0.55, 0.7).set_trans(Tween.TRANS_SINE)
 	pulse.tween_property(beam, "modulate:a", 1.0, 0.7).set_trans(Tween.TRANS_SINE)
-	var sparks := CPUParticles2D.new()
-	sparks.position = Vector2(0, -4)
-	sparks.amount = 14
-	sparks.lifetime = 1.2
-	sparks.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-	sparks.emission_rect_extents = Vector2(5, 2)
-	sparks.direction = Vector2.UP
-	sparks.spread = 15.0
-	sparks.gravity = Vector2.ZERO
-	sparks.initial_velocity_min = 12.0
-	sparks.initial_velocity_max = 28.0
-	sparks.scale_amount_max = 2.0
-	var fade := Gradient.new()
-	fade.colors = PackedColorArray([Color(1, 0.95, 0.7), Items.LEGENDARY_COLOR, Color(Items.LEGENDARY_COLOR, 0.0)])
-	sparks.color_ramp = fade
-	sparks.material = additive
+	var sparks := WorldVfx.loot_legendary()
+	sparks.position = Vector2(0, -3)
+	sparks.scale = Vector2.ONE * 1.25
 	add_child(sparks)
 	sprite.modulate = Color(1.3, 1.15, 0.9)
 

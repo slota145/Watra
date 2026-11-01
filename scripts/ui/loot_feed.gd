@@ -113,7 +113,7 @@ func _create(id: String, amount: int) -> void:
 	icon.pivot_offset = icon.size / 2.0
 	icon_box.add_child(icon)
 	if epic:
-		icon_box.add_child(_sparkles())
+		icon_box.add_child(_sparkles(id))
 	if legendary:
 		icon.add_child(LegendaryFrame.new())
 
@@ -201,21 +201,9 @@ func _is_epic(id: String) -> bool:
 	return Items.is_legendary(id) or Items.get_data(id).get("stone", {}).get("perfect", false)
 
 
-func _sparkles() -> CPUParticles2D:
-	var p := CPUParticles2D.new()
-	p.position = ICON_BOX / 2.0
-	p.amount = 10
-	p.lifetime = 0.8
-	p.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-	p.emission_sphere_radius = 7.0
-	p.direction = Vector2.UP
-	p.spread = 180.0
-	p.gravity = Vector2(0, -15)
-	p.initial_velocity_min = 3.0
-	p.initial_velocity_max = 10.0
-	p.scale_amount_min = 1.0
-	p.scale_amount_max = 2.0
-	var fade := Gradient.new()
-	fade.colors = PackedColorArray([Color(1, 1, 0.85), GOLD, Color(GOLD, 0.0)])
-	p.color_ramp = fade
-	return p
+## Zapętlone iskry z kreatora efektów PixelLab wokół ikony: legendarny łup - iskry legendy, reszta - złoty błysk.
+func _sparkles(id: String) -> AnimatedSprite2D:
+	var fx := WorldVfx.loot_legendary() if Items.is_legendary(id) else WorldVfx.loot_glint("rare")
+	fx.position = ICON_BOX / 2.0 + Vector2(0, 2 if Items.is_legendary(id) else 0)
+	fx.scale = Vector2.ONE * 0.75
+	return fx

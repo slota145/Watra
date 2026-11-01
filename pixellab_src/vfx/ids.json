@@ -1495,5 +1495,169 @@
       73,
       124
     ]
+  },
+  "burning_fire": {
+    "effect": "0a218b9d-9bd5-444e-977d-dbc1c6046eaa",
+    "name": "Płonąca ziemia",
+    "frame": [
+      70,
+      44
+    ],
+    "frames": 8,
+    "fps": 12,
+    "anchor": [
+      35,
+      28
+    ],
+    "loop": true
+  },
+  "burning_poison": {
+    "effect": "d6475157-346b-4298-a496-5e04c38b6498",
+    "name": "Trujący opar",
+    "frame": [
+      70,
+      44
+    ],
+    "frames": 8,
+    "fps": 12,
+    "anchor": [
+      35,
+      28
+    ],
+    "loop": true
+  },
+  "boulder_break": {
+    "effect": "e062f772-0414-403d-9b9d-ff7c23b75bd2",
+    "name": "Rozbity głaz",
+    "frame": [
+      110,
+      66
+    ],
+    "frames": 12,
+    "columns": 6,
+    "fps": 12,
+    "anchor": [
+      58,
+      23
+    ]
+  },
+  "firework_peony": {
+    "effect": "bd18d4e2-2dc4-416f-98a3-efd790813165",
+    "name": "Fajerwerk - kwiat",
+    "frame": [
+      83,
+      92
+    ],
+    "frames": 16,
+    "columns": 8,
+    "fps": 14,
+    "anchor": [
+      41,
+      29
+    ]
+  },
+  "firework_rocket": {
+    "effect": "ab4e9b8b-d66c-4738-9e68-cd4df558b8c1",
+    "name": "Fajerwerk z rakietą",
+    "frame": [
+      67,
+      90
+    ],
+    "frames": 16,
+    "columns": 8,
+    "fps": 12,
+    "anchor": [
+      35,
+      42
+    ]
+  },
+  "loot_glint_magic": {
+    "effect": "45cc3332-6ca3-4588-a669-07bd81b9b133",
+    "name": "Błysk magicznego łupu",
+    "frame": [
+      27,
+      37
+    ],
+    "frames": 16,
+    "fps": 12,
+    "anchor": [
+      12,
+      20
+    ],
+    "loop": true
+  },
+  "loot_glint_rare": {
+    "effect": "4e95558c-bce4-409b-927d-88a6e15d4ad3",
+    "name": "Błysk rzadkiego łupu",
+    "frame": [
+      30,
+      42
+    ],
+    "frames": 16,
+    "fps": 12,
+    "anchor": [
+      13,
+      22
+    ],
+    "loop": true
+  },
+  "loot_legendary": {
+    "effect": "3ddeb07a-24d0-4ca6-ad3e-23268dca6ae3",
+    "name": "Iskry legendarnego łupu",
+    "frame": [
+      43,
+      68
+    ],
+    "frames": 16,
+    "fps": 12,
+    "anchor": [
+      21,
+      52
+    ],
+    "loop": true
+  },
+  "enchant_success": {
+    "effect": "bcaabf5e-286c-4fe8-8837-efdf2874e85e",
+    "name": "Udane zaklinanie",
+    "frame": [
+      68,
+      78
+    ],
+    "frames": 12,
+    "fps": 16,
+    "anchor": [
+      35,
+      30
+    ]
+  },
+  "enchant_fail": {
+    "effect": "c0d4ebab-912a-4b5a-b6d0-e504a7022edb",
+    "name": "Nieudane zaklinanie",
+    "frame": [
+      72,
+      66
+    ],
+    "frames": 12,
+    "fps": 16,
+    "anchor": [
+      42,
+      26
+    ]
+  },
+  "enchant_charge": {
+    "effect": "b3b02fe0-68a2-4c93-a808-f681d5a17ab9",
+    "name": "Zaklinanie w toku",
+    "frame": [
+      61,
+      44
+    ],
+    "frames": 24,
+    "columns": 12,
+    "fps": 12,
+    "anchor": [
+      30,
+      22
+    ],
+    "loop": true
   }
 }

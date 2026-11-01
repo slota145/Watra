@@ -257,6 +257,13 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 - [x] Królowa Pająków nie stoi już do gracza tyłem (na obrotach z PixelLab patrzyła w lewo - `tools/pixellab_sheets.py`,
   `creature(..., mirror=True)` odbija klatki); mniejsze kokony z uwięzionymi ludźmi (`pair(..., scale=0.6)`, 33 zamiast
   55 px) i owinięte ofiary (`PROP_SCALE` - połowa, 30 zamiast 61 px) - człowiek mniej więcej wzrostu postaci.
+- [x] Efekty świata i interfejsu z kreatora efektów (`scripts/world_vfx.gd` - `WorldVfx`, wpisy `burning_*`, `boulder_break`,
+  `firework_*`, `loot_*`, `enchant_*` w `ids.json`): płonąca ziemia i trujący opar jako zapętlone kręgi płomieni
+  (`BurningPatch`, skalowane do promienia), odłamki i pył rozbitego głazu, fajerwerki na Święcie (kwiat iskier albo
+  rakieta, białe rysunki barwione losowym kolorem), zapętlony błysk łupu na ziemi (niebieski - magiczny, złoty - rzadki;
+  wspólne klatki, więc setki łupów mało kosztują) i iskry legendy w słupie światła, złoty błysk w powiadomieniu o łupie,
+  w oknie zaklinania krążące złote runy w trakcie, złoty rozbłysk z gwiazdkami po sukcesie i czerwone pęknięcie z dymem
+  po porażce. Mgła, muchy, zarodniki, dym z kominów, para i iskierki ziół zostają.
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 
