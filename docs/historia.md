@@ -159,6 +159,11 @@ odpowiedniej sekcji.
   to kraina startowa, więc zwiększenie jest umiarkowane.
 - [x] Prastary Las: dwa pierścienie prastarych drzew wokół Leszego z drzewcami, wielkie leże pająków, wataha wargów
   przy każdej bestii, gniazda pająków i stada drzewców w gęstwinie - około 400 potworów (było 66).
+- [x] Prastary Las: dużo potworów (579, było 409) - dzikie ostępy (`AncientForest._plan_wilds` / `_build_wilds`,
+  własne ziarno `_wild_rng`, budowane na końcu): 6 zasnutych polan (wielka sieć, sieci na ziemi, kokony, jaja, ofiara,
+  sieć-pułapka, dwie gromady pająków z sieciarzami), 5 kręgów drzewców na mchu (8-10 drzewców kręgiem wokół powalonego
+  pnia, omszałe głazy, spróchniałe pnie, świecące grzyby), 8 legowisk wargów (kości, krew, ślady pazurów, 6-8 wargów,
+  część leży). Z dala od szlaku, rozstajów, wejścia, kręgu Leszego, leża pająków i Biesa.
 - [x] Gobliński Las: dużo potworów (około 590 wrogów bez zwierzyny, było około 380) - `scripts/goblin_posts.gd`
   (osobne ziarno, budowane na końcu): posterunki goblinów przy drogach dalej niż 20 kafelków od palisady (rząd pali
   od strony drogi z przejściem, łucznicy i osiłek, ognisko z siedzącą zgrają, dwa namioty; zwykle 3), psiarnie

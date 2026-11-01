@@ -14,6 +14,10 @@ extends Node
 ## - na południowym zachodzie: siedlisko bestii - rozproszone, bardzo silne bestie (mini-bossowie), każda
 ##   w swoim rewirze pełnym śladów pazurów, złamanych drzew i krwi, z watahą wargów, a w głębi leże Biesa
 ##   otoczone czaszkami na palach.
+## Poza siedliskami (gęstwina, _build_thicket i _build_wilds): gniazda pająków i stada drzewców, a dalej zasnute
+## polany (pająki rozlane z leża: wielkie sieci, kokony, jaja, ofiary), kręgi drzewców na mchu (omszałe głazy,
+## pnie, świecące grzyby) i legowiska wargów (kości, krew, ślady pazurów). Te ostatnie mają własne ziarno
+## (_wild_rng), żeby reszta lasu wyglądała jak dawniej, i powstają na końcu (nowe numery miejsc potworów).
 
 const TILE := 16
 ## Runo z PixelLab (tools/pixellab_sheets.py). Rzędy 7-10: luźne warianty ściółki, liści, mchu
@@ -93,6 +97,10 @@ const TREANT_HERDS := 8
 const SHROOMS := 46
 const LOGS := 14
 const WEB_TRAPS := 20
+## Dzikie ostępy poza siedliskami (_build_wilds): zasnute polany, kręgi drzewców i legowiska wargów.
+const WEB_GLADES := 6
+const TREANT_CIRCLES := 5
+const WARG_DENS := 8
 
 var w  # świat
 var entry_x := 0.0
@@ -112,6 +120,9 @@ var _moss_spots: Array[Vector2] = []
 var _moss_near := {}
 var _player: Node2D
 var _fireflies: Array[CPUParticles2D] = []
+## Dzikie ostępy: [rodzaj ("glade" / "circle" / "den"), środek w kafelkach].
+var _wilds: Array = []
+var _wild_rng := RandomNumberGenerator.new()
 
 
 func generate(world) -> void:
@@ -146,6 +157,7 @@ func generate(world) -> void:
 	w._reserve_area(bies, 7.0)
 	_plan_ancient_trees(rng)
 	_plan_beasts(rng)
+	_plan_wilds()
 
 	_place_forest(rng)
 	_build_ground(rng)
@@ -155,6 +167,7 @@ func generate(world) -> void:
 	_build_beast_habitat(rng)
 	_build_thicket(rng)
 	_build_atmosphere(rng)
+	_build_wilds()
 
 	var shrine: Node2D = w.SHRINE.instantiate()
 	shrine.position = shrine_tile * TILE
@@ -200,6 +213,47 @@ func _plan_beasts(rng: RandomNumberGenerator) -> void:
 			continue
 		_beast_spots.append(tile)
 		w._reserve_area(tile, 5.0)
+
+
+## Dzikie ostępy: z dala od szlaku, rozstajów, wejścia, siedlisk i siebie nawzajem; najpierw kręgi drzewców
+## (mech pod nimi kładzie się z runem), potem polany i legowiska. Rezerwacja bez drzew.
+func _plan_wilds() -> void:
+	_wild_rng.seed = hash([w._seed, "ancient_wilds"])
+	var size := Vector2(w.map_size)
+	var entry := Vector2(entry_x, size.y)
+	var kinds: Array[String] = []
+	for i in TREANT_CIRCLES:
+		kinds.append("circle")
+	for i in WEB_GLADES:
+		kinds.append("glade")
+	for i in WARG_DENS:
+		kinds.append("den")
+	var taken: Array[Vector2] = [leshy, lair, bies, _cross]
+	taken.append_array(_beast_spots)
+	taken.append_array(_ancient_spots)
+	for kind in kinds:
+		for attempt in 120:
+			var tile := Vector2(_wild_rng.randf_range(14.0, size.x - 14.0), _wild_rng.randf_range(12.0, size.y - 12.0))
+			if Road.distance_to(tile, w._road) < 8.0 or tile.distance_to(entry) < 30.0 or tile.distance_to(_cross) < 18.0:
+				continue
+			if tile.distance_to(leshy) < 50.0 or ((tile - lair) / _lair_radii).length() < 1.5 or tile.distance_to(bies) < 16.0:
+				continue
+			# legowiska wargów mogą stać przy bestiach (ich watahy), reszta poza siedliskiem bestii
+			if kind != "den" and beast_area.grow(4.0).has_point(tile):
+				continue
+			if taken.any(func(other: Vector2) -> bool: return other.distance_to(tile) < 17.0):
+				continue
+			var room := 7.0 if kind == "circle" else 5.5
+			if w._cells_in_radius(tile, room).any(func(cell: Vector2i) -> bool: return w._reserved.has(cell) or w._road_clear.has(cell)):
+				continue
+			taken.append(tile)
+			_wilds.append([kind, tile])
+			w._reserve_area(tile, room)
+			if kind == "circle":
+				_moss_spots.append(tile)
+				for k in 8:
+					_moss_spots.append(tile + Vector2.from_angle(TAU * k / 8.0) * 4.0)
+			break
 
 
 # ---------------------------------------------------------------- teren
@@ -614,6 +668,86 @@ func _build_thicket(rng: RandomNumberGenerator) -> void:
 				w._add_goblin_spawn({"type": "treant", "position": at, "sitting": false, "look_at": pos})
 			for k in 3:
 				_shroom(pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(30, 70))
+
+
+## Dzikie ostępy zaplanowane w _plan_wilds.
+func _build_wilds() -> void:
+	var rng := _wild_rng
+	for wild: Array in _wilds:
+		var pos: Vector2 = wild[1] * TILE
+		match str(wild[0]):
+			"glade":
+				_build_web_glade(rng, pos)
+			"circle":
+				_build_treant_circle(rng, pos)
+			"den":
+				_build_warg_den(rng, pos)
+
+
+## Zasnuta polana: wielka sieć między pniami, sieci na ziemi, kokony, jaja, owinięta ofiara, szczątki
+## i dwie gromady pająków z sieciarzami.
+func _build_web_glade(rng: RandomNumberGenerator, pos: Vector2) -> void:
+	_prop(WEB_BIG, pos + Vector2(0, -50), Vector2(60, 8))
+	for k in 10:
+		var web := _floor(WEB_SMALL if k % 3 != 2 else WEB_TANGLE, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(0, 70), rng.randf() * TAU)
+		web.modulate.a = 0.75
+		if k % 3 == 2:
+			web.scale = Vector2.ONE * 0.5
+		w._map_props[Vector2i(web.position / TILE)] = MAP_WEB
+	_prop(VICTIM, pos + Vector2(rng.randf_range(-50, 50), rng.randf_range(-30, 10)))
+	for k in 2:
+		_prop(EGG_SAC, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(30, 60))
+	_remains(rng, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(20, 60))
+	for k in 4:
+		var at := pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(24, 66)
+		w._add_goblin_spawn({"type": "cocoon", "position": at, "sitting": false, "look_at": at, "respawn": 120.0})
+	var web_trap := _floor(WEB_BIG, pos + Vector2(rng.randf_range(-30, 30), rng.randf_range(10, 40)), rng.randf() * TAU)
+	web_trap.scale = Vector2.ONE * 0.6
+	_webs.append([web_trap.position, 30.0])
+	for side in [-1.0, 1.0]:
+		var spot := pos + Vector2(side * 62.0, 22.0)
+		for k in rng.randi_range(5, 6):
+			var at := spot + Vector2(rng.randf_range(-26, 26), rng.randf_range(-20, 20))
+			w._add_goblin_spawn({"type": "web_spider" if k % 3 == 1 else "spider", "position": at, "sitting": false, "look_at": pos})
+	w._map_markers.append({"position": pos, "color": MAP_WEB, "size": 2.0})
+
+
+## Krąg drzewców: drzewce stoją kręgiem zwrócone do środka (jakby radziły), między nimi omszałe głazy
+## i spróchniałe pnie, w środku powalony pień i świecące grzyby; pod spodem mech.
+func _build_treant_circle(rng: RandomNumberGenerator, pos: Vector2) -> void:
+	var n := rng.randi_range(8, 10)
+	var turn := rng.randf() * TAU
+	for k in n:
+		var angle := turn + TAU * k / n
+		w._add_goblin_spawn({"type": "treant", "position": pos + Vector2.from_angle(angle) * Vector2(76, 54), "sitting": false, "look_at": pos})
+		if k % 3 == 0:
+			var between := angle + PI / n
+			_prop(MOSSY_ROCK if k % 2 == 0 else ROTTEN_STUMP, pos + Vector2.from_angle(between) * Vector2(98, 70), Vector2(14, 6))
+	_prop(LOG, pos + Vector2(0, 4), Vector2(40, 8)).flip_h = rng.randf() < 0.5
+	for k in 5:
+		_shroom(pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(16, 40))
+	w._map_markers.append({"position": pos, "color": MAP_MOSS, "size": 2.0})
+
+
+## Legowisko wargów: kości, krew, ślady pazurów, drapane drzewo, szczątki; część watahy leży, reszta stoi.
+func _build_warg_den(rng: RandomNumberGenerator, pos: Vector2) -> void:
+	_prop(BONE_PILE, pos + Vector2(rng.randf_range(-16, 16), -10))
+	_prop(CLAW_STUMP, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(56, 70), Vector2(14, 6))
+	for k in 3:
+		_floor(SCRATCHES, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(10, 50), rng.randf() * TAU)
+	for k in 2:
+		_floor(BLOOD, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(10, 40), rng.randf() * TAU)
+	_remains(rng, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(20, 50))
+	var n := rng.randi_range(6, 8)
+	var turn := rng.randf() * TAU
+	for k in n:
+		var at := pos + Vector2.from_angle(turn + TAU * k / n + rng.randf_range(-0.2, 0.2)) * Vector2(rng.randf_range(48, 72), rng.randf_range(34, 50))
+		var lying := k % 2 == 0
+		var spawn := {"type": "warg", "position": at, "sitting": lying, "look_at": pos}
+		if lying:
+			spawn["pose"] = "lie"
+		w._add_goblin_spawn(spawn)
+	w._map_markers.append({"position": pos, "color": Color(0.85, 0.45, 0.3), "size": 2.0})
 
 
 # ---------------------------------------------------------------- klimat: mrok, smugi światła, grzyby, świetliki
