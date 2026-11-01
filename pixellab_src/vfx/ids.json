@@ -1817,5 +1817,135 @@
       22
     ],
     "loop": true
+  },
+  "mob_poof": {
+    "effect": "8bc68421-b6b1-497b-afa4-7757664d1e6a",
+    "name": "Potwór - śmierć (obłoczek)",
+    "frame": [
+      40,
+      40
+    ],
+    "frames": 7,
+    "fps": 16,
+    "anchor": [
+      20,
+      24
+    ]
+  },
+  "mob_bones": {
+    "effect": "ffbde005-9427-4109-b8ea-613fb6625b84",
+    "name": "Szkielet - rozsypane kości",
+    "frame": [
+      47,
+      25
+    ],
+    "frames": 10,
+    "fps": 16,
+    "anchor": [
+      22,
+      11
+    ]
+  },
+  "mob_spit": {
+    "effect": "4feb3ad8-8a5f-4a8a-8736-d65acc77f13f",
+    "name": "Plucie jadem - pocisk",
+    "frame": [
+      28,
+      16
+    ],
+    "frames": 4,
+    "fps": 14,
+    "anchor": [
+      20,
+      8
+    ],
+    "loop": true
+  },
+  "mob_water_orb": {
+    "effect": "0dee7a40-562b-47a0-af2c-9b965479d557",
+    "name": "Kula wody topielicy - pocisk",
+    "frame": [
+      28,
+      16
+    ],
+    "frames": 4,
+    "fps": 14,
+    "anchor": [
+      20,
+      8
+    ],
+    "loop": true
+  },
+  "mob_dust": {
+    "effect": "19826717-d3bd-4ac0-ad4a-d5331bf01b4e",
+    "name": "Robak polny - pył kopca",
+    "frame": [
+      40,
+      30
+    ],
+    "frames": 6,
+    "fps": 12,
+    "anchor": [
+      20,
+      18
+    ],
+    "loop": true
+  },
+  "mob_notes": {
+    "effect": "64e2c175-8e0d-4e30-9367-abe92f16b90a",
+    "name": "Rusałka - nuty pieśni",
+    "frame": [
+      40,
+      40
+    ],
+    "frames": 12,
+    "fps": 10,
+    "anchor": [
+      20,
+      30
+    ],
+    "loop": true
+  },
+  "mob_wisp_burst": {
+    "effect": "fd7b6a4a-c81c-43eb-865c-99b07c498ceb",
+    "name": "Ognik - wybuch",
+    "frame": [
+      72,
+      64
+    ],
+    "frames": 10,
+    "fps": 16,
+    "anchor": [
+      36,
+      34
+    ]
+  },
+  "mob_splinters": {
+    "effect": "6a0cfeff-c444-49ff-b80e-97a3ad187605",
+    "name": "Drzewiec - drzazgi",
+    "frame": [
+      46,
+      30
+    ],
+    "frames": 9,
+    "fps": 16,
+    "anchor": [
+      20,
+      15
+    ]
+  },
+  "mob_splash": {
+    "effect": "28b1650e-a513-4ddb-ac23-f9dd65412ba6",
+    "name": "Utopiec - plusk",
+    "frame": [
+      48,
+      34
+    ],
+    "frames": 8,
+    "fps": 16,
+    "anchor": [
+      24,
+      14
+    ]
   }
 }

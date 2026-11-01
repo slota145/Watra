@@ -40,6 +40,11 @@ func _die() -> void:
 	Sfx.play_at("tree_fall", global_position, -4.0)
 
 
+## Pada w drzazgach i liściach zamiast obłoczka.
+func _spawn_poof() -> void:
+	MonsterFx.splinters(get_parent(), global_position)
+
+
 func _drop_loot() -> void:
 	super()
 	if randf() < bark_drop_chance:

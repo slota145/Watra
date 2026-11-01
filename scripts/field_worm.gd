@@ -13,7 +13,6 @@ const HOLE := preload("res://assets/fields/hole.png")
 const DIVE_TIME := 0.45
 const AIM_TIME := 0.75
 const RISE_TIME := 0.25
-const DIRT := Color(0.45, 0.32, 0.2)
 
 @export var erupt_damage := 18
 @export var erupt_radius := 22.0
@@ -28,7 +27,7 @@ var _aim_at := Vector2.ZERO
 var _aim_telegraph: Telegraph
 var _mound: Sprite2D
 var _hole: Sprite2D
-var _dust: CPUParticles2D
+var _dust: AnimatedSprite2D
 
 
 func _ready() -> void:
@@ -50,18 +49,9 @@ func _ready() -> void:
 	_mound.offset = Vector2(0, -4)
 	_mound.visible = false
 	add_child(_mound)
-	_dust = CPUParticles2D.new()
-	_dust.amount = 8
-	_dust.lifetime = 0.5
-	_dust.local_coords = false
-	_dust.emitting = false
-	_dust.direction = Vector2.UP
-	_dust.spread = 60.0
-	_dust.initial_velocity_min = 10.0
-	_dust.initial_velocity_max = 25.0
-	_dust.gravity = Vector2(0, 80)
-	_dust.scale_amount_max = 2.5
-	_dust.color = DIRT
+	# pył i grudy nad kopcem, gdy robak ryje pod ziemią
+	_dust = MonsterFx.dust()
+	_dust.visible = false
 	add_child(_dust)
 
 
@@ -155,7 +145,7 @@ func _go_under() -> void:
 	sprite.visible = false
 	_hole.visible = false
 	_mound.visible = true
-	_dust.emitting = true
+	_dust.visible = true
 	$CollisionShape2D.set_deferred("disabled", true)
 	Sfx.play_at("mine", global_position, -8.0)
 
@@ -184,7 +174,7 @@ func _erupt() -> void:
 	if _player_alive() and _player.global_position.distance_to(_aim_at) <= erupt_radius:
 		_player.take_damage(erupt_damage, _aim_at)
 		_player._knockback = (_player.global_position - _aim_at).normalized() * 160.0
-	_burst_dirt(14, 90.0)
+	BossFx.burrow(get_parent(), global_position, 0.6)
 	if _player != null and _player.global_position.distance_to(global_position) < 200.0:
 		_player.add_shake(2.0)
 
@@ -196,7 +186,7 @@ func _surface(at: Vector2) -> void:
 	sprite.visible = true
 	_hole.visible = true
 	_mound.visible = false
-	_dust.emitting = false
+	_dust.visible = false
 	$CollisionShape2D.set_deferred("disabled", false)
 	if phase != Phase.RISE:
 		_set_phase(Phase.UP)
@@ -218,26 +208,6 @@ func _go_home(_delta: float) -> void:
 		_surface(home)
 		state = State.IDLE
 		health = max_health
-
-
-func _burst_dirt(amount: int, power: float) -> void:
-	var p := CPUParticles2D.new()
-	p.global_position = global_position
-	p.one_shot = true
-	p.explosiveness = 1.0
-	p.amount = amount
-	p.lifetime = 0.7
-	p.spread = 60.0
-	p.direction = Vector2.UP
-	p.initial_velocity_min = power * 0.5
-	p.initial_velocity_max = power
-	p.gravity = Vector2(0, 320)
-	p.scale_amount_min = 1.5
-	p.scale_amount_max = 3.5
-	p.color = DIRT
-	p.emitting = true
-	get_parent().add_child(p)
-	p.finished.connect(p.queue_free)
 
 
 func _animate(delta: float) -> void:

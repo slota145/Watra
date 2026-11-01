@@ -271,6 +271,12 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   wspólne klatki, więc setki łupów mało kosztują) i iskry legendy w słupie światła, złoty błysk w powiadomieniu o łupie,
   w oknie zaklinania krążące złote runy w trakcie, złoty rozbłysk z gwiazdkami po sukcesie i czerwone pęknięcie z dymem
   po porażce. Mgła, muchy, zarodniki, dym z kominów, para i iskierki ziół zostają.
+- [x] Efekty zwykłych potworów z kreatora efektów (`scripts/monster_fx.gd` - `MonsterFx`, wpisy "mob_*" w `ids.json`):
+  przy śmierci każdego potwora jeden krótki obłoczek w jego kolorze (`map_color`, losowo odbity - bez cząsteczek,
+  bo padają setkami), rozsypane kości szkieletu, drzazgi drzewca i prastarego drzewa; plucie żabołaków i kula wody
+  topielicy jako zapętlona animacja, pociski z drzewcem ze smugą, rozpryski trafień; piorun szamana ptakoludzi
+  (`storm_strike`), uderzenie osiłka (`BossFx.slam`), pył kopca i fontanna ziemi robaka, szkielet wygrzebujący się
+  w pyle, plusk utopca, nuty rusałki, wybuch ognika.
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

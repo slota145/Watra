@@ -138,8 +138,7 @@ func _strike(telegraph: Telegraph, target: Vector2) -> void:
 		telegraph.queue_free()
 	if not is_inside_tree():
 		return
-	SkillEffects.bolt(get_parent(), target + Vector2(randf_range(-20, 20), -160), target, 0.3, 8.0)
-	SkillEffects.spark(get_parent(), target, Color(0.75, 0.9, 1.0), 10)
+	MonsterFx.sky_bolt(get_parent(), target)
 	Sfx.play_at("zap", target)
 
 
