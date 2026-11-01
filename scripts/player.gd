@@ -2109,7 +2109,7 @@ func _cast_chain(level: int) -> void:
 			first = enemy
 	if first == null:
 		# nikogo w zasięgu - błyskawica strzela w powietrze
-		SpellSkills.lightning(get_parent(), origin, origin + dir * 90.0)
+		LightningArc.spawn(get_parent(), origin, origin + dir * 90.0, 1.5, 0.3)
 		Sfx.play("zap")
 		return
 	targets.append(first)
@@ -2141,8 +2141,10 @@ func _zap(from: Vector2, target: Goblin, multiplier: float) -> void:
 	if not is_instance_valid(target) or target.state == Goblin.State.DEAD:
 		return
 	var to := target.hurt_center()
-	SpellSkills.lightning(get_parent(), from, to)
+	# błyskawica rysowana w kodzie (ostra przy każdej długości) i porażenie na trafionym
+	LightningArc.spawn(get_parent(), from, to, 1.5, 0.3)
 	SpellSkills.zap_flash(get_parent(), to)
+	ShockFx.apply(target, to, target.hurt_radius + 6.0)
 	Sfx.play("zap")
 	hit_enemy(target, _skill_damage(multiplier, ["spell"]), from, 40.0)
 
