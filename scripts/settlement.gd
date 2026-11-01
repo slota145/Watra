@@ -185,9 +185,12 @@ const TAX_GOLD := 15
 const TAX_PER_LEVEL := 4
 ## Wędrowny kupiec: co tyle sekund nowy towar, ile pozycji i z czego losuje.
 const MERCHANT_ROTATION := 600.0
-## (kamienie zaklinające są tylko w lochach Watry - kupiec ich nie sprzedaje).
+## Pula to towary z dalekich stron, droższe niż w krainach: wielkie mikstury, róg straży, rzadkie zioła i eliksiry,
+## przyzywacze bossów i Runa Zmiany (ceny w Items, pole "price"). Kamienie zaklinające są tylko w lochach Watry -
+## kupiec ich nie sprzedaje.
 const MERCHANT_STOCK := 4
-const MERCHANT_POOL: Array[String] = ["greater_health_potion", "greater_mana_potion", "guard_horn"]
+const MERCHANT_POOL: Array[String] = ["greater_health_potion", "greater_mana_potion", "guard_horn",
+		"herb_fern", "herb_datura", "elixir_fern", "elixir_datura", "summon_alpha", "summon_frog_chief", "rune_chaos"]
 const LINES_ZERCA: Array[String] = ["Dopóki płonie ogień, Ostoja trwa.", "Perunie, czuwaj nad nami.",
 		"Watra słyszy każdą ofiarę.", "Ogień pamięta tych, którzy go strzegli."]
 const LINES_JEWELER: Array[String] = ["Każdy kamień ma swoją duszę.", "Szlif to cierpliwość, nie siła.",

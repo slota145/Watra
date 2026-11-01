@@ -125,6 +125,10 @@ func _process(_d: float) -> bool:
 			var posted: String = p.quests.take_help(load("res://scripts/bounties.gd").make("kill", "forest", 0, poster["name"]))
 			p.travelers.die(poster)
 			check("prośba przepada ze śmiercią proszącego", p.quests.active_help() == "" and p.quests.state_of(posted) == "available")
+			# drużyna mogła być jednoosobowa (wielkość jest losowa) - wtedy ktoś dołącza, żeby było co rozwiązać
+			if p.travelers.party.is_empty():
+				p.travelers.join_party(p.travelers.active().filter(func(t: Dictionary) -> bool: return t["state"] != "dead").slice(0, 1))
+			check("drużyna przed odejściem", not p.travelers.party.is_empty())
 			# niewykonana prośba przepada, gdy drużyna odejdzie
 			_help = p.quests.take_help(load("res://scripts/bounties.gd").make("kill", "forest", 0, "Test"))
 			# powrót do Ostoi kończy wspólne łowy

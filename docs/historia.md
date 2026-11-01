@@ -147,6 +147,12 @@ odpowiedniej sekcji.
   (`SummonCircle`), ognisty ogon i uderzenie meteorytu, rozprysk Kryształu Watry, płomień Watry przy przybyciu
   i odejściu podróżnika, wirujący krąg dymu (ładowanie Dymnych Wybuchów, chmura Dym i Cień), trzask wyładowań
   Gromoskrzydłego; podróżnicy i rywale tną i trafiają efektami gracza (`sword_slash`, `sword_hit`, `spell_hit`).
+- [x] Wędrowny kupiec Hasan (`Settlement.MERCHANT_POOL`, 4 z 10 towarów co 10 minut): poza wielkimi miksturami i rogiem
+  straży sprzedaje kwiat paproci (150 zł), bieluń (70), eliksir z kwiatu paproci (250), wywar z bielunia (160),
+  Wilczy Róg (250), Muszlę Bulgora (300) i Runę Zmiany (900); ceny w polu `price` w `Items`. Kamieni zaklinających
+  nadal nie sprzedaje. Test `test_village` sprawdza, że każdy towar ma cenę.
+- [x] `tests/test_party.gd`, „prośba przepada z drużyną” zawodziło losowo: drużyna bywa jednoosobowa, a test zabijał
+  jej jedynego członka, więc późniejsza prośba nie miała drużyny do rozwiązania. Test dobiera wtedy nowego członka.
 
 ## Gobliński Las i Prastary Las (`scripts/world.gd`, `scripts/ancient_forest.gd`) (Do poprawy)
 - [x] Gobliński Las: więcej grupek goblinów w lesie i większe siedlisko wilków - około 450 potworów (było około 340);

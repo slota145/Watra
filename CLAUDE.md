@@ -164,22 +164,12 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
 
 Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po graniu.
 
-### Testy
-
-- [ ] `tests/test_party.gd` - przypadek „prośba przepada z drużyną” zawodzi losowo (mniej więcej 2 na 3 uruchomienia),
-  także w wersji sprzed efektów bossów; do naprawy (najpewniej zależność od losowania w teście).
-
 ### Zasada ogólna: dużo potworów
 
 - [ ] Domyślnie każde siedlisko potworów ma mieć **dziesiątki, a nawet setki potworów**, jak w miejscach farmienia w Black Desert albo w Path of Exile.
   Wyjątek: siedliska, których projekt wymaga inaczej (np. arena bossa).
   Przy zwiększaniu liczebności sprawdź wydajność (`tests/bench_combat.gd`, `tests/playtest_bot.gd`).
   Potwory w spoczynku, które się nie ruszają, pomijają `move_and_slide` (`scripts/goblin.gd`), żeby setki stojących potworów mało kosztowały.
-
-### Postacie i narzędzia
-
-- [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
-  więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 
 ## Pomysły i rzeczy do zrobienia
 
