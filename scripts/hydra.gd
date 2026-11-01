@@ -24,6 +24,13 @@ const BREATH_ARC := 0.55
 const REGROW_HEAL := 0.04
 const DROWNER_SCENE := "res://scenes/drowner.tscn"
 const VENOM := Color(0.55, 0.95, 0.35)
+## Efekty z kreatora efektów PixelLab: kłapnięcie szczęk na końcu pasa kąsania, trujący oddech (klin rysowany
+## w prawo, długość w klatce BREATH_FX_LENGTH) i fala bagiennej wody po uderzeniu cielskiem (promień w klatce SLAM_FX_RADIUS).
+const BITE_FX := preload("res://assets/effects/hydra_bite.png")
+const BREATH_FX := preload("res://assets/effects/hydra_breath.png")
+const BREATH_FX_LENGTH := 150.0
+const SLAM_FX := preload("res://assets/effects/hydra_slam.png")
+const SLAM_FX_RADIUS := 112.0
 
 var _bites: Array[Telegraph] = []
 var _venom_left := 0
@@ -108,7 +115,8 @@ func _update_attack(delta: float) -> void:
 					if is_instance_valid(line):
 						if _player_alive() and line.contains(_player.global_position):
 							_hurt_player(bite_damage, 200.0)
-						SkillEffects.spark(get_parent(), line.global_position + Vector2.from_angle(line.rotation) * BITE_LENGTH * 0.8, VENOM, 6)
+						SkillEffects.sheet_once(get_parent(), BITE_FX, 6, 18.0, line.global_position + Vector2.from_angle(line.rotation) * BITE_LENGTH * 0.8,
+								Vector2(18, 22), line.rotation)
 				_clear_bites()
 				Sfx.play_at("claw", global_position)
 				_shake_camera(4.0)
@@ -119,10 +127,8 @@ func _update_attack(delta: float) -> void:
 				if _player_in_telegraph():
 					_hurt_player(wave_damage, 340.0)
 				_remove_telegraph()
-				for side in [0.0, PI]:
-					SkillEffects.tide(get_parent(), global_position, side, 1.4, WAVE_RADIUS)
-				SkillEffects.shockwave(get_parent(), global_position, WAVE_RADIUS, Color(0.5, 0.8, 0.7))
-				_burst(global_position, Color(0.5, 0.75, 0.6), 30, 180.0)
+				SkillEffects.sheet_once(get_parent(), SLAM_FX, 12, 16.0, global_position, Vector2(119, 62), 0.0, 1.0,
+						WAVE_RADIUS / SLAM_FX_RADIUS)
 				Sfx.play_at("boss_splash", global_position)
 				_shake_camera(7.0)
 				_set_stage("recover", 0.8)
@@ -141,7 +147,8 @@ func _update_attack(delta: float) -> void:
 					patch.damage = maxi(1, breath_damage / 5)
 					(layer if layer != null else get_parent()).add_child(patch)
 					patch.global_position = global_position + _dir.rotated(randf_range(-BREATH_ARC, BREATH_ARC) * 0.8) * randf_range(50.0, BREATH_RADIUS - 20.0)
-				_burst(global_position + _dir * 30.0 + Vector2(0, -30), VENOM, 36, 200.0)
+				SkillEffects.sheet_once(get_parent(), BREATH_FX, 12, 16.0, global_position + _dir * 20.0 + Vector2(0, -10), Vector2(6, 62),
+						_dir.angle(), 1.0, BREATH_RADIUS / BREATH_FX_LENGTH)
 				Sfx.play_at("spit", global_position, 4.0)
 				_set_stage("recover", 0.7)
 		["venom", "telegraph"]:
@@ -174,7 +181,7 @@ func _update_attack(delta: float) -> void:
 				attack_interval *= 0.85
 				DamageNumber.spawn_text(get_parent(), hurt_center() + Vector2(0, -20), "Głowy odrastają!", VENOM, 10)
 				Sfx.play_at("bies_roar", global_position, 3.0)
-				SkillEffects.shockwave(get_parent(), global_position, 140.0, VENOM)
+				_fx_phase()
 				_shake_camera(6.0)
 				var scene: PackedScene = load(DROWNER_SCENE)
 				for i in 3:

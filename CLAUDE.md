@@ -127,6 +127,11 @@ efekt w „My effects” autora na pixellab.ai). Jego pliki też się nie pobier
 
 Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po graniu.
 
+### Testy
+
+- [ ] `tests/test_party.gd` - przypadek „prośba przepada z drużyną” zawodzi losowo (mniej więcej 2 na 3 uruchomienia),
+  także w wersji sprzed efektów bossów; do naprawy (najpewniej zależność od losowania w teście).
+
 ### Zasada ogólna: dużo potworów
 
 - [ ] Domyślnie każde siedlisko potworów ma mieć **dziesiątki, a nawet setki potworów**, jak w miejscach farmienia w Black Desert albo w Path of Exile.
@@ -225,6 +230,33 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   Spadającej Gwiazdy, fioletowa mgła Kroku, bańka z heksagonów Tarczy Many, Kamień Runiczny z kręgiem run. Grafiki
   `assets/spell/` (włócznia, kula, gwiazda, kamień) zastąpione animacjami (`frost_lance.png` i `meteor.png` zostają
   tylko jako obrazek zapasowy pocisku).
+- [x] Wspólne efekty bossów (`scripts/boss.gd`, `assets/effects/boss_*.png`): ryk z falą przy wejściu do walki
+  (`_fx_engage`), wybuch z dymem i duszami przy śmierci (`_fx_death`), wybuch mocy przy zmianie fazy (`_fx_phase`)
+  i zapętlona aura wściekłości (`enraged` - polowanie na bossa, albo poniżej 30% zdrowia w walce; tylko wygląd);
+  podklasy podmieniają je własnymi wersjami. Zapowiedzi ataków (`scripts/telegraph.gd`) mają znaki ruchu (kręgi
+  zbiegające się do środka koła, strzałki na pasie, łuki w stożku) i błysk tuż przed uderzeniem.
+- [x] Ataki bossów Goblińskiego Lasu, Pól Zbożowych i bestii Prastarego Lasu z kreatora efektów (`scripts/boss_fx.gd` -
+  `BossFx`, wpisy `boss_slam`, `boss_claw`, `boss_cleave`, `bies_smoke`, `bies_roar`, `bomb_blast`, `acid_splash`,
+  `worm_burrow` w `ids.json`): uderzenia w ziemię (Gruzłog, Szarokieł, bestie, Pożeracz Pól, lądowanie Bombardiera),
+  krwawe pazury i cięcie pazurami w stożku, pył za szarżami, cienisty dym i ryk Biesa, wybuch każdej bomby kobolda
+  i rozprysk kwasu (`KoboldBomb._explode` - także pociski kwasu Hydry), fontanna ziemi Pożeracza przy zakopywaniu,
+  wynurzaniu, przywołaniu i wejściu do walki, kamienne kolce trzęsienia (efekt Rozłupania Ziemi).
+- [x] Bossowie Rozlewisk i Turni z kreatora efektów (`assets/effects/bulgor_*`, `wodnik_*`, `hydra_*`, `eagle_*`,
+  `gryf_*`, `satyr_*`): Bulgor - plusk wody i błota przy lądowaniu i trafieniu językiem; Wodnik - zapętlony wir
+  (zamiast rysowanych kręgów), fala przetaczająca się pasem, plusk przy wynurzeniu (własne `_fx_engage`) i przy
+  topielcach; Hydra - kłapnięcie szczęk na końcach pasów kąsania, trujący oddech (klin), fala bagiennej wody,
+  przy odrastaniu `_fx_phase`; Gromoskrzydły - piorun z nieba (`storm_strike`) z trafieniem, smuga nurkowania,
+  podmuch z piórami, piorun w orła przy wejściu do walki; Gryf - stożek wiatru (`bow_wind_cone`), złote szpony
+  z pyłem, zapętlona trąba powietrzna (`GryfTornado`), krzyk - złote fale dźwięku; Faun-Król - fletnia (fale
+  melodii z nutami), pnącza spod ziemi, tupnięcie z pęknięciami i pyłem.
+- [x] Efekty ataków bossów z kreatora efektów PixelLab (`tools/vfx_art.py`): Leszy (korzenie, wir liści), Królowa Pająków
+  (sieć, lądowanie z jadem, pękające jaja), Mortan (kościane kolce, promień duszy, krąg wezwania, dym mgnienia, słup dusz
+  przy śmierci), Gnilec (zamach, miażdżenie i skok, żółć, ryk), Żmij (zionięcie, spadające kule ognia, lądowanie
+  z ognistym kręgiem, ogniste słupy) i Wij (wzrok spod powiek, kłąb mroku, korzenie szponów); własne `_fx_engage` /
+  `_fx_phase` / `_fx_death` tam, gdzie pasują.
+- [x] Królowa Pająków nie stoi już do gracza tyłem (na obrotach z PixelLab patrzyła w lewo - `tools/pixellab_sheets.py`,
+  `creature(..., mirror=True)` odbija klatki); mniejsze kokony z uwięzionymi ludźmi (`pair(..., scale=0.6)`, 33 zamiast
+  55 px) i owinięte ofiary (`PROP_SCALE` - połowa, 30 zamiast 61 px) - człowiek mniej więcej wzrostu postaci.
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

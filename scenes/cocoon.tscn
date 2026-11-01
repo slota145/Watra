@@ -37,7 +37,7 @@ texture = ExtResource("3_shadow")
 [node name="Sprite" type="Sprite2D" parent="."]
 material = SubResource("ShaderMaterial_flash")
 texture = ExtResource("2_sheet")
-offset = Vector2(0, -25)
+offset = Vector2(0, -16)
 hframes = 2
 vframes = 1
 

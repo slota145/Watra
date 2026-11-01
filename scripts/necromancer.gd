@@ -20,6 +20,15 @@ const BEAM_WIDTH := 26.0
 const BEAM_HEAL := 0.04
 const SPIKE_RADIUS := 26.0
 const GREEN := Color(0.45, 1.0, 0.55)
+## Efekty z kreatora efektów PixelLab (tools/vfx_art.py): kościane kolce z grobów, promień wysysania duszy,
+## krąg wezwania umarłych, kłąb dymu mgnienia i słup dusz przy śmierci.
+const FX_SPIKE := preload("res://assets/effects/mortan_spike.png")
+const FX_BEAM := preload("res://assets/effects/mortan_beam.png")
+const FX_RAISE := preload("res://assets/effects/mortan_raise.png")
+const FX_BLINK := preload("res://assets/effects/mortan_blink.png")
+const FX_DEATH_SOULS := preload("res://assets/effects/mortan_death.png")
+## Długość promienia na arkuszu (od punktu zaczepienia do końca), żeby rozciągnąć go do BEAM_LENGTH.
+const BEAM_SHEET_LENGTH := 143.0
 
 var _raised: Array = []
 var _raise_cooldown := 0.0
@@ -167,7 +176,7 @@ func _raise_dead() -> void:
 		get_parent().add_child(skeleton)
 		skeleton.rise()
 		_raised.append(skeleton)
-	SkillEffects.shockwave(get_parent(), global_position, 120.0, GREEN)
+	SkillEffects.sheet_once(get_parent(), FX_RAISE, 12, 16.0, global_position, Vector2(64, 61), 0.0, 1.0, 1.6)
 
 
 ## Zielony krąg grobu, z którego po chwili wystrzelają kościane kolce.
@@ -184,8 +193,8 @@ func _grave_spike(spot: Vector2) -> void:
 			telegraph.queue_free()
 		if state == State.DEAD:
 			return
-		_debris(spot, 10, 150.0, Skeleton.BONE_COLOR)
-		SkillEffects.spark(get_parent(), spot + Vector2(0, -6), GREEN, 8)
+		_debris(spot, 6, 120.0, Skeleton.BONE_COLOR)
+		SkillEffects.sheet_once(get_parent(), FX_SPIKE, 10, 16.0, spot + Vector2(0, 6), Vector2(25, 34), 0.0, 1.0, 1.1)
 		if _player_alive() and _player.global_position.distance_to(spot) <= SPIKE_RADIUS:
 			_player.take_damage(spike_damage, spot))
 
@@ -203,39 +212,27 @@ func _blink() -> void:
 	Sfx.play_at("magic", global_position)
 
 
+## Kłąb fioletowego dymu z kośćmi (mgnienie).
 func _smoke(at: Vector2) -> void:
-	var p := CPUParticles2D.new()
-	p.global_position = at + Vector2(0, -12)
-	p.one_shot = true
-	p.explosiveness = 1.0
-	p.amount = 24
-	p.lifetime = 0.7
-	p.spread = 180.0
-	p.initial_velocity_min = 20.0
-	p.initial_velocity_max = 60.0
-	p.gravity = Vector2(0, -30)
-	p.scale_amount_min = 2.0
-	p.scale_amount_max = 4.0
-	p.color = Color(0.35, 0.2, 0.45, 0.8)
-	p.emitting = true
-	get_parent().add_child(p)
-	p.finished.connect(p.queue_free)
+	SkillEffects.sheet_once(get_parent(), FX_BLINK, 10, 12.0, at + Vector2(0, -14), Vector2(30, 27), 0.0, 1.0, 1.3)
 
 
+## Zielony promień wysysania duszy od `from` do `to`.
 func _beam_fx(from: Vector2, to: Vector2) -> void:
-	var line := Line2D.new()
-	line.points = PackedVector2Array([from, to])
-	line.width = 10.0
-	line.default_color = Color(0.5, 1.0, 0.55, 0.8)
-	line.z_index = 5
-	var additive := CanvasItemMaterial.new()
-	additive.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-	line.material = additive
-	get_parent().add_child(line)
-	var tween := line.create_tween().set_parallel()
-	tween.tween_property(line, "width", 1.0, 0.35)
-	tween.tween_property(line, "modulate:a", 0.0, 0.35)
-	tween.chain().tween_callback(line.queue_free)
+	var size := 1.2
+	SkillEffects.sheet_once(get_parent(), FX_BEAM, 9, 18.0, from, Vector2(42, 9), (to - from).angle(),
+			from.distance_to(to) / (BEAM_SHEET_LENGTH * size), size)
+
+
+## Wejście do walki: zielony krąg wezwania pod nekromantą.
+func _fx_engage() -> void:
+	SkillEffects.sheet_once(get_parent(), FX_RAISE, 12, 16.0, global_position, Vector2(64, 61), 0.0, 1.0, 1.3)
+
+
+## Śmierć: rozsypujące się kości i słup dusz uciekających w górę.
+func _fx_death() -> void:
+	SkillEffects.sheet_once(get_parent(), FX_DEATH_SOULS, 14, 16.0, global_position + Vector2(0, 4), Vector2(56, 115),
+			0.0, 1.0, fx_scale())
 
 
 func _die() -> void:

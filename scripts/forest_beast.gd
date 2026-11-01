@@ -24,6 +24,8 @@ var _travel_left := 0.0
 var _leap_from := Vector2.ZERO
 var _leap_to := Vector2.ZERO
 var _leap_time := 0.0
+## Odstęp między obłokami pyłu w czasie szarży (s).
+var _dust_time := 0.0
 
 
 func _ready() -> void:
@@ -88,27 +90,37 @@ func _update_attack(delta: float) -> void:
 					_hurt_player(slam_damage, 260.0 if _attack == "slam" else 160.0)
 				_remove_telegraph()
 				_shake_camera(5.0 if _attack == "slam" else 3.0)
-				_burst(global_position, Color(0.4, 0.3, 0.2), 20, 120.0)
 				if _attack == "frenzy":
-					for side in [-1.0, 0.0, 1.0]:
-						SkillEffects.claw(get_parent(), global_position + _dir * 30.0 + Vector2(0, -12), side if side != 0.0 else -1.0, 30.0, Color(0.9, 0.5, 0.4))
+					BossFx.cleave(get_parent(), global_position + Vector2(0, -10), _dir.angle(), FRENZY_RADIUS)
+					BossFx.claw(get_parent(), global_position + _dir * 30.0 + Vector2(0, -12), -1.0, 1.1)
+					get_tree().create_timer(0.1).timeout.connect(func() -> void:
+						if is_instance_valid(self):
+							BossFx.claw(get_parent(), global_position + _dir * 34.0 + Vector2(4, -16), 1.0, 1.1))
 					Sfx.play_at("claw", global_position)
 				else:
+					BossFx.slam(get_parent(), global_position, SLAM_RADIUS)
 					Sfx.play_at("hit_heavy", global_position)
 				_set_stage("recover", 0.7)
 		["charge", "telegraph"]:
 			velocity = Vector2.ZERO
 			if _stage_timer <= 0.0:
 				_travel_left = CHARGE_LENGTH
+				_dust_time = 0.0
 				Sfx.play_at("bear_roar", global_position, -4.0)
 				_set_stage("act", CHARGE_LENGTH / CHARGE_SPEED + 0.2)
 		["charge", "act"]:
 			var step := minf(CHARGE_SPEED * delta, _travel_left)
 			_travel_left -= step
 			velocity = _dir * CHARGE_SPEED
+			# tuman pyłu za szarżującą bestią
+			_dust_time -= delta
+			if _dust_time <= 0.0:
+				_dust_time = 0.14
+				BossFx.dust(get_parent(), global_position - _dir * 10.0, 1.3)
 			if not _hit_player and _player_alive() and global_position.distance_to(_player.global_position) < 24.0:
 				_hurt_player(charge_damage, 320.0)
 				_shake_camera(5.0)
+				BossFx.claw(get_parent(), _player.global_position + Vector2(0, -14), -1.0 if _dir.x < 0.0 else 1.0)
 			if _travel_left <= 0.0 or _stage_timer <= 0.0:
 				_remove_telegraph()
 				_set_stage("recover", 0.8)
@@ -132,7 +144,7 @@ func _update_attack(delta: float) -> void:
 					_hurt_player(charge_damage, 200.0)
 				_remove_telegraph()
 				_shake_camera(4.0)
-				_burst(global_position, Color(0.4, 0.3, 0.2), 16, 100.0)
+				BossFx.slam(get_parent(), global_position, POUNCE_RADIUS)
 				_set_stage("recover", 0.6)
 		[_, "recover"]:
 			velocity = Vector2.ZERO

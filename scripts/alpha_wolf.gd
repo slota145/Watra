@@ -64,7 +64,7 @@ func _update_attack(delta: float) -> void:
 				_ghost_time = 0.0
 				# wybicie: kurz spod łap, wyrzut sylwetki
 				_snap(Vector2(0.82, 1.22))
-				_burst(global_position, Color(0.55, 0.48, 0.38), 14, 70.0)
+				BossFx.dust(get_parent(), global_position, 1.3)
 				Sfx.play_at("dash", global_position, -4.0)
 				_set_stage("act", LEAP_TIME + 0.2)
 		["pounce", "act"]:
@@ -82,13 +82,12 @@ func _update_attack(delta: float) -> void:
 				# lądowanie: fala uderzeniowa, pęknięcia, odłamki, mocne trzęsienie
 				if _player_in_telegraph():
 					_hurt_player(pounce_damage, 260.0)
-					SkillEffects.claw(get_parent(), _player.global_position + Vector2(0, -14), -1.0 if sprite.flip_h else 1.0, 30.0, Color(1.0, 0.3, 0.25))
+					BossFx.claw(get_parent(), _player.global_position + Vector2(0, -14), -1.0 if sprite.flip_h else 1.0)
 				_shake_camera(9.0)
 				_snap(Vector2(1.25, 0.8))
-				SkillEffects.shockwave(get_parent(), global_position, pounce_radius * 1.2, Color(0.9, 0.35, 0.25))
+				BossFx.slam(get_parent(), global_position, pounce_radius * 1.2)
 				_ground_crack(global_position, pounce_radius * 0.9)
-				_debris(global_position, 18, 170.0)
-				_burst(global_position, Color(0.45, 0.4, 0.35), 24, 120.0)
+				_debris(global_position, 6, 170.0)
 				Sfx.play_at("hit_heavy", global_position)
 				Sfx.play_at("shockwave", global_position, -6.0)
 				_remove_telegraph()
@@ -101,10 +100,8 @@ func _update_attack(delta: float) -> void:
 					_hurt_player(cleave_damage, 200.0)
 				var tip := global_position + Vector2.from_angle(angle) * cleave_radius * 0.6
 				# rozszarpanie: fala cięcia po stożku, dwa krzyżujące się ślady pazurów, rzut do przodu
-				SkillEffects.crescent(get_parent(), global_position + Vector2(0, -8), angle, deg_to_rad(cleave_arc_degrees / 2.0), cleave_radius)
-				SkillEffects.claw(get_parent(), tip + Vector2(0, -10), -1.0, 40.0, Color(1.0, 0.25, 0.2))
-				SkillEffects.claw(get_parent(), tip + Vector2(6, -6), 1.0, 34.0, Color(1.0, 0.85, 0.8))
-				_burst(tip + Vector2(0, -8), Color(0.85, 0.15, 0.15), 18, 90.0)
+				BossFx.cleave(get_parent(), global_position + Vector2(0, -8), angle, cleave_radius)
+				BossFx.claw(get_parent(), tip + Vector2(0, -10), -1.0, 1.2)
 				_snap(Vector2(1.18, 0.88))
 				var lunge := sprite.create_tween()
 				lunge.tween_property(sprite, "position", Vector2.from_angle(angle) * 10.0, 0.07)

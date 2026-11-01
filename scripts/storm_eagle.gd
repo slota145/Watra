@@ -28,6 +28,14 @@ const HOVER := 6.0
 const FLAP_FRAMES := 8
 const FLAP_FPS := 11.0
 const FLAP_FPS_IDLE := 8.0
+## Efekty z kreatora efektów PixelLab: piorun z nieba (ten sam co Burza Peruna) z trafieniem, smuga nurkowania
+## (rysowana w prawo, długość w klatce DIVE_FX_LENGTH) i podmuch skrzydeł z piórami (promień w klatce GUST_FX_RADIUS).
+const BOLT_FX := preload("res://assets/effects/storm_strike.png")
+const ZAP_FX := preload("res://assets/effects/spell_zap.png")
+const DIVE_FX := preload("res://assets/effects/eagle_dive.png")
+const DIVE_FX_LENGTH := 100.0
+const GUST_FX := preload("res://assets/effects/eagle_gust.png")
+const GUST_FX_RADIUS := 86.0
 
 var _bolts_left := 0
 var _bolt_timer := 0.0
@@ -113,6 +121,8 @@ func _update_attack(delta: float) -> void:
 			if _stage_timer <= 0.0:
 				_dive_left = DIVE_LENGTH
 				$CollisionShape2D.set_deferred("disabled", true)
+				SkillEffects.sheet_once(get_parent(), DIVE_FX, 8, 16.0, global_position + Vector2(0, -20), Vector2(1, 16), _dive_dir.angle(),
+						DIVE_LENGTH / DIVE_FX_LENGTH, 1.0)
 				Sfx.play_at("wing_gust", global_position)
 				_set_stage("act", DIVE_LENGTH / DIVE_SPEED + 0.2)
 		["dive", "act"]:
@@ -135,7 +145,8 @@ func _update_attack(delta: float) -> void:
 					_hurt_player(gust_damage, 420.0)
 				_remove_telegraph()
 				_shake_camera(5.0)
-				_burst(global_position, Color(0.85, 0.85, 0.9), 30, 180.0)
+				SkillEffects.sheet_once(get_parent(), GUST_FX, 9, 16.0, global_position, Vector2(90, 60), 0.0, 1.0,
+						GUST_RADIUS / GUST_FX_RADIUS)
 				Sfx.play_at("wing_gust", global_position)
 				var base := randf() * TAU
 				for i in FEATHERS:
@@ -150,6 +161,12 @@ func _update_attack(delta: float) -> void:
 			velocity = Vector2.ZERO
 			if _stage_timer <= 0.0:
 				_end_attack()
+
+
+## Wejście do walki: piorun wali w samego orła, a dookoła rozchodzi się ryk z falą.
+func _fx_engage() -> void:
+	super()
+	SkillEffects.sheet_once(get_parent(), BOLT_FX, 7, 20.0, global_position, Vector2(25, 141), 0.0, 1.0, 1.2)
 
 
 ## Koło ostrzegawcze - po chwili wali w nie piorun z nieba.
@@ -172,9 +189,8 @@ func _bolt(telegraph: Telegraph, target: Vector2) -> void:
 		telegraph.queue_free()
 	if not is_inside_tree():
 		return
-	for k in 2:
-		SkillEffects.bolt(get_parent(), target + Vector2(randf_range(-24, 24), -200), target, 0.35, 10.0)
-	SkillEffects.spark(get_parent(), target, Color(0.75, 0.9, 1.0), 16)
+	SkillEffects.sheet_once(get_parent(), BOLT_FX, 7, 20.0, target, Vector2(25, 141))
+	SkillEffects.sheet_once(get_parent(), ZAP_FX, 5, 20.0, target, Vector2(22, 22), 0.0, 1.0, 1.5)
 	_burst(target, Color(0.3, 0.3, 0.35), 10, 80.0)
 	_shake_camera(3.0)
 	Sfx.play_at("thunder", target, -4.0)

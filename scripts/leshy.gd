@@ -16,6 +16,9 @@ const ROOTS_WIDTH := 30.0
 const LEAVES_RADIUS := 140.0
 const LEAVES_ARC := 0.6
 const TREANT := preload("res://scenes/treant.tscn")
+## Efekty z kreatora efektów PixelLab (tools/vfx_art.py): korzenie wybijające z ziemi i wir liści.
+const FX_ROOTS := preload("res://assets/effects/leshy_roots.png")
+const FX_LEAVES := preload("res://assets/effects/leshy_leaves.png")
 
 var _dir := Vector2.RIGHT
 var _adds: Array[Node] = []
@@ -69,6 +72,7 @@ func _update_attack(_delta: float) -> void:
 				for i in 8:  # korzenie wybijające się z ziemi wzdłuż pasa
 					var at := global_position + _dir * (30.0 + i * 26.0)
 					_burst(at, Color(0.35, 0.25, 0.15), 6, 70.0)
+					_roots_fx(at + Vector2(randf_range(-6.0, 6.0), 8.0), 0.9 + i * 0.04)
 				Sfx.play_at("roots_burst", global_position + _dir * 100.0)
 				_shake_camera(4.0)
 				_set_stage("recover", 0.7)
@@ -79,6 +83,8 @@ func _update_attack(_delta: float) -> void:
 					_hurt_player(leaves_damage, 140.0)
 				_remove_telegraph()
 				SkillEffects.cone(get_parent(), global_position, _dir.angle(), LEAVES_ARC, LEAVES_RADIUS)
+				SkillEffects.sheet_once(get_parent(), FX_LEAVES, 10, 16.0, global_position + Vector2(0, -20), Vector2(11, 32),
+						_dir.angle(), 1.0, 1.55)
 				for i in 3:
 					_burst(global_position + _dir.rotated(randf_range(-LEAVES_ARC, LEAVES_ARC)) * randf_range(40, LEAVES_RADIUS),
 							Color(0.75, 0.6, 0.2), 10, 80.0)
@@ -98,6 +104,7 @@ func _update_attack(_delta: float) -> void:
 					treant.aggro()
 					_adds.append(treant)
 					_burst(treant.global_position, Color(0.35, 0.25, 0.15), 14, 90.0)
+					_roots_fx(treant.global_position + Vector2(0, 6), 1.3)
 				Sfx.play_at("roots_burst", global_position)
 				_set_stage("recover", 0.6)
 		[_, "recover"]:
@@ -137,6 +144,25 @@ func _animate(delta: float) -> void:
 		sprite.frame = IDLE_FRAME
 		if state == State.CHASE and _player != null:
 			_face(_player.global_position)
+
+
+## Korzenie wybijające się z ziemi (efekt z PixelLab).
+func _roots_fx(at: Vector2, size := 1.0) -> void:
+	SkillEffects.sheet_once(get_parent(), FX_ROOTS, 10, 16.0, at, Vector2(24, 39), 0.0, 1.0, size, 0.0, randf() < 0.5)
+
+
+## Wejście do walki: wspólny ryk i krąg korzeni wokół Leszego.
+func _fx_engage() -> void:
+	super()
+	for i in 6:
+		_roots_fx(global_position + Vector2.from_angle(TAU * i / 6.0) * Vector2(70.0, 42.0), 1.1)
+
+
+## Śmierć: wspólny wybuch i korzenie zapadające się wokół.
+func _fx_death() -> void:
+	super()
+	for i in 5:
+		_roots_fx(global_position + Vector2.from_angle(TAU * i / 5.0 + 0.3) * Vector2(50.0, 30.0), 1.2)
 
 
 func _die() -> void:

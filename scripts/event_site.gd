@@ -249,6 +249,7 @@ func _build_hunt() -> void:
 		return
 	_boss_base = {"max_health": boss.max_health, "scale": boss.scale, "modulate": boss.modulate}
 	boss.max_health = roundi(boss.max_health * HUNT_HEALTH)
+	boss.enraged = true
 	boss.health = boss.max_health
 	_scale_damage(boss, HUNT_DAMAGE)
 	boss.scale *= 1.2
