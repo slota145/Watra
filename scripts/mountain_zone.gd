@@ -21,12 +21,11 @@ extends Node
 ## między rampami, leży dolna osada (chaty, ogniska, totemy przy wejściu od drogi) z ulicą łączącą
 ## obie rampy. Ptakoludzi jest bardzo wielu - gromady przy ogniskach, straż gniazda i patrole.
 ##
-## Na południowym wschodzie, na kwietnej polanie wśród hal, leży wioska satyrów: wielkie ognisko
-## w kręgu kamieni, wokół którego tańczą satyrowie i grają grajkowie, wianuszek namiotów i szałasów
-## z winem, winoroślą i amforami przy wydeptanej ścieżce wokół ogniska, gaik z majem, królewski gaj
-## Faun-Króla i totemy z kozich czaszek. Wokół polany leżą mniejsze przysiółki (ognisko, kilka namiotów,
-## tłocznia albo maj, gromada satyrów), połączone z nią ścieżkami. Od ścieżki z przełęczy pilnują
-## wioski satyrowie osiłki, którzy szarżują z rogami.
+## Na południowym wschodzie, na kwietnej polanie wśród hal, leży wioska satyrów, w której wiecznie trwa winne
+## święto: na wydeptanym placu biesiadnym wielkie ognisko, parkiet do tańca w lampionach i girlandach, długie
+## stoły z ucztą, podest grajków i tron z beczek Faun-Króla. Wokół placu stoją duże chaty z winoroślą, winiarnia
+## i altana, a za nimi winnice, sad i zagroda z kozami, połączone krętymi dróżkami. Od ścieżki z przełęczy
+## pilnują wioski satyrowie osiłki, którzy szarżują z rogami.
 ##
 ## Ptakoludzie rozlali się z wioski na płaskowyże: na każdym dalszym płaskowyżu orla czata (chata na palach
 ## z ogniskiem, gniazdem i żerdzią, siedząca gromada i dwie stojące po bokach). Przy stadach kóz na halach
@@ -87,6 +86,7 @@ const VILLAGE_RADII := Vector2(32.0, 24.0)
 const RING_WIDTH := 12.0
 const RING_LEVEL := 3
 const MAP_SNOW := Color("e8eef4")
+const MAP_DANCE_FLOOR := Color("9a6a3a")
 const DEAD_TREES: Array[Texture2D] = [preload("res://assets/mountains/dead_tree_0.png"), preload("res://assets/mountains/dead_tree_1.png")]
 const DECOR := preload("res://assets/mountains/decor.png")
 const IRON_ORE := preload("res://scenes/props/iron_ore.tscn")
@@ -114,7 +114,7 @@ const BACK_HUT_RADII := Vector2(25.5, 17.5)
 const RING_FROM := -150.0
 const RING_TO := 48.0
 ## Wersja układu krainy (World.ZONE_LAYOUTS) - postać zapisana w starszym układzie wraca do kapliczki.
-const LAYOUT := 2
+const LAYOUT := 3
 ## Dolna osada u stóp skarpy (między rampami): półosie elipsy w kafelkach i chaty wzdłuż ulicy
 ## (przesunięcie w poziomie względem środka - między stopami ramp, nie na nich).
 const LOWER_RADII := Vector2(22.0, 6.5)
@@ -122,29 +122,56 @@ const LOWER_HUTS: Array[float] = [-16.0, -3.5, 5.5, 18.0]
 ## Wydeptana ścieżka wokół gniazda (półosie w kafelkach) - z dala od piorunochronów i totemów.
 const NEST_PATH := Vector2(13.0, 8.5)
 const NEST_GUARDS := 12
-## Wioska satyrów: promień polany (w kafelkach), liczba namiotów i tancerzy przy ognisku.
-const SATYR_RADIUS := 22.0
-const SATYR_TENTS := 12
-const SATYR_DANCERS := 18
-## Wianuszek namiotów (w pikselach) i wydeptana ścieżka przed nimi (w kafelkach).
-const SATYR_TENT_RING := Vector2(270, 200)
-const SATYR_PATH := Vector2(13.5, 10.0)
-## Przysiółki wokół polany: ile najwyżej, promień (w kafelkach) i odległość ich środków od środka polany.
-const SATYR_HAMLETS := 4
-const HAMLET_RADIUS := 7.5
-const HAMLET_DISTANCE := 31.0
-const HAMLET_SPECIALS := ["press", "maypole", "statue", "drums"]
+## Wioska satyrów - winne święto: promień polany (w kafelkach), wydeptany plac biesiadny w środku (półosie
+## w kafelkach), pierścień chat wokół placu (w pikselach) i kręta ścieżka między placem a chatami (w kafelkach).
+const SATYR_RADIUS := 25.0
+const SATYR_PLAZA := Vector2(10.5, 7.5)
+const SATYR_HOUSE_RING := Vector2(330, 240)
+const SATYR_HOUSES := 14
+const SATYR_PATH := Vector2(15.0, 10.5)
+## Parkiet do tańca z desek przed ogniskiem (środek względem ogniska i rozmiar, w pikselach).
+const DANCE_FLOOR := Rect2(-84, 40, 168, 76)
+const SATYR_DANCERS := 12
+## Winnice, sady i zagroda wokół polany: ile najwyżej, promień (w kafelkach), odległość od środka polany
+## (półosie elipsy - w pionie mniej miejsca między drogą a skrajem mapy) i rodzaje po kolei.
+const SATYR_PLOTS := 5
+const PLOT_RADIUS := 7.5
+const PLOT_DISTANCE := Vector2(36.0, 25.0)
+const PLOT_KINDS := ["vineyard", "orchard", "vineyard", "pen", "vineyard"]
+## Winnica to duża działka o postrzępionym brzegu (półosie w kafelkach, brzeg wygięty szumem), docięta przez drogi
+## i ścieżki jak pola zbożowe; rzędy winorośli co VINE_ROW kafelków, w rzędzie co VINE_STEP pikseli.
+const VINEYARD_RADIUS := Vector2(16.0, 11.5)
+const VINE_ROW := 3
+const VINE_STEP := 40.0
 const SATYR_PROPS := {
-	"tent": preload("res://scenes/props/forest/satyr_tent.tscn"), "hut": preload("res://scenes/props/forest/satyr_hut.tscn"),
-	"barrels": preload("res://scenes/props/forest/satyr_barrels.tscn"), "amphoras": preload("res://scenes/props/forest/satyr_amphoras.tscn"),
-	"vines": preload("res://scenes/props/forest/satyr_vines.tscn"), "press": preload("res://scenes/props/forest/satyr_press.tscn"),
-	"maypole": preload("res://scenes/props/forest/satyr_maypole.tscn"), "totem": preload("res://scenes/props/forest/satyr_totem.tscn"),
-	"stone": preload("res://scenes/props/forest/satyr_stone.tscn"), "arch": preload("res://scenes/props/forest/satyr_arch.tscn"),
-	"bench": preload("res://scenes/props/forest/satyr_bench.tscn"), "drums": preload("res://scenes/props/forest/satyr_drums.tscn"),
-	"feast": preload("res://scenes/props/forest/satyr_feast.tscn"), "statue": preload("res://scenes/props/forest/satyr_statue.tscn"),
-	"hay": preload("res://scenes/props/forest/satyr_hay.tscn"),
+	"tent": preload("res://scenes/props/forest/satyr_tent.tscn"), "hay": preload("res://scenes/props/forest/satyr_hay.tscn"),
+	"barrels": preload("res://scenes/props/forest/satyr_barrels.tscn"), "totem": preload("res://scenes/props/forest/satyr_totem.tscn"),
+	"statue": preload("res://scenes/props/forest/satyr_statue.tscn"), "arch": preload("res://scenes/props/forest/satyr_arch.tscn"),
+	"drums": preload("res://scenes/props/forest/satyr_drums.tscn"),
 }
-const SATYR_CLUTTER := ["barrels", "amphoras", "vines", "feast", "hay", "drums"]
+## Rekwizyty winnego święta z PixelLab (tools/satyr_village_art.py).
+const FEAST_PROPS := {
+	"cottage": preload("res://scenes/props/mountains/satyr/cottage.tscn"),
+	"cottage_porch": preload("res://scenes/props/mountains/satyr/cottage_porch.tscn"),
+	"winery": preload("res://scenes/props/mountains/satyr/winery.tscn"), "arbor": preload("res://scenes/props/mountains/satyr/arbor.tscn"),
+	"banquet": preload("res://scenes/props/mountains/satyr/banquet.tscn"), "throne": preload("res://scenes/props/mountains/satyr/throne.tscn"),
+	"stage": preload("res://scenes/props/mountains/satyr/stage.tscn"), "bonfire": preload("res://scenes/props/mountains/satyr/bonfire.tscn"),
+	"vine_row": preload("res://scenes/props/mountains/satyr/vine_row.tscn"),
+	"vine_row_2": preload("res://scenes/props/mountains/satyr/vine_row_2.tscn"),
+	"lantern": preload("res://scenes/props/mountains/satyr/lantern.tscn"), "garland": preload("res://scenes/props/mountains/satyr/garland.tscn"),
+	"apple_tree": preload("res://scenes/props/mountains/satyr/apple_tree.tscn"),
+	"pear_tree": preload("res://scenes/props/mountains/satyr/pear_tree.tscn"),
+	"fence": preload("res://scenes/props/mountains/satyr/fence.tscn"), "trough": preload("res://scenes/props/mountains/satyr/trough.tscn"),
+	"grape_basket": preload("res://scenes/props/mountains/satyr/grape_basket.tscn"),
+	"stomp_tub": preload("res://scenes/props/mountains/satyr/stomp_tub.tscn"),
+	"barrel_pile": preload("res://scenes/props/mountains/satyr/barrel_pile.tscn"), "keg": preload("res://scenes/props/mountains/satyr/keg.tscn"),
+	"wreath_pole": preload("res://scenes/props/mountains/satyr/wreath_pole.tscn"),
+	"amphora": preload("res://scenes/props/mountains/satyr/amphora.tscn"),
+	"ladder_basket": preload("res://scenes/props/mountains/satyr/ladder_basket.tscn"),
+	"grape_cart": preload("res://scenes/props/mountains/satyr/grape_cart.tscn"),
+}
+## Drobiazgi pod ścianami chat.
+const HOUSE_CLUTTER := ["barrel_pile", "amphora", "keg", "grape_basket", "stomp_tub", "ladder_basket"]
 const PILLARS := 6
 const PATROLS := 10
 ## Gromady ptakoludzi stojące na ulicy dolnej osady.
@@ -199,8 +226,13 @@ var _lips: Array = []
 ## Środek polany satyrów (w kafelkach) i punkt, z którego dochodzi do niej ścieżka.
 var satyr_glade := Vector2.ZERO
 var _satyr_gate := Vector2.ZERO
-## Środki przysiółków satyrów (w kafelkach).
-var satyr_hamlets: Array[Vector2] = []
+## Winnice, sady i zagroda wokół polany: [środek (w kafelkach), rodzaj], ścieżka wokół placu (w kafelkach)
+## i osobne ziarno szczegółów wioski.
+var satyr_plots: Array = []
+var _satyr_loop := PackedVector2Array()
+var _satyr_rng := RandomNumberGenerator.new()
+## Komórki winnic: komórka -> numer działki w satyr_plots.
+var _vineyard_cells := {}
 ## Płaskowyże: [środek, komórki] (w kafelkach), orle czaty (środki) i pasterze satyrów: [miejsce, stado kóz].
 var _plateaus: Array = []
 var _outposts: Array[Vector2] = []
@@ -395,10 +427,11 @@ func _nearest(points: PackedVector2Array, to: Vector2) -> Vector2:
 
 
 ## Polana satyrów na południowym wschodzie, z dala od drogi i wioski ptakoludzi; ścieżka
-## prowadzi do niej od przełęczy (tylko wydeptany pas, bez karawan).
+## prowadzi do niej od przełęczy (tylko wydeptany pas, bez karawan). Szczegóły wioski (winnice, ścieżki,
+## chaty) losuje osobne ziarno (_satyr_rng), żeby nie przestawiać reszty krainy.
 func _plan_satyr_glade(rng: RandomNumberGenerator, pass_point: Vector2) -> void:
 	var size := Vector2(w.map_size)
-	satyr_glade = Vector2(size.x * rng.randf_range(0.74, 0.8), size.y * rng.randf_range(0.74, 0.78))
+	satyr_glade = Vector2(size.x * rng.randf_range(0.7, 0.75), size.y * rng.randf_range(0.72, 0.76))
 	w._reserve_area(satyr_glade, SATYR_RADIUS)
 	w._mark_camp_area(satyr_glade, SATYR_RADIUS - 2.0)
 	var trail := Road.wiggle(pass_point + Vector2(4, 2), satyr_glade, rng, 5.0, 12.0)
@@ -411,53 +444,123 @@ func _plan_satyr_glade(rng: RandomNumberGenerator, pass_point: Vector2) -> void:
 		for cell in w._cells_in_radius(point, 2.5):
 			w._road_clear[cell] = true
 			_no_cliff[cell] = true
-	_plan_satyr_hamlets(rng)
+	_satyr_rng.seed = hash([w._seed, "satyr_village"])
+	_plan_satyr_plots(_satyr_rng)
+	_plan_satyr_paths(_satyr_rng)
+	_plan_vineyards()
 
 
-## Przysiółki satyrów dookoła polany (kierunki co 30°, losowa kolejność): w granicach mapy, z dala od drogi,
-## wioski ptakoludzi i siebie nawzajem. Każdy dostaje ścieżkę od wydeptanego kręgu polany. Na polanie
-## ścieżka wokół ogniska (przed namiotami) i od bramy do niej.
-func _plan_satyr_hamlets(rng: RandomNumberGenerator) -> void:
+## Winnice, sady i zagroda dookoła polany (kierunki co 30°, losowa kolejność, nie od strony bramy): w granicach
+## mapy, z dala od drogi, wioski ptakoludzi i siebie nawzajem.
+func _plan_satyr_plots(rng: RandomNumberGenerator) -> void:
 	var size := Vector2(w.map_size)
-	var margin: float = w.border_thickness + HAMLET_RADIUS + 3.0
+	var margin: float = w.border_thickness + PLOT_RADIUS * 0.7
+	var gate_angle := _satyr_gate_angle()
 	var angles: Array[float] = []
 	for i in 12:
-		angles.append(TAU * i / 12.0 + rng.randf_range(-0.15, 0.15))
+		var angle := TAU * i / 12.0 + rng.randf_range(-0.15, 0.15)
+		if absf(angle_difference(angle, gate_angle)) > 0.5:
+			angles.append(angle)
 	angles.shuffle()
 	for angle in angles:
-		if satyr_hamlets.size() >= SATYR_HAMLETS:
+		if satyr_plots.size() >= SATYR_PLOTS:
 			break
 		# najpierw zwykła odległość, a gdy tam się nie mieści (skraj mapy, droga) - bliżej albo dalej
-		for scale: float in [1.0, 0.85, 1.15]:
-			var spot := satyr_glade + Vector2.from_angle(angle) * HAMLET_DISTANCE * scale
+		for scale: float in [1.0, 0.92, 1.12]:
+			var spot := satyr_glade + Vector2.from_angle(angle) * PLOT_DISTANCE * scale
 			if spot.x < margin or spot.y < margin or spot.x > size.x - margin or spot.y > size.y - margin:
 				continue
-			if Road.distance_to(spot, w._road) < HAMLET_RADIUS + 5.0 or Road.distance_to(spot, _street) < HAMLET_RADIUS + 8.0 \
+			if Road.distance_to(spot, w._road) < PLOT_RADIUS + 3.0 or Road.distance_to(spot, _street) < PLOT_RADIUS + 8.0 \
 					or spot.distance_to(lair) < 42.0:
 				continue
-			if satyr_hamlets.any(func(other: Vector2) -> bool: return other.distance_to(spot) < HAMLET_RADIUS * 3.0):
+			if satyr_plots.any(func(other: Array) -> bool: return (other[0] as Vector2).distance_to(spot) < PLOT_RADIUS * 2.4):
 				continue
-			satyr_hamlets.append(spot)
-			w._reserve_area(spot, HAMLET_RADIUS)
+			var kind: String = PLOT_KINDS[satyr_plots.size() % PLOT_KINDS.size()]
+			satyr_plots.append([spot, kind])
+			# winnice zajmują miejsce dopiero po wytyczeniu ścieżek (_plan_vineyards)
+			if kind != "vineyard":
+				w._reserve_area(spot, PLOT_RADIUS)
 			break
+
+
+## Kąt (od środka polany) ścieżki z przełęczy.
+func _satyr_gate_angle() -> float:
+	return (_satyr_gate - satyr_glade).angle() if _satyr_gate != Vector2.ZERO else PI / 2.0
+
+
+## Wydeptany plac biesiadny (o nierównym brzegu), kręta ścieżka wokół niego (przed chatami), odejście do bramy
+## i kręte dróżki do winnic, sadów i zagrody.
+func _plan_satyr_paths(rng: RandomNumberGenerator) -> void:
+	var phase := rng.randf() * TAU
+	for cell in w._cells_in_radius(satyr_glade, SATYR_PLAZA.x + 1.0):
+		var d := (Vector2(cell) - satyr_glade) / SATYR_PLAZA
+		var edge := 1.0 + 0.08 * sin(d.angle() * 3.0 + phase) + _mix.get_noise_2d(cell.x, cell.y) * 0.12
+		if d.length() < edge:
+			w._road_cells[cell] = true
+			w._road_clear[cell] = true
+	# pętla o promieniu falującym jak u prawdziwej, wydeptanej ścieżki (bez kół jak z cyrkla)
 	var loop: Array[Vector2] = []
-	for i in 40:
-		loop.append(satyr_glade + Vector2.from_angle(TAU * i / 40.0) * SATYR_PATH * rng.randf_range(0.96, 1.04))
+	var waves := [rng.randf() * TAU, rng.randf() * TAU]
+	for i in 24:
+		var angle := TAU * i / 24.0
+		var wobble := 1.0 + 0.09 * sin(angle * 2.0 + waves[0]) + 0.06 * sin(angle * 3.0 + waves[1]) + rng.randf_range(-0.04, 0.04)
+		loop.append(satyr_glade + Vector2.from_angle(angle) * SATYR_PATH * wobble)
 	loop.append(loop[0])
-	_path(Road.smooth(loop), 0.9)
+	_satyr_loop = Road.smooth(loop)
+	_path(_satyr_loop, 0.8)
 	if _satyr_gate != Vector2.ZERO:
-		var dir := (_satyr_gate - satyr_glade).normalized()
-		_path(Road.straight(_satyr_gate, satyr_glade + dir * SATYR_PATH), 0.9)
-	for spot in satyr_hamlets:
-		var dir := (spot - satyr_glade).normalized()
-		_path(Road.wiggle(satyr_glade + dir * SATYR_PATH, spot - dir * 3.0, rng, 2.0, 6.0), 0.9)
+		_path(Road.wiggle(_satyr_gate, _nearest(_satyr_loop, _satyr_gate), rng, 1.5, 5.0), 0.9)
+	for plot: Array in satyr_plots:
+		var spot: Vector2 = plot[0]
+		var start := _nearest(_satyr_loop, spot)
+		# do winnicy dróżka wchodzi głęboko i dzieli ją na części, jak polne drogi między łanami
+		var reach := (spot - start).normalized() * 7.0 if plot[1] == "vineyard" else (start - spot).normalized() * (PLOT_RADIUS - 1.0)
+		_path(Road.wiggle(start, spot + reach, rng, 3.0, 5.0), 0.8)
 
 
-## Komórka w kwietnej krainie satyrów: na polanie albo w przysiółku (z zapasem).
+## Winnice: komórki w postrzępionej elipsie wokół środka działki, z dala od dróg i ścieżek (brzeg dopasowuje się
+## do nich), poza polaną, innymi siedliskami i pasem przy granicy mapy. Między sąsiednimi działkami zostaje miedza.
+func _plan_vineyards() -> void:
+	var size: Vector2i = w.map_size
+	var edge: int = w.border_thickness + 1
+	for i in satyr_plots.size():
+		if satyr_plots[i][1] != "vineyard":
+			continue
+		var spot: Vector2 = satyr_plots[i][0]
+		for cell in w._cells_in_radius(spot, VINEYARD_RADIUS.x * 1.4):
+			if cell.x < edge or cell.y < edge or cell.x >= size.x - edge or cell.y >= size.y - edge:
+				continue
+			var d := (Vector2(cell) - spot) / VINEYARD_RADIUS
+			if d.length() > 1.0 + _shape.get_noise_2d(cell.x * 1.6, cell.y * 1.6) * 0.4:
+				continue
+			if Vector2(cell).distance_to(satyr_glade) < SATYR_RADIUS or w._reserved.has(cell) or _near_road(cell):
+				continue
+			var mine := Vector2(cell).distance_to(spot)
+			var balk := false
+			for j in satyr_plots.size():
+				if j != i and Vector2(cell).distance_to(satyr_plots[j][0]) < mine + 1.5:
+					balk = true
+					break
+			if not balk:
+				_vineyard_cells[cell] = i
+		for cell: Vector2i in _vineyard_cells:
+			w._reserved[cell] = true
+
+
+## Czy komórka sąsiaduje z drogą albo ścieżką (z jej poboczem).
+func _near_road(cell: Vector2i) -> bool:
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			if w._road_clear.has(cell + Vector2i(dx, dy)):
+				return true
+	return false
+
+
+## Komórka w kwietnej krainie satyrów: na polanie albo w winnicy, sadzie czy zagrodzie (z zapasem).
 func _in_satyr_land(cell: Vector2, pad := 0.0) -> bool:
-	if cell.distance_to(satyr_glade) < SATYR_RADIUS + pad:
+	if cell.distance_to(satyr_glade) < SATYR_RADIUS + pad or _vineyard_cells.has(Vector2i(cell)):
 		return true
-	return satyr_hamlets.any(func(spot: Vector2) -> bool: return cell.distance_to(spot) < HAMLET_RADIUS + pad)
+	return satyr_plots.any(func(plot: Array) -> bool: return cell.distance_to(plot[0]) < PLOT_RADIUS + pad)
 
 
 ## Płaskowyż wioski z dwiema rampami od południa i grań wokół (bez południowego wejścia).
@@ -996,11 +1099,14 @@ func _plan_soft_ground(kinds: Dictionary) -> void:
 				name = "m_scree"
 			elif kind == Floor.ROCK:
 				name = "m_snow" if level_of(cell) >= RING_LEVEL and _mix.get_noise_2d(x, y) > -0.25 else "m_rock"
+			elif _vineyard_cells.has(cell):
+				name = "m_dark"
 			elif _in_satyr_land(Vector2(cell), _mix.get_noise_2d(x, y) * 3.0):
 				name = "m_flowers"
 			else:
 				var patch: float = w._noise.get_noise_2d(x * 0.8 + 300.0, y * 0.8)
-				if patch > 0.32:
+				# przy winnicach bez płatów gęstej trawy - winnica (też gęsta trawa) nie zlewa się z nimi
+				if patch > 0.32 and not (satyr_plots.size() > 0 and _in_satyr_land(Vector2(cell), 6.0)):
 					name = "m_dark"
 				elif patch < -0.42:
 					name = "m_flowers"
@@ -1304,49 +1410,39 @@ func _build_lower_village(rng: RandomNumberGenerator) -> void:
 
 
 # ---------------------------------------------------------------- wioska satyrów
-func _build_satyr_village(rng: RandomNumberGenerator) -> void:
+## Winne święto: wydeptany plac biesiadny z wielkim ogniskiem, parkietem do tańca w lampionach i girlandach,
+## długimi stołami z ucztą, podestem grajków i tronem Faun-Króla; wokół placu duże chaty z winoroślą,
+## winiarnia i altana, a za nimi winnice, sad i zagroda połączone krętymi dróżkami.
+func _build_satyr_village(_rng: RandomNumberGenerator) -> void:
+	var rng := _satyr_rng
 	var center := satyr_glade * TILE
-	# wielkie ognisko w kręgu kamieni i tańczący wokół satyrowie w dwóch kręgach (co trzeci gra na fletni)
-	w._spawn(w.CAMPFIRE, center)
-	w._map_markers.append({"position": center, "color": w.MAP_FIRE, "size": 3.0})
-	for i in 8:
-		var angle := TAU * i / 8.0 + 0.2
-		w._spawn(SATYR_PROPS["stone"], center + Vector2.from_angle(angle) * Vector2(88, 66))
-	for k in SATYR_DANCERS:
-		var angle := TAU * k / SATYR_DANCERS + rng.randf_range(-0.1, 0.1)
-		var pos := center + Vector2.from_angle(angle) * (Vector2(44, 33) if k % 2 == 0 else Vector2(64, 48))
-		w._add_goblin_spawn({"type": "satyr_piper" if k % 3 == 1 else "satyr", "position": pos, "sitting": true, "look_at": center})
-	# maj z wstążkami, posąg rogatego boga i uczta na trawie
-	w._spawn(SATYR_PROPS["maypole"], center + Vector2(0, -116))
-	w._spawn(SATYR_PROPS["statue"], center + Vector2(-60, -118))
-	w._spawn(SATYR_PROPS["feast"], center + Vector2(62, -106))
-
-	# wianuszek namiotów i szałasów, przy każdym wino, winorośl albo amfory i gromadka satyrów przed wejściem
-	var gate_angle := (_satyr_gate * TILE - center).angle() if _satyr_gate != Vector2.ZERO else PI / 2.0
-	for i in SATYR_TENTS:
-		var angle := gate_angle + TAU * (i + 0.5) / SATYR_TENTS
-		var tent := center + Vector2.from_angle(angle) * SATYR_TENT_RING
-		if _blocks_satyr_path(tent / TILE):
+	var gate_angle := _satyr_gate_angle()
+	_build_feast_plaza(rng, center)
+	_build_satyr_houses(rng, center, gate_angle)
+	# biesiadnicy krążą gromadkami po ścieżce między placem a chatami
+	for i in 5:
+		var spot := _satyr_loop[int(_satyr_loop.size() * (i + 0.3) / 5.0)] * TILE
+		if spot.distance_to(center + Vector2(0, -110)) < 90.0:
 			continue
-		_satyr_dwelling(rng, tent, angle, i % 2 == 0)
-		var front := tent + Vector2.from_angle(angle + PI) * 40.0
-		for k in rng.randi_range(3, 4):
-			var pos := front + Vector2(rng.randf_range(-20, 20), rng.randf_range(-12, 12))
-			w._add_goblin_spawn({"type": "satyr_piper" if k == 2 else "satyr", "position": pos, "sitting": false, "look_at": center})
-	# tłocznia wina i pilnujący jej osiłek
-	var press := center + Vector2.from_angle(gate_angle + PI * 0.6) * Vector2(110, 84)
-	w._spawn(SATYR_PROPS["press"], press)
-	w._add_goblin_spawn({"type": "satyr_brute", "position": press + Vector2(26, 14), "sitting": false, "look_at": center})
-	# totemy z kozich czaszek na skraju polany
-	for i in 6:
-		var angle := gate_angle + TAU * (i + 0.25) / 6.0
-		var spot := center + Vector2.from_angle(angle) * Vector2(330, 250)
+		for k in 4:
+			var pos := spot + Vector2(rng.randf_range(-20, 20), rng.randf_range(-12, 12))
+			w._add_goblin_spawn({"type": "satyr_piper" if k == 0 else "satyr", "position": pos, "sitting": false, "look_at": spot})
+	# totemy z kozich czaszek na skraju polany (groźna strona święta)
+	for i in 5:
+		var spot := center + Vector2.from_angle(gate_angle + TAU * (i + 0.5) / 5.0) * Vector2(380, 280)
 		if not _blocks_satyr_path(spot / TILE):
 			w._spawn(SATYR_PROPS["totem"], spot)
-	_build_royal_grove(rng, center, gate_angle)
-	for spot in satyr_hamlets:
-		_build_satyr_hamlet(rng, spot * TILE, (spot - satyr_glade).angle())
-
+	for plot: Array in satyr_plots:
+		var spot: Vector2 = plot[0]
+		var toward := (satyr_glade - spot).normalized()
+		match plot[1]:
+			"vineyard":
+				_build_vineyard(rng, satyr_plots.find(plot))
+			"orchard":
+				_build_orchard(rng, spot * TILE, toward)
+			"pen":
+				_build_pen(rng, spot * TILE, toward)
+		w._map_markers.append({"position": spot * TILE, "color": Color("8a5aa8"), "size": 2.0})
 	# brama z kwiecistego łuku na ścieżce i osiłki na straży
 	if _satyr_gate != Vector2.ZERO:
 		var gate := _satyr_gate * TILE
@@ -1358,79 +1454,238 @@ func _build_satyr_village(rng: RandomNumberGenerator) -> void:
 	w._map_markers.append({"position": center + Vector2(0, -24), "color": Color("c86ad8"), "size": 3.0})
 
 
-## Namiot albo szałas z ławą, a po bokach wino, winorośl, amfory, siano albo bębny.
-func _satyr_dwelling(rng: RandomNumberGenerator, pos: Vector2, angle: float, tent: bool) -> void:
-	w._spawn(SATYR_PROPS["tent" if tent else "hut"], pos)
-	w._map_markers.append({"position": pos, "color": w.MAP_TENT, "size": 2.0})
-	var side := Vector2.from_angle(angle + PI / 2.0)
-	w._spawn(SATYR_PROPS[SATYR_CLUTTER[rng.randi() % SATYR_CLUTTER.size()]], pos + side * 36.0 + Vector2(0, 8))
-	w._spawn(SATYR_PROPS[SATYR_CLUTTER[rng.randi() % SATYR_CLUTTER.size()]], pos - side * 36.0 + Vector2(0, 8))
-	w._spawn(SATYR_PROPS["bench"], pos + side * 30.0 - Vector2(0, 14))
+## Plac biesiadny: ognisko z siedzącymi wokół satyrami, parkiet z tańczącymi, tron Faun-Króla z posągami
+## i strażą od północy, stoły z ucztą po bokach i podest grajków.
+func _build_feast_plaza(rng: RandomNumberGenerator, center: Vector2) -> void:
+	w._spawn(FEAST_PROPS["bonfire"], center)
+	w._map_markers.append({"position": center, "color": w.MAP_FIRE, "size": 3.0})
+	for k in 8:
+		var angle := TAU * (k + 0.5) / 8.0 + rng.randf_range(-0.1, 0.1)
+		var pos := center + Vector2.from_angle(angle) * Vector2(62, 34)
+		w._add_goblin_spawn({"type": "satyr_piper" if k == 3 else "satyr", "position": pos, "sitting": true, "look_at": center})
+	# parkiet z desek, lampiony w narożnikach i girlandy po bokach; na parkiecie tańczący satyrowie
+	var floor_rect := Rect2(center + DANCE_FLOOR.position, DANCE_FLOOR.size)
+	_dance_floor(floor_rect)
+	for corner in [floor_rect.position, Vector2(floor_rect.end.x, floor_rect.position.y), floor_rect.end,
+			Vector2(floor_rect.position.x, floor_rect.end.y)]:
+		w._spawn(FEAST_PROPS["lantern"], corner + Vector2(signf(corner.x - center.x) * 8.0, 6.0))
+	for side in [-1.0, 1.0]:
+		w._spawn(FEAST_PROPS["garland"], Vector2(center.x + side * (DANCE_FLOOR.size.x / 2.0 + 34.0), floor_rect.end.y - 18.0))
+	for k in SATYR_DANCERS:
+		var pos := floor_rect.position + Vector2(rng.randf_range(14, floor_rect.size.x - 14), rng.randf_range(18, floor_rect.size.y - 6))
+		w._add_goblin_spawn({"type": "satyr_piper" if k % 5 == 2 else "satyr", "position": pos, "sitting": false,
+				"look_at": floor_rect.get_center()})
+	# tron z beczek, posągi rogatego boga, słupki z wiankami i straż osiłków; Faun-Król przed tronem
+	var throne := center + Vector2(0, -104)
+	w._spawn(FEAST_PROPS["throne"], throne)
+	for side in [-1.0, 1.0]:
+		w._spawn(SATYR_PROPS["statue"], throne + Vector2(side * 62.0, 2.0))
+		w._spawn(FEAST_PROPS["wreath_pole"], throne + Vector2(side * 96.0, 8.0))
+		w._add_goblin_spawn({"type": "satyr_brute", "position": throne + Vector2(side * 38.0, 26.0), "sitting": false, "look_at": center})
+	w._add_goblin_spawn({"type": "satyr_king", "position": throne + Vector2(0, 20), "sitting": false, "look_at": center,
+			"respawn": w.boss_respawn_time})
+	w._map_markers.append({"position": throne, "color": w.MAP_BOSS, "size": 4.0})
+	# długie stoły z ucztą (dwa od zachodu, jeden od wschodu, odbity) i biesiadnicy wokół nich
+	for table: Array in [[Vector2(-178, -30), false], [Vector2(-166, 78), true], [Vector2(172, 86), true]]:
+		_banquet(rng, center + table[0], table[1])
+	# podest grajków na wschodzie (pod postaciami - grajkowie stoją na deskach), beczki i baryłki
+	var stage := center + Vector2(178, -28)
+	var deck: Node2D = FEAST_PROPS["stage"].instantiate()
+	deck.position = stage
+	w.floors.add_child(deck)
+	for spot: Vector2 in [Vector2(-18, -34), Vector2(8, -24), Vector2(24, -40)]:
+		w._add_goblin_spawn({"type": "satyr_piper", "position": stage + spot, "sitting": false, "look_at": center})
+	w._spawn(FEAST_PROPS["keg"], center + Vector2(-122, -86))
+	w._spawn(FEAST_PROPS["barrel_pile"], center + Vector2(132, -92))
+	w._spawn(FEAST_PROPS["keg"], center + Vector2(232, 30))
+	w._spawn(FEAST_PROPS["amphora"], center + Vector2(-236, 30))
 
 
-## Czy w tym miejscu (kafelek) biegnie ścieżka - tam nie stawiamy namiotów ani totemów.
-func _blocks_satyr_path(tile: Vector2) -> bool:
+## Długi stół z ucztą (rysunek biegnie ukośnie) i sześciu biesiadników po obu stronach blatu.
+func _banquet(rng: RandomNumberGenerator, pos: Vector2, flip: bool) -> void:
+	var table: Node2D = w._spawn(FEAST_PROPS["banquet"], pos)
+	(table.get_node("Sprite") as Sprite2D).flip_h = flip
+	var top := pos + Vector2(0, -46)
+	var along := Vector2(-1.0 if flip else 1.0, -0.8).normalized()
+	var across := along.orthogonal()
+	for t in [-32.0, 0.0, 32.0]:
+		for side in [-1.0, 1.0]:
+			var seat: Vector2 = top + along * (t + rng.randf_range(-4, 4)) + across * side * 34.0
+			w._add_goblin_spawn({"type": "satyr", "position": seat, "sitting": true, "look_at": top})
+
+
+## Parkiet z desek (tekstura pomostów z rozlewisk, powtarzana), z ciemniejszą obwódką i cieniem od dołu.
+func _dance_floor(rect: Rect2) -> void:
+	var shade := ColorRect.new()
+	shade.position = rect.position + Vector2(2, rect.size.y)
+	shade.size = Vector2(rect.size.x, 4)
+	shade.color = Color(0.05, 0.04, 0.02, 0.45)
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	w.floors.add_child(shade)
+	var planks := _floor_sprite(w.WALK_H, rect.position, Rect2(Vector2.ZERO, rect.size))
+	planks.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	planks.modulate = Color(1.08, 0.98, 0.9)
+	for edge: Rect2 in [Rect2(0, 0, rect.size.x, 2), Rect2(0, rect.size.y - 3, rect.size.x, 3), Rect2(0, 0, 2, rect.size.y),
+			Rect2(rect.size.x - 2, 0, 2, rect.size.y)]:
+		var frame := ColorRect.new()
+		frame.position = rect.position + edge.position
+		frame.size = edge.size
+		frame.color = Color(0.22, 0.13, 0.07)
+		frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		w.floors.add_child(frame)
+	for cell in w._cells_in_radius(rect.get_center() / TILE, rect.size.x / TILE / 2.0):
+		w._map_props[cell] = MAP_DANCE_FLOOR
+
+
+## Chaty wokół placu, z dala od ścieżki do bramy i dróżek do winnic: duże chaty z winoroślą (część odbita),
+## winiarnia i altana, drobiazgi pod ścianami, a przed każdą gromadka satyrów; między chatami lampiony
+## i girlandy przy ścieżce.
+func _build_satyr_houses(rng: RandomNumberGenerator, center: Vector2, gate_angle: float) -> void:
+	var spokes: Array[float] = [gate_angle]
+	for plot: Array in satyr_plots:
+		spokes.append(((plot[0] as Vector2) - satyr_glade).angle())
+	var slots: Array[float] = []
+	var offset := rng.randf() * TAU
+	for i in SATYR_HOUSES:
+		var angle := offset + TAU * i / SATYR_HOUSES
+		if spokes.all(func(spoke: float) -> bool: return absf(angle_difference(angle, spoke)) > 0.24):
+			slots.append(angle)
+	var winery := slots[0]
+	var arbor := slots[slots.size() / 2]
+	for angle in slots:
+		var pos := center + Vector2.from_angle(angle) * SATYR_HOUSE_RING * rng.randf_range(0.97, 1.03)
+		if _blocks_satyr_path(pos / TILE, 3):
+			continue
+		var kind: String = "winery" if angle == winery else "arbor" if angle == arbor else ["cottage", "cottage_porch"][rng.randi() % 2]
+		var house: Node2D = w._spawn(FEAST_PROPS[kind], pos)
+		(house.get_node("Sprite") as Sprite2D).flip_h = rng.randf() < 0.5
+		w._map_markers.append({"position": pos, "color": w.MAP_TENT, "size": 2.0})
+		for side in [-1.0, 1.0]:
+			if rng.randf() < 0.8:
+				w._spawn(FEAST_PROPS[HOUSE_CLUTTER[rng.randi() % HOUSE_CLUTTER.size()]], pos + Vector2(side * rng.randf_range(54, 62), 6))
+		var front := pos + (center - pos).normalized() * 46.0
+		for k in 3:
+			var spot := front + Vector2(rng.randf_range(-22, 22), rng.randf_range(-10, 10))
+			var kind_satyr := "satyr_brute" if kind == "winery" and k == 0 else "satyr_piper" if k == 2 and rng.randf() < 0.4 else "satyr"
+			w._add_goblin_spawn({"type": kind_satyr, "position": spot, "sitting": false, "look_at": center})
+	# lampiony i girlandy między chatami, przy wewnętrznej stronie ścieżki
+	for angle in slots:
+		var spot := center + Vector2.from_angle(angle + PI / SATYR_HOUSES) * SATYR_HOUSE_RING * 0.63
+		if not _blocks_satyr_path(spot / TILE):
+			w._spawn(FEAST_PROPS["garland" if rng.randf() < 0.35 else "lantern"], spot)
+
+
+## Winnica: rzędy winorośli wypełniają działkę (w każdym rzędzie ciągłe odcinki komórek winnicy, z przejściami
+## co kilka krzewów), więc kształt winnicy idzie za drogami. Między rzędami zbierający winogrona satyrowie
+## (z grajkiem) i kosze, przy ścieżkach wózki z winogronami, drabiny i kadzie do deptania winogron.
+func _build_vineyard(rng: RandomNumberGenerator, index: int) -> void:
+	var row_kind := "vine_row" if rng.randf() < 0.5 else "vine_row_2"
+	var rows := {}
+	var aisles: Array[Vector2i] = []
+	var verge: Array[Vector2i] = []
+	for cell: Vector2i in _vineyard_cells:
+		if _vineyard_cells[cell] != index:
+			continue
+		if posmod(cell.y, VINE_ROW) == 0:
+			if not rows.has(cell.y):
+				rows[cell.y] = []
+			rows[cell.y].append(cell.x)
+		elif posmod(cell.y, VINE_ROW) == 1:
+			aisles.append(cell)
+			if _near_road(cell + Vector2i(0, 1)) or _near_road(cell - Vector2i(0, 1)):
+				verge.append(cell)
+	aisles.sort()
+	verge.sort()
+	for y: int in rows:
+		var xs: Array = rows[y]
+		xs.sort()
+		var run_start: int = xs[0]
+		for k in xs.size():
+			var last: bool = k == xs.size() - 1
+			if last or xs[k + 1] != xs[k] + 1:
+				_vine_run(rng, index, row_kind, run_start, xs[k], y)
+				if not last:
+					run_start = xs[k + 1]
+	# zbieracze: około jednego na 14 komórek przejść, najwyżej 14 na winnicę
+	var pickers := mini(14, aisles.size() / 14)
+	for k in pickers:
+		var cell: Vector2i = aisles[rng.randi() % aisles.size()]
+		var pos := (Vector2(cell) + Vector2(rng.randf_range(0.2, 0.8), 0.6)) * TILE
+		w._add_goblin_spawn({"type": "satyr_piper" if k == 0 else "satyr", "position": pos, "sitting": false, "look_at": pos + Vector2(0, -20)})
+	for k in maxi(2, aisles.size() / 60):
+		w._spawn(FEAST_PROPS["grape_basket"], (Vector2(aisles[rng.randi() % aisles.size()]) + Vector2(0.5, 0.7)) * TILE)
+	var tools := ["grape_cart", "ladder_basket", "stomp_tub", "grape_cart", "barrel_pile"]
+	for k in mini(tools.size(), verge.size() / 6):
+		var cell: Vector2i = verge[(k * verge.size()) / mini(tools.size(), verge.size() / 6) + rng.randi() % 3]
+		w._spawn(FEAST_PROPS[tools[k]], (Vector2(cell) + Vector2(0.5, 0.8)) * TILE)
+
+
+## Odcinek rzędu winorośli od komórki x0 do x1 w rzędzie y: krzewy co VINE_STEP pikseli, wyśrodkowane w odcinku,
+## co 5-7 krzewów przejście; krzew stoi tylko tam, gdzie i nad nim jest winnica.
+func _vine_run(rng: RandomNumberGenerator, index: int, kind: String, x0: int, x1: int, y: int) -> void:
+	var length := (x1 - x0 + 1) * TILE
+	var count := int((length + 8) / VINE_STEP)
+	if count < 1:
+		return
+	var left := x0 * TILE + (length - count * VINE_STEP) / 2.0 + VINE_STEP / 2.0
+	var next_gap := rng.randi_range(5, 7)
+	for k in count:
+		if k == next_gap:
+			next_gap += rng.randi_range(6, 8)
+			continue
+		var pos := Vector2(left + k * VINE_STEP, y * TILE + 14.0)
+		var above := Vector2i(int(pos.x / TILE), y - 1)
+		if _vineyard_cells.get(above, -1) == index:
+			w._spawn(FEAST_PROPS[kind], pos)
+
+
+## Sad: jabłonie i grusze w luźnych rzędach, kosze i drabiny, zbierający owoce satyrowie z grajkiem.
+func _build_orchard(rng: RandomNumberGenerator, center: Vector2, toward: Vector2) -> void:
+	for r in 3:
+		for c in 4:
+			var pos := center + Vector2(-90.0 + c * 60.0 + (30.0 if r % 2 == 1 else 0.0), -50.0 + r * 54.0) \
+					+ Vector2(rng.randf_range(-8, 8), rng.randf_range(-6, 6))
+			if not _blocks_satyr_path(pos / TILE, 0):
+				w._spawn(FEAST_PROPS["apple_tree" if rng.randf() < 0.5 else "pear_tree"], pos)
+	for k in 3:
+		w._spawn(FEAST_PROPS["grape_basket" if k == 0 else "ladder_basket"], center + Vector2(rng.randf_range(-100, 100), rng.randf_range(-70, 80)))
+	for k in 8:
+		var pos := center + Vector2(rng.randf_range(-100, 100), rng.randf_range(-60, 80))
+		w._add_goblin_spawn({"type": "satyr_piper" if k == 0 else "satyr", "position": pos, "sitting": false, "look_at": center})
+	w._spawn(FEAST_PROPS["keg"], center + toward * 110.0)
+
+
+## Zagroda: płoty z przodu i z tyłu (z furtką od strony polany), koryto i siano w środku, kozy, a przed
+## furtką pasterze z osiłkiem.
+func _build_pen(rng: RandomNumberGenerator, center: Vector2, toward: Vector2) -> void:
+	var gate_row := -1.0 if toward.y < 0.0 else 1.0
+	for row in [-1.0, 1.0]:
+		for c in 5:
+			if row == gate_row and c == 2:
+				continue
+			w._spawn(FEAST_PROPS["fence"], center + Vector2(-88.0 + c * 44.0, row * 62.0))
+	for side in [-1.0, 1.0]:
+		w._spawn(SATYR_PROPS["hay"], center + Vector2(side * 112.0, rng.randf_range(-10, 10)))
+	w._spawn(FEAST_PROPS["trough"], center + Vector2(0, -12))
+	for k in 5:
+		var pos := center + Vector2(rng.randf_range(-70, 70), rng.randf_range(-36, 40))
+		w._add_goblin_spawn({"type": "goat", "position": pos, "sitting": false, "look_at": center, "respawn": w.animal_respawn_time})
+	var gate := center + Vector2(0, gate_row * 92.0)
+	for k in 5:
+		var pos := gate + Vector2(rng.randf_range(-40, 40), rng.randf_range(-10, 14))
+		var kind := "satyr_brute" if k == 0 else "satyr_piper" if k == 1 else "satyr"
+		w._add_goblin_spawn({"type": kind, "position": pos, "sitting": false, "look_at": center})
+	w._spawn(SATYR_PROPS["tent"], center + Vector2(-150, gate_row * 70.0))
+	w._spawn(SATYR_PROPS["barrels"], center + Vector2(-118, gate_row * 84.0))
+
+
+## Czy w tym miejscu (kafelek, z zapasem `pad` kafelków na boki) biegnie ścieżka - tam nic nie stawiamy.
+func _blocks_satyr_path(tile: Vector2, pad := 1) -> bool:
 	for dy in range(-1, 2):
-		for dx in range(-1, 2):
+		for dx in range(-pad, pad + 1):
 			if w._road_cells.has(Vector2i(tile) + Vector2i(dx, dy)):
 				return true
 	return false
-
-
-## Przysiółek satyrów: ognisko w kręgu kamieni z siedzącą gromadką (z grajkiem), trzy namioty albo szałasy
-## od strony z dala od ścieżki, tłocznia, maj, posąg albo bębny, totem, a na skraju stojąca gromada
-## i osiłek pilnujący drogi do polany.
-func _build_satyr_hamlet(rng: RandomNumberGenerator, center: Vector2, path_angle: float) -> void:
-	w._spawn(w.CAMPFIRE, center)
-	w._map_markers.append({"position": center, "color": w.MAP_FIRE, "size": 2.0})
-	for i in 5:
-		w._spawn(SATYR_PROPS["stone"], center + Vector2.from_angle(TAU * i / 5.0 + 0.4) * Vector2(52, 39))
-	var sitting := rng.randi_range(6, 8)
-	for k in sitting:
-		var pos := center + Vector2.from_angle(TAU * k / sitting + rng.randf_range(-0.1, 0.1)) * Vector2(34, 26)
-		w._add_goblin_spawn({"type": "satyr_piper" if k == 0 else "satyr", "position": pos, "sitting": true, "look_at": center})
-	# ścieżka przychodzi od strony polany (path_angle + PI) - namioty po przeciwnej stronie
-	for i in 3:
-		var angle := path_angle + (i - 1) * 1.15 + rng.randf_range(-0.12, 0.12)
-		_satyr_dwelling(rng, center + Vector2.from_angle(angle) * Vector2(96, 72), angle, rng.randf() < 0.5)
-	var special: String = HAMLET_SPECIALS[rng.randi() % HAMLET_SPECIALS.size()]
-	var side := path_angle + PI + (1.4 if rng.randf() < 0.5 else -1.4)
-	w._spawn(SATYR_PROPS[special], center + Vector2.from_angle(side) * Vector2(84, 62))
-	w._spawn(SATYR_PROPS["vines"], center + Vector2.from_angle(side + 0.6) * Vector2(100, 74))
-	w._spawn(SATYR_PROPS["totem"], center + Vector2.from_angle(path_angle + PI + 0.5) * Vector2(110, 82))
-	var spot := center + Vector2.from_angle(path_angle + PI - 0.9) * Vector2(70, 52)
-	for k in rng.randi_range(4, 5):
-		var pos := spot + Vector2(rng.randf_range(-20, 20), rng.randf_range(-14, 14))
-		w._add_goblin_spawn({"type": "satyr_piper" if k == 0 else "satyr", "position": pos, "sitting": false, "look_at": spot})
-	w._add_goblin_spawn({"type": "satyr_brute", "position": center + Vector2.from_angle(path_angle + PI) * 80.0, "sitting": false,
-			"look_at": center + Vector2.from_angle(path_angle + PI) * 200.0})
-
-
-## Królewski gaj naprzeciw bramy: tron Faun-Króla między posągami rogatego boga, bębny, uczta i straż osiłków.
-## Na wydeptanym kręgu polany, między namiotami, kręcą się dodatkowe gromady satyrów z grajkami.
-func _build_royal_grove(rng: RandomNumberGenerator, center: Vector2, gate_angle: float) -> void:
-	var grove := center + Vector2.from_angle(gate_angle + PI) * Vector2(150, 112)
-	w._spawn(SATYR_PROPS["arch"], grove + Vector2(0, -40))
-	w._spawn(SATYR_PROPS["statue"], grove + Vector2(-56, -30))
-	w._spawn(SATYR_PROPS["statue"], grove + Vector2(56, -30))
-	w._spawn(SATYR_PROPS["drums"], grove + Vector2(-70, 20))
-	w._spawn(SATYR_PROPS["feast"], grove + Vector2(70, 22))
-	w._spawn(SATYR_PROPS["vines"], grove + Vector2(-34, -52))
-	w._spawn(SATYR_PROPS["vines"], grove + Vector2(34, -52))
-	for side in [-1.0, 1.0]:
-		w._add_goblin_spawn({"type": "satyr_brute", "position": grove + Vector2(side * 40.0, 26.0), "sitting": false, "look_at": center})
-		w._add_goblin_spawn({"type": "satyr_piper", "position": grove + Vector2(side * 84.0, -6.0), "sitting": true, "look_at": grove})
-	w._add_goblin_spawn({"type": "satyr_king", "position": grove, "sitting": false, "look_at": center, "respawn": w.boss_respawn_time})
-	w._map_markers.append({"position": grove, "color": w.MAP_BOSS, "size": 4.0})
-	# dodatkowe gromady na wydeptanym kręgu (między namiotami, z dala od gaju)
-	for i in 6:
-		var angle := gate_angle + TAU * (i + 0.5) / 6.0 + rng.randf_range(-0.15, 0.15)
-		var spot := center + Vector2.from_angle(angle) * SATYR_PATH * TILE
-		if spot.distance_to(grove) < 90.0:
-			continue
-		for k in 5:
-			var pos := spot + Vector2(rng.randf_range(-22, 22), rng.randf_range(-14, 14))
-			w._add_goblin_spawn({"type": "satyr_piper" if k == 0 else "satyr", "position": pos, "sitting": false, "look_at": spot})
 
 
 ## Ośnieżone szczyty gęsto na grani wokół wioski (na rzadkiej, poszarpanej siatce).
