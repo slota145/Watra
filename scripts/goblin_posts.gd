@@ -151,7 +151,7 @@ func _build_post(center: Vector2, to_road: Vector2) -> void:
 	for k in range(-3, 4):
 		if absi(k) <= 0:
 			continue  # przejście
-		w._spawn(w.FOREST_PROPS["palisade"], front + across * k * 30.0)
+		w._spawn_palisade(front + across * k * 30.0, across)
 	for side in [-1.0, 1.0]:
 		var tent: Vector2 = center - to_road * 42.0 + across * side * 50.0
 		w._spawn(w.FOREST_PROPS["tent" if side < 0 else "hide_tent"], tent)
@@ -182,7 +182,7 @@ func _build_kennel(center: Vector2) -> void:
 		var angle := TAU * k / stakes
 		if absf(angle_difference(angle, PI / 2.0)) < 0.4:
 			continue  # brama
-		w._spawn(w.FOREST_PROPS["palisade"], center + Vector2.from_angle(angle) * Vector2(r, r * 0.75))
+		w._spawn_palisade(center + Vector2.from_angle(angle) * Vector2(r, r * 0.75), Vector2(-sin(angle) * r, cos(angle) * r * 0.75))
 	w._spawn(w.FOREST_PROPS["cage"], center + Vector2(-18, -14))
 	w._spawn(w.FOREST_PROPS["bone_pile"], center + Vector2(20, -8))
 	w._map_markers.append({"position": center, "color": w.MAP_DEN, "size": 2.5})

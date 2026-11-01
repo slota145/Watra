@@ -1519,7 +1519,7 @@ func _build_camp(layout: Dictionary) -> void:
 		# rząd pali widać od frontu - barykada tylko na górnym i dolnym łuku (na bokach układała się
 		# w ukośne schodki), z kilkoma wyłomami (sinusoida po obwodzie)
 		if not at_gate and absf(sin(a)) > 0.6 and sin(a * 3.0 + phase) > -0.6:
-			_spawn(FOREST_PROPS["palisade"], center + Vector2.from_angle(a) * ring)
+			_spawn_palisade(center + Vector2.from_angle(a) * ring, Vector2.from_angle(a).orthogonal())
 		a += step
 
 
@@ -1731,6 +1731,16 @@ func on_rest() -> void:
 	for other: String in _zone_states:
 		if other != zone:
 			_zone_states[other]["bosses_reset"] = true
+
+
+## Odcinek barykady z pali biegnący w kierunku `along`. Pale na grafice idą ukośnie „\" (pasują do prawego górnego
+## i lewego dolnego łuku pierścienia); tam, gdzie barykada biegnie ukośnie „/" (lewy górny i prawy dolny łuk),
+## grafika jest odbita, żeby pale nie stały w poprzek i nie zasłaniały obozu.
+func _spawn_palisade(pos: Vector2, along: Vector2) -> Node2D:
+	var stake := _spawn(FOREST_PROPS["palisade"], pos)
+	if along.x * along.y < 0.0:
+		(stake.get_node("Sprite") as Sprite2D).flip_h = true
+	return stake
 
 
 func _spawn(scene: PackedScene, pos: Vector2) -> Node2D:
@@ -2279,7 +2289,7 @@ func _build_chief_lair(center: Vector2) -> void:
 	while a < TAU:
 		var open := absf(angle_difference(a, exit_angle)) < 0.38
 		if not open and absf(sin(a)) > 0.62:
-			_spawn(FOREST_PROPS["palisade"], center + Vector2.from_angle(a) * ring)
+			_spawn_palisade(center + Vector2.from_angle(a) * ring, Vector2(-sin(a) * ring.x, cos(a) * ring.y))
 		a += CAMP_STAKE_SPACING / ring.x
 	var gate := center + Vector2.from_angle(exit_angle) * ring
 	for side in [-1.0, 1.0]:
