@@ -328,6 +328,8 @@ odpowiedniej sekcji.
   - **Łańcuch błyskawic bez odnowienia** (listopad 2026): zamiast odnowienia 2,4 s tylko czas rzucania
     `Skills.CHAIN_CAST_TIME` (0,6 s) dzielony przez szybkość rzucania; trzymany klawisz rzuca raz za razem
     (`Player._process_strikes`, uderzenia trafiają do `_held_ids`).
+    Wygląd: błyskawica rysowana w kodzie (`scripts/lightning_arc.gd` - poszarpana, migocząca, ostro zakończona,
+    bez rozciągania arkusza), trafieni wrogowie porażeni na 0,7 s (`scripts/shock_fx.gd` - łuki i poświata).
 - [x] **Czerwone koła nie zostają na ziemi** (listopad 2026): koło pioruna ptakoczłowieka i Orła Burzy znika też,
   gdy potwór zniknął przed uderzeniem (np. zabity przez podróżników); bezpiecznik `Telegraph.LINGER` - każda
   poświata sama znika 3 s po wypełnieniu. Test `tests/test_telegraph.gd`.
