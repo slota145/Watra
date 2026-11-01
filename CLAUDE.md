@@ -125,6 +125,9 @@ efekt w „My effects” autora na pixellab.ai). Jego pliki też się nie pobier
 
 - Zmiany idą na gałąź roboczą, potem pull request do `main`. Autor zwykle prosi o założenie PR i od razu scalenie.
 - Gdy autor ma u siebie lokalne commity, `git pull` otwiera vima. Podpowiadaj wtedy `git pull --no-edit origin main`.
+- U autora po samym `git pull` gra się nie uruchamia (nieaktualny folder `.godot`: brak nowych klas i grafik).
+  Polecaj `powershell -ExecutionPolicy Bypass -File aktualizuj.ps1` (pull + import zasobów; Godot autora:
+  `C:\Godot_v4.7.2-stable_win64.exe\` - to folder z plikami `.exe` w środku).
 
 ## Systemy w grze
 
