@@ -195,6 +195,22 @@ odpowiedniej sekcji.
   i ścięte drzewa ze starego układu się nie liczą. Walka w środku wioski ptakoludzi kosztuje ok. 15 ms na klatkę
   (dwa razy więcej niż gdzie indziej, tak było i przed przebudową - do sprawdzenia, co w niej tyle kosztuje).
 
+- [x] Wioska satyrów przebudowana na **winne święto** (`MountainZone._plan_satyr_glade`, `_plan_satyr_plots`,
+  `_plan_satyr_paths`, `_build_satyr_village`, `_build_feast_plaza`, `_build_satyr_houses`, `_build_vineyard`,
+  `_build_orchard`, `_build_pen`; `LAYOUT` = 3). Jedna duża polana (promień 25 kafelków, środek w (0.7-0.75,
+  0.72-0.76) rozmiaru mapy), w środku wydeptany plac biesiadny o nierównym brzegu: animowane wielkie ognisko,
+  parkiet z desek (tekstura pomostów `WALK_H`, `_dance_floor`) z lampionami i girlandami, trzy ukośne stoły
+  z ucztą i biesiadnikami (`_banquet`), podest grajków (w warstwie podłóg, grajkowie stoją na deskach), tron
+  z beczek z posągami i osiłkami, Faun-Król przed tronem. Wokół placu kręta ścieżka (promień falujący, bez kół
+  jak z cyrkla) i do 14 chat (dwie chaty z bali, winiarnia, altana; drobiazgi pod ścianami, po 3 satyry przed
+  wejściem), lampiony między chatami. Zamiast przysiółków do 5 pól na elipsie wokół polany (`PLOT_DISTANCE`,
+  w pionie bliżej, bo między drogą a skrajem mapy mało miejsca): winnice (rzędy winorośli, zbieracze, kosze,
+  wózek), sad (jabłonie i grusze), zagroda (płoty z furtką, koryto, siano, kozy, pasterze z osiłkiem), połączone
+  krętymi dróżkami. Szczegóły wioski losuje własne ziarno (`_satyr_rng`). Grafiki z PixelLab:
+  `pixellab_src/regions/satyr_village/` (paczki houses, feast, vineyard, animacja bonfire), narzędzie
+  `tools/satyr_village_art.py` -> `assets/mountains/satyr/`, sceny `scenes/props/mountains/satyr/`.
+  Krainy: 664 wrogów (było 686), największa gromada to plac biesiadny (84), walka tam około 7 ms na klatkę.
+
 ## Rozlewiska (`scripts/drowned_grove.gd`, `scripts/hydra_bog.gd`) (Do poprawy)
 - [x] Topielcze Uroczysko zajmuje cały obszar pod drogą i na zachód od rzeki: 16 sadzawek (było 7), mgła na całym obszarze,
   około 220 potworów (było 66): utopce, ogniki, topielice.

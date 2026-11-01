@@ -375,7 +375,7 @@ const DATA := {
 	},
 	"summon_satyr_king": {
 		"name": "Złoty Kielich",
-		"description": "Kielich wina z królewskiej tłoczni. Wzniesiony w królewskim gaju wioski satyrów (Wietrzne Turnie) przywołuje Faun-Króla.",
+		"description": "Kielich wina z królewskiej tłoczni. Wzniesiony przy tronie w wiosce satyrów (Wietrzne Turnie) przywołuje Faun-Króla.",
 		"icon": preload("res://assets/items/summon_satyr_king.png"),
 		"use": {"summon": "satyr_king"}, "sell_price": 40, "notable": true,
 	},

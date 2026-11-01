@@ -101,7 +101,7 @@ const LAIR_NAMES := {
 	"colossal_ghoul": "w głębi trupowiska na wschodzie Leśnego Cmentarza",
 	"hydra": "na bagnie Hydry (Rozlewiska, zachodni skraj pod drogą od wejścia)",
 	"gryf": "na skalistym wzgórzu w lewym górnym rogu Pól Zbożowych",
-	"satyr_king": "w królewskim gaju wioski satyrów (Wietrzne Turnie, południowy wschód)",
+	"satyr_king": "przy tronie na placu biesiadnym wioski satyrów (Wietrzne Turnie, południowy wschód)",
 }
 ## id miejsc bossów, którzy właśnie są przyzywani (krąg jeszcze się ładuje).
 var _summoning := {}

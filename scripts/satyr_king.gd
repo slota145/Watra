@@ -1,6 +1,6 @@
 class_name SatyrKing
 extends Boss
-## Faun-Król, Król Satyrów - władca wioski satyrów w Wietrznych Turniach, w królewskim gaju za ogniskiem.
+## Faun-Król, Król Satyrów - władca wioski satyrów w Wietrznych Turniach, na tronie z beczek nad placem biesiadnym.
 ## Ogromne złote rogi, korona z winorośli i złota fletnia Pana. Ataki:
 ## - Szarża rogami: czerwony pas - król pędzi nim z pochylonymi rogami, rani i odrzuca,
 ## - Fletnia: gra skoczną melodię - z wioski przybiegają satyrowie, a gracz w zasięgu traci orientację
