@@ -128,8 +128,8 @@ func _wake() -> void:
 	state = "waves"
 	_wave_timer = WAVE_DELAY
 	Sfx.play("thunder", -4.0, 0.7)
-	dungeon.w.hud.show_banner(("Kryształ Watry się budzi! Obroń go przed falami potworów" if variant == "crystal"
-			else "Górnicy zaczynają kuć Kryształ Watry! Obroń ich przed falami potworów"), Color(1.0, 0.65, 0.35))
+	dungeon.w.hud.show_banner((tr("Kryształ Watry się budzi! Obroń go przed falami potworów") if variant == "crystal"
+			else tr("Górnicy zaczynają kuć Kryształ Watry! Obroń ich przed falami potworów")), Color(1.0, 0.65, 0.35))
 	for miner in miners:
 		miner.mining = true
 
@@ -151,7 +151,7 @@ func _spawn_wave() -> void:
 		goblin.sitting = false
 		_alive.append(goblin)
 	Sfx.play("telegraph", -2.0)
-	dungeon.w.hud.show_banner("Fala %d z %d" % [wave, WAVES], Color(1.0, 0.75, 0.45))
+	dungeon.w.hud.show_banner(tr("Fala %d z %d") % [wave, WAVES], Color(1.0, 0.75, 0.45))
 
 
 ## Punkt przy brzegu komnaty, z dala od kryształu.
@@ -202,10 +202,10 @@ func _finish(success: bool) -> void:
 		dungeon._drop(global_position + Vector2(0, 18), entry[0], entry[1])
 	var text := ""
 	if variant == "crystal":
-		text = "Kryształ Watry rozpada się w kamienie!" if success else "Potwory roztrzaskały Kryształ Watry - zostały tylko odłamki"
+		text = tr("Kryształ Watry rozpada się w kamienie!") if success else tr("Potwory roztrzaskały Kryształ Watry - zostały tylko odłamki")
 	else:
-		text = "Górnicy wykuli kamienie z Kryształu Watry!" if success else "Górnicy polegli - zostały tylko odłamki"
-	dungeon.w.hud.show_banner(text + "\nKowal w Ostoi wbije je w twój oręż", Color(1.0, 0.75, 0.4) if success else Color(1.0, 0.5, 0.4))
+		text = tr("Górnicy wykuli kamienie z Kryształu Watry!") if success else tr("Górnicy polegli - zostały tylko odłamki")
+	dungeon.w.hud.show_banner(tr("%s\nKowal w Ostoi wbije je w twój oręż") % text, Color(1.0, 0.75, 0.4) if success else Color(1.0, 0.5, 0.4))
 	if success:
 		dungeon.w.player.quests.note_event("crystal_done")
 	finished.emit(success)

@@ -24,29 +24,29 @@ func show_result(result: Dictionary) -> void:
 		_box.remove_child(child)
 		child.queue_free()
 	var color: Color = WorldEvents.TYPES[result["type"]]["color"]
-	_add(result["title"], 9, color)
-	_add(("Sukces! " if result["success"] else "Porażka. ") + Zones.zone_name(result["zone"]), 8,
+	_add(WorldEvents.title_of(result), 9, color)
+	_add((tr("Sukces! %s") if result["success"] else tr("Porażka. %s")) % tr(Zones.zone_name(result["zone"])), 8,
 			Color(0.6, 1.0, 0.6) if result["success"] else Color(1.0, 0.5, 0.45))
 	var list: Array = result["ranking"]
 	var place: int = result["place"]
 	for i in mini(5, list.size()):
 		var mine: bool = list[i][0] == WorldEvents.PLAYER
-		_add("%d. %s - %d pkt" % [i + 1, list[i][0], list[i][1]], 7, Color(1.0, 0.9, 0.5) if mine else UiStyle.TEXT_COLOR)
+		_add(tr("%d. %s - %d pkt") % [i + 1, WorldEvents.who(list[i][0]), list[i][1]], 7, Color(1.0, 0.9, 0.5) if mine else UiStyle.TEXT_COLOR)
 	if place > 5:
 		_add("...", 7, UiStyle.DIM_COLOR)
-		_add("%d. Ty - %d pkt" % [place, list[place - 1][1]], 7, Color(1.0, 0.9, 0.5))
+		_add(tr("%d. Ty - %d pkt") % [place, list[place - 1][1]], 7, Color(1.0, 0.9, 0.5))
 	if place == 0:
-		_add("Bez twojego udziału - nagrody przypadły innym.", 7, UiStyle.DIM_COLOR)
+		_add(tr("Bez twojego udziału - nagrody przypadły innym."), 7, UiStyle.DIM_COLOR)
 	else:
-		var rewards: Array[String] = ["Znaki Zwycięstwa x%d" % result["marks"]]
+		var rewards: Array[String] = [tr("Znaki Zwycięstwa x%d") % result["marks"]]
 		if result["fame"] > 0:
-			rewards.append("sława gildii +%d" % result["fame"])
+			rewards.append(tr("sława gildii +%d") % result["fame"])
 		if result["success"] and result.get("here", false):
-			rewards.append("skrzynia z łupem na miejscu")
-		var label := _add("Nagroda: " + ", ".join(rewards), 7, Color(0.6, 1.0, 0.6))
+			rewards.append(tr("skrzynia z łupem na miejscu"))
+		var label := _add(tr("Nagroda: %s") % ", ".join(rewards), 7, Color(0.6, 1.0, 0.6))
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var close := Button.new()
-	close.text = "Zamknij"
+	close.text = tr("Zamknij")
 	close.focus_mode = Control.FOCUS_NONE
 	close.add_theme_font_size_override("font_size", 7)
 	close.pressed.connect(func() -> void: visible = false)

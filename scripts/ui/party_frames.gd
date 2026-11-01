@@ -43,16 +43,16 @@ func _rebuild() -> void:
 		return
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 4)
-	header.add_child(UiStyle.label("Drużyna (+%d%% exp)" % roundi((_player.travelers.party_xp_factor() - 1.0) * 100.0), 7, Traveler.PARTY_COLOR))
+	header.add_child(UiStyle.label(tr("Drużyna (+%d%% exp)") % roundi((_player.travelers.party_xp_factor() - 1.0) * 100.0), 7, Traveler.PARTY_COLOR))
 	var leave := Button.new()
-	leave.text = "Opuść"
+	leave.text = tr("Opuść")
 	leave.focus_mode = Control.FOCUS_NONE
 	leave.add_theme_font_size_override("font_size", 6)
-	leave.tooltip_text = "Rozwiąż drużynę - podróżnicy wrócą do Ostoi"
+	leave.tooltip_text = tr("Rozwiąż drużynę - podróżnicy wrócą do Ostoi")
 	leave.pressed.connect(func() -> void:
 		for node in get_tree().get_nodes_in_group("travelers"):
 			if node.mode == "party":
-				node.say("Do zobaczenia w Ostoi!")
+				node.say(tr("Do zobaczenia w Ostoi!"))
 				node.recall()
 		_player.travelers.disband()
 		Sfx.play("ui_close"))
@@ -62,7 +62,7 @@ func _rebuild() -> void:
 		var row := VBoxContainer.new()
 		row.add_theme_constant_override("separation", 0)
 		row.set_meta("member", traveler["name"])
-		row.add_child(UiStyle.label("%s [%d] - %s" % [traveler["name"], traveler["level"], Travelers.WEAPON_NAMES[traveler["weapon"]]], 6, UiStyle.TEXT_COLOR))
+		row.add_child(UiStyle.label("%s [%d] - %s" % [traveler["name"], traveler["level"], tr(Travelers.WEAPON_NAMES[traveler["weapon"]])], 6, UiStyle.TEXT_COLOR))
 		var bar := ProgressBar.new()
 		bar.name = "Bar"
 		bar.show_percentage = false

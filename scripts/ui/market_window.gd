@@ -41,11 +41,11 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
-	box.add_child(UiStyle.title("Rynek gildii"))
+	box.add_child(UiStyle.title(tr("Rynek gildii")))
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 3)
 	box.add_child(tabs)
-	for entry: Array in [["goods", "Towary"], ["items", "Przedmioty"], ["mine", "Moje oferty"]]:
+	for entry: Array in [["goods", tr("Towary")], ["items", tr("Przedmioty")], ["mine", tr("Moje oferty")]]:
 		var button := _button(entry[1], _show.bind(entry[0]))
 		button.toggle_mode = true
 		_tabs[entry[0]] = button
@@ -81,7 +81,7 @@ func _ready() -> void:
 	_status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	bottom.add_child(_status)
-	bottom.add_child(_button("Zamknij", func() -> void:
+	bottom.add_child(_button(tr("Zamknij"), func() -> void:
 		visible = false
 		Sfx.play("ui_close")))
 	box.add_child(bottom)
@@ -94,7 +94,7 @@ func setup(player: Player) -> void:
 			_refresh())
 	player.stats.gold_changed.connect(func(_g: int) -> void:
 		if visible:
-			_gold.text = "%d zł" % _player.stats.gold)
+			_gold.text = tr("%d zł") % _player.stats.gold)
 
 
 func open() -> void:
@@ -118,9 +118,10 @@ func _spin(low: int, high: int) -> SpinBox:
 	return spin
 
 
+## Przycisk; gotowy napis tłumaczy sam (napisy z danymi trzeba przetłumaczyć wcześniej).
 func _button(text: String, action: Callable) -> Button:
 	var button := Button.new()
-	button.text = text
+	button.text = tr(text)
 	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_font_size_override("font_size", 8)
 	button.pressed.connect(action)
@@ -149,7 +150,7 @@ func _refresh() -> void:
 		return
 	_clear(_list)
 	_clear(_side)
-	_gold.text = "%d zł" % _player.stats.gold
+	_gold.text = tr("%d zł") % _player.stats.gold
 	match _tab:
 		"goods":
 			_build_goods()
@@ -160,7 +161,7 @@ func _refresh() -> void:
 
 
 func _say(text: String, ok := true) -> void:
-	_status.text = text
+	_status.text = tr(text)
 	_status.add_theme_color_override("font_color", UP if ok else DOWN)
 	Sfx.play("coins" if ok else "ui_error")
 
@@ -183,11 +184,11 @@ func _icon_row(id: String, text: String, color: Color, action: Callable, pressed
 func _build_goods() -> void:
 	var market := _player.market
 	for category: String in Market.CATEGORIES:
-		_list.add_child(UiStyle.label(category, 8, UiStyle.TITLE_COLOR))
+		_list.add_child(UiStyle.label(tr(category), 8, UiStyle.TITLE_COLOR))
 		for id: String in Market.CATEGORIES[category]:
 			var change := market.trend(id)
 			var arrow := "▲" if change > 0.02 else "▼" if change < -0.02 else "•"
-			var row := _icon_row(id, "%s  %d zł %s%d%%" % [Items.get_data(id)["name"], market.price_of(id), arrow, roundi(absf(change) * 100.0)],
+			var row := _icon_row(id, tr("%s  %d zł %s%d%%") % [tr(Items.get_data(id)["name"]), market.price_of(id), arrow, roundi(absf(change) * 100.0)],
 					UP if change > 0.02 else DOWN if change < -0.02 else UiStyle.TEXT_COLOR, _select_good.bind(id), id == _selected)
 			row.tooltip_text = Items.describe(id)
 			UiStyle.rich_tooltip(row)
@@ -205,8 +206,8 @@ func _select_good(id: String) -> void:
 func _build_good_side() -> void:
 	var market := _player.market
 	var id := _selected
-	_side.add_child(UiStyle.label(Items.get_data(id)["name"], 9, UiStyle.TITLE_COLOR))
-	_side.add_child(UiStyle.label("Cena rynkowa: %d zł   Masz: %d" % [market.price_of(id), _player.inventory.count_of(id)], 7, UiStyle.TEXT_COLOR))
+	_side.add_child(UiStyle.label(tr(Items.get_data(id)["name"]), 9, UiStyle.TITLE_COLOR))
+	_side.add_child(UiStyle.label(tr("Cena rynkowa: %d zł   Masz: %d") % [market.price_of(id), _player.inventory.count_of(id)], 7, UiStyle.TEXT_COLOR))
 	var book := market.book(id)
 	var grid := GridContainer.new()
 	grid.columns = 3
@@ -220,9 +221,9 @@ func _build_good_side() -> void:
 		_book_row(grid, level, UP)
 	var fields := HBoxContainer.new()
 	fields.add_theme_constant_override("separation", 3)
-	fields.add_child(UiStyle.label("Ilość", 7))
+	fields.add_child(UiStyle.label(tr("Ilość"), 7))
 	fields.add_child(_qty)
-	fields.add_child(UiStyle.label("Cena", 7))
+	fields.add_child(UiStyle.label(tr("Cena"), 7))
 	fields.add_child(_price)
 	_side.add_child(fields)
 	if _price.value <= 1:
@@ -235,15 +236,15 @@ func _build_good_side() -> void:
 	actions.add_theme_constant_override("h_separation", 3)
 	actions.add_theme_constant_override("v_separation", 2)
 	_side.add_child(actions)
-	var buy := _button("Kup od razu (%s)" % ("%d zł" % cost if cost >= 0 else "brak"), func() -> void: _result(market.buy_now(id, int(_qty.value)), "Kupiono."))
+	var buy := _button(tr("Kup od razu (%s)") % (tr("%d zł") % cost if cost >= 0 else tr("brak")), func() -> void: _result(market.buy_now(id, int(_qty.value)), tr("Kupiono.")))
 	buy.disabled = cost < 0 or _player.stats.gold < cost
 	actions.add_child(buy)
-	var sell := _button("Sprzedaj od razu (%s)" % ("%d zł" % gain if gain >= 0 else "brak"), func() -> void: _result(market.sell_now(id, int(_qty.value)), "Sprzedano (podatek %d%%)." % roundi(Market.TAX * 100.0)))
+	var sell := _button(tr("Sprzedaj od razu (%s)") % (tr("%d zł") % gain if gain >= 0 else tr("brak")), func() -> void: _result(market.sell_now(id, int(_qty.value)), tr("Sprzedano (podatek %d%%).") % roundi(Market.TAX * 100.0)))
 	sell.disabled = gain < 0 or _player.inventory.count_of(id) < qty
 	actions.add_child(sell)
 	actions.add_child(_button("Wystaw sprzedaż", func() -> void: _result(market.place_sell(id, int(_qty.value), int(_price.value)), "Wystawiono - podróżnicy kupią z czasem.")))
 	actions.add_child(_button("Zamów kupno", func() -> void: _result(market.place_buy(id, int(_qty.value), int(_price.value)), "Zamówienie złożone - złoto czeka na rynku.")))
-	var hint := UiStyle.label("Zamówienie po lepszej cenie niż rynek realizuje się szybciej. Podatek od sprzedaży: %d%%." % roundi(Market.TAX * 100.0), 7, UiStyle.DIM_COLOR)
+	var hint := UiStyle.label(tr("Zamówienie po lepszej cenie niż rynek realizuje się szybciej. Podatek od sprzedaży: %d%%.") % roundi(Market.TAX * 100.0), 7, UiStyle.DIM_COLOR)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.custom_minimum_size.x = SIDE_WIDTH - 12.0
 	_side.add_child(hint)
@@ -257,13 +258,13 @@ func _on_qty_changed(_value: float) -> void:
 
 
 func _book_row(grid: GridContainer, level: Array, color: Color) -> void:
-	grid.add_child(UiStyle.label("%d zł" % level[0], 7, color))
+	grid.add_child(UiStyle.label(tr("%d zł") % level[0], 7, color))
 	grid.add_child(UiStyle.label("x%d" % level[1], 7, UiStyle.TEXT_COLOR))
 	var is_fresh := level.size() > 3
-	var who := UiStyle.label(("%s - świeże" % level[2]) if is_fresh else str(level[2]), 7,
+	var who := UiStyle.label((tr("%s - świeże") % level[2]) if is_fresh else WorldEvents.who(str(level[2])), 7,
 			Color(0.55, 1.0, 0.6) if level[2] == "Ty" else Color(1.0, 0.8, 0.45) if is_fresh else UiStyle.DIM_COLOR)
 	if is_fresh:
-		who.tooltip_text = "Świeży towar prosto z krainy (zbieracz: %s). Taniej, ale szybko znika." % level[2]
+		who.tooltip_text = tr("Świeży towar prosto z krainy (zbieracz: %s). Taniej, ale szybko znika.") % level[2]
 		who.mouse_filter = Control.MOUSE_FILTER_STOP
 	who.clip_text = true
 	who.custom_minimum_size.x = 100
@@ -324,7 +325,7 @@ func _option(entries: Array, current: String, on_pick: Callable) -> OptionButton
 	option.focus_mode = Control.FOCUS_NONE
 	option.add_theme_font_size_override("font_size", 7)
 	for i in entries.size():
-		option.add_item(entries[i][1], i)
+		option.add_item(tr(entries[i][1]), i)
 		if entries[i][0] == current:
 			option.select(i)
 	option.item_selected.connect(func(index: int) -> void:
@@ -338,8 +339,8 @@ func _build_items() -> void:
 	var market := _player.market
 	var all_count := market.listings.filter(func(l: Dictionary) -> bool: return not l.get("mine", false)).size()
 	var shown := shown_listings()
-	var head := UiStyle.label("Oferty podróżników: %d/%d (podróżników: %d)" % [shown.size(), all_count, market.traveler_count()], 8, UiStyle.TITLE_COLOR)
-	head.tooltip_text = "Im więcej podróżników w gildii, tym więcej ofert i lepsze przedmioty. Okazje szybko wykupują inni!"
+	var head := UiStyle.label(tr("Oferty podróżników: %d/%d (podróżników: %d)") % [shown.size(), all_count, market.traveler_count()], 8, UiStyle.TITLE_COLOR)
+	head.tooltip_text = tr("Im więcej podróżników w gildii, tym więcej ofert i lepsze przedmioty. Okazje szybko wykupują inni!")
 	head.mouse_filter = Control.MOUSE_FILTER_STOP
 	_list.add_child(head)
 	var controls := HBoxContainer.new()
@@ -347,11 +348,11 @@ func _build_items() -> void:
 	controls.add_child(_option(FILTERS, _filter, func(value: String) -> void: _filter = value))
 	controls.add_child(_option(SORTS, _sort, func(value: String) -> void: _sort = value))
 	var mine := CheckBox.new()
-	mine.text = "Dla mnie"
+	mine.text = tr("Dla mnie")
 	mine.focus_mode = Control.FOCUS_NONE
 	mine.add_theme_font_size_override("font_size", 7)
 	mine.button_pressed = _for_me
-	mine.tooltip_text = "Tylko rzeczy, które możesz założyć: broń twojego obecnego rodzaju, poziom nie wyższy niż twój."
+	mine.tooltip_text = tr("Tylko rzeczy, które możesz założyć: broń twojego obecnego rodzaju, poziom nie wyższy niż twój.")
 	mine.toggled.connect(func(on: bool) -> void:
 		_for_me = on
 		Sfx.play("ui_click")
@@ -359,20 +360,20 @@ func _build_items() -> void:
 	controls.add_child(mine)
 	_list.add_child(controls)
 	if shown.is_empty():
-		_list.add_child(UiStyle.label("Brak ofert - zmień filtr albo zajrzyj później.", 7, UiStyle.DIM_COLOR))
+		_list.add_child(UiStyle.label(tr("Brak ofert - zmień filtr albo zajrzyj później."), 7, UiStyle.DIM_COLOR))
 	for listing: Dictionary in shown:
 		var id: String = listing["id"]
 		var line := HBoxContainer.new()
 		line.add_theme_constant_override("separation", 2)
-		var row := _icon_row(id, Items.get_data(id)["name"], Items.rarity_color(id), func() -> void: pass)
+		var row := _icon_row(id, tr(Items.get_data(id)["name"]), Items.rarity_color(id), func() -> void: pass)
 		row.custom_minimum_size.x = LIST_SIZE.x - 120.0
 		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.clip_text = true
 		row.toggle_mode = false
-		row.tooltip_text = "%s\n\nSprzedaje: %s\nUczciwa cena: ok. %d zł" % [Items.describe(id), listing["seller"], Market.fair_price(id)]
+		row.tooltip_text = tr("%s\n\nSprzedaje: %s\nUczciwa cena: ok. %d zł") % [Items.describe(id), WorldEvents.who(listing["seller"]), Market.fair_price(id)]
 		UiStyle.rich_tooltip(row)
 		line.add_child(row)
-		var price := UiStyle.label("%d zł" % listing["price"], 7, Color(1.0, 0.85, 0.3))
+		var price := UiStyle.label(tr("%d zł") % listing["price"], 7, Color(1.0, 0.85, 0.3))
 		price.custom_minimum_size.x = 40
 		price.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		line.add_child(price)
@@ -380,15 +381,15 @@ func _build_items() -> void:
 		var tag := UiStyle.label("%+d%%" % -roundi(deal * 100.0), 7, UP if deal >= 0.1 else DOWN if deal <= -0.1 else UiStyle.DIM_COLOR)
 		tag.custom_minimum_size.x = 26
 		tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		tag.tooltip_text = "Okazja! Taniej o %d%% od uczciwej ceny - szybko zniknie." % roundi(deal * 100.0) if deal >= 0.1 \
-				else "Cena względem uczciwej wartości."
+		tag.tooltip_text = tr("Okazja! Taniej o %d%% od uczciwej ceny - szybko zniknie.") % roundi(deal * 100.0) if deal >= 0.1 \
+				else tr("Cena względem uczciwej wartości.")
 		tag.mouse_filter = Control.MOUSE_FILTER_STOP
 		line.add_child(tag)
-		var buy := _button("Kup", func() -> void: _result(market.buy_listing(market.listings.find(listing)), "Kupiono: %s" % Items.get_data(id)["name"]))
+		var buy := _button(tr("Kup"), func() -> void: _result(market.buy_listing(market.listings.find(listing)), tr("Kupiono: %s") % tr(Items.get_data(id)["name"])))
 		buy.disabled = _player.stats.gold < int(listing["price"])
 		line.add_child(buy)
 		_list.add_child(line)
-	_side.add_child(UiStyle.label("Wystaw z plecaka", 9, UiStyle.TITLE_COLOR))
+	_side.add_child(UiStyle.label(tr("Wystaw z plecaka"), 9, UiStyle.TITLE_COLOR))
 	var grid := GridContainer.new()
 	grid.columns = 8
 	grid.add_theme_constant_override("h_separation", 2)
@@ -414,10 +415,10 @@ func _build_items() -> void:
 		grid.add_child(pick)
 	if _bag_index >= 0 and _bag_index < _player.inventory.slots.size() and not _player.inventory.slots[_bag_index].is_empty():
 		var id: String = _player.inventory.slots[_bag_index]["id"]
-		_side.add_child(UiStyle.label(Items.get_data(id)["name"], 8, Items.rarity_color(id)))
-		_side.add_child(UiStyle.label("Uczciwa cena: ok. %d zł" % Market.fair_price(id), 7, UiStyle.DIM_COLOR))
+		_side.add_child(UiStyle.label(tr(Items.get_data(id)["name"]), 8, Items.rarity_color(id)))
+		_side.add_child(UiStyle.label(tr("Uczciwa cena: ok. %d zł") % Market.fair_price(id), 7, UiStyle.DIM_COLOR))
 		var fields := HBoxContainer.new()
-		fields.add_child(UiStyle.label("Cena", 7))
+		fields.add_child(UiStyle.label(tr("Cena"), 7))
 		fields.add_child(_price)
 		_side.add_child(fields)
 		_side.add_child(_button("Wystaw na rynku", func() -> void:
@@ -425,19 +426,19 @@ func _build_items() -> void:
 			_bag_index = -1
 			_result(message, "Wystawiono - kupiec znajdzie się z czasem.")))
 	else:
-		_side.add_child(UiStyle.label("Kliknij przedmiot, żeby ustalić cenę.", 7, UiStyle.DIM_COLOR))
+		_side.add_child(UiStyle.label(tr("Kliknij przedmiot, żeby ustalić cenę."), 7, UiStyle.DIM_COLOR))
 
 
 # ---------------------------------------------------------------- moje
 func _build_mine() -> void:
 	var market := _player.market
-	_list.add_child(UiStyle.label("Zamówienia towarów", 8, UiStyle.TITLE_COLOR))
+	_list.add_child(UiStyle.label(tr("Zamówienia towarów"), 8, UiStyle.TITLE_COLOR))
 	if market.orders.is_empty():
-		_list.add_child(UiStyle.label("Brak zamówień.", 7, UiStyle.DIM_COLOR))
+		_list.add_child(UiStyle.label(tr("Brak zamówień."), 7, UiStyle.DIM_COLOR))
 	for i in market.orders.size():
 		var order: Dictionary = market.orders[i]
 		var done := int(order["qty"]) - int(order["left"])
-		var text := "%s: %s %d/%d po %d zł" % ["Sprzedaż" if order["kind"] == "sell" else "Kupno", Items.get_data(order["id"])["name"],
+		var text := (tr("Sprzedaż: %s %d/%d po %d zł") if order["kind"] == "sell" else tr("Kupno: %s %d/%d po %d zł")) % [tr(Items.get_data(order["id"])["name"]),
 				done, order["qty"], order["price"]]
 		var line := HBoxContainer.new()
 		var label := UiStyle.label(text, 7, UiStyle.TEXT_COLOR)
@@ -445,15 +446,15 @@ func _build_mine() -> void:
 		label.clip_text = true
 		line.add_child(label)
 		if int(order["ready"]) > 0:
-			line.add_child(_button("Odbierz %d" % order["ready"], func() -> void:
+			line.add_child(_button(tr("Odbierz %d") % order["ready"], func() -> void:
 				market.collect(i)
 				_refresh()))
-		line.add_child(_button("Wycofaj", func() -> void:
+		line.add_child(_button(tr("Wycofaj"), func() -> void:
 			market.cancel(i)
 			_say("Zamówienie wycofane.")
 			_refresh()))
 		_list.add_child(line)
-	_side.add_child(UiStyle.label("Moje przedmioty na rynku", 8, UiStyle.TITLE_COLOR))
+	_side.add_child(UiStyle.label(tr("Moje przedmioty na rynku"), 8, UiStyle.TITLE_COLOR))
 	var any := false
 	for i in market.listings.size():
 		var listing: Dictionary = market.listings[i]
@@ -461,11 +462,11 @@ func _build_mine() -> void:
 			continue
 		any = true
 		var line := HBoxContainer.new()
-		var label := UiStyle.label("%s - %d zł" % [Items.get_data(listing["id"])["name"], listing["price"]], 7, Items.rarity_color(listing["id"]))
+		var label := UiStyle.label(tr("%s - %d zł") % [tr(Items.get_data(listing["id"])["name"]), listing["price"]], 7, Items.rarity_color(listing["id"]))
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		label.clip_text = true
 		line.add_child(label)
-		line.add_child(_button("Wycofaj", func() -> void: _result(market.unlist(i), "Przedmiot wrócił do plecaka.")))
+		line.add_child(_button(tr("Wycofaj"), func() -> void: _result(market.unlist(i), "Przedmiot wrócił do plecaka.")))
 		_side.add_child(line)
 	if not any:
-		_side.add_child(UiStyle.label("Nic nie wystawiono.", 7, UiStyle.DIM_COLOR))
+		_side.add_child(UiStyle.label(tr("Nic nie wystawiono."), 7, UiStyle.DIM_COLOR))

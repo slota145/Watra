@@ -28,7 +28,7 @@ func _ready() -> void:
 	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
 	buttons.add_theme_constant_override("separation", 6)
 	box.add_child(buttons)
-	for entry: Array in [["Dołącz", true], ["Odmów", false]]:
+	for entry: Array in [[tr("Dołącz"), true], [tr("Odmów"), false]]:
 		var button := Button.new()
 		button.text = entry[0]
 		button.focus_mode = Control.FOCUS_NONE
@@ -43,7 +43,7 @@ func _ready() -> void:
 
 func ask(text: String, on_accept: Callable, on_decline: Callable, accept_label := "Dołącz") -> void:
 	_text.text = text
-	_yes.text = accept_label
+	_yes.text = tr(accept_label)
 	_accept = on_accept
 	_decline = on_decline
 	_left = TIMEOUT
@@ -61,7 +61,7 @@ func _process(delta: float) -> void:
 	if not visible:
 		return
 	_left -= delta
-	_time.text = "%d s" % ceili(_left)
+	_time.text = tr("%d s") % ceili(_left)
 	if _left <= 0.0:
 		_answer(false)
 

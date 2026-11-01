@@ -6,7 +6,9 @@ a mają tłumaczenie, zostają na końcu z dopiskiem "(nieużywany)"; bez tłuma
 Napis trafia do pliku, gdy:
 - stoi w Lang.t(...), Lang.n(...) albo tr(...),
 - ma polską literę albo kilka słów (po usunięciu znaczników BBCode i %s / %d),
-- jest wartością w słowniku i zaczyna się wielką literą ("name": "Wodnik"),
+- jest kluczem albo wartością w słowniku i zaczyna się wielką literą ("boss": "Wodnik"), stoi pod kluczem "name"
+  ("name": "przyjazny") albo w słowniku stałej o nazwie kończącej się na _NAMES (WEAPON_NAMES),
+- jest elementem listy w stałej (const) i zaczyna się wielką literą ([["goblin", "Gobliny", 40]]),
 - w scenie jest tekstem kontrolki (text, tooltip_text, placeholder_text, title).
 Pomija: komunikaty print/push_error/assert, ścieżki plików, napisy z translations/pomijane.txt (jeden na linię).
 
@@ -25,6 +27,8 @@ SKIP_PATH = os.path.join(ROOT, "translations", "pomijane.txt")
 POLISH = re.compile(r"[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]")
 CALL = re.compile(r"(?:\bLang\.t|\bLang\.n|(?<![\w.])tr|\.tr)\(\s*$")
 DICT_VALUE = re.compile(r"[\"'\w]\s*:\s*$")
+NAME_VALUE = re.compile(r"[\"']name[\"']\s*:\s*$")
+NAMES_CONST = re.compile(r"^const \w*_NAMES\b")
 LOG_CALL = re.compile(r"\b(print|prints|printerr|print_rich|push_error|push_warning|assert)\(")
 SCENE_PROP = re.compile(r"^(text|tooltip_text|placeholder_text|title) = \"")
 ESCAPES = {"n": "\n", "t": "\t", "\"": "\"", "'": "'", "\\": "\\", "r": "\r"}
@@ -44,7 +48,7 @@ def unescape(raw):
 
 
 def literals(line):
-    """Napisy z linii kodu: (tekst, kod przed napisem). Pomija komentarze, &"…" i ^"…"."""
+    """Napisy z linii kodu: (tekst, kod przed napisem, kod po napisie). Pomija komentarze, &"…" i ^"…"."""
     found, i, n = [], 0, len(line)
     while i < n:
         c = line[i]
@@ -61,7 +65,7 @@ def literals(line):
                 j += 1
             prefix = line[i - 1] if i > 0 else ""
             if prefix not in "&^":
-                found.append((unescape("".join(raw)), line[:i]))
+                found.append((unescape("".join(raw)), line[:i], line[j + 1:]))
             i = j + 1
             continue
         i += 1
@@ -87,6 +91,8 @@ def wanted(text, before):
         return True
     if " " in text.strip() and len(words) >= 2:
         return True
+    if NAME_VALUE.search(before) or NAMES_CONST.search(before.lstrip()) and DICT_VALUE.search(before):
+        return True
     return bool(DICT_VALUE.search(before)) and text[:1].isupper()
 
 
@@ -102,12 +108,47 @@ def scan_script(path, found):
             buffer = ""
     if buffer:
         logical.append(buffer)
+    in_const = False
+    depth = 0
     for line in logical:
+        if line.startswith("const "):
+            in_const, depth = True, 0
+        elif depth <= 0:
+            in_const = False
         if line.strip().startswith("#") or LOG_CALL.search(line):
             continue
-        for text, before in literals(line):
-            if wanted(text, before.split("\n")[-1]):
+        for text, before, after in literals(line):
+            last = before.split("\n")[-1]
+            # klucz słownika z wielkiej litery ("Surowce": [...]) - nazwa kategorii pokazywana graczowi
+            key = after.lstrip().startswith(":") and text[:1].isupper() and bool(wordy(text)) and "://" not in text
+            # element listy w stałej, z wielkiej litery ([["goblin", "Gobliny", ...]], ["all", "Wszystko"])
+            listed = in_const and text[:1].isupper() and bool(wordy(text)) and re.search(r"[\[,]\s*$", last) is not None
+            if key or listed or wanted(text, last):
                 found.setdefault(text, set()).add(os.path.basename(path))
+        depth += _brackets(line)
+
+
+def _brackets(line):
+    """Bilans nawiasów [ ] { } ( ) w linii kodu (bez napisów i komentarzy)."""
+    total, quote, i = 0, "", 0
+    while i < len(line):
+        c = line[i]
+        if quote:
+            if c == "\\":
+                i += 2
+                continue
+            if c == quote:
+                quote = ""
+        elif c == "#":
+            break
+        elif c in "\"'":
+            quote = c
+        elif c in "[{(":
+            total += 1
+        elif c in "]})":
+            total -= 1
+        i += 1
+    return total
 
 
 def _open_quote(line):

@@ -21,7 +21,7 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
-	box.add_child(UiStyle.title("Podróżnicy gildii"))
+	box.add_child(UiStyle.title(tr("Podróżnicy gildii")))
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(WIDTH, LIST_HEIGHT)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -46,7 +46,7 @@ func _ready() -> void:
 	_status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bottom.add_child(_status)
 	var close := Button.new()
-	close.text = "Zamknij"
+	close.text = tr("Zamknij")
 	close.focus_mode = Control.FOCUS_NONE
 	close.add_theme_font_size_override("font_size", 8)
 	close.pressed.connect(func() -> void:
@@ -76,7 +76,7 @@ func _refresh() -> void:
 		_list.remove_child(child)
 		child.queue_free()
 	var travelers := _player.travelers
-	for header in ["Imię", "Poz.", "Broń", "Charakter", "Ekwipunek", "Gdzie", "Zabójstwa", "Śmierci"]:
+	for header: String in [tr("Imię"), tr("Poz."), tr("Broń"), tr("Charakter"), tr("Ekwipunek"), tr("Gdzie"), tr("Zabójstwa"), tr("Śmierci")]:
 		_list.add_child(UiStyle.label(header, 7, UiStyle.TITLE_COLOR))
 	var list := travelers.active()
 	list.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a["fame"]) > int(b["fame"]))
@@ -87,32 +87,32 @@ func _refresh() -> void:
 		name.clip_text = true
 		_list.add_child(name)
 		_list.add_child(UiStyle.label(str(traveler["level"]), 7))
-		_list.add_child(UiStyle.label(Travelers.WEAPON_NAMES[traveler["weapon"]], 7))
-		_list.add_child(UiStyle.label(temper["name"], 7, temper["color"]))
+		_list.add_child(UiStyle.label(tr(Travelers.WEAPON_NAMES[traveler["weapon"]]), 7))
+		_list.add_child(UiStyle.label(tr(temper["name"]), 7, temper["color"]))
 		var gear: String = traveler["gear"]
 		var rarity: String = {"zwykły": "common", "magiczny": "magic", "rzadki": "rare", "legendarny": "legendary"}.get(gear, "common")
-		_list.add_child(UiStyle.label(gear, 7, Items.RARITY_COLORS[rarity]))
+		_list.add_child(UiStyle.label(tr(Items.RARITY_NAMES[rarity]).to_lower(), 7, Items.RARITY_COLORS[rarity]))
 		_list.add_child(UiStyle.label(Travelers.place_text(traveler), 7, UiStyle.DIM_COLOR))
 		_list.add_child(UiStyle.label(str(traveler["kills"]), 7))
 		_list.add_child(UiStyle.label(str(traveler["deaths"]), 7))
 	var rank := travelers.guild_rank
-	_rank.text = "Ranga gildii: %d/%d - sława: %d - aktywnych podróżników: %d, najwyższy poziom: %d - tryb świata: %s" % [rank,
-			Travelers.MAX_RANK, travelers.guild_fame, travelers.active_count(), travelers.level_cap(), WorldModes.MODES[travelers.world_mode]["name"]]
+	_rank.text = tr("Ranga gildii: %d/%d - sława: %d - aktywnych podróżników: %d, najwyższy poziom: %d - tryb świata: %s") % [rank,
+			Travelers.MAX_RANK, travelers.guild_fame, travelers.active_count(), travelers.level_cap(), tr(WorldModes.MODES[travelers.world_mode]["name"])]
 	_upgrade.visible = rank >= 1 and rank < Travelers.MAX_RANK
 	if _upgrade.visible:
 		var cost: Dictionary = Travelers.RANK_COSTS[rank + 1]
 		var parts: Array[String] = []
 		for id: String in cost:
 			if id == "fame":
-				parts.append("sława %d" % cost[id])
+				parts.append(tr("sława %d") % cost[id])
 			else:
-				parts.append("%d %s" % [cost[id], "zł" if id == "gold" else Items.get_data(id)["name"].to_lower()])
-		_upgrade.text = "Ulepsz gildię: " + ", ".join(parts)
+				parts.append("%d %s" % [cost[id], tr("zł") if id == "gold" else tr(Items.get_data(id)["name"]).to_lower()])
+		_upgrade.text = tr("Ulepsz gildię: %s") % ", ".join(parts)
 
 
 func _on_upgrade() -> void:
 	var message := _player.travelers.upgrade_rank(_player)
-	_status.text = message if message != "" else "Gildia rośnie w siłę! Zjeżdżają nowi podróżnicy."
+	_status.text = message if message != "" else tr("Gildia rośnie w siłę! Zjeżdżają nowi podróżnicy.")
 	_status.add_theme_color_override("font_color", Color(1, 0.5, 0.45) if message != "" else Color(0.55, 1.0, 0.55))
 	Sfx.play("ui_error" if message != "" else "quest_done")
 	_refresh()
