@@ -882,5 +882,297 @@
       31,
       80
     ]
+  },
+  "leshy_roots": {
+    "effect": "c6f8d703-b175-4c11-a347-51123cfd6620",
+    "name": "Leszy - korzenie",
+    "frame": [
+      51,
+      50
+    ],
+    "frames": 10,
+    "fps": 16,
+    "anchor": [
+      24,
+      39
+    ]
+  },
+  "leshy_leaves": {
+    "effect": "8e162398-d2c0-4524-a971-b4c8513a831b",
+    "name": "Leszy - wir lisci",
+    "frame": [
+      94,
+      60
+    ],
+    "frames": 10,
+    "fps": 16,
+    "anchor": [
+      11,
+      32
+    ]
+  },
+  "queen_web": {
+    "effect": "6dc5ec03-bcfb-4e1f-bd31-48d0c809c3df",
+    "name": "Krolowa Pajakow - siec",
+    "frame": [
+      90,
+      66
+    ],
+    "frames": 10,
+    "fps": 16,
+    "anchor": [
+      4,
+      34
+    ]
+  },
+  "queen_leap": {
+    "effect": "45135d19-fc3d-4254-9cb0-43be3810de6a",
+    "name": "Krolowa Pajakow - skok z jadem",
+    "frame": [
+      115,
+      60
+    ],
+    "frames": 11,
+    "columns": 8,
+    "fps": 16,
+    "anchor": [
+      57,
+      30
+    ]
+  },
+  "queen_hatch": {
+    "effect": "1a171e23-dc30-47dd-a694-67709a9cb132",
+    "name": "Krolowa Pajakow - wylag",
+    "frame": [
+      46,
+      24
+    ],
+    "frames": 9,
+    "fps": 16,
+    "anchor": [
+      19,
+      16
+    ]
+  },
+  "mortan_spike": {
+    "effect": "969176e3-a45e-429f-a755-22d81248164d",
+    "name": "Mortan - kosciane kolce",
+    "frame": [
+      46,
+      46
+    ],
+    "frames": 10,
+    "fps": 16,
+    "anchor": [
+      25,
+      34
+    ]
+  },
+  "mortan_beam": {
+    "effect": "f271ce19-4709-4c5b-853d-1ba1c98a73a0",
+    "name": "Mortan - wysysanie duszy",
+    "frame": [
+      185,
+      21
+    ],
+    "frames": 9,
+    "columns": 5,
+    "fps": 18,
+    "anchor": [
+      42,
+      9
+    ]
+  },
+  "mortan_raise": {
+    "effect": "98a39dc2-7521-4345-a653-d2f0e4858c79",
+    "name": "Mortan - wezwanie umarlych",
+    "frame": [
+      129,
+      117
+    ],
+    "frames": 12,
+    "columns": 7,
+    "fps": 16,
+    "anchor": [
+      64,
+      61
+    ]
+  },
+  "mortan_blink": {
+    "effect": "b0717634-46a8-4be1-a754-9111459e704e",
+    "name": "Mortan - mgnienie",
+    "frame": [
+      57,
+      45
+    ],
+    "frames": 10,
+    "fps": 12,
+    "anchor": [
+      30,
+      27
+    ]
+  },
+  "mortan_death": {
+    "effect": "5d4c50f2-58a1-4f6d-be63-4c5d041ccf7e",
+    "name": "Mortan - smierc",
+    "frame": [
+      103,
+      122
+    ],
+    "frames": 14,
+    "columns": 7,
+    "fps": 16,
+    "anchor": [
+      56,
+      115
+    ]
+  },
+  "ghoul_sweep": {
+    "effect": "0202b23f-c23f-4a4d-ba84-8d93037d0f08",
+    "name": "Gnilec - zamach",
+    "frame": [
+      73,
+      120
+    ],
+    "frames": 8,
+    "fps": 18,
+    "anchor": [
+      -10,
+      59
+    ]
+  },
+  "ghoul_slam": {
+    "effect": "d421e63d-90a3-40c6-acc1-2eaef72c157d",
+    "name": "Gnilec - miazdzenie",
+    "frame": [
+      122,
+      66
+    ],
+    "frames": 11,
+    "columns": 8,
+    "fps": 16,
+    "anchor": [
+      62,
+      33
+    ]
+  },
+  "ghoul_bile": {
+    "effect": "3ecd6399-1320-4e68-a6bc-1385a0f0de1d",
+    "name": "Gnilec - wymiociny",
+    "frame": [
+      77,
+      68
+    ],
+    "frames": 10,
+    "fps": 16,
+    "anchor": [
+      3,
+      29
+    ]
+  },
+  "ghoul_roar": {
+    "effect": "a0bbd1c2-c4b9-4a35-9403-f19462a4c83f",
+    "name": "Gnilec - ryk",
+    "frame": [
+      155,
+      106
+    ],
+    "frames": 11,
+    "columns": 6,
+    "fps": 16,
+    "anchor": [
+      77,
+      66
+    ]
+  },
+  "zmij_breath": {
+    "effect": "9ad3bc27-a139-487c-9ebb-1e35c404a6e4",
+    "name": "Zmij - zioniecie",
+    "frame": [
+      106,
+      53
+    ],
+    "frames": 8,
+    "fps": 12,
+    "loop": true,
+    "anchor": [
+      4,
+      25
+    ]
+  },
+  "zmij_fireball": {
+    "effect": "0051a5fd-24a0-48dd-9794-fe36fbb7ed67",
+    "name": "Zmij - kula ognia",
+    "frame": [
+      107,
+      139
+    ],
+    "frames": 14,
+    "columns": 9,
+    "fps": 18,
+    "anchor": [
+      54,
+      115
+    ]
+  },
+  "zmij_slam": {
+    "effect": "e150cd73-b499-4e0e-a166-fbe911e51aff",
+    "name": "Zmij - uderzenie",
+    "frame": [
+      251,
+      142
+    ],
+    "frames": 12,
+    "columns": 4,
+    "fps": 16,
+    "anchor": [
+      118,
+      86
+    ]
+  },
+  "zmij_pillar": {
+    "effect": "0eb9fda0-74b9-4d07-b2b2-0a1f65c2f78f",
+    "name": "Zmij - ognisty slup",
+    "frame": [
+      175,
+      170
+    ],
+    "frames": 11,
+    "columns": 5,
+    "fps": 16,
+    "anchor": [
+      87,
+      124
+    ]
+  },
+  "wij_gaze": {
+    "effect": "f0dfb7b0-cbb1-4852-9252-48392abe7e90",
+    "name": "Wij - wzrok",
+    "frame": [
+      198,
+      122
+    ],
+    "frames": 12,
+    "columns": 5,
+    "fps": 16,
+    "anchor": [
+      5,
+      61
+    ]
+  },
+  "wij_mist": {
+    "effect": "ab253e1a-8b76-4702-af8f-277990811027",
+    "name": "Wij - mrok",
+    "frame": [
+      148,
+      163
+    ],
+    "frames": 14,
+    "columns": 6,
+    "fps": 16,
+    "anchor": [
+      73,
+      124
+    ]
   }
 }

@@ -29,6 +29,17 @@ const CLAW_RADIUS := 85.0
 const FIRE := Color(1.0, 0.55, 0.2)
 const GAZE := Color(1.0, 0.9, 0.35)
 const PHASES := [0.66, 0.33]
+## Efekty z kreatora efektów PixelLab (tools/vfx_art.py): Żmij - zionięcie, spadająca kula ognia, lądowanie
+## z ognistym kręgiem, ognisty słup; Wij - wzrok spod powiek, kłąb mroku i korzenie szponów.
+const FX_BREATH := preload("res://assets/effects/zmij_breath.png")
+const FX_FIREBALL := preload("res://assets/effects/zmij_fireball.png")
+const FX_SLAM := preload("res://assets/effects/zmij_slam.png")
+const FX_PILLAR := preload("res://assets/effects/zmij_pillar.png")
+const FX_GAZE := preload("res://assets/effects/wij_gaze.png")
+const FX_MIST := preload("res://assets/effects/wij_mist.png")
+const FX_ROOTS := preload("res://assets/effects/leshy_roots.png")
+## Kula ognia spada 4 klatki (18 kl./s), zanim wybuchnie - animacja rusza tyle przed obrażeniami.
+const FIREBALL_FALL := 4.0 / 18.0
 
 ## Faza walki 1-3 (EventSite pokazuje komunikat przy zmianie - sygnał phase_changed).
 signal phase_changed(phase: int)
@@ -91,6 +102,7 @@ func _choose_attack(to_player: Vector2) -> bool:
 				_spots.append(_player.global_position + Vector2.from_angle(randf() * TAU) * randf_range(50.0, 110.0))
 			for spot: Vector2 in _spots:
 				_marker(spot, FIREBALL_RADIUS, 1.1, FIRE)
+				_fireball_fx(spot, 1.1 - FIREBALL_FALL)
 			_wind_up(1.1, Vector2(0.9, 1.12))
 		elif distance < 420.0:
 			_slam_from = global_position
@@ -142,7 +154,9 @@ func _update_attack(_delta: float) -> void:
 				for i in 6:
 					var at := global_position + _aim.rotated(randf_range(-BREATH_ARC, BREATH_ARC)) * randf_range(40.0, BREATH_RANGE)
 					_fire_patch(at)
-				SkillEffects.spark(get_parent(), global_position + _aim * 60.0, FIRE, 24)
+				SkillEffects.spark(get_parent(), global_position + _aim * 60.0, FIRE, 12)
+				SkillEffects.sheet_once(get_parent(), FX_BREATH, 8, 14.0, global_position + _aim * 10.0 + Vector2(0, -24),
+						Vector2(4, 25), _aim.angle(), 1.45, 1.4)
 				# faza 2+: zionięcie także za siebie
 				if phase >= 2 and not _second:
 					_second = true
@@ -159,8 +173,7 @@ func _update_attack(_delta: float) -> void:
 			if _stage_timer <= 0.0:
 				_snap()
 				for spot: Vector2 in _spots:
-					SkillEffects.shockwave(get_parent(), spot, FIREBALL_RADIUS, FIRE)
-					_burst(spot, FIRE, 12, 120.0)
+					_burst(spot, FIRE, 8, 110.0)
 					if _player_alive() and _player.global_position.distance_to(spot) <= FIREBALL_RADIUS:
 						_hurt_player(fireball_damage, 160.0)
 				Sfx.play_at("explosion", _spots[0])
@@ -180,12 +193,15 @@ func _update_attack(_delta: float) -> void:
 					_hurt_player(slam_damage, 300.0)
 				_remove_telegraph()
 				_ground_crack(global_position, SLAM_RADIUS * 0.8)
-				_debris(global_position, 18, 180.0)
+				_debris(global_position, 10, 160.0)
+				SkillEffects.sheet_once(get_parent(), FX_SLAM, 12, 16.0, global_position, Vector2(118, 86), 0.0, 1.0, 1.15)
 				_shake_camera(9.0)
 				Sfx.play_at("rock_break", global_position)
 				if phase >= 3:
 					for i in 8:
-						_fire_patch(global_position + Vector2.from_angle(TAU * i / 8.0) * SLAM_RADIUS)
+						var at := global_position + Vector2.from_angle(TAU * i / 8.0) * SLAM_RADIUS
+						_fire_patch(at)
+						SkillEffects.sheet_once(get_parent(), FX_PILLAR, 11, 16.0, at, Vector2(87, 124), 0.0, 1.0, 0.45)
 				_set_stage("recover", 0.9)
 		["gaze", "telegraph"]:
 			if _stage_timer <= 0.0:
@@ -193,8 +209,8 @@ func _update_attack(_delta: float) -> void:
 				if _player_in_telegraph():
 					_hurt_player(gaze_damage, 80.0)
 					_player.apply_slow(0.45, 3.0)
-				for i in 10:
-					SkillEffects.spark(get_parent(), global_position + _aim * (30.0 + i * 26.0), GAZE, 4)
+				SkillEffects.sheet_once(get_parent(), FX_GAZE, 12, 16.0, global_position + Vector2(0, -30), Vector2(5, 61),
+						_aim.angle(), 1.2, 1.3)
 				_shake_camera(5.0)
 				if phase >= 3 and not _second:
 					_second = true
@@ -217,17 +233,54 @@ func _update_attack(_delta: float) -> void:
 					_player.apply_slow(0.1, 1.2)
 				_remove_telegraph()
 				_ground_crack(global_position, CLAW_RADIUS * 0.8)
-				_debris(global_position, 14, 150.0, Color(0.35, 0.25, 0.15))
+				_debris(global_position, 8, 130.0, Color(0.35, 0.25, 0.15))
+				for i in 8:
+					var at := global_position + Vector2.from_angle(TAU * i / 8.0 + randf() * 0.4) * Vector2(CLAW_RADIUS * 0.75, CLAW_RADIUS * 0.5)
+					SkillEffects.sheet_once(get_parent(), FX_ROOTS, 10, 16.0, at, Vector2(24, 39), 0.0, 1.0, 1.4, 0.0, i % 2 == 0)
 				Sfx.play_at("roots_burst", global_position)
 				_set_stage("recover", 0.6)
 		["summon", "telegraph"]:
 			if _stage_timer <= 0.0:
 				if site != null and is_instance_valid(site):
 					site.summon_minions(global_position, 3 + phase)
+				SkillEffects.sheet_once(get_parent(), FX_MIST, 14, 16.0, global_position, Vector2(73, 124), 0.0, 1.0, 1.2)
 				_set_stage("recover", 0.6)
 		[_, "recover"]:
 			if _stage_timer <= 0.0:
 				_end_attack()
+
+
+## Spadająca kula ognia po `delay` s - wybucha razem z obrażeniami (FIREBALL_FALL po starcie animacji).
+func _fireball_fx(spot: Vector2, delay: float) -> void:
+	get_tree().create_timer(maxf(delay, 0.0), false).timeout.connect(func() -> void:
+		if state != State.DEAD and _attack == "fireballs" and is_inside_tree():
+			SkillEffects.sheet_once(get_parent(), FX_FIREBALL, 14, 18.0, spot, Vector2(54, 115)))
+
+
+## Wejście do walki: Żmij - ognisty słup, Wij - kłąb mroku.
+func _fx_engage() -> void:
+	if kind == "zmij":
+		SkillEffects.sheet_once(get_parent(), FX_PILLAR, 11, 16.0, global_position, Vector2(87, 124), 0.0, 1.0, fx_scale() * 0.8)
+	else:
+		SkillEffects.sheet_once(get_parent(), FX_MIST, 14, 16.0, global_position, Vector2(73, 124), 0.0, 1.0, fx_scale() * 0.8)
+
+
+## Zmiana fazy: wspólny wybuch mocy i efekt bossa (ognisty krąg / kłąb mroku).
+func _fx_phase() -> void:
+	super()
+	if kind == "zmij":
+		SkillEffects.sheet_once(get_parent(), FX_SLAM, 12, 16.0, global_position, Vector2(118, 86), 0.0, 1.0, 1.5)
+	else:
+		SkillEffects.sheet_once(get_parent(), FX_MIST, 14, 16.0, global_position, Vector2(73, 124), 0.0, 1.0, fx_scale())
+
+
+## Śmierć: wspólny wybuch z duszami i efekt bossa.
+func _fx_death() -> void:
+	super()
+	if kind == "zmij":
+		SkillEffects.sheet_once(get_parent(), FX_PILLAR, 11, 16.0, global_position, Vector2(87, 124), 0.0, 1.0, fx_scale() * 0.7)
+	else:
+		SkillEffects.sheet_once(get_parent(), FX_MIST, 14, 16.0, global_position, Vector2(73, 124), 0.0, 1.0, fx_scale())
 
 
 ## Płonąca ziemia po zionięciu (BurningPatch).
