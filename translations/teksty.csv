@@ -2205,7 +2205,7 @@ Basic attack with the equipped weapon toward the cursor. Drag onto the skill bar
 "+%d%% obrażeń przez %s s, strach %s s, odnowienie %s s","+%d%% damage for %s s, fear %s s, cooldown %s s","skills.gd"
 "+%s many/s i %s%% maks. many/s","+%s mana/s and %s%% max mana/s","skills.gd"
 "+%s zdrowia/s i %s%% maks. zdrowia/s","+%s health/s and %s%% max health/s","skills.gd"
-"Błyskawica przeskakuje błyskawicznie od wroga do wroga. Combo: atak zaraz potem to Fala piorunów.","Lightning leaps swiftly from enemy to enemy. Combo: an attack right after is a Lightning Wave.","skills.gd"
+"Błyskawica przeskakuje błyskawicznie od wroga do wroga. Bez odnowienia: przytrzymaj klawisz, a rzucasz raz za razem, tym szybciej, im większa szybkość rzucania. Combo: atak zaraz potem to Fala piorunów.","Lightning leaps swiftly from enemy to enemy. No cooldown: hold the key to cast it again and again, faster with higher cast speed. Combo: an attack right after is a Lightning Wave.","skills.gd"
 "Błyskawiczne pchnięcie mieczem w stronę kursora, raniące wszystkich na drodze. Combo: atak zaraz potem to Półksiężyc.","A lightning-fast sword thrust toward the cursor, hurting everyone in the way. Combo: an attack right after is a Crescent.","skills.gd"
 "Cierpliwość łowcy","Hunter's Patience","skills.gd"
 "Cięcie %d%% obrażeń, krwawienie %d%% przez 3 s","Slash %d%% damage, bleed %d%% for 3 s","skills.gd"

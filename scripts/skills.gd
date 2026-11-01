@@ -160,7 +160,7 @@ const DATA := {
 	"chain_lightning": {
 		"name": "Łańcuch błyskawic", "weapon": "spell", "type": "strike",
 		"icon": preload("res://assets/skills/chain_lightning.png"),
-		"description": "Błyskawica przeskakuje błyskawicznie od wroga do wroga. Combo: atak zaraz potem to Fala piorunów.",
+		"description": "Błyskawica przeskakuje błyskawicznie od wroga do wroga. Bez odnowienia: przytrzymaj klawisz, a rzucasz raz za razem, tym szybciej, im większa szybkość rzucania. Combo: atak zaraz potem to Fala piorunów.",
 	},
 	"thunder_wave": {
 		"name": "Fala piorunów", "weapon": "spell", "type": "combo", "requires": "chain_lightning",
@@ -231,7 +231,8 @@ const SEEKER_DAMAGE := 0.9
 const VOLLEY_MANA := 6.0
 const VOLLEY_DAMAGE := 0.7
 const CHAIN_MANA := 14.0
-const CHAIN_COOLDOWN := 2.4
+## Czas rzucania łańcucha (s) - bez odnowienia, krótszy z szybkością rzucania.
+const CHAIN_CAST_TIME := 0.6
 const CHAIN_DAMAGE := 1.6
 ## Każdy kolejny przeskok błyskawicy jest o tyle słabszy.
 const CHAIN_FALLOFF := 0.9

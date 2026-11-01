@@ -65,6 +65,7 @@ func _process(_d: float) -> bool:
 			p.equipment.equip("spellbook")
 			check("księga w ręku", p.stats.weapon_type() == "spell")
 			_check_tree(p)
+			_check_chain(p)
 			# Włócznia Marzanny po Kuli ognia: przebija, spowalnia, odłamki
 			_aim_at_enemy(p)
 			_ready_to_cast(p)
@@ -195,6 +196,39 @@ func _check_tree(p) -> void:
 
 
 ## Starsze zapisy: czary kupione za złoto dostają węzły.
+## Łańcuch błyskawic: bez odnowienia, tylko czas rzucania skracany szybkością rzucania; trzymany klawisz rzuca dalej.
+func _check_chain(p) -> void:
+	var Sk = load("res://scripts/skills.gd")
+	if not p.skills.nodes["spell"].has("chain_lightning"):
+		p.skills.nodes["spell"].append("chain_lightning")
+	check("łańcuch jako uderzenie księgi", p.skills.strike_for("spell") == "chain_lightning")
+	_ready_to_cast(p)
+	p._strike_cooldown = 0.0
+	p._use_strike()
+	var base: float = p._strike_cooldown
+	check("łańcuch: tylko czas rzucania", base > 0.0 and is_equal_approx(base, Sk.CHAIN_CAST_TIME / p.stats.cast_speed()), "%.2f s" % base)
+	p.stats.temp_bonus["cast_speed"] = 1.0
+	_ready_to_cast(p)
+	p._strike_cooldown = 0.0
+	p._use_strike()
+	check("łańcuch: szybkość rzucania skraca rzucanie", p._strike_cooldown < base * 0.75, "%.2f -> %.2f s" % [base, p._strike_cooldown])
+	p.stats.temp_bonus.erase("cast_speed")
+	# trzymany klawisz: po końcu rzucania łańcuch idzie sam
+	p._held_ids["chain_lightning"] = true
+	p._strike_cooldown = 0.0
+	p._strike_request = false
+	p._process_strikes()
+	check("łańcuch: trzymany klawisz rzuca dalej", p._strike_cooldown > 0.0)
+	# puszczony klawisz: nic się samo nie rzuca
+	p._held_ids.erase("chain_lightning")
+	p._strike_cooldown = 0.0
+	p._process_strikes()
+	check("łańcuch: puszczony klawisz nie rzuca", p._strike_cooldown == 0.0)
+	p._held_ids.erase("chain_lightning")
+	p._strike_cooldown = 0.0
+	p._combo_window = 0.0
+
+
 func _check_migration() -> void:
 	var book = load("res://scripts/skill_book.gd").new()
 	book.load_save_data({"levels": {"fireball": 3, "chain_lightning": 1, "thunder_wave": 1}, "nodes": {"melee": []}})
