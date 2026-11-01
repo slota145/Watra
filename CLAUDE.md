@@ -155,6 +155,8 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
 ## Oszczędzanie tokenów
 
 - Nowy duży temat zaczynaj w nowej sesji - wszystko ważne jest w tym pliku i w `docs/historia.md`.
+  Po zakończeniu większego tematu od razu daj autorowi gotowy prompt do nowej sesji na kolejny punkt
+  (cel, co już wiadomo, pliki, co dopytać), bez czekania na prośbę.
 - `docs/historia.md` przeszukuj grepem, nie czytaj w całości.
 - Duże pliki (`settlement.gd`, `world.gd`, `items.gd`, `player.gd` mają tysiące linii) czytaj fragmentami: grep, potem
   Read z offset/limit.
