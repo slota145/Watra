@@ -164,6 +164,11 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
 
 Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po graniu.
 
+### Testy
+
+- [ ] `tests/test_world_events.gd` - „meteoryt rani gracza” zawiódł raz na kilka uruchomień (Rozlewiska, losowo);
+  do sprawdzenia, co losowego chroni gracza przed meteorytem (unik, nietykalność).
+
 ### Zasada ogólna: dużo potworów
 
 - [ ] Domyślnie każde siedlisko potworów ma mieć **dziesiątki, a nawet setki potworów**, jak w miejscach farmienia w Black Desert albo w Path of Exile.
@@ -174,7 +179,8 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   potworów na pustych terenach (z własnym wystrojem i sensem) i gęściej w istniejących. Liczy je `tests/bench_combat.gd`
   („spawns”); koszt rośnie z liczbą wrogów atakujących naraz (największa gromada), nie z liczbą w krainie.
   Zrobione: Pola Zbożowe (626), Rozlewiska (617), Wietrzne Turnie (~650, wioska ptakoludzi przeniesiona w róg),
-  Gobliński Las (~590). Dalej: Prastary Las (~409); Leśny Cmentarz ma już 682. Nowe siedliska losuj osobnym ziarnem (jak `FrogPonds`)
+  Gobliński Las (~590), Prastary Las (579); Leśny Cmentarz miał już 682 - wszystkie krainy zrobione, punkt do
+  zamknięcia po ograniu przez autora. Nowe siedliska losuj osobnym ziarnem (jak `FrogPonds`)
   i buduj na końcu, żeby w starych zapisach reszta krainy się nie zmieniła. Przy przebudowie całej krainy podbij
   jej wersję układu (`World.ZONE_LAYOUTS`) - postać ze starego zapisu wróci do kapliczki.
   Do sprawdzenia: walka w środku wioski ptakoludzi kosztuje ok. 15 ms na klatkę (inne gromady 7-9 ms).
