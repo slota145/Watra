@@ -14,7 +14,7 @@ const CONTROLS := [
 	["K", "umiejętności"],
 	["J", "dziennik zadań"],
 	["L", "encyklopedia (legendy, bossowie, potwory, zioła, przedmioty)"],
-	["M", "mapa"],
+	["M", "mapa świata"],
 	["Esc", "zamknij okna / menu gry"],
 ]
 
