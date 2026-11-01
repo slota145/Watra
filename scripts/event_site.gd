@@ -362,7 +362,8 @@ func _process_champion(delta: float) -> void:
 			_summon -= delta
 			if fighting and _summon <= 0.0:
 				_summon = 12.0
-				SkillEffects.spark(w.entities, champion.global_position, Color(1.0, 0.6, 1.0), 16)
+				MiscVfx.ring(w.entities, champion.global_position, 36.0, Color(1.0, 0.6, 1.0))
+				MiscVfx.puff(w.entities, champion.global_position + Vector2(0, -10), Color(1.0, 0.6, 1.0), 0.8)
 				for i in 2:
 					var minion := _spawn_mob(_common_types().pick_random(), champion.global_position + Vector2.from_angle(randf() * TAU) * 30.0, _level)
 					minion.aggro()
@@ -420,7 +421,8 @@ func _process_world_boss() -> void:
 	boss.phase_changed.connect(func(phase: int) -> void:
 		w.hud.show_banner("%s wpada w szał - faza %d!" % [boss.boss_name, phase], WorldEvents.TYPES["world_boss"]["color"]))
 	mobs.append(boss)
-	SkillEffects.shockwave(w.entities, center, 120.0, WorldEvents.TYPES["world_boss"]["color"])
+	MiscVfx.ring(w.entities, center, 120.0, WorldEvents.TYPES["world_boss"]["color"])
+	MiscVfx.debris(w.entities, center, Color(0.55, 0.45, 0.38), 2.0)
 	Sfx.play_at("summon", center)
 	w.player.add_shake(10.0)
 	w.hud.show_banner("%s nadchodzi!" % boss.boss_name, WorldEvents.TYPES["world_boss"]["color"])
@@ -433,7 +435,8 @@ func summon_minions(at: Vector2, count: int) -> void:
 		var mob := _spawn_mob(kinds.pick_random(), at + Vector2.from_angle(randf() * TAU) * randf_range(50.0, 110.0), _level - 2)
 		mob.modulate = Color(0.75, 0.9, 0.8, 0.9)
 		mob.aggro.call_deferred()
-	SkillEffects.spark(w.entities, at, Color(0.6, 1.0, 0.7), 24)
+	MiscVfx.ring(w.entities, at, 90.0, Color(0.6, 1.0, 0.7))
+	MiscVfx.puff(w.entities, at + Vector2(0, -10), Color(0.6, 1.0, 0.7), 1.2)
 
 
 ## Spacerowicze w Ostoi idą tam, gdzie teraz trzeba (w święto - wokół Watry).
@@ -555,7 +558,7 @@ func _process_travelers(delta: float) -> void:
 	data["zone"] = w.zone
 	var at := center + Vector2.from_angle(randf() * TAU) * randf_range(90.0, 150.0)
 	var node: Traveler = w._spawn_traveler(data, "event", at)
-	SkillEffects.spark(w.entities, at + Vector2(0, -12), Color(1.0, 0.6, 0.25), 14)
+	MiscVfx.traveler_flame(w.entities, at, 0.8)
 	if randf() < 0.5:
 		node.say.call_deferred(["Słyszałem o %s!" % event["title"].to_lower(), "Jestem! Gdzie oni są?", "Za Ostoję!",
 				"Ten łup będzie mój!", "Razem damy radę!"].pick_random())
@@ -636,7 +639,8 @@ func _chest(place: int) -> void:
 	chest.offset = Vector2(0, -CHEST.get_height() / 2.0)
 	chest.position = center + Vector2(0, 24)
 	w.entities.add_child(chest)
-	SkillEffects.shockwave(w.entities, chest.position, 40.0, Color(1.0, 0.85, 0.4))
+	MiscVfx.ring(w.entities, chest.position, 40.0, Color(1.0, 0.85, 0.4))
+	MiscVfx.spark(w.entities, chest.position + Vector2(0, -12), Color(1.0, 0.85, 0.4), 1.3)
 	var tween := chest.create_tween()
 	tween.tween_interval(CHEST_LIFE)
 	tween.tween_property(chest, "modulate:a", 0.0, 1.0)

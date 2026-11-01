@@ -1,6 +1,7 @@
 class_name LegendFx
 ## Pomocnicze węzły efektów legend Hydry i Gryfa (LegendaryEffects): fala półksiężyca, wieżyczka ognia,
 ## trąba powietrzna. Każdy rani wrogów wprost (take_damage) - obrażenia z efektów nie wywołują kolejnych efektów.
+## Wygląd - zapętlone efekty z kreatora efektów PixelLab (LegendVfx).
 
 
 ## Półksiężyc wiatru wystrzelony z cięcia miecza (Ostrze Gryfa): leci prosto i rani każdego wroga raz.
@@ -16,6 +17,9 @@ class WindCrescent extends Node2D:
 	func _ready() -> void:
 		rotation = direction.angle()
 		z_index = 3
+		var fx := LegendVfx.wind_crescent()
+		fx.position = Vector2(0, -8).rotated(-rotation)
+		add_child(fx)
 
 	func _process(delta: float) -> void:
 		var step := direction * SPEED * delta
@@ -30,11 +34,6 @@ class WindCrescent extends Node2D:
 		modulate.a = 1.0 - _travelled / RANGE
 		if _travelled >= RANGE:
 			queue_free()
-		queue_redraw()
-
-	func _draw() -> void:
-		draw_arc(Vector2(-6, -8), 16.0, -1.1, 1.1, 14, Color(0.85, 0.95, 1.0, 0.85), 3.0)
-		draw_arc(Vector2(-9, -8), 13.0, -0.9, 0.9, 12, Color(0.6, 0.8, 1.0, 0.5), 2.0)
 
 
 ## Kula ognia, która nie wybucha od razu (Księga Gryfiego Płomienia): wisi w miejscu i strzela płomieniami
@@ -50,11 +49,13 @@ class FireTurret extends Node2D:
 
 	func _ready() -> void:
 		z_index = 3
+		var fx := LegendVfx.fireball()
+		fx.position = Vector2(0, -10)
+		add_child(fx)
 
 	func _process(delta: float) -> void:
 		_time += delta
 		_shot -= delta
-		queue_redraw()
 		if _shot <= 0.0:
 			_shot = SHOT
 			var target: Goblin = null
@@ -65,8 +66,7 @@ class FireTurret extends Node2D:
 					best = d
 					target = enemy
 			if target != null:
-				SkillEffects.bolt(get_parent(), global_position + Vector2(0, -10), target.hurt_center(), 0.18, 3.0)
-				SkillEffects.spark(get_parent(), target.hurt_center(), Color(1.0, 0.6, 0.2), 5)
+				LegendVfx.fire_shot(get_parent(), global_position + Vector2(0, -10), target.hurt_center())
 				target.take_damage(shot_damage, global_position, 30.0)
 				Sfx.play_at("fireball_launch", global_position, -14.0)
 		if _time >= LIFE:
@@ -77,11 +77,6 @@ class FireTurret extends Node2D:
 				explosion.set_physics_process(false)
 				explosion._explode()
 			queue_free()
-
-	func _draw() -> void:
-		var pulse := 1.0 + 0.15 * sin(_time * 14.0)
-		draw_circle(Vector2(0, -10), 7.0 * pulse, Color(1.0, 0.45, 0.1, 0.5))
-		draw_circle(Vector2(0, -10), 4.0 * pulse, Color(1.0, 0.85, 0.4))
 
 
 ## Trąba powietrzna spod stóp biegnącego gracza (Skrzydła Gryfa): sunie przed siebie, wciąga i rani wrogów.
@@ -95,14 +90,19 @@ class Tornado extends Node2D:
 	var _time := 0.0
 	var _tick := 0.0
 
+	var _fx: Node2D
+
 	func _ready() -> void:
 		z_index = 2
+		_fx = LegendVfx.tornado()
+		_fx.scale = Vector2.ONE * 0.75
+		add_child(_fx)
 
 	func _process(delta: float) -> void:
 		_time += delta
 		_tick -= delta
 		global_position += direction * SPEED * delta
-		queue_redraw()
+		_fx.modulate.a = clampf(minf(_time * 4.0, (LIFE - _time) * 3.0), 0.0, 1.0)
 		if _tick <= 0.0:
 			_tick = TICK
 			for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
@@ -113,10 +113,3 @@ class Tornado extends Node2D:
 						enemy._knockback = to_center.normalized() * 80.0
 		if _time >= LIFE:
 			queue_free()
-
-	func _draw() -> void:
-		var fade := clampf(minf(_time * 4.0, (LIFE - _time) * 3.0), 0.0, 1.0)
-		for i in 5:
-			var y := -4.0 - i * 6.0
-			var wobble := sin(_time * 12.0 + i) * 3.0
-			draw_arc(Vector2(wobble, y), 5.0 + i * 2.5, 0.0, TAU, 16, Color(0.85, 0.92, 1.0, 0.5 * fade), 1.5)

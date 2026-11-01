@@ -55,22 +55,7 @@ func emerge() -> void:
 	$CollisionShape2D.set_deferred("disabled", false)
 	$Shadow.visible = true
 	Sfx.play_at("drowner_emerge", global_position)
-	var splash := CPUParticles2D.new()
-	splash.position = Vector2(0, -4)
-	splash.one_shot = true
-	splash.explosiveness = 0.9
-	splash.amount = 16
-	splash.lifetime = 0.6
-	splash.direction = Vector2.UP
-	splash.spread = 50.0
-	splash.initial_velocity_min = 40.0
-	splash.initial_velocity_max = 80.0
-	splash.gravity = Vector2(0, 200)
-	splash.scale_amount_max = 2.0
-	splash.color = Color(0.6, 0.85, 1.0)
-	splash.emitting = true
-	add_child(splash)
-	splash.finished.connect(splash.queue_free)
+	MonsterFx.splash(get_parent(), global_position)
 
 
 ## Wezwany przez Wodnika z kałuży - od razu się wynurza i rusza do ataku.

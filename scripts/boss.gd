@@ -267,25 +267,13 @@ func _shake_camera(strength: float) -> void:
 		_player._shake = maxf(_player._shake, strength)
 
 
-## Kurz / odłamki rozbryzgujące się po uderzeniu.
+## Kurz, dym albo iskry rozbryzgujące się po uderzeniu (efekty z kreatora efektów PixelLab - MiscVfx,
+## barwione kolorem `color`): kłąb w rozmiarze z siły `power`, przy jasnym kolorze także iskry.
 func _burst(pos: Vector2, color: Color, amount: int, power: float) -> void:
-	var p := CPUParticles2D.new()
-	p.global_position = pos
-	p.one_shot = true
-	p.explosiveness = 1.0
-	p.amount = amount
-	p.lifetime = 0.6
-	p.spread = 180.0
-	p.direction = Vector2.UP
-	p.initial_velocity_min = power * 0.4
-	p.initial_velocity_max = power
-	p.gravity = Vector2(0, 120)
-	p.scale_amount_min = 1.5
-	p.scale_amount_max = 3.0
-	p.color = color
-	p.emitting = true
-	get_parent().add_child(p)
-	p.finished.connect(p.queue_free)
+	var size := clampf(power / 110.0, 0.4, 1.6) * (0.8 if amount < 10 else 1.0)
+	MiscVfx.puff(get_parent(), pos, color, size)
+	if color.get_luminance() > 0.5:
+		MiscVfx.spark(get_parent(), pos, color, size * 1.2)
 
 
 # ---------------------------------------------------------------- efekty ataków
@@ -295,30 +283,9 @@ func _ground_crack(pos: Vector2, radius: float, life := 3.0) -> void:
 	SkillEffects.ground_crack(layer if layer != null else get_parent(), pos, radius, life)
 
 
-## Odłamki ziemi i kamieni podrzucone uderzeniem (spadają z grawitacją).
+## Odłamki ziemi i kamieni podrzucone uderzeniem z punktu na ziemi (MiscVfx.debris w kolorze `color`).
 func _debris(pos: Vector2, amount: int, power: float, color := Color(0.42, 0.33, 0.24)) -> void:
-	var p := CPUParticles2D.new()
-	p.global_position = pos
-	p.one_shot = true
-	p.explosiveness = 0.95
-	p.amount = amount
-	p.lifetime = 0.9
-	p.spread = 70.0
-	p.direction = Vector2.UP
-	p.initial_velocity_min = power * 0.5
-	p.initial_velocity_max = power
-	p.gravity = Vector2(0, 420)
-	p.angular_velocity_min = -360.0
-	p.angular_velocity_max = 360.0
-	p.scale_amount_min = 2.0
-	p.scale_amount_max = 4.5
-	var ramp := Gradient.new()
-	ramp.colors = PackedColorArray([color.lightened(0.15), color.darkened(0.35)])
-	p.color_ramp = ramp
-	p.z_index = 3
-	p.emitting = true
-	get_parent().add_child(p)
-	p.finished.connect(p.queue_free)
+	MiscVfx.debris(get_parent(), pos, color.lightened(0.15), clampf(power / 150.0, 0.6, 1.6) * (0.8 if amount < 6 else 1.0))
 
 
 ## Powidok sylwetki w ruchu (skok, szarża) - przezroczysta kopia bieżącej klatki gasnąca w miejscu.

@@ -116,7 +116,7 @@ func _split(enemy: Goblin) -> void:
 		child._last_hit = enemy
 		get_parent().add_child.call_deferred(child)
 	split = 0
-	SkillEffects.spark(get_parent(), global_position + Vector2(0, -HEIGHT), Color(1.0, 0.8, 0.3), 8)
+	MiscVfx.spark(get_parent(), global_position + Vector2(0, -HEIGHT), Color(1.0, 0.8, 0.3), 1.0)
 
 
 func _is_alive(enemy: Goblin) -> bool:

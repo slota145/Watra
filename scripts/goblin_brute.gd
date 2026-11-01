@@ -15,7 +15,7 @@ func _process_attack(delta: float) -> void:
 	_cooldown = attack_cooldown
 	state = State.CHASE
 	Sfx.play_at("hit_heavy", global_position)
-	SkillEffects.shockwave(get_parent(), global_position, slam_radius, Color(0.55, 0.45, 0.3))
+	BossFx.slam(get_parent(), global_position, slam_radius)
 	if _player_alive() and global_position.distance_to(_player.global_position) <= slam_radius + 6.0:
 		_player.take_damage(damage, global_position)
 		_player.add_shake(3.0)

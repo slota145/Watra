@@ -1311,7 +1311,7 @@ func _process_festival(delta: float) -> void:
 	if _festival_fire <= 0.0:
 		_festival_fire = randf_range(2.5, 5.0)
 		var at := _px(WATRA_POS) + Vector2(randf_range(-90, 90), randf_range(-110, -60))
-		SkillEffects.spark(_entities, at, Color.from_hsv(randf(), 0.6, 1.0), 18)
+		WorldVfx.firework(_entities, at)
 		Sfx.play_at("explosion", at, -20.0)
 
 
@@ -1325,7 +1325,7 @@ func _process_celebration(delta: float) -> void:
 			_firework_timer = randf_range(0.6, 1.4)
 			_fireworks -= 1
 			var at := _px(PLAZA) + Vector2(randf_range(-60, 60), randf_range(-90, -50))
-			SkillEffects.spark(_entities, at, Color.from_hsv(randf(), 0.6, 1.0), 16)
+			WorldVfx.firework(_entities, at)
 			Sfx.play_at("explosion", at, -18.0)
 	if _celebration_left <= 0.0:
 		for node in _celebration:

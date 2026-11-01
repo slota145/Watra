@@ -257,6 +257,33 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 - [x] Królowa Pająków nie stoi już do gracza tyłem (na obrotach z PixelLab patrzyła w lewo - `tools/pixellab_sheets.py`,
   `creature(..., mirror=True)` odbija klatki); mniejsze kokony z uwięzionymi ludźmi (`pair(..., scale=0.6)`, 33 zamiast
   55 px) i owinięte ofiary (`PROP_SCALE` - połowa, 30 zamiast 61 px) - człowiek mniej więcej wzrostu postaci.
+- [x] Efekty legendarnych przedmiotów z kreatora efektów (`scripts/legend_vfx.gd` - `LegendVfx`, wpisy "legend_*"
+  w `ids.json`): złota fala uderzeniowa (Sygnet Gruzłoga), fala wody (Oko Przypływu, Płaszcz Topielca) i złota fala
+  dźwięku z nutami (Berło) w stożku, trująca chmura (Łuski Hydry), półksiężyc wiatru (Ostrze Gryfa), wachlarz piór,
+  sieć, leczenie krwią i liśćmi, krążące i pękające kości (Kościana Korona); reszta legend używa efektów swoich
+  bossów i umiejętności (piorun z nieba i łańcuch błyskawic, wir Wodnika, korzenie Leszego, dym i ryk Biesa, kwas,
+  wybuch bomby, fontanna Czerwia, krąg dusz Mortana, uderzenie Gnilca, pnącza i fletnia Fauna, trąba Gryfa, kula
+  ognia - `LegendFx`); echo (Kieł Alfy) barwi efekt na niebiesko. Pęknięcia ziemi (`ground_crack`) i język Bulgora zostają.
+- [x] Efekty świata i interfejsu z kreatora efektów (`scripts/world_vfx.gd` - `WorldVfx`, wpisy `burning_*`, `boulder_break`,
+  `firework_*`, `loot_*`, `enchant_*` w `ids.json`): płonąca ziemia i trujący opar jako zapętlone kręgi płomieni
+  (`BurningPatch`, skalowane do promienia), odłamki i pył rozbitego głazu, fajerwerki na Święcie (kwiat iskier albo
+  rakieta, białe rysunki barwione losowym kolorem), zapętlony błysk łupu na ziemi (niebieski - magiczny, złoty - rzadki;
+  wspólne klatki, więc setki łupów mało kosztują) i iskry legendy w słupie światła, złoty błysk w powiadomieniu o łupie,
+  w oknie zaklinania krążące złote runy w trakcie, złoty rozbłysk z gwiazdkami po sukcesie i czerwone pęknięcie z dymem
+  po porażce. Mgła, muchy, zarodniki, dym z kominów, para i iskierki ziół zostają.
+- [x] Efekty zwykłych potworów z kreatora efektów (`scripts/monster_fx.gd` - `MonsterFx`, wpisy "mob_*" w `ids.json`):
+  przy śmierci każdego potwora jeden krótki obłoczek w jego kolorze (`map_color`, losowo odbity - bez cząsteczek,
+  bo padają setkami), rozsypane kości szkieletu, drzazgi drzewca i prastarego drzewa; plucie żabołaków i kula wody
+  topielicy jako zapętlona animacja, pociski z drzewcem ze smugą, rozpryski trafień; piorun szamana ptakoludzi
+  (`storm_strike`), uderzenie osiłka (`BossFx.slam`), pył kopca i fontanna ziemi robaka, szkielet wygrzebujący się
+  w pyle, plusk utopca, nuty rusałki, wybuch ognika.
+- [x] Pozostałe stare efekty z kreatora efektów (`scripts/misc_vfx.gd` - `MiscVfx`, wpisy `misc_*`, `meteor_*`,
+  `crystal_shatter`, `traveler_flame` w `ids.json`): iskry, kłąb dymu, odłamki i fala po ziemi narysowane w szarościach
+  i barwione kolorem źródła (zamiast `SkillEffects.spark` / `shockwave` i cząsteczek) - sojusznicy i przywołańcy,
+  `Boss._burst` / `_debris`, wydarzenia w świecie, Kryształ Watry, drobne iskry umiejętności; krąg przyzwania bossa
+  (`SummonCircle`), ognisty ogon i uderzenie meteorytu, rozprysk Kryształu Watry, płomień Watry przy przybyciu
+  i odejściu podróżnika, wirujący krąg dymu (ładowanie Dymnych Wybuchów, chmura Dym i Cień), trzask wyładowań
+  Gromoskrzydłego; podróżnicy i rywale tną i trafiają efektami gracza (`sword_slash`, `sword_hit`, `spell_hit`).
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

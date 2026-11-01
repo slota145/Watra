@@ -78,5 +78,6 @@ func _nearest_enemy() -> Goblin:
 
 
 func _crumble() -> void:
-	SkillEffects.spark(get_parent(), global_position + Vector2(0, -8), tint, 10)
+	MiscVfx.debris(get_parent(), global_position, tint, 0.5)
+	MiscVfx.puff(get_parent(), global_position + Vector2(0, -4), tint, 0.4)
 	queue_free()

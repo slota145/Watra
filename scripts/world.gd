@@ -1698,7 +1698,7 @@ func _finish_summon(spawn: Dictionary) -> void:
 	tween.tween_property(boss, "scale", Vector2.ONE, 0.45).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_ELASTIC)
 	tween.tween_property(boss, "modulate", Color.WHITE, 0.6)
 	player.add_shake(6.0)
-	SkillEffects.shockwave(entities, spawn["position"], 46.0, SummonCircle.COLOR)
+	MiscVfx.ring(entities, spawn["position"], 46.0, SummonCircle.COLOR)
 	hud.show_banner("Przyzwano: %s!" % boss.get("boss_name"), SummonCircle.SHINE)
 
 

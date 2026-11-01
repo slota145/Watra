@@ -142,7 +142,7 @@ const GATHER_RANGE := 110.0
 const FEATHER_RADIUS := 60.0
 const POISON_COLOR := Color(0.55, 0.95, 0.35)
 var _aura_tick := 0.0
-var _aura: CPUParticles2D
+var _aura: Node2D
 var _trail_timer := 0.0
 var _tornado_timer := 0.0
 const WHIRL_RADIUS := 64.0
@@ -339,7 +339,7 @@ func _claw(enemy: Goblin, at: Vector2, side: float, echo: bool) -> void:
 		return
 	if is_instance_valid(enemy) and enemy.state != Goblin.State.DEAD:
 		at = enemy.hurt_center()
-	SkillEffects.claw(_player.get_parent(), at, side, CLAW_SIZE, ECHO_COLOR if echo else Color.WHITE)
+	BossFx.claw(_player.get_parent(), at, side, CLAW_SIZE / 28.0)
 	Sfx.play_at("claw", at)
 	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if other.hurt_center().distance_to(at) <= CLAW_RADIUS + other.hurt_radius:
@@ -368,28 +368,22 @@ func _thunder(enemy: Goblin, at: Vector2, echo: bool) -> void:
 		targets.append(next)
 		from = next.hurt_center()
 	var parent := _player.get_parent()
-	SkillEffects.bolt(parent, at + Vector2(randf_range(-16, 16), -170), at, 0.35, 9.0)
-	SkillEffects.spark(parent, at, ECHO_COLOR if echo else Color(0.75, 0.9, 1.0), 12)
+	LegendVfx.thunder(parent, at, echo)
 	Sfx.play_at("thunder", at, -6.0 if echo else -3.0)
 	_player.add_shake(2.0)
 	from = at
 	for target in targets:
 		if target != enemy:
-			SkillEffects.bolt(parent, from, target.hurt_center(), 0.3, 6.0)
+			LegendVfx.chain(parent, from, target.hurt_center())
+			SpellSkills.zap_flash(parent, target.hurt_center())
 		target.take_damage(_player.roll_damage(THUNDER_DAMAGE), from, 60.0)
 		from = target.hurt_center()
 
 
 ## Wir pod trafionym: przez chwilę wciąga wrogów do środka i co pół sekundy rani.
 func _whirlpool(at: Vector2, echo: bool) -> void:
-	var fx := Wodnik.WhirlFx.new()
-	fx.radius = WHIRL_RADIUS
-	fx.life = WHIRL_TIME
-	if echo:
-		fx.modulate = ECHO_COLOR
 	var layer := get_tree().get_first_node_in_group("floor_layer")
-	(layer if layer != null else _player.get_parent()).add_child(fx)
-	fx.global_position = at
+	LegendVfx.whirlpool(layer if layer != null else _player.get_parent(), at, WHIRL_RADIUS, WHIRL_TIME, echo)
 	Sfx.play_at("whirlpool", at, -4.0)
 	var ticks := int(WHIRL_TIME / 0.5)
 	for i in ticks:
@@ -426,19 +420,18 @@ func on_dash(from: Vector2, to: Vector2) -> void:
 		return
 	var parent := _player.get_parent()
 	var lift := Vector2(0, -8)
-	SkillEffects.bolt(parent, from + lift, to + lift, 0.45, 5.0)
-	SkillEffects.bolt(parent, from + lift, to + lift, 0.3, 7.0)
+	LegendVfx.chain(parent, from + lift, to + lift)
 	Sfx.play_at("zap", to)
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
 		var point := Geometry2D.get_closest_point_to_segment(enemy.global_position, from, to)
 		if point.distance_to(enemy.global_position) <= DASH_TRAIL_WIDTH + enemy.hurt_radius:
 			enemy.take_damage(_player.roll_damage(power), point, 50.0)
-			SkillEffects.spark(parent, enemy.hurt_center(), Color(0.75, 0.9, 1.0), 6)
+			SpellSkills.zap_flash(parent, enemy.hurt_center())
 
 
 ## Fala uderzeniowa: rani i ogłusza trafionego oraz wszystkich dookoła.
 func _shockwave(at: Vector2, echo: bool) -> void:
-	SkillEffects.shockwave(_player.get_parent(), at + Vector2(0, 4), SHOCK_RADIUS, ECHO_COLOR if echo else Items.LEGENDARY_COLOR)
+	LegendVfx.shockwave(_player.get_parent(), at + Vector2(0, 8), SHOCK_RADIUS, echo)
 	Sfx.play_at("shockwave", at, -2.0 if echo else 0.0)
 	_player.add_shake(3.0)
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
@@ -453,7 +446,7 @@ func _shockwave(at: Vector2, echo: bool) -> void:
 ## Fala wody: stożek od trafionego w stronę od gracza - rani i odrzuca wrogów.
 func _tide(at: Vector2, away: Vector2, echo: bool) -> void:
 	var origin := at - away * 10.0
-	SkillEffects.tide(_player.get_parent(), origin, away.angle(), TIDE_HALF_ANGLE, TIDE_RADIUS, echo)
+	LegendVfx.tide(_player.get_parent(), origin, away.angle(), TIDE_RADIUS, echo)
 	Sfx.play_at("tide_wave", at, -2.0 if echo else 0.0)
 	_player.add_shake(2.0)
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
@@ -470,11 +463,7 @@ func _tide(at: Vector2, away: Vector2, echo: bool) -> void:
 ## Korzenie spod ziemi: ranią i oplątują (ogłuszają) wrogów wokół trafionego.
 func _roots(at: Vector2, echo: bool) -> void:
 	var parent := _player.get_parent()
-	SkillEffects.shockwave(parent, at, ROOTS_RADIUS, ECHO_COLOR if echo else ROOTS_COLOR)
-	for i in 6:
-		var spot := at + Vector2.from_angle(TAU * i / 6.0 + randf()) * randf_range(8.0, ROOTS_RADIUS)
-		SkillEffects.spark(parent, spot, ROOTS_COLOR, 5)
-		SkillEffects.spark(parent, spot, Color(0.4, 0.7, 0.3), 3)
+	LegendVfx.roots(parent, at, ROOTS_RADIUS, 6, false, echo)
 	Sfx.play_at("roots_burst", at, -3.0)
 	_player.add_shake(2.0)
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
@@ -502,9 +491,7 @@ func _thorns() -> void:
 	_cooldowns["thorns"] = COOLDOWN
 	var at := _player.global_position
 	var parent := _player.get_parent()
-	SkillEffects.shockwave(parent, at, THORNS_RADIUS, Color(0.45, 0.75, 0.3))
-	for i in 10:
-		SkillEffects.spark(parent, at + Vector2.from_angle(TAU * i / 10.0) * THORNS_RADIUS * 0.7, ROOTS_COLOR, 3)
+	LegendVfx.roots(parent, at, THORNS_RADIUS * 0.7, 8, true)
 	Sfx.play_at("roots_burst", at, -2.0)
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if enemy.global_position.distance_to(at) <= THORNS_RADIUS + enemy.hurt_radius:
@@ -513,7 +500,7 @@ func _thorns() -> void:
 
 ## Pierścień Królowej: jad na trafionym i wrogach tuż obok.
 func _venom_burst(enemy: Goblin, at: Vector2) -> void:
-	SkillEffects.spark(_player.get_parent(), at, VENOM_COLOR, 10)
+	BossFx.acid(_player.get_parent(), at, VENOM_RADIUS)
 	Sfx.play_at("spit_hit", at, -6.0)
 	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if other == enemy or other.hurt_center().distance_to(at) <= VENOM_RADIUS + other.hurt_radius:
@@ -524,19 +511,10 @@ func _venom_burst(enemy: Goblin, at: Vector2) -> void:
 func poison(enemy: Goblin) -> void:
 	if not is_instance_valid(enemy) or enemy.state == Goblin.State.DEAD or enemy.has_node("Venom"):
 		return
-	var fumes := CPUParticles2D.new()
+	var fumes := LegendVfx.venom_fumes()
 	fumes.name = "Venom"
 	fumes.position = enemy.hurt_center() - enemy.global_position
-	fumes.amount = 8
-	fumes.lifetime = 0.8
-	fumes.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-	fumes.emission_sphere_radius = 6.0
-	fumes.direction = Vector2.UP
-	fumes.gravity = Vector2(0, -25)
-	fumes.initial_velocity_min = 4.0
-	fumes.initial_velocity_max = 10.0
-	fumes.scale_amount_max = 2.0
-	fumes.color = Color(VENOM_COLOR, 0.8)
+	fumes.z_index = 2
 	enemy.add_child(fumes)
 	for i in VENOM_TICKS:
 		get_tree().create_timer(0.5 * (i + 1)).timeout.connect(_venom_tick.bind(enemy.get_instance_id(), i == VENOM_TICKS - 1))
@@ -555,25 +533,8 @@ func _venom_tick(enemy_id: int, last: bool) -> void:
 
 ## Róg Biesa: kłąb czarnego dymu i ryk - rani wrogów wokół trafionego, a ci w strachu uciekają od gracza.
 func _fear(at: Vector2, echo: bool) -> void:
-	var smoke := CPUParticles2D.new()
-	smoke.one_shot = true
-	smoke.explosiveness = 0.9
-	smoke.amount = 30
-	smoke.lifetime = 0.9
-	smoke.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-	smoke.emission_sphere_radius = 14.0
-	smoke.spread = 180.0
-	smoke.gravity = Vector2(0, -20)
-	smoke.initial_velocity_min = 30.0
-	smoke.initial_velocity_max = 80.0
-	smoke.scale_amount_min = 3.0
-	smoke.scale_amount_max = 6.0
-	smoke.color = ECHO_COLOR if echo else Color(0.1, 0.05, 0.08, 0.8)
-	smoke.emitting = true
-	_player.get_parent().add_child(smoke)
-	smoke.global_position = at
-	smoke.finished.connect(smoke.queue_free)
-	SkillEffects.shockwave(_player.get_parent(), at, FEAR_RADIUS, Color(0.8, 0.15, 0.1))
+	BossFx.smoke(_player.get_parent(), at, 0.8 if echo else 1.0)
+	BossFx.roar(_player.get_parent(), at + Vector2(0, 8), FEAR_RADIUS)
 	Sfx.play_at("bies_roar", at, -8.0)
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if enemy.hurt_center().distance_to(at) > FEAR_RADIUS + enemy.hurt_radius:
@@ -607,7 +568,7 @@ func on_kill(enemy: Goblin) -> void:
 			_soul_nova(_player.equipment.effect_power("soul_harvest"))
 	if randf() < chance("devour"):
 		_player.heal(_player.stats.max_health() * DEVOUR_HEAL)
-		SkillEffects.spark(_player.get_parent(), _player.body_center(), Color(0.9, 0.4, 0.4), 6)
+		LegendVfx.heal(_player.get_parent(), _player.global_position)
 	if _cooldowns.get("brood", 0.0) <= 0.0 and randf() < chance("brood"):
 		_cooldowns["brood"] = COOLDOWN
 		for i in BROOD_COUNT:
@@ -652,8 +613,7 @@ func _throw_bomb(target: Vector2) -> void:
 ## Wybuch raniący wrogów w promieniu (Kostur Bombardiera, Naszyjnik z Lontów).
 func _explosion(at: Vector2, radius: float, damage: float, echo: bool) -> void:
 	var parent := _player.get_parent()
-	SkillEffects.shockwave(parent, at, radius, ECHO_COLOR if echo else FIRE_COLOR)
-	SkillEffects.spark(parent, at, FIRE_COLOR, 10)
+	BossFx.bomb(parent, at, radius * (0.8 if echo else 1.0))
 	Sfx.play_at("explosion", at, -10.0)
 	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if other.hurt_center().distance_to(at) <= radius + other.hurt_radius:
@@ -664,7 +624,7 @@ func _explosion(at: Vector2, radius: float, damage: float, echo: bool) -> void:
 func _earth_spike(at: Vector2, echo: bool) -> void:
 	var layer := get_tree().get_first_node_in_group("floor_layer")
 	SkillEffects.ground_crack(layer if layer != null else _player.get_parent(), at, SPIKE_RADIUS, 1.5)
-	SkillEffects.spark(_player.get_parent(), at + Vector2(0, -8), ECHO_COLOR if echo else EARTH_COLOR, 12)
+	BossFx.spikes(_player.get_parent(), at, 0.7 if echo else 0.85)
 	Sfx.play_at("rock_break", at, -8.0)
 	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if other.global_position.distance_to(at) <= SPIKE_RADIUS + other.hurt_radius:
@@ -704,7 +664,7 @@ func _try_burrow(amount: int) -> bool:
 	_player._invulnerable_timer = BURROW_TIME + 0.3
 	var at := _player.global_position
 	var parent := _player.get_parent()
-	SkillEffects.spark(parent, at, EARTH_COLOR, 16)
+	BossFx.burrow(parent, at, 0.6)
 	Sfx.play_at("mine", at)
 	DamageNumber.spawn_text(parent, _player.body_center() + Vector2(0, -16), "Zakopanie!", EARTH_COLOR, 9)
 	var tween := _player.create_tween()
@@ -722,7 +682,8 @@ func _erupt_from_burrow() -> void:
 	var parent := _player.get_parent()
 	var layer := get_tree().get_first_node_in_group("floor_layer")
 	SkillEffects.ground_crack(layer if layer != null else parent, at, BURROW_RADIUS * 0.7, 3.0)
-	SkillEffects.shockwave(parent, at, BURROW_RADIUS, EARTH_COLOR)
+	BossFx.burrow(parent, at, 0.9)
+	BossFx.slam(parent, at, BURROW_RADIUS)
 	Sfx.play_at("rock_break", at)
 	_player.add_shake(5.0)
 	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
@@ -748,7 +709,7 @@ func _process_tremor(delta: float) -> void:
 			hit.append(other)
 	if hit.is_empty():
 		return
-	SkillEffects.shockwave(_player.get_parent(), at, TREMOR_RADIUS, EARTH_COLOR)
+	LegendVfx.stomp(_player.get_parent(), at, TREMOR_RADIUS)
 	Sfx.play_at("tree_rumble", at, -10.0)
 	for other in hit:
 		other.take_damage(_player.roll_damage(power), at, 90.0)
@@ -759,9 +720,7 @@ func _process_tremor(delta: float) -> void:
 func _soul_nova(power: float) -> void:
 	var at := _player.global_position
 	var parent := _player.get_parent()
-	SkillEffects.shockwave(parent, at, SOUL_RADIUS, SOUL_COLOR)
-	for i in 12:
-		SkillEffects.spark(parent, at + Vector2.from_angle(TAU * i / 12.0) * SOUL_RADIUS * 0.6 + Vector2(0, -10), SOUL_COLOR, 3)
+	LegendVfx.soul_nova(parent, at, SOUL_RADIUS)
 	Sfx.play_at("wisp_burst", at, -4.0)
 	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if other.global_position.distance_to(at) <= SOUL_RADIUS + other.hurt_radius:
@@ -777,21 +736,13 @@ func _process_bone_armor(delta: float) -> void:
 			_bone_orbit = null
 		return
 	if _bone_orbit != null:
-		_bone_orbit.rotation += delta * 3.0
 		return
 	_bone_armor_timer -= delta
 	if _bone_armor_timer > 0.0:
 		return
-	_bone_orbit = Node2D.new()
+	_bone_orbit = LegendVfx.bone_orbit()
 	_bone_orbit.position = Vector2(0, -12)
 	_bone_orbit.z_index = 2
-	for i in 4:
-		var bone := Line2D.new()
-		var dir := Vector2.from_angle(TAU * i / 4.0)
-		bone.points = PackedVector2Array([dir * 14.0 - dir.orthogonal() * 3.0, dir * 14.0 + dir.orthogonal() * 3.0])
-		bone.width = 2.0
-		bone.default_color = Skeleton.BONE_COLOR
-		_bone_orbit.add_child(bone)
 	_player.add_child(_bone_orbit)
 
 
@@ -802,7 +753,7 @@ func _try_bone_armor(amount: int) -> bool:
 	_bone_orbit.queue_free()
 	_bone_orbit = null
 	_bone_armor_timer = BONE_ARMOR_PERIOD
-	SkillEffects.spark(_player.get_parent(), _player.body_center(), Skeleton.BONE_COLOR, 12)
+	LegendVfx.bone_burst(_player.get_parent(), _player.body_center())
 	Sfx.play_at("rock_break", _player.global_position, -8.0)
 	if amount <= limit:
 		_player._invulnerable_timer = _player.invulnerability_time
@@ -831,12 +782,12 @@ func _rend(enemy: Goblin) -> void:
 	if not is_instance_valid(enemy) or enemy.state == Goblin.State.DEAD:
 		return
 	var per_tick := _player.roll_damage(1.5 / REND_TICKS)
-	SkillEffects.spark(_player.get_parent(), enemy.hurt_center(), Color(0.8, 0.1, 0.1), 6)
+	LegendVfx.wound(_player.get_parent(), enemy.hurt_center())
 	for i in REND_TICKS:
 		get_tree().create_timer(0.5 * (i + 1)).timeout.connect(func() -> void:
 			if is_instance_valid(enemy) and enemy.state != Goblin.State.DEAD:
 				enemy.take_damage(per_tick, enemy.global_position, 0.0)
-				SkillEffects.spark(enemy.get_parent(), enemy.hurt_center(), Color(0.7, 0.05, 0.05), 2))
+				LegendVfx.wound(enemy.get_parent(), enemy.hurt_center(), 0.5))
 
 
 ## Nagolenice Trupojada: koniec uniku miażdży ziemię.
@@ -847,7 +798,7 @@ func _corpse_leap(at: Vector2) -> void:
 	_cooldowns["corpse_leap"] = 0.8
 	var layer := get_tree().get_first_node_in_group("floor_layer")
 	SkillEffects.ground_crack(layer if layer != null else _player.get_parent(), at, LEAP_RADIUS * 0.8, 2.0)
-	SkillEffects.shockwave(_player.get_parent(), at, LEAP_RADIUS, Color(0.6, 0.75, 0.45))
+	LegendVfx.ghoul_slam(_player.get_parent(), at, LEAP_RADIUS)
 	Sfx.play_at("rock_break", at, -6.0)
 	_player.add_shake(3.0)
 	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
@@ -928,6 +879,7 @@ func _tongue(enemy: Goblin, at: Vector2) -> void:
 	var tween := line.create_tween()
 	tween.tween_property(line, "modulate:a", 0.0, 0.25)
 	tween.tween_callback(line.queue_free)
+	LegendVfx.splash(_player.get_parent(), best.global_position)
 	Sfx.play_at("tongue_lash", at, -6.0)
 	best.take_damage(_player.roll_damage(0.8), at, 0.0)
 	if not best is Boss and best.state != Goblin.State.DEAD:
@@ -936,9 +888,7 @@ func _tongue(enemy: Goblin, at: Vector2) -> void:
 
 ## Żądło Królowej: sieć oplątuje wrogów wokół trafionego.
 func _web_burst(at: Vector2) -> void:
-	var parent := _player.get_parent()
-	for i in 8:
-		SkillEffects.spark(parent, at + Vector2.from_angle(TAU * i / 8.0) * WEB_RADIUS * 0.6, Color(0.92, 0.92, 1.0), 2)
+	LegendVfx.web(_player.get_parent(), at, WEB_RADIUS)
 	Sfx.play_at("spider_hiss", at, -10.0)
 	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if other.hurt_center().distance_to(at) <= WEB_RADIUS + other.hurt_radius:
@@ -952,7 +902,7 @@ func _tidal_dodge(from: Vector2, to: Vector2) -> void:
 		return
 	_cooldowns["tidal_dodge"] = 0.8
 	var dir := from.direction_to(to)
-	SkillEffects.tide(_player.get_parent(), from, dir.angle(), 0.7, TIDE_DODGE_RADIUS)
+	LegendVfx.tide(_player.get_parent(), from, dir.angle(), TIDE_DODGE_RADIUS)
 	Sfx.play_at("tide_wave", from, -6.0)
 	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
 		var rel := other.global_position - from
@@ -972,8 +922,8 @@ func _process_rooted_regen(delta: float) -> void:
 	if _still_time < 0.8 or _player.health >= _player.stats.max_health():
 		return
 	_player.heal(_player.stats.max_health() * power * delta)
-	if randf() < delta * 3.0:
-		SkillEffects.spark(_player.get_parent(), _player.global_position + Vector2(randf_range(-8, 8), -2), ROOTS_COLOR, 2)
+	if randf() < delta * 1.2:
+		LegendVfx.heal(_player.get_parent(), _player.global_position, true)
 
 
 # ---------------------------------------------------------------- legendy Hydry i Gryfa
@@ -986,8 +936,7 @@ func on_enemy_died(enemy: Goblin) -> void:
 	_cooldowns["corpse_blast"] = 0.08
 	var at := enemy.global_position
 	var parent := _player.get_parent()
-	SkillEffects.shockwave(parent, at, CORPSE_RADIUS, POISON_COLOR)
-	SkillEffects.spark(parent, at + Vector2(0, -6), POISON_COLOR, 12)
+	BossFx.acid(parent, at, CORPSE_RADIUS)
 	Sfx.play_at("spit_hit", at, -4.0)
 	# obrażenia z opóźnieniem - wybuch nie rani w tej samej klatce, w której wróg padł (łańcuchy wybuchów)
 	get_tree().create_timer(0.05).timeout.connect(func() -> void:
@@ -1044,24 +993,13 @@ func _venom_chain(enemy: Goblin) -> void:
 	others.sort_custom(func(a, b) -> bool:
 		return a.global_position.distance_to(enemy.global_position) < b.global_position.distance_to(enemy.global_position))
 	for other in others.slice(0, 2):
-		SkillEffects.bolt(_player.get_parent(), enemy.hurt_center(), other.hurt_center(), 0.25, 3.0)
+		BossFx.acid(_player.get_parent(), other.hurt_center(), 16.0)
 		poison(other)
 
 
 ## Grzebień Gryfa: wachlarz piór z trafionego.
 func _feather_storm(at: Vector2, echo: bool) -> void:
-	var parent := _player.get_parent()
-	for i in 10:
-		var dir := Vector2.from_angle(TAU * i / 10.0)
-		var line := Line2D.new()
-		line.points = PackedVector2Array([at + dir * 6.0, at + dir * FEATHER_RADIUS])
-		line.width = 2.0
-		line.default_color = ECHO_COLOR if echo else Color(1.0, 0.85, 0.45)
-		line.z_index = 4
-		parent.add_child(line)
-		var tween := line.create_tween()
-		tween.tween_property(line, "modulate:a", 0.0, 0.3)
-		tween.tween_callback(line.queue_free)
+	LegendVfx.feathers(_player.get_parent(), at, FEATHER_RADIUS, echo)
 	Sfx.play_at("wing_gust", at, -8.0)
 	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if other.hurt_center().distance_to(at) <= FEATHER_RADIUS + other.hurt_radius:
@@ -1075,19 +1013,8 @@ func _process_hydra_gryf(delta: float) -> void:
 	var equipment := _player.equipment
 	var aura := equipment.effect_power("toxic_aura")
 	if aura > 0.0 and _aura == null:
-		_aura = CPUParticles2D.new()
-		_aura.amount = 16
-		_aura.lifetime = 1.2
-		_aura.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-		_aura.emission_sphere_radius = AURA_RADIUS * 0.8
-		_aura.gravity = Vector2(0, -10)
-		_aura.initial_velocity_max = 6.0
-		_aura.scale_amount_min = 2.0
-		_aura.scale_amount_max = 4.0
-		var ramp := Gradient.new()
-		ramp.colors = PackedColorArray([Color(POISON_COLOR, 0.0), Color(POISON_COLOR, 0.35), Color(POISON_COLOR, 0.0)])
-		_aura.color_ramp = ramp
-		_aura.position = Vector2(0, -6)
+		_aura = LegendVfx.toxic_aura(AURA_RADIUS)
+		_aura.z_index = -1
 		_player.add_child(_aura)
 	elif aura <= 0.0 and _aura != null:
 		_aura.queue_free()
@@ -1102,6 +1029,8 @@ func _process_hydra_gryf(delta: float) -> void:
 	var regrowth := equipment.effect_power("regrowth")
 	if regrowth > 0.0 and _player.health < _player.stats.max_health() * 0.5:
 		_player.heal(_player.stats.max_health() * regrowth * delta)
+		if randf() < delta * 1.2:
+			LegendVfx.heal(_player.get_parent(), _player.global_position, true)
 	var moving := _player.velocity.length() > 20.0
 	var trail := equipment.effect_power("acid_trail")
 	if trail > 0.0 and moving:
@@ -1136,9 +1065,7 @@ const NOTE_COLOR := Color(1.0, 0.8, 0.35)
 
 ## Fletnia Fauna: wrogowie wokół trafionego tańczą (ogłuszeni).
 func _dance(at: Vector2) -> void:
-	var parent := _player.get_parent()
-	for i in 6:
-		SkillEffects.spark(parent, at + Vector2.from_angle(TAU * i / 6.0) * 24.0 + Vector2(0, -10), NOTE_COLOR, 2)
+	LegendVfx.melody(_player.get_parent(), at, 50.0)
 	Sfx.play_at("magic", at, -8.0)
 	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if other.hurt_center().distance_to(at) <= 50.0 + other.hurt_radius:
@@ -1148,7 +1075,7 @@ func _dance(at: Vector2) -> void:
 ## Berło Króla Satyrów: fala dźwięku stożkiem przed graczem - rani i płoszy.
 func _pan_echo(away: Vector2, echo: bool) -> void:
 	var from := _player.global_position
-	SkillEffects.tide(_player.get_parent(), from, away.angle(), 0.6, 90.0, echo)
+	LegendVfx.sound_cone(_player.get_parent(), from + Vector2(0, -8), away.angle(), 90.0, echo)
 	Sfx.play_at("magic", from, -4.0)
 	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
 		var rel := other.global_position - from
@@ -1163,7 +1090,7 @@ func _vine_snare() -> void:
 		return
 	_cooldowns["vine_snare"] = 2.0
 	var at := _player.global_position
-	SkillEffects.shockwave(_player.get_parent(), at, 64.0, ROOTS_COLOR)
+	LegendVfx.vines(_player.get_parent(), at, 64.0)
 	Sfx.play_at("roots_burst", at, -6.0)
 	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if other.global_position.distance_to(at) <= 64.0 + other.hurt_radius:
@@ -1177,6 +1104,7 @@ func _horn_charge(from: Vector2, to: Vector2) -> void:
 		return
 	var dir := from.direction_to(to)
 	var length := from.distance_to(to)
+	BossFx.dust(_player.get_parent(), from)
 	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
 		var rel := other.global_position - from
 		var along := rel.dot(dir)
@@ -1184,4 +1112,4 @@ func _horn_charge(from: Vector2, to: Vector2) -> void:
 			continue
 		var side := signf(rel.cross(dir)) if rel.cross(dir) != 0.0 else 1.0
 		other.take_damage(_player.roll_damage(power), other.global_position - dir.orthogonal() * side * 10.0, 220.0)
-		SkillEffects.spark(_player.get_parent(), other.hurt_center(), NOTE_COLOR, 4)
+		LegendVfx.impact(_player.get_parent(), other.hurt_center(), dir.angle())

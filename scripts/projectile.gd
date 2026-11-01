@@ -50,8 +50,6 @@ var turret_damage := 0
 ## Trafienie wroga (bez wybuchu) - np. combo Grotu Swaroga dokłada wtedy wybuch ognia (BowSkills).
 signal enemy_hit(enemy: Goblin)
 
-static var _flash_cache: ImageTexture
-
 var _travelled := 0.0
 var _hit: Dictionary[Node, bool] = {}
 var _done := false
@@ -74,12 +72,13 @@ func _ready() -> void:
 		fx_kind = "missile"
 	if FX.has(fx_kind):
 		_make_fx()
-		if fire:
-			add_child(_make_trail())
-	elif magic or fire:
-		add_child(_make_trail())
-	else:
+	elif not (magic or fire):
 		sprite.rotation = direction.angle()
+	if fire:
+		# płonąca smuga (ta sama co za Grotem Swaroga) - węzeł "Trail" znika przy trafieniu
+		var trail := BowSkills.arrow_trail(BowSkills.POWER_TRAIL_FX, direction)
+		trail.scale = Vector2.ONE * size
+		add_child(trail)
 
 
 ## Animowany pocisk (FxLoop) zamiast obrazka - obrócony w kierunku lotu, jeśli rodzaj tego chce.
@@ -172,8 +171,9 @@ func _explode() -> void:
 		player.add_shake(2.0 + 3.0 * power)
 	_done = true
 	sprite.visible = false
-	for trail: CPUParticles2D in find_children("", "CPUParticles2D", false, false):
-		trail.emitting = false
+	var trail := get_node_or_null("Trail") as CanvasItem
+	if trail != null:
+		trail.visible = false
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if enemy.global_position.distance_to(global_position) <= explosion_radius + enemy.hurt_radius:
 			_hit_enemy(enemy, randi_range(explosion_min, explosion_max), global_position, knockback * 2.0)
@@ -184,47 +184,6 @@ func _explode() -> void:
 	SkillEffects.sheet_once(get_parent(), FIRE_BLAST, 11, 16.0, global_position + Vector2(0, -HEIGHT * 0.5), Vector2(42, 33),
 			0.0, 1.0, explosion_radius / FIRE_BLAST_RADIUS)
 	get_tree().create_timer(0.8, false).timeout.connect(queue_free)
-
-
-## Rozbłysk cząsteczek we wszystkich kierunkach.
-func _burst(amount: int, lifetime: float, speed_min: float, speed_max: float, size_min: float, size_max: float) -> CPUParticles2D:
-	var burst := CPUParticles2D.new()
-	burst.position = Vector2(0, -HEIGHT * 0.5)
-	burst.one_shot = true
-	burst.explosiveness = 1.0
-	burst.amount = maxi(amount, 4)
-	burst.lifetime = lifetime
-	burst.direction = Vector2.RIGHT
-	burst.spread = 180.0
-	burst.gravity = Vector2.ZERO
-	burst.initial_velocity_min = speed_min
-	burst.initial_velocity_max = speed_max
-	burst.scale_amount_min = size_min
-	burst.scale_amount_max = size_max
-	burst.z_index = 2
-	burst.emitting = true
-	add_child(burst)
-	return burst
-
-
-func _ramp(colors: Array[Color]) -> Gradient:
-	var gradient := Gradient.new()
-	gradient.colors = PackedColorArray(colors)
-	return gradient
-
-
-## Miękka, okrągła poświata błysku (rysowana raz i współdzielona przez wszystkie wybuchy).
-static func _flash_texture() -> ImageTexture:
-	if _flash_cache != null:
-		return _flash_cache
-	var image := Image.create(48, 40, false, Image.FORMAT_RGBA8)
-	for y in 40:
-		for x in 48:
-			var d := Vector2((x + 0.5 - 24.0) / 24.0, (y + 0.5 - 20.0) / 20.0).length()
-			var a := clampf(1.0 - d, 0.0, 1.0)
-			image.set_pixel(x, y, Color(1.0, lerpf(0.45, 0.95, a), lerpf(0.1, 0.6, a), a * a))
-	_flash_cache = ImageTexture.create_from_image(image)
-	return _flash_cache
 
 
 func _impact() -> void:
@@ -243,41 +202,12 @@ func _impact() -> void:
 				1.0, data[9])
 		queue_free()
 		return
-	var burst := CPUParticles2D.new()
-	burst.position = Vector2(0, -HEIGHT)
-	burst.one_shot = true
-	burst.explosiveness = 1.0
-	burst.amount = 10 if magic else 5
-	burst.lifetime = 0.35
-	burst.spread = 180.0
-	burst.initial_velocity_min = 20.0
-	burst.initial_velocity_max = 50.0
-	burst.gravity = Vector2.ZERO if magic else Vector2(0, 120)
-	burst.color = Color(0.6, 0.5, 1.0) if magic else Color(0.75, 0.6, 0.4)
-	burst.emitting = true
-	add_child(burst)
-	burst.finished.connect(queue_free)
-
-
-func _make_trail() -> CPUParticles2D:
-	var trail := CPUParticles2D.new()
-	trail.position = Vector2(0, -HEIGHT)
-	trail.amount = 16
-	trail.lifetime = 0.3
-	trail.local_coords = false
-	trail.spread = 180.0
-	trail.initial_velocity_min = 2.0
-	trail.initial_velocity_max = 8.0
-	trail.gravity = Vector2.ZERO
-	trail.scale_amount_min = 1.0
-	trail.scale_amount_max = 2.0
-	var fade := Gradient.new()
-	if fire:
-		fade.colors = PackedColorArray([Color(1.0, 0.85, 0.4, 0.9), Color(0.9, 0.25, 0.1, 0.0)])
+	# koniec lotu bez własnego efektu trafienia: strzała wzbija pył, inne pociski sypią iskrami (MiscVfx)
+	if magic or fire:
+		MiscVfx.spark(get_parent(), global_position + Vector2(0, -HEIGHT), Color(1.0, 0.6, 0.3) if fire else Color(0.6, 0.5, 1.0), 0.6)
 	else:
-		fade.colors = PackedColorArray([Color(0.75, 0.85, 1.0, 0.9), Color(0.45, 0.3, 1.0, 0.0)])
-	trail.color_ramp = fade
-	return trail
+		MiscVfx.puff(get_parent(), global_position + Vector2(0, -HEIGHT * 0.5), Color(0.75, 0.6, 0.4), 0.3)
+	queue_free()
 
 
 ## Trafienie przez gracza (efekty legendarnych pierścieni); bez gracza - zwykłe obrażenia.

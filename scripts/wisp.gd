@@ -101,7 +101,7 @@ func _explode() -> void:
 		if _player_alive() and _telegraph.contains(_player.global_position):
 			_player.take_damage(blast_damage, global_position)
 		_telegraph.queue_free()
-	SkillEffects.spark(get_parent(), hurt_center(), WISP_COLOR, 18)
+	MonsterFx.wisp_burst(get_parent(), hurt_center())
 	Sfx.play_at("wisp_burst", global_position)
 	health = 0
 	_die()

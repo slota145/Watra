@@ -251,7 +251,7 @@ func _echo(again: Callable) -> void:
 		if not is_instance_valid(_player) or _player.is_dead or _player.stats.weapon_type() != "spell":
 			return
 		_echoing = true
-		SkillEffects.spark(_player.get_parent(), _player.body_center(), Color(0.75, 0.5, 1.0), 8)
+		MiscVfx.spark(_player.get_parent(), _player.body_center(), Color(0.75, 0.5, 1.0), 1.0)
 		again.call()
 		_echoing = false)
 
@@ -299,7 +299,7 @@ func _process_burn(delta: float) -> void:
 		if entry[2] <= 0.0:
 			entry[2] += BURN_TICK
 			enemy.take_damage(roundi(entry[0]), enemy.global_position, 0.0)
-			SkillEffects.spark(enemy.get_parent(), enemy.hurt_center(), FIRE_COLOR, 3)
+			MiscVfx.spark(enemy.get_parent(), enemy.hurt_center(), FIRE_COLOR, 0.45)
 		if entry[1] <= 0.0:
 			_burning.erase(enemy)
 
@@ -518,7 +518,7 @@ func absorb(amount: int) -> int:
 		return amount
 	_player.mana -= taken * Skills.SHIELD_MANA_PER_DAMAGE
 	_player.mana_changed.emit(int(_player.mana), _player.stats.max_mana())
-	SkillEffects.spark(_player.get_parent(), _player.body_center(), Color(0.5, 0.7, 1.0), 6)
+	MiscVfx.spark(_player.get_parent(), _player.body_center(), Color(0.5, 0.7, 1.0), 0.7)
 	return amount - taken
 
 

@@ -86,21 +86,6 @@ func _miner(from: Vector2) -> String:
 
 
 func _play_harvest(_from: Vector2) -> void:
-	var shards := CPUParticles2D.new()
-	shards.position = Vector2(0, -8)
-	shards.one_shot = true
-	shards.explosiveness = 1.0
-	shards.amount = 20
-	shards.lifetime = 0.6
-	shards.spread = 180.0
-	shards.direction = Vector2.UP
-	shards.initial_velocity_min = 40.0
-	shards.initial_velocity_max = 90.0
-	shards.gravity = Vector2(0, 260)
-	shards.scale_amount_min = 2.0
-	shards.scale_amount_max = 3.0
-	shards.color = chip_color
-	shards.emitting = true
-	get_parent().add_child(shards)
-	shards.global_position = global_position + Vector2(0, -8)
-	shards.finished.connect(shards.queue_free)
+	# odłamki skały w jej kolorze i pył (efekty z kreatora efektów PixelLab - MiscVfx)
+	MiscVfx.debris(get_parent(), global_position + Vector2(0, 4), chip_color, 0.9)
+	MiscVfx.puff(get_parent(), global_position + Vector2(0, -6), chip_color.lerp(Color(0.8, 0.75, 0.7), 0.5), 0.6)

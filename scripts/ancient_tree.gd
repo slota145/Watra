@@ -96,7 +96,7 @@ func _spawn_treant(index: int) -> void:
 	treant.create_tween().tween_property(treant, "modulate:a", 1.0, 0.5)
 	treant.aggro()
 	_treants.append(treant)
-	SkillEffects.spark(get_parent(), treant.global_position, Color(0.5, 0.35, 0.2), 14)
+	MonsterFx.splinters(get_parent(), treant.global_position)
 	Sfx.play_at("roots_burst", treant.global_position)
 
 
@@ -121,6 +121,12 @@ func _die() -> void:
 	get_tree().create_timer(60.0).timeout.connect(stump.queue_free)
 	Sfx.play_at("tree_fall", global_position)
 	super()
+
+
+## Rozbite drzewo sypie drzazgami.
+func _spawn_poof() -> void:
+	MonsterFx.splinters(get_parent(), global_position)
+	MonsterFx.splinters(get_parent(), global_position + Vector2(randf_range(-10, 10), -14))
 
 
 func _drop_loot() -> void:
