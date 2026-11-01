@@ -317,6 +317,11 @@ static func compose_name(recipe: Dictionary) -> String:
 	for stat: String in name_stats(recipe):
 		if SUFFIXES.has(stat):
 			suffixes.append(Lang.t(SUFFIXES[stat]))
+	# po angielsku "of the" tylko raz: "Steel Sword of the Lynx and Owl"
+	if not Lang.is_polish():
+		var regex := RegEx.create_from_string("^of (the )?")
+		for i in range(1, suffixes.size()):
+			suffixes[i] = regex.sub(suffixes[i], "")
 	return base_name if suffixes.is_empty() else "%s %s" % [base_name, Lang.join(suffixes)]
 
 
