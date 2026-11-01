@@ -187,8 +187,21 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 
 ### Wietrzne Turnie
 
-- [ ] Poprawić wizualnie wioskę satyrów i jej okolice (polana z ogniskiem, przysiółki, ścieżki - `MountainZone._build_satyr_village`,
-  `_build_satyr_hamlet`); szczegóły do ustalenia z autorem.
+- [ ] Poprawić wizualnie wioskę satyrów i jej okolice (`MountainZone._plan_satyr_glade`, `_plan_satyr_hamlets`,
+  `_build_satyr_village`, `_build_satyr_hamlet`, `_build_royal_grove`). Ustalenia z autorem:
+  - klimat **winnego święta**: wiecznie trwająca uczta, wesoło, ale groźnie;
+  - przeszkadza: małe, rozsypane domki (namioty i szałasy wielkości postaci, zlewają się z tłumem satyrów),
+    sztuczne ścieżki (pierścienie jak z cyrkla, przysiółki jak kopie), nijaka okolica (zwykła hala);
+  - układ: **jedna wyraźna, większa polana** z placem biesiadnym w środku i domami wokół; zamiast przysiółków
+    **winnice (winorośl w rzędach), sady i zagrody** wokół, połączone krętymi ścieżkami;
+  - domy: **większe chaty z winoroślą** (ok. 2-3 postacie wzrostu, drewno, dachy z trzciny, beczki pod ścianą)
+    i 1-2 większe budowle (winiarnia / tłocznia, altana);
+  - centrum: **plac biesiadny** - długi stół z ucztą, wielkie ognisko, parkiet do tańca w girlandach i lampionach,
+    grajkowie na podwyższeniu, Król Faun na tronie z beczek obok;
+  - **nowe grafiki z PixelLab** dozwolone (chaty, rzędy winorośli, stół biesiadny, girlandy, lampiony, tron z beczek,
+    winiarnia); autor nie ma obrazu referencyjnego - zrobić w stylu gry i pokazać zrzuty do oceny;
+  - liczba satyrów zostaje podobna (ok. 180 z pasterzami); nowe miejsca potworów na końcu albo osobne ziarno;
+    przebudowa zmienia układ Turni, więc podbić `MountainZone.LAYOUT`.
 
 ## Pomysły i rzeczy do zrobienia
 
