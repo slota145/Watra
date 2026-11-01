@@ -254,6 +254,9 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   przy śmierci), Gnilec (zamach, miażdżenie i skok, żółć, ryk), Żmij (zionięcie, spadające kule ognia, lądowanie
   z ognistym kręgiem, ogniste słupy) i Wij (wzrok spod powiek, kłąb mroku, korzenie szponów); własne `_fx_engage` /
   `_fx_phase` / `_fx_death` tam, gdzie pasują.
+- [x] Królowa Pająków nie stoi już do gracza tyłem (na obrotach z PixelLab patrzyła w lewo - `tools/pixellab_sheets.py`,
+  `creature(..., mirror=True)` odbija klatki); mniejsze kokony z uwięzionymi ludźmi (`pair(..., scale=0.6)`, 33 zamiast
+  55 px) i owinięte ofiary (`PROP_SCALE` - połowa, 30 zamiast 61 px) - człowiek mniej więcej wzrostu postaci.
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

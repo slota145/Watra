@@ -23,7 +23,7 @@ const SINKS := {
 	"skull_totem": 7,
 	"tree": 8,
 	"web_huge": 17,
-	"wrapped_victim": 4,
+	"wrapped_victim": 2,
 }
 
 

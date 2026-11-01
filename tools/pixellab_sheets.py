@@ -86,12 +86,23 @@ def leshy():
     sheet("leshy", rows, os.path.join(ANCIENT, "leshy_pl.png"))
 
 
-def creature(name, walk, idle, windup, strike, extra=None):
-    """Arkusz 4x2: chód (4), spoczynek (2), zamach, cios. `extra` zastępuje klatki 5-7."""
+def creature(name, walk, idle, windup, strike, extra=None, mirror=False):
+    """Arkusz 4x2: chód (4), spoczynek (2), zamach, cios. `extra` zastępuje klatki 5-7.
+    `mirror` odbija każdą klatkę w poziomie - gra zakłada, że potwór na rysunku patrzy w prawo
+    (Goblin/Boss odbijają go przy ruchu w lewo), a niektóre obroty z PixelLab patrzą w lewo."""
     row2 = [idle, idle, windup, strike]
     if extra:
         row2 = [idle] + extra
-    sheet(name, [walk, row2], os.path.join(ANCIENT, name + "_pl.png"))
+    path = os.path.join(ANCIENT, name + "_pl.png")
+    sheet(name, [walk, row2], path)
+    if mirror:
+        img = Image.open(path)
+        cell_w, cell_h = img.width // 4, img.height // 2
+        out = Image.new("RGBA", img.size)
+        for i in range(8):
+            box = ((i % 4) * cell_w, (i // 4) * cell_h, (i % 4 + 1) * cell_w, (i // 4 + 1) * cell_h)
+            out.paste(img.crop(box).transpose(Image.Transpose.FLIP_LEFT_RIGHT), box[:2])
+        out.save(path)
 
 
 def creatures():
@@ -119,8 +130,9 @@ def creatures():
              extra=[pose("werewolf", "frenzy_0"), pose("werewolf", "frenzy_1"), pose("werewolf", "frenzy_3")])
     creature("bies", walk("bies"), rot("bies"), None, None,
              extra=[pose("bies", "roar_2"), pose("bies", "slash_1"), pose("bies", "slash_3")])
+    # królowa na obrotach z PixelLab patrzy w lewo - odbita, żeby nie stała do gracza tyłem
     creature("spider_queen", walk("queen"), rot("queen"), None, None,
-             extra=[pose("queen", "spray_3"), pose("queen", "summon_2"), pose("queen", "leap_2")])
+             extra=[pose("queen", "spray_3"), pose("queen", "summon_2"), pose("queen", "leap_2")], mirror=True)
 
 
 def glow_shroom():
@@ -201,8 +213,9 @@ def fade_roots(img):
     return base
 
 
-def trimmed(src, out, keep_light=False, soft_base=False, sink=None):
-    """Pojedyncza grafika przycięta do treści (dół = podstawa obiektu)."""
+def trimmed(src, out, keep_light=False, soft_base=False, sink=None, scale=1.0):
+    """Pojedyncza grafika przycięta do treści (dół = podstawa obiektu).
+    `scale` zmniejsza wynik (próbkowanie najbliższym pikselem, bez rozmycia)."""
     img = _open(src)
     if keep_light:  # pajęczyna na ziemi: tylko jasne nitki, bez ciemnego tła
         px = img.load()
@@ -214,6 +227,8 @@ def trimmed(src, out, keep_light=False, soft_base=False, sink=None):
     if soft_base:
         soften_base(img)
     img = img.crop(img.getbbox())
+    if scale != 1.0:
+        img = img.resize((round(img.width * scale), round(img.height * scale)), Image.Resampling.NEAREST)
     if soft_base:
         base = fade_roots(img)
         img = img.crop((0, 0, img.width, img.getbbox()[3]))
@@ -226,8 +241,9 @@ def trimmed(src, out, keep_light=False, soft_base=False, sink=None):
     return img
 
 
-def pair(first, second, out, soft_base=False):
-    """Dwie klatki obok siebie (np. drzewo uśpione / przebudzone), wyrównane do dołu."""
+def pair(first, second, out, soft_base=False, scale=1.0):
+    """Dwie klatki obok siebie (np. drzewo uśpione / przebudzone), wyrównane do dołu.
+    `scale` zmniejsza wynik (próbkowanie najbliższym pikselem, bez rozmycia)."""
     a, b = _open(first), _open(second)
     if soft_base:
         soften_base(a)
@@ -244,6 +260,9 @@ def pair(first, second, out, soft_base=False):
     for i, (img, box) in enumerate(((a, box_a), (b, box_b))):
         crop = img.crop(box)
         out_img.alpha_composite(crop, (i * w + (w - crop.width) // 2, h - crop.height))
+    if scale != 1.0:
+        cell_w, cell_h = round(w * scale), round(h * scale)
+        out_img = out_img.resize((cell_w * 2, cell_h), Image.Resampling.NEAREST)
     out_img.save(os.path.join(ANCIENT, out))
     if sink:
         SINKS[out[:-4]] = sink
@@ -263,6 +282,8 @@ def strip(sources, out):
 PROPS = {"menhir_0": 0, "menhir_1": 1, "menhir_2": 2, "altar_stump": 3, "fallen_log": 4, "claw_tree": 5,
          "broken_tree": 6, "skull_totem": 7, "wrapped_victim": 10, "egg_sac": 11, "ancient_stump": 12,
          "bone_pile": 13, "mossy_rock": 14, "rotten_stump": 15}
+## Zmniejszenie niektórych obiektów (owinięta ofiara była ponad 2 razy dłuższa niż wzrost postaci).
+PROP_SCALE = {"wrapped_victim": 0.5}
 DECOR = [2, 3, 4, 5, 6, 7, 8, 9, 13, 14, 15, 18, 20, 31, 32, 34, 37, 38, 44, 47, 48, 51, 57, 60, 63]
 REMAINS = [22, 23, 24, 26, 40, 41]  # czaszka, miecz, dzban, kości, latarnia, plecak - ślady poszukiwaczy
 
@@ -275,12 +296,14 @@ def props():
     awake = "%s/trees/awake.png" % a
     pair(face, awake if os.path.exists(os.path.join(SRC, awake)) else face, "ancient_tree.png", soft_base=True)
     for name, i in PROPS.items():
-        trimmed("%s/props/frame_%d.png" % (a, i), name + ".png", sink="trunk" if name in ("claw_tree", "broken_tree") else 0.12)
+        trimmed("%s/props/frame_%d.png" % (a, i), name + ".png", sink="trunk" if name in ("claw_tree", "broken_tree") else 0.12,
+                scale=PROP_SCALE.get(name, 1.0))
     for i in range(3):
         lit = "%s/props/menhir_%d_lit.png" % (a, i)
         base = "%s/props/frame_%d.png" % (a, i)
         pair(base, lit if os.path.exists(os.path.join(SRC, lit)) else base, "menhir_%d.png" % i)
-    pair("%s/props/frame_8.png" % a, "%s/props/frame_9.png" % a, "cocoon.png")
+    # kokon z uwięzionym człowiekiem - zmniejszony, żeby człowiek w środku miał mniej więcej wzrost postaci
+    pair("%s/props/frame_8.png" % a, "%s/props/frame_9.png" % a, "cocoon.png", scale=0.6)
     trimmed("%s/webs/frame_0.png" % a, "web_huge.png", sink=0.15)
     trimmed("%s/webs/frame_1.png" % a, "web_big.png", keep_light=True)
     trimmed("%s/webs/frame_2.png" % a, "web_tangle.png", keep_light=True)
