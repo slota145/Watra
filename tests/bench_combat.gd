@@ -1,7 +1,7 @@
 extends SceneTree
 ## Walka: gracz (nieśmiertelny) stoi w największym skupisku wrogów; mierzymy czas klatki.
 
-const ZONES := ["forest", "swamp", "mountains", "ancient"]
+const ZONES := ["forest", "fields", "swamp", "mountains", "ancient", "cemetery"]
 const SECONDS := 12.0
 const MOVES := ["move_right", "move_down", "move_left", "move_up"]
 var _t0 := 0

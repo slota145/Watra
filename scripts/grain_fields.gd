@@ -7,9 +7,13 @@ extends Node
 ## spowalnia), część pól jest już zebrana (ściernisko z rzędami snopków), część świeżo zaorana. Między polami kępy
 ## jesiennych drzew, a na polanach opuszczone gospodarstwa (chałupy, stodoły, studnie) z dróżkami do drogi. Droga prowadzi od wejścia do rozstajów przy ruinie wiatraka (kapliczka Starego Młyna). Siedliska:
 ## - na północy: wielki obóz koboldów (namioty ze skór, ogniska, skrzynie bomb, totemy), a w jego północnej
-##   części barykada Bombardiera; zgraje koboldów także w okolicznych łanach,
-## - na południowym zachodzie: ryjowisko czerwi polnych (kopce, nory, popękana ziemia) z kraterem
-##   Pożeracza Pól (ryjowisko to ścierniska i zaorane zagony, nie łany),
+##   części barykada Bombardiera; zgraje koboldów także w łanach w całej krainie,
+## - czaty koboldów (OUTPOSTS) na dawnych pustkowiach: wianuszek namiotów wokół ogniska, łupy z gospodarstw
+##   (wóz, worki), skrzynie bomb i totemy, dróżka do drogi - po około 30 koboldów,
+## - opuszczone gospodarstwa: na północy plądrują je koboldy, na południu podwórka rozryły czerwie,
+## - na południowym zachodzie: ryjowisko czerwi polnych (gromadki czerwi wokół nor, kopce, popękana ziemia)
+##   z kraterem Pożeracza Pól (ryjowisko to ścierniska i zaorane zagony, nie łany); gniazda czerwi także
+##   w zaoranych zagonach w całej krainie,
 ## - w lewym górnym rogu, najdalej od wejścia: wzgórze, nad którym krąży gryf.
 
 const TILE := 16
@@ -66,9 +70,16 @@ const PINE := preload("res://scenes/props/tree_pine.tscn")
 const BUSH := preload("res://scenes/props/bush.tscn")
 const CAMPFIRE := preload("res://scenes/props/campfire.tscn")
 
-const FARMS := 7
-const KOBOLD_GROUPS := 14
-const WORMS := 26
+const FARMS := 10
+## Zgraje koboldów w łanach i na miedzach (cała kraina poza ryjowiskiem i okolicą wejścia).
+const KOBOLD_GROUPS := 34
+const WORMS := 80
+## Czaty koboldów: mniejsze obozowiska z łupami z gospodarstw - ile, promień polany (w kafelkach), namioty.
+const OUTPOSTS := 4
+const OUTPOST_RADIUS := 8.0
+const OUTPOST_TENTS := 5
+## Gniazda czerwi w zaoranych zagonach poza ryjowiskiem (po kilka czerwi).
+const SOIL_NESTS := 14
 ## Obóz koboldów: półosie (w kafelkach), namioty, ogniska i stojące zgraje w obozie.
 const CAMP_RADII := Vector2(24.0, 15.0)
 const CAMP_TENTS := 12
@@ -97,6 +108,7 @@ var bombardier := Vector2.ZERO
 var worms := Vector2.ZERO
 var worm_lair := Vector2.ZERO
 var gryf_hill := Vector2.ZERO
+var _outposts: Array[Vector2] = []
 ## Rodzaj pola w komórce: "grain" / "stubble" / "soil" (brak wpisu - łąka, droga, siedlisko).
 var _field_kind := {}
 var _farms: Array[Vector2] = []
@@ -150,6 +162,7 @@ func generate(world) -> void:
 	w._reserve_area(worm_lair, 9.0)
 	w._reserve_area(gryf_hill, 14.0)
 	_plan_farms(rng)
+	_plan_outposts(rng)
 	_plan_fields(rng)
 
 	_build_ground(rng)
@@ -161,7 +174,10 @@ func generate(world) -> void:
 	_build_balks(rng)
 	_build_kobold_camp(rng)
 	_build_bombardier_lair(rng)
+	for outpost in _outposts:
+		_build_outpost(rng, outpost)
 	_build_worm_grounds(rng)
+	_build_soil_nests(rng)
 	_build_gryf_hill(rng)
 
 	var shrine: Node2D = w.SHRINE.instantiate()
@@ -187,7 +203,7 @@ func _mark_path(points: PackedVector2Array, road: float, clear: float) -> void:
 func _plan_farms(rng: RandomNumberGenerator) -> void:
 	var area := Rect2(Vector2(12, 12), Vector2(w.map_size) - Vector2(24, 24))
 	var ok := func(tile: Vector2) -> bool:
-		return _free(Vector2i(tile), 8) and Road.distance_to(tile, w._road) > 4.0 and Road.distance_to(tile, w._road) < 18.0
+		return _free(Vector2i(tile), 8) and Road.distance_to(tile, w._road) > 4.0 and Road.distance_to(tile, w._road) < 26.0
 	for i in FARMS:
 		var tile: Vector2 = w._pick_spread(area, _farms, ok)
 		if not tile.is_finite():
@@ -203,6 +219,30 @@ func _plan_farms(rng: RandomNumberGenerator) -> void:
 			if point.distance_squared_to(farm) < nearest.distance_squared_to(farm):
 				nearest = point
 		_mark_path(Road.wiggle(farm + Vector2(0, 4), nearest, rng, 2.0, 6.0), 0.7, 1.8)
+
+
+## Czaty koboldów z dala od obozu, ryjowiska, wzgórza gryfa, rozstajów i wejścia - tam, gdzie dziś są puste łany
+## (środek i wschód krainy). Dróżka do najbliższej drogi.
+func _plan_outposts(rng: RandomNumberGenerator) -> void:
+	var area := Rect2(Vector2(30, 24), Vector2(w.map_size) - Vector2(60, 48))
+	var ok := func(tile: Vector2) -> bool:
+		return _far_from_all(tile, _outposts, 44.0) and ((tile - kobolds) / CAMP_RADII).length() > 1.9 and ((tile - worms) / Vector2(40, 28)).length() > 1.0 \
+				and tile.distance_to(gryf_hill) > 30.0 and tile.distance_to(cross) > 22.0 and tile.distance_to(entry) > 40.0 \
+				and Road.distance_to(tile, w._road) > OUTPOST_RADIUS + 3.0 and _free(Vector2i(tile), int(OUTPOST_RADIUS))
+	var taken: Array[Vector2] = _farms.duplicate()
+	taken.append_array([kobolds, worms, gryf_hill, cross])
+	for i in OUTPOSTS:
+		var tile: Vector2 = w._pick_spread(area, taken, ok, 200)
+		if not tile.is_finite():
+			continue
+		_outposts.append(tile)
+		taken.append(tile)
+		w._reserve_area(tile, OUTPOST_RADIUS + 1.0)
+		var nearest: Vector2 = w._road[0]
+		for point: Vector2 in w._road:
+			if point.distance_squared_to(tile) < nearest.distance_squared_to(tile):
+				nearest = point
+		_mark_path(Road.wiggle(tile + Vector2(0, OUTPOST_RADIUS * 0.6), nearest, rng, 3.0, 8.0), 0.7, 1.8)
 
 
 ## Pola: działki o organicznych granicach (komórki Woronoja z wygiętymi szumem odległościami) na całej krainie poza
@@ -314,6 +354,9 @@ func _build_ground(rng: RandomNumberGenerator) -> void:
 		dirt[cell] = true
 	for cell in _ellipse(kobolds, CAMP_RADII * 0.9):
 		dirt[cell] = true
+	for outpost in _outposts:
+		for cell in _ellipse(outpost, Vector2(OUTPOST_RADIUS, OUTPOST_RADIUS * 0.75)):
+			dirt[cell] = true
 	for cell in w._cells_in_radius(worm_lair, 6.5):
 		dirt[cell] = true
 	for cell in w._cells_in_radius(gryf_hill, 8.0):
@@ -611,14 +654,19 @@ func _build_farm(rng: RandomNumberGenerator, center: Vector2) -> void:
 			_prop(FENCE, pos, Vector2(22, 4)).flip_h = rng.randf() < 0.5
 	for i in 6:
 		_decor(rng, c + Vector2(rng.randf_range(-80, 80), rng.randf_range(-10, 60)), [9, 10, 11, 12, 13].pick_random())
-	# w opuszczonym gospodarstwie gnieżdżą się koboldy (północ) albo ryją czerwie (południe)
+	# opuszczone gospodarstwo plądrują koboldy (północ: zgraja przy wyniesionych workach i rozbitych beczkach)
+	# albo rozryły czerwie (południe: kopce i nory na podwórku)
 	var tile := center + Vector2(0, 2.5)
 	if center.y < w.map_size.y * 0.5:
-		_kobold_group(rng, tile, rng.randi_range(4, 6), false)
+		for i in 3:
+			_prop(SACKS if i < 2 else BOMB_CRATE, c + Vector2(rng.randf_range(-60, 60), rng.randf_range(-4, 14)))
+		_kobold_group(rng, tile, rng.randi_range(5, 7), false)
+		_kobold_group(rng, tile + Vector2(-4.0 * side, 1.5), rng.randi_range(3, 5), false)
 	else:
-		for i in 2:
+		for i in rng.randi_range(4, 6):
 			var pos := (tile + Vector2(rng.randf_range(-5, 5), rng.randf_range(-2, 3))) * TILE
 			w._add_goblin_spawn({"type": "field_worm", "position": pos, "sitting": false, "look_at": pos})
+			_molehill(rng, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(14, 26))
 
 
 func _map_rect(top_left_center: Vector2, half: Vector2, color: Color) -> void:
@@ -688,17 +736,66 @@ func _build_kobold_camp(rng: RandomNumberGenerator) -> void:
 		_decor(rng, center + Vector2.from_angle(rng.randf() * TAU) * radii * rng.randf_range(0.1, 0.9), [7, 8, 11, 12, 15].pick_random())
 	# zgraje w okolicznych łanach i na miedzach
 	var spots: Array[Vector2] = []
-	var area := Rect2(Vector2(10, 8), Vector2(w.map_size.x - 20, w.map_size.y * 0.55))
+	var area := Rect2(Vector2(10, 8), Vector2(w.map_size) - Vector2(20, 16))
 	var ok := func(tile: Vector2) -> bool:
-		return ((tile - kobolds) / CAMP_RADII).length() > 1.3 and tile.distance_to(gryf_hill) > 24.0 \
-				and not w._occupied.has(Vector2i(tile)) and tile.distance_to(entry) > 50.0
+		return ((tile - kobolds) / CAMP_RADII).length() > 1.3 and ((tile - worms) / Vector2(40, 28)).length() > 1.0 \
+				and tile.distance_to(gryf_hill) > 24.0 and tile.distance_to(worm_lair) > 16.0 and tile.distance_to(cross) > 10.0 \
+				and not w._occupied.has(Vector2i(tile)) and tile.distance_to(entry) > 40.0 \
+				and _far_from_all(tile, _outposts, OUTPOST_RADIUS + 6.0) and _far_from_all(tile, _farms, 12.0)
 	for i in KOBOLD_GROUPS:
 		var tile: Vector2 = w._pick_spread(area, spots, ok)
 		if not tile.is_finite():
 			continue
 		spots.append(tile)
-		_kobold_group(rng, tile, rng.randi_range(5, 7), false)
+		_kobold_group(rng, tile, rng.randi_range(5, 8), false)
 	w._map_markers.append({"position": center, "color": Kobold.KOBOLD_COLOR, "size": 3.0})
+
+
+## Czata koboldów: wianuszek namiotów wokół ogniska z siedzącą zgrają, stos łupów z gospodarstw (worki, wóz, bele),
+## skrzynie bomb, totemy na skraju i zgraje stojące między namiotami - razem około 30 koboldów.
+func _build_outpost(rng: RandomNumberGenerator, tile: Vector2) -> void:
+	var center := tile * TILE
+	var radii := Vector2(OUTPOST_RADIUS, OUTPOST_RADIUS * 0.75) * TILE
+	var fire: Node2D = CAMPFIRE.instantiate()
+	fire.position = center
+	w.entities.add_child(fire)
+	w._map_props[Vector2i(tile)] = w.MAP_FIRE
+	_kobold_group(rng, tile, rng.randi_range(7, 9), true)
+	var turn := rng.randf() * TAU
+	for i in OUTPOST_TENTS:
+		var pos := center + Vector2.from_angle(turn + TAU * i / OUTPOST_TENTS) * radii * rng.randf_range(0.7, 0.8)
+		var tent := _prop(TENT, pos, Vector2(40, 12))
+		tent.flip_h = pos.x < center.x
+		w._map_props[Vector2i(pos / TILE)] = MAP_TENT
+	# luki między namiotami: w tej od strony dróżki (południe) stos łupów, w pozostałych stojące zgraje i skrzynie bomb
+	var loot_gap := 0
+	for i in OUTPOST_TENTS:
+		var angle := turn + TAU * (i + 0.5) / OUTPOST_TENTS
+		if absf(angle_difference(angle, PI / 2.0)) < absf(angle_difference(turn + TAU * (loot_gap + 0.5) / OUTPOST_TENTS, PI / 2.0)):
+			loot_gap = i
+	for i in OUTPOST_TENTS:
+		var dir := Vector2.from_angle(turn + TAU * (i + 0.5) / OUTPOST_TENTS)
+		if i == loot_gap:
+			var loot := center + dir * radii * 0.72
+			_prop(CART, loot + Vector2(-22, 0), Vector2(26, 8)).flip_h = rng.randf() < 0.5
+			for k in 3:
+				_prop(SACKS if k != 1 else HAY_BALE, loot + Vector2(10 + k * 13, rng.randf_range(-6, 6)))
+			continue
+		_kobold_group(rng, tile + dir * OUTPOST_RADIUS * Vector2(0.62, 0.62 * 0.75), rng.randi_range(4, 6), false)
+		if i % 2 == 0:
+			_prop(BOMB_CRATE if i % 4 == 0 else POWDER, center + dir * radii * 0.95, Vector2(16, 6))
+	for k in 4:
+		_prop(TOTEM, center + Vector2.from_angle(turn + TAU * (k + 0.25) / 4.0) * radii * 1.05, Vector2(8, 4))
+	for i in 14:
+		_decor(rng, center + Vector2.from_angle(rng.randf() * TAU) * radii * rng.randf_range(0.2, 0.95), [7, 8, 11, 12, 15].pick_random())
+	w._map_markers.append({"position": center, "color": Kobold.KOBOLD_COLOR, "size": 2.0})
+
+
+func _far_from_all(tile: Vector2, others: Array[Vector2], min_distance: float) -> bool:
+	for other in others:
+		if tile.distance_to(other) < min_distance:
+			return false
+	return true
 
 
 ## Barykada Bombardiera w północnej części obozu: łuk ze skrzyń bomb i beczek prochu, totemy, osmalona ziemia
@@ -724,17 +821,19 @@ func _build_bombardier_lair(rng: RandomNumberGenerator) -> void:
 # ---------------------------------------------------------------- czerwie
 func _build_worm_grounds(rng: RandomNumberGenerator) -> void:
 	var placed := 0
-	for attempt in 400:
+	for attempt in 1000:
 		if placed >= WORMS:
 			break
 		var tile := worms + Vector2.from_angle(rng.randf() * TAU) * Vector2(34, 22) * sqrt(rng.randf())
 		var cell := Vector2i(tile)
 		if w._occupied.has(cell) or tile.distance_to(worm_lair) < 12.0 or not Rect2(Vector2(6, 6), Vector2(w.map_size) - Vector2(12, 12)).has_point(tile):
 			continue
-		placed += 1
-		var pos := tile * TILE
-		w._add_goblin_spawn({"type": "field_worm", "position": pos, "sitting": false, "look_at": pos})
-		for k in 2:
+		# czerwie ryją gromadkami (2-4) wokół jednej nory
+		_molehill(rng, tile * TILE, true)
+		for k in rng.randi_range(2, 4):
+			placed += 1
+			var pos := (tile + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(1.0, 3.0)) * TILE
+			w._add_goblin_spawn({"type": "field_worm", "position": pos, "sitting": false, "look_at": pos})
 			_molehill(rng, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(14, 30))
 	for i in 40:
 		var tile := worms + Vector2.from_angle(rng.randf() * TAU) * Vector2(38, 25) * sqrt(rng.randf())
@@ -755,6 +854,27 @@ func _build_worm_grounds(rng: RandomNumberGenerator) -> void:
 		_decor(rng, center + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(30, 90), [0, 14, 15, 15].pick_random())
 	w._add_goblin_spawn({"type": "giant_worm", "position": center, "sitting": false, "look_at": center, "respawn": w.boss_respawn_time})
 	w._map_markers.append({"position": center, "color": w.MAP_BOSS, "size": 4.0})
+
+
+## Gniazda czerwi w zaoranych zagonach w całej krainie (czerwie lubią świeżo zruszoną ziemię): po 3-5 czerwi
+## wokół nor i kopców.
+func _build_soil_nests(rng: RandomNumberGenerator) -> void:
+	var spots: Array[Vector2] = []
+	var area := Rect2(Vector2(10, 8), Vector2(w.map_size) - Vector2(20, 16))
+	var ok := func(tile: Vector2) -> bool:
+		return _field_kind.get(Vector2i(tile), "") == "soil" and ((tile - worms) / Vector2(40, 28)).length() > 1.0 \
+				and ((tile - kobolds) / CAMP_RADII).length() > 1.2 and tile.distance_to(entry) > 40.0 \
+				and tile.distance_to(cross) > 10.0 and not w._occupied.has(Vector2i(tile))
+	for i in SOIL_NESTS:
+		var tile: Vector2 = w._pick_spread(area, spots, ok, 300)
+		if not tile.is_finite():
+			continue
+		spots.append(tile)
+		_molehill(rng, tile * TILE, true)
+		for k in rng.randi_range(3, 5):
+			var pos := (tile + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(0.5, 3.5)) * TILE
+			w._add_goblin_spawn({"type": "field_worm", "position": pos, "sitting": false, "look_at": pos})
+			_molehill(rng, pos + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(12, 24))
 
 
 # ---------------------------------------------------------------- wzgórze Gryfa
@@ -798,9 +918,9 @@ func _decor(rng: RandomNumberGenerator, pos: Vector2, frame: int) -> void:
 
 
 ## Kopczyk świeżej ziemi jak po krecie (tools/fields_art.py) - czasem z wylotem nory czerwia.
-func _molehill(rng: RandomNumberGenerator, pos: Vector2) -> void:
+func _molehill(rng: RandomNumberGenerator, pos: Vector2, hole := false) -> void:
 	var sprite := Sprite2D.new()
-	sprite.texture = HOLE if rng.randf() < 0.35 else MOUND
+	sprite.texture = HOLE if hole or rng.randf() < 0.35 else MOUND
 	sprite.offset = Vector2(0, -sprite.texture.get_height() / 2.0 + 3.0)
 	sprite.flip_h = rng.randf() < 0.5
 	sprite.position = pos.round()
