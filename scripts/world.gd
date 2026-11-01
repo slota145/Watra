@@ -838,7 +838,7 @@ func start_event_here(type := "") -> bool:
 
 func _on_event_started(event: Dictionary) -> void:
 	Sfx.play("summon")
-	hud.show_banner("%s\n%s" % [Lang.t(event["title"]), Zones.zone_name(event["zone"])], WorldEvents.TYPES[event["type"]]["color"])
+	hud.show_banner("%s\n%s" % [WorldEvents.title_of(event), Lang.t(Zones.zone_name(event["zone"]))], WorldEvents.TYPES[event["type"]]["color"])
 	hud.event_tracker.show_message(WorldEvents.announcement(event))
 
 
@@ -984,8 +984,9 @@ func _process_party_offers(delta: float) -> void:
 	# zbierający łowca prosi o osłonę przed potworami
 	if guild and leader.is_gathering() and _guard.is_empty() and randf() < GUARD_CHANCE:
 		var reward := guard_reward(leader)
-		var text := Lang.t("%s [%d] zbiera %s, ale potwory nie dają spokoju. Osłonisz %s przez %d sekund?\nNagroda: %d zł, %d exp i część urobku.") % [
-				leader.data["name"], leader.data["level"], Lang.t(GUARD_GOODS[leader.gather_kind()]), Lang.t("ją") if leader.data.get("female", false) else Lang.t("go"),
+		var ask := "%s [%d] zbiera %s, ale potwory nie dają spokoju. Osłonisz ją przez %d sekund?\nNagroda: %d zł, %d exp i część urobku." \
+				if leader.data.get("female", false) else "%s [%d] zbiera %s, ale potwory nie dają spokoju. Osłonisz go przez %d sekund?\nNagroda: %d zł, %d exp i część urobku."
+		var text := Lang.t(ask) % [leader.data["name"], leader.data["level"], Lang.t(GUARD_GOODS[leader.gather_kind()]),
 				roundi(GUARD_TIME), reward["gold"], reward["xp"]]
 		leader.say(Lang.t("Osłoń mnie!"))
 		hud.party_offer.ask(text, start_guard.bind(leader), func() -> void:
@@ -1004,8 +1005,8 @@ func _process_party_offers(delta: float) -> void:
 		leader.say(Lang.t("Hej! Chodź z nami polować!"))
 	else:
 		text = Lang.t("%s [%d] prosi o pomoc: %s\nNagroda: %d zł, %d exp.") % [leader.data["name"], leader.data["level"],
-				task["description"], task["gold"], task["xp"]]
-		leader.say(Lang.t("Pomożesz nam?"))
+				Quests.text(task, "description"), task["gold"], task["xp"]]
+		leader.say("Pomożesz nam?")
 	hud.party_offer.ask(text, _accept_party.bind(group, task), _decline_party.bind(group))
 
 
@@ -1095,7 +1096,7 @@ func _end_guard(success: bool) -> void:
 		gift = ", %s x%d" % [Lang.t(Items.get_data(share[0])["name"]), qty]
 	Sfx.play("quest_done")
 	if node != null:
-		node.say([Lang.t("Dzięki! Bez ciebie by mnie zjadły."), Lang.t("Udało się! Masz tu część urobku."), Lang.t("Dobra robota! Opowiem o tobie w gildii.")].pick_random())
+		node.say(["Dzięki! Bez ciebie by mnie zjadły.", "Udało się! Masz tu część urobku.", "Dobra robota! Opowiem o tobie w gildii."].pick_random())
 	hud.show_banner(Lang.t("Osłona udana! +%d zł, +%d exp%s") % [reward["gold"], reward["xp"], gift], Color(0.6, 1.0, 0.6))
 
 
@@ -1120,7 +1121,7 @@ func _start_fight(leader: Traveler, kind: String) -> void:
 	if kind == "pk":
 		Sfx.play("ui_error")
 		hud.show_banner(Lang.t("%s atakuje cię!\nZbój (PK) - walczy na śmierć") % data["name"], Color(1.0, 0.45, 0.4))
-		_rival.say([Lang.t("Sakiewka albo życie!"), Lang.t("Twoje złoto będzie moje!"), Lang.t("Nikt cię tu nie usłyszy...")].pick_random())
+		_rival.say(["Sakiewka albo życie!", "Twoje złoto będzie moje!", "Nikt cię tu nie usłyszy..."].pick_random())
 		_rival.died.connect(_on_bandit_died.bind(data))
 	else:
 		_rival.say(Lang.t("Do boju!"))
@@ -1135,10 +1136,10 @@ func _on_fight_finished(result: String, data: Dictionary, kind: String, leader: 
 			player.stats.add_gold(prize)
 			player.travelers.guild_fame += 5
 			Sfx.play("quest_done")
-			_rival.say([Lang.t("Poddaję się! Dobra walka."), Lang.t("Uznaję twoją wyższość!"), Lang.t("Wystarczy! Wygrałeś uczciwie.")].pick_random())
+			_rival.say(["Poddaję się! Dobra walka.", "Uznaję twoją wyższość!", "Wystarczy! Wygrałeś uczciwie."].pick_random())
 			DamageNumber.spawn_text(player.get_parent(), player.body_center() + Vector2(0, -14), Lang.t("Wygrany pojedynek! +%d zł") % prize, Color(1.0, 0.85, 0.3), 9)
 		else:
-			_rival.say([Lang.t("Ha! Może następnym razem."), Lang.t("Za słabo, wędrowcze!"), Lang.t("Wygrałem! Opowiem w karczmie.")].pick_random())
+			_rival.say(["Ha! Może następnym razem.", "Za słabo, wędrowcze!", "Wygrałem! Opowiem w karczmie."].pick_random())
 			DamageNumber.spawn_text(player.get_parent(), player.body_center() + Vector2(0, -14), Lang.t("Przegrany pojedynek"), Color(1.0, 0.5, 0.45), 9)
 	if is_instance_valid(leader):
 		leader.show_after_fight(_rival.global_position if is_instance_valid(_rival) else leader.global_position)
@@ -1174,17 +1175,17 @@ func _help_task(poster: String) -> Dictionary:
 	if kind == "kill":
 		share = 0.25
 		task["count"] = maxi(10, roundi(task["count"] * share / 5.0) * 5)
-		task["description"] = Lang.t("Przetrzebmy razem %s - jeszcze %d.") % [Lang.t(task["target_name"]).to_lower(), task["count"]]
+		task["description"] = ["Przetrzebmy razem %s - jeszcze %d.", {"t": task["target_name"], "lower": true}, task["count"]]
 	elif kind == "gather":
 		share = 0.4
 		task["count"] = maxi(2, roundi(task["count"] * share))
-		task["description"] = Lang.t("Brakuje nam %s - zbierzmy razem %d.") % [Lang.t(task["target_name"]).to_lower(), task["count"]]
+		task["description"] = ["Brakuje nam %s - zbierzmy razem %d.", {"t": task["target_name"], "lower": true}, task["count"]]
 	else:
-		task["description"] = Lang.t("Idziemy na %s. Bez ciebie nie damy rady!") % Lang.t(task["target_name"]).get_slice(",", 0)
+		task["description"] = ["Idziemy na %s. Bez ciebie nie damy rady!", {"t": task["target_name"], "slice": true}]
 	task["gold"] = roundi(task["gold"] * share)
 	task["xp"] = roundi(task["xp"] * share)
 	task["fame"] = roundi(task["fame"] * 0.5)
-	task["title"] = Lang.t("Prośba: %s") % poster
+	task["title"] = ["Prośba: %s", poster]
 	return task
 
 

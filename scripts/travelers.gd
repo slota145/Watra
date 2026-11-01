@@ -329,27 +329,27 @@ func in_town() -> Array[Dictionary]:
 static func place_text(traveler: Dictionary) -> String:
 	match str(traveler["state"]):
 		"town":
-			return "w Ostoi"
+			return Lang.t("w Ostoi")
 		"dead":
-			return "poległ, wraca do Ostoi" if not traveler["female"] else "poległa, wraca do Ostoi"
-	return "poluje: %s" % Zones.DATA[traveler["zone"]]["name"]
+			return Lang.t("poległ, wraca do Ostoi") if not traveler["female"] else Lang.t("poległa, wraca do Ostoi")
+	return Lang.t("poluje: %s") % Lang.t(Zones.DATA[traveler["zone"]]["name"])
 
 
 ## Ulepszenie gildii do następnej rangi (koszt RANK_COSTS) - "" albo powód odmowy.
 func upgrade_rank(player: Player) -> String:
 	if guild_rank >= MAX_RANK:
-		return "Gildia ma już najwyższą rangę."
+		return Lang.t("Gildia ma już najwyższą rangę.")
 	if guild_rank == 0:
-		return "Najpierw trzeba zbudować gildię."
+		return Lang.t("Najpierw trzeba zbudować gildię.")
 	var cost: Dictionary = RANK_COSTS[guild_rank + 1]
 	if guild_fame < int(cost.get("fame", 0)):
-		return "Za mało sławy gildii (%d/%d) - wykonuj zlecenia z tablicy." % [guild_fame, cost["fame"]]
+		return Lang.t("Za mało sławy gildii (%d/%d) - wykonuj zlecenia z tablicy.") % [guild_fame, cost["fame"]]
 	for id: String in cost:
 		if id == "fame":
 			continue
 		var have: int = player.stats.gold if id == "gold" else player.count_owned(id)
 		if have < int(cost[id]):
-			return "Brakuje: %s" % ("złota" if id == "gold" else Items.get_data(id)["name"])
+			return Lang.t("Brakuje: %s") % (Lang.t("złota") if id == "gold" else Lang.t(Items.get_data(id)["name"]))
 	for id: String in cost:
 		if id == "fame":
 			continue

@@ -12,9 +12,9 @@ var current := ""
 
 func _ready() -> void:
 	add_theme_constant_override("separation", 6)
-	var title := UiStyle.title("Tryb świata")
+	var title := UiStyle.title(tr("Tryb świata"))
 	add_child(title)
-	var intro := UiStyle.label("Jak zachowują się inni podróżnicy (symulowani gracze) wobec ciebie? Tryb możesz później zmienić u żercy Wszebora przy Watrze w Ostoi.", 7, UiStyle.DIM_COLOR)
+	var intro := UiStyle.label(tr("Jak zachowują się inni podróżnicy (symulowani gracze) wobec ciebie? Tryb możesz później zmienić u żercy Wszebora przy Watrze w Ostoi."), 7, UiStyle.DIM_COLOR)
 	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	intro.custom_minimum_size.x = CARD_WIDTH * 3 + 12.0
 	intro.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -43,15 +43,15 @@ func _card(id: String) -> Button:
 	inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	inner.add_theme_constant_override("separation", 3)
 	card.add_child(inner)
-	var name := UiStyle.label(data["name"] + ("  (obecny)" if id == current else ""), 9, data["color"])
+	var name := UiStyle.label(tr(data["name"]) + (tr("  (obecny)") if id == current else ""), 9, data["color"])
 	name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	inner.add_child(name)
-	var short := UiStyle.label(data["short"], 7, UiStyle.TITLE_COLOR)
+	var short := UiStyle.label(tr(data["short"]), 7, UiStyle.TITLE_COLOR)
 	short.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	short.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	inner.add_child(short)
-	var text := UiStyle.label(data["description"], 6, UiStyle.TEXT_COLOR)
+	var text := UiStyle.label(tr(data["description"]), 6, UiStyle.TEXT_COLOR)
 	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	text.custom_minimum_size.x = CARD_WIDTH - 12.0
 	text.mouse_filter = Control.MOUSE_FILTER_IGNORE

@@ -28,7 +28,7 @@ func _ready() -> void:
 	_box = VBoxContainer.new()
 	_box.add_theme_constant_override("separation", 4)
 	add_child(_box)
-	_box.add_child(UiStyle.title("Tablica ogłoszeń"))
+	_box.add_child(UiStyle.title(tr("Tablica ogłoszeń")))
 	_done_label = UiStyle.label("", 7, Color(0.95, 0.85, 0.65))
 	_done_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_box.add_child(_done_label)
@@ -53,7 +53,7 @@ func _ready() -> void:
 	_status = UiStyle.label("", 8, Color(0.95, 0.85, 0.65))
 	_status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bottom.add_child(_status)
-	var close_button := _button("Zamknij", func() -> void:
+	var close_button := _button(tr("Zamknij"), func() -> void:
 		visible = false
 		Sfx.play("ui_close"))
 	bottom.add_child(close_button)
@@ -96,7 +96,7 @@ func _refresh() -> void:
 	var quest_log := _player.quests
 	quest_log.refresh_board(_player)
 	var active := quest_log.active_bounties()
-	_done_label.text = "Wykonane zlecenia: %d  •  sława gildii: %d  •  przyjęte: %d/%d" % [quest_log.bounties_done,
+	_done_label.text = tr("Wykonane zlecenia: %d  •  sława gildii: %d  •  przyjęte: %d/%d") % [quest_log.bounties_done,
 			_player.travelers.guild_fame, active.size(), Bounties.MAX_ACTIVE]
 	for id in active:
 		_cards.add_child(_active_card(id))
@@ -132,29 +132,28 @@ func _ink(text: String, size := 7, color := INK, wrap_width := 0.0) -> Label:
 
 
 func _quest_text(content: VBoxContainer, quest: Dictionary, progress: int, show_progress: bool) -> void:
-	var title := _ink(quest["title"], 8, Color(0.5, 0.12, 0.08), CARD_WIDTH - 10.0)
+	var title := _ink(Quests.text(quest, "title"), 8, Color(0.5, 0.12, 0.08), CARD_WIDTH - 10.0)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	content.add_child(title)
 	if quest.has("poster"):
-		content.add_child(_ink("Zleca: " + quest["poster"], 7, INK_DIM))
-	content.add_child(_ink(quest["description"], 7, INK, CARD_WIDTH - 10.0))
-	var verb: String = {"gather": "przynieś", "boss": "pokonaj"}.get(quest.get("kind", ""), "pokonaj")
-	if quest.get("type", "") == "gather":
-		verb = "przynieś"
-	var goal := "Cel: %s %d/%d" % [quest["target_name"], progress, quest["count"]] if show_progress \
-			else "Cel: %s %d (%s)" % [verb, quest["count"], quest["target_name"].to_lower()]
+		content.add_child(_ink(tr("Zleca: %s") % Quests.person(quest["poster"]), 7, INK_DIM))
+	content.add_child(_ink(Quests.text(quest, "description"), 7, INK, CARD_WIDTH - 10.0))
+	var gather: bool = quest.get("kind", "") == "gather" or quest.get("type", "") == "gather"
+	var target := Quests.text(quest, "target_name")
+	var goal := tr("Cel: %s %d/%d") % [target, progress, quest["count"]] if show_progress \
+			else (tr("Cel: przynieś %d (%s)") if gather else tr("Cel: pokonaj %d (%s)")) % [quest["count"], target.to_lower()]
 	content.add_child(_ink(goal, 7, INK))
-	content.add_child(_ink("Gdzie: " + quest["area_name"], 7, INK_DIM, CARD_WIDTH - 10.0))
-	content.add_child(_ink("Nagroda:", 7, REWARD))
+	content.add_child(_ink(tr("Gdzie: %s") % Quests.text(quest, "area_name"), 7, INK_DIM, CARD_WIDTH - 10.0))
+	content.add_child(_ink(tr("Nagroda:"), 7, REWARD))
 	var rewards := HFlowContainer.new()
 	rewards.custom_minimum_size.x = CARD_WIDTH - 10.0
 	rewards.add_theme_constant_override("h_separation", 6)
-	rewards.add_child(_ink("%d zł" % quest["gold"], 7, REWARD))
-	rewards.add_child(_ink("%d exp" % quest["xp"], 7, REWARD))
+	rewards.add_child(_ink(tr("%d zł") % quest["gold"], 7, REWARD))
+	rewards.add_child(_ink(tr("%d exp") % quest["xp"], 7, REWARD))
 	if int(quest.get("fame", 0)) > 0:
-		rewards.add_child(_ink("sława +%d" % quest["fame"], 7, REWARD))
+		rewards.add_child(_ink(tr("sława +%d") % quest["fame"], 7, REWARD))
 	if Bounties.gem_bonus(quest):
-		rewards.add_child(_ink("kamień szlachetny", 7, REWARD))
+		rewards.add_child(_ink(tr("kamień szlachetny"), 7, REWARD))
 	var items: Dictionary = quest["reward_items"]
 	for id: String in items:
 		var pair := HBoxContainer.new()
@@ -162,7 +161,7 @@ func _quest_text(content: VBoxContainer, quest: Dictionary, progress: int, show_
 		var icon := TextureRect.new()
 		icon.texture = Items.get_data(id)["icon"]
 		UiStyle.fit_icon(icon)
-		icon.tooltip_text = Items.get_data(id)["name"]
+		icon.tooltip_text = tr(Items.get_data(id)["name"])
 		pair.add_child(icon)
 		pair.add_child(_ink("x%d" % items[id], 7, REWARD))
 		rewards.add_child(pair)
@@ -172,7 +171,7 @@ func _quest_text(content: VBoxContainer, quest: Dictionary, progress: int, show_
 func _offer_card(offer: Dictionary, can_take := true) -> Control:
 	var content := _paper(CARD_WIDTH)
 	_quest_text(content, offer, 0, false)
-	var take := _button("Przyjmij zlecenie", _take.bind(offer))
+	var take := _button(tr("Przyjmij zlecenie"), _take.bind(offer))
 	take.disabled = not can_take
 	take.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	content.add_child(take)
@@ -188,9 +187,9 @@ func _active_card(id: String) -> Control:
 	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
 	buttons.add_theme_constant_override("separation", 6)
 	if quest_log.state_of(id) == Quests.STATE_READY:
-		buttons.add_child(_button("Odbierz nagrodę", _finish.bind(id)))
+		buttons.add_child(_button(tr("Odbierz nagrodę"), _finish.bind(id)))
 	else:
-		buttons.add_child(_button("Na pewno porzucić?" if _confirm_abandon == id else "Porzuć zlecenie", _abandon.bind(id)))
+		buttons.add_child(_button(tr("Na pewno porzucić?") if _confirm_abandon == id else tr("Porzuć zlecenie"), _abandon.bind(id)))
 	content.add_child(buttons)
 	return content.get_parent()
 
@@ -208,23 +207,23 @@ func _take(offer: Dictionary) -> void:
 	if _player.quests.take_bounty(offer) == "":
 		return
 	Sfx.play("ui_confirm")
-	_status.text = "Przyjęto: %s" % offer["title"]
+	_status.text = tr("Przyjęto: %s") % Quests.text(offer, "title")
 	_refresh()
 
 
 func _finish(id: String) -> void:
 	var quest := Quests.get_data(id).duplicate()
 	if not _player.quests.finish_bounty(id, _player):
-		_status.text = "Brakuje rzeczy do oddania - sprawdź plecak i magazyn."
+		_status.text = tr("Brakuje rzeczy do oddania - sprawdź plecak i magazyn.")
 		Sfx.play("ui_error")
 		return
 	Sfx.play("quest_done")
 	Sfx.play("coins")
 	DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -14),
-			"+%d zł  +%d exp" % [quest["gold"], quest["xp"]], Color(1.0, 0.85, 0.3), 10)
+			tr("+%d zł  +%d exp") % [quest["gold"], quest["xp"]], Color(1.0, 0.85, 0.3), 10)
 	for item: String in quest["reward_items"]:
 		_player.item_picked.emit(item, int(quest["reward_items"][item]))
-	_status.text = "Nagroda odebrana! Sława gildii rośnie."
+	_status.text = tr("Nagroda odebrana! Sława gildii rośnie.")
 	_refresh()
 
 
@@ -236,5 +235,5 @@ func _abandon(id: String) -> void:
 	_confirm_abandon = ""
 	_player.quests.abandon_bounty(id)
 	Sfx.play("ui_close")
-	_status.text = "Zlecenie porzucone."
+	_status.text = tr("Zlecenie porzucone.")
 	_refresh()

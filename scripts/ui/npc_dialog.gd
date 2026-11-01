@@ -110,7 +110,7 @@ func _refresh() -> void:
 		child.get_parent().remove_child(child)  # od razu znika z układu
 		child.queue_free()
 
-	_title.text = _npc.display_name
+	_title.text = Quests.person(_npc.display_name)
 	var main := MainQuests.step_for(_player.quests, _npc.display_name)
 	_shown_quest = main if main != "" else _npc.quest_id
 	# krok czeka na zadanie poboczne tej postaci - pokazujemy je, żeby dało się je oddać
@@ -121,66 +121,66 @@ func _refresh() -> void:
 	if _shown_quest != "":
 		_quest_section(_shown_quest)
 	else:
-		_text.text = _npc.dialog_greeting
+		_text.text = tr(_npc.dialog_greeting)
 	for service in _npc.services:
 		match service:
 			"rest":
-				_buttons.add_child(_button("Odpocznij (%d zł)" % _player.boons.discounted(rest_price(_player.stats.level)), _rest))
+				_buttons.add_child(_button(tr("Odpocznij (%d zł)") % _player.boons.discounted(rest_price(_player.stats.level)), _rest))
 			"forge":
-				_buttons.add_child(_button("Wykuwanie", _forge))
+				_buttons.add_child(_button(tr("Wykuwanie"), _forge))
 			"jeweler":
 				# klejnoty dopiero po zadaniu "Pierwszy klejnot"
 				if Gems.unlocked:
-					_buttons.add_child(_button("Klejnoty", _jeweler))
+					_buttons.add_child(_button(tr("Klejnoty"), _jeweler))
 			"enchant":
-				var enchant := _button("Zaklinanie", _enchant)
-				enchant.tooltip_text = "Kowal wbija kamienie z Kryształów Watry (lochy) w broń, zbroję i biżuterię"
+				var enchant := _button(tr("Zaklinanie"), _enchant)
+				enchant.tooltip_text = tr("Kowal wbija kamienie z Kryształów Watry (lochy) w broń, zbroję i biżuterię")
 				_buttons.add_child(enchant)
-				var essences := _button("Esencje", func() -> void:
+				var essences := _button(tr("Esencje"), func() -> void:
 					close()
 					essence_requested.emit("smith"))
-				essences.tooltip_text = "Gniazdo na esencję legendy (Serce Kryształu z lochów) - osadzanie i wyjmowanie esencji"
+				essences.tooltip_text = tr("Gniazdo na esencję legendy (Serce Kryształu z lochów) - osadzanie i wyjmowanie esencji")
 				_buttons.add_child(essences)
 			"disenchant":
-				_buttons.add_child(_button("Odczarowanie", _sage))
+				_buttons.add_child(_button(tr("Odczarowanie"), _sage))
 			"world_mode":
-				var mode_button := _button("Tryb świata", func() -> void:
+				var mode_button := _button(tr("Tryb świata"), func() -> void:
 					close()
 					world_mode_requested.emit())
-				mode_button.tooltip_text = "Jak zachowują się inni podróżnicy: spokojnie, z pojedynkami albo ze zbójami (PK)"
+				mode_button.tooltip_text = tr("Jak zachowują się inni podróżnicy: spokojnie, z pojedynkami albo ze zbójami (PK)")
 				_buttons.add_child(mode_button)
 			"market":
-				_buttons.add_child(_button("Rynek", func() -> void:
+				_buttons.add_child(_button(tr("Rynek"), func() -> void:
 					close()
 					market_requested.emit()))
 			"travelers":
-				_buttons.add_child(_button("Podróżnicy", func() -> void:
+				_buttons.add_child(_button(tr("Podróżnicy"), func() -> void:
 					close()
 					travelers_requested.emit()))
 			"reforge":
-				var workshop := _button("Warsztat", func() -> void:
+				var workshop := _button(tr("Warsztat"), func() -> void:
 					close()
 					workshop_requested.emit())
-				workshop.tooltip_text = "Rzemiosło premii: przerzut, przekucie, usuwanie i dodawanie premii, ulepszanie rzadkości, runy z lochów"
+				workshop.tooltip_text = tr("Rzemiosło premii: przerzut, przekucie, usuwanie i dodawanie premii, ulepszanie rzadkości, runy z lochów")
 				_buttons.add_child(workshop)
 			"meals", "blessing", "bestiary", "elixirs", "respec", "marks":
-				_buttons.add_child(_button(OFFER_SERVICES[service], _offers.bind(service)))
+				_buttons.add_child(_button(tr(OFFER_SERVICES[service]), _offers.bind(service)))
 			"build":
 				# plany budowy dopiero po zadaniu sołtysa z prośbą o pomoc
 				var settlement := get_tree().get_first_node_in_group("settlement") as Settlement
 				if settlement != null and settlement.building_unlocked(_player):
-					_buttons.add_child(_button("Budowa", _build))
+					_buttons.add_child(_button(tr("Budowa"), _build))
 			"storage":
-				_buttons.add_child(_button("Magazyn", _storage))
+				_buttons.add_child(_button(tr("Magazyn"), _storage))
 				if StorageWindow.can_upgrade(_player.storage):
 					var cost := StorageWindow.upgrade_cost(StorageWindow.upgrades_done(_player.storage))
-					var upgrade := _button("Rozbuduj +%d (%d zł)" % [StorageWindow.SLOTS_PER_UPGRADE, cost], _upgrade_storage)
-					upgrade.tooltip_text = "Magazynier dobuduje regał: %d -> %d miejsc" % [_player.storage.slots.size(),
+					var upgrade := _button(tr("Rozbuduj +%d (%d zł)") % [StorageWindow.SLOTS_PER_UPGRADE, cost], _upgrade_storage)
+					upgrade.tooltip_text = tr("Magazynier dobuduje regał: %d -> %d miejsc") % [_player.storage.slots.size(),
 							_player.storage.slots.size() + StorageWindow.SLOTS_PER_UPGRADE]
 					_buttons.add_child(upgrade)
 	if _npc.is_trader():
-		_buttons.add_child(_button("Handel", _trade))
-	_buttons.add_child(_button("Do widzenia", close))
+		_buttons.add_child(_button(tr("Handel"), _trade))
+	_buttons.add_child(_button(tr("Do widzenia"), close))
 	reset_size()
 	position = ((get_viewport_rect().size - size) / 2.0 + Vector2(0, 40)).floor()
 
@@ -190,55 +190,58 @@ func _quest_section(id: String) -> void:
 	var state := _player.quests.state_of(id)
 	match state:
 		Quests.STATE_AVAILABLE:
-			_text.text = quest["description"]
+			_text.text = Quests.text(quest, "description")
 			_quest_info(id, false)
-			_buttons.add_child(_button("Przyjmij zadanie", _accept))
+			_buttons.add_child(_button(tr("Przyjmij zadanie"), _accept))
 		Quests.STATE_ACTIVE:
-			_text.text = quest["progress_text"]
+			_text.text = Quests.text(quest, "progress_text")
 			_quest_info(id, true)
 		Quests.STATE_READY when Quests.receiver(id) != _npc.display_name:
 			# zadanie główne oddaje się innej postaci
-			_text.text = quest["progress_text"]
+			_text.text = Quests.text(quest, "progress_text")
 			_quest_info(id, true)
 		Quests.STATE_READY:
-			_text.text = quest["complete_text"]
+			_text.text = Quests.text(quest, "complete_text")
 			_quest_info(id, true)
-			_buttons.add_child(_button("Odbierz nagrodę", _turn_in))
+			_buttons.add_child(_button(tr("Odbierz nagrodę"), _turn_in))
 		_:
-			_text.text = quest["done_text"]
+			_text.text = Quests.text(quest, "done_text")
 
 
 func _quest_info(id: String, show_progress: bool) -> void:
 	var quest := Quests.get_data(id)
 	var main := MainQuests.is_main(id)
-	_quest_box.add_child(UiStyle.label(("Zadanie główne: " if main else "") + quest["title"], 9, MainQuests.COLOR if main else UiStyle.TITLE_COLOR))
-	var verb := "zbierz" if Quests.is_gather(id) else "pokonaj"
+	var title := Quests.text(quest, "title")
+	_quest_box.add_child(UiStyle.label(tr("Zadanie główne: %s") % title if main else title, 9, MainQuests.COLOR if main else UiStyle.TITLE_COLOR))
+	var target := Quests.text(quest, "target_name")
 	var goal := ""
 	if main:
-		goal = "Cel: " + MainQuests.progress_text(_player, id) if show_progress else "Cel: %s" % quest["target_name"]
+		goal = tr("Cel: %s") % (MainQuests.progress_text(_player, id) if show_progress else target)
 		if Quests.receiver(id) != quest["giver"]:
-			goal += "  (nagroda u: %s)" % Quests.receiver(id)
+			goal += tr("  (nagroda u: %s)") % Quests.person(Quests.receiver(id))
 	elif show_progress:
-		goal = "Cel: %s %d/%d" % [quest["target_name"], _player.quests.progress_of(id), quest["count"]]
+		goal = tr("Cel: %s %d/%d") % [target, _player.quests.progress_of(id), quest["count"]]
+	elif Quests.is_gather(id):
+		goal = tr("Cel: zbierz %d (%s)") % [quest["count"], target.to_lower()]
 	else:
-		goal = "Cel: %s %d (%s)" % [verb, quest["count"], quest["target_name"].to_lower()]
+		goal = tr("Cel: pokonaj %d (%s)") % [quest["count"], target.to_lower()]
 	if Quests.requirements(id).size() > 1:
 		# kilka surowców - każdy w osobnej linii
 		var parts: Array[String] = []
 		var needed: Dictionary = Quests.requirements(id)
 		for item: String in needed:
-			parts.append("%s %d/%d" % [Items.get_data(item)["name"], mini(_player.count_owned(item), needed[item]), needed[item]])
-		goal = "Cel: zbierz " + ", ".join(parts)
+			parts.append("%s %d/%d" % [tr(Items.get_data(item)["name"]), mini(_player.count_owned(item), needed[item]), needed[item]])
+		goal = tr("Cel: zbierz %s") % ", ".join(parts)
 	_quest_box.add_child(UiStyle.label(goal, 7, UiStyle.TEXT_COLOR))
-	_quest_box.add_child(_wrapped("Gdzie: " + quest["area_name"], 7, UiStyle.DIM_COLOR))
-	_quest_box.add_child(UiStyle.label("Nagroda: " + Quests.reward_text(id), 7, Color(1.0, 0.85, 0.3)))
+	_quest_box.add_child(_wrapped(tr("Gdzie: %s") % Quests.text(quest, "area_name"), 7, UiStyle.DIM_COLOR))
+	_quest_box.add_child(UiStyle.label(tr("Nagroda: %s") % Quests.reward_text(id), 7, Color(1.0, 0.85, 0.3)))
 
 
 func _accept() -> void:
 	_player.quests.accept(_shown_quest)
 	_player.quests.update_main(_player)
 	Sfx.play("ui_confirm")
-	_npc.say("Liczę na ciebie!")
+	_npc.say(tr("Liczę na ciebie!"))
 
 
 func _turn_in() -> void:
@@ -251,7 +254,7 @@ func _turn_in() -> void:
 				_player.take_owned(item, needed[item])
 		Sfx.play("quest_done")
 		DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -14),
-				"+%d zł  +%d exp" % [quest["gold"], quest["xp"]], Color(1.0, 0.85, 0.3), 10)
+				tr("+%d zł  +%d exp") % [quest["gold"], quest["xp"]], Color(1.0, 0.85, 0.3), 10)
 
 
 func _offers(kind: String) -> void:
@@ -263,7 +266,7 @@ func _offers(kind: String) -> void:
 func _rest() -> void:
 	var price := _player.boons.discounted(rest_price(_player.stats.level))
 	if _player.stats.gold < price:
-		_npc.say("Najpierw zapłać, przyjacielu. %d złota." % price)
+		_npc.say(tr("Najpierw zapłać, przyjacielu. %d złota.") % price)
 		Sfx.play("ui_error")
 		return
 	Sfx.play("coins")
@@ -278,14 +281,14 @@ func _upgrade_storage() -> void:
 		return
 	var cost := StorageWindow.upgrade_cost(StorageWindow.upgrades_done(_player.storage))
 	if _player.stats.gold < cost:
-		_npc.say("Regały same się nie zbudują. Potrzebuję %d złota." % cost)
+		_npc.say(tr("Regały same się nie zbudują. Potrzebuję %d złota.") % cost)
 		Sfx.play("ui_error")
 		return
 	_player.stats.add_gold(-cost)
 	_player.storage.resize(_player.storage.slots.size() + StorageWindow.SLOTS_PER_UPGRADE)
 	Sfx.play("coins")
 	Sfx.play_at("hammer", _npc.global_position)
-	_npc.say(["Nowy regał stoi!", "Zmieści się jeszcze więcej. Dziękuję!", "Dobudowane. Porządek musi być!"].pick_random())
+	_npc.say(tr(["Nowy regał stoi!", "Zmieści się jeszcze więcej. Dziękuję!", "Dobudowane. Porządek musi być!"].pick_random()))
 	_refresh()
 
 

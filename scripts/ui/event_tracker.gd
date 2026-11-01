@@ -70,15 +70,15 @@ func _refresh() -> void:
 		return
 	var event := events.active
 	var color: Color = WorldEvents.TYPES[event["type"]]["color"]
-	_title.text = event["title"]
+	_title.text = WorldEvents.title_of(event)
 	_title.add_theme_color_override("font_color", color)
 	var left := maxi(0, ceili(float(event["left"])))
-	_where.text = "%s  -  %d:%02d" % [Zones.zone_name(event["zone"]), left / 60, left % 60]
+	_where.text = "%s  -  %d:%02d" % [tr(Zones.zone_name(event["zone"])), left / 60, left % 60]
 	var here := site != null and is_instance_valid(site) and not site.done
-	_goal.text = site.objective_text() if here else "Wydarzenie w innej krainie - idź tam albo teleportuj się (M)"
+	_goal.text = site.objective_text() if here else tr("Wydarzenie w innej krainie - idź tam albo teleportuj się (M)")
 	var place := events.player_place()
 	var count := events.ranking().size()
 	_place.visible = here and event["type"] != "festival"
-	_place.text = ("Twoje miejsce: %d/%d" % [place, count]) if place > 0 else "Walcz, żeby trafić do rankingu"
+	_place.text = (tr("Twoje miejsce: %d/%d") % [place, count]) if place > 0 else tr("Walcz, żeby trafić do rankingu")
 	_message.visible = _message_left > 0.0
 	reset_size()

@@ -90,38 +90,37 @@ static func generate(player: Player, count: int, tier: int) -> Array[Dictionary]
 
 
 ## Jedno zlecenie danego rodzaju w krainie; `tier` - liczba wykonanych zleceń (nagrody rosną).
+## Teksty to wzory z danymi (Quests.resolve) - składane i tłumaczone przy pokazywaniu, nie w zapisie gry.
 static func make(kind: String, zone: String, tier: int, poster: String) -> Dictionary:
 	var level: int = Levels.ZONES[zone][1]
 	var scale := (1.0 + minf(TIER_STEP * tier, TIER_MAX)) * randf_range(0.9, 1.1)
 	var zone_name: String = Zones.DATA[zone]["name"]
 	var quest := {"giver": GIVER, "poster": poster, "bounty": true, "zone": zone, "area": "", "kind": kind,
 			"progress_text": "Zlecenie wciąż wisi na tablicy. Wróć, gdy je wykonasz.",
-			"complete_text": "Zlecenie wykonane! %s dziękuje i wypłaca nagrodę." % poster, "done_text": "Zlecenie wykonane."}
+			"complete_text": ["Zlecenie wykonane! %s dziękuje i wypłaca nagrodę.", poster], "done_text": "Zlecenie wykonane."}
 	var units := 1.0
 	match kind:
 		"kill":
 			var hunt: Array = HUNTS[zone].pick_random()
 			var count := roundi(randi_range(hunt[2], hunt[3]) / 10.0) * 10
-			quest.merge({"title": "%s: %s" % [zone_name, hunt[1]], "target": hunt[0], "target_name": hunt[1], "count": count,
-					"area_name": hunt[4], "description": KILL_LINES.pick_random() % hunt[1].to_lower()})
+			quest.merge({"title": ["%s: %s", zone_name, hunt[1]], "target": hunt[0], "target_name": hunt[1], "count": count,
+					"area_name": hunt[4], "description": [KILL_LINES.pick_random(), {"t": hunt[1], "lower": true}]})
 			units = count
 		"boss":
 			var boss: String = BOSSES[zone].pick_random()
 			var boss_name: String = Codex.monster_info(boss).get("boss_name", boss)
-			quest.merge({"title": "Nagroda za głowę: %s" % boss_name.get_slice(",", 0), "target": "boss:" + boss,
+			quest.merge({"title": ["Nagroda za głowę: %s", {"t": boss_name, "slice": true}], "target": "boss:" + boss,
 					"target_name": boss_name, "count": 1, "area_name": zone_name,
-					"description": BOSS_LINES.pick_random() % boss_name.get_slice(",", 0)})
+					"description": [BOSS_LINES.pick_random(), {"t": boss_name, "slice": true}]})
 			units = 60.0
 		"gather":
 			var wanted: Array = GATHER[zone].pick_random()
 			var count := randi_range(wanted[1], wanted[2])
 			var item_name: String = Items.get_data(wanted[0])["name"]
-			quest.merge({"title": "Zamówienie: %s" % item_name, "type": "gather", "item": wanted[0], "target_name": item_name,
-					"count": count, "area_name": "%s - liczy się plecak i magazyn, oddajesz przy odbiorze" % zone_name,
-					"description": GATHER_LINES.pick_random() % item_name.to_lower()})
+			quest.merge({"title": ["Zamówienie: %s", item_name], "type": "gather", "item": wanted[0], "target_name": item_name,
+					"count": count, "area_name": ["%s - liczy się plecak i magazyn, oddajesz przy odbiorze", zone_name],
+					"description": [GATHER_LINES.pick_random(), {"t": item_name, "lower": true}]})
 			units = 25.0 + count * maxf(1.0, Market.COMMODITIES.get(wanted[0], 8) / 8.0)
-	var text: String = quest["description"]
-	quest["description"] = text.left(1).to_upper() + text.substr(1)
 	quest["gold"] = roundi(Levels.gold(level) * units * 1.6 * scale)
 	quest["xp"] = roundi(Levels.xp(level) * units * 0.5 * scale)
 	quest["fame"] = {"kill": 10, "gather": 8, "boss": 30}[kind] + roundi(level / 4.0)

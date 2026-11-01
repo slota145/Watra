@@ -404,7 +404,7 @@ func _handle_dev_keys(event: InputEvent) -> bool:
 		KEY_F5:
 			var world := get_tree().get_first_node_in_group("world")
 			if world != null and world.start_event_here():
-				_dev_feedback(Lang.t("Wydarzenie: %s") % Lang.t(_player.events.active["title"]), WorldEvents.TYPES[_player.events.active["type"]]["color"])
+				_dev_feedback(tr("Wydarzenie: %s") % WorldEvents.title_of(_player.events.active), WorldEvents.TYPES[_player.events.active["type"]]["color"])
 			else:
 				_dev_feedback(Lang.t("Tu nie może zacząć się wydarzenie (albo jedno już trwa)"), Color(1, 0.4, 0.4))
 		_:
@@ -542,7 +542,7 @@ func show_quest_area(id: String) -> void:
 	var quest := Quests.get_data(id)
 	if _quest_areas.has(quest.get("area", "")):
 		quest_journal.visible = false
-		big_map.show_area(_quest_areas[quest["area"]], quest["title"])
+		big_map.show_area(_quest_areas[quest["area"]], Quests.text(quest, "title"))
 
 
 ## Odpoczynek w karczmie: ekran gaśnie, drzewa odrastają, bossowie wracają do leży, zdrowie i mana wracają.
@@ -569,7 +569,7 @@ func _rest_peak() -> void:
 func _on_quest_ready(id: String) -> void:
 	Sfx.play("quest_ready")
 	var quest := Quests.get_data(id)
-	_show_banner(Lang.t("Zadanie wykonane: %s\nWróć do: %s") % [Lang.t(quest["title"]), Lang.t(quest["giver"])], Color(0.6, 1.0, 0.5))
+	_show_banner(tr("Zadanie wykonane: %s\nWróć do: %s") % [Quests.text(quest, "title"), Quests.person(Quests.receiver(id))], Color(0.6, 1.0, 0.5))
 
 
 ## Pasek ikon w prawym dolnym rogu: każda otwiera/zamyka swoje okno.
@@ -636,7 +636,7 @@ func _update_event_markers() -> void:
 	if events.active.is_empty():
 		big_map.set_event("", Vector2.INF, "", Color.WHITE)
 		return
-	big_map.set_event(events.active["zone"], event_site.center if here else Vector2.INF, events.active["title"],
+	big_map.set_event(events.active["zone"], event_site.center if here else Vector2.INF, WorldEvents.title_of(events.active),
 			WorldEvents.TYPES[events.active["type"]]["color"])
 
 
