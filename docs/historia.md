@@ -328,6 +328,9 @@ odpowiedniej sekcji.
   - **Łańcuch błyskawic bez odnowienia** (listopad 2026): zamiast odnowienia 2,4 s tylko czas rzucania
     `Skills.CHAIN_CAST_TIME` (0,6 s) dzielony przez szybkość rzucania; trzymany klawisz rzuca raz za razem
     (`Player._process_strikes`, uderzenia trafiają do `_held_ids`).
+- [x] **Czerwone koła nie zostają na ziemi** (listopad 2026): koło pioruna ptakoczłowieka i Orła Burzy znika też,
+  gdy potwór zniknął przed uderzeniem (np. zabity przez podróżników); bezpiecznik `Telegraph.LINGER` - każda
+  poświata sama znika 3 s po wypełnieniu. Test `tests/test_telegraph.gd`.
 - [x] Broń w ręku: łuki we właściwym rozmiarze (`tools/pixellab_items.py` sam dobiera obrót ikony), legendarne bronie
   trzymają w ręku siebie (`tools/legend_held.py`, `scripts/legend_held.gd`; Łuk Swaroga, Łuk Burzy i Księga
   Marzanny z osobnych rysunków PixelLab w `pixellab_src/legend_held/`).

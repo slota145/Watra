@@ -170,7 +170,10 @@ func _call_bolt(target: Vector2) -> void:
 	(layer if layer != null else get_parent()).add_child(telegraph)
 	telegraph.global_position = target
 	Sfx.play_at("telegraph", target, -6.0)
-	get_tree().create_timer(BOLT_DELAY).timeout.connect(_bolt.bind(telegraph, target))
+	var timer := get_tree().create_timer(BOLT_DELAY)
+	timer.timeout.connect(_bolt.bind(telegraph, target))
+	# koło znika też wtedy, gdy orła już nie ma
+	timer.timeout.connect(telegraph.queue_free)
 
 
 func _bolt(telegraph: Telegraph, target: Vector2) -> void:
