@@ -203,7 +203,7 @@ func _process_power(delta: float) -> void:
 	var speed := _player._skill_speed(Skills.tags("power_shot")) * (1.0 + _bonus("power_charge"))
 	_power_charge = minf(_power_charge + delta * speed / Skills.POWER_CHARGE_TIME, 1.0)
 	if before < 1.0 and _power_charge >= 1.0:
-		SkillEffects.spark(_player.get_parent(), _player.body_center() + dir * 12.0, FIRE_COLOR, 10)
+		MiscVfx.spark(_player.get_parent(), _player.body_center() + dir * 12.0, FIRE_COLOR, 1.0)
 		Sfx.play("fireball_full", -6.0, 1.3)
 
 
@@ -307,7 +307,7 @@ func _vault() -> void:
 		_shadow_time = SHADOW_TIME
 		_shadow_shot = true
 		Goblin.hidden_until = Time.get_ticks_msec() + roundi(SHADOW_TIME * 1000.0)
-		SkillEffects.spark(_player.get_parent(), _player.body_center(), Color(0.3, 0.3, 0.4), 12)
+		MiscVfx.puff(_player.get_parent(), _player.body_center(), Color(0.3, 0.3, 0.4), 0.7)
 
 
 # ---------------------------------------------------------------- Sidła
@@ -435,7 +435,7 @@ func _wind_arrow() -> void:
 		if to_enemy.length() > enemy.hurt_radius and absf(angle_difference(dir.angle(), to_enemy.angle())) > half:
 			continue
 		_player.hit_enemy(enemy, _player._skill_damage(multiplier, Skills.tags("wind_arrow")), _player.global_position, Skills.WIND_KNOCKBACK)
-		SkillEffects.spark(_player.get_parent(), enemy.hurt_center(), WIND_COLOR, 4)
+		MiscVfx.spark(_player.get_parent(), enemy.hurt_center(), WIND_COLOR, 0.5)
 
 
 # ---------------------------------------------------------------- Balista
@@ -545,28 +545,6 @@ static func release(parent: Node, at: Vector2, angle: float, size := 1.0) -> voi
 	SkillEffects.sheet_once(parent, RELEASE_FX, 6, 18.0, at, Vector2(3, 21), angle, 1.0, size)
 
 
-static func _ramp(color: Color) -> Gradient:
-	var ramp := Gradient.new()
-	ramp.colors = PackedColorArray([Color(1, 1, 0.85, 0.9), color, Color(color, 0.0)])
-	return ramp
-
-
-## Smuga za strzałą (na wysokości lotu pocisku).
-static func _trail(color: Color, height: float) -> CPUParticles2D:
-	var trail := CPUParticles2D.new()
-	trail.position = Vector2(0, -height)
-	trail.amount = 24
-	trail.lifetime = 0.3
-	trail.local_coords = false
-	trail.spread = 180.0
-	trail.initial_velocity_max = 10.0
-	trail.gravity = Vector2(0, -20)
-	trail.scale_amount_min = 1.0
-	trail.scale_amount_max = 2.5
-	trail.color_ramp = _ramp(color)
-	return trail
-
-
 ## Krąg Deszczu Strzał: co `tick` s fala strzał rani wszystkich w kręgu; spadające strzały to kreski z nieba.
 class _Rain:
 	extends Node2D
@@ -652,7 +630,7 @@ class _Snare:
 		loop.free()
 		play("default")
 		z_index = -1
-		SkillEffects.spark(get_parent(), global_position, Color(0.8, 0.8, 0.85), 4)
+		MiscVfx.puff(get_parent(), global_position, Color(0.8, 0.8, 0.85), 0.35)
 
 	func _physics_process(delta: float) -> void:
 		_life -= delta
@@ -822,7 +800,7 @@ class _Ballista:
 		_sprite.scale = Vector2.ONE * 0.6
 		_sprite.offset = Vector2(0, -BowSkills.BALLISTA_TEXTURE.get_height() / 2.0 + 4.0)
 		add_child(_sprite)
-		SkillEffects.spark(get_parent(), global_position, Color(0.85, 0.7, 0.5), 8)
+		MiscVfx.puff(get_parent(), global_position, Color(0.85, 0.7, 0.5), 0.6)
 		_sprite.scale = Vector2(0.6, 0.0)
 		create_tween().tween_property(_sprite, "scale", Vector2.ONE * 0.6, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 

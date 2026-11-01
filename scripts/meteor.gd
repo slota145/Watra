@@ -13,6 +13,7 @@ var site: EventSite
 var level := 1
 var _time := 0.0
 var _rock: Sprite2D
+var _trail: FxLoop
 var _landed := false
 
 
@@ -25,18 +26,13 @@ func _ready() -> void:
 	_rock.visible = false
 	_rock.z_index = 40
 	add_child(_rock)
-	var trail := CPUParticles2D.new()
-	trail.amount = 30
-	trail.lifetime = 0.35
-	trail.gravity = Vector2.ZERO
-	trail.direction = Vector2(-0.33, -1.0)
-	trail.spread = 12.0
-	trail.initial_velocity_min = 40.0
-	trail.initial_velocity_max = 80.0
-	trail.scale_amount_min = 3.0
-	trail.scale_amount_max = 5.0
-	trail.color = Color(1.0, 0.55, 0.2)
-	_rock.add_child(trail)
+	# ognisty ogon z kreatora efektów PixelLab (MiscVfx), skierowany wstecz toru lotu, pod skałą
+	_trail = MiscVfx.looping("meteor_trail")
+	_trail.rotation = (Vector2(0, -8) - Vector2(-90, -260)).angle()
+	_trail.scale = Vector2.ONE * 1.0
+	_trail.z_index = 39
+	_trail.visible = false
+	add_child(_trail)
 	Sfx.play_at("telegraph", global_position)
 
 
@@ -46,6 +42,8 @@ func _process(delta: float) -> void:
 		_rock.visible = true
 		var t := clampf((_time - WARNING) / FALL, 0.0, 1.0)
 		_rock.position = Vector2(-90, -260).lerp(Vector2(0, -8), t)
+		_trail.visible = true
+		_trail.position = _rock.position
 		if t >= 1.0:
 			_land()
 	queue_redraw()
@@ -54,8 +52,7 @@ func _process(delta: float) -> void:
 func _land() -> void:
 	_landed = true
 	Sfx.play_at("explosion", global_position)
-	SkillEffects.shockwave(get_parent(), global_position, RADIUS + 10.0, Color(1.0, 0.6, 0.3))
-	SkillEffects.spark(get_parent(), global_position + Vector2(0, -6), Color(1.0, 0.7, 0.3), 18)
+	MiscVfx.meteor_impact(get_parent(), global_position, RADIUS + 10.0)
 	var player: Player = get_tree().get_first_node_in_group("player")
 	if player != null:
 		var d := player.global_position.distance_to(global_position)

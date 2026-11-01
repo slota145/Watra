@@ -40,13 +40,13 @@ func _ready() -> void:
 	_sprite.offset = Vector2(0, -19)
 	add_child(_sprite)
 	_attack = randf() * ATTACK_TIME
-	SkillEffects.spark(get_parent(), global_position + Vector2(0, -10), Color(1.0, 0.9, 0.6), 8)
+	MiscVfx.puff(get_parent(), global_position + Vector2(0, -6), Color(1.0, 0.9, 0.6), 0.55)
 
 
 func _process(delta: float) -> void:
 	_life -= delta
 	if _life <= 0.0 or not is_instance_valid(player) or player.is_dead:
-		SkillEffects.spark(get_parent(), global_position + Vector2(0, -10), Color(1.0, 0.9, 0.6), 6)
+		MiscVfx.puff(get_parent(), global_position + Vector2(0, -6), Color(1.0, 0.9, 0.6), 0.5)
 		queue_free()
 		return
 	if _target == null or not is_instance_valid(_target) or _target.state == Goblin.State.DEAD:

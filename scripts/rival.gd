@@ -99,12 +99,15 @@ func _process_attack(delta: float) -> void:
 		return
 	match weapon:
 		"bow":
-			SkillEffects.spark(get_parent(), _player.body_center(), Color(0.95, 0.85, 0.6), 4)
+			BowSkills.arrow_hit(get_parent(), _player.body_center(), (_player.body_center() - global_position).angle())
 			Sfx.play_at("bow", global_position)
 		"spell":
-			SkillEffects.spark(get_parent(), _player.body_center(), Color(0.55, 0.75, 1.0), 8)
+			SkillEffects.sheet_once(get_parent(), Traveler.SPELL_HIT_FX, 6, 18.0, _player.body_center(), Vector2(20, 20), 0.0, 1.0, 0.7)
 			Sfx.play_at("magic", global_position)
 		_:
+			var aim := (_player.body_center() - global_position).normalized()
+			SkillEffects.sheet_once(get_parent(), Traveler.SLASH_FX, 5, 24.0, global_position + Vector2(0, -9), Vector2(32, 32), aim.angle(), 1.0, 0.7)
+			SkillEffects.sheet_once(get_parent(), Traveler.HIT_FX, 5, 16.0, _player.body_center(), Vector2(14, 14), randf() * TAU, 1.0, 0.8)
 			Sfx.play_at("swing", global_position)
 	# pojedynek: gracz nie ginie - przegrywa przy 10% zdrowia
 	if kind == "duel" and _player.health - damage <= _player.stats.max_health() * YIELD_AT:

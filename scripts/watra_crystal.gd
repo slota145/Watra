@@ -86,7 +86,7 @@ func take_hit(amount: int) -> void:
 	if not is_alive():
 		return
 	health -= amount
-	SkillEffects.spark(get_parent(), global_position + Vector2(0, -20), Color(1.0, 0.6, 0.3), 4)
+	MiscVfx.spark(get_parent(), global_position + Vector2(randf_range(-8.0, 8.0), -20), Color(1.0, 0.6, 0.3), 0.6)
 	Sfx.play_at("hit", global_position, -6.0)
 	if health <= 0.0:
 		_finish(false)
@@ -195,8 +195,7 @@ func _finish(success: bool) -> void:
 	elif not success:
 		factor = FAIL_REWARD
 	_set_texture(RUBBLE if success and variant == "crystal" else TEXTURE_DIM)
-	SkillEffects.shockwave(get_parent(), global_position, 70.0, Color(1.0, 0.55, 0.25))
-	SkillEffects.spark(get_parent(), global_position + Vector2(0, -20), Color(1.0, 0.7, 0.35), 24)
+	MiscVfx.crystal_shatter(get_parent(), global_position, 70.0)
 	Sfx.play("rock_break", 2.0)
 	Sfx.play("quest_ready" if success else "ui_error")
 	for entry: Array in reward(tier, factor):
@@ -279,7 +278,7 @@ class Miner:
 		if not is_alive():
 			return
 		health -= amount
-		SkillEffects.spark(get_parent().get_parent(), global_position + Vector2(0, -12), Color(1.0, 0.3, 0.25), 4)
+		MiscVfx.spark(get_parent().get_parent(), global_position + Vector2(0, -12), Color(1.0, 0.3, 0.25), 0.55)
 		Sfx.play_at("hurt", global_position, -8.0)
 		if health <= 0.0:
 			mining = false
@@ -296,7 +295,7 @@ class Miner:
 		var up := fmod(_time, SWING * 2.0) < SWING
 		_sprite.texture = WatraCrystal.MINER_UP if up else WatraCrystal.MINER_DOWN
 		if fmod(before, SWING * 2.0) < SWING and not up:
-			SkillEffects.spark(get_parent().get_parent(), global_position + Vector2(-side * 14.0, -10), Color(1.0, 0.6, 0.3), 3)
+			MiscVfx.spark(get_parent().get_parent(), global_position + Vector2(-side * 14.0, -10), Color(1.0, 0.6, 0.3), 0.45)
 			Sfx.play_at("mine", global_position, -12.0)
 
 	func _draw() -> void:
