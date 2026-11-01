@@ -165,6 +165,9 @@ odpowiedniej sekcji.
   w południowej części (zagroda z pali z oswajanymi wilkami, klatka, kości, przed bramą poskramiacze, osiłek i dwa
   wargi; 3), zgraje zwiadowców na wolnych pasach wokół Ostoi (około 9), wilcze łowy przy truchłach jeleni
   na skraju siedliska wilków (około 4). Od palisady Ostoi co najmniej 10 kafelków, łowiska zwierzyny nietknięte.
+- [x] Barykady z pali w lesie (obozy goblinów, leże wodza, posterunki, psiarnie) przez `World._spawn_palisade`:
+  na odcinkach biegnących ukośnie „/" (lewy górny i prawy dolny łuk pierścienia) grafika pali jest odbita
+  w poziomie, żeby pale szły wzdłuż barykady i nie zasłaniały obozu.
 
 ## Wietrzne Turnie (`scripts/mountain_zone.gd`) (Do poprawy)
 - [x] Elektryczny orzeł (Gromoskrzydły, `scripts/storm_eagle.gd`) macha skrzydłami: 8 klatek pełnego uderzenia z PixelLab, także w spoczynku nad gniazdem.
