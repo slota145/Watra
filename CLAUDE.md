@@ -127,6 +127,11 @@ efekt w „My effects” autora na pixellab.ai). Jego pliki też się nie pobier
 
 Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po graniu.
 
+### Testy
+
+- [ ] `tests/test_party.gd` - przypadek „prośba przepada z drużyną” zawodzi losowo (mniej więcej 2 na 3 uruchomienia),
+  także w wersji sprzed efektów bossów; do naprawy (najpewniej zależność od losowania w teście).
+
 ### Zasada ogólna: dużo potworów
 
 - [ ] Domyślnie każde siedlisko potworów ma mieć **dziesiątki, a nawet setki potworów**, jak w miejscach farmienia w Black Desert albo w Path of Exile.
@@ -225,6 +230,11 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   Spadającej Gwiazdy, fioletowa mgła Kroku, bańka z heksagonów Tarczy Many, Kamień Runiczny z kręgiem run. Grafiki
   `assets/spell/` (włócznia, kula, gwiazda, kamień) zastąpione animacjami (`frost_lance.png` i `meteor.png` zostają
   tylko jako obrazek zapasowy pocisku).
+- [x] Wspólne efekty bossów (`scripts/boss.gd`, `assets/effects/boss_*.png`): ryk z falą przy wejściu do walki
+  (`_fx_engage`), wybuch z dymem i duszami przy śmierci (`_fx_death`), wybuch mocy przy zmianie fazy (`_fx_phase`)
+  i zapętlona aura wściekłości (`enraged` - polowanie na bossa, albo poniżej 30% zdrowia w walce; tylko wygląd);
+  podklasy podmieniają je własnymi wersjami. Zapowiedzi ataków (`scripts/telegraph.gd`) mają znaki ruchu (kręgi
+  zbiegające się do środka koła, strzałki na pasie, łuki w stożku) i błysk tuż przed uderzeniem.
 - [x] Ataki bossów Goblińskiego Lasu, Pól Zbożowych i bestii Prastarego Lasu z kreatora efektów (`scripts/boss_fx.gd` -
   `BossFx`, wpisy `boss_slam`, `boss_claw`, `boss_cleave`, `bies_smoke`, `bies_roar`, `bomb_blast`, `acid_splash`,
   `worm_burrow` w `ids.json`): uderzenia w ziemię (Gruzłog, Szarokieł, bestie, Pożeracz Pól, lądowanie Bombardiera),
