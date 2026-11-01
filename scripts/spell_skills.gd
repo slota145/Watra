@@ -289,10 +289,12 @@ func is_burning(enemy: Goblin) -> bool:
 
 
 func _process_burn(delta: float) -> void:
-	for enemy: Goblin in _burning.keys():
-		if not is_instance_valid(enemy) or enemy.state == Goblin.State.DEAD:
-			_burning.erase(enemy)
+	# klucz bez typu: zabity potwór jest już zwolniony, a przypisanie go do zmiennej Goblin to błąd
+	for key in _burning.keys():
+		if not is_instance_valid(key) or (key as Goblin).state == Goblin.State.DEAD:
+			_burning.erase(key)
 			continue
+		var enemy: Goblin = key
 		var entry: Array = _burning[enemy]
 		entry[1] -= delta
 		entry[2] -= delta

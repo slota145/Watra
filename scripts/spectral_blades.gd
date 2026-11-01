@@ -84,9 +84,13 @@ func _process(delta: float) -> void:
 	if time_left <= 0.0 or player.is_dead:
 		queue_free()
 		return
-	for enemy: Goblin in _recent.keys():
+	# klucz bez typu: zabity potwór jest już zwolniony, a przypisanie go do zmiennej Goblin to błąd
+	for enemy in _recent.keys():
+		if not is_instance_valid(enemy):
+			_recent.erase(enemy)
+			continue
 		_recent[enemy] -= delta
-		if _recent[enemy] <= 0.0 or not is_instance_valid(enemy):
+		if _recent[enemy] <= 0.0:
 			_recent.erase(enemy)
 	for offset in blade_positions():
 		var at := global_position + offset

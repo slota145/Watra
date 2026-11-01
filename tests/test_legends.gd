@@ -36,7 +36,9 @@ func _initialize() -> void:
 		var rolled: String = loot.legendary_at_level(id, 20)
 		ok = ok and rolled != "" and items.get_data(rolled).get("rarity", "") == "legendary"
 		# dymek z opisem (błąd formatowania - np. "%" bez "%%" w EFFECT_TEXTS - daje pusty tekst)
-		ok = ok and items.describe(id).contains("Efekt:") and items.describe(rolled).contains("Efekt:")
+		# (napis w języku gry - na komputerze z angielskim systemem gra startuje po angielsku)
+		var label: String = Lang.t("Efekt: %s").get_slice("%", 0)
+		ok = ok and items.describe(id).contains(label) and items.describe(rolled).contains(label)
 		_check("%s (%s, %s)" % [id, data.get("slot", "?"), effect], ok)
 	print("WYNIK: ", "OK" if _fails == 0 else "%d bledow" % _fails)
 	quit()

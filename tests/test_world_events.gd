@@ -111,13 +111,20 @@ func _process(_d: float) -> bool:
 		408:
 			_site = _world.event_site
 			check("miejsce meteorytów", _site != null and _site._type == "meteors" and not _site.done)
-			var meteor = load("res://scripts/meteor.gd").new()
-			meteor.site = _site
-			meteor.level = 16
-			meteor.position = p.global_position
-			_world.entities.add_child(meteor)
+			# przed uderzeniem zdejmujemy chwilową nietykalność (potwory z Rozlewisk mogły właśnie trafić gracza);
+			# unik z przedmiotów jest losowy, więc kolejne meteoryty (już bez miejsca wydarzenia) próbują ponownie
 			var hp: float = p.health
-			meteor._land()
+			for attempt in 5:
+				var meteor = load("res://scripts/meteor.gd").new()
+				meteor.site = _site if attempt == 0 else null
+				meteor.level = 16
+				meteor.position = p.global_position
+				_world.entities.add_child(meteor)
+				p._invulnerable_timer = 0.0
+				hp = p.health
+				meteor._land()
+				if p.health < hp:
+					break
 			check("meteoryt rani gracza", p.health < hp)
 		410:
 			var rock = null

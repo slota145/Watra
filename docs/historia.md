@@ -257,6 +257,22 @@ odpowiedniej sekcji.
   Rozpychanie potworów liczone w siatce sąsiadów, a odległe potwory w spoczynku sprawdzają gracza co kilka klatek
   (`scripts/goblin.gd`).
 
+## Testy (Do poprawy)
+- [x] Przegląd całego zestawu testów (listopad 2026) - przedawnione albo losowe testy poprawione:
+  - `test_world_events.gd` „meteoryt rani gracza”: gracz bywał chwilowo nietykalny po ciosie potwora z Rozlewisk
+    (albo robił unik z przedmiotów); test zdejmuje nietykalność i próbuje do 5 meteorytów (kolejne bez miejsca wydarzenia);
+  - `test_legends.gd` szukał napisu „Efekt:”, a na komputerze z angielskim systemem gra startuje po angielsku -
+    test bierze napis z `Lang.t`;
+  - `test_bow_skills.gd` „Balista strzela”: balista celuje w najbliższego potwora (czasem innego z gromady) -
+    test liczy salwy (`_Ballista.shots`);
+  - `test_market_growth.gd` „lepsze przedmioty na dużym rynku”: 3000 losowań zamiast 400, próg 2,5 punktu zamiast 5
+    (różnica zmalała po zmianach losowania łupu i ginęła w szumie);
+  - `test_pan.gd`: krok przesuwania tła przeliczony na 60 klatek na sekundę, próg 1,5 px (1 px wypadał na granicy);
+  - błąd „previously freed instance” przy zabitych potworach w pętlach po słownikach (ostrza widmowe
+    `spectral_blades.gd`, trucizna `bow_skills.gd`, podpalenie `spell_skills.gd`) - klucz bez typu, sprawdzony przed użyciem.
+- [x] Wydajność wioski ptakoludzi: dawny pomiar 15 ms na klatkę jest nieaktualny - `bench_combat` daje w środku wioski
+  (81 wrogów) średnio 7,3 ms, jak w innych krainach (7-8,5 ms).
+
 ## Postać i przedmioty (Pomysły i rzeczy do zrobienia)
 - [x] **Drzewko miecza, etap 1** (`scripts/skill_tree.gd`, widok `scripts/ui/skill_tree_view.gd` w oknie K, `scripts/skill_book.gd`):
   sieć węzłów jak drzewko pasywne w PoE (umiejętności, pasywne, kluczowe), punkt umiejętności za każdy poziom postaci
