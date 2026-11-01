@@ -1495,5 +1495,163 @@
       73,
       124
     ]
+  },
+  "legend_shockwave": {
+    "effect": "145dcee0-10cc-4451-93e4-ea6d1a46d615",
+    "name": "Legenda - złota fala uderzeniowa",
+    "frame": [
+      104,
+      72
+    ],
+    "frames": 9,
+    "fps": 18,
+    "anchor": [
+      52,
+      40
+    ]
+  },
+  "legend_tide": {
+    "effect": "7ecb55e6-43ee-4d92-b313-a79e023efa78",
+    "name": "Legenda - fala wody (stożek)",
+    "frame": [
+      100,
+      100
+    ],
+    "frames": 9,
+    "fps": 18,
+    "anchor": [
+      6,
+      50
+    ]
+  },
+  "legend_sound_cone": {
+    "effect": "ff1e4345-442d-483f-b173-e32c9101d54b",
+    "name": "Legenda - fala dźwięku z nutami (stożek)",
+    "frame": [
+      100,
+      100
+    ],
+    "frames": 9,
+    "fps": 18,
+    "anchor": [
+      6,
+      50
+    ]
+  },
+  "legend_toxic_aura": {
+    "effect": "5088d6ba-c079-4d22-b3b7-977e8e978de6",
+    "name": "Legenda - trująca chmura wokół gracza",
+    "frame": [
+      124,
+      76
+    ],
+    "frames": 8,
+    "fps": 10,
+    "loop": true,
+    "anchor": [
+      62,
+      40
+    ]
+  },
+  "legend_wind_crescent": {
+    "effect": "d5f9862b-5fbb-4ca8-9906-cb21dfc2e13e",
+    "name": "Legenda - półksiężyc wiatru",
+    "frame": [
+      52,
+      44
+    ],
+    "frames": 4,
+    "fps": 16,
+    "loop": true,
+    "anchor": [
+      30,
+      22
+    ]
+  },
+  "legend_feathers": {
+    "effect": "c3ef6da7-d254-40ee-be8f-0f7769075f2e",
+    "name": "Legenda - wachlarz złotych piór",
+    "frame": [
+      140,
+      112
+    ],
+    "frames": 9,
+    "columns": 5,
+    "fps": 18,
+    "anchor": [
+      70,
+      56
+    ]
+  },
+  "legend_web": {
+    "effect": "35ed3f8e-96b6-4a05-b1af-1acaa9647605",
+    "name": "Legenda - rozpięta sieć",
+    "frame": [
+      100,
+      76
+    ],
+    "frames": 9,
+    "fps": 16,
+    "anchor": [
+      50,
+      40
+    ]
+  },
+  "legend_heal_blood": {
+    "effect": "37d1d679-9186-4caf-b042-ddf400ec9a88",
+    "name": "Legenda - leczenie krwią",
+    "frame": [
+      48,
+      60
+    ],
+    "frames": 10,
+    "fps": 14,
+    "anchor": [
+      24,
+      46
+    ]
+  },
+  "legend_heal_leaf": {
+    "effect": "aaf9218a-0ac1-4fb3-a7cf-3a0c49c0831c",
+    "name": "Legenda - leczenie liśćmi",
+    "frame": [
+      48,
+      60
+    ],
+    "frames": 10,
+    "fps": 14,
+    "anchor": [
+      24,
+      46
+    ]
+  },
+  "legend_bone_orbit": {
+    "effect": "10bd6312-5552-4851-b82c-49d5d9b6463b",
+    "name": "Legenda - krążące kości",
+    "frame": [
+      48,
+      36
+    ],
+    "frames": 8,
+    "fps": 12,
+    "loop": true,
+    "anchor": [
+      24,
+      18
+    ]
+  },
+  "legend_bone_burst": {
+    "effect": "abf739e5-eb69-41bf-a34a-7dfb20b83d82",
+    "name": "Legenda - pękająca tarcza kości",
+    "frame": [
+      64,
+      56
+    ],
+    "frames": 8,
+    "fps": 16,
+    "anchor": [
+      32,
+      30
+    ]
   }
 }

@@ -257,6 +257,13 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 - [x] Królowa Pająków nie stoi już do gracza tyłem (na obrotach z PixelLab patrzyła w lewo - `tools/pixellab_sheets.py`,
   `creature(..., mirror=True)` odbija klatki); mniejsze kokony z uwięzionymi ludźmi (`pair(..., scale=0.6)`, 33 zamiast
   55 px) i owinięte ofiary (`PROP_SCALE` - połowa, 30 zamiast 61 px) - człowiek mniej więcej wzrostu postaci.
+- [x] Efekty legendarnych przedmiotów z kreatora efektów (`scripts/legend_vfx.gd` - `LegendVfx`, wpisy "legend_*"
+  w `ids.json`): złota fala uderzeniowa (Sygnet Gruzłoga), fala wody (Oko Przypływu, Płaszcz Topielca) i złota fala
+  dźwięku z nutami (Berło) w stożku, trująca chmura (Łuski Hydry), półksiężyc wiatru (Ostrze Gryfa), wachlarz piór,
+  sieć, leczenie krwią i liśćmi, krążące i pękające kości (Kościana Korona); reszta legend używa efektów swoich
+  bossów i umiejętności (piorun z nieba i łańcuch błyskawic, wir Wodnika, korzenie Leszego, dym i ryk Biesa, kwas,
+  wybuch bomby, fontanna Czerwia, krąg dusz Mortana, uderzenie Gnilca, pnącza i fletnia Fauna, trąba Gryfa, kula
+  ognia - `LegendFx`); echo (Kieł Alfy) barwi efekt na niebiesko. Pęknięcia ziemi (`ground_crack`) i język Bulgora zostają.
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 
