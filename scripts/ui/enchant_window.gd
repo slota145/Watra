@@ -61,7 +61,7 @@ var _skip_box: CheckBox
 var _auto_box: CheckBox
 var _status: Label
 var _warning: Label
-var _charge_particles: CPUParticles2D
+var _charge_fx: AnimatedSprite2D
 var _fx: Control
 var _pulse_radius := 0.0
 var _pulse_alpha := 0.0
@@ -204,8 +204,10 @@ func _ready() -> void:
 	box.add_child(_status)
 
 	# efekty na środkowej kratce: iskry przy ładowaniu i puls/błysk na koniec
-	_charge_particles = _make_particles(GOLD, 26, false)
-	_item_slot.add_child(_charge_particles)
+	_charge_fx = WorldVfx.enchant_charge()
+	_charge_fx.position = BIG_SLOT / 2.0 + Vector2(0, 4)
+	_charge_fx.visible = false
+	_item_slot.add_child(_charge_fx)
 	# pierścień pulsu leży poza kratką, żeby nie przejmował jej rozjaśnienia
 	_fx = Control.new()
 	_fx.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -473,7 +475,7 @@ func _start_attempt() -> void:
 
 	_set_status("Zaklinanie...", GOLD)
 	_charge_sound.play()
-	_charge_particles.emitting = true
+	_charge_fx.visible = true
 	_blessed_flow = plan["blessed"]
 	_spark_timer = 0.0
 	_progress.value = 0.0
@@ -492,7 +494,7 @@ func _finish(success: bool, blessed: bool) -> void:
 	_charge_sound.stop()
 	_busy = false
 	_blessed_flow = false
-	_charge_particles.emitting = false
+	_charge_fx.visible = false
 	_progress.value = 0.0
 	_item_slot.modulate = Color.WHITE
 
@@ -555,9 +557,7 @@ func _auto_next() -> void:
 
 
 func _play_success() -> void:
-	var burst := _make_particles(GOLD, 40, true)
-	_item_slot.add_child(burst)
-	burst.finished.connect(burst.queue_free)
+	WorldVfx.enchant_result(self, _slot_center(), true)
 	var tween := create_tween()
 	tween.tween_method(_pulse_step, 0.0, 1.0, 0.7).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	_item_slot.modulate = GOLD * 1.6
@@ -565,9 +565,7 @@ func _play_success() -> void:
 
 
 func _play_failure() -> void:
-	var burst := _make_particles(FAIL_RED, 30, true)
-	_item_slot.add_child(burst)
-	burst.finished.connect(burst.queue_free)
+	WorldVfx.enchant_result(self, _slot_center(), false)
 	var tween := create_tween()
 	for i in 2:
 		tween.tween_property(_item_slot, "modulate", FAIL_RED * 1.5, 0.12)
@@ -684,27 +682,9 @@ func _check_box(text: String, tooltip: String) -> CheckBox:
 	return box
 
 
-func _make_particles(color: Color, amount: int, burst: bool) -> CPUParticles2D:
-	var p := CPUParticles2D.new()
-	p.position = BIG_SLOT / 2.0
-	p.amount = amount
-	p.emitting = burst
-	p.one_shot = burst
-	p.explosiveness = 1.0 if burst else 0.0
-	p.lifetime = 0.7 if burst else 0.9
-	p.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-	p.emission_sphere_radius = 4.0 if burst else 18.0
-	p.direction = Vector2.UP
-	p.spread = 180.0
-	p.gravity = Vector2(0, 30) if burst else Vector2(0, -25)
-	p.initial_velocity_min = 40.0 if burst else 4.0
-	p.initial_velocity_max = 90.0 if burst else 14.0
-	p.scale_amount_min = 1.0
-	p.scale_amount_max = 2.5
-	var fade := Gradient.new()
-	fade.colors = PackedColorArray([Color(1, 1, 0.9), color, Color(color, 0.0)])
-	p.color_ramp = fade
-	return p
+## Środek dużej kratki przedmiotu na płótnie okna - tu wybucha efekt wyniku zaklinania (z kreatora efektów PixelLab).
+func _slot_center() -> Vector2:
+	return _item_slot.get_global_transform() * (BIG_SLOT / 2.0)
 
 
 func _set_status(text: String, color: Color) -> void:

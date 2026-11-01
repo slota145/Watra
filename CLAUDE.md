@@ -264,6 +264,13 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   bossów i umiejętności (piorun z nieba i łańcuch błyskawic, wir Wodnika, korzenie Leszego, dym i ryk Biesa, kwas,
   wybuch bomby, fontanna Czerwia, krąg dusz Mortana, uderzenie Gnilca, pnącza i fletnia Fauna, trąba Gryfa, kula
   ognia - `LegendFx`); echo (Kieł Alfy) barwi efekt na niebiesko. Pęknięcia ziemi (`ground_crack`) i język Bulgora zostają.
+- [x] Efekty świata i interfejsu z kreatora efektów (`scripts/world_vfx.gd` - `WorldVfx`, wpisy `burning_*`, `boulder_break`,
+  `firework_*`, `loot_*`, `enchant_*` w `ids.json`): płonąca ziemia i trujący opar jako zapętlone kręgi płomieni
+  (`BurningPatch`, skalowane do promienia), odłamki i pył rozbitego głazu, fajerwerki na Święcie (kwiat iskier albo
+  rakieta, białe rysunki barwione losowym kolorem), zapętlony błysk łupu na ziemi (niebieski - magiczny, złoty - rzadki;
+  wspólne klatki, więc setki łupów mało kosztują) i iskry legendy w słupie światła, złoty błysk w powiadomieniu o łupie,
+  w oknie zaklinania krążące złote runy w trakcie, złoty rozbłysk z gwiazdkami po sukcesie i czerwone pęknięcie z dymem
+  po porażce. Mgła, muchy, zarodniki, dym z kominów, para i iskierki ziół zostają.
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 
