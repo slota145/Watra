@@ -138,6 +138,11 @@ const SATYR_PLOTS := 5
 const PLOT_RADIUS := 7.5
 const PLOT_DISTANCE := Vector2(36.0, 25.0)
 const PLOT_KINDS := ["vineyard", "orchard", "vineyard", "pen", "vineyard"]
+## Winnica to duża działka o postrzępionym brzegu (półosie w kafelkach, brzeg wygięty szumem), docięta przez drogi
+## i ścieżki jak pola zbożowe; rzędy winorośli co VINE_ROW kafelków, w rzędzie co VINE_STEP pikseli.
+const VINEYARD_RADIUS := Vector2(16.0, 11.5)
+const VINE_ROW := 3
+const VINE_STEP := 40.0
 const SATYR_PROPS := {
 	"tent": preload("res://scenes/props/forest/satyr_tent.tscn"), "hay": preload("res://scenes/props/forest/satyr_hay.tscn"),
 	"barrels": preload("res://scenes/props/forest/satyr_barrels.tscn"), "totem": preload("res://scenes/props/forest/satyr_totem.tscn"),
@@ -226,6 +231,8 @@ var _satyr_gate := Vector2.ZERO
 var satyr_plots: Array = []
 var _satyr_loop := PackedVector2Array()
 var _satyr_rng := RandomNumberGenerator.new()
+## Komórki winnic: komórka -> numer działki w satyr_plots.
+var _vineyard_cells := {}
 ## Płaskowyże: [środek, komórki] (w kafelkach), orle czaty (środki) i pasterze satyrów: [miejsce, stado kóz].
 var _plateaus: Array = []
 var _outposts: Array[Vector2] = []
@@ -440,6 +447,7 @@ func _plan_satyr_glade(rng: RandomNumberGenerator, pass_point: Vector2) -> void:
 	_satyr_rng.seed = hash([w._seed, "satyr_village"])
 	_plan_satyr_plots(_satyr_rng)
 	_plan_satyr_paths(_satyr_rng)
+	_plan_vineyards()
 
 
 ## Winnice, sady i zagroda dookoła polany (kierunki co 30°, losowa kolejność, nie od strony bramy): w granicach
@@ -467,8 +475,11 @@ func _plan_satyr_plots(rng: RandomNumberGenerator) -> void:
 				continue
 			if satyr_plots.any(func(other: Array) -> bool: return (other[0] as Vector2).distance_to(spot) < PLOT_RADIUS * 2.4):
 				continue
-			satyr_plots.append([spot, PLOT_KINDS[satyr_plots.size() % PLOT_KINDS.size()]])
-			w._reserve_area(spot, PLOT_RADIUS)
+			var kind: String = PLOT_KINDS[satyr_plots.size() % PLOT_KINDS.size()]
+			satyr_plots.append([spot, kind])
+			# winnice zajmują miejsce dopiero po wytyczeniu ścieżek (_plan_vineyards)
+			if kind != "vineyard":
+				w._reserve_area(spot, PLOT_RADIUS)
 			break
 
 
@@ -502,12 +513,52 @@ func _plan_satyr_paths(rng: RandomNumberGenerator) -> void:
 	for plot: Array in satyr_plots:
 		var spot: Vector2 = plot[0]
 		var start := _nearest(_satyr_loop, spot)
-		_path(Road.wiggle(start, spot + (start - spot).normalized() * (PLOT_RADIUS - 1.0), rng, 3.0, 5.0), 0.8)
+		# do winnicy dróżka wchodzi głęboko i dzieli ją na części, jak polne drogi między łanami
+		var reach := (spot - start).normalized() * 7.0 if plot[1] == "vineyard" else (start - spot).normalized() * (PLOT_RADIUS - 1.0)
+		_path(Road.wiggle(start, spot + reach, rng, 3.0, 5.0), 0.8)
+
+
+## Winnice: komórki w postrzępionej elipsie wokół środka działki, z dala od dróg i ścieżek (brzeg dopasowuje się
+## do nich), poza polaną, innymi siedliskami i pasem przy granicy mapy. Między sąsiednimi działkami zostaje miedza.
+func _plan_vineyards() -> void:
+	var size: Vector2i = w.map_size
+	var edge: int = w.border_thickness + 1
+	for i in satyr_plots.size():
+		if satyr_plots[i][1] != "vineyard":
+			continue
+		var spot: Vector2 = satyr_plots[i][0]
+		for cell in w._cells_in_radius(spot, VINEYARD_RADIUS.x * 1.4):
+			if cell.x < edge or cell.y < edge or cell.x >= size.x - edge or cell.y >= size.y - edge:
+				continue
+			var d := (Vector2(cell) - spot) / VINEYARD_RADIUS
+			if d.length() > 1.0 + _shape.get_noise_2d(cell.x * 1.6, cell.y * 1.6) * 0.4:
+				continue
+			if Vector2(cell).distance_to(satyr_glade) < SATYR_RADIUS or w._reserved.has(cell) or _near_road(cell):
+				continue
+			var mine := Vector2(cell).distance_to(spot)
+			var balk := false
+			for j in satyr_plots.size():
+				if j != i and Vector2(cell).distance_to(satyr_plots[j][0]) < mine + 1.5:
+					balk = true
+					break
+			if not balk:
+				_vineyard_cells[cell] = i
+		for cell: Vector2i in _vineyard_cells:
+			w._reserved[cell] = true
+
+
+## Czy komórka sąsiaduje z drogą albo ścieżką (z jej poboczem).
+func _near_road(cell: Vector2i) -> bool:
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			if w._road_clear.has(cell + Vector2i(dx, dy)):
+				return true
+	return false
 
 
 ## Komórka w kwietnej krainie satyrów: na polanie albo w winnicy, sadzie czy zagrodzie (z zapasem).
 func _in_satyr_land(cell: Vector2, pad := 0.0) -> bool:
-	if cell.distance_to(satyr_glade) < SATYR_RADIUS + pad:
+	if cell.distance_to(satyr_glade) < SATYR_RADIUS + pad or _vineyard_cells.has(Vector2i(cell)):
 		return true
 	return satyr_plots.any(func(plot: Array) -> bool: return cell.distance_to(plot[0]) < PLOT_RADIUS + pad)
 
@@ -1048,11 +1099,14 @@ func _plan_soft_ground(kinds: Dictionary) -> void:
 				name = "m_scree"
 			elif kind == Floor.ROCK:
 				name = "m_snow" if level_of(cell) >= RING_LEVEL and _mix.get_noise_2d(x, y) > -0.25 else "m_rock"
+			elif _vineyard_cells.has(cell):
+				name = "m_dark"
 			elif _in_satyr_land(Vector2(cell), _mix.get_noise_2d(x, y) * 3.0):
 				name = "m_flowers"
 			else:
 				var patch: float = w._noise.get_noise_2d(x * 0.8 + 300.0, y * 0.8)
-				if patch > 0.32:
+				# przy winnicach bez płatów gęstej trawy - winnica (też gęsta trawa) nie zlewa się z nimi
+				if patch > 0.32 and not (satyr_plots.size() > 0 and _in_satyr_land(Vector2(cell), 6.0)):
 					name = "m_dark"
 				elif patch < -0.42:
 					name = "m_flowers"
@@ -1383,7 +1437,7 @@ func _build_satyr_village(_rng: RandomNumberGenerator) -> void:
 		var toward := (satyr_glade - spot).normalized()
 		match plot[1]:
 			"vineyard":
-				_build_vineyard(rng, spot * TILE, toward)
+				_build_vineyard(rng, satyr_plots.find(plot))
 			"orchard":
 				_build_orchard(rng, spot * TILE, toward)
 			"pen":
@@ -1521,25 +1575,68 @@ func _build_satyr_houses(rng: RandomNumberGenerator, center: Vector2, gate_angle
 			w._spawn(FEAST_PROPS["garland" if rng.randf() < 0.35 else "lantern"], spot)
 
 
-## Winnica: rzędy winorośli, zbierający winogrona satyrowie między rzędami (z grajkiem),
-## kosze, drabina i wózek z winogronami od strony polany, kadź do deptania winogron.
-func _build_vineyard(rng: RandomNumberGenerator, center: Vector2, toward: Vector2) -> void:
+## Winnica: rzędy winorośli wypełniają działkę (w każdym rzędzie ciągłe odcinki komórek winnicy, z przejściami
+## co kilka krzewów), więc kształt winnicy idzie za drogami. Między rzędami zbierający winogrona satyrowie
+## (z grajkiem) i kosze, przy ścieżkach wózki z winogronami, drabiny i kadzie do deptania winogron.
+func _build_vineyard(rng: RandomNumberGenerator, index: int) -> void:
 	var row_kind := "vine_row" if rng.randf() < 0.5 else "vine_row_2"
-	for r in 5:
-		var y := -84.0 + r * 46.0
-		for c in 5:
-			var pos := center + Vector2(-84.0 + c * 42.0 + rng.randf_range(-2, 2), y + rng.randf_range(-2, 2))
-			if not _blocks_satyr_path(pos / TILE, 0):
-				w._spawn(FEAST_PROPS[row_kind], pos)
-	for k in 9:
-		var pos := center + Vector2(rng.randf_range(-100, 100), -62.0 + (rng.randi() % 4) * 46.0)
-		w._add_goblin_spawn({"type": "satyr_piper" if k == 0 else "satyr", "position": pos, "sitting": false, "look_at": center})
-	for k in 3:
-		w._spawn(FEAST_PROPS["grape_basket"], center + Vector2(rng.randf_range(-100, 100), -64.0 + (rng.randi() % 4) * 46.0))
-	var entry := center + toward * 120.0
-	w._spawn(FEAST_PROPS["grape_cart"], entry + toward.orthogonal() * 34.0)
-	w._spawn(FEAST_PROPS["ladder_basket"], entry - toward.orthogonal() * 34.0)
-	w._spawn(FEAST_PROPS["stomp_tub"], entry - toward.orthogonal() * 66.0)
+	var rows := {}
+	var aisles: Array[Vector2i] = []
+	var verge: Array[Vector2i] = []
+	for cell: Vector2i in _vineyard_cells:
+		if _vineyard_cells[cell] != index:
+			continue
+		if posmod(cell.y, VINE_ROW) == 0:
+			if not rows.has(cell.y):
+				rows[cell.y] = []
+			rows[cell.y].append(cell.x)
+		elif posmod(cell.y, VINE_ROW) == 1:
+			aisles.append(cell)
+			if _near_road(cell + Vector2i(0, 1)) or _near_road(cell - Vector2i(0, 1)):
+				verge.append(cell)
+	aisles.sort()
+	verge.sort()
+	for y: int in rows:
+		var xs: Array = rows[y]
+		xs.sort()
+		var run_start: int = xs[0]
+		for k in xs.size():
+			var last: bool = k == xs.size() - 1
+			if last or xs[k + 1] != xs[k] + 1:
+				_vine_run(rng, index, row_kind, run_start, xs[k], y)
+				if not last:
+					run_start = xs[k + 1]
+	# zbieracze: około jednego na 14 komórek przejść, najwyżej 14 na winnicę
+	var pickers := mini(14, aisles.size() / 14)
+	for k in pickers:
+		var cell: Vector2i = aisles[rng.randi() % aisles.size()]
+		var pos := (Vector2(cell) + Vector2(rng.randf_range(0.2, 0.8), 0.6)) * TILE
+		w._add_goblin_spawn({"type": "satyr_piper" if k == 0 else "satyr", "position": pos, "sitting": false, "look_at": pos + Vector2(0, -20)})
+	for k in maxi(2, aisles.size() / 60):
+		w._spawn(FEAST_PROPS["grape_basket"], (Vector2(aisles[rng.randi() % aisles.size()]) + Vector2(0.5, 0.7)) * TILE)
+	var tools := ["grape_cart", "ladder_basket", "stomp_tub", "grape_cart", "barrel_pile"]
+	for k in mini(tools.size(), verge.size() / 6):
+		var cell: Vector2i = verge[(k * verge.size()) / mini(tools.size(), verge.size() / 6) + rng.randi() % 3]
+		w._spawn(FEAST_PROPS[tools[k]], (Vector2(cell) + Vector2(0.5, 0.8)) * TILE)
+
+
+## Odcinek rzędu winorośli od komórki x0 do x1 w rzędzie y: krzewy co VINE_STEP pikseli, wyśrodkowane w odcinku,
+## co 5-7 krzewów przejście; krzew stoi tylko tam, gdzie i nad nim jest winnica.
+func _vine_run(rng: RandomNumberGenerator, index: int, kind: String, x0: int, x1: int, y: int) -> void:
+	var length := (x1 - x0 + 1) * TILE
+	var count := int((length + 8) / VINE_STEP)
+	if count < 1:
+		return
+	var left := x0 * TILE + (length - count * VINE_STEP) / 2.0 + VINE_STEP / 2.0
+	var next_gap := rng.randi_range(5, 7)
+	for k in count:
+		if k == next_gap:
+			next_gap += rng.randi_range(6, 8)
+			continue
+		var pos := Vector2(left + k * VINE_STEP, y * TILE + 14.0)
+		var above := Vector2i(int(pos.x / TILE), y - 1)
+		if _vineyard_cells.get(above, -1) == index:
+			w._spawn(FEAST_PROPS[kind], pos)
 
 
 ## Sad: jabłonie i grusze w luźnych rzędach, kosze i drabiny, zbierający owoce satyrowie z grajkiem.
