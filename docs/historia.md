@@ -183,6 +183,12 @@ odpowiedniej sekcji.
   i zaorane zagony; mało trawy (łąki tylko płatami, polany wokół gospodarstw); kępy drzew w jesiennych barwach
   (`shaders/autumn.gdshader`); zboże nie spowalnia.
   Wzór: `docs/referencje/pola_zbozowe.jpg`.
+- [x] Dużo potworów (626 wrogów, było 224): 4 czaty koboldów (`OUTPOSTS`, `_build_outpost` - wianuszek 5 namiotów wokół
+  ogniska z siedzącą zgrają, zgraje w lukach między namiotami, wóz z workami, skrzynie bomb, totemy, dróżka do drogi;
+  po około 28 koboldów) w środku i na wschodzie krainy; 10 gospodarstw (na północy plądrują je dwie zgraje przy workach,
+  na południu 4-6 czerwi z norami); 34 zgraje po 5-8 w łanach w całej krainie (poza ryjowiskiem); w ryjowisku 80 czerwi
+  gromadkami po 2-4 wokół nory; 14 gniazd po 3-5 czerwi w zaoranych zagonach (`_build_soil_nests`). Główny obóz bez
+  zmian (gęstszy podnosił czas klatki przy walce w jego środku).
 
 ## Leśny Cmentarz (`scripts/forest_cemetery.gd`) (Do poprawy)
 - [x] Kwatery na całym cmentarzu (komórki Woronoja w normie L4 - zaokrąglone prostokąty), między nimi żwirowe alejki,

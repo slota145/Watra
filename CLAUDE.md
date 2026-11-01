@@ -170,6 +170,11 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   Wyjątek: siedliska, których projekt wymaga inaczej (np. arena bossa).
   Przy zwiększaniu liczebności sprawdź wydajność (`tests/bench_combat.gd`, `tests/playtest_bot.gd`).
   Potwory w spoczynku, które się nie ruszają, pomijają `move_and_slide` (`scripts/goblin.gd`), żeby setki stojących potworów mało kosztowały.
+  Plan uzgodniony z autorem: kraina po krainie (osobny PR), cel 600-800 wrogów na krainę, nowe siedliska z obecnych
+  potworów na pustych terenach (z własnym wystrojem i sensem) i gęściej w istniejących. Liczy je `tests/bench_combat.gd`
+  („spawns”); koszt rośnie z liczbą wrogów atakujących naraz (największa gromada), nie z liczbą w krainie.
+  Zrobione: Pola Zbożowe (626). Dalej: Rozlewiska (~300, pusty wschód), Wietrzne Turnie (~326, pusty zachód),
+  Gobliński Las (~380), Prastary Las (~409); Leśny Cmentarz ma już 682.
 
 ## Pomysły i rzeczy do zrobienia
 
