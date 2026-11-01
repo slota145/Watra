@@ -24,8 +24,8 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
-	box.add_child(UiStyle.title("Rzemiosło"))
-	var hint := UiStyle.label("Składniki bierzesz z plecaka.", 7, UiStyle.DIM_COLOR)
+	box.add_child(UiStyle.title(Lang.t("Rzemiosło")))
+	var hint := UiStyle.label(Lang.t("Składniki bierzesz z plecaka."), 7, UiStyle.DIM_COLOR)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(hint)
 	var tabs := HBoxContainer.new()
@@ -34,7 +34,7 @@ func _ready() -> void:
 	box.add_child(tabs)
 	for group: String in Crafting.GROUPS:
 		var tab := Button.new()
-		tab.text = Crafting.GROUPS[group]
+		tab.text = Lang.t(Crafting.GROUPS[group])
 		tab.toggle_mode = true
 		tab.focus_mode = Control.FOCUS_NONE
 		tab.add_theme_font_size_override("font_size", 8)
@@ -100,7 +100,7 @@ func _make_row(index: int) -> PanelContainer:
 	middle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	middle.mouse_filter = Control.MOUSE_FILTER_PASS
 	line.add_child(middle)
-	var title: String = Items.get_data(result)["name"]
+	var title: String = Items.display_name(result)
 	if Items.is_bag(result):
 		title += "  (+%d miejsc)" % int(Items.get_data(result)["bag"])
 	var name_label := UiStyle.label(title, 8, Color(0.85, 0.65, 1.0))
@@ -115,7 +115,7 @@ func _make_row(index: int) -> PanelContainer:
 		var part_icon := TextureRect.new()
 		part_icon.texture = Items.get_data(id)["icon"]
 		UiStyle.fit_icon(part_icon)
-		part_icon.tooltip_text = Items.get_data(id)["name"]
+		part_icon.tooltip_text = Items.display_name(id)
 		parts.add_child(part_icon)
 		var count := UiStyle.label("", 7)
 		count.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -124,7 +124,7 @@ func _make_row(index: int) -> PanelContainer:
 		counts[id] = count
 
 	var button := Button.new()
-	button.text = "Wytwórz"
+	button.text = Lang.t("Wytwórz")
 	button.focus_mode = Control.FOCUS_NONE
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.add_theme_font_size_override("font_size", 8)
@@ -163,13 +163,13 @@ func _refresh() -> void:
 
 func _craft(index: int) -> void:
 	var recipe: Dictionary = Crafting.RECIPES[index]
-	var name: String = Items.get_data(recipe["result"])["name"]
+	var name: String = Items.display_name(recipe["result"])
 	if Crafting.craft(recipe, _player.inventory):
 		Sfx.play("craft")
-		_status.text = "Wytworzono: %s" % name
+		_status.text = Lang.t("Wytworzono: %s") % name
 		_status.add_theme_color_override("font_color", OK_COLOR)
 		_player.item_picked.emit(recipe["result"], int(recipe["amount"]))
 	else:
 		Sfx.play("ui_error")
-		_status.text = "Brak składników albo miejsca w plecaku"
+		_status.text = Lang.t("Brak składników albo miejsca w plecaku")
 		_status.add_theme_color_override("font_color", MISSING_COLOR)

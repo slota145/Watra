@@ -29,7 +29,7 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
-	box.add_child(UiStyle.title("Jubiler Dobromir - klejnoty"))
+	box.add_child(UiStyle.title(Lang.t("Jubiler Dobromir - klejnoty")))
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 4)
 	box.add_child(row)
@@ -63,13 +63,13 @@ func _ready() -> void:
 	_actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_actions.add_theme_constant_override("separation", 2)
 	actions_scroll.add_child(_actions)
-	box.add_child(UiStyle.label("Łączenie: trzy kamienie tego samego szlifu dają jeden lepszy (rodzaj jednego z nich)", 7, UiStyle.DIM_COLOR))
+	box.add_child(UiStyle.label(Lang.t("Łączenie: trzy kamienie tego samego szlifu dają jeden lepszy (rodzaj jednego z nich)"), 7, UiStyle.DIM_COLOR))
 	_combine = HBoxContainer.new()
 	_combine.add_theme_constant_override("separation", 3)
 	box.add_child(_combine)
 	_reshape_box = VBoxContainer.new()
 	_reshape_box.add_theme_constant_override("separation", 2)
-	_reshape_box.add_child(UiStyle.label("Przeszlifowanie: kliknij kamień - nowe premie (rodzaj, szlif i liczba premii zostają)", 7, UiStyle.DIM_COLOR))
+	_reshape_box.add_child(UiStyle.label(Lang.t("Przeszlifowanie: kliknij kamień - nowe premie (rodzaj, szlif i liczba premii zostają)"), 7, UiStyle.DIM_COLOR))
 	_reshape = HFlowContainer.new()
 	_reshape.add_theme_constant_override("h_separation", 2)
 	_reshape.add_theme_constant_override("v_separation", 2)
@@ -79,7 +79,7 @@ func _ready() -> void:
 	_status = UiStyle.label("", 8, UiStyle.DIM_COLOR)
 	_status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bottom.add_child(_status)
-	bottom.add_child(_button("Zamknij", func() -> void:
+	bottom.add_child(_button(Lang.t("Zamknij"), func() -> void:
 		visible = false
 		Sfx.play("ui_close")))
 	box.add_child(bottom)
@@ -171,7 +171,7 @@ func _row(entry: Dictionary) -> Button:
 	var marks := ""
 	for gem: Dictionary in sockets:
 		marks += " [%s]" % ("•" if not gem.is_empty() else " ")
-	var button := _button(("Założone: " if entry.has("equip") else "") + Items.get_data(id)["name"] + marks, _select.bind(entry))
+	var button := _button((Lang.t("Założone: ") if entry.has("equip") else "") + Items.display_name(id) + marks, _select.bind(entry))
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.icon = Items.get_data(id).get("icon")
 	button.expand_icon = true
@@ -192,28 +192,28 @@ func _select(entry: Dictionary) -> void:
 
 func _show_selected() -> void:
 	if _selected.is_empty():
-		_details.text = "Nie masz przedmiotów, w których mogę wydrążyć gniazdo albo osadzić kamień."
+		_details.text = Lang.t("Nie masz przedmiotów, w których mogę wydrążyć gniazdo albo osadzić kamień.")
 		return
 	var id := item_of(_selected)
-	var lines: Array[String] = ["[color=#%s]%s[/color]" % [Items.rarity_color(id).to_html(false), Items.get_data(id)["name"]]]
+	var lines: Array[String] = ["[color=#%s]%s[/color]" % [Items.rarity_color(id).to_html(false), Items.display_name(id)]]
 	var sockets := Gems.sockets_of(id)
 	if sockets.is_empty():
-		lines.append("Brak gniazda.")
+		lines.append(Lang.t("Brak gniazda."))
 		var price := 0 if _player.free_sockets > 0 else Gems.socket_price(id)
-		var add := _button("Wydrąż gniazdo (%s)" % ("za darmo" if price == 0 else "%d zł" % price), _add_socket.bind(price))
+		var add := _button(Lang.t("Wydrąż gniazdo (%s)") % (Lang.t("za darmo") if price == 0 else Lang.t("%d zł") % price), _add_socket.bind(price))
 		add.disabled = _player.stats.gold < price
 		_actions.add_child(add)
 	for i in sockets.size():
 		var gem: Dictionary = sockets[i]
 		lines.append(Gems.socket_text(gem))
 		if not gem.is_empty():
-			_actions.add_child(_button("Wyjmij kamień", _remove.bind(i)))
+			_actions.add_child(_button(Lang.t("Wyjmij kamień"), _remove.bind(i)))
 			continue
 		var gems := _gems_in_bag()
 		if gems.is_empty():
-			lines.append("[color=#a6abbf]Nie masz kamieni szlachetnych do osadzenia.[/color]")
+			lines.append(Lang.t("[color=#a6abbf]Nie masz kamieni szlachetnych do osadzenia.[/color]"))
 			continue
-		lines.append("[color=#a6abbf]Kliknij kamień z plecaka, żeby go osadzić:[/color]")
+		lines.append(Lang.t("[color=#a6abbf]Kliknij kamień z plecaka, żeby go osadzić:[/color]"))
 		var grid := GridContainer.new()
 		grid.columns = 8
 		grid.add_theme_constant_override("h_separation", 2)
@@ -226,7 +226,7 @@ func _show_selected() -> void:
 			put.custom_minimum_size = Vector2(20, 20)
 			put.icon = Items.get_data(gem_id)["icon"]
 			put.expand_icon = true
-			put.tooltip_text = "Osadź: " + Items.describe(gem_id)
+			put.tooltip_text = Lang.t("Osadź: ") + Items.describe(gem_id)
 			UiStyle.rich_tooltip(put)
 			put.pressed.connect(_insert.bind(i, index))
 			grid.add_child(put)
@@ -253,7 +253,7 @@ func _add_socket(price: int) -> void:
 		_player.free_sockets -= 1
 	_replace(_selected, Gems.add_socket(id))
 	Sfx.play("anvil", -4.0, 1.4)
-	_status.text = "Gniazdo gotowe!"
+	_status.text = Lang.t("Gniazdo gotowe!")
 	_refresh()
 
 
@@ -265,21 +265,21 @@ func _insert(socket: int, bag_index: int) -> void:
 	_replace(_selected, id)
 	_player.inventory.changed.emit()
 	Sfx.play("enchant_success")
-	_status.text = "Kamień osadzony."
+	_status.text = Lang.t("Kamień osadzony.")
 	_refresh()
 
 
 func _remove(socket: int) -> void:
 	var id := item_of(_selected)
 	if not _player.inventory.slots.any(func(s: Dictionary) -> bool: return s.is_empty()):
-		_status.text = "Plecak jest pełny."
+		_status.text = Lang.t("Plecak jest pełny.")
 		Sfx.play("ui_error")
 		return
 	var gem_id := Gems.remove(id, socket)
 	_replace(_selected, id)
 	_player.inventory.add_item(gem_id, 1)
 	Sfx.play("pickup")
-	_status.text = "Kamień wrócił do plecaka."
+	_status.text = Lang.t("Kamień wrócił do plecaka.")
 	_refresh()
 
 
@@ -291,16 +291,16 @@ func _build_combine() -> void:
 		if cut < Gems.CUTS.size() - 1:
 			by_cut[cut] = by_cut.get(cut, []) + [index]
 	if by_cut.is_empty():
-		_combine.add_child(UiStyle.label("Brak trzech kamieni tego samego szlifu.", 7, UiStyle.DIM_COLOR))
+		_combine.add_child(UiStyle.label(Lang.t("Brak trzech kamieni tego samego szlifu."), 7, UiStyle.DIM_COLOR))
 		return
 	if not by_cut.values().any(func(list: Array) -> bool: return list.size() >= 3):
-		_combine.add_child(UiStyle.label("Brak trzech kamieni tego samego szlifu.", 7, UiStyle.DIM_COLOR))
+		_combine.add_child(UiStyle.label(Lang.t("Brak trzech kamieni tego samego szlifu."), 7, UiStyle.DIM_COLOR))
 		return
 	for cut: int in by_cut:
 		if by_cut[cut].size() < 3:
 			continue
 		var price: int = Gems.COMBINE_GOLD[cut]
-		var button := _button("3 × %s -> %s (%d zł)" % [Gems.CUTS[cut].to_lower(), Gems.CUTS[cut + 1].to_lower(), price],
+		var button := _button(Lang.t("3 × %s -> %s (%d zł)") % [Gems.CUTS[cut].to_lower(), Gems.CUTS[cut + 1].to_lower(), price],
 				_combine_cut.bind(by_cut[cut].slice(0, 3), price))
 		button.disabled = _player.stats.gold < price
 		_combine.add_child(button)
@@ -313,7 +313,7 @@ func _build_reshape() -> void:
 		return
 	var gems := _gems_in_bag()
 	if gems.is_empty():
-		_reshape.add_child(UiStyle.label("Nie masz kamieni w plecaku.", 7, UiStyle.DIM_COLOR))
+		_reshape.add_child(UiStyle.label(Lang.t("Nie masz kamieni w plecaku."), 7, UiStyle.DIM_COLOR))
 		return
 	for index in gems:
 		var gem_id: String = _player.inventory.slots[index]["id"]
@@ -324,7 +324,7 @@ func _build_reshape() -> void:
 		button.icon = Items.get_data(gem_id)["icon"]
 		button.expand_icon = true
 		button.disabled = _player.stats.gold < price
-		button.tooltip_text = "Przeszlifuj za %d zł:\n%s" % [price, Items.describe(gem_id)]
+		button.tooltip_text = Lang.t("Przeszlifuj za %d zł:\n%s") % [price, Items.describe(gem_id)]
 		UiStyle.rich_tooltip(button)
 		button.pressed.connect(_reshape_gem.bind(index, price))
 		_reshape.add_child(button)
@@ -340,7 +340,7 @@ func _reshape_gem(index: int, price: int) -> void:
 	_player.inventory.slots[index] = {"id": result, "count": 1}
 	_player.inventory.changed.emit()
 	Sfx.play("enchant_success")
-	_status.text = "Przeszlifowany: %s" % Gems.plain_text(Items.get_data(result)["recipe"])
+	_status.text = Lang.t("Przeszlifowany: %s") % Gems.plain_text(Items.get_data(result)["recipe"])
 	_refresh()
 
 
@@ -354,5 +354,5 @@ func _combine_cut(indices: Array, price: int) -> void:
 	var result := Gems.combine(ids)
 	_player.inventory.add_item(result, 1)
 	Sfx.play("enchant_success")
-	_status.text = "Powstał: %s" % Items.get_data(result)["name"]
+	_status.text = Lang.t("Powstał: %s") % Items.display_name(result)
 	_refresh()

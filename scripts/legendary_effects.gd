@@ -203,23 +203,23 @@ func _process(delta: float) -> void:
 func statuses() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	if _bloodlust > 0:
-		result.append({"name": "Żądza krwi", "kind": "good", "left": _bloodlust_time, "total": BLOODLUST_TIME,
+		result.append({"name": Lang.t("Żądza krwi"), "kind": "good", "left": _bloodlust_time, "total": BLOODLUST_TIME,
 				"stacks": _bloodlust, "icon": _effect_icon("bloodlust"),
-				"description": "+%d%% obrażeń (x%d, każde zabójstwo odnawia i dokłada)" % [
+				"description": Lang.t("+%d%% obrażeń (x%d, każde zabójstwo odnawia i dokłada)") % [
 					roundi(_bloodlust * _player.equipment.effect_power("bloodlust") * 100.0), _bloodlust]})
 	var berserk := _player.equipment.effect_power("berserk")
 	if berserk > 0.0 and _player.health < _player.stats.max_health() * BERSERK_THRESHOLD:
-		result.append({"name": "Szał", "kind": "good", "left": -1.0, "icon": _effect_icon("berserk"),
-				"description": "+%d%% obrażeń, dopóki masz mniej niż %d%% zdrowia" % [roundi(berserk * 100.0), roundi(BERSERK_THRESHOLD * 100.0)]})
+		result.append({"name": Lang.t("Szał"), "kind": "good", "left": -1.0, "icon": _effect_icon("berserk"),
+				"description": Lang.t("+%d%% obrażeń, dopóki masz mniej niż %d%% zdrowia") % [roundi(berserk * 100.0), roundi(BERSERK_THRESHOLD * 100.0)]})
 	if _potion_fury > 0.0:
-		result.append({"name": "Gniew Bogatyra", "kind": "good", "left": _potion_fury, "total": POTION_FURY_TIME,
+		result.append({"name": Lang.t("Gniew Bogatyra"), "kind": "good", "left": _potion_fury, "total": POTION_FURY_TIME,
 				"icon": _effect_icon("potion_fury"),
-				"description": "+%d%% obrażeń po wypiciu mikstury" % roundi(_player.equipment.effect_power("potion_fury") * 100.0)})
+				"description": Lang.t("+%d%% obrażeń po wypiciu mikstury") % roundi(_player.equipment.effect_power("potion_fury") * 100.0)})
 	if _bone_orbit != null:
-		result.append({"name": "Kościana tarcza", "kind": "good", "left": -1.0, "icon": _effect_icon("bone_armor"),
-				"description": "Pochłonie następny cios do %d%% maks. zdrowia" % roundi(_player.equipment.effect_power("bone_armor") * 100.0)})
-	for entry: Array in [["undying", "Filakteria odnawia się", "Cios śmiertelny znów zostawi cię przy życiu po odnowieniu", UNDYING_COOLDOWN],
-			["burrow", "Łuski Czerwia odnawiają się", "Zakopanie się pod ziemię przy ciężkim ciosie wróci po odnowieniu", BURROW_COOLDOWN]]:
+		result.append({"name": Lang.t("Kościana tarcza"), "kind": "good", "left": -1.0, "icon": _effect_icon("bone_armor"),
+				"description": Lang.t("Pochłonie następny cios do %d%% maks. zdrowia") % roundi(_player.equipment.effect_power("bone_armor") * 100.0)})
+	for entry: Array in [["undying", Lang.t("Filakteria odnawia się"), Lang.t("Cios śmiertelny znów zostawi cię przy życiu po odnowieniu"), UNDYING_COOLDOWN],
+			["burrow", Lang.t("Łuski Czerwia odnawiają się"), Lang.t("Zakopanie się pod ziemię przy ciężkim ciosie wróci po odnowieniu"), BURROW_COOLDOWN]]:
 		var left: float = _cooldowns.get(entry[0], 0.0)
 		if left > 0.0 and _player.equipment.effect_power(entry[0]) > 0.0:
 			result.append({"name": entry[1], "kind": "cooldown", "left": left, "total": entry[3], "icon": _effect_icon(entry[0]),
@@ -285,7 +285,7 @@ func _echo(kind: String, enemy: Goblin, at: Vector2, away: Vector2) -> void:
 		return
 	if is_instance_valid(enemy) and enemy.state != Goblin.State.DEAD:
 		at = enemy.hurt_center()
-	DamageNumber.spawn_text(_player.get_parent(), at + Vector2(0, -16), "Echo!", ECHO_COLOR, 8)
+	DamageNumber.spawn_text(_player.get_parent(), at + Vector2(0, -16), Lang.t("Echo!"), ECHO_COLOR, 8)
 	_trigger(kind, enemy, at, away, true)
 
 
@@ -581,7 +581,7 @@ func on_kill(enemy: Goblin) -> void:
 	if _player.equipment.effect_power("bloodlust") > 0.0:
 		_bloodlust = mini(_bloodlust + 1, BLOODLUST_STACKS)
 		_bloodlust_time = BLOODLUST_TIME
-		DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -18), "Żądza krwi x%d" % _bloodlust,
+		DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -18), Lang.t("Żądza krwi x%d") % _bloodlust,
 				Color(1.0, 0.35, 0.3), 8)
 
 
@@ -666,7 +666,7 @@ func _try_burrow(amount: int) -> bool:
 	var parent := _player.get_parent()
 	BossFx.burrow(parent, at, 0.6)
 	Sfx.play_at("mine", at)
-	DamageNumber.spawn_text(parent, _player.body_center() + Vector2(0, -16), "Zakopanie!", EARTH_COLOR, 9)
+	DamageNumber.spawn_text(parent, _player.body_center() + Vector2(0, -16), Lang.t("Zakopanie!"), EARTH_COLOR, 9)
 	var tween := _player.create_tween()
 	tween.tween_property(_player, "modulate:a", 0.25, 0.15)
 	tween.tween_interval(BURROW_TIME)
@@ -772,7 +772,7 @@ func _try_undying(amount: int) -> bool:
 	_player.health = maxi(1, roundi(_player.stats.max_health() * power))
 	_player.health_changed.emit(_player.health, _player.stats.max_health())
 	_player._invulnerable_timer = 1.5
-	DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -16), "Filakteria!", SOUL_COLOR, 10)
+	DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -16), Lang.t("Filakteria!"), SOUL_COLOR, 10)
 	_soul_nova(2.0)
 	return true
 

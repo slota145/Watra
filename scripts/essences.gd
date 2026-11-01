@@ -82,9 +82,9 @@ static func register(recipe: Dictionary, id := "") -> String:
 	recipe["value"] = float(recipe["value"])
 	recipe["power"] = float(recipe.get("power", 0.5))
 	Items.generated[id] = {
-		"name": "Esencja: %s" % recipe["source_name"],
-		"description": ("Efekt legendy zamknięty w płomieniu (%d%% jej siły). Pasuje do gniazda esencji w przedmiocie (%s) "
-				+ "i do gniazda legendarnego w drzewku broni - przeciągnij ją na przedmiot albo gniazdo.") % [roundi(recipe["power"] * 100.0), GROUP_NAMES[group]],
+		"name": Lang.t("Esencja: %s") % source_name(recipe),
+		"description": Lang.t("Efekt legendy zamknięty w płomieniu (%d%% jej siły). Pasuje do gniazda esencji w przedmiocie (%s) i do gniazda legendarnego w drzewku broni - przeciągnij ją na przedmiot albo gniazdo.") % [roundi(recipe["power"] * 100.0), Lang.t(GROUP_NAMES[group])],
+		"name_lang": TranslationServer.get_locale(),
 		"icon": ICONS[group], "rarity": "legendary", "essence": recipe,
 		"effect": {"kind": recipe["kind"], "chance": recipe["value"], "per_level": 0.0},
 		"sell_price": 50, "recipe": recipe,
@@ -95,15 +95,23 @@ static func register(recipe: Dictionary, id := "") -> String:
 ## Opis esencji w gnieździe: "Esencja: Łuk Swaroga - 2 strzały ...".
 static func socket_text(essence: Dictionary) -> String:
 	if essence.is_empty():
-		return "Puste gniazdo esencji"
-	return "[color=#%s]Esencja: %s[/color] - %s" % [COLORS.get(essence.get("group", ""), "ffb060"), essence["source_name"], effect_text(essence)]
+		return Lang.t("Puste gniazdo esencji")
+	return "[color=#%s]%s[/color] - %s" % [COLORS.get(essence.get("group", ""), "ffb060"), Lang.t("Esencja: %s") % source_name(essence), effect_text(essence)]
+
+
+## Nazwa legendy, z której pochodzi esencja, w obecnym języku (z id legendy; zapisane "source_name" - gdy legendy
+## już nie ma w bazie).
+static func source_name(essence: Dictionary) -> String:
+	var source: String = essence.get("source", "")
+	var name: String = Items.get_data(source).get("name", "") if source != "" and not Loot.is_generated(source) else ""
+	return Lang.t(name if name != "" else str(essence.get("source_name", "")))
 
 
 static func effect_text(essence: Dictionary) -> String:
 	var kind: String = essence["kind"]
 	var value: float = essence["value"]
 	var shown := str(roundi(value)) if kind in Items.COUNT_EFFECTS else "%d%%" % roundi(value * 100.0)
-	return (Items.EFFECT_TEXTS[kind] as String) % shown
+	return Items.effect_text(kind, shown)
 
 
 static func plain_text(essence: Dictionary) -> String:

@@ -24,8 +24,8 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
-	box.add_child(UiStyle.title("Warsztat - rzemiosło premii"))
-	var hint := UiStyle.label("Koszt: złoto i trofea potworów z krainy pasującej do poziomu przedmiotu. Legendy - 3 razy drożej. Runy wypadają w lochach.", 7, UiStyle.DIM_COLOR)
+	box.add_child(UiStyle.title(Lang.t("Warsztat - rzemiosło premii")))
+	var hint := UiStyle.label(Lang.t("Koszt: złoto i trofea potworów z krainy pasującej do poziomu przedmiotu. Legendy - 3 razy drożej. Runy wypadają w lochach."), 7, UiStyle.DIM_COLOR)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.custom_minimum_size.x = LIST_SIZE.x + SIDE_WIDTH + 4.0
 	box.add_child(hint)
@@ -60,7 +60,7 @@ func _ready() -> void:
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	bottom.add_child(_status)
 	var close := Button.new()
-	close.text = "Zamknij"
+	close.text = Lang.t("Zamknij")
 	close.focus_mode = Control.FOCUS_NONE
 	close.add_theme_font_size_override("font_size", 8)
 	close.pressed.connect(func() -> void:
@@ -137,13 +137,13 @@ func _refresh() -> void:
 		for child in container.get_children():
 			container.remove_child(child)
 			child.queue_free()
-	_gold.text = "%d zł" % _player.stats.gold
+	_gold.text = Lang.t("%d zł") % _player.stats.gold
 	var list := entries()
 	if _selected.is_empty() or not list.has(_selected):
 		_selected = list[0] if not list.is_empty() else {}
 	for entry in list:
 		var id := item_of(entry)
-		var button := _button(("Założone: " if entry.has("equip") else "") + Items.display_name(id, enchant_of(entry)), func() -> void:
+		var button := _button((Lang.t("Założone: ") if entry.has("equip") else "") + Items.display_name(id, enchant_of(entry)), func() -> void:
 			_selected = entry
 			_stat = ""
 			Sfx.play("ui_click")
@@ -161,7 +161,7 @@ func _refresh() -> void:
 		UiStyle.rich_tooltip(button)
 		_list.add_child(button)
 	if _selected.is_empty():
-		_side.add_child(UiStyle.label("Nie masz broni, zbroi ani biżuterii.", 7, UiStyle.DIM_COLOR))
+		_side.add_child(UiStyle.label(Lang.t("Nie masz broni, zbroi ani biżuterii."), 7, UiStyle.DIM_COLOR))
 		return
 	_build_side(item_of(_selected))
 
@@ -169,9 +169,9 @@ func _refresh() -> void:
 func _build_side(id: String) -> void:
 	var data := Items.get_data(id)
 	var quality := ItemCraft.quality_of(id)
-	_side.add_child(UiStyle.label(data["name"], 9, Items.rarity_color(id)))
+	_side.add_child(UiStyle.label(Items.display_name(id), 9, Items.rarity_color(id)))
 	var affixes: Dictionary = data.get("recipe", {}).get("affixes", {})
-	_side.add_child(UiStyle.label("%s, poz. %d - premie %d/%d (kliknij premię; tier 1 - najlepszy)" % [Items.RARITY_NAMES[quality],
+	_side.add_child(UiStyle.label(Lang.t("%s, poz. %d - premie %d/%d (kliknij premię; tier 1 - najlepszy)") % [Lang.t(Items.RARITY_NAMES[quality]),
 			Items.item_level(id), affixes.size(), Loot.AFFIX_COUNTS[quality][1]], 7, UiStyle.DIM_COLOR))
 	var tiers: Dictionary = data.get("recipe", {}).get("tiers", {})
 	for stat: String in affixes:
@@ -190,16 +190,16 @@ func _build_side(id: String) -> void:
 	for action: String in ItemCraft.ORDER:
 		var info: Dictionary = ItemCraft.ACTIONS[action]
 		var price := ItemCraft.cost(id, action)
-		var parts: Array[String] = ["%d zł" % price["gold"]]
+		var parts: Array[String] = [Lang.t("%d zł") % price["gold"]]
 		for item: String in price["items"]:
-			parts.append("%s %d/%d" % [Items.get_data(item)["name"], mini(_player.count_owned(item), price["items"][item]), price["items"][item]])
+			parts.append("%s %d/%d" % [Items.display_name(item), mini(_player.count_owned(item), price["items"][item]), price["items"][item]])
 		var reason := ItemCraft.check(id, action, _stat)
-		var button := _button("%s - %s" % [info["name"], ", ".join(parts)], _do.bind(action))
+		var button := _button("%s - %s" % [Lang.t(info["name"]), ", ".join(parts)], _do.bind(action))
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.clip_text = true
 		button.custom_minimum_size.x = SIDE_WIDTH - 14.0
 		button.disabled = reason != "" or not ItemCraft.afford(_player, id, action)
-		button.tooltip_text = info["description"] + ("\n" + reason if reason != "" else "")
+		button.tooltip_text = Lang.t(info["description"]) + ("\n" + reason if reason != "" else "")
 		_side.add_child(button)
 
 
@@ -214,7 +214,7 @@ func _do(action: String) -> void:
 	var id := item_of(entry)
 	var reason := ItemCraft.check(id, action, _stat)
 	if reason != "" or not ItemCraft.afford(_player, id, action):
-		_status.text = reason if reason != "" else "Brakuje złota albo materiałów."
+		_status.text = reason if reason != "" else Lang.t("Brakuje złota albo materiałów.")
 		Sfx.play("ui_error")
 		return
 	var price := ItemCraft.cost(id, action)
