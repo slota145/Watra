@@ -11,7 +11,7 @@ extends Goblin
 
 const RUSALKA_COLOR := Color(0.75, 0.95, 0.9)
 
-var _notes: CPUParticles2D
+var _notes: AnimatedSprite2D
 var _song_timer := 0.0
 
 
@@ -21,21 +21,9 @@ func _ready() -> void:
 	hurt_radius = 8.0
 	map_color = RUSALKA_COLOR
 	quest_kind = "rusalka"
-	_notes = CPUParticles2D.new()
-	_notes.position = Vector2(0, -26)
-	_notes.amount = 6
-	_notes.lifetime = 1.4
-	_notes.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-	_notes.emission_sphere_radius = 6.0
-	_notes.direction = Vector2.UP
-	_notes.spread = 60.0
-	_notes.gravity = Vector2(0, -10)
-	_notes.initial_velocity_min = 6.0
-	_notes.initial_velocity_max = 14.0
-	_notes.scale_amount_min = 1.5
-	_notes.scale_amount_max = 2.5
-	_notes.color = Color(0.7, 1.0, 0.95, 0.8)
-	_notes.emitting = false
+	_notes = MonsterFx.notes()
+	_notes.position = Vector2(0, -22)
+	_notes.visible = false
 	add_child(_notes)
 
 
@@ -46,11 +34,11 @@ func hurt_center() -> Vector2:
 func _physics_process(delta: float) -> void:
 	super(delta)
 	if state == State.DEAD:
-		_notes.emitting = false
+		_notes.visible = false
 		return
 	# pieśń: w walce spowalnia gracza w zasięgu
 	var singing := (state == State.CHASE or state == State.ATTACK) and _player_alive() and not is_stunned()
-	_notes.emitting = singing
+	_notes.visible = singing
 	if singing and global_position.distance_to(_player.global_position) < song_radius:
 		_player.apply_slow(song_slow, 0.25)
 		_song_timer -= delta

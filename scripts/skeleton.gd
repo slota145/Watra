@@ -33,21 +33,11 @@ func rise() -> void:
 	tween.tween_property(sprite, "position:y", 0.0, RISE_TIME)
 	tween.tween_property(self, "modulate", Color.WHITE, RISE_TIME)
 	tween.chain().tween_callback(aggro)
-	var dirt := CPUParticles2D.new()
-	dirt.position = Vector2(0, -2)
-	dirt.one_shot = true
-	dirt.explosiveness = 0.6
-	dirt.amount = 14
-	dirt.lifetime = 0.7
-	dirt.direction = Vector2.UP
-	dirt.spread = 50.0
-	dirt.initial_velocity_min = 25.0
-	dirt.initial_velocity_max = 60.0
-	dirt.gravity = Vector2(0, 160)
-	dirt.scale_amount_max = 2.5
-	dirt.color = Color(0.3, 0.24, 0.18)
-	dirt.emitting = true
+	# grudy ziemi i pył spod stóp, dopóki szkielet się wygrzebuje
+	var dirt := MonsterFx.dust()
+	dirt.position = Vector2(0, 2)
 	add_child(dirt)
+	get_tree().create_timer(RISE_TIME).timeout.connect(dirt.queue_free)
 	Sfx.play_at("drowner_emerge", global_position, -6.0)
 
 
@@ -78,21 +68,5 @@ func _drop_loot() -> void:
 
 
 func _spawn_poof() -> void:
-	var bones := CPUParticles2D.new()
-	bones.position = position + Vector2(0, -8)
-	bones.one_shot = true
-	bones.emitting = true
-	bones.amount = 14
-	bones.lifetime = 0.7
-	bones.explosiveness = 1.0
-	bones.direction = Vector2.UP
-	bones.spread = 120.0
-	bones.initial_velocity_min = 30.0
-	bones.initial_velocity_max = 70.0
-	bones.gravity = Vector2(0, 220)
-	bones.scale_amount_min = 1.5
-	bones.scale_amount_max = 2.5
-	bones.color = BONE_COLOR
-	get_parent().add_child(bones)
-	bones.finished.connect(bones.queue_free)
+	MonsterFx.bones(get_parent(), global_position + Vector2(0, -4))
 	Sfx.play_at("rock_break", global_position, -14.0)

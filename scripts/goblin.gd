@@ -537,21 +537,6 @@ func _spawn_pickup(item_id: String, amount: int) -> void:
 	get_parent().add_child.call_deferred(pickup)
 
 
+## Obłoczek dymu przy śmierci (MonsterFx - jeden krótki sprite w kolorze potwora).
 func _spawn_poof() -> void:
-	var particles := CPUParticles2D.new()
-	particles.position = position + Vector2(0, -6)
-	particles.one_shot = true
-	particles.emitting = true
-	particles.amount = 12
-	particles.lifetime = 0.45
-	particles.explosiveness = 1.0
-	particles.direction = Vector2.UP
-	particles.spread = 180.0
-	particles.initial_velocity_min = 25.0
-	particles.initial_velocity_max = 55.0
-	particles.gravity = Vector2(0, 60)
-	particles.scale_amount_min = 1.0
-	particles.scale_amount_max = 2.0
-	particles.color = Color(0.55, 0.75, 0.4)
-	get_parent().add_child(particles)
-	particles.finished.connect(particles.queue_free)
+	MonsterFx.poof(get_parent(), global_position + Vector2(0, -4), map_color)

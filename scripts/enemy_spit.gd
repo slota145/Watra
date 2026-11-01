@@ -10,14 +10,14 @@ extends Node2D
 const SPEED := 170.0
 const MAX_RANGE := 260.0
 const HIT_RADIUS := 10.0
-const COLOR := Color(0.5, 0.9, 0.3)
 
 var direction := Vector2.RIGHT
 var damage := 12
 var style := "spit"
 const STYLE_SPEED := {"spit": SPEED, "javelin": 230.0, "feather": 200.0, "water": 150.0, "web": 160.0, "arrow": 260.0, "note": 175.0, "stone": 220.0, "bone": 210.0}
-const STYLE_COLOR := {"spit": COLOR, "javelin": Color(0.75, 0.7, 0.6), "feather": Color(0.55, 0.8, 1.0),
-		"water": Color(0.45, 0.8, 0.95), "web": Color(0.9, 0.9, 0.95), "arrow": Color(0.6, 0.5, 0.35), "note": Color(1.0, 0.8, 0.35), "stone": Color(0.6, 0.56, 0.5), "bone": Color(0.6, 1.0, 0.65)}
+## Odmiany rysowane animacją z kreatora efektów i odmiany ze smugą za grotem.
+const ORB_STYLES := ["spit", "water"]
+const TRAIL_STYLES := ["javelin", "feather", "arrow", "stone", "bone"]
 ## Po trafieniu: spowolnienie (mnożnik prędkości, 0 = brak) i zatrucie (obrażenia na sekundę).
 var slow := 0.0
 var poison := 0.0
@@ -35,19 +35,17 @@ func _init() -> void:
 
 func _ready() -> void:
 	_player = get_tree().get_first_node_in_group("player")
-	var trail := CPUParticles2D.new()
-	trail.amount = 10
-	trail.lifetime = 0.25
-	trail.local_coords = false
-	trail.spread = 180.0
-	trail.initial_velocity_max = 6.0
-	trail.gravity = Vector2(0, 40)
-	trail.scale_amount_max = 2.0
-	trail.color = Color(STYLE_COLOR[style], 0.7)
-	if style != "spit":
-		trail.gravity = Vector2.ZERO
-		trail.amount = 6
-	add_child(trail)
+	# lot z kreatora efektów (MonsterFx): kula jadu i kula wody to zapętlona animacja zamiast rysunku,
+	# pociski z drzewcem ciągną za sobą smugę (nuta i sieć - bez smugi)
+	var fx: AnimatedSprite2D = null
+	if style in ORB_STYLES:
+		fx = MonsterFx.orb(style == "water")
+	elif style in TRAIL_STYLES:
+		fx = MonsterFx.trail()
+		fx.z_index = -1
+	if fx != null:
+		fx.rotation = direction.angle()
+		add_child(fx)
 
 
 func _physics_process(delta: float) -> void:
@@ -61,7 +59,7 @@ func _physics_process(delta: float) -> void:
 	if _player != null and not _player.is_dead and _player.body_center().distance_to(global_position) < HIT_RADIUS:
 		# Serce Gryfa: wiatr odbija pocisk
 		if _player.legendary.deflects():
-			SkillEffects.spark(get_parent(), global_position, Color(0.85, 0.95, 1.0), 8)
+			MonsterFx.hit(get_parent(), global_position)
 			queue_free()
 			return
 		_player.take_damage(damage, global_position - direction * 10.0)
@@ -76,6 +74,8 @@ func _physics_process(delta: float) -> void:
 
 
 func _draw() -> void:
+	if style in ORB_STYLES:  # kula to animacja (MonsterFx.orb)
+		return
 	if style == "javelin":  # drzewce z kamiennym grotem
 		draw_line(-direction * 9.0, direction * 4.0, Color(0.42, 0.3, 0.18), 2.0)
 		draw_line(direction * 3.0, direction * 7.0, Color(0.75, 0.75, 0.8), 3.0)
@@ -108,38 +108,23 @@ func _draw() -> void:
 			draw_line(Vector2.ZERO, Vector2.from_angle(a) * 5.0, Color(0.95, 0.95, 1.0, 0.85), 1.0)
 		draw_circle(Vector2.ZERO, 2.0, Color(1, 1, 1, 0.9))
 		return
-	if style == "water":  # kula wody z jaśniejszym środkiem
-		draw_circle(Vector2.ZERO, 4.0, Color(0.15, 0.35, 0.5))
-		draw_circle(Vector2.ZERO, 3.0, Color(0.45, 0.8, 0.95))
-		draw_circle(Vector2(-1, -1), 1.2, Color(0.9, 1.0, 1.0))
-		return
 	if style == "feather":  # pióro z iskrami
 		draw_line(-direction * 6.0, direction * 5.0, Color(0.85, 0.9, 1.0), 3.0)
 		draw_line(-direction * 6.0, direction * 5.0, Color(0.35, 0.6, 1.0), 1.0)
 		draw_circle(direction * 5.0, 1.5, Color(0.9, 0.97, 1.0))
 		return
-	draw_circle(Vector2.ZERO, 3.5, Color(0.18, 0.35, 0.12))
-	draw_circle(Vector2.ZERO, 2.6, COLOR)
-	draw_circle(Vector2(-1, -1), 1.0, Color(0.85, 1.0, 0.7))
 
 
 func _splat() -> void:
 	var wet := style in ["spit", "water"]
 	Sfx.play_at("spit_hit" if wet else "hit", global_position, 0.0 if wet else -6.0)
-	var burst := CPUParticles2D.new()
-	burst.global_position = global_position
-	burst.one_shot = true
-	burst.explosiveness = 1.0
-	burst.amount = 10
-	burst.lifetime = 0.4
-	burst.direction = Vector2.UP
-	burst.spread = 180.0
-	burst.initial_velocity_min = 20.0
-	burst.initial_velocity_max = 50.0
-	burst.gravity = Vector2(0, 150)
-	burst.scale_amount_max = 2.0
-	burst.color = STYLE_COLOR[style]
-	burst.emitting = true
-	get_parent().add_child(burst)
-	burst.finished.connect(burst.queue_free)
+	match style:
+		"spit":
+			BossFx.acid(get_parent(), global_position, 10.0)
+		"water":
+			MonsterFx.splash(get_parent(), global_position)
+		"feather":
+			MonsterFx.zap(get_parent(), global_position)
+		_:
+			MonsterFx.hit(get_parent(), global_position)
 	queue_free()
