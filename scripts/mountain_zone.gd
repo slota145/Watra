@@ -14,7 +14,10 @@ extends Node
 ## wielkie gniazdo Gromoskrzydłego, otoczone piorunochronami z kryształami burzy. Wydeptane ścieżki
 ## prowadzą od ramp do gniazda, okrążają je i rozchodzą się do chat. Od wschodu, północy i zachodu
 ## wioskę zamyka niedostępna grań o dwa poziomy wyżej - opada ku wiosce wysoką ścianą i jest najeżona
-## ośnieżonymi szczytami; od południa jest wejście. Wioska schodzi też z płaskowyżu: u stóp skarpy,
+## ośnieżonymi szczytami; od południa jest wejście. Wioska jest wciśnięta w północno-wschodni róg krainy:
+## grań biegnie łukiem wokół narożnika (północ i wschód), a od zachodu wioska otwiera się na hale (z płaskowyżu
+## schodzi się wyłącznie rampami od południa). Zewnętrzny krąg chat stoi z tyłu wioski (od strony rogu) i na zachodzie.
+## Wioska schodzi też z płaskowyżu: u stóp skarpy,
 ## między rampami, leży dolna osada (chaty, ogniska, totemy przy wejściu od drogi) z ulicą łączącą
 ## obie rampy. Ptakoludzi jest bardzo wielu - gromady przy ogniskach, straż gniazda i patrole.
 ##
@@ -103,6 +106,15 @@ const STORM_ROD := preload("res://assets/mountains/storm_rod.png")
 const AERIE := preload("res://assets/mountains/aerie.png")
 
 const HUTS := 9
+## Zewnętrzne chaty wioski (z tyłu od strony narożnika i na otwartym zachodzie): kąty (w stopniach, 0 = wschód,
+## -90 = północ) i półosie ich elipsy.
+const BACK_HUTS: Array[float] = [-128.0, -92.0, -56.0, -20.0, 150.0, 178.0, -156.0]
+const BACK_HUT_RADII := Vector2(25.5, 17.5)
+## Grań wokół wioski: od tego kąta do tego (w stopniach, przez północ) - od południa i zachodu wioska jest otwarta.
+const RING_FROM := -150.0
+const RING_TO := 48.0
+## Wersja układu krainy (World.ZONE_LAYOUTS) - postać zapisana w starszym układzie wraca do kapliczki.
+const LAYOUT := 2
 ## Dolna osada u stóp skarpy (między rampami): półosie elipsy w kafelkach i chaty wzdłuż ulicy
 ## (przesunięcie w poziomie względem środka - między stopami ramp, nie na nich).
 const LOWER_RADII := Vector2(22.0, 6.5)
@@ -142,7 +154,7 @@ const GOAT_HERDS := 9
 const PLATEAUS := 20
 ## Orle czaty na płaskowyżach: najmniejsza odległość od gniazda wodza (w kafelkach) i wolny promień wokół czaty.
 const OUTPOST_VILLAGE_DISTANCE := 40.0
-const OUTPOST_RADIUS := 5
+const OUTPOST_RADIUS := 4
 ## Polujące gromady ptakoludzi na halach zachodniej części krainy.
 const HUNTING_PACKS := 14
 ## Odstęp płaskowyżu od drogi, wioski, pastwisk i innych płaskowyżów (w kafelkach).
@@ -210,7 +222,7 @@ func generate(world) -> void:
 	_mix.frequency = 0.13
 	Goblin.safe_zone = Rect2()
 
-	lair = Vector2(size.x * 0.74, size.y * 0.3)
+	lair = Vector2(size.x * 0.785, size.y * 0.245)
 	var pass_point := Vector2(size.x * 0.36, size.y * 0.66)
 	var foot := _plan_village_plateau(rng)
 	# droga: od wejścia (lewy dolny róg) przez przełęcz pod rampę wioski
@@ -298,6 +310,13 @@ func _plan_village(rng: RandomNumberGenerator) -> void:
 	for i in HUTS:
 		var angle := base + TAU * i / HUTS + rng.randf_range(-0.15, 0.15)
 		var hut := lair + Vector2.from_angle(angle) * Vector2(17.0, 13.0) * rng.randf_range(0.95, 1.1)
+		_huts.append(hut)
+		w._reserve_area(hut + Vector2(0, 2), 4.5)
+	# zewnętrzne chaty od strony narożnika i na zachodzie (tylko na płaskowyżu, z dala od krawędzi)
+	for angle in BACK_HUTS:
+		var hut := lair + Vector2.from_angle(deg_to_rad(angle)) * BACK_HUT_RADII
+		if not _inside_by(Vector2i(hut), _village_cells, 4) or not _inside_by(Vector2i(hut + Vector2(0, 4)), _village_cells, 3):
+			continue
 		_huts.append(hut)
 		w._reserve_area(hut + Vector2(0, 2), 4.5)
 	_plan_lower_village(rng)
@@ -457,7 +476,7 @@ func _plan_village_plateau(rng: RandomNumberGenerator) -> Vector2:
 				continue
 			var p := Vector2(x, y) + Vector2(0.5, 0.5) - lair
 			var angle := rad_to_deg(atan2(p.y, p.x))
-			if angle > 28.0 and angle < 152.0:  # od południa wejście do wioski
+			if angle < RING_FROM or angle > RING_TO:  # od południa i zachodu wioska otwarta
 				continue
 			if (p / (outer + Vector2.ONE * _shape.get_noise_2d(x * 0.6, y * 0.6) * 5.0)).length() < 1.0:
 				_levels[cell] = RING_LEVEL
@@ -1174,8 +1193,9 @@ func _build_village(rng: RandomNumberGenerator) -> void:
 		w._add_goblin_spawn({"type": kind, "position": pos, "sitting": false, "look_at": center})
 
 	# chaty na palach z ogniskami, przy każdej gromada ptakoludzi i ozdoby
-	for hut_tile in _huts:
-		_hut_camp(rng, hut_tile * TILE, rng.randi_range(7, 9))
+	# przy zewnętrznych chatach (BACK_HUTS) mniejsze gromady - walka w środku wioski i tak ściąga ich wszystkich
+	for i in _huts.size():
+		_hut_camp(rng, _huts[i] * TILE, rng.randi_range(7, 9) if i < HUTS else rng.randi_range(4, 5))
 
 	# skalne iglice z gniazdami na obrzeżach wioski
 	var base := rng.randf() * TAU
