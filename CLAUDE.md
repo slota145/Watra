@@ -42,7 +42,7 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
 - `scripts/`: cała logika. Najważniejsze pliki:
   - `game.gd` (autoload `Game`): zapisy (`user://saves/`) i przełączanie scen,
   - `sfx.gd` (autoload `Sfx`): dźwięki,
-  - `world.gd` i skrypty krain (`grain_fields.gd`, `drowned_grove.gd`, `frog_ponds.gd`, `mountain_zone.gd`, `ancient_forest.gd`, `forest_cemetery.gd`, `hydra_bog.gd`),
+  - `world.gd` i skrypty krain (`grain_fields.gd`, `goblin_posts.gd`, `drowned_grove.gd`, `frog_ponds.gd`, `mountain_zone.gd`, `ancient_forest.gd`, `forest_cemetery.gd`, `hydra_bog.gd`),
   - `settlement.gd`: Ostoja,
   - `player.gd`, `character_stats.gd`, `items.gd`, `item_bases.gd`, `loot.gd`, `legends.gd`, `legendary_effects.gd`, `skills.gd`, `skill_effects.gd`, `levels.gd`, `quests.gd`, `bounties.gd`,
   - `hotbar.gd`: paski szybkiego wyboru (dane), `status_effects.gd`: lista efektów działających na gracza,
@@ -173,11 +173,16 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   Plan uzgodniony z autorem: kraina po krainie (osobny PR), cel 600-800 wrogów na krainę, nowe siedliska z obecnych
   potworów na pustych terenach (z własnym wystrojem i sensem) i gęściej w istniejących. Liczy je `tests/bench_combat.gd`
   („spawns”); koszt rośnie z liczbą wrogów atakujących naraz (największa gromada), nie z liczbą w krainie.
-  Zrobione: Pola Zbożowe (626), Rozlewiska (617), Wietrzne Turnie (~650, wioska ptakoludzi przeniesiona w róg). Dalej: Gobliński Las (~380),
-  Prastary Las (~409); Leśny Cmentarz ma już 682. Nowe siedliska losuj osobnym ziarnem (jak `FrogPonds`)
+  Zrobione: Pola Zbożowe (626), Rozlewiska (617), Wietrzne Turnie (~650, wioska ptakoludzi przeniesiona w róg),
+  Gobliński Las (~590). Dalej: Prastary Las (~409); Leśny Cmentarz ma już 682. Nowe siedliska losuj osobnym ziarnem (jak `FrogPonds`)
   i buduj na końcu, żeby w starych zapisach reszta krainy się nie zmieniła. Przy przebudowie całej krainy podbij
   jej wersję układu (`World.ZONE_LAYOUTS`) - postać ze starego zapisu wróci do kapliczki.
   Do sprawdzenia: walka w środku wioski ptakoludzi kosztuje ok. 15 ms na klatkę (inne gromady 7-9 ms).
+
+### Wietrzne Turnie
+
+- [ ] Poprawić wizualnie wioskę satyrów i jej okolice (polana z ogniskiem, przysiółki, ścieżki - `MountainZone._build_satyr_village`,
+  `_build_satyr_hamlet`); szczegóły do ustalenia z autorem.
 
 ## Pomysły i rzeczy do zrobienia
 
