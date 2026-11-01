@@ -159,6 +159,12 @@ odpowiedniej sekcji.
   to kraina startowa, więc zwiększenie jest umiarkowane.
 - [x] Prastary Las: dwa pierścienie prastarych drzew wokół Leszego z drzewcami, wielkie leże pająków, wataha wargów
   przy każdej bestii, gniazda pająków i stada drzewców w gęstwinie - około 400 potworów (było 66).
+- [x] Gobliński Las: dużo potworów (około 590 wrogów bez zwierzyny, było około 380) - `scripts/goblin_posts.gd`
+  (osobne ziarno, budowane na końcu): posterunki goblinów przy drogach dalej niż 20 kafelków od palisady (rząd pali
+  od strony drogi z przejściem, łucznicy i osiłek, ognisko z siedzącą zgrają, dwa namioty; zwykle 3), psiarnie
+  w południowej części (zagroda z pali z oswajanymi wilkami, klatka, kości, przed bramą poskramiacze, osiłek i dwa
+  wargi; 3), zgraje zwiadowców na wolnych pasach wokół Ostoi (około 9), wilcze łowy przy truchłach jeleni
+  na skraju siedliska wilków (około 4). Od palisady Ostoi co najmniej 10 kafelków, łowiska zwierzyny nietknięte.
 
 ## Wietrzne Turnie (`scripts/mountain_zone.gd`) (Do poprawy)
 - [x] Elektryczny orzeł (Gromoskrzydły, `scripts/storm_eagle.gd`) macha skrzydłami: 8 klatek pełnego uderzenia z PixelLab, także w spoczynku nad gniazdem.

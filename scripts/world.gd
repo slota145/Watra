@@ -432,6 +432,7 @@ var _walk_cells := {}
 var _grove: DrownedGrove
 var _hydra_bog: HydraBog
 var _frog_ponds: FrogPonds
+var _goblin_posts: GoblinPosts
 
 @onready var ground: TileMapLayer = $Ground
 @onready var decor: Node2D = $Decor
@@ -573,6 +574,9 @@ func _generate_forest() -> void:
 	_plan_road()
 	_plan_wolf_sites()
 	_plan_hunting_grounds()
+	_goblin_posts = GoblinPosts.new()
+	add_child(_goblin_posts)
+	_goblin_posts.plan(self)
 	_build_ground()
 	_place_props()
 	_build_bounds()
@@ -608,6 +612,7 @@ func _generate_forest() -> void:
 	for herd in _herds:
 		_build_herd(herd[0], herd[1] * TILE)
 	_build_darkness()
+	_goblin_posts.build()
 	_caravan_timer = first_caravan_delay
 
 	# przejście do rozlewisk na końcu drogi w prawym górnym rogu
