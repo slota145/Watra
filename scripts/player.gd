@@ -372,6 +372,7 @@ func _press_slot(index: int) -> void:
 				_skill_held = true
 			"strike":
 				_strike_request = true
+				_held_ids[id] = true
 			"skill":
 				_held_ids[id] = true
 				match Skills.get_data(id)["weapon"]:
@@ -399,7 +400,7 @@ func _update_held_slots() -> void:
 			continue
 		elif Skills.get_data(id)["type"] == "active":
 			_skill_held = true
-		elif Skills.get_data(id)["type"] == "skill":
+		elif Skills.get_data(id)["type"] in ["skill", "strike"]:
 			_held_ids[id] = true
 
 
@@ -1741,6 +1742,10 @@ func combo_ready() -> bool:
 
 
 func _process_strikes() -> void:
+	# łańcuch błyskawic nie ma odnowienia - trzymany klawisz rzuca go raz za razem
+	if not _strike_request and is_skill_held("chain_lightning") and strike_ready() \
+			and skills.strike_for(stats.weapon_type()) == "chain_lightning":
+		_strike_request = true
 	if _strike_request:
 		_strike_request = false
 		_use_strike()
@@ -1782,7 +1787,8 @@ func _use_strike() -> void:
 			_combo_window = combo_window()
 			note_skill(id)
 		"chain_lightning":
-			_strike_cooldown = _cooldown(Skills.CHAIN_COOLDOWN, ["spell"])
+			# bez odnowienia: tylko czas rzucania, krótszy z szybkością rzucania
+			_strike_cooldown = Skills.CHAIN_CAST_TIME / _skill_speed(["spell"])
 			_strike_cooldown_total = _strike_cooldown
 			_cast_chain(level)
 			_combo_window = combo_window()
