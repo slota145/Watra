@@ -646,7 +646,7 @@ func _chest(place: int) -> void:
 	tween.tween_property(chest, "modulate:a", 0.0, 1.0)
 	tween.tween_callback(chest.queue_free)
 	for drop: Array in chest_loot(place, _level):
-		var pickup: Pickup = load(Goblin.PICKUP_PATH).instantiate()
+		var pickup: Pickup = Goblin.pickup_scene().instantiate()
 		pickup.item_id = drop[0]
 		pickup.amount = drop[1]
 		pickup.position = chest.position + Vector2(randf_range(-30, 30), randf_range(4, 22))

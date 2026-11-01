@@ -191,6 +191,7 @@ func setup(player: Player) -> void:
 	player.bags_changed.connect(_refresh)
 	player.equipment.changed.connect(_refresh)
 	player.stats.gold_changed.connect(func(_gold: int) -> void: _refresh())
+	visibility_changed.connect(_refresh)
 	_refresh()
 
 
@@ -437,8 +438,9 @@ func _on_sort_pressed() -> void:
 	Sfx.play("ui_confirm")
 
 
+## Zamknięte okno się nie przebudowuje (plecak zmienia się przy każdym podniesionym łupie) - robi to przy otwarciu.
 func _refresh() -> void:
-	if _player == null:
+	if _player == null or not is_visible_in_tree():
 		return
 	var inv := _player.inventory
 	_identify_button.visible = inv.slots.any(func(s: Dictionary) -> bool:

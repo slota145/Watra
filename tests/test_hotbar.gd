@@ -47,6 +47,7 @@ func _process(_d: float) -> bool:
 		check("osobny układ łuku", bar.skill_bar("bow")[1] == "multishot" and bar.skill_bar("bow")[2] == "seeker")
 		p.give_starting_items()
 		check("mikstury na start", p.inventory.count_of("health_potion") == 5 and p.inventory.count_of("mana_potion") == 5)
+		hud.action_bars.refresh()  # zmiany plecaka pasek przelicza raz na klatkę (ActionBars._queue_refresh)
 		check("pasek pokazuje liczbę", hud.action_bars._item_slots[0].count_label.text == "5", hud.action_bars._item_slots[0].count_label.text)
 		check("7 slotów umiejętności i 10 przedmiotów", hud.action_bars._skill_slots.size() == 7 and hud.action_bars._item_slots.size() == 10)
 		# klawisz 1 - mikstura życia (przy pełnym zdrowiu nie zużywa)

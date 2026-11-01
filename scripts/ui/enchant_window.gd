@@ -221,6 +221,7 @@ func setup(player: Player) -> void:
 	player.inventory.changed.connect(_refresh)
 	player.inventory.rearranged.connect(_follow_bag_item)
 	player.equipment.changed.connect(_refresh)
+	visibility_changed.connect(_refresh)
 
 
 ## Przedmiot z plecaka przeniesiony na inne miejsce (przeciąganie, sortowanie) - okno nadal go trzyma.
@@ -325,8 +326,9 @@ func _plan() -> Dictionary:
 	return plan
 
 
+## Zamknięte okno się nie przebudowuje (plecak zmienia się przy każdym podniesionym łupie) - robi to przy otwarciu.
 func _refresh() -> void:
-	if _player == null:
+	if _player == null or not is_visible_in_tree():
 		return
 	if _stone_id != "" and _count(_stone_id) == 0:
 		_stone_id = ""

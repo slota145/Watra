@@ -700,7 +700,7 @@ func steer(from: Vector2) -> Vector2:
 func _drop(at: Vector2, id: String, amount: int) -> void:
 	if amount <= 0:
 		return
-	var pickup: Pickup = load(Goblin.PICKUP_PATH).instantiate()
+	var pickup: Pickup = Goblin.pickup_scene().instantiate()
 	pickup.item_id = id
 	pickup.amount = amount
 	pickup.position = at + Vector2(_rng.randf_range(-28, 28), _rng.randf_range(-6, 18))
