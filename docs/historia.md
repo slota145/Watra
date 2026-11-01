@@ -173,6 +173,11 @@ odpowiedniej sekcji.
   około 220 potworów (było 66): utopce, ogniki, topielice.
 - [x] Bagno Hydry przeniesione na północny skraj krainy (najdalej od drogi, na zachód od rzeki, z dala od żabołaków), z 3-5 mniejszymi sadzawkami
   wokół głównej; w bagnie martwe drzewa zamiast zwykłych.
+- [x] Dużo potworów (617 wrogów, było 323): Żabie stawy na wschodzie za rzeką (`scripts/frog_ponds.gd`, osobne ziarno,
+  budowane po Bagnie Hydry - stare numery miejsc potworów w zapisach się nie zmieniają): do 14 stawów (zwykle 10)
+  z płycizną, po której da się brodzić (`World._in_marsh`), po 2-3 gromady po 6-8 żaboludzi i plujek na błotnistym
+  brzegu i 3-4 brodzących; przy 3 największych osada (chata w namorzynie, ognisko z siedzącą gromadą, suszarnia ryb,
+  sieć, garnki, totem, dłubanka); łowiska nad rzeką (do 12 gromad z sieciami); 6 dodatkowych gromad wokół wioski.
 
 ## Pola Zbożowe (`scripts/grain_fields.gd`) (Do poprawy)
 - [x] Wielki obóz koboldów (elipsa 48x30 kafelków) z barykadą Bombardiera w północnej części: 12 namiotów, 6 ognisk,

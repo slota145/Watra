@@ -431,6 +431,7 @@ var _walk_cells := {}
 ## Topielcze Uroczysko w lewym dolnym rogu rozlewisk (null w innych krainach).
 var _grove: DrownedGrove
 var _hydra_bog: HydraBog
+var _frog_ponds: FrogPonds
 
 @onready var ground: TileMapLayer = $Ground
 @onready var decor: Node2D = $Decor
@@ -2423,6 +2424,7 @@ func _forest_quest_areas() -> Dictionary:
 ## Rozlewisko to płycizna (da się po niej brodzić) pełna pałek wodnych i namorzynów, z wioską
 ## żaboludzi (chaty w olbrzymich namorzynach, kładki) i ich wodzem na wyspie pośrodku;
 ## w głębokim nurcie rzeki chodzić się nie da. Obok mostu stoi kapliczka odrodzenia.
+## Na wschodzie za rzeką żabie stawy z osadami i łowiska żaboludzi nad nurtem (FrogPonds).
 func _generate_swamp() -> void:
 	Goblin.safe_zone = Rect2()
 	var w := float(map_size.x)
@@ -2456,6 +2458,9 @@ func _generate_swamp() -> void:
 	_hydra_bog = HydraBog.new()
 	add_child(_hydra_bog)
 	_hydra_bog.plan(self)
+	_frog_ponds = FrogPonds.new()
+	add_child(_frog_ponds)
+	_frog_ponds.plan(self)
 	_plan_swamp_herds()
 	_build_swamp_ground()
 	_place_swamp_props()
@@ -2468,6 +2473,7 @@ func _generate_swamp() -> void:
 	_build_frog_village()
 	_grove.build()
 	_hydra_bog.build()
+	_frog_ponds.build()
 	# kaczki, żurawie, ważki i ryby
 	var wildlife := Wildlife.new()
 	add_child(wildlife)
@@ -2871,6 +2877,8 @@ func _in_marsh(cell: Vector2i) -> bool:
 	if ((Vector2(cell) - _swamp_center) / _swamp_radii).length() < 1.15:
 		return true
 	if _hydra_bog != null and _hydra_bog.strength(cell) > 0.15:
+		return true
+	if _frog_ponds != null and _frog_ponds.contains(cell):
 		return true
 	return _grove != null and _grove.contains(cell)
 
