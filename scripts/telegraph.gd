@@ -14,6 +14,9 @@ const MARK := Color(1.0, 0.55, 0.3, 0.7)
 const FLASH := Color(1.0, 0.85, 0.7, 0.45)
 ## Od jakiego postępu kształt błyska przed uderzeniem.
 const FLASH_FROM := 0.88
+## Bezpiecznik: po tylu sekundach od pełnego wypełnienia poświata sama znika (gdy potwór, który miał ją
+## sprzątnąć, zniknął wcześniej - np. zabity przez podróżników albo usunięty z krainy).
+const LINGER := 3.0
 
 var shape := Shape.CIRCLE
 var radius := 40.0
@@ -32,6 +35,8 @@ func _process(delta: float) -> void:
 	_time += delta
 	progress = minf(1.0, progress + delta / duration)
 	queue_redraw()
+	if _time > duration + LINGER:
+		queue_free()
 
 
 ## Czy punkt świata leży w obszarze ataku.

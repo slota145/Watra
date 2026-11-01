@@ -128,7 +128,10 @@ func _call_lightning() -> void:
 	(layer if layer != null else get_parent()).add_child(telegraph)
 	telegraph.global_position = target
 	Sfx.play_at("zap", global_position, -6.0)
-	get_tree().create_timer(BOLT_DELAY).timeout.connect(_strike.bind(telegraph, target))
+	var timer := get_tree().create_timer(BOLT_DELAY)
+	timer.timeout.connect(_strike.bind(telegraph, target))
+	# koło znika też wtedy, gdy ptakoczłowieka już nie ma (zginął i zniknął przed uderzeniem)
+	timer.timeout.connect(telegraph.queue_free)
 
 
 func _strike(telegraph: Telegraph, target: Vector2) -> void:
