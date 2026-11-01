@@ -22,6 +22,11 @@ const BILE_ARC := 0.6
 const MINION_SCENES := ["res://scenes/ghoul.tscn", "res://scenes/zombie.tscn"]
 const MAX_MINIONS := 6
 const BILE := Color(0.6, 0.8, 0.25)
+## Efekty z kreatora efektów PixelLab (tools/vfx_art.py): zamach pazurami, uderzenie w ziemię, żółć i ryk.
+const FX_SWEEP := preload("res://assets/effects/ghoul_sweep.png")
+const FX_SLAM := preload("res://assets/effects/ghoul_slam.png")
+const FX_BILE := preload("res://assets/effects/ghoul_bile.png")
+const FX_ROAR := preload("res://assets/effects/ghoul_roar.png")
 
 var _dir := Vector2.RIGHT
 var _slam_at := Vector2.ZERO
@@ -93,7 +98,8 @@ func _update_attack(delta: float) -> void:
 		["sweep", "telegraph"]:
 			if _stage_timer <= 0.0:
 				_snap(Vector2(1.2, 0.85))
-				SkillEffects.claw(get_parent(), global_position + _dir * 30.0 + Vector2(0, -14), -1.0 if _dir.x < 0 else 1.0, 60.0, Color(0.9, 1.0, 0.8))
+				SkillEffects.sheet_once(get_parent(), FX_SWEEP, 8, 18.0, global_position + Vector2(0, -14), Vector2(-10, 59),
+						_dir.angle(), 1.0, 1.1)
 				if _player_in_telegraph():
 					_hurt_player(sweep_damage, 220.0)
 				_remove_telegraph()
@@ -106,7 +112,8 @@ func _update_attack(delta: float) -> void:
 					_hurt_player(slam_damage, 260.0)
 				_remove_telegraph()
 				_ground_crack(_slam_at, SLAM_RADIUS)
-				_debris(_slam_at, 18, 170.0)
+				_debris(_slam_at, 10, 150.0)
+				SkillEffects.sheet_once(get_parent(), FX_SLAM, 11, 16.0, _slam_at, Vector2(62, 33), 0.0, 1.0, 1.25)
 				_shake_camera(8.0)
 				Sfx.play_at("rock_break", _slam_at)
 				_set_stage("recover", 0.8)
@@ -137,7 +144,8 @@ func _update_attack(delta: float) -> void:
 					_hurt_player(leap_damage, 300.0)
 				_remove_telegraph()
 				_ground_crack(global_position, LEAP_RADIUS, 4.0)
-				_debris(global_position, 24, 200.0)
+				_debris(global_position, 14, 180.0)
+				SkillEffects.sheet_once(get_parent(), FX_SLAM, 11, 16.0, global_position, Vector2(62, 33), 0.0, 1.0, 1.55)
 				_shake_camera(10.0)
 				Sfx.play_at("rock_break", global_position, 2.0)
 				_set_stage("recover", 1.0)
@@ -146,7 +154,7 @@ func _update_attack(delta: float) -> void:
 				_snap()
 				_roar_cooldown = 15.0
 				Sfx.play_at("bies_roar", global_position, 2.0)
-				SkillEffects.shockwave(get_parent(), global_position, 150.0, BILE)
+				SkillEffects.sheet_once(get_parent(), FX_ROAR, 11, 16.0, global_position, Vector2(77, 66), 0.0, 1.0, 1.9)
 				_shake_camera(6.0)
 				if _player_alive() and _player.global_position.distance_to(global_position) < 160.0:
 					_player.apply_slow(0.5, 2.0)
@@ -175,7 +183,14 @@ func _spray_bile() -> void:
 		patch.damage = maxi(1, bile_damage / 5)
 		(layer if layer != null else get_parent()).add_child(patch)
 		patch.global_position = global_position + _dir.rotated(randf_range(-BILE_ARC, BILE_ARC) * 0.8) * randf_range(50.0, BILE_RADIUS - 20.0)
-	_burst(global_position + _dir * 30.0 + Vector2(0, -20), BILE, 30, 160.0)
+	_burst(global_position + _dir * 30.0 + Vector2(0, -20), BILE, 14, 140.0)
+	SkillEffects.sheet_once(get_parent(), FX_BILE, 10, 16.0, global_position + _dir * 10.0 + Vector2(0, -20), Vector2(3, 29),
+			_dir.angle(), 1.0, 2.0)
+
+
+## Wejście do walki: ryk z zielonymi falami.
+func _fx_engage() -> void:
+	SkillEffects.sheet_once(get_parent(), FX_ROAR, 11, 16.0, global_position, Vector2(77, 66), 0.0, 1.0, 1.4)
 
 
 func _cancel_attack() -> void:

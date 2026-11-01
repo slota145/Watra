@@ -239,6 +239,11 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   podmuch z piórami, piorun w orła przy wejściu do walki; Gryf - stożek wiatru (`bow_wind_cone`), złote szpony
   z pyłem, zapętlona trąba powietrzna (`GryfTornado`), krzyk - złote fale dźwięku; Faun-Król - fletnia (fale
   melodii z nutami), pnącza spod ziemi, tupnięcie z pęknięciami i pyłem.
+- [x] Efekty ataków bossów z kreatora efektów PixelLab (`tools/vfx_art.py`): Leszy (korzenie, wir liści), Królowa Pająków
+  (sieć, lądowanie z jadem, pękające jaja), Mortan (kościane kolce, promień duszy, krąg wezwania, dym mgnienia, słup dusz
+  przy śmierci), Gnilec (zamach, miażdżenie i skok, żółć, ryk), Żmij (zionięcie, spadające kule ognia, lądowanie
+  z ognistym kręgiem, ogniste słupy) i Wij (wzrok spod powiek, kłąb mroku, korzenie szponów); własne `_fx_engage` /
+  `_fx_phase` / `_fx_death` tam, gdzie pasują.
 - [ ] Wędrowny kupiec Hasan ma w puli tylko 3 towary (`Settlement.MERCHANT_POOL`) od usunięcia kamieni zaklinających,
   więc jego oferta się nie zmienia - do uzupełnienia nowymi towarami.
 

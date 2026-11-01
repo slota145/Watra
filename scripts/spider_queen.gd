@@ -15,6 +15,10 @@ const WEB_ARC := 0.55
 const LEAP_RADIUS := 56.0
 const LEAP_TIME := 0.6
 const SPIDERLING := preload("res://scenes/spiderling.tscn")
+## Efekty z kreatora efektów PixelLab (tools/vfx_art.py): rzut sieci, lądowanie z jadem i pękające jaja.
+const FX_WEB := preload("res://assets/effects/queen_web.png")
+const FX_LEAP := preload("res://assets/effects/queen_leap.png")
+const FX_HATCH := preload("res://assets/effects/queen_hatch.png")
 
 var _dir := Vector2.RIGHT
 var _leap_from := Vector2.ZERO
@@ -80,6 +84,8 @@ func _update_attack(delta: float) -> void:
 					_player.apply_slow(0.35, 3.0)
 				_remove_telegraph()
 				SkillEffects.cone(get_parent(), global_position, _dir.angle(), WEB_ARC, WEB_RADIUS)
+				SkillEffects.sheet_once(get_parent(), FX_WEB, 10, 16.0, global_position + Vector2(0, -24), Vector2(4, 34),
+						_dir.angle(), 1.0, 1.6)
 				for i in 4:
 					_burst(global_position + _dir.rotated(randf_range(-WEB_ARC, WEB_ARC)) * randf_range(40, WEB_RADIUS),
 							Color(0.92, 0.92, 0.96), 8, 50.0)
@@ -93,6 +99,7 @@ func _update_attack(delta: float) -> void:
 						continue
 					var spiderling: Node = SPIDERLING.instantiate()
 					spiderling.position = egg.global_position
+					SkillEffects.sheet_once(get_parent(), FX_HATCH, 9, 16.0, egg.global_position, Vector2(19, 16), 0.0, 1.0, 1.2)
 					spiderling.xp_reward = 5
 					spiderling.silk_drop_chance = 0.1
 					spiderling.venom_drop_chance = 0.0
@@ -126,6 +133,7 @@ func _update_attack(delta: float) -> void:
 				_remove_telegraph()
 				_shake_camera(7.0)
 				_burst(global_position, Color(0.3, 0.25, 0.2), 24, 140.0)
+				SkillEffects.sheet_once(get_parent(), FX_LEAP, 11, 16.0, global_position, Vector2(57, 30), 0.0, 1.0, 1.15)
 				Sfx.play_at("hit_heavy", global_position)
 				_set_stage("recover", 0.8)
 		[_, "recover"]:
