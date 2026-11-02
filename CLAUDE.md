@@ -234,7 +234,8 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   (szukaj „Etap 2 animacji”): seria 3 cięć w zwykłych atakach i własne ruchy Rozpłatania, Rozłupania Ziemi, Szarży,
   Półksiężyca i Młynka; zrzuty klatek ataków w grze robi `tools/anim_shots.gd`. Etap 3 zrobiony (szukaj „Etap 3 animacji”):
   cięciwa łuku rysowana w kodzie (`BowString`, `tools/bow_strings.py`) i własne ruchy umiejętności łuku i księgi
-  (`Player.SKILL_MOVES`, chwyt ze znaczników stanu „Znacznik” w PixelLab). Dalej: etap 4 - nowe pozy ciała.
+  (`Player.SKILL_MOVES`, chwyt ze znaczników stanu „Znacznik” w PixelLab). Etap 4 zrobiony (szukaj „Etap 4 animacji”):
+  oddech w spoczynku, chód po 8 klatek, zryw i upadek przy śmierci. Punkt do zamknięcia po ograniu przez autora.
 - [ ] Lepsze dźwięki trafień przeciwników (mięsiste, różne dla miecza, strzał i czarów), pod nowe animacje efektów.
 - [ ] **Przebudowa rozwoju postaci** (do ustalenia z autorem): po dodaniu nekromancji do drzewka księgi - nowe węzły
   także w drzewkach miecza i łuku; może oddzielić umiejętności od drzewka (inny sposób odblokowania); więcej punktów

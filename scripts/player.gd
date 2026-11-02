@@ -46,6 +46,14 @@ signal dialog_requested(npc: Npc)
 @export var respawn_invulnerability := 1.5
 
 const WALK_FPS := 9.0
+## Chód Wojciecha ma 8 klatek (dwa kroki) zamiast 4 - WALK_FPS dotyczy 4 klatek, więc tempo rośnie z liczbą klatek.
+const WALK_BASE_FRAMES := 4.0
+## Oddech w spoczynku: klatki na sekundę (8 klatek - jeden wdech i wydech).
+const IDLE_FPS := 6.0
+## Zryw: ruch dash (niski doskok) trwa czas zrywu i jeszcze tyle wyhamowania (tylko wygląd).
+const DASH_RECOVER := 0.16
+## Upadek przy śmierci (ruch death): ile trwa; potem postać leży w ostatniej klatce, aż zniknie.
+const DEATH_ANIM_TIME := 0.7
 const GHOST_INTERVAL := 0.03
 const HURT_COLOR := Color(1.0, 0.25, 0.25)
 const DODGE_COLOR := Color(0.75, 0.9, 1.0)
@@ -172,6 +180,11 @@ var is_dead := false
 var spawn_point := Vector2.ZERO
 
 var _anim_time := 0.0
+## Czas oddechu w spoczynku, ruchu zrywu (od początku) i upadku przy śmierci - tylko wygląd.
+var _idle_time := 0.0
+var _dash_anim := 0.0
+var _dash_anim_total := 0.0
+var _death_time := 0.0
 var _dash_timer := 0.0
 ## Spowolnienie (np. śpiew topielicy): mnożnik prędkości i ile jeszcze trwa.
 var _slow_factor := 1.0
@@ -623,6 +636,9 @@ func _physics_process(delta: float) -> void:
 			_slow_factor = 1.0
 			sprite.self_modulate = Color.WHITE
 	if is_dead:
+		# upadek przy śmierci (ruch death) - jedyna animacja martwej postaci
+		if HeroRig.frames(hero, "death") > 0:
+			_update_animation(delta)
 		return
 
 	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
@@ -2329,9 +2345,13 @@ func _die() -> void:
 	_stop_whirl()
 	if is_charging_fireball():
 		_stop_fireball_charge()
+	_death_time = 0.0
+	_dash_anim = 0.0
 	var tween := create_tween()
-	tween.tween_property(sprite, "rotation", PI / 2.0, 0.3)
-	tween.parallel().tween_property(sprite, "modulate:a", 0.0, 1.0).set_delay(0.5)
+	# upadek z arkusza postaci (ruch death), a bez niego - przewrócenie sprite'a
+	if HeroRig.frames(hero, "death") <= 0:
+		tween.tween_property(sprite, "rotation", PI / 2.0, 0.3)
+	tween.parallel().tween_property(sprite, "modulate:a", 0.0, 1.0).set_delay(0.5 + DEATH_ANIM_TIME)
 	Sfx.play("death")
 	died.emit()
 	# timer zatrzymuje się podczas pauzy
@@ -2399,6 +2419,8 @@ func _start_dash(input: Vector2) -> void:
 	_dash_from = global_position
 	_dash_cooldown_timer = dash_cooldown
 	_ghost_timer = 0.0
+	_dash_anim_total = dash_duration + DASH_RECOVER
+	_dash_anim = _dash_anim_total
 	Sfx.play("dash")
 
 
@@ -2440,7 +2462,14 @@ func _update_animation(delta: float) -> void:
 	_skill_anim_timer = maxf(_skill_anim_timer - delta, 0.0)
 	_chain_timer = maxf(_chain_timer - delta, 0.0)
 	_thrust_time = maxf(_thrust_time - delta, 0.0)
-	if _whirling:
+	_dash_anim = maxf(_dash_anim - delta, 0.0)
+	if is_dead and HeroRig.frames(hero, "death") > 0:
+		# upadek, potem postać leży w ostatniej klatce
+		_death_time += delta
+		anim = "death"
+		var death_frames := HeroRig.frames(hero, "death")
+		frame = mini(int(_death_time / DEATH_ANIM_TIME * death_frames), death_frames - 1)
+	elif _whirling:
 		# poza z rozłożonymi rękami w kierunku z _update_whirl - ciało obraca się razem z mieczem
 		anim = "spin" if HeroRig.frames(hero, "spin") > 0 else "slash"
 	elif _lunge_time > 0.0:
@@ -2470,12 +2499,21 @@ func _update_animation(delta: float) -> void:
 		var count := HeroRig.frames(hero, anim)
 		var progress := 1.0 - _attack_timer / maxf(_attack_length, 0.001)
 		frame = clampi(int(progress * count), 0, count - 1)
+	elif _dash_anim > 0.0 and HeroRig.frames(hero, "dash") > 0:
+		# zryw: niski doskok, a po nim krótkie wyhamowanie
+		anim = "dash"
+		var dash_frames := HeroRig.frames(hero, "dash")
+		frame = clampi(int((1.0 - _dash_anim / _dash_anim_total) * dash_frames), 0, dash_frames - 1)
 	elif velocity.length() > 10.0:
 		anim = "walk"
-		_anim_time += delta * WALK_FPS * clampf(velocity.length() / max_speed, 0.5, 1.5)
-		frame = int(_anim_time) % HeroRig.frames(hero, "walk")
+		var walk_frames := HeroRig.frames(hero, "walk")
+		_anim_time += delta * WALK_FPS * walk_frames / WALK_BASE_FRAMES * clampf(velocity.length() / max_speed, 0.5, 1.5)
+		frame = int(_anim_time) % walk_frames
+		_idle_time = 0.0
 	else:
 		_anim_time = 0.0
+		_idle_time += delta
+		frame = int(_idle_time * IDLE_FPS) % HeroRig.frames(hero, "idle")
 	var shown := HeroRig.frame_index(anim, _dir_row, frame)
 	var new_frame := shown != sprite.frame
 	sprite.frame = shown
