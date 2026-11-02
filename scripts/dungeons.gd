@@ -1,4 +1,4 @@
-class_name Dungeons
+﻿class_name Dungeons
 ## Lochy w płomieniach Watry - dane: klimaty (zestaw kafelków z PixelLab, potwory, strażnik, wystrój, kolory),
 ## stopnie trudności i modyfikatory kupowane za żar. Generator lochu to scripts/dungeon.gd, okno wyboru -
 ## scripts/ui/dungeon_window.gd. Poziom Watry odblokowuje kolejne stopnie (stopień <= poziom Watry) i modyfikatory.
@@ -24,6 +24,9 @@ const CLIMATES := {
 		"wall_props": ["res://assets/cemetery/candle.png", "res://assets/cemetery/sarcophagus.png", "res://assets/forest/props/cage.png",
 				"res://assets/cemetery/skulls.png"],
 		"map_floor": Color("5c5650"), "map_wall": Color("16151a"),
+		# wystrój komnat (scripts/dungeon_decor.gd): rodzaje komnat i grafiki z tools/dungeon_props.py
+		"decor": {"dir": "res://assets/dungeons/catacombs/", "tint": Color(0.6, 0.6, 0.72),
+				"themes": ["crypt", "pillars", "ossuary", "chapel", "collapsed", "prison"]},
 	},
 	"mine": {
 		"name": "Kopalnia goblinów", "description": "Chodniki z belkami, porzucone wózki i beczki prochu. Gobliny i koboldy; rządzi nimi wódz.",
