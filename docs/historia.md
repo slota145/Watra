@@ -646,9 +646,17 @@ odpowiedniej sekcji.
     poduchy), tany (słup majowy, tyczki ze wstążkami, altana z lirą i bębnami), sad (drzewa co drugi wierzchołek),
     zagroda kóz (płot, koryto, paśnik, kozy z poziomem lochu), obóz (namioty i szałasy wokół rożna), źródło wina
     (fontanna z satyrem, pałki, brzozy, świetliki); wejście - łuk z winorośli i latarnie, strażnik - tron za skarbcem,
-    totemy z kozią czaszką; latarnie wzdłuż ścieżek i drogowskazy (`_trail_lights`), ślady święta na trawie (`_scatter`);
+    totemy z kozią czaszką; latarnie wzdłuż ścieżek (`_trail_lights`);
     na licu klifów winorośl. Grafiki też z wioski satyrów (`assets/mountains/satyr/`, `assets/forest/props/satyr_*`);
     ścieżka bez rozszerzenia w `DungeonDecor._tex` dostaje `.png`;
+  - poprawki po ocenie autora („winnica bez winnicy”, ozdoby bez sensu): pola winorośli także na terenie
+    niedostępnym (`Dungeon.vines`, próg `vines_above`, nie przy klifach - lico zachodzi na sąsiednie komórki; mniej
+    klifów: `cliff_below` -0,28; `_vine_fields`: rzędy co 3 kafelki, krzew co 40 px, przejście
+    co 6-8 krzewów - jak w Turniach, `Dungeon.vine_run`); na polanach-winnicach (3 z 10 rodzajów w kolejce)
+    i w szerokich miejscach przy ścieżkach pasy winorośli (`VineyardDecor._vine_strips`: co drugi rząd wierzchołków
+    dwa rzędy krzewów z jedną kolizją, co 5 wierzchołków przejście); nic nie stoi na ścieżce (wierzchołki ścieżek
+    zajęte od początku, kręgi ozdób omijają ścieżkę), latarnie na poboczu (na skraju sąsiedniego lasu lub pola);
+    usunięte rozsypane drobiazgi, kiście i plamy wina poza scenkami; rzadziej poszerzane ścieżki (mniej pustych placów);
   - grafiki PixelLab: paczki `vineyard_small`, `vineyard_tall`, `vineyard_furniture` (po 16, 64 px) i `vineyard_big`
     (4 sztuki, 128 px) w `pixellab_src/dungeons/`; w paczce wysokich obiektów kandydatki wyszły przesunięte między
     klatkami, więc `tools/dungeon_props.py` tnie ją z pasa sklejonych klatek (`strip_part`, klatka `"s<nr>"`).

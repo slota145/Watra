@@ -236,12 +236,12 @@ PROPS = {
     },
     "vineyard": {
         # nakładki na trawę polan
-        "grapes": ("vineyard_small", 0, 0.95, 0.6),
-        "wine_spill": ("vineyard_small", 1, 0.85, 0.65),
+        "grapes": ("vineyard_small", 0, 0.95, 0.4),
+        "wine_spill": ("vineyard_small", 1, 0.85, 0.5),
         "shards": ("vineyard_small", 2, 0.9, 0.55),
         "leaves": ("vineyard_small", 3, 0.8, 0.6),
         "flowers": ("vineyard_small", 4, 0.9, 0.6),
-        "grape_skins": ("vineyard_small", 9, 0.8, 0.6),
+        "grape_skins": ("vineyard_small", 9, 0.8, 0.45),
         "hoofprints": ("vineyard_small", 11, 0.55, 0.6),
         "stones": ("vineyard_small", 15, 0.9, 0.55),
         # drobiazgi

@@ -36,6 +36,9 @@ const PORTAL_FPS := 7.0
 const DENSITY := 0.42
 const PACK := Vector2i(4, 7)
 const LEASH := 5000.0
+## Pola winorośli lochu na zewnątrz: rzędy co tyle kafelków świata, krzewy co tyle pikseli (jak w Turniach).
+const VINE_ROW := 3
+const VINE_STEP := 40.0
 
 var w
 var config := {}
@@ -77,6 +80,8 @@ var outdoor := false
 ## Wierzchołki poza podłogą lochu na zewnątrz: klif (skalna półka) albo woda; reszta to ściana drzew.
 var cliffs := {}
 var waters := {}
+## Pola winorośli na terenie niedostępnym (loch na zewnątrz z "vines" w "terrain") - równe rzędy krzewów.
+var vines := {}
 ## Komórki ścieżek (kafelki 16 px świata) - ubita ziemia pod krętymi ścieżkami między polanami.
 var path_tiles := {}
 ## Gładkie linie krętych ścieżek (w wierzchołkach, przed zaokrągleniem) - po nich biegnie ubita ziemia.
@@ -118,6 +123,7 @@ func generate(world, settings: Dictionary) -> void:
 	if outdoor:
 		_build_ground()
 		_dress_borders()
+		_vine_fields()
 	_build_atmosphere()
 	if climate.has("decor"):
 		DungeonDecor.create(self).build()
@@ -250,7 +256,7 @@ func _dig_path(from: Vector2i, to: Vector2i) -> void:
 
 ## Kawałek ścieżki: 2x2 wierzchołki, czasem poszerzony do 3x3 (brzeg ścieżki faluje).
 func _stamp_path(cell: Vector2i) -> void:
-	var wide := _rng.randf() < 0.3
+	var wide := _rng.randf() < 0.12
 	for dx in range(-1 if wide else 0, 2):
 		for dy in range(-1 if wide else 0, 2):
 			var v := cell + Vector2i(dx, dy)
@@ -258,8 +264,8 @@ func _stamp_path(cell: Vector2i) -> void:
 				floor_cells[v] = true
 
 
-## Granica polan: każdy wierzchołek poza podłogą to klif, woda albo drzewa wg szumu o dużych plamach (progi
-## w "terrain" klimatu). Klif, który nie pasuje do żadnego kafelka Wang, zamienia się w drzewa.
+## Granica polan: każdy wierzchołek poza podłogą to klif, woda, pole winorośli albo drzewa wg szumu o dużych plamach
+## (progi w "terrain" klimatu). Klif, który nie pasuje do żadnego kafelka Wang, zamienia się w drzewa.
 func _plan_borders() -> void:
 	var noise := FastNoiseLite.new()
 	noise.seed = _rng.randi()
@@ -287,6 +293,19 @@ func _plan_borders() -> void:
 					cliffs.erase(c)
 		if bad == 0:
 			break
+	# pola winorośli: duże plamy drugiego szumu wśród drzew (skraj mapy zostaje lasem)
+	if terrain.has("vines"):
+		var field := FastNoiseLite.new()
+		field.seed = _rng.randi()
+		field.frequency = 0.09
+		for x in range(1, GRID.x - 1):
+			for y in range(1, GRID.y - 1):
+				var v := Vector2i(x, y)
+				if floor_cells.has(v) or cliffs.has(v) or waters.has(v) or field.get_noise_2d(x, y) <= terrain["vines_above"]:
+					continue
+				# przy klifie (lico i przejścia kafelków Wang zachodzą na sąsiednie komórki) zostają drzewa
+				if not STEPS.any(func(step: Vector2i) -> bool: return cliffs.has(v + step)):
+					vines[v] = true
 	# ubita ziemia ścieżek: kafelki świata (16 px) w pasie wzdłuż krętych ścieżek, tylko na podłodze
 	var tile: int = w.TILE
 	for trail in _trails:
@@ -377,7 +396,7 @@ func _dress_borders() -> void:
 	for x in GRID.x:
 		for y in GRID.y:
 			var v := Vector2i(x, y)
-			if floor_cells.has(v):
+			if floor_cells.has(v) or vines.has(v):
 				continue
 			var at := Vector2(v) * CELL
 			if waters.has(v):
@@ -412,6 +431,40 @@ func _dress_borders() -> void:
 					tree.flip_h = _rng.randf() < 0.5
 					var shade := _rng.randf_range(0.82, 1.0)
 					tree.modulate = Color(shade, shade, shade)
+
+
+## Pola winorośli: rzędy co VINE_ROW kafelków świata, w rzędzie krzew co VINE_STEP px, co kilka krzewów przejście
+## (jak winnice wioski satyrów w Turniach). Krzew stoi tylko tam, gdzie kafelek i kafelek nad nim leżą w polu -
+## rząd kończy się równo na skraju pola.
+func _vine_fields() -> void:
+	var tile: int = w.TILE
+	var kinds: Array = climate["terrain"]["vines"].map(func(path: String) -> Texture2D: return load(path))
+	var in_field := func(t: Vector2i) -> bool:
+		return vines.has(Vector2i(((Vector2(t) + Vector2(0.5, 0.5)) * tile / CELL).round()))
+	for y in range(1, w.map_size.y, VINE_ROW):
+		var run := -1
+		for x in w.map_size.x + 1:
+			var on: bool = x < w.map_size.x and in_field.call(Vector2i(x, y)) and in_field.call(Vector2i(x, y - 1))
+			if on and run < 0:
+				run = x
+			elif not on and run >= 0:
+				vine_run(kinds[_rng.randi() % kinds.size()], run * tile, x * tile, y * tile + 14.0)
+				run = -1
+
+
+## Jeden rząd krzewów winorośli od `from` do `to` (px) na wysokości `y`: równe odstępy, przejście co 6-8 krzewów.
+## Zwraca postawione krzewy.
+func vine_run(texture: Texture2D, from: float, to: float, y: float, gaps := true) -> Array[Sprite2D]:
+	var out: Array[Sprite2D] = []
+	var count := int((to - from + 8.0) / VINE_STEP)
+	var left := from + (to - from - count * VINE_STEP) / 2.0 + VINE_STEP / 2.0
+	var next_gap := _rng.randi_range(5, 7) if gaps else 1 << 20
+	for k in count:
+		if k == next_gap:
+			next_gap += _rng.randi_range(6, 8)
+			continue
+		out.append(w._village_prop(texture, Vector2(left + k * VINE_STEP, y)))
+	return out
 
 
 ## Ołtarz Welesa: rzadko (Essences.ALTAR_CHANCE, w trybie deweloperskim albo z "altar" w ustawieniach zawsze)
@@ -712,6 +765,8 @@ func _build_map() -> void:
 				color = climate["map_wall"].lerp(climate["map_floor"], 0.35)
 			elif outdoor and waters.has(v):
 				color = climate["map_water"]
+			elif outdoor and vines.has(v):
+				color = climate["map_vines"]
 			elif outdoor and label == "u" and not cliffs.has(v):
 				color = climate["map_trees"]
 			elif outdoor and path_tiles.has(Vector2i(x, y)):

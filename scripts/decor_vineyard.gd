@@ -8,7 +8,8 @@ extends DungeonDecor
 ## i bzu), zagroda kóz (płot wokół koryta i paśnika, kozy), obóz (namioty i szałasy wokół rożna) i źródło wina
 ## (fontanna z satyrem w kręgu pałek i brzóz, świetliki). Wejście: łuk z winorośli i latarnie przy płomieniach
 ## Watry; polana strażnika: tron Króla Satyrów za skarbcem, totemy z kozią czaszką, bożek, krąg latarni i wstążek.
-## Na licu klifów zwisa winorośl, wzdłuż ścieżek stoją latarnie, a przy rozstajach drogowskazy.
+## Na licu klifów zwisa winorośl, na poboczu ścieżek stoją latarnie; na samych ścieżkach nic nie stoi.
+## Pola winorośli rosną też na terenie niedostępnym (Dungeon._vine_fields).
 ## Grafiki: assets/dungeons/vineyard/ (tools/dungeon_props.py) i wioska satyrów z Turni
 ## (assets/mountains/satyr/, assets/forest/props/satyr_*).
 
@@ -20,11 +21,10 @@ const FIRE := Color(1.0, 0.55, 0.2, 0.55)
 ## Świetliki nad sadem i źródłem.
 const FIREFLY := Color(0.85, 1.0, 0.5)
 const BONFIRE := preload("res://scenes/props/mountains/satyr/bonfire.tscn")
-const FLOOR_DECALS := {"grapes": 1.2, "wine_spill": 0.8, "leaves": 1.6, "flowers": 2.0, "grape_skins": 0.8,
-		"hoofprints": 1.0, "stones": 1.0, "shards": 0.5}
+## Nakładki na trawę tylko drobne i naturalne - ślady święta (wino, winogrona) leżą wyłącznie w scenkach.
+const FLOOR_DECALS := {"flowers": 1.0}
 const LINES := {
-	"vines": {"n": ["trellis", "", "raisin_rack", "trellis", ""], "w": ["grape_crate", ""], "e": ["", "basket_tipped"],
-			"s": ["", "grape_crate", "", "trellis"]},
+	"vines": {"n": ["", "", "raisin_rack", "", "", ""], "s": ["", "", "grape_crate", "", ""]},
 	"press": {"n": ["barrel_rack", "", "tapped_barrel", "barrel_tower", ""], "w": ["grape_crate", "", S + "keg"],
 			"e": [S + "barrel_pile", "", "amphora_stand"], "s": ["", "tapped_barrel", "", S + "keg"]},
 	"feast": {"n": ["lantern_post", "", "table", "", "wineskins", ""], "w": ["cushions", "", "bench"], "e": ["bench", "", "cushions"],
@@ -64,9 +64,15 @@ func event_pillars() -> Array:
 
 
 func build() -> void:
+	# nic nie staje na ścieżce: wierzchołki, przez których środek biegnie ubita ziemia, są zajęte od początku
+	for v: Vector2i in d.floor_cells:
+		if d.path_tiles.has(Vector2i(_px(v) / w.TILE)):
+			_used[v] = true
 	super.build()
 	_trail_lights()
-	_scatter()
+	# szerokie miejsca przy ścieżkach poza polanami też obsadzone winoroślą
+	_vine_strips(Rect2i(Vector2i.ZERO, Dungeon.GRID), S + "vine_row", 2, func(v: Vector2i) -> bool:
+			return not d.rooms.any(func(r: Rect2i) -> bool: return r.grow(1).has_point(v)) and not d.altar_room.grow(1).has_point(v))
 
 
 ## Czy wierzchołek i jego czterej sąsiedzi są wolną podłogą (drzewo sadu nie zamknie przejścia).
@@ -77,26 +83,6 @@ func _open_cross(v: Vector2i) -> bool:
 	return true
 
 
-## Ślady wiecznego święta na wolnej trawie polan: nakładki (winogrona, liście, kwiaty, rozlane wino) i porzucone
-## drobiazgi (dzbany, kielichy, bukłaki, kosze).
-func _scatter() -> void:
-	var small := ["jug", "goblets", "wine_skin", "basket_tipped", "mushrooms", "grape_crate", "wreath", S + "amphora"]
-	for room in d.rooms:
-		if room == d.start_room:
-			continue
-		for x in range(room.position.x - 1, room.end.x + 1):
-			for y in range(room.position.y - 1, room.end.y + 1):
-				var v := Vector2i(x, y)
-				if not _floor_at(v) or _used.has(v):
-					continue
-				var roll := rng.randf()
-				if roll < 0.1:
-					_decal(d._pick(FLOOR_DECALS), _px(v) + _jitter(20) + Vector2(0, 10))
-				elif roll < 0.14:
-					_used[v] = true
-					_prop(_pick(small), _px(v) + _jitter(16) + Vector2(0, 16))
-
-
 ## Lico klifu: zwisająca winorośl.
 func _dress_wall(run: Array[Vector2i]) -> void:
 	for v in run:
@@ -104,24 +90,25 @@ func _dress_wall(run: Array[Vector2i]) -> void:
 			_decal(P + "vines", _px(v) + Vector2(0, -12)).z_index = 1
 
 
-## Latarnie wzdłuż krętych ścieżek (co kilka kroków, na przemian po obu stronach) i drogowskazy na ich końcach.
+## Latarnie na poboczu krętych ścieżek: co kilka kroków, na przemian po obu stronach, na skraju pierwszego
+## niedostępnego wierzchołka obok ścieżki (drzewa albo pole winorośli) - nigdy na samej ścieżce.
 func _trail_lights() -> void:
 	for trail: PackedVector2Array in d._trails:
 		var side := 1.0
-		for i in range(4, trail.size() - 4, 9):
-			var dir := (trail[i + 1] - trail[i - 1]).normalized()
-			var spot := (trail[i] + Vector2(0.5, 0.5) + dir.orthogonal() * side * 1.05) * Dungeon.CELL
+		for i in range(5, trail.size() - 5, 8):
+			var at := trail[i] + Vector2(0.5, 0.5)
+			var across := (trail[i + 1] - trail[i - 1]).normalized().orthogonal() * side
 			side = -side
-			var v := Vector2i((spot / Dungeon.CELL).round())
-			if d._label(v) != "l" or d.solid.has(v) or _used.has(v) or d.rooms.any(func(r: Rect2i) -> bool: return r.grow(1).has_point(v)):
-				continue
-			_used[v] = true
-			_prop("lantern_post", spot + Vector2(0, 14), false)
-			_light(spot - Vector2(0, 22), LAMP, Vector2(150, 110))
-		if trail.size() > 12 and rng.randf() < 0.5:
-			var spot := (trail[3] + Vector2(1.3, 0.2)) * Dungeon.CELL
-			if not d._blocked(spot, 6.0):
-				_prop("signpost", spot)
+			for k in range(1, 4):
+				var v := Vector2i((at + across * k).round())
+				if d.floor_cells.has(v):
+					continue
+				if not d.waters.has(v) and not d.cliffs.has(v) and not _sconces.has(v):
+					_sconces[v] = true
+					var spot := _px(v) - across * 26.0 + Vector2(0, 18)
+					_prop("lantern_post", spot, false)
+					_light(spot - Vector2(0, 40), LAMP, Vector2(150, 110))
+				break
 
 
 ## Duży rekwizyt na środku polany; gdy środek nie jest wolny - bez kolizji.
@@ -149,7 +136,7 @@ func _ring(at: Vector2, radius: Vector2, count: int, names: Array, decals := fal
 		var angle := TAU * i / count + 0.3
 		var spot := at + Vector2(cos(angle) * radius.x, sin(angle) * radius.y)
 		var v := Vector2i((spot / Dungeon.CELL).round())
-		if not _floor_at(v) or d._blocked(spot, 8.0):
+		if not _floor_at(v) or d._blocked(spot, 8.0) or d.path_tiles.has(Vector2i(spot / w.TILE)):
 			continue
 		if decals:
 			_decal(_pick(names), spot)
@@ -184,11 +171,11 @@ func _start(room: Rect2i) -> void:
 			_used[v] = true
 			_prop("lantern_post", _px(v) + Vector2(0, 14), false)
 			_light(_px(v) - Vector2(0, 24), LAMP, Vector2(160, 120))
-	_ring(_px(mid) + Vector2(0, 40), Vector2(110, 60), 6, ["flowers", "leaves", "grapes"], true)
+	_ring(_px(mid) + Vector2(0, 40), Vector2(110, 60), 6, ["flowers", "leaves", "flowers"], true)
 
 
-## Polana strażnika: tron Króla Satyrów za skarbcem, po bokach totemy z kozią czaszką, poduchy, rozlane wino,
-## krąg latarni i tyczek ze wstążkami.
+## Polana strażnika: tron Króla Satyrów za skarbcem, po bokach totemy z kozią czaszką i poduchy, krąg latarni
+## i tyczek ze wstążkami.
 func _boss(room: Rect2i) -> void:
 	var mid := _center(room)
 	var top := Vector2i(mid.x, room.position.y)
@@ -201,31 +188,66 @@ func _boss(room: Rect2i) -> void:
 			_prop("goat_totem", _px(v) + Vector2(0, 10), false)
 			_prop("cushions", _px(v) + Vector2(-dx * 14, 34))
 	_ring(_px(mid) + Vector2(0, 30), Vector2(room.size.x * 26.0, room.size.y * 22.0), 8, ["lantern_post", "ribbon_pole"])
-	_ring(_px(mid) + Vector2(0, 30), Vector2(90, 60), 5, ["wine_spill", "grape_skins", "grapes"], true)
 	_light(_px(mid) + Vector2(0, 30), Color(LAMP, 0.3), Vector2(420, 300), false)
 
 
-## Winnica: poziome rzędy winorośli co dwa wierzchołki z przejściem co cztery krzewy; w przejściach kosze,
-## skrzynki winogron i wózek, na skraju strach na wróble.
+## Winnica: polanę wypełniają długie, równe pasy winorośli (co drugi rząd wierzchołków po dwa rzędy krzewów, krzew
+## co 40 px), pas kończy się na skraju polany i przy ścieżce, co kilka wierzchołków poprzeczne przejście.
+## W przejściach między pasami kosze i skrzynki z zebranymi winogronami, na skraju strach na wróble.
 func _vines(room: Rect2i) -> void:
-	for y in range(room.position.y + 1, room.end.y - 1, 2):
-		var n := 0
-		for x in range(room.position.x, room.end.x):
+	_vine_strips(room.grow(1), S + ("vine_row" if rng.randf() < 0.5 else "vine_row_2"), rng.randi_range(0, 4))
+	for x in range(room.position.x, room.end.x):
+		for y in range(room.position.y, room.end.y):
 			var v := Vector2i(x, y)
-			n += 1
-			if n % 4 == 0 or not _floor_at(v) or _used.has(v):
-				continue
-			if not _floor_at(v + Vector2i.UP) or not _floor_at(v + Vector2i.DOWN):
-				continue
-			_solid(S + ("vine_row" if rng.randf() < 0.5 else "vine_row_2"), v, Vector2(42, 8))
-		for x in range(room.position.x, room.end.x):
-			var v := Vector2i(x, y + 1)
-			if _floor_at(v) and not _used.has(v):
-				_litter(v, [S + "grape_basket", "basket_tipped", "grape_crate", S + "grape_cart", "grapes"], 0.2)
+			if posmod(y, 2) == 0 and _floor_at(v) and not _used.has(v) and rng.randf() < 0.08:
+				_used[v] = true
+				_prop(_pick([S + "grape_basket", "grape_crate", S + "ladder_basket"]), _px(v) + Vector2(rng.randf_range(-14, 14), 18))
 	var corner: Vector2i = _corners(room)[rng.randi() % 4]
 	if _floor_at(corner) and not _used.has(corner):
 		_used[corner] = true
 		_prop("scarecrow", _px(corner) + Vector2(0, 16))
+
+
+## Pasy winorośli w obszarze `area`: co drugi rząd wierzchołków (nieparzyste y) przez wolną podłogę z podłogą nad
+## i pod pasem, co pięć wierzchołków poprzeczne przejście (od `cross`), pas kończy się na skraju i przy ścieżce.
+## `allow` (wierzchołek -> bool) zawęża, gdzie pas może biec.
+func _vine_strips(area: Rect2i, kind: String, cross: int, allow := Callable()) -> void:
+	for y in range(area.position.y, area.end.y):
+		if posmod(y, 2) == 0:
+			continue
+		var run: Array[Vector2i] = []
+		for x in range(area.position.x, area.end.x + 1):
+			var v := Vector2i(x, y)
+			var on: bool = x < area.end.x and _floor_at(v) and not _used.has(v) and posmod(x - cross, 5) != 0 \
+					and _floor_at(v + Vector2i.UP) and _floor_at(v + Vector2i.DOWN) and (not allow.is_valid() or allow.call(v))
+			if on:
+				run.append(v)
+			elif not run.is_empty():
+				_vine_row(kind, run)
+				run = []
+
+
+## Pas winorośli przez kolejne wierzchołki `run`: dwa rzędy krzewów w równych odstępach (gęsto jak na polach
+## za skrajem polany), jedna kolizja na cały pas, wierzchołki zajęte (potwory obchodzą pas przejściami).
+func _vine_row(kind: String, run: Array[Vector2i]) -> void:
+	if run.size() < 2:
+		return
+	var from := _px(run[0]).x - 30.0
+	var to := _px(run[-1]).x + 30.0
+	var y := _px(run[0]).y
+	for row_y in [y - 10.0, y + 30.0]:
+		d.vine_run(_tex(kind), from, to, row_y, false)
+	for v in run:
+		d.solid[v] = true
+		_used[v] = true
+	var body := StaticBody2D.new()
+	body.position = Vector2((from + to) / 2.0, y + 6.0)
+	var shape := CollisionShape2D.new()
+	var box := RectangleShape2D.new()
+	box.size = Vector2(to - from - 8.0, 44.0)
+	shape.shape = box
+	body.add_child(shape)
+	w.entities.add_child(body)
 
 
 ## Tłocznia: wielka prasa albo kadź na środku, po bokach kadzie z winogronami i do deptania, beczki z kranem, rozlane wino
@@ -238,7 +260,7 @@ func _press(room: Rect2i) -> void:
 			Vector2i(2, 2): "press_small", Vector2i(0, 2): S + "stomp_tub"}
 	for step: Vector2i in pieces:
 		_maybe_solid(pieces[step], mid + step, Vector2(28, 8))
-	_ring(_px(mid) + Vector2(0, 40), Vector2(80, 50), 7, ["wine_spill", "grape_skins", "grapes"], true)
+	_ring(_px(mid) + Vector2(0, 40), Vector2(80, 50), 5, ["wine_spill", "grape_skins"], true)
 
 
 ## Biesiada: wielki stół z jadłem przy ognisku, wokół stoliki, poduchy, rożen, dzbany i kielichy.
@@ -252,7 +274,7 @@ func _feast(room: Rect2i) -> void:
 		_maybe_solid(_pick(["table", "roast_spit"]), mid + step, Vector2(34, 8))
 	_ring(_px(mid) + Vector2(0, 30), Vector2(room.size.x * 26.0, room.size.y * 24.0), 8,
 			["cushions", "jug", "goblets", S + "amphora", "wine_skin"])
-	_ring(_px(mid) + Vector2(0, 30), Vector2(100, 70), 5, ["wine_spill", "grapes"], true)
+	_ring(_px(mid) + Vector2(0, 30), Vector2(100, 70), 4, ["wine_spill", "goblets"], true)
 
 
 ## Tany: słup majowy na środku w kręgu tyczek ze wstążkami, pod północnym brzegiem altana z muzykami (lira,
