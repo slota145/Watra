@@ -272,11 +272,37 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   falami) ma się zmienić; wzmiankę usunięto z opisu w oknie lochów. Jak ma działać - dopytać autora.
 - [ ] Pomysły do Kryształu Watry: komnata z kowadłem w lochu (jednorazowo wyższa szansa zaklinania), kolejne
   warianty zdarzenia.
-- [ ] **Losowe mechaniki w lochach z własnymi drzewkami rozwoju** (jak atlas w Path of Exile): w lochu losowo pojawia się
-  dodatkowa mechanika (np. wydarzenie, specjalny przeciwnik, ukryta komnata), a każda ma własne drzewko ulepszeń
-  rozwijane postępami w lochach. Szczegóły do ustalenia z autorem.
-- [ ] **Sloty w Watrze na przedmioty modyfikujące lochy** (jak skaraby w PoE): przedmioty z łupu wkładane w Watrę przed
-  wejściem, które dodatkowo zmieniają loch (więcej danej mechaniki, inne potwory, więcej łupu danego rodzaju).
+- [ ] **Mechaniki w lochach - powód, żeby robić lochy** (plan z autorem, listopad 2026; najpierw mechaniki, potem
+  atlas, nowe klimaty lochów odłożone). W każdym lochu co najmniej 1 mechanika, z małą szansą druga i trzecia; proste
+  częściej, duże rzadziej; drzewko rozwoju Watry podnosi szanse (aż do 100% na wybraną mechanikę) i wzmacnia
+  mechaniki. Każda większa mechanika ma własny, unikalny łup:
+  - **Skrzynki** (jak strongboxy) - zwykły łup, czasem z cechami (pułapka, więcej przedmiotów);
+  - **Kapliczki** - buff na czas lochu;
+  - **Elitarne potwory** z cechami (wzmacniają wrogów wokół) - więcej i lepszego łupu;
+  - **Uroczysko** - dotknięty kamień otwiera rosnący krąg innego świata pełen upiorów, na czas - łup: **runy**
+    (patrz „Modyfikacja premii tylko runami”);
+  - **Krąg Żertwy** (nie „Ołtarz Welesa” - ta nazwa jest już zajęta przez esencje) - zabici wrogowie w kręgu dają
+    daninę, za nią wybór nagrody - łup: **talizmany**;
+  - **Skarbnik** - duch strzeże skarbca, fale obrońców, rodzaj łupu znany z góry;
+  - **Kryształ Watry** (do przerobienia) - jedyne źródło **kamieni zaklinania**: zabrać je ze skarbca strażnika
+    (`Dungeon` - zostają kamienie błogosławione), rynek i nagroda zadania głównego zostają jako drogie wyjście
+    awaryjne; Kryształ musi wypadać często;
+  - pomysły na później: **Kurhan** (wysadzanie kurhanów prochem, artefakty wymieniane u handlarza w Ostoi), **Mgła
+    Nawii** (loch coraz trudniejszy i hojniejszy z każdą minutą, wyjście w dowolnej chwili), **Łowy** (chwytanie
+    rzadkich bestii do zagrody w Ostoi - składniki rzemiosła).
+  Odrzucone przez autora: zbłąkany wędrowiec, Noc Kupały, Zakład z biesem, Licho, Dziady.
+- [ ] **Bożki** (jak skaraby w PoE): wypadają z małą szansą z każdego potwora (gracz nie musi grindować jednego
+  miejsca), wkładane w sloty Watry przed wejściem, zmieniają loch (więcej danej mechaniki, silniejsze potwory i więcej
+  łupu, więcej łupu danego rodzaju); mają rzadkości. Same są traktowane jak mechanika - z własnymi węzłami w drzewku
+  Watry (częściej wypadają, rzadsze odmiany, dodatkowy slot).
+- [ ] **Talizmany** (jak idole w Last Epoch): nowy rodzaj przedmiotu z Kręgu Żertwy, wkładany w specjalne sloty
+  postaci (siatka slotów, talizmany różnych rozmiarów - do ustalenia); zwykłe mają premie do statystyk, rzadsze -
+  unikalne efekty (np. warunkowe: szał po serii zabójstw, ognista tarcza przy niskim zdrowiu).
+- [ ] **Atlas** (po mechanikach): mapa węzłów-lochów, ukończenie odblokowuje sąsiednie i daje punkty do drzewka
+  wzmacniającego mechaniki; razem z podziałem lochów na zwykłe i endgame'owe (punkt niżej).
+- [ ] **Obce mitologie jako odległe królestwa** (luźny pomysł autora): świat zostaje słowiański, a królestwa grecki,
+  nordycki, egipski tylko w końcówce gry (np. wrota w atlasie, najeźdźcy przez płomienie Watry), każde jako mały
+  obszar z bossem szczytowym - obcym bogiem; tłumaczy hydrę i satyry. Na pinnacle nadają się też słowiańscy bogowie.
 - [ ] Pomysły na rozwój lochów: kolejne klimaty (lodowe jaskinie, wulkaniczna kuźnia, krasnoludzkie ruiny), kilka pięter
   w dół z coraz lepszym łupem, elitarne potwory z własnymi cechami, pułapki i zagadki, własni strażnicy lochów
   zamiast bossów z krain, sekretne komnaty, zlecenia gildii na lochy.
