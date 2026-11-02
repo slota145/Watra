@@ -237,6 +237,9 @@ const SWAMP_RIVER_SHALLOW := 3.5
 const SWAMP_RIVER_BANK := 4.6
 ## Warstwa fizyki głębokiej wody - zatrzymuje postać, ale nie pociski.
 const WATER_LAYER := 8
+## Granica, której nie przeskakują zryw, Mgnienie ani teleport: brzegi mapy i ściany podziemnych lochów
+## (zwykłe przeszkody - płoty, klify, drzewa, budynki - leżą tylko na warstwie 1 i da się je przeskoczyć).
+const BOUNDS_LAYER := 16
 const MANGROVE := preload("res://scenes/props/tree_mangrove.tscn")
 const SHRINE := preload("res://scenes/props/shrine.tscn")
 const CATTAIL_TEXTURE := preload("res://assets/swamp/v2_cattails.png")
@@ -1995,6 +1998,7 @@ func _cell_to_world(cell: Vector2i) -> Vector2:
 
 ## Niewidzialne ściany wokół mapy, żeby nie dało się z niej wyjść.
 func _build_bounds() -> void:
+	$Bounds.collision_layer = 1 | BOUNDS_LAYER
 	var size := Vector2(map_size * TILE)
 	var t := 32.0
 	var walls: Array[Rect2] = [

@@ -23,6 +23,13 @@ signal dialog_requested(npc: Npc)
 @export var friction := 1200.0
 
 @export_group("Dash")
+## Maski kolizji postaci: zwykle przeszkody (1) i głęboka woda (8); w skoku (zryw, odskok) tylko granica
+## (BOUNDS_LAYER w world.gd) - brzegi mapy i ściany podziemi.
+const SOLID_MASK := 9
+const JUMP_MASK := 16
+## Stopy postaci (kształt kolizji) względem jej pozycji i jak daleko za przeszkodą szukać miejsca do lądowania.
+const FEET_OFFSET := Vector2(0, -3)
+const LANDING_REACH := 96.0
 @export var dash_speed := 280.0
 @export var dash_duration := 0.14
 @export var dash_cooldown := 0.5
@@ -200,6 +207,7 @@ const POISON_COLOR := Color(0.55, 1.0, 0.35)
 ## Skąd zaczął się unik (ślad piorunów Lotki Burzy).
 var _dash_from := Vector2.ZERO
 var _dash_cooldown_timer := 0.0
+var _was_jumping := false
 var _dash_dir := Vector2.ZERO
 var _ghost_timer := 0.0
 
@@ -689,10 +697,18 @@ func _physics_process(delta: float) -> void:
 		else:
 			_move_velocity = _move_velocity.move_toward(Vector2.ZERO, friction * delta)
 
+	# zryw i odskok przeskakują przeszkody (płoty, klify, drzewa) - zatrzymuje je tylko granica mapy i ściany
+	# podziemi; po wylądowaniu w przeszkodzie postać przesuwa się na wolne miejsce na linii skoku
+	var jumping := is_dashing()
+	collision_mask = JUMP_MASK if jumping else SOLID_MASK
 	# odrzut dokładamy osobno, żeby nie kumulował się w prędkości ruchu
 	velocity = _move_velocity + _knockback
 	move_and_slide()
 	_move_velocity = velocity - _knockback
+	if _was_jumping and not jumping:
+		collision_mask = SOLID_MASK
+		global_position = free_landing(global_position, _dash_from)
+	_was_jumping = jumping
 	_knockback = _knockback.move_toward(Vector2.ZERO, 900.0 * delta)
 
 	_update_footsteps(delta, input)
@@ -711,6 +727,37 @@ func _physics_process(delta: float) -> void:
 
 func is_dashing() -> bool:
 	return _dash_timer > 0.0
+
+
+## Wolne miejsce do wylądowania po skoku przez przeszkody: sam punkt `at`, a gdy stoi w przeszkodzie albo w głębokiej
+## wodzie - pierwszy wolny punkt dalej w kierunku skoku (do LANDING_REACH px), potem cofając się po linii do `from`.
+## Nigdy za granicą mapy ani ścianą podziemi (sprawdzane promieniem od `from`).
+func free_landing(at: Vector2, from: Vector2) -> Vector2:
+	var space := get_world_2d().direct_space_state
+	var shape := CircleShape2D.new()
+	shape.radius = 5.0
+	var query := PhysicsShapeQueryParameters2D.new()
+	query.shape = shape
+	query.collision_mask = SOLID_MASK | JUMP_MASK
+	var free := func(spot: Vector2) -> bool:
+		query.transform = Transform2D(0.0, spot + FEET_OFFSET)
+		if not space.intersect_shape(query, 1).is_empty():
+			return false
+		var ray := PhysicsRayQueryParameters2D.create(from + FEET_OFFSET, spot + FEET_OFFSET, JUMP_MASK)
+		return space.intersect_ray(ray).is_empty()
+	if free.call(at):
+		return at
+	var dir := (at - from).normalized()
+	if dir == Vector2.ZERO:
+		dir = _facing_vector()
+	for step in range(4, int(LANDING_REACH) + 1, 4):
+		if free.call(at + dir * step):
+			return at + dir * step
+	var back := at.distance_to(from)
+	for step in range(4, int(back) + 1, 4):
+		if free.call(at - dir * step):
+			return at - dir * step
+	return from
 
 
 func can_dash() -> bool:
