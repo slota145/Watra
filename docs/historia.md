@@ -432,6 +432,8 @@ odpowiedniej sekcji.
   kąt z pręta, łuk celuje w cel, księga grzbietem w górę), pivot z efektem cięcia zostaje przy barku; pozostali bohaterowie
   bez chwytu w atakach - jak dawniej. Miecz i księga w dłoni mniejsze (`Player.HOLD_SCALE`). Szarża pokazuje klatkę
   trafienia (`_hit_frame`). Balans i działanie ataków bez zmian.
+  Wybór postaci usunięty z menu: „Nowa gra” od razu pokazuje tryb świata, gracz zawsze gra Wojciechem
+  (`Player.HERO`, `set_hero` ignoruje postać z zapisu); arkusze Bogdana, Miry i Jagi zostają na NPC.
 
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)

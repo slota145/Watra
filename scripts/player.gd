@@ -116,7 +116,9 @@ var legendary: LegendaryEffects
 var _main_quest_check := 0.0
 ## Kierunek patrzenia (jeden z 8, wektor jednostkowy) i który wybrana postać z PixelLab.
 var facing_dir := Vector2.DOWN
-var hero := "wojciech"
+## Grywalna postać - jedna, porządnie animowana (pozostali bohaterowie z HeroRig mogą być NPC).
+const HERO := "wojciech"
+var hero := HERO
 var _dir_row := 0
 var health := 0
 var mana := 0.0
@@ -2309,9 +2311,10 @@ func _face_direction(dir: Vector2) -> void:
 	sprite.flip_h = OCTANT_DIRS[octant][1]
 
 
-## Wybór postaci (z menu nowej gry albo z zapisu).
-func set_hero(id: String) -> void:
-	hero = id if id in HeroRig.HEROES else HeroRig.HEROES[0]
+## Postać gracza: zawsze Wojciech (HERO), także w starszych zapisach z wybraną inną postacią -
+## tylko on ma ataki z bronią w dłoni.
+func set_hero(_id: String) -> void:
+	hero = HERO
 	sprite.texture = HeroRig.sheet(hero)
 	sprite.hframes = HeroRig.FRAMES
 	sprite.vframes = HeroRig.ANIMS.size() * HeroRig.DIRS

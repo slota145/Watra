@@ -34,9 +34,8 @@ var _bird_timer := 3.0
 var _title: TextureRect
 var _subtitle: Label
 var _menu: VBoxContainer
-var _heroes: VBoxContainer
-## Podglądy postaci w oknie wyboru (chodzą w miejscu) - [AtlasTexture, id postaci].
-var _hero_previews: Array = []
+## Okno wyboru trybu świata przy nowej grze (null - zamknięte).
+var _modes: PanelContainer
 
 
 func _ready() -> void:
@@ -82,9 +81,6 @@ func _ready() -> void:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
-	_heroes = _make_hero_picker()
-	_heroes.visible = false
-	center.add_child(_heroes)
 
 	# "Kontynuuj" wczytuje najnowszy zapis; pod nim jego nazwa i opis
 	var saves := Game.list_saves()
@@ -95,7 +91,7 @@ func _ready() -> void:
 %s" % [saves[0].get("name", ""), Game.describe_save(saves[0])] if not saves.is_empty() else Lang.t("Brak zapisów"), 8, UiStyle.DIM_COLOR)
 	save_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(save_info)
-	var new_game := UiStyle.menu_button(Lang.t("Nowa gra"), _show_heroes)
+	var new_game := UiStyle.menu_button(Lang.t("Nowa gra"), _show_modes.bind(center))
 	box.add_child(new_game)
 	var load_game := UiStyle.menu_button(Lang.t("Wczytaj grę"), _show_saves)
 	load_game.disabled = saves.is_empty()
@@ -109,58 +105,14 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_time += delta
 	_animate_scene(delta)
-	# podglądy postaci: chód w stronę widza
-	for entry: Array in _hero_previews:
-		var atlas: AtlasTexture = entry[0]
-		var frame := HeroRig.frame_index("walk", 0, int(_time * 6.0) % HeroRig.frames(HeroRig.HEROES[0], "walk"))
-		atlas.region = Rect2((frame % HeroRig.FRAMES) * HeroRig.CELL, (frame / HeroRig.FRAMES) * HeroRig.CELL, HeroRig.CELL, HeroRig.CELL)
 
 
-## Okno wyboru postaci do nowej gry: cztery postacie z PixelLab, chodzące w miejscu.
-func _make_hero_picker() -> VBoxContainer:
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 8)
-	var title := UiStyle.title(Lang.t("Wybierz postać"))
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	box.add_child(title)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.add_child(row)
-	for id: String in HeroRig.HEROES:
-		var card := Button.new()
-		card.custom_minimum_size = Vector2(96, 124)
-		card.pressed.connect(_show_modes.bind(id))
-		var inner := VBoxContainer.new()
-		inner.set_anchors_preset(Control.PRESET_FULL_RECT)
-		inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		inner.alignment = BoxContainer.ALIGNMENT_CENTER
-		card.add_child(inner)
-		var atlas := AtlasTexture.new()
-		atlas.atlas = HeroRig.sheet(id)
-		atlas.region = Rect2(0, 0, HeroRig.CELL, HeroRig.CELL)
-		_hero_previews.append([atlas, id])
-		var picture := TextureRect.new()
-		picture.texture = atlas
-		picture.custom_minimum_size = Vector2(HeroRig.CELL, HeroRig.CELL) * 1.3
-		picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		picture.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		inner.add_child(picture)
-		var name_label := UiStyle.label(HeroRig.NAMES[id], 10)
-		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		inner.add_child(name_label)
-		row.add_child(card)
-	var back := UiStyle.menu_button(Lang.t("Wróć"), _show_menu)
-	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	box.add_child(back)
-	return box
 
-
-## Po wyborze bohatera: tryb świata (WorldModes) z wyjaśnieniem, potem nowa gra.
-func _show_modes(hero_id: String) -> void:
-	_heroes.visible = false
+## Nowa gra: wybór trybu świata (WorldModes) z wyjaśnieniem. Postać jest jedna - Wojciech
+## (wyboru postaci nie ma, bo tylko on ma porządne animacje ataków).
+func _show_modes(center: CenterContainer) -> void:
+	_menu.get_parent().visible = false
+	_subtitle.visible = false
 	var panel := PanelContainer.new()
 	panel.theme = UiStyle.make_theme()
 	panel.add_theme_stylebox_override("panel", UiStyle.panel(Color(UiStyle.BG, 0.92)))
@@ -171,21 +123,13 @@ func _show_modes(hero_id: String) -> void:
 	picker.current = Game.world_mode
 	picker.chosen.connect(func(mode: String) -> void:
 		Game.world_mode = mode
-		Game.new_game(hero_id))
+		Game.new_game(Player.HERO))
 	box.add_child(picker)
-	var back := UiStyle.menu_button(Lang.t("Wróć"), func() -> void:
-		panel.queue_free()
-		_show_heroes())
+	var back := UiStyle.menu_button(Lang.t("Wróć"), _show_menu)
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	box.add_child(back)
-	_heroes.get_parent().add_child(panel)
-
-
-func _show_heroes() -> void:
-	_menu.get_parent().visible = false
-	_subtitle.visible = false
-	_heroes.visible = true
-	(_heroes.get_child(1).get_child(0) as Button).grab_focus()
+	center.add_child(panel)
+	_modes = panel
 
 
 func _show_saves() -> void:
@@ -208,7 +152,9 @@ func _show_settings() -> void:
 
 
 func _show_menu() -> void:
-	_heroes.visible = false
+	if _modes != null:
+		_modes.queue_free()
+		_modes = null
 	_menu.get_parent().visible = true
 	_subtitle.visible = true
 
