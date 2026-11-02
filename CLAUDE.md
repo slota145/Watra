@@ -243,6 +243,16 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     umiejętnościach przebudzenia broń w ręku zmienia się sama (gracz niczego nie przełącza); combo między
     umiejętnościami podstawowymi i przebudzenia (np. Mgnienie, a zaraz po nim cień kosą);
   - proponowana kolejność: efekty łuku i księgi -> nekromancja w drzewku maga -> przebudzenia (jedna klasa naraz).
+- [ ] **Wspólne drzewko z trzema zakładkami** (pomysł autora, listopad 2026): drzewka miecza, łuku i księgi połączyć
+  w jedno drzewko z 3 zakładkami. Punkty są wspólne dla każdej zakładki osobno: gdy w jednej zakładce wydano np.
+  50 punktów, po przełączeniu na drugą można te same 50 punktów wydać tam na coś innego (każda zakładka ma
+  własny, pełny przydział punktów; działa tylko zakładka wybrana). Szczegóły (jak się przełącza, czy przełączanie
+  coś kosztuje, co z paskami szybkiego wyboru) dopytać autora.
+- [ ] **Modyfikacja premii tylko runami** (decyzja autora, listopad 2026): wszystkie sposoby zmiany premii
+  (afiksów) przedmiotów mają działać przez runy - przedmioty-waluty jak orby w Path of Exile. Kilka już jest
+  (Runa Zmiany, Runa Pieczęci - `item_craft.gd`, `items.gd`); pozostałe działania warsztatu kowala (przerzut
+  wartości, przekucie, usunięcie i dodanie premii, ulepszenie rzadkości) zamienić na runy. Zestaw run,
+  skąd wypadają i co z trofeami potworów - dopytać autora.
 - [ ] **Animacje postaci z bronią** (listopad 2026): broń nie leży stabilnie w dłoni, za mało animacji ataków.
   Ustalenia z autorem: porządnie animowany tylko **Wojciech** (reszta może zostać NPC), styl **zamaszysty jak w BDO**,
   nowe pozy ciała (etap 4) na później. Etap 1 zrobiony (szczegóły w `docs/historia.md`, szukaj „Etap 1 animacji”):
@@ -258,6 +268,8 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
 
 ### Watra i Ostoja
 
+- [ ] **Kryształ Watry do przerobienia** (autor, listopad 2026): obecne zdarzenie (co czwarty loch, obrona przed
+  falami) ma się zmienić; wzmiankę usunięto z opisu w oknie lochów. Jak ma działać - dopytać autora.
 - [ ] Pomysły do Kryształu Watry: komnata z kowadłem w lochu (jednorazowo wyższa szansa zaklinania), kolejne
   warianty zdarzenia.
 - [ ] **Losowe mechaniki w lochach z własnymi drzewkami rozwoju** (jak atlas w Path of Exile): w lochu losowo pojawia się
