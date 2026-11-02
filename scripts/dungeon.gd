@@ -293,6 +293,14 @@ func _plan_borders() -> void:
 					cliffs.erase(c)
 		if bad == 0:
 			break
+	# wokół klifu łąka, po której można chodzić: drzewa i krzewy zasłaniałyby lico albo wystawały za krawędź,
+	# a goły zablokowany wierzchołek byłby niewidzialną ścianą (rząd niżej też - korony sięgają wysoko)
+	for x in range(1, GRID.x - 1):
+		for y in range(1, GRID.y - 1):
+			var v := Vector2i(x, y)
+			if not floor_cells.has(v) and not cliffs.has(v) and not waters.has(v) \
+					and (near_cliff(v) or near_cliff(v + Vector2i.UP)):
+				floor_cells[v] = true
 	# pola winorośli: duże plamy drugiego szumu wśród drzew (skraj mapy zostaje lasem)
 	if terrain.has("vines"):
 		var field := FastNoiseLite.new()
@@ -362,7 +370,7 @@ func _build_ground() -> void:
 			var v := Vector2i((px / CELL).round())
 			var bent := Vector2i(((px + Vector2(warp_x.get_noise_2d(x, y), warp_y.get_noise_2d(x, y)) * 26.0) / CELL).round())
 			var kind := "meadow"
-			if near_cliff(v) or cliffs.has(v):
+			if cliffs.has(bent) or near_cliff(bent):
 				# przy klifie łąka w kolorze trawy kafelków klifu (inaczej brzeg półki odcina się prostą linią)
 				kind = "meadow"
 			elif waters.has(v):
@@ -387,7 +395,7 @@ func _build_ground() -> void:
 					kind = "m_flowers"
 				elif n < -0.35:
 					kind = "m_dark"
-			else:
+			elif not floor_cells.has(bent):
 				kind = "m_dark"
 			corners[c] = kind
 	for x in w.map_size.x:
@@ -405,8 +413,7 @@ func near_cliff(v: Vector2i) -> bool:
 
 ## Ściana drzew na wierzchołkach drzew (dwa drzewa na wierzchołek, korony zachodzą na siebie), krzewy i głazy
 ## w głębi skalnych półek, trzciny przy brzegu stawów i grążele na wodzie. Bez własnej kolizji - wierzchołek i tak
-## jest zablokowany. Przy klifach (i rząd niżej - korona sięga wysoko) nic wysokiego: drzewo zasłaniałoby lico
-## albo wisiało nad krawędzią.
+## jest zablokowany. Wokół klifów drzew nie ma - tam jest łąka (_plan_borders).
 func _dress_borders() -> void:
 	var terrain: Dictionary = climate["terrain"]
 	var trees: Array = terrain["trees"].map(func(path: String) -> Texture2D: return load(path))
@@ -425,8 +432,8 @@ func _dress_borders() -> void:
 					shore = shore or not waters.has(v + d)
 				if shore and not near_cliff(v) and _rng.randf() < 0.55:
 					var reed: Sprite2D = w._village_prop(reeds, at + Vector2(_rng.randf_range(-20, 20), _rng.randf_range(-12, 20)))
-					reed.hframes = 3
-					reed.frame = _rng.randi() % 3
+					reed.hframes = 2
+					reed.frame = _rng.randi() % 2
 					reed.flip_h = _rng.randf() < 0.5
 				elif not shore and _rng.randf() < 0.35:
 					var lily := Sprite2D.new()
@@ -441,7 +448,7 @@ func _dress_borders() -> void:
 					continue
 				var top: Sprite2D = w._village_prop(tops.pick_random(), at + Vector2(_rng.randf_range(-10, 10), _rng.randf_range(4, 16)))
 				top.flip_h = _rng.randf() < 0.5
-			elif not near_cliff(v) and not near_cliff(v + Vector2i.UP):
+			else:
 				for i in 2:
 					var spot := at + Vector2(_rng.randf_range(-14, 14) + (i * 2 - 1) * 14, _rng.randf_range(-6, 6) + (24 if i == 0 else 4))
 					var tree: Sprite2D = w._village_prop(trees.pick_random(), spot)

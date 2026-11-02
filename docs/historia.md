@@ -661,6 +661,10 @@ odpowiedniej sekcji.
     (`Dungeon.near_cliff` - sąsiad także po skosie) nie rosną drzewa ani trzciny, a wystrój nie stawia tam niczego;
     na szczytach półek tylko krzewy i głazy w głębi; podłoże przy klifach to łąka w kolorze trawy kafelków klifu,
     a granice gęstej trawy i kwiatów wygina szum (przesunięcie punktu o ±26 px); poduchy tylko przy tronie;
+  - trzecia runda: wokół klifów (sąsiedzi i rząd niżej) łąka do chodzenia zamiast drzew - klify stoją jak skały
+    na trawie, bez niewidzialnych ścian; wysokie rekwizyty (`VineyardDecor._prop`, ponad 40 px) nie stają dwa rzędy
+    pod klifem; więcej pól winorośli (`vines_above` -0,45), pojedyncze drzewa na łące (`_lone_trees`); zagroda kóz
+    w miejscu bez ścieżki (`_pen_spot`), nic nie dotyka ścieżki (`_clear_of_path`); trzciny mają 2 klatki;
   - grafiki PixelLab: paczki `vineyard_small`, `vineyard_tall`, `vineyard_furniture` (po 16, 64 px) i `vineyard_big`
     (4 sztuki, 128 px) w `pixellab_src/dungeons/`; w paczce wysokich obiektów kandydatki wyszły przesunięte między
     klatkami, więc `tools/dungeon_props.py` tnie ją z pasa sklejonych klatek (`strip_part`, klatka `"s<nr>"`).

@@ -64,16 +64,50 @@ func event_pillars() -> Array:
 
 
 func build() -> void:
-	# nic nie staje na ścieżce ani przy klifie: wierzchołki, przez których środek biegnie ubita ziemia, i sąsiedzi
-	# klifów (lico i krawędź półki zachodzą na ich komórki) są zajęte od początku
+	# nic nie staje na ścieżce ani przy klifie: wierzchołki, przez których środek biegnie ubita ziemia, sąsiedzi
+	# klifów (lico i krawędź półki zachodzą na ich komórki) i rząd pod nimi są zajęte od początku
 	for v: Vector2i in d.floor_cells:
-		if d.path_tiles.has(Vector2i(_px(v) / w.TILE)) or d.near_cliff(v):
+		if d.path_tiles.has(Vector2i(_px(v) / w.TILE)) or d.near_cliff(v) or d.near_cliff(v + Vector2i.UP):
 			_used[v] = true
 	super.build()
 	_trail_lights()
+	_lone_trees()
 	# szerokie miejsca przy ścieżkach poza polanami też obsadzone winoroślą
 	_vine_strips(Rect2i(Vector2i.ZERO, Dungeon.GRID), S + "vine_row", 2, func(v: Vector2i) -> bool:
 			return not d.rooms.any(func(r: Rect2i) -> bool: return r.grow(1).has_point(v)) and not d.altar_room.grow(1).has_point(v))
+
+
+## Rekwizyt stojący; wysoki (ponad 40 px) nie staje tuż pod klifem ani dwa rzędy niżej - wystawałby na lico
+## albo na szczyt półki (zwraca wtedy null).
+func _prop(name: String, pos: Vector2, flip := true) -> Sprite2D:
+	if _tex(name).get_height() > 40:
+		var v := Vector2i((pos / Dungeon.CELL).round())
+		for k in 3:
+			if d.cliffs.has(v + Vector2i.UP * k) or d.near_cliff(v + Vector2i.UP * k):
+				return null
+	return super._prop(name, pos, flip)
+
+
+## Pojedyncze drzewa na wolnej łące (poza polanami ze scenkami): wierzchołek z wolnym otoczeniem, z dala od ścieżki.
+func _lone_trees() -> void:
+	var trees := ["res://assets/forest/trees/oak_1.png", "res://assets/forest/trees/oak_4.png", "birch", "poplar",
+			S + "apple_tree", S + "pear_tree"]
+	for x in Dungeon.GRID.x:
+		for y in Dungeon.GRID.y:
+			var v := Vector2i(x, y)
+			if rng.randf() < 0.07 and _isolated(v) and _clear_of_path(_px(v) + Vector2(0, 16), 40.0) \
+					and not d.near_cliff(v + Vector2i.UP) and not d.near_cliff(v + Vector2i.UP * 2) \
+					and not d.rooms.any(func(r: Rect2i) -> bool: return r.grow(-1).has_point(v)):
+				_solid(_pick(trees), v, Vector2(12, 8))
+
+
+## Czy pas szerokości 2 * `half` px wokół punktu (na wysokości podstawy rekwizytu) omija ubitą ziemię ścieżki.
+func _clear_of_path(pos: Vector2, half: float) -> bool:
+	for dx in range(-int(half), int(half) + 1, 8):
+		for dy in [-8, 0, 8]:
+			if d.path_tiles.has(Vector2i((pos + Vector2(dx, dy)) / w.TILE)):
+				return false
+	return true
 
 
 ## Czy wierzchołek i jego czterej sąsiedzi są wolną podłogą (drzewo sadu nie zamknie przejścia).
@@ -137,7 +171,7 @@ func _ring(at: Vector2, radius: Vector2, count: int, names: Array, decals := fal
 		var angle := TAU * i / count + 0.3
 		var spot := at + Vector2(cos(angle) * radius.x, sin(angle) * radius.y)
 		var v := Vector2i((spot / Dungeon.CELL).round())
-		if not _floor_at(v) or d._blocked(spot, 8.0) or d.path_tiles.has(Vector2i(spot / w.TILE)) or d.near_cliff(v):
+		if not _floor_at(v) or d._blocked(spot, 8.0) or not _clear_of_path(spot, 20.0) or d.near_cliff(v):
 			continue
 		if decals:
 			_decal(_pick(names), spot)
@@ -147,7 +181,7 @@ func _ring(at: Vector2, radius: Vector2, count: int, names: Array, decals := fal
 
 ## Drobiazg w przejściu między rzędami siatki.
 func _litter(v: Vector2i, props: Array, chance := 0.25) -> void:
-	if rng.randf() < chance:
+	if rng.randf() < chance and _clear_of_path(_px(v) + Vector2(0, 20), 20.0):
 		_used[v] = true
 		_prop(_pick(props), _px(v) + _jitter(10) + Vector2(0, 20))
 
@@ -314,15 +348,18 @@ func _orchard(room: Rect2i) -> void:
 	_motes(_px(_center(room)), Vector2(room.size.x * 24.0, room.size.y * 20.0), 12, FIREFLY)
 
 
-## Zagroda kóz: płot wokół środka polany (z furtką na południu), w środku koryto i paśnik z sianem, kozy.
+## Zagroda kóz: płot wokół wolnego od ścieżek miejsca polany (z furtką na południu), w środku koryto i paśnik
+## z sianem, kozy.
 func _goats(room: Rect2i) -> void:
-	var mid := _center(room)
+	var mid := _pen_spot(room)
+	if mid.x < 0:
+		return
 	for dx in range(-2, 3):
 		for dy in [-1, 2]:
 			var v := mid + Vector2i(dx, dy)
 			if dy == 2 and dx == 0:
 				continue
-			if _floor_at(v) and not _used.has(v):
+			if _floor_at(v) and not _used.has(v) and _clear_of_path(_px(v) + Vector2(0, 10), 26.0):
 				_solid(S + "fence", v, Vector2(44, 6), false)
 	_centerpiece(S + "trough", mid, Vector2(30, 6))
 	var rack := mid + Vector2i(1, 1)
@@ -333,6 +370,29 @@ func _goats(room: Rect2i) -> void:
 	for i in rng.randi_range(3, 5):
 		var spot := _px(mid) + Vector2(rng.randf_range(-90, 90), rng.randf_range(10, 60))
 		w._add_goblin_spawn({"type": "goat", "position": d._free_spot(spot, _px(mid)), "sitting": false, "look_at": _px(mid), "level": d.level})
+
+
+## Środek zagrody: wierzchołek polany (najbliżej środka), wokół którego cały prostokąt płotu leży na wolnej podłodze
+## z dala od ścieżki i klifów; (-1, -1), gdy takiego miejsca nie ma (polana zostaje bez zagrody).
+func _pen_spot(room: Rect2i) -> Vector2i:
+	var best := Vector2i(-1, -1)
+	var best_d := 1 << 30
+	for x in range(room.position.x, room.end.x):
+		for y in range(room.position.y, room.end.y):
+			var mid := Vector2i(x, y)
+			var ok := true
+			for dx in range(-2, 3):
+				for dy in range(-1, 3):
+					var v := mid + Vector2i(dx, dy)
+					if not _floor_at(v) or _used.has(v):
+						ok = false
+			ok = ok and _clear_of_path(_px(mid) + Vector2(0, 10), 170.0) and _clear_of_path(_px(mid) + Vector2(0, 74), 170.0) \
+					and _clear_of_path(_px(mid) + Vector2(0, 138), 170.0) and _clear_of_path(_px(mid) - Vector2(0, 54), 170.0)
+			var dist := (mid - _center(room)).length_squared()
+			if ok and dist < best_d:
+				best_d = dist
+				best = mid
+	return best
 
 
 ## Obóz: namioty i szałasy wokół rożna, ławy, drewno na opał, bębny.

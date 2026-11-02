@@ -89,7 +89,7 @@ const CLIMATES := {
 						"res://assets/forest/trees/rock_0.png", "res://assets/forest/trees/rock_1.png"],
 				"reeds": "res://assets/swamp/v2_reeds.png", "lilies": "res://assets/swamp/v2_lilies.png",
 				# pola winorośli na terenie niedostępnym (Dungeon._vine_fields)
-				"vines": ["res://assets/mountains/satyr/vine_row.png", "res://assets/mountains/satyr/vine_row_2.png"], "vines_above": -0.2},
+				"vines": ["res://assets/mountains/satyr/vine_row.png", "res://assets/mountains/satyr/vine_row_2.png"], "vines_above": -0.45},
 		"map_floor": Color("4f8a2c"), "map_wall": Color("6e6652"), "map_trees": Color("1f3a17"), "map_water": Color("2f5f6e"),
 		"map_path": Color("8a7048"), "map_vines": Color("3e5a26"),
 		"decor": {"dir": "res://assets/dungeons/vineyard/", "tint": Color(0.92, 0.8, 0.74),
