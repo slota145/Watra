@@ -204,6 +204,11 @@ func xp_multiplier() -> float:
 	return 1.0 + _bonus("xp_gain")
 
 
+## Mnożnik szansy na przedmioty i kamienie szlachetne z potworów (dar kapliczki w lochu).
+func item_find_multiplier() -> float:
+	return 1.0 + _bonus("item_find")
+
+
 ## Rodzaj założonej broni: melee (także pięści), bow albo spell.
 func weapon_type() -> String:
 	if equipment == null:

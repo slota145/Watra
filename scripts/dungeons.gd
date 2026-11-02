@@ -117,10 +117,47 @@ const CLIMATES := {
 }
 const CLIMATE_ORDER: Array[String] = ["catacombs", "mine", "flooded", "roots", "vineyard", "stronghold"]
 
-## Kryształ Watry (scripts/watra_crystal.gd): szansa, że loch ma komnatę z kryształem, i warianty zdarzenia
-## (obrona kryształu albo górników). W trybie deweloperskim kryształ jest w każdym lochu.
-const EVENT_CHANCE := 0.25
+## Mechaniki lochu - powód, żeby robić lochy. Każdy loch ma co najmniej jedną, z małą szansą drugą i trzecią
+## (bez powtórzeń); proste ("small") mają większą wagę niż duże ("large"). "room" - mechanika zajmuje własną
+## komnatę (bez zwykłych potworów). Losuje je Dungeons.roll_mechanics, buduje Dungeon._build_mechanics.
+## Nowa mechanika: wpis tutaj i gałąź w Dungeon._build_mechanics.
+const MECHANICS := {
+	"chests": {"name": "Skrzynie", "weight": 10.0, "size": "small"},
+	"shrine": {"name": "Kapliczka", "weight": 8.0, "size": "small"},
+	"crystal": {"name": "Kryształ Watry", "weight": 5.0, "size": "large", "room": true},
+}
+## Szansa na drugą i trzecią mechanikę.
+const MECHANIC_EXTRA: Array[float] = [0.25, 0.08]
+## Kryształ Watry (scripts/watra_crystal.gd): warianty zdarzenia (obrona kryształu albo górników).
 const EVENTS: Array[String] = ["crystal", "miners"]
+
+## Skrzynie (scripts/dungeon_chest.gd) - jak strongboxy w PoE: rodzaj mówi, jaki łup jest w środku.
+## "weight" - jak często, "tint" - kolor skrzyni, "glow" - poświata.
+const CHEST_KINDS := {
+	"common": {"name": "Skrzynia", "weight": 5.0, "tint": Color(1.0, 1.0, 1.0), "glow": Color(1.0, 0.85, 0.5, 0.35)},
+	"smith": {"name": "Skrzynia kowala", "weight": 3.0, "tint": Color(0.75, 0.82, 0.95), "glow": Color(0.6, 0.75, 1.0, 0.4)},
+	"jeweler": {"name": "Szkatuła jubilera", "weight": 2.0, "tint": Color(0.9, 0.7, 1.0), "glow": Color(0.85, 0.5, 1.0, 0.4)},
+	"gold": {"name": "Skarbnica", "weight": 2.0, "tint": Color(1.0, 0.88, 0.45), "glow": Color(1.0, 0.8, 0.25, 0.45)},
+}
+## Cechy skrzyń: strzeżona (po otwarciu wyskakują strażnicy, skrzynia otwiera się po ich pokonaniu, łupu więcej),
+## obfita (więcej łupu), cenna (lepsze rzadkości). "chance" - szansa na cechę, "loot" - mnożnik ilości łupu.
+const CHEST_TRAITS := {
+	"guarded": {"name": "Strzeżona", "chance": 0.3, "loot": 1.4},
+	"rich": {"name": "Obfita", "chance": 0.25, "loot": 1.6},
+	"rare": {"name": "Cenna", "chance": 0.2, "loot": 1.0},
+}
+## Ile skrzyń w lochu z tą mechaniką.
+const CHESTS := Vector2i(2, 4)
+
+## Kapliczki (scripts/dungeon_shrine.gd): krótki, mocny dar (Boons, grupa "shrine") po modlitwie.
+const SHRINES: Array[String] = ["shrine_might", "shrine_ward", "shrine_haste", "shrine_fortune", "shrine_wisdom", "shrine_moon"]
+## Ile kapliczek w lochu z tą mechaniką (każda daje inny dar).
+const SHRINE_COUNT := Vector2i(1, 2)
+## Kamienie zaklinające ze skarbca strażnika (rzadko i po jednym - ich głównym źródłem jest Kryształ Watry):
+## szansa na kamień każdego rodzaju (plus szansa z poziomu, Levels.stone_chances) i szansa na doskonały.
+const VAULT_STONE_CHANCE := 0.15
+const VAULT_STONE_LEVEL := 1.5
+const VAULT_STONE_PERFECT := 2.0
 
 ## Poziom potworów na stopniach 1-7 (stopień wybiera gracz, najwyżej poziom Watry); strażnik ma o 2 więcej.
 const TIER_LEVELS: Array[int] = [5, 11, 17, 23, 29, 35, 41]
@@ -144,6 +181,58 @@ const MODIFIER_ORDER: Array[String] = ["horde", "wealth", "fury", "treasure"]
 const VAULT_LEGENDS: Array[String] = ["legend_endless_amulet", "legend_swarog_bow", "legend_engineer_gloves", "legend_tracker_talisman",
 		"legend_marzanna_book", "legend_perun_crown", "legend_mokosh_belt", "legend_bogatyr_girdle"]
 const VAULT_LEGEND_CHANCE := 0.07
+
+
+## Losuje mechaniki lochu: pierwsza zawsze, druga i trzecia z szansą MECHANIC_EXTRA (bez powtórzeń).
+## `bonus` - na później (drzewko Watry, bożki): "weights" {id: mnożnik wagi}, "extra" [premia do szansy drugiej,
+## trzeciej], "forced" [mechaniki zawsze obecne - nie liczą się do limitu].
+static func roll_mechanics(rng: RandomNumberGenerator, bonus := {}) -> Array[String]:
+	var result: Array[String] = []
+	for id: String in bonus.get("forced", []):
+		if MECHANICS.has(id) and not result.has(id):
+			result.append(id)
+	var weights: Dictionary = bonus.get("weights", {})
+	var extra: Array = bonus.get("extra", [])
+	for i in 1 + MECHANIC_EXTRA.size():
+		if i > 0:
+			var chance: float = MECHANIC_EXTRA[i - 1] + float(extra[i - 1] if extra.size() >= i else 0.0)
+			if rng.randf() >= chance:
+				break
+		var pool := {}
+		for id: String in MECHANICS:
+			if not result.has(id):
+				pool[id] = float(MECHANICS[id]["weight"]) * float(weights.get(id, 1.0))
+		var id := weighted(rng, pool)
+		if id == "":
+			break
+		result.append(id)
+	return result
+
+
+## Jak często loch ma daną mechanikę (próba wielu losowań - do symulacji balansu i testów).
+static func mechanic_chance(id: String, samples := 4000) -> float:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	var hits := 0
+	for i in samples:
+		if roll_mechanics(rng).has(id):
+			hits += 1
+	return float(hits) / samples
+
+
+## Losowy klucz słownika {klucz: waga} ("" - pusty albo same zera).
+static func weighted(rng: RandomNumberGenerator, weights: Dictionary) -> String:
+	var total := 0.0
+	for key: String in weights:
+		total += maxf(float(weights[key]), 0.0)
+	if total <= 0.0:
+		return ""
+	var roll := rng.randf() * total
+	for key: String in weights:
+		roll -= maxf(float(weights[key]), 0.0)
+		if roll <= 0.0 and float(weights[key]) > 0.0:
+			return key
+	return weights.keys().back()
 
 
 static func tier_level(tier: int) -> int:

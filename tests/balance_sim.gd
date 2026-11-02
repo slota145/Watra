@@ -73,11 +73,12 @@ func _avg_items(line: String, item_level: int, quality: String) -> Dictionary:
 	return total
 
 
-## Zwykłe kamienie na broń z jednego lochu przy poziomie potworów L: skarbiec strażnika (szansa i 1-2 sztuki,
-## jak Dungeon._open_vault) i Kryształ Watry w co drugim lochu (2-4 sztuki, WatraCrystal.reward).
+## Zwykłe kamienie na broń z jednego lochu przy poziomie potworów L: skarbiec strażnika (rzadko po jednym,
+## jak Dungeon._on_boss_died) i Kryształ Watry, gdy loch go ma (2-4 sztuki, WatraCrystal.reward).
 func _stones_per_dungeon(level: int) -> float:
-	var vault: float = minf(0.5 + levels.stone_chances(level)[1] * 4.0, 1.0) * 1.5
-	var crystal: float = load("res://scripts/dungeons.gd").EVENT_CHANCE * 3.0
+	var dungeons = load("res://scripts/dungeons.gd")
+	var vault: float = minf(dungeons.VAULT_STONE_CHANCE + levels.stone_chances(level)[1] * dungeons.VAULT_STONE_LEVEL, 1.0)
+	var crystal: float = dungeons.mechanic_chance("crystal") * 3.0
 	return vault + crystal
 
 

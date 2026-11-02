@@ -697,6 +697,38 @@ odpowiedniej sekcji.
   dalej w kierunku skoku (do 96 px), a potem z powrotem po linii skoku (nigdy za granicą). Mgnienie widzi wrogów
   za przeszkodami, a miejsce lądowania za celem omija przeszkody i wodę. Test: `tests/test_jump.gd`.
 
+- [x] **Mechaniki w lochach, etap 1** (listopad 2026): system losowania mechanik, skrzynie i kapliczki.
+  - Losowanie: `Dungeons.MECHANICS` (id -> nazwa, waga, "size" small/large, "room" - własna komnata);
+    `Dungeons.roll_mechanics(rng, bonus)` - pierwsza zawsze, druga 25%, trzecia 8% (`MECHANIC_EXTRA`), bez powtórzeń.
+    Wagi: skrzynie 10, kapliczka 8, Kryształ Watry 5 - wychodzi: skrzynie ~54% lochów, kapliczka ~44%, Kryształ ~30%,
+    średnio 1,27 mechaniki na loch (`Dungeons.mechanic_chance`). `bonus` na później (drzewko Watry, bożki):
+    "weights" {id: mnożnik}, "extra" [premie do szans 2. i 3.], "forced" [zawsze obecne]; w ustawieniach wyprawy
+    `"mechanic_bonus"`. `"mechanics"` w ustawieniach wymusza zestaw (testy), stare `"event"` wymusza Kryształ
+    z wariantem; w trybie deweloperskim loch ma wszystkie mechaniki.
+  - `Dungeon._pick_mechanics` (zastąpiło `_pick_event`) i `_build_mechanics` (po potworach); `Dungeon.mechanics`,
+    `chests`, `shrines`. Obiekty stają w zwykłych komnatach (`_mechanic_rooms` - bez wejściowej, strażnika, Kryształu,
+    ołtarza), w miejscu z najmniejszą ilością wystroju (`_mechanic_spot`). Napisy nad obiektami rozjaśnia
+    `Dungeon.label_boost` (znosi mrok CanvasModulate). Nowa mechanika: wpis w `MECHANICS` i gałąź w `_build_mechanics`.
+  - Kryształ Watry jest w puli (dawniej osobna szansa 25% - `EVENT_CHANCE` usunięte). Skarbiec strażnika daje
+    kamienie zaklinające rzadko i po jednym (`Dungeons.VAULT_STONE_CHANCE` 0,15 + szansa z poziomu x1,5, doskonały
+    x2; wcześniej 50%+ i 1-2 sztuki) - głównym źródłem ma być Kryształ.
+  - **Skrzynie** (`scripts/dungeon_chest.gd`, `DungeonChest` - Harvestable, F, 1 s): 2-4 w lochu (`Dungeons.CHESTS`).
+    Rodzaje `CHEST_KINDS`: Skrzynia (3-5 przedmiotów, złoto), Skrzynia kowala (2-4 bronie/zbroje, kamienie
+    błogosławione), Szkatuła jubilera (biżuteria i kamienie szlachetne - bez zadania jubilera sama biżuteria),
+    Skarbnica (25-40x złoto potwora, 25% rzadki przedmiot, 3% legenda ze skarbca). Cechy `CHEST_TRAITS` (każda
+    losowana osobno): Strzeżona 30% (po otwarciu 5 + stopień/2 strażników o poziom wyżej, łup x1,4 po ich pokonaniu),
+    Obfita 25% (x1,6), Cenna 20% (co najmniej magiczne, częściej rzadkie; Skarbnica - podwójne szanse).
+    Grafika: skrzynia z Ostoi (`assets/village/chest.png`) w kolorze rodzaju, poświata i napis z cechami.
+  - **Kapliczki** (`scripts/dungeon_shrine.gd`, `DungeonShrine`, F - modlitwa 0,8 s): 1-2 w lochu, każda inny dar
+    na 60 s (`Boons`, grupa "shrine" - nowy dar zastępuje poprzedni; ikony w `StatusEffects.BOON_ICONS`):
+    Moc Peruna (+50% obrażeń, +10% kryt.), Opieka Mokoszy (+40% zdrowia, +20% uniku, +10 zdrowia/s),
+    Tchnienie Strzyboga (+30% ruchu, ataku, zaklęć), Hojność Dadźboga (x2 złoto i przedmioty - nowa statystyka
+    `item_find`, `CharacterStats.item_find_multiplier`, liczona w `Goblin._drop_loot`), Oko Światowida
+    (+100% doświadczenia), Blask Chorsa (+12 many/s, -30% odnowienia). Grafika: omszały kamień
+    `assets/ancient/v2_shrine.png` z poświatą w kolorze daru (`DungeonShrine.COLORS`).
+  - Zrzuty z bliska: `SCRIPT=tools/dungeon_shots.gd tools/screenshot.sh /tmp/m catacombs 7 3 2.0 mechaniki`.
+    Test: `tests/test_dungeon.gd` (losowanie, skrzynia zwykła i strzeżona, kapliczka, ikona daru).
+
 ## Zielarstwo (Pomysły i rzeczy do zrobienia)
 - [x] **Zioła i mikstury zielarki** (`scripts/herbs.gd`, roślina `scripts/herb.gd`, grafiki z PixelLab przez `tools/herb_art.py`):
   w każdej krainie rośnie jej zioło (dziurawiec, rumianek, tatarak, arnika, kwiat paproci - rzadki, bieluń), zrywane klawiszem F

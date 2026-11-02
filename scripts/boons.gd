@@ -49,14 +49,30 @@ const DEFS := {
 			"description": "+8% szansy na trafienie krytyczne, +30% znajdowanego złota"},
 	"elixir_datura": {"name": "Wywar z bielunia", "group": "elixir", "time": 300.0, "stats": {"attack_speed": 0.2},
 			"description": "+20% szybkości ataku"},
+	# kapliczki w lochach (DungeonShrine, Dungeons.SHRINES): krótko, ale bardzo mocno
+	"shrine_might": {"name": "Moc Peruna", "group": "shrine", "time": 60.0, "stats": {"damage_percent": 0.5, "crit_chance": 0.1},
+			"description": "+50% zadawanych obrażeń, +10% szansy na trafienie krytyczne"},
+	"shrine_ward": {"name": "Opieka Mokoszy", "group": "shrine", "time": 60.0,
+			"stats": {"health_percent": 0.4, "dodge_chance": 0.2, "health_regen": 10.0},
+			"description": "+40% maks. zdrowia, +20% szansy na unik, +10 zdrowia na sekundę"},
+	"shrine_haste": {"name": "Tchnienie Strzyboga", "group": "shrine", "time": 60.0,
+			"stats": {"move_speed": 0.3, "attack_speed": 0.3, "cast_speed": 0.3},
+			"description": "+30% szybkości ruchu, ataku i rzucania zaklęć"},
+	"shrine_fortune": {"name": "Hojność Dadźboga", "group": "shrine", "time": 60.0, "stats": {"gold_find": 1.0, "item_find": 1.0},
+			"description": "Potwory dają dwa razy więcej złota i dwa razy częściej przedmioty"},
+	"shrine_wisdom": {"name": "Oko Światowida", "group": "shrine", "time": 60.0, "stats": {"xp_gain": 1.0},
+			"description": "+100% doświadczenia"},
+	"shrine_moon": {"name": "Blask Chorsa", "group": "shrine", "time": 60.0, "stats": {"mana_regen": 12.0, "cooldown_reduction": 0.3},
+			"description": "+12 many na sekundę, umiejętności odnawiają się o 30% szybciej"},
 	"rested": {"name": "Wypoczęty", "group": "rest", "time": 600.0,
 			"stats": {"health_regen": 2.0, "mana_regen": 1.0, "move_speed": 0.05},
 			"description": "+2 zdrowia i +1 many na sekundę, +5% szybkości ruchu"},
 }
 const GROUP_NAMES := {"meal": "Posiłek", "blessing": "Błogosławieństwo", "rest": "Łaźnia", "watra": "Dar Watry",
-		"elixir": "Mikstura zielarki", "festival": "Święto", "trade": "Karawana"}
+		"elixir": "Mikstura zielarki", "festival": "Święto", "trade": "Karawana", "shrine": "Kapliczka w lochu"}
 const GROUP_COLORS := {"meal": Color(1.0, 0.72, 0.4), "blessing": Color(1.0, 0.92, 0.55), "rest": Color(0.6, 0.85, 1.0),
-		"watra": Color(1.0, 0.5, 0.22), "elixir": Color(0.55, 0.95, 0.5), "festival": Color(1.0, 0.6, 0.85), "trade": Color(1.0, 0.85, 0.4)}
+		"watra": Color(1.0, 0.5, 0.22), "elixir": Color(0.55, 0.95, 0.5), "festival": Color(1.0, 0.6, 0.85), "trade": Color(1.0, 0.85, 0.4),
+		"shrine": Color(0.55, 0.85, 1.0)}
 ## Najwyższa zniżka u kupców i w usługach (święto i karawana razem).
 const MAX_DISCOUNT := 0.35
 

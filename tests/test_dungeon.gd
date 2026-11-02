@@ -1,6 +1,7 @@
 extends SceneTree
 ## Lochy w płomieniach Watry: każdy klimat (kafelki dla wszystkich komórek, komnaty połączone, gracz na podłodze,
-## potwory klimatu na poziomie stopnia, strażnik), modyfikatory, otwarcie skarbca po pokonaniu strażnika,
+## potwory klimatu na poziomie stopnia, strażnik, co najmniej jedna mechanika), mechaniki (losowanie, skrzynie,
+## kapliczki), modyfikatory, otwarcie skarbca po pokonaniu strażnika,
 ## zapis gry z lochu (wraca do Ostoi), żar do wydania, a na koniec pełna droga: okno lochów przy Watrze ->
 ## wejście w płomienie (żar wydany, modyfikatory działają) -> płomienie w lochu -> powrót przed Watrę.
 
@@ -26,6 +27,8 @@ func _initialize() -> void:
 func _load_next() -> void:
 	var mods: Array = ["horde", "fury"] if _index == 0 else []
 	var config: Dictionary = _Dungeons.config(CLIMATES[_index], 2 + _index, mods, 1000 + _index * 77)
+	if _index == 0:
+		config["mechanics"] = ["chests", "shrine", "crystal"]
 	root.get_node("Game")._pending_load = {"seed": 12345, "zone": "dungeon", "dungeon": config, "arrive": "start", "player": {}}
 	_world = load("res://scenes/world.tscn").instantiate()
 	root.add_child(_world)
@@ -47,6 +50,8 @@ func _process(_d: float) -> bool:
 	_frame += 1
 	if _frame == 5:
 		_check_dungeon()
+	if _frame == 6 and _index == 0:
+		_check_mechanics()
 	if _frame == 8 and _index == 0:
 		_check_vault_and_save()
 	if _frame == 20:
@@ -115,10 +120,83 @@ func _check_dungeon() -> void:
 	check("%s: strażnik" % climate, boss != null and boss.is_in_group("bosses") and boss.level == tier_level + 2,
 			boss.scene_file_path.get_file() if boss != null else "brak")
 	check("%s: potwory klimatu" % climate, kinds.size() >= 3, str(kinds.keys()))
+	check("%s: co najmniej jedna mechanika" % climate, d.mechanics.size() >= 1 and d.mechanics.size() <= 3, str(d.mechanics))
 	if _index == 0:
 		check("modyfikatory: wściekłość", is_equal_approx(_mods()["health"], 1.25) and is_equal_approx(_mods()["xp"], 1.5))
 	else:
 		check("%s: bez modyfikatorów" % climate, is_equal_approx(_mods()["health"], 1.0))
+
+
+## Mechaniki lochu: losowanie (zawsze co najmniej jedna, proste częściej), skrzynie (zwykła, strzeżona) i kapliczka.
+func _check_mechanics() -> void:
+	var d = _world._dungeon
+	check("mechaniki z ustawień wyprawy", d.mechanics.size() == 3 and d.crystal != null and d.chests.size() >= 2 and d.shrines.size() >= 1,
+			"%s, %d skrzyń, %d kapliczek" % [d.mechanics, d.chests.size(), d.shrines.size()])
+	var in_rooms := true
+	for node: Node2D in d.chests + d.shrines:
+		var vertex := Vector2i((node.position / d.CELL).round())
+		if d._blocked(node.position, 4.0) or d.boss_room.has_point(vertex) or d.start_room.has_point(vertex):
+			in_rooms = false
+	check("skrzynie i kapliczki w wolnych miejscach zwykłych komnat", in_rooms)
+	# losowanie
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 99
+	var counts := {}
+	var sizes := 0
+	var never_empty := true
+	for i in 3000:
+		var rolled: Array[String] = _Dungeons.roll_mechanics(rng)
+		never_empty = never_empty and rolled.size() >= 1
+		sizes += rolled.size()
+		for id in rolled:
+			counts[id] = counts.get(id, 0) + 1
+	var average := sizes / 3000.0
+	check("losowanie: zawsze mechanika, czasem druga i trzecia", never_empty and average > 1.15 and average < 1.5, "średnio %.2f" % average)
+	check("losowanie: proste częściej niż duże", counts.get("chests", 0) > counts.get("shrine", 0) and counts.get("shrine", 0) > counts.get("crystal", 0),
+			str(counts))
+	var crystal: float = _Dungeons.mechanic_chance("crystal")
+	check("Kryształ Watry mniej więcej w co czwartym lochu", crystal > 0.18 and crystal < 0.35, "%.2f" % crystal)
+	var forced: Array[String] = _Dungeons.roll_mechanics(rng, {"forced": ["crystal"], "weights": {"chests": 0.0, "shrine": 0.0}})
+	check("premie z drzewka Watry: wymuszona mechanika i wagi", forced[0] == "crystal" and not forced.has("chests"), str(forced))
+	# zawartość każdego rodzaju skrzyni
+	var Chest = load("res://scripts/dungeon_chest.gd")
+	var all_filled := true
+	for kind in _Dungeons.CHEST_KINDS:
+		all_filled = all_filled and not Chest.roll_contents(kind, [], d.level).is_empty()
+	check("każdy rodzaj skrzyni ma łup", all_filled)
+	var rich := 0
+	var plain := 0
+	for i in 40:
+		rich += Chest.roll_contents("common", ["rich"], d.level).size()
+		plain += Chest.roll_contents("common", [], d.level).size()
+	check("obfita skrzynia ma więcej łupu", rich > plain, "%d > %d" % [rich, plain])
+	# zwykła skrzynia: otwiera się od razu
+	var chest = d.chests[0]
+	chest.traits.assign([])
+	var before := _pickups()
+	chest.harvest(chest.global_position)
+	check("skrzynia wysypuje łup", chest.state == "open" and _pickups() > before and not chest.can_harvest(), "%d łupów" % (_pickups() - before))
+	# strzeżona: najpierw strażnicy, po ich pokonaniu łup
+	var guarded = d.chests[1]
+	guarded.traits.assign(["guarded"])
+	var enemies := _world.get_tree().get_nodes_in_group("enemies").size()
+	guarded.harvest(guarded.global_position)
+	check("strzeżona skrzynia wypuszcza strażników", guarded.state == "guarded" and guarded._guards.size() >= 5
+			and _world.get_tree().get_nodes_in_group("enemies").size() > enemies)
+	for goblin in guarded._guards:
+		goblin.take_damage(999999, goblin.global_position)
+	before = _pickups()
+	guarded._process(0.1)
+	check("po strażnikach skrzynia się otwiera", guarded.state == "open" and _pickups() > before)
+	# kapliczka: dar na 60 s
+	var shrine = d.shrines[0]
+	shrine.gift = "shrine_fortune"
+	var player = _world.player
+	shrine.harvest(shrine.global_position)
+	check("kapliczka daje dar", player.boons.has_group("shrine") and is_equal_approx(player.stats.item_find_multiplier(), 2.0)
+			and not shrine.can_harvest(), str(player.boons.active))
+	var icons: Array = load("res://scripts/status_effects.gd").list(player).filter(func(e: Dictionary) -> bool: return e["left"] > 0.0 and e["total"] == 60.0)
+	check("ikona daru kapliczki pod paskami", icons.size() == 1)
 
 
 func _mods() -> Dictionary:
