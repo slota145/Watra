@@ -208,6 +208,11 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 
 ### Zgłoszenia z listopada 2026
 
+- [ ] **Encyklopedia w trybie deweloperskim - przedmiot dopiero po drugim kliknięciu** (`scripts/ui/codex_window.gd`,
+  `_on_slot` i `give`): dziś pierwsze kliknięcie przedmiotu (np. unikatu) od razu wkłada go do plecaka. Ma być tak:
+  pierwsze kliknięcie tylko wybiera przedmiot i pokazuje jego opis, dopiero kolejne kliknięcie w ten sam przedmiot
+  go daje. Poprawić też podpowiedź w liczniku („kliknij przedmiot, by go dostać”).
+
 
 ## Pomysły i rzeczy do zrobienia
 
@@ -263,6 +268,10 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   cięciwa łuku rysowana w kodzie (`BowString`, `tools/bow_strings.py`) i własne ruchy umiejętności łuku i księgi
   (`Player.SKILL_MOVES`, chwyt ze znaczników stanu „Znacznik” w PixelLab). Etap 4 zrobiony (szukaj „Etap 4 animacji”):
   oddech w spoczynku, chód po 8 klatek, zryw i upadek przy śmierci. Punkt do zamknięcia po ograniu przez autora.
+- [ ] **Aury rezerwujące manę** (pomysł autora, listopad 2026; jak aury w Path of Exile): umiejętności-aury, które
+  po włączeniu działają bez końca, dopóki gracz ich nie wyłączy, a w zamian rezerwują część many (np. jakiś %
+  maksymalnej many jest niedostępny, póki aura działa). Do ustalenia z autorem: jakie aury (premie dla gracza,
+  osłabianie wrogów wokół), ile procent many, w których drzewkach, ikona na pasku i pod paskami zdrowia i many.
 - [ ] **Przebudowa rozwoju postaci** (do ustalenia z autorem): po dodaniu nekromancji do drzewka księgi - nowe węzły
   także w drzewkach miecza i łuku; może oddzielić umiejętności od drzewka (inny sposób odblokowania); więcej punktów
   za awans albo osobne punkty statystyk i drzewka, albo statystyki tylko w drzewku (trudniejszy balans).
