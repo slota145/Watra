@@ -651,11 +651,24 @@ func _update_boss_bar() -> void:
 		if boss.is_engaged() and boss.global_position.distance_to(_player.global_position) < BOSS_BAR_DISTANCE:
 			fighting = boss
 			break
-	boss_bar.visible = fighting != null
+	# bez bossa - najbliższa walcząca elita lochu (DungeonElite) z cechami zamiast imienia
+	var elite: Goblin = null
+	if fighting == null:
+		var best := BOSS_BAR_DISTANCE * 0.6
+		for enemy: Goblin in get_tree().get_nodes_in_group("elites"):
+			var distance := enemy.global_position.distance_to(_player.global_position)
+			if enemy.state in [Goblin.State.CHASE, Goblin.State.ATTACK] and distance < best:
+				best = distance
+				elite = enemy
+	boss_bar.visible = fighting != null or elite != null
 	if fighting:
 		boss_name_label.text = Lang.t("%s  (poz. %d)") % [Lang.t(fighting.boss_name), fighting.level]
 		boss_health.max_value = fighting.max_health
 		boss_health.value = maxi(fighting.health, 0)
+	elif elite:
+		boss_name_label.text = Lang.t("Elita: %s  (poz. %d)") % [elite.elite.label_text(), elite.level]
+		boss_health.max_value = elite.max_health
+		boss_health.value = maxi(elite.health, 0)
 
 
 func _update_kills() -> void:

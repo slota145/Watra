@@ -28,7 +28,7 @@ func _load_next() -> void:
 	var mods: Array = ["horde", "fury"] if _index == 0 else []
 	var config: Dictionary = _Dungeons.config(CLIMATES[_index], 2 + _index, mods, 1000 + _index * 77)
 	if _index == 0:
-		config["mechanics"] = ["chests", "shrine", "crystal"]
+		config["mechanics"] = ["chests", "shrine", "crystal", "elites"]
 	root.get_node("Game")._pending_load = {"seed": 12345, "zone": "dungeon", "dungeon": config, "arrive": "start", "player": {}}
 	_world = load("res://scenes/world.tscn").instantiate()
 	root.add_child(_world)
@@ -120,7 +120,7 @@ func _check_dungeon() -> void:
 	check("%s: strażnik" % climate, boss != null and boss.is_in_group("bosses") and boss.level == tier_level + 2,
 			boss.scene_file_path.get_file() if boss != null else "brak")
 	check("%s: potwory klimatu" % climate, kinds.size() >= 3, str(kinds.keys()))
-	check("%s: co najmniej jedna mechanika" % climate, d.mechanics.size() >= 1 and d.mechanics.size() <= 3, str(d.mechanics))
+	check("%s: co najmniej jedna mechanika" % climate, d.mechanics.size() >= 1 and (d.mechanics.size() <= 3 or d.config.has("mechanics")), str(d.mechanics))
 	if _index == 0:
 		check("modyfikatory: wściekłość", is_equal_approx(_mods()["health"], 1.25) and is_equal_approx(_mods()["xp"], 1.5))
 	else:
@@ -130,7 +130,7 @@ func _check_dungeon() -> void:
 ## Mechaniki lochu: losowanie (zawsze co najmniej jedna, proste częściej), skrzynie (zwykła, strzeżona) i kapliczka.
 func _check_mechanics() -> void:
 	var d = _world._dungeon
-	check("mechaniki z ustawień wyprawy", d.mechanics.size() == 3 and d.crystal != null and d.chests.size() >= 2 and d.shrines.size() >= 1,
+	check("mechaniki z ustawień wyprawy", d.mechanics.size() == 4 and d.crystal != null and d.chests.size() >= 2 and d.shrines.size() >= 1,
 			"%s, %d skrzyń, %d kapliczek" % [d.mechanics, d.chests.size(), d.shrines.size()])
 	var in_rooms := true
 	for node: Node2D in d.chests + d.shrines:
@@ -197,6 +197,68 @@ func _check_mechanics() -> void:
 			and not shrine.can_harvest(), str(player.boons.active))
 	var icons: Array = load("res://scripts/status_effects.gd").list(player).filter(func(e: Dictionary) -> bool: return e["left"] > 0.0 and e["total"] == 60.0)
 	check("ikona daru kapliczki pod paskami", icons.size() == 1)
+	_check_elites(d)
+
+
+## Elitarne potwory: liczba, cechy z różnych grup, aura, tarcza, rozszczepienie i łup.
+func _check_elites(d) -> void:
+	var traits_ok := true
+	for elite in d.elites:
+		var groups := {}
+		for id: String in elite.traits:
+			groups[_Dungeons.ELITE_TRAITS[id]["group"]] = true
+		traits_ok = traits_ok and elite.traits.size() >= 1 and elite.traits.size() <= 3 and groups.size() == elite.traits.size() \
+				and elite.goblin.elite == elite and elite.goblin.scale.x > 1.0 and elite.label_text() != ""
+	check("elity w lochu (3-5, cechy z różnych grup, większe, z napisem)", d.elites.size() >= 3 and d.elites.size() <= 5 and traits_ok,
+			str(d.elites.map(func(e) -> Array: return e.traits)))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
+	var counts := [0, 0, 0, 0]
+	for i in 2000:
+		counts[_Dungeons.roll_elite_traits(rng).size()] += 1
+	check("liczba cech elity: najczęściej 1, rzadko 3", counts[1] > counts[2] and counts[2] > counts[3] and counts[3] > 0 and counts[0] == 0, str(counts))
+	var elite = d.elites[0]
+	var boss = elite.goblin
+	# aura Dowódczego: sąsiad zadaje więcej obrażeń, po wygaśnięciu wraca do normy
+	var spawn: Dictionary = d._spawn("skeleton", boss.global_position + Vector2(20, 0), boss.global_position, d.level)
+	var ally = _world._live_goblins.get(spawn["id"])
+	var base_damage: int = ally.damage
+	elite._trait_tick("commander", Time.get_ticks_msec())
+	check("aura elity wzmacnia sąsiadów", ally.has_aura("commander") and ally.damage == roundi(base_damage * 1.4), "%d -> %d" % [base_damage, ally.damage])
+	ally._auras["commander"][1] = 0
+	ally._refresh_auras()
+	check("po wyjściu z aury statystyki wracają", ally.damage == base_damage and ally._aura_base.is_empty())
+	elite._trait_tick("warding", Time.get_ticks_msec())
+	var hp: int = ally.health
+	ally.take_damage(100, ally.global_position)
+	check("aura Osłaniającego zmniejsza obrażenia", hp - ally.health == 65, "%d" % (hp - ally.health))
+	# tarcza (bez aury Osłaniającego, którą elita nałożyła też na siebie)
+	boss._auras.clear()
+	boss._refresh_auras()
+	elite.max_shield = 100
+	elite.shield = 100
+	hp = boss.health
+	boss.take_damage(60, boss.global_position)
+	check("tarcza elity przyjmuje obrażenia", boss.health == hp and elite.shield == 40, "tarcza %d" % elite.shield)
+	boss.take_damage(70, boss.global_position)
+	check("po tarczy obrażenia idą w zdrowie", elite.shield == 0 and boss.health == hp - 30, "%d" % (hp - boss.health))
+	# łup elity
+	var loot: Array = load("res://scripts/dungeon_elite.gd").roll_loot(d.level, 2)
+	check("łup elity: 1 + liczba cech przedmiotów", loot.size() >= 3)
+	# rozszczepienie
+	var enemies := _world.get_tree().get_nodes_in_group("enemies").size()
+	elite.traits.assign(["splitting"])
+	elite._split(boss.global_position)
+	check("Rozszczepialny dzieli się na mniejsze", _world.get_tree().get_nodes_in_group("enemies").size() == enemies + 3)
+	# śmierć elity: zwykły łup i dodatkowy (przedmioty leżące przy elicie)
+	var at: Vector2 = boss.global_position
+	elite.traits.assign(["volatile"])
+	boss.take_damage(99999999, boss.global_position)
+	for i in 2:
+		await _world.get_tree().process_frame
+	var items: Array = _world.entities.get_children().filter(func(n: Node) -> bool:
+			return n.get_script() == load("res://scripts/pickup.gd") and n.item_id != "gold" and n.position.distance_to(at) < 60.0)
+	check("pokonana elita sypie dodatkowe przedmioty", items.size() >= 2, str(items.map(func(n) -> String: return n.item_id)))
 
 
 func _mods() -> Dictionary:
