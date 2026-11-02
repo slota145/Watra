@@ -5,6 +5,7 @@
   "roots": "66f78009-484d-4359-b42e-ddf81ffd391d",
   "_packs": {
     "catacombs_small": "100b805a-e792-4fc7-8f8c-fe31fbc18acf",
-    "catacombs_tall": "f969fc82-2255-4150-903f-70b2c93d984f"
+    "catacombs_tall": "f969fc82-2255-4150-903f-70b2c93d984f",
+    "catacombs_furniture": "456c46b5-6d6c-4d16-b4ee-619d4312bcce"
   }
 }

@@ -48,6 +48,23 @@ PROPS = {
         "sarcophagus_0": ("catacombs_tall", 13, 1.0),
         "sarcophagus_1": ("catacombs_tall", 14, 1.0),
         "coffin": ("catacombs_tall", 15, 1.0),
+        # meble pod ściany
+        "shelf": ("catacombs_furniture", 0, 1.0),
+        "coffins_upright": ("catacombs_furniture", 1, 1.0),
+        "candelabra": ("catacombs_furniture", 2, 1.0),
+        "ossuary_shelf": ("catacombs_furniture", 3, 1.0),
+        "table": ("catacombs_furniture", 4, 1.0),
+        "cage": ("catacombs_furniture", 5, 1.0),
+        "crates": ("catacombs_furniture", 6, 1.0),
+        "upright_sarc": ("catacombs_furniture", 7, 1.0),
+        "weapon_rack": ("catacombs_furniture", 8, 1.0),
+        "chains": ("catacombs_furniture", 9, 1.0),
+        "web": ("catacombs_furniture", 10, 1.0),
+        "font": ("catacombs_furniture", 11, 1.0),
+        "bench": ("catacombs_furniture", 12, 1.0),
+        "shrouds": ("catacombs_furniture", 13, 1.0),
+        "runestone": ("catacombs_furniture", 14, 1.0),
+        "cart": ("catacombs_furniture", 15, 1.0),
     },
 }
 

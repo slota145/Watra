@@ -26,7 +26,7 @@ const CLIMATES := {
 		"map_floor": Color("5c5650"), "map_wall": Color("16151a"),
 		# wystrój komnat (scripts/dungeon_decor.gd): rodzaje komnat i grafiki z tools/dungeon_props.py
 		"decor": {"dir": "res://assets/dungeons/catacombs/", "tint": Color(0.6, 0.6, 0.72),
-				"themes": ["crypt", "pillars", "ossuary", "chapel", "collapsed"]},
+				"themes": ["crypt", "pillars", "ossuary", "chapel", "collapsed", "prison"]},
 	},
 	"mine": {
 		"name": "Kopalnia goblinów", "description": "Chodniki z belkami, porzucone wózki i beczki prochu. Gobliny i koboldy; rządzi nimi wódz.",
