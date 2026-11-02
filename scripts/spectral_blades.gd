@@ -99,7 +99,7 @@ func _process(delta: float) -> void:
 				continue
 			if enemy.hurt_center().distance_to(at) <= HIT_RADIUS + enemy.hurt_radius:
 				_recent[enemy] = HIT_INTERVAL
-				player.hit_enemy(enemy, player._skill_damage(damage, TAGS), at, 30.0)
+				player.hit_enemy(enemy, player._skill_damage(damage, TAGS), at, 30.0, "blade")
 				_burst(enemy.hurt_center(), 0.6)
 
 
@@ -113,7 +113,7 @@ func _process_flying(delta: float) -> void:
 		var at: Vector2 = blade[0]
 		var to := target.hurt_center() - at
 		if to.length() <= LAUNCH_SPEED * delta + 4.0:
-			player.hit_enemy(target, player._skill_damage(damage * Skills.BLADES_LAUNCH, TAGS), at, 120.0)
+			player.hit_enemy(target, player._skill_damage(damage * Skills.BLADES_LAUNCH, TAGS), at, 120.0, "blade")
 			_burst(target.hurt_center(), 1.3)
 			_flying.remove_at(i)
 			continue
