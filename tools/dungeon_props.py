@@ -3,7 +3,8 @@ Surowe klatki leżą w pixellab_src/dungeons/<paczka>/frame_<i>.png (pobiera je 
 Narzędzie przycina każdą klatkę do zawartości, nakładkom na podłogę zmniejsza krycie (wtapiają się w kafelki)
 i zapisuje wynik do assets/dungeons/<klimat>/<nazwa>.png. Pasy, które gra powtarza wzdłuż komnaty, rysuje samo
 (bezszwowe w pionie): chodnik Katakumb (runner), tory i kładkę z desek Kopalni (rails, walkway),
-mokrą kładkę i płytkie rozlewiska Zatopionych podziemi (planks, pool, pool_small).
+mokrą kładkę i płytkie rozlewiska Zatopionych podziemi (planks, pool, pool_small), pajęczy most
+i zejście po korzeniach Pajęczych korzeni (silk, root_path).
 Gdy pobieranie z PixelLab jest zablokowane, klatki paczki to podglądy kandydatów z get_object (64x64, przezroczyste).
 Uruchom: python tools/dungeon_props.py"""
 import os
@@ -13,7 +14,7 @@ from PIL import Image, ImageDraw
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "pixellab_src", "dungeons")
 
-# klimat -> nazwa -> (paczka, klatka, krycie); z klatki zostaje najszersza ciągła grupa kolumn (main_part)
+# klimat -> nazwa -> (paczka, klatka, krycie[, skala]); z klatki zostaje najszersza ciągła grupa kolumn (main_part)
 PROPS = {
     "catacombs": {
         # nakładki na podłogę
@@ -178,6 +179,60 @@ PROPS = {
         "stakes": ("flooded_furniture", 14, 1.0),
         "driftwood": ("flooded_furniture", 15, 1.0),
     },
+    "roots": {
+        # nakładki na podłogę
+        "crack": ("roots_small", 0, 0.55),
+        "silk_patch": ("roots_small", 1, 0.55),
+        "glow_moss": ("roots_small", 2, 0.8),
+        "mud": ("roots_small", 3, 0.6),
+        "bones": ("roots_small", 4, 0.95),
+        "husk": ("roots_small", 5, 1.0),
+        "leaves": ("roots_small", 6, 0.6),
+        "shells": ("roots_small", 7, 0.7, 0.7),
+        # na licu ściany
+        "fungus_lamp": ("roots_small", 8, 1.0),
+        "root_drape": ("roots_small", 9, 1.0),
+        "wall_web": ("roots_small", 10, 0.85),
+        "wall_eggs": ("roots_small", 11, 1.0),
+        # drobiazgi
+        "shrooms": ("roots_small", 12, 1.0),
+        "skull": ("roots_small", 13, 1.0, 0.55),
+        "backpack": ("roots_small", 14, 1.0, 0.7),
+        "egg": ("roots_small", 15, 1.0, 0.6),
+        # duże, z kolizją
+        "root_column": ("roots_tall", 0, 1.0),
+        "root_twist": ("roots_tall", 1, 1.0),
+        "root_stump": ("roots_tall", 2, 1.0),
+        "giant_shroom": ("roots_tall", 3, 1.0),
+        "shroom_cluster": ("roots_tall", 4, 1.0),
+        "egg_mound": ("roots_tall", 5, 1.0),
+        "cocoon": ("roots_tall", 6, 1.0),
+        "silk_spire": ("roots_tall", 7, 1.0),
+        "altar": ("roots_tall", 8, 1.0),
+        "hollow_stump": ("roots_tall", 9, 1.0),
+        "root_boulder": ("roots_tall", 10, 1.0),
+        "campfire": ("roots_tall", 11, 1.0),
+        "tent": ("roots_tall", 12, 1.0),
+        "throne": ("roots_tall", 13, 1.0),
+        "treasure": ("roots_tall", 14, 1.0),
+        "cocoon_torn": ("roots_tall", 15, 1.0),
+        # meble pod ściany
+        "cocoons": ("roots_furniture", 0, 1.0),
+        "eggs": ("roots_furniture", 1, 1.0),
+        "root_wall": ("roots_furniture", 2, 1.0),
+        "shelf_fungi": ("roots_furniture", 3, 1.0),
+        "web_sheet": ("roots_furniture", 4, 1.0),
+        "bone_heap": ("roots_furniture", 5, 1.0),
+        "bedroll": ("roots_furniture", 6, 1.0),
+        "supplies": ("roots_furniture", 7, 1.0),
+        "spear_rack": ("roots_furniture", 8, 1.0),
+        "log": ("roots_furniture", 9, 1.0),
+        "dead_treant": ("roots_furniture", 11, 1.0),
+        "moss": ("roots_furniture", 12, 1.0),
+        "lantern_post": ("roots_furniture", 13, 1.0),
+        "antlers": ("roots_furniture", 14, 1.0),
+        "sap_root": ("roots_furniture", 15, 1.0),
+    },
 }
 
 
@@ -313,17 +368,77 @@ def pool(w, h, seed):
     return img
 
 
+def silk_bridge():
+    """Pajęczy most: pas półprzezroczystej przędzy z nierównymi, falującymi nićmi i linami po brzegach,
+    48x64, bezszwowy w pionie."""
+    import math
+    import random
+    rnd = random.Random(11)
+    img = Image.new("RGBA", (48, 64), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    # mleczne tło przędzy, gęstsze w środku
+    for x in range(4, 44):
+        a = int(25 + 45 * math.sin(math.pi * (x - 4) / 40))
+        d.line((x, 0, x, 63), fill=(200, 204, 210, a))
+    # nici biegnące wzdłuż, falujące (okres 64 px - bez szwu)
+    for _ in range(22):
+        base = rnd.uniform(6, 42)
+        amp = rnd.uniform(0.5, 2.5)
+        phase = rnd.uniform(0, 2 * math.pi)
+        tone = rnd.randint(205, 240)
+        for y in range(64):
+            x = base + amp * math.sin(2 * math.pi * y / 64 + phase)
+            d.point((round(x), y), fill=(tone, tone + 2, tone + 6, rnd.randint(150, 220)))
+    # liny po brzegach
+    for x, phase in ((4, 0.0), (43, 2.0)):
+        for y in range(64):
+            xx = x + round(math.sin(2 * math.pi * y / 64 + phase) * 1.5)
+            d.point((xx, y), fill=(232, 234, 238, 210))
+    # supły w nieregularnych miejscach
+    for x, y in ((14, 9), (31, 27), (22, 50)):
+        d.ellipse((x, y, x + 3, y + 2), fill=(236, 238, 244, 190))
+    return img
+
+
+def root_path():
+    """Zejście po korzeniach: pięć grubych, splecionych korzeni wzdłuż pasa, z mchem i ziemią, 64x64,
+    bezszwowe w pionie."""
+    import math
+    img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    # ziemia między korzeniami, zanikająca ku brzegom
+    for x in range(4, 60):
+        d.line((x, 0, x, 63), fill=(40, 30, 22, int(110 * math.sin(math.pi * (x - 4) / 56) ** 2)))
+    for base, amp, phase, width, tone in ((14, 5, 0.0, 9, (70, 52, 36)), (48, 5, math.pi, 9, (78, 58, 40)),
+            (31, 9, math.pi / 2, 7, (64, 47, 32)), (22, 6, math.pi * 1.4, 5, (84, 63, 43)),
+            (41, 6, math.pi * 0.3, 5, (60, 44, 30))):
+        for y in range(64):
+            x = base + amp * math.sin(2 * math.pi * y / 64 + phase)
+            d.line((x - width / 2, y, x + width / 2, y), fill=tone + (245,))
+            d.point((x - width / 2, y), fill=(34, 24, 16, 245))
+            d.point((x + width / 2 - 1, y), fill=(118, 92, 62, 245))
+            if y % 9 == 0:
+                d.point((x, y), fill=(46, 34, 22, 245))
+    for x, y in ((10, 12), (50, 40), (28, 54), (36, 22), (18, 34)):
+        d.rectangle((x, y, x + 3, y + 1), fill=(66, 96, 58, 235))
+    return img
+
+
 STRIPS = {"catacombs": {"runner": runner}, "mine": {"rails": rails, "walkway": walkway},
-        "flooded": {"planks": wet_planks, "pool": lambda: pool(176, 112, 3), "pool_small": lambda: pool(104, 68, 5)}}
+        "flooded": {"planks": wet_planks, "pool": lambda: pool(176, 112, 3), "pool_small": lambda: pool(104, 68, 5)},
+        "roots": {"silk": silk_bridge, "root_path": root_path}}
 
 
 def main():
     for climate, props in PROPS.items():
         out = os.path.join(ROOT, "assets", "dungeons", climate)
         os.makedirs(out, exist_ok=True)
-        for name, (pack, frame, alpha) in props.items():
+        for name, spec in props.items():
+            pack, frame, alpha = spec[:3]
             img = Image.open(os.path.join(SRC, pack, "frame_%d.png" % frame)).convert("RGBA")
             img = main_part(img)
+            if len(spec) > 3:
+                img = img.resize((max(1, round(img.width * spec[3])), max(1, round(img.height * spec[3]))), Image.NEAREST)
             if alpha < 1.0:
                 a = img.getchannel("A").point(lambda v: int(v * alpha))
                 img.putalpha(a)

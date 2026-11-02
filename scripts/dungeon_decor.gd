@@ -1,7 +1,7 @@
 class_name DungeonDecor
 extends RefCounted
 ## Wspólna część wystroju lochu klimatu z kluczem "decor" (Dungeons.CLIMATES). Każdy klimat ma własny skrypt
-## scripts/decor_<klimat>.gd (CatacombsDecor, MineDecor, FloodedDecor), który dziedziczy po tym i dopisuje: rzędy mebli pod
+## scripts/decor_<klimat>.gd (CatacombsDecor, MineDecor, FloodedDecor, RootsDecor), który dziedziczy po tym i dopisuje: rzędy mebli pod
 ## ścianami (lines), nakładki na podłogę (floor_decals), wystrój lica ścian (_dress_wall) i scenki komnat
 ## (funkcje _<rodzaj>(room) dla rodzajów z "themes" oraz _start, _boss i _event).
 ## Wszystko stoi w porządku, a nie porozrzucane: na licu ścian światła w równych odstępach, pod ścianami komnat
@@ -361,6 +361,46 @@ func _corners(room: Rect2i, inset := Vector2i(1, 2)) -> Array[Vector2i]:
 			Vector2i(-inset.x - 1, -inset.y)]:
 		out.append(Vector2i(room.position.x if corner.x > 0 else room.end.x, room.position.y if corner.y > 0 else room.end.y) + corner)
 	return out
+
+
+## Siatka dużych rekwizytów co drugi wierzchołek (jak regały w magazynie); `place` stawia jeden (z numerem kolejnym), `aisle` - coś
+## w przejściu między rzędami (albo nic).
+func _grid(room: Rect2i, place: Callable, aisle: Callable) -> void:
+	var i := 0
+	for x in range(room.position.x + 1, room.end.x - 1):
+		for y in range(room.position.y + 2, room.end.y - 1):
+			var v := Vector2i(x, y)
+			var col := (x - room.position.x) % 2 == 1
+			var row := (y - room.position.y) % 2 == 0
+			if col and row and _isolated(v):
+				place.call(v, i)
+				i += 1
+			elif _floor_at(v) and not _used.has(v):
+				aisle.call(v)
+
+
+## Ogniki albo zarodniki: iskierki koloru `tint` unoszące się powoli nad `at`.
+func _motes(at: Vector2, extents := Vector2(40, 30), amount := 8, tint := Color(0.55, 1.0, 0.9)) -> void:
+	var motes := CPUParticles2D.new()
+	motes.position = at
+	motes.amount = amount
+	motes.lifetime = 4.0
+	motes.preprocess = 4.0
+	motes.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	motes.emission_rect_extents = extents
+	motes.direction = Vector2(0, -1)
+	motes.spread = 60.0
+	motes.gravity = Vector2(0, -3)
+	motes.initial_velocity_min = 3.0
+	motes.initial_velocity_max = 9.0
+	motes.scale_amount_min = 1.5
+	motes.scale_amount_max = 2.5
+	var fade := Gradient.new()
+	fade.colors = PackedColorArray([Color(tint, 0.0), Color(tint, 0.9), Color(tint, 0.0)])
+	fade.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
+	motes.color_ramp = fade
+	motes.z_index = 20
+	w.add_child(motes)
 
 
 func _dust(at: Vector2) -> void:
