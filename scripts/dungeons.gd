@@ -86,7 +86,7 @@ const CLIMATES := {
 						"res://assets/forest/trees/oak_6.png", "res://assets/forest/trees/oak_7.png", "res://assets/forest/trees/pine_0.png",
 						"res://assets/forest/trees/pine_1.png", "res://assets/forest/trees/pine_2.png"],
 				"plateau": ["res://assets/forest/trees/bush_0.png", "res://assets/forest/trees/bush_1.png", "res://assets/forest/trees/bush_2.png",
-						"res://assets/forest/trees/rock_0.png", "res://assets/forest/trees/rock_1.png", "res://assets/forest/trees/pine_3.png"],
+						"res://assets/forest/trees/rock_0.png", "res://assets/forest/trees/rock_1.png"],
 				"reeds": "res://assets/swamp/v2_reeds.png", "lilies": "res://assets/swamp/v2_lilies.png",
 				# pola winorośli na terenie niedostępnym (Dungeon._vine_fields)
 				"vines": ["res://assets/mountains/satyr/vine_row.png", "res://assets/mountains/satyr/vine_row_2.png"], "vines_above": -0.2},

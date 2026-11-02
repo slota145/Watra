@@ -27,9 +27,9 @@ const LINES := {
 	"vines": {"n": ["", "", "raisin_rack", "", "", ""], "s": ["", "", "grape_crate", "", ""]},
 	"press": {"n": ["barrel_rack", "", "tapped_barrel", "barrel_tower", ""], "w": ["grape_crate", "", S + "keg"],
 			"e": [S + "barrel_pile", "", "amphora_stand"], "s": ["", "tapped_barrel", "", S + "keg"]},
-	"feast": {"n": ["lantern_post", "", "table", "", "wineskins", ""], "w": ["cushions", "", "bench"], "e": ["bench", "", "cushions"],
+	"feast": {"n": ["lantern_post", "", "table", "", "wineskins", ""], "w": ["bench", "", ""], "e": ["", "", "bench"],
 			"s": ["", "jug", "", "goblets"]},
-	"dance": {"n": ["ribbon_pole", "", "lantern_post", ""], "w": ["cushions", "", "ribbon_pole"], "e": ["ribbon_pole", "", "cushions"],
+	"dance": {"n": ["ribbon_pole", "", "lantern_post", ""], "w": ["", "", "ribbon_pole"], "e": ["ribbon_pole", "", ""],
 			"s": ["", "lantern_post", ""]},
 	"orchard": {"n": ["elder", "", S + "ladder_basket", ""], "w": ["", "mushrooms"], "e": ["mushrooms", ""], "s": ["", "basket_tipped", ""]},
 	"goats": {"n": ["hay_rack", "", P + "hay", ""], "w": [S + "fence", ""], "e": [S + "fence", ""], "s": ["", P + "hay", ""]},
@@ -64,9 +64,10 @@ func event_pillars() -> Array:
 
 
 func build() -> void:
-	# nic nie staje na ścieżce: wierzchołki, przez których środek biegnie ubita ziemia, są zajęte od początku
+	# nic nie staje na ścieżce ani przy klifie: wierzchołki, przez których środek biegnie ubita ziemia, i sąsiedzi
+	# klifów (lico i krawędź półki zachodzą na ich komórki) są zajęte od początku
 	for v: Vector2i in d.floor_cells:
-		if d.path_tiles.has(Vector2i(_px(v) / w.TILE)):
+		if d.path_tiles.has(Vector2i(_px(v) / w.TILE)) or d.near_cliff(v):
 			_used[v] = true
 	super.build()
 	_trail_lights()
@@ -103,7 +104,7 @@ func _trail_lights() -> void:
 				var v := Vector2i((at + across * k).round())
 				if d.floor_cells.has(v):
 					continue
-				if not d.waters.has(v) and not d.cliffs.has(v) and not _sconces.has(v):
+				if not d.waters.has(v) and not d.cliffs.has(v) and not d.near_cliff(v) and not _sconces.has(v):
 					_sconces[v] = true
 					var spot := _px(v) - across * 26.0 + Vector2(0, 18)
 					_prop("lantern_post", spot, false)
@@ -115,7 +116,7 @@ func _trail_lights() -> void:
 func _centerpiece(name: String, mid: Vector2i, collision: Vector2) -> void:
 	if _isolated(mid):
 		_solid(name, mid, collision, false)
-	else:
+	elif not d.near_cliff(mid):
 		_used[mid] = true
 		_prop(name, _px(mid) + Vector2(0, 20), false)
 
@@ -136,7 +137,7 @@ func _ring(at: Vector2, radius: Vector2, count: int, names: Array, decals := fal
 		var angle := TAU * i / count + 0.3
 		var spot := at + Vector2(cos(angle) * radius.x, sin(angle) * radius.y)
 		var v := Vector2i((spot / Dungeon.CELL).round())
-		if not _floor_at(v) or d._blocked(spot, 8.0) or d.path_tiles.has(Vector2i(spot / w.TILE)):
+		if not _floor_at(v) or d._blocked(spot, 8.0) or d.path_tiles.has(Vector2i(spot / w.TILE)) or d.near_cliff(v):
 			continue
 		if decals:
 			_decal(_pick(names), spot)
@@ -209,7 +210,8 @@ func _vines(room: Rect2i) -> void:
 
 
 ## Pasy winorośli w obszarze `area`: co drugi rząd wierzchołków (nieparzyste y) przez wolną podłogę z podłogą nad
-## i pod pasem, co pięć wierzchołków poprzeczne przejście (od `cross`), pas kończy się na skraju i przy ścieżce.
+## i pod pasem, co pięć wierzchołków poprzeczne przejście (od `cross`), pas kończy się na skraju i przy ścieżce,
+## z dala od klifów (krzewy są wysokie - pas tuż pod klifem zachodziłby na lico).
 ## `allow` (wierzchołek -> bool) zawęża, gdzie pas może biec.
 func _vine_strips(area: Rect2i, kind: String, cross: int, allow := Callable()) -> void:
 	for y in range(area.position.y, area.end.y):
@@ -219,7 +221,8 @@ func _vine_strips(area: Rect2i, kind: String, cross: int, allow := Callable()) -
 		for x in range(area.position.x, area.end.x + 1):
 			var v := Vector2i(x, y)
 			var on: bool = x < area.end.x and _floor_at(v) and not _used.has(v) and posmod(x - cross, 5) != 0 \
-					and _floor_at(v + Vector2i.UP) and _floor_at(v + Vector2i.DOWN) and (not allow.is_valid() or allow.call(v))
+					and _floor_at(v + Vector2i.UP) and _floor_at(v + Vector2i.DOWN) and not d.near_cliff(v + Vector2i.UP) \
+					and (not allow.is_valid() or allow.call(v))
 			if on:
 				run.append(v)
 			elif not run.is_empty():
@@ -273,7 +276,7 @@ func _feast(room: Rect2i) -> void:
 	for step: Vector2i in [Vector2i(-3, 1), Vector2i(3, 1)]:
 		_maybe_solid(_pick(["table", "roast_spit"]), mid + step, Vector2(34, 8))
 	_ring(_px(mid) + Vector2(0, 30), Vector2(room.size.x * 26.0, room.size.y * 24.0), 8,
-			["cushions", "jug", "goblets", S + "amphora", "wine_skin"])
+			["bench", "jug", S + "amphora", S + "keg"])
 	_ring(_px(mid) + Vector2(0, 30), Vector2(100, 70), 4, ["wine_spill", "goblets"], true)
 
 

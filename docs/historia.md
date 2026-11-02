@@ -657,6 +657,10 @@ odpowiedniej sekcji.
     dwa rzędy krzewów z jedną kolizją, co 5 wierzchołków przejście); nic nie stoi na ścieżce (wierzchołki ścieżek
     zajęte od początku, kręgi ozdób omijają ścieżkę), latarnie na poboczu (na skraju sąsiedniego lasu lub pola);
     usunięte rozsypane drobiazgi, kiście i plamy wina poza scenkami; rzadziej poszerzane ścieżki (mniej pustych placów);
+  - druga runda poprawek (drzewa na klifach, obiekty na klifach, proste odcięcia terenu): przy klifach
+    (`Dungeon.near_cliff` - sąsiad także po skosie) nie rosną drzewa ani trzciny, a wystrój nie stawia tam niczego;
+    na szczytach półek tylko krzewy i głazy w głębi; podłoże przy klifach to łąka w kolorze trawy kafelków klifu,
+    a granice gęstej trawy i kwiatów wygina szum (przesunięcie punktu o ±26 px); poduchy tylko przy tronie;
   - grafiki PixelLab: paczki `vineyard_small`, `vineyard_tall`, `vineyard_furniture` (po 16, 64 px) i `vineyard_big`
     (4 sztuki, 128 px) w `pixellab_src/dungeons/`; w paczce wysokich obiektów kandydatki wyszły przesunięte między
     klatkami, więc `tools/dungeon_props.py` tnie ją z pasa sklejonych klatek (`strip_part`, klatka `"s<nr>"`).

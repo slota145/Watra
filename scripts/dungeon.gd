@@ -303,8 +303,9 @@ func _plan_borders() -> void:
 				var v := Vector2i(x, y)
 				if floor_cells.has(v) or cliffs.has(v) or waters.has(v) or field.get_noise_2d(x, y) <= terrain["vines_above"]:
 					continue
-				# przy klifie (lico i przejścia kafelków Wang zachodzą na sąsiednie komórki) zostają drzewa
-				if not STEPS.any(func(step: Vector2i) -> bool: return cliffs.has(v + step)):
+				# przy klifie (lico i przejścia kafelków Wang zachodzą na sąsiednie komórki, a wysokie krzewy sięgają
+				# rząd wyżej) zostają drzewa
+				if not near_cliff(v) and not near_cliff(v + Vector2i.UP):
 					vines[v] = true
 	# ubita ziemia ścieżek: kafelki świata (16 px) w pasie wzdłuż krętych ścieżek, tylko na podłodze
 	var tile: int = w.TILE
@@ -345,14 +346,26 @@ func _build_ground() -> void:
 	var shore := FastNoiseLite.new()
 	shore.seed = _rng.randi()
 	shore.frequency = 0.2
+	# granice terenów (gęsta trawa pod drzewami, kwiaty) biegną po wierzchołkach lochu co 64 px - przesunięcie
+	# punktu dwoma szumami wygina je, żeby nie były prostymi odcinkami
+	var warp_x := FastNoiseLite.new()
+	warp_x.seed = _rng.randi()
+	warp_x.frequency = 0.08
+	var warp_y := FastNoiseLite.new()
+	warp_y.seed = _rng.randi()
+	warp_y.frequency = 0.08
 	var corners := {}
 	for x in w.map_size.x + 1:
 		for y in w.map_size.y + 1:
 			var c := Vector2i(x, y)
 			var px := Vector2(c) * tile
 			var v := Vector2i((px / CELL).round())
+			var bent := Vector2i(((px + Vector2(warp_x.get_noise_2d(x, y), warp_y.get_noise_2d(x, y)) * 26.0) / CELL).round())
 			var kind := "meadow"
-			if waters.has(v):
+			if near_cliff(v) or cliffs.has(v):
+				# przy klifie łąka w kolorze trawy kafelków klifu (inaczej brzeg półki odcina się prostą linią)
+				kind = "meadow"
+			elif waters.has(v):
 				# woda kończy się przed brzegiem kolizji w odległości falującej z szumem (brzeg nie jest prostokątem;
 				# trzciny zakrywają szparę): wszystkie punkty w kręgu wokół narożnika muszą leżeć nad wodą
 				kind = "w_deep"
@@ -362,7 +375,7 @@ func _build_ground() -> void:
 					if not waters.has(Vector2i((probe / CELL).round())):
 						kind = "m_dark"
 						break
-			elif floor_cells.has(v):
+			elif floor_cells.has(bent):
 				var near_path := false
 				for t: Vector2i in [c, c - Vector2i(1, 0), c - Vector2i(0, 1), c - Vector2i(1, 1)]:
 					if path_tiles.has(t):
@@ -384,9 +397,16 @@ func _build_ground() -> void:
 	w._soft_textures = {"w_deep": w.SWAMP_GROUND["w_deep"]}
 
 
-## Ściana drzew na wierzchołkach drzew (dwa drzewa na wierzchołek, korony zachodzą na siebie), krzewy, głazy
-## i drzewa na szczytach skalnych półek, trzciny przy brzegu stawów i grążele na wodzie. Bez własnej kolizji -
-## wierzchołek i tak jest zablokowany.
+## Czy wierzchołek sąsiaduje z klifem (także po skosie) - lico i krawędzie kafelków Wang zachodzą na jego komórki,
+## więc nie stawiamy tam niczego wysokiego.
+func near_cliff(v: Vector2i) -> bool:
+	return STEPS.any(func(step: Vector2i) -> bool: return cliffs.has(v + step))
+
+
+## Ściana drzew na wierzchołkach drzew (dwa drzewa na wierzchołek, korony zachodzą na siebie), krzewy i głazy
+## w głębi skalnych półek, trzciny przy brzegu stawów i grążele na wodzie. Bez własnej kolizji - wierzchołek i tak
+## jest zablokowany. Przy klifach (i rząd niżej - korona sięga wysoko) nic wysokiego: drzewo zasłaniałoby lico
+## albo wisiało nad krawędzią.
 func _dress_borders() -> void:
 	var terrain: Dictionary = climate["terrain"]
 	var trees: Array = terrain["trees"].map(func(path: String) -> Texture2D: return load(path))
@@ -403,7 +423,7 @@ func _dress_borders() -> void:
 				var shore := false
 				for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
 					shore = shore or not waters.has(v + d)
-				if shore and _rng.randf() < 0.55:
+				if shore and not near_cliff(v) and _rng.randf() < 0.55:
 					var reed: Sprite2D = w._village_prop(reeds, at + Vector2(_rng.randf_range(-20, 20), _rng.randf_range(-12, 20)))
 					reed.hframes = 3
 					reed.frame = _rng.randi() % 3
@@ -416,15 +436,12 @@ func _dress_borders() -> void:
 					lily.position = at + Vector2(_rng.randf_range(-16, 16), _rng.randf_range(-16, 16))
 					w.floors.add_child(lily)
 			elif cliffs.has(v):
-				# szczyt półki porasta zagajnik (nie tuż nad licem), żeby nie wyglądał jak polana
-				if not cliffs.has(v + Vector2i.DOWN):
+				# w głębi półki (wszędzie wokół klif) krzewy i głazy - bez drzew, które wystawałyby za krawędź
+				if not STEPS.all(func(step: Vector2i) -> bool: return cliffs.has(v + step)) or _rng.randf() >= 0.35:
 					continue
-				var roll := _rng.randf()
-				var tex: Texture2D = trees.pick_random() if roll < 0.55 else tops.pick_random() if roll < 0.85 else null
-				if tex != null:
-					var top: Sprite2D = w._village_prop(tex, at + Vector2(_rng.randf_range(-16, 16), _rng.randf_range(4, 22)))
-					top.flip_h = _rng.randf() < 0.5
-			else:
+				var top: Sprite2D = w._village_prop(tops.pick_random(), at + Vector2(_rng.randf_range(-10, 10), _rng.randf_range(4, 16)))
+				top.flip_h = _rng.randf() < 0.5
+			elif not near_cliff(v) and not near_cliff(v + Vector2i.UP):
 				for i in 2:
 					var spot := at + Vector2(_rng.randf_range(-14, 14) + (i * 2 - 1) * 14, _rng.randf_range(-6, 6) + (24 if i == 0 else 4))
 					var tree: Sprite2D = w._village_prop(trees.pick_random(), spot)
