@@ -95,8 +95,27 @@ const CLIMATES := {
 		"decor": {"dir": "res://assets/dungeons/vineyard/", "tint": Color(0.92, 0.8, 0.74),
 				"themes": ["vines", "vines", "press", "feast", "dance", "vines", "orchard", "goats", "camp", "pond"]},
 	},
+	# drugi loch na zewnątrz: granicą palisada (Dungeon.palisades - pale wzdłuż gładkiego obrysu, za nią spalone
+	# zagrody), las i stawy; bez klifów (kafelki Wang nieużywane)
+	"stronghold": {
+		"name": "Oblężony gród", "description": "Gród zdobyty i spalony przez hordę koboldów. Za połamaną palisadą dymią zgliszcza zagród, na majdanie stoi obóz najeźdźców, a z ruin dworu rządzi nimi Bombardier Kaszlak.",
+		"tiles": preload("res://assets/dungeons/vineyard.png"), "outdoor": true,
+		"monsters": {"kobold": 5, "kobold_slinger": 3, "kobold_bomber": 2},
+		"boss": "bombardier", "tint": Color(0.86, 0.74, 0.7), "light": Color(1.0, 0.6, 0.3, 0.55),
+		"terrain": {"cliff_below": -2.0, "water_above": 0.45, "palisade_below": 0.15,
+				"trees": ["res://assets/forest/trees/oak_0.png", "res://assets/forest/trees/oak_1.png", "res://assets/forest/trees/oak_2.png",
+						"res://assets/forest/trees/oak_3.png", "res://assets/forest/trees/pine_0.png", "res://assets/forest/trees/pine_1.png",
+						"res://assets/forest/trees/pine_2.png"],
+				"plateau": [], "reeds": "res://assets/swamp/v2_reeds.png", "lilies": "res://assets/swamp/v2_lilies.png",
+				# pale palisady (klatki jak w Ostoi - Settlement.STAKE_WEIGHTS) i pale złamane
+				"stakes": "res://assets/village/palisade_stake.png", "stakes_broken": "res://assets/village/palisade_stake_broken.png"},
+		"map_floor": Color("5a7a34"), "map_wall": Color("5c4632"), "map_trees": Color("1f3a17"), "map_water": Color("2f5f6e"),
+		"map_path": Color("8a7048"), "map_yard": Color("4a3a2c"),
+		"decor": {"dir": "res://assets/village/", "tint": Color(0.86, 0.74, 0.7),
+				"themes": ["burned", "camp", "gate", "square", "burned", "camp", "burned", "gate", "square", "camp"]},
+	},
 }
-const CLIMATE_ORDER: Array[String] = ["catacombs", "mine", "flooded", "roots", "vineyard"]
+const CLIMATE_ORDER: Array[String] = ["catacombs", "mine", "flooded", "roots", "vineyard", "stronghold"]
 
 ## Kryształ Watry (scripts/watra_crystal.gd): szansa, że loch ma komnatę z kryształem, i warianty zdarzenia
 ## (obrona kryształu albo górników). W trybie deweloperskim kryształ jest w każdym lochu.

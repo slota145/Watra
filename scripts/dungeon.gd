@@ -14,6 +14,8 @@ extends Node
 ## krętymi ścieżkami, a zamiast skały granicą jest teren - skalne półki (klify z kafelków Wang), ściana drzew albo
 ## staw (_plan_borders). Podłoże rysuje SoftGround z teksturami gór (łąka, ścieżka, kwiaty, woda), kafelki Wang
 ## stoją tylko przy klifach. Przejścia, kolizje i droga potworów działają tak samo jak w podziemiach.
+## Klimat z "palisade_below" w "terrain" (Oblężony gród) ma granicą także palisadę: pale wzdłuż gładkiego obrysu
+## terenu palisady (_build_palisade), za nią zagrody urządzane przez wystrój klimatu.
 
 const CELL := 64
 const GRID := Vector2i(40, 30)
@@ -82,6 +84,10 @@ var cliffs := {}
 var waters := {}
 ## Pola winorośli na terenie niedostępnym (loch na zewnątrz z "vines" w "terrain") - równe rzędy krzewów.
 var vines := {}
+## Teren za palisadą (klimat z "palisade_below"): wierzchołki niedostępne otoczone palisadą.
+var palisades := {}
+## Wygładzone linie palisady (piksele) - po nich stoją pale; wystrój stawia przy nich wieże.
+var palisade_lines: Array[PackedVector2Array] = []
 ## Komórki ścieżek (kafelki 16 px świata) - ubita ziemia pod krętymi ścieżkami między polanami.
 var path_tiles := {}
 ## Gładkie linie krętych ścieżek (w wierzchołkach, przed zaokrągleniem) - po nich biegnie ubita ziemia.
@@ -124,6 +130,7 @@ func generate(world, settings: Dictionary) -> void:
 		_build_ground()
 		_dress_borders()
 		_vine_fields()
+		_build_palisade()
 	_build_atmosphere()
 	if climate.has("decor"):
 		DungeonDecor.create(self).build()
@@ -279,8 +286,28 @@ func _plan_borders() -> void:
 			var n := noise.get_noise_2d(x, y)
 			if n < terrain["cliff_below"]:
 				cliffs[v] = true
+			elif n < terrain.get("palisade_below", -2.0):
+				palisades[v] = true
 			elif n > terrain["water_above"] and x >= 1 and y >= 1 and x <= GRID.x - 2 and y <= GRID.y - 2:
 				waters[v] = true
+	# drobne kawałki terenu palisady (kółko z pali wokół kilku wierzchołków) zostają lasem
+	var groups := {}
+	for start: Vector2i in palisades.keys():
+		if groups.has(start):
+			continue
+		var group: Array[Vector2i] = [start]
+		groups[start] = true
+		var i := 0
+		while i < group.size():
+			for step: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+				var n := group[i] + step
+				if palisades.has(n) and not groups.has(n):
+					groups[n] = true
+					group.append(n)
+			i += 1
+		if group.size() < 14:
+			for v in group:
+				palisades.erase(v)
 	for _pass in 60:
 		var bad := 0
 		for x in range(-1, GRID.x):
@@ -298,7 +325,7 @@ func _plan_borders() -> void:
 	for x in range(1, GRID.x - 1):
 		for y in range(1, GRID.y - 1):
 			var v := Vector2i(x, y)
-			if not floor_cells.has(v) and not cliffs.has(v) and not waters.has(v) \
+			if not floor_cells.has(v) and not cliffs.has(v) and not waters.has(v) and not palisades.has(v) \
 					and (near_cliff(v) or near_cliff(v + Vector2i.UP)):
 				floor_cells[v] = true
 	# pola winorośli: duże plamy drugiego szumu wśród drzew (skraj mapy zostaje lasem)
@@ -309,7 +336,7 @@ func _plan_borders() -> void:
 		for x in range(1, GRID.x - 1):
 			for y in range(1, GRID.y - 1):
 				var v := Vector2i(x, y)
-				if floor_cells.has(v) or cliffs.has(v) or waters.has(v) or field.get_noise_2d(x, y) <= terrain["vines_above"]:
+				if floor_cells.has(v) or cliffs.has(v) or waters.has(v) or palisades.has(v) or field.get_noise_2d(x, y) <= terrain["vines_above"]:
 					continue
 				# przy klifie (lico i przejścia kafelków Wang zachodzą na sąsiednie komórki, a wysokie krzewy sięgają
 				# rząd wyżej) zostają drzewa
@@ -383,6 +410,9 @@ func _build_ground() -> void:
 					if not waters.has(Vector2i((probe / CELL).round())):
 						kind = "m_dark"
 						break
+			elif palisades.has(bent):
+				# za palisadą wydeptana trawa z płatami ubitej ziemi (inna niż ścieżki - tam się nie wchodzi)
+				kind = "m_path" if noise.get_noise_2d(x, y) > 0.3 else "m_dark"
 			elif floor_cells.has(bent):
 				var near_path := false
 				for t: Vector2i in [c, c - Vector2i(1, 0), c - Vector2i(0, 1), c - Vector2i(1, 1)]:
@@ -423,7 +453,7 @@ func _dress_borders() -> void:
 	for x in GRID.x:
 		for y in GRID.y:
 			var v := Vector2i(x, y)
-			if floor_cells.has(v) or vines.has(v):
+			if floor_cells.has(v) or vines.has(v) or palisades.has(v):
 				continue
 			var at := Vector2(v) * CELL
 			if waters.has(v):
@@ -457,10 +487,149 @@ func _dress_borders() -> void:
 					tree.modulate = Color(shade, shade, shade)
 
 
+## Palisada: obrys terenu palisady (marching squares po wierzchołkach - odcinki między środkami krawędzi, wierzchołki
+## palisady stykające się tylko po skosie zostają osobno) łączony w linie i wygładzony (Chaikin), wzdłuż linii pale
+## co kilka pikseli (w pionie gęściej - widać je jeden za drugim), w kilku miejscach pas złamanych pali, kolizja
+## wzdłuż całej linii. Pale stoją tylko od strony polan, ścieżek i wody (zagroda przechodzi w las bez płotu).
+func _build_palisade() -> void:
+	if palisades.is_empty():
+		return
+	var terrain: Dictionary = climate["terrain"]
+	var stakes: Texture2D = load(terrain["stakes"])
+	var broken: Texture2D = load(terrain["stakes_broken"])
+	# punkt obrysu to środek krawędzi między wierzchołkami a i b - kluczem jest a + b
+	var links := {}
+	for x in range(-1, GRID.x):
+		for y in range(-1, GRID.y):
+			var c := Vector2i(x, y)
+			var corners: Array[Vector2i] = [c, c + Vector2i.RIGHT, c + Vector2i.ONE, c + Vector2i.DOWN]
+			var cuts: Array[Vector2i] = []
+			for i in 4:
+				var a := corners[i]
+				var b := corners[(i + 1) % 4]
+				cuts.append(a + b if palisades.has(a) != palisades.has(b) else Vector2i(-99, -99))
+			# pale tylko od strony polan, ścieżek i wody - zagroda przechodzi w las bez płotu
+			var open := false
+			for v in corners:
+				open = open or (not palisades.has(v) and (floor_cells.has(v) or waters.has(v)))
+			if not open:
+				continue
+			var real := cuts.filter(func(k: Vector2i) -> bool: return k.x != -99)
+			if real.size() == 2:
+				_link(links, real[0], real[1])
+			elif real.size() == 4:
+				# siodło: osobno obchodzimy każdy narożnik palisady
+				var first := 3 if palisades.has(corners[0]) else 0
+				_link(links, cuts[first], cuts[(first + 1) % 4])
+				_link(links, cuts[(first + 2) % 4], cuts[(first + 3) % 4])
+	# linie: najpierw od końców (obrys urwany na skraju mapy), potem pętle
+	var seen := {}
+	var starts: Array = links.keys().filter(func(k: Vector2i) -> bool: return links[k].size() == 1)
+	starts.append_array(links.keys().filter(func(k: Vector2i) -> bool: return links[k].size() != 1))
+	for start: Vector2i in starts:
+		if seen.has(start):
+			continue
+		var line := PackedVector2Array()
+		var at := start
+		var last := start
+		while true:
+			seen[at] = true
+			last = at
+			line.append(Vector2(at) * CELL / 2.0)
+			var next := Vector2i(-99, -99)
+			for n: Vector2i in links[at]:
+				if not seen.has(n):
+					next = n
+					break
+			if next.x == -99:
+				break
+			at = next
+		var closed: bool = line.size() > 2 and links[last].has(start)
+		if closed:
+			line.append(line[0])
+		for _pass in 2:
+			line = _chaikin(line, closed)
+		if line.size() > 1:
+			palisade_lines.append(line)
+	var body := StaticBody2D.new()
+	body.name = "Palisade"
+	w.add_child(body)
+	var noise := FastNoiseLite.new()
+	noise.seed = _rng.randi()
+	noise.frequency = 0.006
+	var area := Rect2(Vector2(-CELL / 2.0, -CELL / 2.0), Vector2(GRID) * CELL)
+	for line in palisade_lines:
+		var segments := PackedVector2Array()
+		for i in line.size() - 1:
+			segments.append_array([line[i], line[i + 1]])
+		var shape := CollisionShape2D.new()
+		var concave := ConcavePolygonShape2D.new()
+		concave.segments = segments
+		shape.shape = concave
+		body.add_child(shape)
+		# `t` - odległość od początku odcinka do następnego pala (reszta przechodzi na kolejny odcinek)
+		var t := 0.0
+		for i in line.size() - 1:
+			var along := line[i + 1] - line[i]
+			var length := along.length()
+			var step := lerpf(6.0, 3.5, absf(along.normalized().y))
+			while t < length:
+				var at := line[i] + along * (t / length)
+				if area.has_point(at):
+					_palisade_stake(stakes, broken, at, noise.get_noise_2d(at.x, at.y) > 0.42)
+				t += step
+			t -= length
+
+
+func _link(links: Dictionary, a: Vector2i, b: Vector2i) -> void:
+	if not links.has(a):
+		links[a] = []
+	if not links.has(b):
+		links[b] = []
+	links[a].append(b)
+	links[b].append(a)
+
+
+## Wygładzenie łamanej (Chaikin): każdy odcinek zastępują punkty w 1/4 i 3/4; otwarta zachowuje końce.
+func _chaikin(line: PackedVector2Array, closed: bool) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	if not closed:
+		out.append(line[0])
+	for i in line.size() - 1:
+		out.append(line[i].lerp(line[i + 1], 0.25))
+		out.append(line[i].lerp(line[i + 1], 0.75))
+	if closed:
+		out.append(out[0])
+	else:
+		out.append(line[line.size() - 1])
+	return out
+
+
+## Jeden pal palisady (jak w Ostoi - Settlement._stake); złamany co trzeci w pasie złamanych.
+func _palisade_stake(stakes: Texture2D, broken: Texture2D, at: Vector2, damaged: bool) -> void:
+	var sprite := Sprite2D.new()
+	if damaged and _rng.randf() < 0.45:
+		sprite.texture = broken
+		sprite.hframes = broken.get_width() / broken.get_height()
+		sprite.frame = _rng.randi() % sprite.hframes
+	else:
+		sprite.texture = stakes
+		sprite.hframes = Settlement.STAKE_WEIGHTS.size()
+		sprite.frame = _rng.rand_weighted(PackedFloat32Array(Settlement.STAKE_WEIGHTS))
+	sprite.offset = Vector2(0, -sprite.texture.get_height() / 2.0 + 1.0)
+	sprite.position = (at + Vector2(_rng.randf_range(-0.8, 0.8), _rng.randf_range(-0.6, 0.6))).round()
+	sprite.flip_h = _rng.randf() < 0.5
+	var shade := _rng.randf_range(0.82, 0.95) if not damaged else _rng.randf_range(0.6, 0.78)
+	sprite.modulate = Color(shade, shade * 0.97, shade * 0.95)
+	w.entities.add_child(sprite)
+
+
 ## Pola winorośli: rzędy co VINE_ROW kafelków świata, w rzędzie krzew co VINE_STEP px, co kilka krzewów przejście
 ## (jak winnice wioski satyrów w Turniach). Krzew stoi tylko tam, gdzie kafelek i kafelek nad nim leżą w polu -
 ## rząd kończy się równo na skraju pola.
 func _vine_fields() -> void:
+	if not climate["terrain"].has("vines"):
+		return
 	var tile: int = w.TILE
 	var kinds: Array = climate["terrain"]["vines"].map(func(path: String) -> Texture2D: return load(path))
 	var in_field := func(t: Vector2i) -> bool:
@@ -793,6 +962,8 @@ func _build_map() -> void:
 				color = climate["map_water"]
 			elif outdoor and vines.has(v):
 				color = climate["map_vines"]
+			elif outdoor and palisades.has(v):
+				color = climate["map_yard"]
 			elif outdoor and label == "u" and not cliffs.has(v):
 				color = climate["map_trees"]
 			elif outdoor and path_tiles.has(Vector2i(x, y)):

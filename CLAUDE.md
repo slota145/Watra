@@ -285,7 +285,9 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   łowców, pajęczy ołtarz, gniazdo królowej) zrobione, czekają na ocenę autora - szczegóły w `docs/historia.md`
   (szukaj „Wystrój lochów”). Wszystkie podziemne klimaty mają wystrój. Krok 5 (Winnica satyrów - pierwszy loch na
   zewnątrz: polany, kręte ścieżki, granicą klify, ściana drzew i stawy - `Dungeon.outdoor`, `decor_vineyard.gd`) zrobiony,
-  czeka na ocenę autora; dalej kolejne lochy na zewnątrz (Oblężony gród, Wyspy na bagnie, Przesmyk w Turniach, Święty gaj).
+  czeka na ocenę autora. Krok 6 (Oblężony gród - granicą palisada po gładkim obrysie, `Dungeon._build_palisade`, za nią
+  spalone zagrody; `decor_stronghold.gd`) zrobiony, czeka na ocenę autora; dalej Wyspy na bagnie, Przesmyk w Turniach,
+  Święty gaj.
   Kolejny klimat: "decor" w `Dungeons.CLIMATES`, skrypt `scripts/decor_<klimat>.gd` (dziedziczy po `DungeonDecor`),
   paczki PixelLab w `pixellab_src/dungeons/` i wpis w `tools/dungeon_props.py`; zrzuty sal: `tools/dungeon_shots.gd`.
 - [ ] **Podział lochów na zwykłe i endgame'owe** (listopad 2026): zwykłe jak dziś; endgame'owe z przedmiotami w Watrze

@@ -669,6 +669,26 @@ odpowiedniej sekcji.
     (4 sztuki, 128 px) w `pixellab_src/dungeons/`; w paczce wysokich obiektów kandydatki wyszły przesunięte między
     klatkami, więc `tools/dungeon_props.py` tnie ją z pasa sklejonych klatek (`strip_part`, klatka `"s<nr>"`).
 
+- [x] **Wystrój lochów: Oblężony gród - drugi loch na zewnątrz** (krok 6 punktu „Lochy ładne i bogate w środku”;
+  ustalenia z autorem: gród zdobyty i spalony przez hordę koboldów, potwory - kobold, procarz, bombiarz, strażnik -
+  Bombardier Kaszlak z Pól Zbożowych, polany: brama i wyłom, spalone zagrody, obóz koboldów, plac - majdan;
+  0 generacji PixelLab - wszystko z gotowych grafik Ostoi, Kopalni goblinów i Pól Zbożowych):
+  - klimat `"stronghold"` w `Dungeons.CLIMATES` (bez klifów: `cliff_below` -2; `palisade_below` 0,15 - wierzchołki
+    poniżej progu szumu to teren za palisadą `Dungeon.palisades`, drobne kawałki poniżej 14 wierzchołków zostają lasem);
+  - `Dungeon._build_palisade`: obrys terenu palisady metodą marching squares po wierzchołkach (odcinki między
+    środkami krawędzi, siodła rozdzielone), łączony w linie i wygładzony dwa razy (`_chaikin`); pale jak w Ostoi
+    (`Settlement.STAKE_WEIGHTS`, co 6 px, w pionie co 3,5 px), pasy złamanych pali według szumu, kolizja
+    `ConcavePolygonShape2D` wzdłuż linii; pale tylko od strony polan, ścieżek i wody (zagroda przechodzi w las bez
+    płotu); linie w `Dungeon.palisade_lines`; za palisadą podłoże ciemna trawa z płatami ubitej ziemi;
+  - wystrój `scripts/decor_stronghold.gd` (`StrongholdDecor`): zagrody za palisadą (`_yards`) - gęsta zabudowa
+    w siatce co około 88 px (chaty, a gdzie się zmieszczą - dwór, stodoła, stajnia, łaźnia, kuźnia, kaplica), część
+    osmalona z dymem (`_smoke`, najwyżej 18) i żarem (`_embers` - `WorldVfx.burning`), ogródki pod chatami, drobiazgi
+    co 40 px, zwęglone drzewa; wieże strażnicze na poziomych odcinkach palisady z terenem palisady za nimi (`_towers`);
+    pochodnie przy ścieżkach (`_trail_torches`); scenki: brama i wyłom (łuk bramy, ocalały kawałek palisady z wieżą,
+    wyłom ze złamanymi palami i rusztowaniem, taran z belek, leje po bombach), spalone zagrody, obóz koboldów (ognisko,
+    namioty ze skór, skrzynie bomb, łupy, totemy), plac (studnia, kramy, manekiny, chorągwie); wejście - obóz obrońców,
+    strażnik - spalony dwór i barykada z prochu; muzyka Pól Zbożowych.
+
 - [x] **Skoki przez przeszkody** (prośba autora): zryw, odskok łuku (`Player.leap`), Mgnienie (też wirujące
   w Młynku) i Krok przez Mgłę przeskakują zwykłe przeszkody (płoty, klify, góry, drzewa, budynki, głęboką wodę),
   ale nie granicę - warstwa `BOUNDS_LAYER` (16, `world.gd`): brzegi mapy (`Bounds`) i ściany podziemnych lochów
