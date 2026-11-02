@@ -443,6 +443,7 @@ func _rend() -> void:
 	if combo:
 		_player.combo_used()
 	_player._ranged_pose(aim)
+	_player.play_skill_anim("sweep")
 	_player.note_skill("rend")
 	var origin := _player.body_center()
 	var half := deg_to_rad(Skills.REND_ARC_DEGREES) / 2.0
@@ -487,6 +488,7 @@ func _ground_slam() -> void:
 	if combo:
 		_player.combo_used()
 	_player._ranged_pose(aim)
+	_player.play_skill_anim("chop")
 	_player.note_skill("ground_slam")
 	_player.add_shake(4.0)
 	Sfx.play("explosion", -4.0, 0.7)

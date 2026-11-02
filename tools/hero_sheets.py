@@ -2,7 +2,7 @@
 
 Każda postać ma 5 kierunków (south, south-east, east, north-east, north - pozostałe gra
 odbija w poziomie) i animacje: idle (obrót postaci), walk, slash (zamach), cast (czar),
-shoot (łuk) - po 4 klatki, a ataki postaci animowanej porządnie (Wojciech) po 8 klatek
+shoot (łuk), a u Wojciecha też ruchy miecza chop, sweep, stab, rising_cut i spin - po 4 klatki, a ataki postaci animowanej porządnie (Wojciech) po 8 klatek
 (szkieletowe ruchy PixelLab: cięcie, strzał z łuku, czar - broń w prawej ręce).
 Arkusz: kolumny = klatki (8), wiersze = animacja * 5 + kierunek.
 
@@ -27,7 +27,10 @@ OUT = os.path.join(ROOT, "assets", "heroes")
 
 HEROES = [("wojciech", "Wojciech"), ("bogdan", "Bogdan"), ("mira", "Mira"), ("jaga", "Jaga")]
 DIRS = ["south", "south-east", "east", "north-east", "north"]
-ANIMS = ["idle", "walk", "slash", "cast", "shoot"]
+ANIMS = ["idle", "walk", "slash", "cast", "shoot", "chop", "sweep", "stab", "rising_cut", "spin"]
+## Ruchy miecza z etapu 2: tu znacznik czytamy po całym pręcie (_rod_ends), bo bywa w ciemniejszym błękicie.
+## Obrót (spin) nie ma znaczników: w Młynku miecz krąży wokół postaci w kodzie (Player).
+SWORD_MOVES = ("chop", "sweep", "stab", "rising_cut", "spin")
 FRAMES = 8  # kolumny arkusza; chód i spoczynek mają 4 klatki, ataki do 8
 CELL = 72
 FEET_Y = 62  # stopy w komórce (od góry), przed zmniejszeniem
@@ -52,8 +55,17 @@ FRAME_FIX = {
         ("shoot", "east", 4): {"copy": 3},
     },
 }
+## Ręczny kąt broni (stopnie) w klatkach ruchów miecza, w których pręt ze znacznika przecina ciało.
+ANGLE_FIX = {
+    "wojciech": {
+        ("stab", "south", 4): 100, ("stab", "south", 5): 100, ("stab", "south", 7): 110,
+        ("sweep", "north", 1): -35, ("sweep", "south-east", 4): -15,
+    },
+}
 ## Najdalej (w pikselach), o ile chwyt ataku może zostać przyciągnięty do sylwetki (_snap).
 SNAP_MAX = 7
+## Jak daleko (w pikselach) szukać dłoni na przedłużeniu pręta w ruchach miecza (_to_fist).
+ROD_REACH = 22
 OUT_CELL = round(CELL * SCALE)
 OUT_FEET_Y = round(FEET_Y * SCALE)
 
@@ -89,6 +101,29 @@ def _clean(hero, anim, direction, f, img):
         for x in range(x0, x1):
             if px[x, y][3] and px[x, y][:3] in colors:
                 px[x, y] = (0, 0, 0, 0)
+    return img
+
+
+def _drop_specks(img):
+    """Usuwa z klatki ruchu miecza małe, oderwane od postaci plamki (do 12 pikseli), które dorysował PixelLab."""
+    px = img.load()
+    body = set(_largest_group(_opaque(img)))
+    left = _opaque(img) - body
+    while left:
+        stack = [left.pop()]
+        group = list(stack)
+        while stack:
+            x, y = stack.pop()
+            for dx in (-1, 0, 1):
+                for dy in (-1, 0, 1):
+                    n = (x + dx, y + dy)
+                    if n in left:
+                        left.remove(n)
+                        group.append(n)
+                        stack.append(n)
+        if len(group) <= 12:
+            for p in group:
+                px[p] = (0, 0, 0, 0)
     return img
 
 
@@ -232,6 +267,55 @@ def _marker(img):
     return far[0], far[1], cx, cy
 
 
+def _rod_ends(img):
+    """(x, y chwytu, x, y czubka) z pręta w ruchach miecza. Czubek to najdalszy od chwytu punkt błękitnej części
+    (także ciemnego błękitu). Chwyt to środek różowej części, a bez niej - koniec błękitu bliższy środka
+    sylwetki. None, gdy pręta nie ma."""
+    px = img.load()
+    cyan, mag, body = [], [], []
+    for y in range(img.height):
+        for x in range(img.width):
+            r, g, b, a = px[x, y]
+            if a < 128:
+                continue
+            h, sat, v = _hsv(r, g, b)
+            if _is_magenta(r, g, b):
+                mag.append((x, y))
+            elif 170.0 <= h <= 200.0 and sat > 0.4 and v > 0.3:
+                cyan.append((x, y))
+            else:
+                body.append((x, y))
+    cyan = _largest_group(cyan)
+    mag = _largest_group(mag)
+    if len(cyan) < 2 or not body:
+        return None
+    if len(mag) >= 2:
+        hx = sum(p[0] for p in mag) / len(mag)
+        hy = sum(p[1] for p in mag) / len(mag)
+    else:
+        bx = sum(p[0] for p in body) / len(body)
+        by = sum(p[1] for p in body) / len(body)
+        hx, hy = min(cyan, key=lambda p: (p[0] - bx) ** 2 + (p[1] - by) ** 2)
+    tip = max(cyan, key=lambda p: (p[0] - hx) ** 2 + (p[1] - hy) ** 2)
+    if (tip[0] - hx) ** 2 + (tip[1] - hy) ** 2 < 16:
+        return None
+    return hx, hy, tip[0], tip[1]
+
+
+def _to_fist(img, rod):
+    """Chwyt ruchu miecza, gdy koniec pręta wisi przed dłonią: cofamy się po linii pręta (od czubka przez
+    chwyt) do pierwszego piksela sylwetki, najdalej ROD_REACH pikseli. None, gdy linia nie trafia w postać."""
+    mx, my, cx, cy = rod
+    length = max(1e-6, math.hypot(cx - mx, cy - my))
+    ux, uy = (mx - cx) / length, (my - cy) / length
+    px = img.load()
+    for step in range(ROD_REACH + 1):
+        x, y = round(mx + ux * step), round(my + uy * step)
+        if 0 <= x < img.width and 0 <= y < img.height and px[x, y][3] >= 128:
+            return x, y
+    return None
+
+
 def build(hero):
     folder = os.path.join(SRC, hero)
     sheet = Image.new("RGBA", (CELL * FRAMES, CELL * len(ANIMS) * len(DIRS)))
@@ -249,6 +333,8 @@ def build(hero):
                 # klatka z wtopionym przedmiotem zastąpiona inną klatką tej animacji (razem ze znacznikiem)
                 src_f = FRAME_FIX.get(hero, {}).get((anim, direction, f), {}).get("copy", f)
                 img = _clean(hero, anim, direction, src_f, _open(paths[src_f]))
+                if anim in SWORD_MOVES:
+                    img = _drop_specks(img)
                 # płótna PixelLab są wyśrodkowane na postaci: stopy z obrotu, przesunięte o różnicę płócien
                 feet = _bottom(rot) + (img.height - rot.height) / 2.0
                 x0 = CELL / 2.0 - img.width / 2.0
@@ -261,7 +347,7 @@ def build(hero):
                 grip = None
                 if os.path.exists(mk_path):
                     mk = _open(mk_path)
-                    found = _marker(mk)
+                    found = _rod_ends(mk) if anim in SWORD_MOVES else _marker(mk)
                     if found:
                         mx, my, cx, cy = found
                         # przesunięcie tylko w atakach (znaczniki chodu i spoczynku są na miejscu)
@@ -271,9 +357,15 @@ def build(hero):
                         ox = (mk.width - img.width) / 2.0
                         oy = (mk.height - img.height) / 2.0
                         angle = math.atan2(cy - my, cx - mx)
+                        fixed = ANGLE_FIX.get(hero, {}).get((anim, direction, f))
+                        if fixed is not None:
+                            angle = math.radians(fixed)
                         hand = (mx - ox, my - oy)
                         if anim not in ("idle", "walk"):
-                            hand = _snap(img, hand)
+                            snapped = _snap(img, hand)
+                            if snapped is None and anim in SWORD_MOVES:
+                                snapped = _to_fist(img, (hand[0], hand[1], cx - ox, cy - oy))
+                            hand = snapped
                         if hand is None:
                             dir_grips.append(None)
                             continue

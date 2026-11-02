@@ -230,10 +230,9 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
 - [ ] **Animacje postaci z bronią** (listopad 2026): broń nie leży stabilnie w dłoni, za mało animacji ataków.
   Ustalenia z autorem: porządnie animowany tylko **Wojciech** (reszta może zostać NPC), styl **zamaszysty jak w BDO**,
   nowe pozy ciała (etap 4) na później. Etap 1 zrobiony (szczegóły w `docs/historia.md`, szukaj „Etap 1 animacji”):
-  ataki Wojciecha po 8 klatek z ruchów szkieletowych PixelLab, broń w dłoni w każdej klatce ataku. Dalej:
-  etap 2 - więcej ruchów miecza tą samą metodą (cios z góry `chop`, cięcie poziome `sweep`, pchnięcie `stab`,
-  cięcie od dołu `rising_cut`, obrót `spin_once` dla Młynka) przypisanych do zwykłych ataków (seria 3 różnych cięć)
-  i umiejętności (Rozpłatanie, Rozłupanie Ziemi, Szarża, Półksiężyc, Młynek); etap 3 - cięciwa łuku rysowana w kodzie
+  ataki Wojciecha po 8 klatek z ruchów szkieletowych PixelLab, broń w dłoni w każdej klatce ataku. Etap 2 zrobiony
+  (szukaj „Etap 2 animacji”): seria 3 cięć w zwykłych atakach i własne ruchy Rozpłatania, Rozłupania Ziemi, Szarży,
+  Półksiężyca i Młynka. Dalej: etap 3 - cięciwa łuku rysowana w kodzie
   (naciąg, puszczenie) i gesty czarów (`cast_down`, ręce w górę) dla umiejętności księgi.
 - [ ] Lepsze dźwięki trafień przeciwników (mięsiste, różne dla miecza, strzał i czarów), pod nowe animacje efektów.
 - [ ] **Przebudowa rozwoju postaci** (do ustalenia z autorem): po dodaniu nekromancji do drzewka księgi - nowe węzły

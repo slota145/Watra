@@ -435,6 +435,17 @@ odpowiedniej sekcji.
   Wybór postaci usunięty z menu: „Nowa gra” od razu pokazuje tryb świata, gracz zawsze gra Wojciechem
   (`Player.HERO`, `set_hero` ignoruje postać z zapisu); arkusze Bogdana, Miry i Jagi zostają na NPC.
 
+- [x] **Etap 2 animacji postaci z bronią** (listopad 2026, Wojciech): nowe ruchy miecza tą samą metodą
+  (`animate_character` w trybie `skeleton-v3`, `energy` 1.3 dla zamaszystego stylu, po 8 klatek na kierunek): `chop`, `sweep`,
+  `stab`, `rising_cut`, `spin` (`spin_once`). Zwykłe ataki mieczem to seria `sweep` -> `chop` -> `rising_cut`
+  (`Player.SWORD_CHAIN`, po 1,2 s przerwy od początku). Umiejętności: Rozpłatanie - `sweep`, Rozłupanie Ziemi - `chop`,
+  Szarża - `stab` (klatki 3-5), Półksiężyc - `rising_cut`, Młynek - `spin`. Rozpłatanie i Rozłupanie Ziemi nie mają własnego
+  czasu ataku, więc ruch włącza `Player.play_skill_anim` (tylko wygląd). Balans i działanie ataków bez zmian.
+  W `tools/hero_sheets.py` ruchy miecza czytają pręt przez `_rod_ends` (także ciemny błękit), chwyt zbyt daleko od dłoni
+  szuka sylwetki na przedłużeniu pręta (`_to_fist`), plamki usuwa `_drop_specks`, ręczne kąty są w `ANGLE_FIX`.
+  Młynek nie ma znaczników: pręty w obrocie wychodziły niespójne, więc miecz krąży wokół postaci w kodzie jak dotąd.
+  Limit `pixelart_workbench join` to 40 elementów (najwyżej 4 kierunki po 8 klatek), a PixelLab przyjmuje 10 zadań naraz.
+
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)
   i 7 slotów umiejętności (LPM, PPM, Q, E, R, Z, X) z osobnym układem dla każdej broni. Każdy slot przyjmuje
