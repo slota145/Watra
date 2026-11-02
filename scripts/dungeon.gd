@@ -53,8 +53,13 @@ var start_room := Rect2i()
 var boss_room := Rect2i()
 ## Komnata Kryształu Watry (pusta do czasu zdarzenia) i jego wariant ("" - loch bez kryształu).
 var event_room := Rect2i()
+## Wariant Kryształu Watry ("crystal", "miners"; "" - loch bez Kryształu).
 var event := ""
 var crystal: WatraCrystal
+## Wylosowane mechaniki lochu (Dungeons.MECHANICS) i ich obiekty.
+var mechanics: Array[String] = []
+var chests: Array[DungeonChest] = []
+var shrines: Array[DungeonShrine] = []
 ## Ołtarz Welesa (Essences): ukryta komnata poza listą komnat - bez potworów i pochodni (pusta - brak ołtarza).
 var altar_room := Rect2i()
 ## Rodzaj wystroju każdej komnaty (DungeonDecor): Rect2i -> nazwa (np. "crypt", "forge", "start").
@@ -121,7 +126,7 @@ func generate(world, settings: Dictionary) -> void:
 	else:
 		_fix_corners()
 	_pick_rooms()
-	_pick_event()
+	_pick_mechanics()
 	_build_tiles()
 	_build_collision()
 	_build_map()
@@ -139,7 +144,7 @@ func generate(world, settings: Dictionary) -> void:
 	_build_entrance()
 	_populate(Dungeons.multiplier(mods, "count") * (1.0 + Dungeons.TIER_COUNT_BONUS * (int(settings["tier"]) - 1)))
 	_build_vault()
-	_build_event()
+	_build_mechanics()
 	_build_altar()
 	Goblin.pathing = self
 
@@ -834,13 +839,23 @@ func _pick_rooms() -> void:
 			boss_room = room
 
 
-## Kryształ Watry: losowo (zawsze w trybie deweloperskim albo gdy wyprawa ma "event") w największej komnacie
-## poza wejściową i komnatą strażnika.
-func _pick_event() -> void:
+## Mechaniki lochu (Dungeons.MECHANICS): losowane z ziarna wyprawy; "mechanics" w ustawieniach wyprawy wymusza
+## zestaw (testy), "event" - wariant Kryształu Watry; w trybie deweloperskim loch ma wszystkie mechaniki.
+## Kryształ Watry zajmuje największą komnatę poza wejściową i komnatą strażnika.
+func _pick_mechanics() -> void:
+	if config.has("mechanics"):
+		mechanics.assign(config["mechanics"])
+	elif Game.dev_mode:
+		mechanics.assign(Dungeons.MECHANICS.keys())
+	else:
+		mechanics = Dungeons.roll_mechanics(_rng, config.get("mechanic_bonus", {}))
 	event = str(config.get("event", ""))
+	if event != "" and not mechanics.has("crystal"):
+		mechanics.append("crystal")
+	if not mechanics.has("crystal"):
+		event = ""
+		return
 	if event == "":
-		if not Game.dev_mode and _rng.randf() >= Dungeons.EVENT_CHANCE:
-			return
 		event = Dungeons.EVENTS[_rng.randi() % Dungeons.EVENTS.size()]
 	var best := -1
 	for room in rooms:
@@ -851,9 +866,107 @@ func _pick_event() -> void:
 			event_room = room
 	if best < 0:
 		event = ""
+		mechanics.erase("crystal")
 
 
-func _build_event() -> void:
+## Buduje wylosowane mechaniki (po potworach - strażnicy skrzyń i fale Kryształu dochodzą później).
+func _build_mechanics() -> void:
+	if mechanics.has("crystal"):
+		_build_crystal()
+	if mechanics.has("chests"):
+		var kinds := {}
+		for kind: String in Dungeons.CHEST_KINDS:
+			kinds[kind] = Dungeons.CHEST_KINDS[kind]["weight"]
+		for room in _mechanic_rooms(_rng.randi_range(Dungeons.CHESTS.x, Dungeons.CHESTS.y)):
+			var traits: Array[String] = []
+			for id: String in Dungeons.CHEST_TRAITS:
+				if _rng.randf() < Dungeons.CHEST_TRAITS[id]["chance"]:
+					traits.append(id)
+			_add_chest(Dungeons.weighted(_rng, kinds), traits, room)
+	if mechanics.has("shrine"):
+		var gifts := Dungeons.SHRINES.duplicate()
+		_shuffle(gifts)
+		for room in _mechanic_rooms(_rng.randi_range(Dungeons.SHRINE_COUNT.x, Dungeons.SHRINE_COUNT.y)):
+			_add_shrine(gifts.pop_back(), room)
+
+
+## Komnaty na skrzynie i kapliczki: zwykłe komnaty (bez wejściowej, strażnika, Kryształu i ołtarza), każda inna,
+## póki starczy.
+func _mechanic_rooms(count: int) -> Array[Rect2i]:
+	var pool: Array[Rect2i] = []
+	for room in rooms:
+		if room != start_room and room != boss_room and room != altar_room and not (event != "" and room == event_room):
+			pool.append(room)
+	_shuffle(pool)
+	var result: Array[Rect2i] = []
+	while result.size() < count and not pool.is_empty():
+		result.append(pool.pop_back())
+	return result
+
+
+func _shuffle(list: Array) -> void:
+	for i in range(list.size() - 1, 0, -1):
+		var j := _rng.randi_range(0, i)
+		var tmp = list[i]
+		list[i] = list[j]
+		list[j] = tmp
+
+
+## Wolne miejsce na obiekt mechaniki w komnacie: z kilkunastu punktów ten, przy którym stoi najmniej wystroju
+## (rekwizyty w w.entities, bez potworów), nie w ścianie i z dala od innych skrzyń i kapliczek.
+func _mechanic_spot(room: Rect2i) -> Vector2:
+	var props: Array[Vector2] = []
+	var area := Rect2(Vector2(room.position) * CELL, Vector2(room.size) * CELL).grow(CELL)
+	for node in w.entities.get_children():
+		if node is Node2D and not node is Goblin and area.has_point(node.position):
+			props.append(node.position)
+	var best := _free_spot(Vector2(room.get_center()) * CELL + Vector2(0, CELL / 2.0), Vector2(room.get_center()) * CELL)
+	var best_score := INF
+	for attempt in 30:
+		var spot := _room_point(room, 48.0)
+		if _blocked(spot, 22.0):
+			continue
+		var score := 0.0
+		for at in props:
+			var d := at.distance_to(spot)
+			if d < 70.0:
+				score += 70.0 - d
+		for other: Node2D in chests + shrines:
+			if other.position.distance_to(spot) < 120.0:
+				score += 500.0
+		if score < best_score:
+			best_score = score
+			best = spot
+	return best
+
+
+## Napisy nad obiektami w mroku lochu: rozjaśnienie, które znosi przyciemnienie świata (CanvasModulate).
+func label_boost() -> Color:
+	var tint: Color = climate["decor"]["tint"] if climate.has("decor") else climate["tint"]
+	return Color(1.0 / tint.r, 1.0 / tint.g, 1.0 / tint.b)
+
+
+func _add_chest(kind: String, traits: Array[String], room: Rect2i) -> DungeonChest:
+	var chest := DungeonChest.create(self, kind, traits)
+	chest.position = _mechanic_spot(room)
+	chests.append(chest)
+	w.entities.add_child(chest)
+	_glow(chest.position + Vector2(0, -8), Dungeons.CHEST_KINDS[kind]["glow"], Vector2(110, 80))
+	w._map_markers.append({"position": chest.position, "color": Color(1.0, 0.85, 0.35), "size": 2.0})
+	return chest
+
+
+func _add_shrine(gift: String, room: Rect2i) -> DungeonShrine:
+	var shrine := DungeonShrine.create(self, gift)
+	shrine.position = _mechanic_spot(room)
+	shrines.append(shrine)
+	w.entities.add_child(shrine)
+	shrine.glow = _glow(shrine.position + Vector2(0, -14), Color(DungeonShrine.COLORS[gift], 0.5), Vector2(130, 100))
+	w._map_markers.append({"position": shrine.position, "color": Color(0.55, 0.85, 1.0), "size": 2.0})
+	return shrine
+
+
+func _build_crystal() -> void:
 	if event == "":
 		return
 	crystal = WatraCrystal.new()
@@ -1216,9 +1329,10 @@ func _on_boss_died(_boss_node: Goblin = null) -> void:
 		for i in 2:
 			_drop(at, Loot.drop_at_level(loot_level, 0.5, Loot.RARE), 1)
 	var chances := Levels.stone_chances(loot_level)
+	# kamienie zaklinające rzadko i po jednym - głównym źródłem jest Kryształ Watry
 	for category in ["weapon", "armor", "jewelry"]:
-		if _rng.randf() < 0.5 + chances[1] * 4.0:
-			_drop(at, Enchanting.stone_id(category, _rng.randf() < chances[1] * 6.0), roundi(_rng.randi_range(1, 2) * treasure))
+		if _rng.randf() < Dungeons.VAULT_STONE_CHANCE + chances[1] * Dungeons.VAULT_STONE_LEVEL:
+			_drop(at, Enchanting.stone_id(category, _rng.randf() < chances[1] * Dungeons.VAULT_STONE_PERFECT), maxi(1, floori(treasure)))
 	_drop(at, "blessed_stone", roundi(_rng.randi_range(1, 3) * treasure))
 	if int(config.get("tier", 1)) >= Essences.HEART_MIN_TIER and _rng.randf() < Essences.HEART_VAULT_CHANCE * treasure:
 		_drop(at, Essences.HEART, 1)

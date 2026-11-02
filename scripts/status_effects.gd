@@ -3,7 +3,7 @@ class_name StatusEffects
 ## Każdy efekt to słownik: "name", "description", "icon" (Texture2D), "left" (sekundy do końca, -1 = bez limitu),
 ## "total" (pełny czas, do mrugania i paska), "kind" (good - premia, bad - osłabienie, cooldown - efekt się odnawia),
 ## "stacks" (opcjonalnie, ile ładunków).
-## Źródła: premie z osady i Dary Watry (Boons), poziom Watry, legendarne przedmioty (LegendaryEffects.statuses)
+## Źródła: premie z osady, Dary Watry i dary kapliczek w lochach (Boons), poziom Watry, legendarne przedmioty (LegendaryEffects.statuses)
 ## oraz osłabienia od potworów (trucizna, spowolnienie, oszołomienie).
 
 const WATRA_ICON := preload("res://assets/ui/status_watra.png")
@@ -20,6 +20,13 @@ const BOON_ICONS := {
 	"rested": preload("res://assets/items/rested.png"),
 	"festival": preload("res://assets/items/victory_mark.png"),
 	"caravan_trade": preload("res://assets/items/bag_satchel.png"),
+	# dary kapliczek w lochach (DungeonShrine)
+	"shrine_might": preload("res://assets/items/bless_might.png"),
+	"shrine_ward": preload("res://assets/items/essence_armor.png"),
+	"shrine_haste": preload("res://assets/items/storm_feather.png"),
+	"shrine_fortune": preload("res://assets/items/coin.png"),
+	"shrine_wisdom": preload("res://assets/items/bless_wisdom.png"),
+	"shrine_moon": preload("res://assets/items/greater_mana_potion.png"),
 }
 
 

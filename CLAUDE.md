@@ -47,7 +47,7 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
   - `player.gd`, `character_stats.gd`, `items.gd`, `item_bases.gd`, `loot.gd`, `legends.gd`, `legendary_effects.gd`, `skills.gd`, `skill_effects.gd`, `levels.gd`, `quests.gd`, `bounties.gd`,
   - `hotbar.gd`: paski szybkiego wyboru (dane), `status_effects.gd`: lista efektów działających na gracza,
   - `skill_tree.gd`: drzewka umiejętności broni (dane), `sword_skills.gd`, `bow_skills.gd` i `spell_skills.gd`: umiejętności drzewek miecza, łuku i księgi,
-  - `dungeons.gd`: dane lochów (klimaty, stopnie, modyfikatory), `dungeon.gd`: generator lochu (też lochy na zewnątrz), wystrój `dungeon_decor.gd`
+  - `dungeons.gd`: dane lochów (klimaty, stopnie, modyfikatory, mechaniki), `dungeon.gd`: generator lochu (też lochy na zewnątrz), wystrój `dungeon_decor.gd`
     i `decor_<klimat>.gd`, okno `scripts/ui/dungeon_window.gd`,
   - `herbs.gd`: zioła i mikstury zielarki, `herb.gd`: zioło do zerwania (sadzone w każdej krainie przez `World._place_herbs`),
   - `scripts/ui/`: okna interfejsu (`ui_style.gd` to wspólny styl).
@@ -160,7 +160,8 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
   jubiler Dobromir), esencje legend (`essences.gd`), rzemiosło premii (`item_craft.gd`), torby (`bags.gd`), pas,
   przedmioty niezidentyfikowane (`unidentified.gd`), encyklopedia (`codex.gd`, klawisz L).
 - **Watra i Ostoja:** Watra z ofiarami, żarem i Darami (`boons.gd`, `ui/watra_window.gd`), budowy osady (`settlement.gd`),
-  lochy Watry (`dungeon.gd`, `dungeons.gd`) z Kryształem Watry (`watra_crystal.gd`) i Ołtarzem Welesa, zielarstwo (`herbs.gd`).
+  lochy Watry (`dungeon.gd`, `dungeons.gd`) z mechanikami (`Dungeons.MECHANICS`: skrzynie `dungeon_chest.gd`, kapliczki
+  `dungeon_shrine.gd`, Kryształ Watry `watra_crystal.gd`) i Ołtarzem Welesa, zielarstwo (`herbs.gd`).
 - **Świat jak w MMO** (po zbudowaniu gildii): podróżnicy (`travelers.gd`, `traveler.gd`), drużyny i prośby o pomoc,
   tryby świata i rywale (`world_modes.gd`, `rival.gd`), rynek (`market.gd`), zlecenia (`bounties.gd`), zadania główne
   (`main_quests.gd`), wydarzenia w świecie (`world_events.gd`, `event_site.gd`).
@@ -291,6 +292,10 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     Nawii** (loch coraz trudniejszy i hojniejszy z każdą minutą, wyjście w dowolnej chwili), **Łowy** (chwytanie
     rzadkich bestii do zagrody w Ostoi - składniki rzemiosła).
   Odrzucone przez autora: zbłąkany wędrowiec, Noc Kupały, Zakład z biesem, Licho, Dziady.
+  Etap 1 zrobiony, czeka na ocenę autora (szczegóły w `docs/historia.md`, szukaj „Mechaniki w lochach, etap 1”):
+  losowanie mechanik (`Dungeons.MECHANICS`, `roll_mechanics` z miejscem na premie drzewka Watry), skrzynie
+  (`dungeon_chest.gd`), kapliczki (`dungeon_shrine.gd`), Kryształ w puli, mniej kamieni zaklinania ze skarbca.
+  Dalej: elitarne potwory, Uroczysko, Krąg Żertwy, Skarbnik, przeróbka Kryształu.
 - [ ] **Bożki** (jak skaraby w PoE): wypadają z małą szansą z każdego potwora (gracz nie musi grindować jednego
   miejsca), wkładane w sloty Watry przed wejściem, zmieniają loch (więcej danej mechaniki, silniejsze potwory i więcej
   łupu, więcej łupu danego rodzaju); mają rzadkości. Same są traktowane jak mechanika - z własnymi węzłami w drzewku
