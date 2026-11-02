@@ -64,6 +64,10 @@ const WHIRL_SPIN_SPEED := 16.0
 const WHIRL_MOVE_FACTOR := 0.7
 ## W Młynku rękojeść krąży w wyciągniętej dłoni, z dala od osi obrotu (ostrze sięga dalej).
 const WHIRL_HAND_REACH := 10.0
+## W Młynku postać stoi z rozłożonymi rękami (klatka 0 ruchu `spin`), a dłoń z mieczem krąży po elipsie
+## (widok z góry spłaszcza okrąg) na wysokości rąk: środek elipsy od stóp i spłaszczenie w pionie.
+const WHIRL_HAND_CENTER := Vector2(0, -16)
+const WHIRL_HAND_SQUASH := 0.55
 ## Oko Cyklonu: przyrost obrażeń Młynka na sekundę kręcenia, górna granica i siła wciągania wrogów.
 const CYCLONE_SPIN_UP := 0.25
 const CYCLONE_SPIN_MAX := 1.0
@@ -182,7 +186,8 @@ var _attack_kind := "melee"
 ## Animacja bieżącego ataku wręcz (seria cięć albo ruch Półksiężyca) - tylko wygląd, bez wpływu na trafienia.
 var _melee_anim := "slash"
 var _chain_step := 0
-var _last_swing_msec := -100000
+## Ile jeszcze (sekundy czasu gry) seria cięć czeka na kolejne cięcie, zanim zacznie się od początku.
+var _chain_timer := 0.0
 ## Ruch postaci przy umiejętności (play_skill_anim) - tylko wygląd.
 var _skill_anim := ""
 var _skill_anim_timer := 0.0
@@ -1317,10 +1322,9 @@ func _emit_resources() -> void:
 func _next_melee_anim(weapon: Dictionary) -> String:
 	if _hold_of(weapon) != "blade":
 		return "slash"
-	var now := Time.get_ticks_msec()
-	if now - _last_swing_msec > SWORD_CHAIN_RESET * 1000.0:
+	if _chain_timer <= 0.0:
 		_chain_step = 0
-	_last_swing_msec = now
+	_chain_timer = SWORD_CHAIN_RESET
 	var anim: String = SWORD_CHAIN[_chain_step]
 	_chain_step = (_chain_step + 1) % SWORD_CHAIN.size()
 	return anim
@@ -1680,7 +1684,8 @@ func _start_whirl() -> void:
 ## Postać kręci się z bronią, a co chwilę rani wszystkich w promieniu.
 func _update_whirl(delta: float) -> void:
 	pivot.rotation += WHIRL_SPIN_SPEED * delta
-	_face_direction(Vector2.from_angle(pivot.rotation))
+	# postać zwraca się tak, żeby prawa (wyciągnięta) ręka wskazywała miecz: twarzą 90 stopni przed nim
+	_face_direction(Vector2.from_angle(pivot.rotation - PI / 2.0))
 	_whirl_fx_time += delta * _skill_speed()
 	_whirl_time += delta
 	_update_whirl_fx(whirl_radius())
@@ -2364,9 +2369,10 @@ func _update_animation(delta: float) -> void:
 	var frame := 0
 	var slash_frames := HeroRig.frames(hero, "slash")
 	_skill_anim_timer = maxf(_skill_anim_timer - delta, 0.0)
+	_chain_timer = maxf(_chain_timer - delta, 0.0)
 	if _whirling:
-		anim = "spin"
-		frame = int(Time.get_ticks_msec() / 70) % HeroRig.frames(hero, anim)
+		# poza z rozłożonymi rękami w kierunku z _update_whirl - ciało obraca się razem z mieczem
+		anim = "spin" if HeroRig.frames(hero, "spin") > 0 else "slash"
 	elif _lunge_time > 0.0:
 		anim = "stab"
 		frame = _lunge_frame()
@@ -2391,8 +2397,16 @@ func _update_animation(delta: float) -> void:
 		frame = int(_anim_time) % HeroRig.frames(hero, "walk")
 	else:
 		_anim_time = 0.0
-	sprite.frame = HeroRig.frame_index(anim, _dir_row, frame)
+	var shown := HeroRig.frame_index(anim, _dir_row, frame)
+	var new_frame := shown != sprite.frame
+	sprite.frame = shown
 	_update_held_weapon(anim, frame)
+	# nowa klatka postaci przeskakuje od razu, więc broń w dłoni też musi przeskoczyć: wygładzanie ruchu
+	# między krokami fizyki (physics interpolation) spóźniałoby ją o krok i odrywało od dłoni;
+	# w Młynku broń krąży płynnie, więc tam wygładzanie zostaje
+	if new_frame and not _whirling:
+		pivot.reset_physics_interpolation()
+		sword.reset_physics_interpolation()
 	_update_silhouette(delta)
 
 
@@ -2422,7 +2436,9 @@ func _update_held_weapon(anim: String, frame: int) -> void:
 			sword.offset = _held_offset(weapon, sword.flip_v)
 		if (is_attacking() or skill_pose) and not _whirling and not is_dead and _follow_hand(weapon, anim, frame):
 			return
-		if not _whirling:
+		if _whirling:
+			_whirl_hand()
+		else:
 			sword.position = Vector2.ZERO
 		return
 	var held: Texture2D = weapon.get("held")
@@ -2483,6 +2499,20 @@ func _follow_hand(weapon: Dictionary, anim: String, frame: int) -> bool:
 	pivot.z_index = 0
 	_weapon_behind(facing_dir.y < -0.1)
 	return true
+
+
+## Miecz w Młynku: rękojeść w wyciągniętej dłoni krążącej po spłaszczonej elipsie na wysokości rąk, ostrze
+## na zewnątrz; gdy dłoń jest z tyłu (u góry ekranu), miecz chowa się za postacią.
+func _whirl_hand() -> void:
+	var angle := pivot.rotation
+	var around := Vector2(cos(angle), sin(angle) * WHIRL_HAND_SQUASH)
+	pivot.position = WHIRL_HAND_CENTER
+	sword.flip_v = false
+	sword.position = pivot.transform.affine_inverse() * (WHIRL_HAND_CENTER + around * WHIRL_HAND_REACH * 1.3)
+	sword.rotation = around.angle() - angle
+	var behind := sin(angle) < -0.2
+	pivot.z_index = 0 if behind else 1
+	_weapon_behind(behind)
 
 
 ## Broń za postacią (rysowana przed sprite'em) albo przed nią - kolejnością węzłów,

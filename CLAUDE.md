@@ -232,7 +232,7 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   nowe pozy ciała (etap 4) na później. Etap 1 zrobiony (szczegóły w `docs/historia.md`, szukaj „Etap 1 animacji”):
   ataki Wojciecha po 8 klatek z ruchów szkieletowych PixelLab, broń w dłoni w każdej klatce ataku. Etap 2 zrobiony
   (szukaj „Etap 2 animacji”): seria 3 cięć w zwykłych atakach i własne ruchy Rozpłatania, Rozłupania Ziemi, Szarży,
-  Półksiężyca i Młynka. Dalej: etap 3 - cięciwa łuku rysowana w kodzie
+  Półksiężyca i Młynka; zrzuty klatek ataków w grze robi `tools/anim_shots.gd`. Dalej: etap 3 - cięciwa łuku rysowana w kodzie
   (naciąg, puszczenie) i gesty czarów (`cast_down`, ręce w górę) dla umiejętności księgi.
 - [ ] Lepsze dźwięki trafień przeciwników (mięsiste, różne dla miecza, strzał i czarów), pod nowe animacje efektów.
 - [ ] **Przebudowa rozwoju postaci** (do ustalenia z autorem): po dodaniu nekromancji do drzewka księgi - nowe węzły

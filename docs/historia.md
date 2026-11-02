@@ -445,6 +445,15 @@ odpowiedniej sekcji.
   szuka sylwetki na przedłużeniu pręta (`_to_fist`), plamki usuwa `_drop_specks`, ręczne kąty są w `ANGLE_FIX`.
   Młynek nie ma znaczników: pręty w obrocie wychodziły niespójne, więc miecz krąży wokół postaci w kodzie jak dotąd.
   Limit `pixelart_workbench join` to 40 elementów (najwyżej 4 kierunki po 8 klatek), a PixelLab przyjmuje 10 zadań naraz.
+  Poprawki po uruchomieniu w grze: (1) przy zmianie klatki postaci broń przeskakuje od razu (`pivot`/`sword`
+  `reset_physics_interpolation` w `Player._update_animation`) - wygładzanie ruchu między krokami fizyki spóźniało ją
+  i odrywało od dłoni; (2) Młynek: postać stoi w pozie z rozłożonymi rękami (klatka 0 ruchu `spin`) zwrócona 90 stopni
+  przed mieczem, więc prawa ręka zawsze wskazuje miecz, a rękojeść krąży po spłaszczonej elipsie na wysokości rąk
+  (`Player._whirl_hand`, `WHIRL_HAND_CENTER`, `WHIRL_HAND_SQUASH`), za postacią, gdy jest u góry; (3) przerwa w serii
+  cięć liczona czasem gry (`_chain_timer`), nie zegarem. Szarża pokazuje klatki 3-5 pchnięcia, w których miecz jest
+  w jednej dłoni (przeskok między rękami w kierunku południowym jest tylko w klatkach 0-2). W klatce trafienia ostrze
+  zasłania biały łuk efektu cięcia - to zamierzone. Zrzuty klatek ataków w grze: `tools/anim_shots.gd`
+  (opis w nagłówku; z `--fixed-fps 60`, bo programowe renderowanie w chmurze jest wolne i gubi klatki).
 
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)
