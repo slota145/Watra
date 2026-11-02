@@ -112,6 +112,16 @@ efekt w „My effects” autora na pixellab.ai). Jego pliki też się nie pobier
 (wynik w `assets/effects/`, w grze `SkillEffects.sheet_once`). W kreatorze kolor części najpewniej zmienia łatka
 `ramps.<nazwa>` (sam `colour` w `set_part` bywa pomijany).
 
+Zanim wydasz generacje (autor ma ograniczony limit miesięczny):
+- najpierw sprawdź, co już jest: grafiki w `assets/` (także z innych krain - np. Winnica satyrów wzięła wioskę satyrów
+  z Turni, klify gór i drzewa lasu), niewykorzystane paczki na PixelLabie (`list_objects`, `list_topdown_tilesets`;
+  identyfikatory użytych są w `pixellab_src/**/ids.json`) i saldo (`get_balance`); policz koszt i pokaż go autorowi;
+- ceny: paczka 16 obiektów 64 px (`create_1_direction_object`) - 10 generacji, paczka 4 obiektów 128 px - 10,
+  zestaw kafelków Wang 64 px (tryb pro) - 25, animacja obiektu 8 klatek - 2; przy wątpliwościach pytaj `search_help`
+  (darmowe) zamiast czytać całą dokumentację API;
+- kandydatki w paczce bywają przesunięte między klatkami (obiekt zaczyna się w jednej, kończy w następnej) - wtedy
+  tnij z pasa sklejonych klatek (`strip_part` w `tools/dungeon_props.py`).
+
 ## Konwencje
 
 - Komentarze, nazwy w interfejsie i opisy commitów piszemy po polsku.
