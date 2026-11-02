@@ -11,6 +11,7 @@ extends SceneTree
 ## domyślnie wszystkie ruchy miecza), łuk: shot (zwykły strzał), power (Grot Swaroga: napinanie i puszczenie),
 ## sky (Deszcz Strzał), hop (Odskok), rapid (Salwa), księga: cast (zwykły czar), push (Kula ognia - pchnięcie),
 ## self (Tarcza Many), down (Fala piorunów), up (Spadająca Gwiazda); np. -- /tmp/luk.png 1 0 shot,power,sky,hop,rapid.
+## Pozy ciała (etap 4): idle (oddech), walk (chód w stronę kierunku), dash (zryw), death (upadek).
 ## Ruchy umiejętności łuku i księgi są tylko pokazane (Player.play_skill_anim z SKILL_MOVES), bez działania umiejętności.
 ## Zmienna ANIM_DEBUG=1: zrzut co klatkę i wypisane położenie miecza (klatka postaci, pozycja, obrót).
 
@@ -93,6 +94,12 @@ func _plan(move: String) -> Vector2i:
 			return Vector2i(60, 3)
 		"shot", "cast":
 			return Vector2i(16, 1)
+		"idle", "walk":
+			return Vector2i(48, 3)
+		"dash":
+			return Vector2i(20, 1)
+		"death":
+			return Vector2i(60, 4)
 	return Vector2i(36, 2)
 
 
@@ -114,6 +121,16 @@ func _begin(p: Node, move: String) -> void:
 			p.play_thrust(_aim)
 		"shot", "cast":
 			p._start_attack()
+		"idle":
+			p._face_direction(_aim)
+		"walk":
+			_press_walk(true)
+		"dash":
+			p._face_direction(_aim)
+			p._start_dash(_aim)
+		"death":
+			p._face_direction(_aim)
+			p._die()
 		"power":
 			p.skills.levels["power_shot"] = 5
 			var tree: GDScript = load("res://scripts/skill_tree.gd")
@@ -136,6 +153,16 @@ func _step(p: Node, move: String, f: int) -> void:
 	if move == "power" and f == 40:
 		# napinanie przez 40 klatek gry, potem puszczenie przycisku
 		p._held_ids.erase("power_shot")
+
+
+## Chód: wciśnięte strzałki ruchu w stronę kierunku (tylko poziomo i pionowo, jak klawisze).
+func _press_walk(on: bool) -> void:
+	var keys := {"move_right": _aim.x > 0.3, "move_left": _aim.x < -0.3, "move_down": _aim.y > 0.3, "move_up": _aim.y < -0.3}
+	for action: String in keys:
+		if on and keys[action]:
+			Input.action_press(action)
+		else:
+			Input.action_release(action)
 
 
 func _process(_delta: float) -> bool:
@@ -167,6 +194,7 @@ func _process(_delta: float) -> bool:
 		if _move_i >= 0:
 			_rows.append([_moves[_move_i], _shots])
 			p._skill_held = false
+			_press_walk(false)
 		_move_i += 1
 		_move_frame = -30  # przerwa: postać wraca do spoczynku, a ostatnie zrzuty pokazują powrót broni
 		_shots = []

@@ -32,7 +32,7 @@ OUT = os.path.join(ROOT, "assets", "heroes")
 HEROES = [("wojciech", "Wojciech"), ("bogdan", "Bogdan"), ("mira", "Mira"), ("jaga", "Jaga")]
 DIRS = ["south", "south-east", "east", "north-east", "north"]
 ANIMS = ["idle", "walk", "slash", "cast", "shoot", "chop", "sweep", "stab", "rising_cut", "spin",
-         "bow_power", "bow_sky", "bow_hop", "cast_push", "cast_self", "cast_down", "cast_up"]
+         "bow_power", "bow_sky", "bow_hop", "cast_push", "cast_self", "cast_down", "cast_up", "dash", "death"]
 ## Ruchy miecza z etapu 2: tu znacznik czytamy po całym pręcie (_rod_ends), bo bywa w ciemniejszym błękicie.
 ## Obrót (spin) nie ma znaczników: w Młynku miecz krąży wokół postaci w kodzie (Player).
 SWORD_MOVES = ("chop", "sweep", "stab", "rising_cut", "spin")
@@ -40,6 +40,16 @@ SWORD_MOVES = ("chop", "sweep", "stab", "rising_cut", "spin")
 ## na stanie postaci „Znacznik” w PixelLab (Wojciech z prętem w prawej dłoni) - pręt pokazuje dłoń w każdej klatce.
 ## Łuk w grze celuje w cel, a księga stoi grzbietem w górę, więc liczy się tylko położenie dłoni.
 STAGE3_MOVES = ("bow_power", "bow_sky", "bow_hop", "cast_push", "cast_self", "cast_down", "cast_up")
+## Etap 4 (tylko postać grywalna, FIST_HEROES): spoczynek z oddechem i chód po 8 klatek oraz zryw (dash) - chwyt
+## z tych samych znaczników co w etapie 3 (mk_<ruch>_<kierunek>_<i>.png). Gdy widać tylko różowy koniec pręta, kąt
+## broni bierzemy z sąsiedniej klatki (albo ze starego znacznika spoczynku mk_idle_<kierunek>.png). Upadek przy
+## śmierci (death) nie ma chwytu - martwa postać nie trzyma broni.
+STAGE4_MOVES = ("idle", "walk", "dash")
+
+
+def _marker_state(hero, anim):
+    """Czy chwyt tego ruchu pochodzi ze znaczników stanu „Znacznik” (etapy 3 i 4)."""
+    return anim in STAGE3_MOVES or (anim in STAGE4_MOVES and hero in FIST_HEROES)
 FRAMES = 8  # kolumny arkusza; chód i spoczynek mają 4 klatki, ataki do 8
 CELL = 72
 FEET_Y = 62  # stopy w komórce (od góry), przed zmniejszeniem
@@ -62,6 +72,8 @@ FRAME_FIX = {
         ("shoot", "south", 5): {"copy": 4},
         ("shoot", "south", 6): {"copy": 4},
         ("shoot", "east", 4): {"copy": 3},
+        # upadek: ostatnia klatka leży inaczej niż poprzednia - postać zostaje w pozie z przedostatniej
+        ("death", "north-east", 7): {"copy": 6}, ("death", "north", 7): {"copy": 6},
     },
 }
 ## Ręczny kąt broni (stopnie) w klatkach ruchów miecza, w których pręt ze znacznika przecina ciało.
@@ -133,7 +145,7 @@ def _bottom(img):
 
 def _frames(hero, anim, direction):
     folder = os.path.join(SRC, hero)
-    if anim == "idle":
+    if anim == "idle" and not os.path.exists(os.path.join(folder, "idle_%s_0.png" % direction)):
         path = os.path.join(folder, "rot_%s.png" % direction)
         return [path] * 4 if os.path.exists(path) else []
     paths = []
@@ -423,11 +435,14 @@ def build(hero):
             dir_grips = []
             paths = _frames(hero, anim, direction)
             counts[anim] = max(counts.get(anim, 0), len(paths))
+            marked = _marker_state(hero, anim)
+            if marked and anim in ("idle", "walk") and _rod_count(folder, anim, direction, len(paths)) < MIN_RODS:
+                marked = False  # pręt prawie cały czas za plecami - chwyt ze starego znacznika spoczynku
             for f, path in enumerate(paths):
                 # klatka z wtopionym przedmiotem zastąpiona inną klatką tej animacji (razem ze znacznikiem)
                 src_f = FRAME_FIX.get(hero, {}).get((anim, direction, f), {}).get("copy", f)
                 img = _clean(hero, anim, direction, src_f, _open(paths[src_f]))
-                if anim in SWORD_MOVES or anim in STAGE3_MOVES:
+                if anim in SWORD_MOVES or _marker_state(hero, anim):
                     img = _drop_specks(img)
                 # płótna PixelLab są wyśrodkowane na postaci: stopy z obrotu, przesunięte o różnicę płócien
                 feet = _bottom(rot) + (img.height - rot.height) / 2.0
@@ -436,22 +451,26 @@ def build(hero):
                 _paste(sheet, img, int(f * CELL + x0), int((a * len(DIRS) + d) * CELL + y0))
                 tops[(anim, d, f)] = img.getbbox()[1] + y0 - FEET_Y
                 # znacznik chwytu (tylko spoczynek i chód)
-                mk_name = "mk_idle_%s.png" % direction if anim == "idle" else "mk_%s_%s_%d.png" % (anim, direction, src_f)
+                # stary znacznik spoczynku: spoczynek bez nowych znaczników i chód Wojciecha z prętem za plecami
+                old_idle = not marked and (anim == "idle" or (anim == "walk" and _marker_state(hero, anim)))
+                mk_name = "mk_idle_%s.png" % direction if old_idle else "mk_%s_%s_%d.png" % (anim, direction, src_f)
                 mk_path = os.path.join(folder, mk_name)
                 grip = None
                 if os.path.exists(mk_path):
                     mk = _open(mk_path)
-                    found = _rod_ends(mk, anim in SWORD_MOVES) if anim in SWORD_MOVES or anim in STAGE3_MOVES else _marker(mk)
+                    found = _rod_ends(mk, anim in SWORD_MOVES) if anim in SWORD_MOVES or marked else _marker(mk)
                     if found:
                         found_raw = found
                         mx, my, cx, cy = found
                         # przesunięcie tylko w atakach (znaczniki chodu i spoczynku są na miejscu)
-                        dx, dy = (0, 0) if anim in ("idle", "walk") else _align(mk, img, found)
+                        dx, dy = (0, 0) if anim in ("idle", "walk") and not marked else _align(mk, img, found)
                         mx, my, cx, cy = mx + dx, my + dy, cx + dx, cy + dy
                         # znacznik może mieć inne płótno niż czysta klatka - też wyśrodkowane
                         ox = (mk.width - img.width) / 2.0
                         oy = (mk.height - img.height) / 2.0
                         angle = math.atan2(cy - my, cx - mx)
+                        if marked and anim in STAGE4_MOVES and _tipless(found):
+                            angle = None  # sam różowy koniec: kąt z sąsiednich klatek
                         fixed = ANGLE_FIX.get(hero, {}).get((anim, direction, f))
                         if fixed is not None:
                             angle = math.radians(fixed)
@@ -462,7 +481,7 @@ def build(hero):
                             contact = None
                         if contact is not None:
                             hand = contact
-                        elif anim not in ("idle", "walk"):
+                        elif anim not in ("idle", "walk") or marked:
                             snapped = _snap(img, hand)
                             if snapped is None and anim in SWORD_MOVES:
                                 snapped = _to_fist(img, (hand[0], hand[1], cx - ox, cy - oy))
@@ -475,22 +494,25 @@ def build(hero):
                         # bokiem broń ma celować przed postać - PixelLab bywa, że rysuje znacznik
                         # trzymany za plecami (Mira); odbijamy wtedy kąt i dłoń w poziomie względem
                         # środka sylwetki, żeby rękojeść była w przedniej dłoni
-                        if anim in ("idle", "walk") and direction in ("east", "south-east") and math.cos(angle) < 0:
+                        if anim in ("idle", "walk") and not marked and direction in ("east", "south-east") and math.cos(angle) < 0:
                             angle = math.atan2(math.sin(angle), -math.cos(angle))
                             box = img.getbbox()
                             body_x = (box[0] + box[2]) / 2.0 + x0 - CELL / 2.0
                             gx = 2.0 * body_x - gx
-                        grip = [round(gx * SCALE, 1), round(gy * SCALE, 1), round(angle, 3)]
+                        grip = [round(gx * SCALE, 1), round(gy * SCALE, 1), None if angle is None else round(angle, 3)]
                 dir_grips.append(grip)
             # brakujące klatki biorą chwyt z poprzedniej (albo z najbliższej znalezionej)
             known = [g for g in dir_grips if g]
-            if anim in STAGE3_MOVES and dir_grips:
-                _fill_between(dir_grips, grips["idle"][d][0] if grips["idle"][d] else None)
+            if marked and dir_grips:
+                if anim in STAGE4_MOVES:
+                    _fill_angles(dir_grips, _rest_angle(folder, direction))
+                rest = grips["idle"][d][0] if anim != "idle" and grips["idle"][d] else None
+                _fill_between(dir_grips, rest)
             for i, g in enumerate(dir_grips):
                 if g is None and known:
                     dir_grips[i] = dir_grips[i - 1] if i > 0 and dir_grips[i - 1] else known[0]
             # pojedyncza klatka z bronią obróconą w drugą stronę (np. Bogdan idący na północ) - kąt jak w pozostałych
-            if len(known) >= 3 and anim in ("idle", "walk"):
+            if len(known) >= 3 and anim in ("idle", "walk") and not marked:
                 for i, g in enumerate(dir_grips):
                     others = [o[2] for j, o in enumerate(dir_grips) if j != i]
                     near = [a for a in others if abs(math.remainder(a - g[2], math.tau)) < math.pi / 3]
@@ -524,6 +546,40 @@ def build(hero):
         _smooth_angles(grips)
         _fist_sheet(small, grips, hero).save(os.path.join(OUT, hero + "_fist.png"))
     return grips, counts
+
+
+## Spoczynek i chód z mniej niż tyloma klatkami z prętem biorą chwyt ze starego znacznika spoczynku (mk_idle_<kierunek>.png).
+MIN_RODS = 3
+
+
+def _rod_count(folder, anim, direction, count):
+    """W ilu klatkach znacznika ruchu widać pręt."""
+    found = 0
+    for i in range(count):
+        path = os.path.join(folder, "mk_%s_%s_%d.png" % (anim, direction, i))
+        if os.path.exists(path) and _rod_ends(_open(path), False):
+            found += 1
+    return found
+
+
+def _tipless(found):
+    """Czy _rod_ends znalazł tylko różowy koniec pręta (czubek wstawiony umownie 4 piksele w prawo)."""
+    return abs(found[2] - found[0] - 4.0) < 1e-6 and found[3] == found[1]
+
+
+def _rest_angle(folder, direction):
+    """Kąt broni ze starego znacznika spoczynku (jedna klatka) albo 90 stopni (w dół), gdy go nie ma."""
+    path = os.path.join(folder, "mk_idle_%s.png" % direction)
+    found = _marker(_open(path)) if os.path.exists(path) else None
+    return round(math.atan2(found[3] - found[1], found[2] - found[0]), 3) if found else round(math.pi / 2, 3)
+
+
+def _fill_angles(dir_grips, fallback):
+    """Klatki z chwytem bez kąta (None) biorą kąt z najbliższej klatki z kątem (albo fallback)."""
+    known = [i for i, g in enumerate(dir_grips) if g and g[2] is not None]
+    for i, g in enumerate(dir_grips):
+        if g and g[2] is None:
+            g[2] = dir_grips[min(known, key=lambda k: abs(k - i))][2] if known else fallback
 
 
 def _fill_between(dir_grips, rest):
@@ -683,7 +739,7 @@ def _fist_sheet(small, grips, hero="wojciech"):
                     center = (OUT_CELL / 2.0 + fix[0], OUT_FEET_Y + fix[1])
                 else:
                     center = _skin_hand(px, anim, DIRS[d], (cx, cy)) or _fist_center(px, cx, cy, grip[2])
-                    if center is None and anim in STAGE3_MOVES:
+                    if center is None and _marker_state(hero, anim):
                         # chwyt wyliczony w pół drogi między znacznikami bywa obok ręki: najbliższy piksel sylwetki
                         near = _nearest_opaque(px, cx, cy, NEAR_REACH)
                         if near:

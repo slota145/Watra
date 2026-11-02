@@ -497,6 +497,19 @@ odpowiedniej sekcji.
   działało (myliło dłoń z twarzą i karkiem). Zrzuty w grze: `tools/anim_shots.gd` (ruchy shot, power, sky, hop, rapid,
   cast, push, self, down, up). Dalej (etap 4, na później): nowe pozy ciała.
 
+- [x] **Etap 4 animacji postaci** (listopad 2026, Wojciech): nowe pozy ciała, wspólne dla wszystkich broni, bez
+  animacji trafienia (żeby nie przerywała ataków). Spoczynek z oddechem (`idle`, ruch `idle`, 8 klatek, w grze
+  `Player.IDLE_FPS`) i chód po 8 klatek (ruch `walk`; tempo `WALK_FPS` liczone na 4 klatki, `WALK_BASE_FRAMES`);
+  inni bohaterowie zostają przy starym spoczynku z obrotu i 4 klatkach chodu. Zryw (`dash`, własne pozy: niski
+  doskok, potem wyhamowanie) trwa czas zrywu i jeszcze `DASH_RECOVER` - zryw w grze trwa tylko 0,14 s, więc przewrót
+  by się nie zmieścił. Upadek przy śmierci (`death`, ruch `fall_back`, `DEATH_ANIM_TIME`, potem postać leży i znika)
+  zamiast przewrócenia sprite'a; martwa postać nie trzyma broni, więc upadek nie ma znaczników, a `_physics_process`
+  martwej postaci odświeża już tylko animację. Ostatnia klatka upadku w dwóch kierunkach to kopia przedostatniej
+  (`FRAME_FIX`). Chwyt jak w etapie 3 ze znaczników stanu „Znacznik” (`STAGE4_MOVES`, `_marker_state`); gdy widać
+  tylko różowy koniec pręta, kąt z sąsiedniej klatki (`_fill_angles`, `_tipless`), a spoczynek i chód z prętem prawie
+  stale za plecami (północ, mniej niż `MIN_RODS` klatek z prętem) biorą chwyt ze starego znacznika spoczynku
+  `mk_idle_<kierunek>.png`. Zrzuty: `tools/anim_shots.gd` (ruchy idle, walk, dash, death).
+
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)
   i 7 slotów umiejętności (LPM, PPM, Q, E, R, Z, X) z osobnym układem dla każdej broni. Każdy slot przyjmuje
