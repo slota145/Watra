@@ -454,6 +454,16 @@ odpowiedniej sekcji.
   w jednej dłoni (przeskok między rękami w kierunku południowym jest tylko w klatkach 0-2). W klatce trafienia ostrze
   zasłania biały łuk efektu cięcia - to zamierzone. Zrzuty klatek ataków w grze: `tools/anim_shots.gd`
   (opis w nagłówku; z `--fixed-fps 60`, bo programowe renderowanie w chmurze jest wolne i gubi klatki).
+  Druga runda po uwagach autora (miecz obok dłoni, za płytko, przed palcami; Szarża i Mgnienie nie ostrzem do przodu):
+  (A) pięść jako osobna warstwa - `tools/hero_sheets.py` wycina piksele dłoni wokół chwytu do
+  `assets/heroes/wojciech_fist.png` (`_fist_sheet`, `FIST_*`), a gra rysuje je nad bronią (`Player._update_fist`,
+  węzeł `Fist` tuż za postacią i bronią, z tym samym z_index), więc rękojeść chowa się w dłoni; chwyt dostaje czwartą
+  liczbę - 1 to broń za postacią (kierunki "od kamery" albo zamach zza głowy: `_over_head`, `HEAD_ROWS`), używaną
+  przez `Player._grip_behind`; (B) chwyt w cięciach liczy `_rod_contact`: PixelLab rysuje między pięścią a różowym
+  końcem znacznika ciemny odcinek pręta, więc idziemy od różowego końca dalej wzdłuż pręta, dopóki klatka ze znacznikiem
+  różni się od czystej (`ROD_DIFF`), i jeszcze `ROD_INTO_FIST` w głąb dłoni; po zmniejszeniu chwyt idzie do środka pięści
+  (`_fist_center`), a pojedyncze odskakujące kąty wygładza `_smooth_angles`; (C) w Szarży i w krótkim pchnięciu po skoku
+  Mgnienia (`Player.play_thrust`, `THRUST_POSE_TIME`, klatki 3-5 ruchu `stab`) kąt miecza to kierunek ruchu.
 
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)

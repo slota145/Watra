@@ -7,7 +7,8 @@ extends SceneTree
 ##   xvfb-run -a -s "-screen 0 3840x2160x24" godot --path . --rendering-driver opengl3 --resolution 1280x720 \
 ##       --fixed-fps 60 -s res://tools/anim_shots.gd -- <plik.png> [kierunek x] [kierunek y] [ruchy]
 ## np. ... -- /tmp/ataki.png 1 0   albo   ... -- /tmp/szarza.png 0 1 lunge
-## Ruchy (po przecinku): chain, rend, slam, lunge, crescent, whirl (domyślnie wszystkie).
+## Ruchy (po przecinku): chain, rend, slam, lunge, crescent, whirl, thrust (pchnięcie po skoku Mgnienia;
+## domyślnie wszystkie).
 ## Zmienna ANIM_DEBUG=1: zrzut co klatkę i wypisane położenie miecza (klatka postaci, pozycja, obrót).
 
 const ZOOM := 4.0
@@ -20,7 +21,7 @@ const SPOT := Vector2(1500, 1500)
 var _world: Node
 var _out := "/tmp/anim_shots.png"
 var _aim := Vector2.RIGHT
-var _moves: Array = ["chain", "rend", "slam", "lunge", "crescent", "whirl"]
+var _moves: Array = ["chain", "rend", "slam", "lunge", "crescent", "whirl", "thrust"]
 var _frame := 0
 var _rows: Array = []  # [nazwa, [Image]]
 var _move_i := -1
@@ -90,6 +91,9 @@ func _begin(p: Node, move: String) -> void:
 			p._start_crescent(5)
 		"whirl":
 			p._skill_held = true
+		"thrust":
+			p._face_direction(_aim)
+			p.play_thrust(_aim)
 
 
 func _step(p: Node, move: String, f: int) -> void:

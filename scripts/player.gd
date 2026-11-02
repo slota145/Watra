@@ -117,6 +117,8 @@ const SKILL_ANIM_TIME := 0.4
 ## Klatki animacji pchnięcia pokazywane w Szarży (ręka wyciągnięta do przodu).
 const LUNGE_FIRST_FRAME := 3
 const LUNGE_FRAMES := 3
+## Po skoku Mgnienia postać przez chwilę stoi w pchnięciu (te same klatki co w Szarży), ostrzem w stronę skoku.
+const THRUST_POSE_TIME := 0.25
 ## O ile przesunąć grafikę broni w dłoni względem pozycji przy ataku (rękojeść w pięści).
 const HELD_GRIP_SHIFT := {"melee": 4.0, "bow": 7.0, "spell": 8.0}
 ## Dodatkowa skala broni w dłoni według sposobu trzymania: miecz i księga były za duże przy postaci.
@@ -191,6 +193,11 @@ var _chain_timer := 0.0
 ## Ruch postaci przy umiejętności (play_skill_anim) - tylko wygląd.
 var _skill_anim := ""
 var _skill_anim_timer := 0.0
+## Pchnięcie po skoku Mgnienia (play_thrust): ile jeszcze trwa i w którą stronę celuje ostrze - tylko wygląd.
+var _thrust_time := 0.0
+var _thrust_dir := Vector2.RIGHT
+## Pięść nad bronią (arkusz HeroRig.fist_sheet): rękojeść chowa się w zaciśniętej dłoni.
+var _fist: Sprite2D
 var _attack_reach := 30.0
 var _attack_arc := PI
 ## Wrogowie trafieni w bieżącym cięciu - każdy obrywa tylko raz na zamach.
@@ -1334,6 +1341,16 @@ func _next_melee_anim(weapon: Dictionary) -> String:
 func play_skill_anim(anim: String) -> void:
 	_skill_anim = anim
 	_skill_anim_timer = SKILL_ANIM_TIME
+	_thrust_time = 0.0
+
+
+## Krótkie pchnięcie ostrzem w stronę `dir` (po skoku Mgnienia). Działa tylko na wygląd.
+func play_thrust(dir: Vector2) -> void:
+	if dir == Vector2.ZERO:
+		return
+	_thrust_dir = dir.normalized()
+	_thrust_time = THRUST_POSE_TIME
+	_skill_anim_timer = 0.0
 
 
 func _start_attack() -> void:
@@ -2370,12 +2387,16 @@ func _update_animation(delta: float) -> void:
 	var slash_frames := HeroRig.frames(hero, "slash")
 	_skill_anim_timer = maxf(_skill_anim_timer - delta, 0.0)
 	_chain_timer = maxf(_chain_timer - delta, 0.0)
+	_thrust_time = maxf(_thrust_time - delta, 0.0)
 	if _whirling:
 		# poza z rozłożonymi rękami w kierunku z _update_whirl - ciało obraca się razem z mieczem
 		anim = "spin" if HeroRig.frames(hero, "spin") > 0 else "slash"
 	elif _lunge_time > 0.0:
 		anim = "stab"
 		frame = _lunge_frame()
+	elif _thrust_time > 0.0 and not is_dead:
+		anim = "stab"
+		frame = clampi(LUNGE_FIRST_FRAME + int((1.0 - _thrust_time / THRUST_POSE_TIME) * LUNGE_FRAMES), LUNGE_FIRST_FRAME, LUNGE_FIRST_FRAME + LUNGE_FRAMES - 1)
 	elif is_charging_fireball():
 		anim = "cast"
 		frame = 1
@@ -2407,6 +2428,7 @@ func _update_animation(delta: float) -> void:
 	if new_frame and not _whirling:
 		pivot.reset_physics_interpolation()
 		sword.reset_physics_interpolation()
+	_update_fist()
 	_update_silhouette(delta)
 
 
@@ -2420,7 +2442,7 @@ func _lunge_frame() -> int:
 ## zachodnich. W ataku postaci z chwytem w klatkach ataku (Wojciech) broń też jest w dłoni
 ## (_follow_hand), u pozostałych kręci się wokół barku jak dotąd (pivot/sword).
 func _update_held_weapon(anim: String, frame: int) -> void:
-	var skill_pose := _skill_anim_timer > 0.0 or _lunge_time > 0.0
+	var skill_pose := _skill_anim_timer > 0.0 or _lunge_time > 0.0 or _thrust_time > 0.0
 	var swinging := _whirling or skill_pose or is_charging_fireball() or _harvest_target != null or is_attacking()
 	var weapon := equipment.weapon()
 	# broń z PixelLab ma gęstszy piksel niż świat (held_scale 0,5); narzędzie do zbierania - zwykłą skalę;
@@ -2467,7 +2489,7 @@ func _update_held_weapon(anim: String, frame: int) -> void:
 	sword.visible = true
 	# idąc "od kamery" (północ) postać zasłania broń
 	pivot.z_index = 0
-	_weapon_behind(facing_dir.y < -0.1)
+	_weapon_behind(_grip_behind(grip))
 
 
 ## Broń w dłoni w trakcie ataku: punkt i kąt chwytu z klatki ataku (HeroRig - w cięciu pręt-znacznik
@@ -2489,6 +2511,10 @@ func _follow_hand(weapon: Dictionary, anim: String, frame: int) -> bool:
 	elif hold == "bow":
 		angle = _attack_angle
 		flip_v = absf(angle_difference(0.0, _attack_angle)) > PI / 2.0
+	elif _lunge_time > 0.0 or _thrust_time > 0.0:
+		# Szarża i pchnięcie po Mgnieniu: ostrze zawsze do przodu, w stronę ruchu
+		angle = (_lunge_dir if _lunge_time > 0.0 else _thrust_dir).angle()
+		flip_v = absf(angle) > PI / 2.0
 	sword.flip_v = flip_v
 	sword.offset = _held_offset(weapon, flip_v)
 	if not weapon.has("grip"):
@@ -2497,8 +2523,16 @@ func _follow_hand(weapon: Dictionary, anim: String, frame: int) -> bool:
 	sword.rotation = angle - pivot.rotation
 	sword.visible = true
 	pivot.z_index = 0
-	_weapon_behind(facing_dir.y < -0.1)
+	_weapon_behind(_grip_behind(grip))
 	return true
+
+
+## Czy broń w tej klatce jest za postacią: z danych chwytu (czwarta liczba - np. zamach zza głowy), a bez nich,
+## gdy postać idzie "od kamery" (na północ).
+func _grip_behind(grip: Array) -> bool:
+	if grip.size() > 3:
+		return grip[3] == 1
+	return facing_dir.y < -0.1
 
 
 ## Miecz w Młynku: rękojeść w wyciągniętej dłoni krążącej po spłaszczonej elipsie na wysokości rąk, ostrze
@@ -2513,6 +2547,36 @@ func _whirl_hand() -> void:
 	var behind := sin(angle) < -0.2
 	pivot.z_index = 0 if behind else 1
 	_weapon_behind(behind)
+
+
+## Pięść nad bronią: ta sama klatka co postać, z arkusza pikseli dłoni (HeroRig.fist_sheet). Poza bronią zakrywa
+## dokładnie te same piksele co postać, więc nic nie zmienia; nad mieczem chowa rękojeść w zaciśniętej dłoni.
+## Stoi zawsze za postacią i bronią w kolejności rysowania, z tym samym z_index co broń.
+func _update_fist() -> void:
+	if _fist == null:
+		var texture := HeroRig.fist_sheet(hero) if ResourceLoader.exists("res://assets/heroes/%s_fist.png" % hero) else null
+		if texture == null:
+			return
+		_fist = Sprite2D.new()
+		_fist.name = "Fist"
+		_fist.texture = texture
+		_fist.hframes = sprite.hframes
+		_fist.vframes = sprite.vframes
+		add_child(_fist)
+	_fist.offset = sprite.offset
+	_fist.position = sprite.position
+	_fist.frame = sprite.frame
+	_fist.flip_h = sprite.flip_h
+	_fist.visible = sprite.visible and sword.visible and _harvest_target == null
+	_fist.modulate = sprite.modulate
+	_fist.self_modulate = sprite.self_modulate
+	_fist.material = sprite.material
+	_fist.z_index = pivot.z_index
+	var last := pivot if pivot.get_index() > sprite.get_index() else sprite
+	if _fist.get_index() < last.get_index():
+		move_child(_fist, last.get_index())
+	elif _fist.get_index() > last.get_index() + 1:
+		move_child(_fist, last.get_index() + 1)
 
 
 ## Broń za postacią (rysowana przed sprite'em) albo przed nią - kolejnością węzłów,

@@ -294,6 +294,8 @@ func _jump(reach: float, level: int, spinning: bool) -> bool:
 	_last_target = best
 	var travel := spot - from
 	_player._face_direction(travel)
+	if not spinning:
+		_player.play_thrust(travel)  # ostrze do przodu, w stronę skoku
 	var trail_from := from + Player.BODY_OFFSET
 	var trail := _player.body_center() - trail_from
 	if spinning:
