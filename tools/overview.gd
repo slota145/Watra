@@ -5,6 +5,8 @@ extends SceneTree
 ## gdzie bywają wyjścia do innych krain.
 ## Użycie: -s tools/overview.gd -- <plik.png> <kraina> <kafelek x> <kafelek y> <przybliżenie> [ziarno]
 ## Na Linuksie bez ekranu: SCRIPT=tools/overview.gd tools/screenshot.sh /tmp/wioska.png mountains 148 57 0.32
+## Loch: kraina "dungeon", a po ziarnie klimat (Dungeons.CLIMATES) i stopień, np.
+## SCRIPT=tools/overview.gd tools/screenshot.sh /tmp/kopalnia.png dungeon 80 60 0.45 7 mine 3
 
 var _world: Node
 var _frame := 0
@@ -15,7 +17,12 @@ func _initialize() -> void:
 	_args = OS.get_cmdline_user_args()
 	var world_seed := int(_args[5]) if _args.size() > 5 else 12345
 	root.get_node("Game").save_path = "user://test_savegame.json"
-	root.get_node("Game")._pending_load = {"seed": world_seed, "zone": _args[1], "player": {}}
+	var pending := {"seed": world_seed, "zone": _args[1], "player": {}}
+	if _args[1] == "dungeon":
+		var climate := _args[6] if _args.size() > 6 else "catacombs"
+		var tier := int(_args[7]) if _args.size() > 7 else 1
+		pending["dungeon"] = {"climate": climate, "tier": tier, "mods": [], "seed": world_seed}
+	root.get_node("Game")._pending_load = pending
 	_world = load("res://scenes/world.tscn").instantiate()
 	root.add_child.call_deferred(_world)
 
