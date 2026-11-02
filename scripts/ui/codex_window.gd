@@ -19,6 +19,8 @@ const BOSS_COLOR := Color(1.0, 0.55, 0.25)
 var _player: Player
 var _tab := "legends"
 var _selected := ""
+## Tryb deweloperski: przedmiot kliknięty ostatnio przez gracza - drugie kliknięcie w niego daje go do plecaka.
+var _clicked := ""
 var _tabs := {}
 var _grid: GridContainer
 var _counter: Label
@@ -119,6 +121,7 @@ func _dev_mode() -> bool:
 func _show_tab(tab: String) -> void:
 	_tab = tab
 	_selected = ""
+	_clicked = ""
 	for other: String in _tabs:
 		_tabs[other].set_pressed_no_signal(other == tab)
 	_refresh()
@@ -175,7 +178,7 @@ func _refresh() -> void:
 		var slot := _make_slot(id, found)
 		_grid.add_child(slot)
 		_slots[id] = slot
-	_counter.text = tr("Odkryto: %d / %d") % [known, list.size()] + (tr("   (tryb deweloperski: kliknij przedmiot, by go dostać)") if _dev_mode() and not _is_monster_tab() else "")
+	_counter.text = tr("Odkryto: %d / %d") % [known, list.size()] + (tr("   (tryb deweloperski: kliknij przedmiot drugi raz, by go dostać)") if _dev_mode() and not _is_monster_tab() else "")
 	if _selected == "" and not list.is_empty():
 		_selected = list[0]
 	_show_details(_selected)
@@ -216,8 +219,11 @@ func _on_slot(id: String) -> void:
 		_slots[other].set_pressed_no_signal(other == id)
 	_show_details(id)
 	Sfx.play("ui_click")
+	# tryb deweloperski: pierwsze kliknięcie pokazuje opis, drugie w ten sam przedmiot daje go do plecaka
 	if _dev_mode() and not _is_monster_tab():
-		give(id)
+		if _clicked == id:
+			give(id)
+		_clicked = id
 
 
 ## Tryb deweloperski: jedna sztuka przedmiotu do plecaka (legenda z poziomem postaci).

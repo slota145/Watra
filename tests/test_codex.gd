@@ -112,6 +112,14 @@ func _check_window(p) -> void:
 	var given: String = window.give("legend_hydra_bow")
 	check("tryb deweloperski: legenda do plecaka", load("res://scripts/items.gd").get_data(given).get("base", "") == "legend_hydra_bow"
 			and p.inventory.count_of(given) == 1 and before == 0)
+	# pierwsze kliknięcie tylko pokazuje opis, drugie w ten sam przedmiot daje go do plecaka
+	var count: int = p.inventory.slots.filter(func(slot) -> bool: return slot != null and not slot.is_empty()).size()
+	window._on_slot("legend_hydra_bow")
+	var after_one: int = p.inventory.slots.filter(func(slot) -> bool: return slot != null and not slot.is_empty()).size()
+	window._on_slot("legend_hydra_bow")
+	var after_two: int = p.inventory.slots.filter(func(slot) -> bool: return slot != null and not slot.is_empty()).size()
+	check("tryb deweloperski: przedmiot dopiero po drugim kliknięciu", after_one == count and after_two == count + 1,
+			"%d -> %d -> %d" % [count, after_one, after_two])
 	check("tryb deweloperski: licznik pełny", window._counter.text.begins_with("Odkryto: %d / %d" % [window.entries().size(), window.entries().size()]))
 	hud.dev_mode = false
 	window.toggle()

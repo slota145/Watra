@@ -208,11 +208,6 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 
 ### Zgłoszenia z listopada 2026
 
-- [ ] **Encyklopedia w trybie deweloperskim - przedmiot dopiero po drugim kliknięciu** (`scripts/ui/codex_window.gd`,
-  `_on_slot` i `give`): dziś pierwsze kliknięcie przedmiotu (np. unikatu) od razu wkłada go do plecaka. Ma być tak:
-  pierwsze kliknięcie tylko wybiera przedmiot i pokazuje jego opis, dopiero kolejne kliknięcie w ten sam przedmiot
-  go daje. Poprawić też podpowiedź w liczniku („kliknij przedmiot, by go dostać”).
-
 
 ## Pomysły i rzeczy do zrobienia
 

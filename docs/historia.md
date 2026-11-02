@@ -542,8 +542,8 @@ odpowiedniej sekcji.
   Bossowie, Potwory (kraina i poziomy, liczba pokonanych, stopień w bestiariuszu, trofeum, legendy bossa, opis),
   Zioła i mikstury, Przedmioty (linie po 5 tierów). Nieodkryte wpisy to ciemne sylwetki z „???” i licznik „Odkryto”;
   przedmiot odkrywa się, gdy trafi do plecaka, na postać albo do magazynu (wylosowany liczy się jako jego baza),
-  potwora - gdy zostanie pokonany. W trybie deweloperskim widać wszystko, a kliknięcie przedmiotu daje jedną sztukę
-  (legendę z poziomem postaci). Nowy potwór wymaga wpisu w `Codex.MONSTERS`.
+  potwora - gdy zostanie pokonany. W trybie deweloperskim widać wszystko, a drugie kliknięcie w ten sam przedmiot daje jedną
+  sztukę (legendę z poziomem postaci); pierwsze tylko pokazuje opis (`CodexWindow._clicked`, listopad 2026). Nowy potwór wymaga wpisu w `Codex.MONSTERS`.
 
 - [x] **Szybkie poprawki z listopada 2026:**
   - węzeł kluczowy miecza **Oko Cyklonu** (`cyclone_eye`) zamiast Nieustającego Wiru: Młynek wciąga wrogów
