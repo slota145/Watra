@@ -4,7 +4,7 @@ extends SceneTree
 ## zapis gry z lochu (wraca do Ostoi), żar do wydania, a na koniec pełna droga: okno lochów przy Watrze ->
 ## wejście w płomienie (żar wydany, modyfikatory działają) -> płomienie w lochu -> powrót przed Watrę.
 
-const CLIMATES := ["catacombs", "mine", "flooded", "roots", "vineyard"]
+const CLIMATES := ["catacombs", "mine", "flooded", "roots", "vineyard", "stronghold"]
 
 var _world: Node
 var _frame := 0
@@ -68,8 +68,14 @@ func _check_dungeon() -> void:
 	var layer: TileMapLayer = _world.get_node("DungeonTiles")
 	if d.outdoor:
 		# loch na zewnątrz: kafelki tylko przy klifach, granicą są też drzewa i stawy, pod spodem podłoże z teksturami
-		check("%s: klify, drzewa i woda" % climate, layer.get_used_cells().size() > 0 and d.cliffs.size() > 0 and d.waters.size() > 0
-				and _world._soft_corners.size() > 0, "%d klifów, %d wody" % [d.cliffs.size(), d.waters.size()])
+		if d.climate["terrain"].has("palisade_below"):
+			# granicą palisada (pale wzdłuż wygładzonych linii z kolizją), drzewa i stawy - bez klifów
+			check("%s: palisada, drzewa i woda" % climate, d.palisades.size() > 50 and d.palisade_lines.size() > 0
+					and _world.get_node_or_null("Palisade") != null and d.waters.size() > 0 and _world._soft_corners.size() > 0,
+					"%d za palisadą, %d linii, %d wody" % [d.palisades.size(), d.palisade_lines.size(), d.waters.size()])
+		else:
+			check("%s: klify, drzewa i woda" % climate, layer.get_used_cells().size() > 0 and d.cliffs.size() > 0 and d.waters.size() > 0
+					and _world._soft_corners.size() > 0, "%d klifów, %d wody" % [d.cliffs.size(), d.waters.size()])
 		check("%s: kręte ścieżki z ubitej ziemi" % climate, d._trails.size() >= d.rooms.size() - 1 and d.path_tiles.size() > 100)
 	else:
 		check("%s: kafelek w każdej komórce" % climate, layer.get_used_cells().size() == (d.GRID.x - 1) * (d.GRID.y - 1))
