@@ -8,7 +8,10 @@ extends SceneTree
 ##       --fixed-fps 60 -s res://tools/anim_shots.gd -- <plik.png> [kierunek x] [kierunek y] [ruchy]
 ## np. ... -- /tmp/ataki.png 1 0   albo   ... -- /tmp/szarza.png 0 1 lunge
 ## Ruchy (po przecinku): chain, rend, slam, lunge, crescent, whirl, thrust (pchnięcie po skoku Mgnienia;
-## domyślnie wszystkie).
+## domyślnie wszystkie ruchy miecza), łuk: shot (zwykły strzał), power (Grot Swaroga: napinanie i puszczenie),
+## sky (Deszcz Strzał), hop (Odskok), rapid (Salwa), księga: cast (zwykły czar), push (Kula ognia - pchnięcie),
+## self (Tarcza Many), down (Fala piorunów), up (Spadająca Gwiazda); np. -- /tmp/luk.png 1 0 shot,power,sky,hop,rapid.
+## Ruchy umiejętności łuku i księgi są tylko pokazane (Player.play_skill_anim z SKILL_MOVES), bez działania umiejętności.
 ## Zmienna ANIM_DEBUG=1: zrzut co klatkę i wypisane położenie miecza (klatka postaci, pozycja, obrót).
 
 const ZOOM := 4.0
@@ -27,6 +30,11 @@ var _rows: Array = []  # [nazwa, [Image]]
 var _move_i := -1
 var _move_frame := 0
 var _shots: Array[Image] = []
+## Ruch -> umiejętność, której wygląd pokazuje (Player.SKILL_MOVES).
+const SKILL_SHOWS := {"sky": "arrow_rain", "hop": "vault", "rapid": "multishot", "push": "frost_lance",
+		"self": "mana_shield", "down": "thunder_wave", "up": "meteor"}
+const BOW_MOVES := ["shot", "power", "sky", "hop", "rapid"]
+const BOOK_MOVES := ["cast", "push", "self", "down", "up"]
 
 
 func _initialize() -> void:
@@ -50,7 +58,7 @@ func _start() -> void:
 func _gear(p: Node) -> void:
 	var loot: GDScript = load("res://scripts/loot.gd")
 	p.stats.level = 30
-	p.equipment.equip_to("weapon", loot.generate(loot.base_for("sword", 30), "rare", 30), 0)
+	_arm(p, "sword")
 	p.skills.character_level = 99
 	for id in ["rend", "ground_slam", "lunge", "crescent", "whirlwind"]:
 		p.skills.levels[id] = 5
@@ -66,6 +74,12 @@ func _gear(p: Node) -> void:
 			p.skills.nodes["melee"][step] = true
 
 
+## Broń w ręku: sword, bow albo book.
+func _arm(p: Node, line: String) -> void:
+	var loot: GDScript = load("res://scripts/loot.gd")
+	p.equipment.equip_to("weapon", loot.generate(loot.base_for(line, 30), "rare", 30), 0)
+
+
 ## Ile klatek gry trwa ruch i co ile klatek robić zrzut.
 func _plan(move: String) -> Vector2i:
 	match move:
@@ -75,7 +89,11 @@ func _plan(move: String) -> Vector2i:
 			return Vector2i(24, 1)
 		"whirl":
 			return Vector2i(24, 1)
-	return Vector2i(30, 2)
+		"power":
+			return Vector2i(60, 3)
+		"shot", "cast":
+			return Vector2i(16, 1)
+	return Vector2i(36, 2)
 
 
 func _begin(p: Node, move: String) -> void:
@@ -94,11 +112,30 @@ func _begin(p: Node, move: String) -> void:
 		"thrust":
 			p._face_direction(_aim)
 			p.play_thrust(_aim)
+		"shot", "cast":
+			p._start_attack()
+		"power":
+			p.skills.levels["power_shot"] = 5
+			var tree: GDScript = load("res://scripts/skill_tree.gd")
+			if not p.skills.nodes.has("bow"):
+				p.skills.nodes["bow"] = {}
+			for step in tree.path_to("bow", tree.node_for_skill("power_shot")):
+				p.skills.nodes["bow"][step] = true
+			p._held_ids["power_shot"] = true
+			p.bow_skills.press("power_shot")
+		_:
+			if SKILL_SHOWS.has(move):
+				p._face_direction(_aim)
+				var show: Array = p.SKILL_MOVES[SKILL_SHOWS[move]]
+				p.play_skill_anim(show[0], show[1], 0, show[2] if show.size() > 2 else 1)
 
 
 func _step(p: Node, move: String, f: int) -> void:
 	if move == "chain" and f % 26 == 0:
 		p._start_attack()
+	if move == "power" and f == 40:
+		# napinanie przez 40 klatek gry, potem puszczenie przycisku
+		p._held_ids.erase("power_shot")
 
 
 func _process(_delta: float) -> bool:
@@ -138,6 +175,9 @@ func _process(_delta: float) -> bool:
 			quit()
 			return false
 		return false
+	if _move_frame == -30:
+		var line := "bow" if _moves[_move_i] in BOW_MOVES else ("book" if _moves[_move_i] in BOOK_MOVES else "sword")
+		_arm(p, line)
 	if _move_frame == 0:
 		_begin(p, _moves[_move_i])
 	if _move_frame >= 0:
