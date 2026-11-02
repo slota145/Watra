@@ -519,6 +519,10 @@ odpowiedniej sekcji.
   `Player.HIT_SOUNDS`; pociski - według `fire`/`fx_kind`/`magic`, czary piorunów i Zamieć podają żywioł same);
   potwór gra go w `play_hit_sound` (w bossa o 2 dB głośniej; boss dotąd nie miał odgłosu trafienia). Ciosy
   sojuszników, pułapek itp. zostają przy zwykłym `hit`. Test: `tests/test_audio.gd`.
+  Poprawka: trafienia czarów i strzał grają daleko od postaci, a `AudioStreamPlayer2D` ze zwykłym cichnięciem
+  (`Sfx.ATTENUATION` 1,6) ściszał je o 10-15 dB względem miecza - trafienia gracza mają łagodne `HIT_ATTENUATION`
+  (piąte pole w `Sfx.SOUNDS`). Widmowe Ostrza i strzały tropiące podają swój dźwięk same (po zmianie broni
+  krążące ostrza grały `hit_magic`).
 
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)

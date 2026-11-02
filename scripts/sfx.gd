@@ -26,7 +26,12 @@ const POOL_2D_SIZE := 16
 ## Zasięg słyszenia dźwięków z położeniem (piksele świata).
 const HEARING_DISTANCE := 420.0
 
-## nazwa: [pliki, głośność (dB), rozrzut wysokości, minimalny odstęp między powtórkami (s)]
+## Cichnięcie z odległością (AudioStreamPlayer2D.attenuation): zwykłe dźwięki świata i łagodne dla trafień gracza -
+## czary i strzały trafiają daleko od postaci, a mają brzmieć prawie tak samo głośno jak cios mieczem obok.
+const ATTENUATION := 1.6
+const HIT_ATTENUATION := 0.5
+
+## nazwa: [pliki, głośność (dB), rozrzut wysokości, minimalny odstęp między powtórkami (s), opcjonalnie cichnięcie]
 const SOUNDS := {
 	# interfejs
 	"ui_click": [["click_002"], -8.0, 0.05, 0.03],
@@ -46,13 +51,13 @@ const SOUNDS := {
 			"impactPunch_medium_003", "impactPunch_medium_004"], -8.0, 0.12, 0.04],
 	"hit_heavy": [["impactPunch_heavy_000", "impactPunch_heavy_001", "impactPunch_heavy_002"], -5.0, 0.08, 0.08],
 	# trafienia gracza zależne od broni i żywiołu (tools/hit_sfx.py, Player.hit_enemy)
-	"hit_blade": [["hit_blade_1", "hit_blade_2", "hit_blade_3", "hit_blade_4"], -6.0, 0.08, 0.04],
-	"hit_arrow": [["hit_arrow_1", "hit_arrow_2", "hit_arrow_3", "hit_arrow_4"], -6.0, 0.08, 0.04],
-	"hit_fire": [["hit_fire_1", "hit_fire_2", "hit_fire_3"], -9.0, 0.06, 0.06],
-	"hit_ice": [["hit_ice_1", "hit_ice_2", "hit_ice_3"], -9.0, 0.06, 0.06],
-	"hit_lightning": [["hit_lightning_1", "hit_lightning_2", "hit_lightning_3"], -10.0, 0.06, 0.06],
-	"hit_magic": [["hit_magic_1", "hit_magic_2", "hit_magic_3"], -8.0, 0.08, 0.05],
-	"hit_crit": [["hit_crit_1", "hit_crit_2", "hit_crit_3"], -4.0, 0.06, 0.06],
+	"hit_blade": [["hit_blade_1", "hit_blade_2", "hit_blade_3", "hit_blade_4"], -6.0, 0.08, 0.04, HIT_ATTENUATION],
+	"hit_arrow": [["hit_arrow_1", "hit_arrow_2", "hit_arrow_3", "hit_arrow_4"], -5.0, 0.08, 0.04, HIT_ATTENUATION],
+	"hit_fire": [["hit_fire_1", "hit_fire_2", "hit_fire_3"], -7.0, 0.06, 0.06, HIT_ATTENUATION],
+	"hit_ice": [["hit_ice_1", "hit_ice_2", "hit_ice_3"], -6.0, 0.06, 0.06, HIT_ATTENUATION],
+	"hit_lightning": [["hit_lightning_1", "hit_lightning_2", "hit_lightning_3"], -6.0, 0.06, 0.06, HIT_ATTENUATION],
+	"hit_magic": [["hit_magic_1", "hit_magic_2", "hit_magic_3"], -7.0, 0.08, 0.05, HIT_ATTENUATION],
+	"hit_crit": [["hit_crit_1", "hit_crit_2", "hit_crit_3"], -4.0, 0.06, 0.06, HIT_ATTENUATION],
 	"hurt": [["impactSoft_heavy_000", "impactSoft_heavy_001", "impactSoft_heavy_002"], -3.0, 0.08, 0.15],
 	"enemy_die": [["kill_1", "kill_2", "kill_3"], -6.0, 0.1, 0.05],
 	"bow": [["bow_shot_1", "bow_shot_2", "bow_shot_3"], -5.0, 0.06, 0.05],
@@ -212,7 +217,7 @@ func _ready() -> void:
 		var player := AudioStreamPlayer2D.new()
 		player.bus = "SFX"
 		player.max_distance = HEARING_DISTANCE
-		player.attenuation = 1.6
+		player.attenuation = ATTENUATION
 		add_child(player)
 		_pool_2d.append(player)
 	for i in 2:
@@ -262,6 +267,8 @@ func play_at(sound: String, at: Vector2, volume := 0.0) -> void:
 	var player := _pool_2d[_next_2d]
 	_next_2d = (_next_2d + 1) % _pool_2d.size()
 	_setup(player, sound, stream, volume, 1.0)
+	var data: Array = SOUNDS[sound]
+	player.attenuation = data[4] if data.size() > 4 else ATTENUATION
 	player.global_position = at
 	player.play()
 

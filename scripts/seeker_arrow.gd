@@ -153,6 +153,6 @@ func _finish() -> void:
 func _hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, push: float) -> void:
 	var player: Player = get_tree().get_first_node_in_group("player")
 	if player != null:
-		player.hit_enemy(enemy, amount, from_position, push)
+		player.hit_enemy(enemy, amount, from_position, push, "arrow")
 	else:
 		enemy.take_damage(amount, from_position, push)

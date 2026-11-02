@@ -67,6 +67,9 @@ func _process(_d: float) -> bool:
 			_sfx._last_played.erase("hit_fire")
 			_world.player.hit_enemy(enemy, 1, _world.player.global_position, 0.0, "fire")
 			check("trafienie ogniem gra hit_fire", _sfx._last_played.has("hit_fire"))
+			# trafienia gracza cichną z odległością łagodniej niż reszta świata (czary trafiają daleko)
+			var last_2d = _sfx._pool_2d[(_sfx._next_2d - 1 + _sfx._pool_2d.size()) % _sfx._pool_2d.size()]
+			check("trafienie cichnie łagodnie", is_equal_approx(last_2d.attenuation, _sfx.HIT_ATTENUATION), str(last_2d.attenuation))
 			check("dźwięk trafienia wraca do zwykłego", enemy.get_script().hit_sound == "hit", enemy.get_script().hit_sound)
 			var boss = null
 			for b in root.get_tree().get_nodes_in_group("bosses"):
