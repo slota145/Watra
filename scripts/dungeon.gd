@@ -8,7 +8,7 @@ extends Node
 ## Komnaty: wejściowa z płomieniami Watry (powrót do Ostoi), w pozostałych gromady potworów klimatu, w najdalszej
 ## strażnik (boss) przy zamkniętym skarbcu - po jego pokonaniu skarbiec się otwiera, a obok buchają płomienie powrotu.
 ## Mrok (CanvasModulate w kolorze klimatu), pochodnie / koksowniki / grzyby ze światłem i światło wokół gracza.
-## Komnaty mają wcięte narożniki i wnęki; klimat z "decor" (Katakumby) urządza je scenkami (DungeonDecor),
+## Komnaty mają wcięte narożniki i wnęki; klimat z "decor" (Katakumby, Kopalnia, Zatopione podziemia) urządza je scenkami (DungeonDecor),
 ## pozostałe - porozrzucanym wystrojem (_build_props).
 
 const CELL := 64
@@ -48,6 +48,8 @@ var event := ""
 var crystal: WatraCrystal
 ## Ołtarz Welesa (Essences): ukryta komnata poza listą komnat - bez potworów i pochodni (pusta - brak ołtarza).
 var altar_room := Rect2i()
+## Rodzaj wystroju każdej komnaty (DungeonDecor): Rect2i -> nazwa (np. "crypt", "forge", "start").
+var room_themes := {}
 var altar: Npc
 var _altar_sprite: Sprite2D
 var _altar_glow: Sprite2D
@@ -95,7 +97,7 @@ func generate(world, settings: Dictionary) -> void:
 	w._build_bounds()
 	_build_atmosphere()
 	if climate.has("decor"):
-		DungeonDecor.new(self).build()
+		DungeonDecor.create(self).build()
 	else:
 		_build_props()
 	_build_entrance()

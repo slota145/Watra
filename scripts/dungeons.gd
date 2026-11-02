@@ -24,7 +24,7 @@ const CLIMATES := {
 		"wall_props": ["res://assets/cemetery/candle.png", "res://assets/cemetery/sarcophagus.png", "res://assets/forest/props/cage.png",
 				"res://assets/cemetery/skulls.png"],
 		"map_floor": Color("5c5650"), "map_wall": Color("16151a"),
-		# wystrój komnat (scripts/dungeon_decor.gd): rodzaje komnat i grafiki z tools/dungeon_props.py
+		# wystrój komnat (scripts/decor_<klimat>.gd): rodzaje komnat i grafiki z tools/dungeon_props.py
 		"decor": {"dir": "res://assets/dungeons/catacombs/", "tint": Color(0.6, 0.6, 0.72),
 				"themes": ["crypt", "pillars", "ossuary", "chapel", "collapsed", "prison"]},
 	},
@@ -40,6 +40,8 @@ const CLIMATES := {
 		"wall_props": ["res://assets/village/crate.png", "res://assets/village/coal_sack.png", "res://assets/village/deco_tools.png",
 				"res://assets/fields/bomb_crate.png", "res://assets/forest/props/weapon_rack.png", "res://assets/village/barrel.png"],
 		"map_floor": Color("755433"), "map_wall": Color("1b1613"),
+		"decor": {"dir": "res://assets/dungeons/mine/", "tint": Color(0.68, 0.6, 0.52),
+				"themes": ["tracks", "powder", "forge", "camp", "shaft", "cavein", "vein"]},
 	},
 	"flooded": {
 		"name": "Zatopione podziemia", "description": "Zalane, omszałe ruiny. Topielce, żabołaki, ogniki i topielice; w głębi czeka wodnik.",
@@ -53,6 +55,8 @@ const CLIMATES := {
 		"wall_props": ["res://assets/frogs/clay_pots.png", "res://assets/frogs/fish_net.png", "res://assets/swamp/v2_pillar.png",
 				"res://assets/drowned/soul_jars.png"],
 		"map_floor": Color("455844"), "map_wall": Color("0c120b"),
+		"decor": {"dir": "res://assets/dungeons/flooded/", "tint": Color(0.6, 0.7, 0.68),
+				"themes": ["temple", "boardwalk", "wrecks", "nest", "wisps", "frogs", "rusalka", "spring"]},
 	},
 	"roots": {
 		"name": "Pajęcze korzenie", "description": "Podziemia pod Prastarym Lasem, oplecione korzeniami i siecią. Pająki i drzewce; w gnieździe królowa pająków.",

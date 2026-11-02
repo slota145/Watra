@@ -6,6 +6,12 @@
   "_packs": {
     "catacombs_small": "100b805a-e792-4fc7-8f8c-fe31fbc18acf",
     "catacombs_tall": "f969fc82-2255-4150-903f-70b2c93d984f",
-    "catacombs_furniture": "456c46b5-6d6c-4d16-b4ee-619d4312bcce"
+    "catacombs_furniture": "456c46b5-6d6c-4d16-b4ee-619d4312bcce",
+    "mine_small": "5b217b94-f771-47b1-8187-5e48deeebf38",
+    "mine_tall": "7c3e4ef4-9eca-4769-99e5-68a661e4cd32",
+    "mine_furniture": "6fa774f5-a9a4-4d4f-913f-d84fe1061d51",
+    "flooded_small": "fb2e95c7-97f3-42ad-abca-c72acc8dd0ab",
+    "flooded_tall": "8d63f0e9-c06b-4581-8e76-09b8b279f295",
+    "flooded_furniture": "cafe4493-5a00-496f-99a8-efc7b025c5f9"
   }
 }

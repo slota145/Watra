@@ -590,6 +590,33 @@ odpowiedniej sekcji.
   4 fale potworów idących na cel (`Goblin.objective`). Warianty: obrona kryształu albo dwóch górników kujących
   kryształ (im więcej przeżyje, tym większa nagroda); po porażce tylko część nagrody. Nagroda rośnie ze stopniem
   lochu (`WatraCrystal.reward`). Tryb deweloperski trwa po przejściu do innej krainy (`Game.dev_mode`).
+- [x] **Wystrój lochów: Katakumby, Kopalnia goblinów i Zatopione podziemia** (część punktu „Lochy ładne i bogate w środku”):
+  - wspólna część w `scripts/dungeon_decor.gd` (`DungeonDecor`): rzędy mebli pod ścianami (`lines`, wzór na każdą
+    stronę komnaty), światła w równych odstępach na licu ścian (`_wall_light`), nakładki na podłodze i cień u stóp
+    ścian, siatki dużych rekwizytów na wierzchołkach z wolnym otoczeniem (`_isolated`, `Dungeon.solid`), snop światła
+    z dziury w stropie (`_light_shaft`), pasy powtarzane wzdłuż komnaty (`_runner`: chodnik, tory, kładka);
+  - każdy klimat ma własny skrypt `scripts/decor_<klimat>.gd` (`DungeonDecor.create`) z rodzajami komnat
+    z `Dungeons.CLIMATES[...]["decor"]["themes"]`; rodzaj każdej komnaty zapisuje się w `Dungeon.room_themes`;
+  - Katakumby (`decor_catacombs.gd`): krypta, sala kolumnowa, kostnica, kaplica, zawalona sala, kaźnia;
+  - Kopalnia goblinów (`decor_mine.gd`, ustalenia z autorem: czynna kopalnia, gobliny same kopią): chodnik z torami
+    (wózki, podpory z latarniami), skład prochu (siatka stosów beczek), kuźnia (palenisko z iskrami, kowadła, koryto),
+    obóz (ognisko z rożnem w kręgu legowisk i tyczek z czaszkami), szyb z windą (platforma, kołowrót, słupy
+    z kajdanami), zawał (połamane podpory, głazy, snop światła), żyła kruszcu (siatka świecących kryształów i kopców
+    rudy); wejście - kładka z desek, sala wodza - tron z łupów za skarbcem, góry skarbów, aleja chorągwi, krąg czaszek;
+  - Zatopione podziemia (`decor_flooded.gd`, ustalenia z autorem: podziemna świątynia dawnych bogów wody, zalana,
+    gdy podniosła się woda; wodnik zrobił z niej królestwo; płytkie kałuże, wszędzie da się przejść): świątynia (posąg
+    boga wody z ołtarzem, nawa z kolumn), kładki (mokre deski przez rozlewisko, kikuty kolumn), wraki (siatka wraków,
+    łodzi i masztów w kałużach), gniazdo topielców (krąg gniazd wokół utopionych skarbów), grota z ognikami (świecące
+    grzyby, unoszące się ogniki - `_motes`), obóz żabołaków (totem w kręgu suszarni ryb), sala rusałek (lustro wody
+    w kręgu wianków, brzozowe gałązki), źródło (woda spada ze stropu do skalnego zbiornika - `_drips`); wejście - kładka
+    przez rozlewisko, sala wodnika - tron z wyrzuconego drewna i muszli, aleja posągów, misy z wodą w narożnikach;
+    na licu ścian kinkiety z zielonym płomieniem, płaskorzeźby fal, mech i sieci; rozlewiska (`pool`, `pool_small`)
+    i kładkę (`planks`) rysuje `tools/dungeon_props.py`;
+  - grafiki: paczki PixelLab po 16 sztuk (64 px) w `pixellab_src/dungeons/<klimat>_small|_tall|_furniture`,
+    `tools/dungeon_props.py` (tory i kładkę rysuje sam). Gdy pobieranie z PixelLab jest zablokowane, klatki to podglądy
+    kandydatów z `get_object` (zapisują się w katalogu `tool-results` sesji jako przezroczyste PNG 64x64);
+  - zrzuty: `tools/dungeon_shots.gd` (każda komnata osobno, nazwa pliku z rodzajem komnaty), `tools/overview.gd`
+    przyjmuje też loch (kraina `dungeon`, klimat i stopień po ziarnie).
 
 ## Zielarstwo (Pomysły i rzeczy do zrobienia)
 - [x] **Zioła i mikstury zielarki** (`scripts/herbs.gd`, roślina `scripts/herb.gd`, grafiki z PixelLab przez `tools/herb_art.py`):

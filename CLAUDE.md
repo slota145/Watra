@@ -47,7 +47,8 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
   - `player.gd`, `character_stats.gd`, `items.gd`, `item_bases.gd`, `loot.gd`, `legends.gd`, `legendary_effects.gd`, `skills.gd`, `skill_effects.gd`, `levels.gd`, `quests.gd`, `bounties.gd`,
   - `hotbar.gd`: paski szybkiego wyboru (dane), `status_effects.gd`: lista efektów działających na gracza,
   - `skill_tree.gd`: drzewka umiejętności broni (dane), `sword_skills.gd`, `bow_skills.gd` i `spell_skills.gd`: umiejętności drzewek miecza, łuku i księgi,
-  - `dungeons.gd`: dane lochów (klimaty, stopnie, modyfikatory), `dungeon.gd`: generator lochu, okno `scripts/ui/dungeon_window.gd`,
+  - `dungeons.gd`: dane lochów (klimaty, stopnie, modyfikatory), `dungeon.gd`: generator lochu, wystrój `dungeon_decor.gd`
+    i `decor_<klimat>.gd`, okno `scripts/ui/dungeon_window.gd`,
   - `herbs.gd`: zioła i mikstury zielarki, `herb.gd`: zioło do zerwania (sadzone w każdej krainie przez `World._place_herbs`),
   - `scripts/ui/`: okna interfejsu (`ui_style.gd` to wspólny styl).
 - Sterowanie: WASD, spacja (zryw), F (interakcja), paski szybkiego wyboru na dole ekranu: umiejętności pod LPM, PPM, Q, E, R, Z, X
@@ -85,7 +86,9 @@ Widok z góry na fragment krainy (kamera odpięta od gracza, bez interfejsu), np
 ```bash
 SCRIPT=tools/overview.gd tools/screenshot.sh /tmp/wioska.png mountains 148 57 0.32
 ```
-Argumenty: plik, kraina, kafelek x i y środka kadru, przybliżenie (0.32 to około 160x90 kafelków), opcjonalnie ziarno.
+Argumenty: plik, kraina, kafelek x i y środka kadru, przybliżenie (0.32 to około 160x90 kafelków), opcjonalnie ziarno
+(dla krainy `dungeon` po ziarnie klimat i stopień). Zrzut każdej komnaty lochu osobno:
+`SCRIPT=tools/dungeon_shots.gd tools/screenshot.sh /tmp/kopalnia mine 7 3 0.8` (prefiks, klimat, ziarno, stopień, przybliżenie).
 Obejrzyj zrzut narzędziem Read, żeby sprawdzić zmiany wizualne. `tools/screenshot.sh` za każdym razem importuje zasoby,
 bo bez tego po podmianie grafiki gra rysowałaby starą wersję (np. pocięte klatki przy zmienionym rozmiarze arkusza). Uwagi:
 - Renderer w chmurze to tryb zgodności, a nie Forward+, więc niektóre shadery mogą wyglądać nieco inaczej niż u autora.
@@ -264,10 +267,12 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   (palisada, chaty), Wyspy na bagnie (kępy, kładki, brody), Przesmyk w Turniach (wąwozy, półki), Święty gaj / uręba
   (ściana drzew, kręgi kamieni). Każdy klimat może mieć też wariant **otwarty** (połać terenu) z innym bossem niż
   wersja zamknięta.
-  Krok 1 (Katakumby) zrobiony, czeka na ocenę autora: `scripts/dungeon_decor.gd` (scenki komnat, nakładki na licu
-  ścian i podłodze, cienie u ścian, migoczące światła), `Dungeon._shape_rooms` (wcięte narożniki i wnęki we wszystkich
-  klimatach), duże rekwizyty zajmują wierzchołki w `Dungeon.solid`; grafiki: `tools/dungeon_props.py`
-  (paczki PixelLab w `pixellab_src/dungeons/`, pobiera `fetch.py`). Kolejny klimat: dopisać mu "decor" w `Dungeons.CLIMATES`.
+  Krok 1 (Katakumby) i krok 2 (Kopalnia goblinów: tory, skład prochu, kuźnia, obóz, szyb z windą, zawał, żyła
+  kruszcu, tron wodza) i krok 3 (Zatopione podziemia - zalana świątynia bogów wody: świątynia, kładki, wraki,
+  gniazdo topielców, grota z ognikami, obóz żabołaków, sala rusałek, źródło, tron wodnika) zrobione, czekają na ocenę
+  autora - szczegóły w `docs/historia.md` (szukaj „Wystrój lochów”). Został klimat Pajęcze korzenie (`roots`).
+  Kolejny klimat: "decor" w `Dungeons.CLIMATES`, skrypt `scripts/decor_<klimat>.gd` (dziedziczy po `DungeonDecor`),
+  paczki PixelLab w `pixellab_src/dungeons/` i wpis w `tools/dungeon_props.py`; zrzuty sal: `tools/dungeon_shots.gd`.
 - [ ] **Podział lochów na zwykłe i endgame'owe** (listopad 2026): zwykłe jak dziś; endgame'owe z przedmiotami w Watrze
   (skaraby), drzewkami lochów i mechanik, losowymi mechanikami i bossami szczytowymi (pinnacle), plus system jak
   atlas w PoE dający namacalny postęp. Wymaga projektu z autorem przed pracą.

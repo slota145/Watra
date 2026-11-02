@@ -1,42 +1,19 @@
 class_name DungeonDecor
 extends RefCounted
-## Wystrój lochu klimatu z kluczem "decor" (Dungeons.CLIMATES, na razie Katakumby). Wszystko stoi w porządku,
-## a nie porozrzucane: kinkiety w równych odstępach na licu ścian (między nimi nisze, chorągwie, wykruszenia),
-## pod ścianami komnat rzędy mebli według wzoru rodzaju komnaty (półki z czaszkami, stojące trumny, kandelabry...),
-## a środek komnaty urządza scenka: krypta (siatka sarkofagów), sala kolumnowa, kostnica (kopiec czaszek w kręgu
-## świec), kaplica (ołtarz, chodnik, rzędy ław), zawalona sala (złamana kolumnada, gruz wokół snopu światła z dziury
-## w sklepieniu) i kaźnia (klatki, łańcuchy, koksownik). Komnata wejściowa dostaje koksowniki przy płomieniach Watry,
-## komnata strażnika - krąg rytualny i posągi. Na podłodze nakładki (pęknięcia, gruz, kałuże) głównie przy ścianach
-## i cień u stóp ścian. Grafiki z tools/dungeon_props.py (assets/dungeons/<klimat>/).
-## Duże rekwizyty (kolumny, sarkofagi, posągi) stoją na wierzchołkach z wolnym otoczeniem i zajmują je
-## w Dungeon.solid - potwory je omijają, a przejścia zostają drożne.
+## Wspólna część wystroju lochu klimatu z kluczem "decor" (Dungeons.CLIMATES). Każdy klimat ma własny skrypt
+## scripts/decor_<klimat>.gd (CatacombsDecor, MineDecor, FloodedDecor), który dziedziczy po tym i dopisuje: rzędy mebli pod
+## ścianami (lines), nakładki na podłogę (floor_decals), wystrój lica ścian (_dress_wall) i scenki komnat
+## (funkcje _<rodzaj>(room) dla rodzajów z "themes" oraz _start, _boss i _event).
+## Wszystko stoi w porządku, a nie porozrzucane: na licu ścian światła w równych odstępach, pod ścianami komnat
+## rzędy mebli według wzoru rodzaju komnaty, środek komnaty urządza scenka. Na podłodze nakładki głównie przy
+## ścianach i cień u stóp ścian. Grafiki z tools/dungeon_props.py (assets/dungeons/<klimat>/).
+## Duże rekwizyty stoją na wierzchołkach z wolnym otoczeniem i zajmują je w Dungeon.solid - potwory je omijają,
+## a przejścia zostają drożne.
 
 const WARM := Color(1.0, 0.62, 0.3, 0.55)
 const CANDLE := Color(1.0, 0.75, 0.42, 0.4)
 const COLD := Color(0.6, 0.72, 1.0, 0.45)
 const RITUAL := Color(0.62, 0.32, 1.0, 0.5)
-## Nakładki na podłogę z wagami.
-const FLOOR_DECALS := {"crack": 3.0, "rubble": 3.0, "puddle": 1.2, "grate": 0.5, "blood": 0.6, "hole": 0.3}
-## Rzędy mebli pod ścianami: rodzaj komnaty -> strona ("n" pod licem, "s", "w", "e" - boki) -> wzór powtarzany
-## wzdłuż ściany ("" - wolne miejsce, ścieżka z "res://" - grafika spoza klimatu).
-const LINES := {
-	"crypt": {"n": ["upright_sarc", "shelf", "upright_sarc", "coffins_upright"], "w": ["shrouds", "", "coffins_upright", ""],
-			"e": ["shrouds", "", "coffins_upright", ""], "s": ["", "urn", "", "runestone"]},
-	"pillars": {"n": ["candelabra", "runestone", "shelf", "runestone"], "w": ["urn", "", "candelabra", ""],
-			"e": ["urn", "", "candelabra", ""], "s": ["", "runestone"]},
-	"ossuary": {"n": ["ossuary_shelf"], "w": ["skull_pile", "res://assets/forest/props/bone_pile.png", "urn"],
-			"e": ["skull_pile", "res://assets/forest/props/bone_pile.png", "urn"], "s": ["skull_pile", "", "urn", ""]},
-	"chapel": {"n": ["runestone", "candelabra"], "w": ["candelabra", "", "shelf", ""], "e": ["candelabra", "", "shelf", ""],
-			"s": ["", "candelabra", ""]},
-	"collapsed": {"n": ["crates", "", "cart", "", "web", ""], "w": ["web", "", "crates", ""], "e": ["web", "", "crates", ""],
-			"s": ["", "web", ""]},
-	"prison": {"n": ["cage", "chains", "weapon_rack", "cage", "table"], "w": ["chains", "", "cage", ""],
-			"e": ["chains", "", "cage", ""], "s": ["", "crates", ""]},
-	"start": {"n": ["candelabra", "", "runestone", ""], "w": ["candelabra", ""], "e": ["candelabra", ""], "s": []},
-	"boss": {"n": ["ossuary_shelf", "candelabra"], "w": ["skull_pile", "candelabra", ""], "e": ["skull_pile", "candelabra", ""],
-			"s": ["skull_pile", ""]},
-	"event": {"n": ["shelf", "", "candelabra", ""], "w": ["", "urn"], "e": ["", "urn"], "s": []},
-}
 ## Gdzie stoi rekwizyt pod ścianą danej strony względem wierzchołka podłogi.
 const SIDE_OFFSET := {"n": Vector2(0, -18), "s": Vector2(0, 26), "w": Vector2(-14, 10), "e": Vector2(14, 10)}
 
@@ -48,9 +25,15 @@ var _decals: Node2D
 var _cache := {}
 ## Cień u stóp ścian (półprzezroczysta czerń) - wspólna tekstura.
 var _shade: GradientTexture2D
-## Wierzchołki zajęte wystrojem (meble pod ścianą, scenki) i wierzchołki pod kinkietami (tam nic wysokiego).
+## Wierzchołki zajęte wystrojem (meble pod ścianą, scenki) i wierzchołki pod światłami na ścianie (tam nic wysokiego).
 var _used := {}
 var _sconces := {}
+
+
+## Wystrój dla klimatu lochu: skrypt scripts/decor_<klimat>.gd.
+static func create(dungeon: Dungeon) -> DungeonDecor:
+	var script: GDScript = load("res://scripts/decor_%s.gd" % dungeon.config["climate"])
+	return script.new(dungeon)
 
 
 func _init(dungeon: Dungeon) -> void:
@@ -58,6 +41,38 @@ func _init(dungeon: Dungeon) -> void:
 	w = dungeon.w
 	rng = dungeon._rng
 	dir = dungeon.climate["decor"]["dir"]
+
+
+# ---------------------------------------------------------------- do nadpisania w klimacie
+## Rzędy mebli pod ścianami: rodzaj komnaty -> strona ("n" pod licem, "s", "w", "e" - boki) -> wzór powtarzany
+## wzdłuż ściany ("" - wolne miejsce, ścieżka z "res://" - grafika spoza klimatu).
+func lines() -> Dictionary:
+	return {}
+
+
+## Nakładki na podłogę z wagami.
+func floor_decals() -> Dictionary:
+	return {}
+
+
+## Niskie rekwizyty, które mogą stać pod światłem na ścianie.
+func low_props() -> Array:
+	return []
+
+
+## Rekwizyty z rzędów, które świecą: nazwa -> [kolor, rozmiar plamy, przesunięcie od podstawy].
+func line_lights() -> Dictionary:
+	return {}
+
+
+## Lico ściany: odcinek kolejnych wierzchołków "t" w jednym rzędzie.
+func _dress_wall(_run: Array[Vector2i]) -> void:
+	pass
+
+
+## Kolumny wokół komnaty Kryształu Watry.
+func event_pillars() -> Array:
+	return []
 
 
 func build() -> void:
@@ -68,6 +83,7 @@ func build() -> void:
 	w.floors.move_child(_decals, 0)
 	_walls()
 	var themes: Array = d.climate["decor"]["themes"].duplicate()
+	var patterns := lines()
 	var queue: Array = []
 	for room in d.rooms:
 		var theme := ""
@@ -82,9 +98,10 @@ func build() -> void:
 				queue = themes.duplicate()
 				_shuffle(queue)
 			theme = str(queue.pop_back())
+		d.room_themes[room] = theme
 		# najpierw scenka (duże rekwizyty na środku), potem rzędy pod ścianami w wolnych miejscach
 		call("_" + theme, room)
-		_line(room, LINES[theme])
+		_line(room, patterns.get(theme, {}))
 	_floor()
 
 
@@ -169,24 +186,22 @@ func _jitter(amount: float) -> Vector2:
 	return Vector2(rng.randf_range(-amount, amount), rng.randf_range(-amount, amount))
 
 
-## Chodnik od punktu `from` w dół (albo w prawo) na długość `length` px.
-func _runner(from: Vector2, length: float, horizontal: bool) -> void:
+## Pas powtarzany wzdłuż komnaty (chodnik, kładka, tory) od punktu `from` w dół (albo w prawo) na długość
+## `length` px; tekstura `texture` jest bezszwowa w pionie.
+func _runner(from: Vector2, length: float, horizontal: bool, texture := "runner") -> Sprite2D:
 	var runner := Sprite2D.new()
-	runner.texture = _tex("runner")
+	runner.texture = _tex(texture)
+	var width := runner.texture.get_width()
 	runner.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	runner.region_enabled = true
-	runner.region_rect = Rect2(0, 0, 28, length)
+	runner.region_rect = Rect2(0, 0, width, length)
 	runner.centered = false
-	runner.offset = Vector2(-14, 0)
+	runner.offset = Vector2(-width / 2.0, 0)
 	runner.position = from.round()
 	if horizontal:
 		runner.rotation = -PI / 2.0
 	_decals.add_child(runner)
-
-
-func _candles(pos: Vector2) -> void:
-	_prop("candles", pos)
-	_light(pos + Vector2(0, -10), CANDLE, Vector2(90, 66))
+	return runner
 
 
 func _add_shade(pos: Vector2) -> void:
@@ -197,8 +212,7 @@ func _add_shade(pos: Vector2) -> void:
 
 
 # ---------------------------------------------------------------- ściany i podłoga
-## Lico ściany (wierzchołki "t" pod skałą): kinkiety co 3 wierzchołki, między nimi nisze z czaszkami,
-## chorągwie (parami po bokach kinkietu) i wykruszone cegły.
+## Lico ściany (wierzchołki "t" pod skałą) - odcinki w rzędach urządza _dress_wall klimatu.
 func _walls() -> void:
 	for y in Dungeon.GRID.y:
 		var run: Array[Vector2i] = []
@@ -212,23 +226,19 @@ func _walls() -> void:
 				run = []
 
 
-func _dress_wall(run: Array[Vector2i]) -> void:
-	# kinkiety symetrycznie: co 3 wierzchołki, wyśrodkowane na odcinku ściany
-	var start := (run.size() - 1) % 3 / 2 + (1 if run.size() >= 5 else 0)
-	var banners := rng.randf() < 0.5
-	for i in run.size():
-		var v := run[i]
-		var at := _px(v)
-		if run.size() >= 2 and (i - start) % 3 == 0 and i >= start:
-			var sconce := _decal("sconce", at + Vector2(0, -14), false)
-			sconce.z_index = 1
-			_light(at + Vector2(0, -30), WARM, Vector2(130, 110))
-			_light(at + Vector2(0, 30), Color(WARM, 0.3), Vector2(190, 110))
-			_sconces[v + Vector2i.DOWN] = true
-		elif banners and run.size() >= 4:
-			_decal("banner", at + Vector2(0, -8), false)
-		elif rng.randf() < 0.35:
-			_decal(_pick(["niche", "niche", "wall_crack"]), at + Vector2(0, -8))
+## Indeks pierwszego światła na odcinku ściany: światła co 3 wierzchołki, wyśrodkowane na odcinku.
+func _light_start(run: Array[Vector2i]) -> int:
+	return (run.size() - 1) % 3 / 2 + (1 if run.size() >= 5 else 0)
+
+
+## Światło na licu ściany w wierzchołku `v` (grafika `name`); pod nim nic wysokiego.
+func _wall_light(name: String, v: Vector2i, color := WARM) -> void:
+	var at := _px(v)
+	var sconce := _decal(name, at + Vector2(0, -14), false)
+	sconce.z_index = 1
+	_light(at + Vector2(0, -30), color, Vector2(130, 110))
+	_light(at + Vector2(0, 30), Color(color, 0.3), Vector2(190, 110))
+	_sconces[v + Vector2i.DOWN] = true
 
 
 ## Nakładki na podłodze (głównie przy ścianach) i cień u stóp ścian.
@@ -242,6 +252,7 @@ func _floor() -> void:
 	_shade.fill = GradientTexture2D.FILL_RADIAL
 	_shade.fill_from = Vector2(0.5, 0.5)
 	_shade.fill_to = Vector2(1.0, 0.5)
+	var decals := floor_decals()
 	for x in Dungeon.GRID.x:
 		for y in Dungeon.GRID.y:
 			var v := Vector2i(x, y)
@@ -252,10 +263,10 @@ func _floor() -> void:
 				if d._label(v + step) != "l":
 					walls += 1
 					_add_shade(_px(v) + Vector2(step) * Vector2(30, 24) + (Vector2(0, 8) if step == Vector2i.UP else Vector2.ZERO))
-			if d.solid.has(v) or _used.has(v):
+			if d.solid.has(v) or _used.has(v) or decals.is_empty():
 				continue
 			if rng.randf() < (0.13 if walls > 0 else 0.025):
-				_decal(d._pick(FLOOR_DECALS), _px(v) + _jitter(18) + Vector2(0, 12))
+				_decal(d._pick(decals), _px(v) + _jitter(18) + Vector2(0, 12))
 
 
 # ---------------------------------------------------------------- rzędy pod ścianami
@@ -287,6 +298,8 @@ func _wall_slots(room: Rect2i) -> Dictionary:
 ## Rząd mebli pod każdą ścianą według wzoru (kolejne miejsca biorą kolejne pozycje wzoru).
 func _line(room: Rect2i, pattern: Dictionary) -> void:
 	var slots := _wall_slots(room)
+	var low := low_props()
+	var lights := line_lights()
 	for side: String in slots:
 		var names: Array = pattern.get(side, [])
 		if names.is_empty():
@@ -297,161 +310,57 @@ func _line(room: Rect2i, pattern: Dictionary) -> void:
 			i += 1
 			if name == "" or _used.has(v) or d.solid.has(v):
 				continue
-			# pod kinkietem nic wysokiego - zostaje światło na ścianie
-			if side == "n" and _sconces.has(v) and name not in ["skull_pile", "urn", "font"]:
+			# pod światłem na ścianie nic wysokiego
+			if side == "n" and _sconces.has(v) and name not in low:
 				continue
 			_used[v] = true
 			_prop(name, _px(v) + SIDE_OFFSET[side], side == "s")
-			if name == "candelabra":
-				_light(_px(v) + SIDE_OFFSET[side] + Vector2(0, -40), CANDLE, Vector2(110, 90))
+			if lights.has(name):
+				var spec: Array = lights[name]
+				_light(_px(v) + SIDE_OFFSET[side] + spec[2], spec[0], spec[1])
 
 
-# ---------------------------------------------------------------- scenki
-## Krypta: siatka sarkofagów co drugi wierzchołek, płyty nagrobne w przejściach między rzędami.
-func _crypt(room: Rect2i) -> void:
-	var kind := _pick(["sarcophagus_1", "sarcophagus_0"])
-	for x in range(room.position.x + 1, room.end.x - 1):
-		for y in range(room.position.y + 2, room.end.y - 1):
-			var v := Vector2i(x, y)
-			var col := (x - room.position.x) % 2 == 1
-			var row := (y - room.position.y) % 2 == 0
-			if col and row and _isolated(v):
-				_solid(kind if rng.randf() < 0.8 else "coffin", v, Vector2(48, 18), false)
-			elif col and not row and _floor_at(v) and not _used.has(v):
-				_decal("slab", _px(v) + Vector2(0, 8), false)
-				_used[v] = true
-
-
-## Sala kolumnowa: dwa rzędy kolumn wzdłuż komnaty, koksowniki na końcach osi, chrzcielnica na środku.
-func _pillars(room: Rect2i) -> void:
-	var top := room.position.y + 2
-	var bottom := room.end.y - 2
-	var kind := _pick(["pillar_0", "pillar_1", "pillar_2"])
-	for x in range(room.position.x + 1, room.end.x - 1, 2):
-		for y in ([top, bottom] if bottom - top >= 2 else [top]):
-			var v := Vector2i(x, y)
-			if _isolated(v):
-				_solid(kind, v, Vector2(26, 14), false)
-	var mid := _center(room)
-	var braziers := 0
-	for x in [room.position.x + 1, room.end.x - 2]:
-		var v := Vector2i(x, mid.y)
-		if _isolated(v):
-			_solid("brazier", v, Vector2(26, 14), false)
-			_light(_px(v) + Vector2(0, -36), WARM, Vector2(200, 160))
-			braziers += 1
-	# chodnik wzdłuż osi między koksownikami
-	if braziers == 2:
-		_runner(_px(Vector2i(room.position.x + 1, mid.y)) + Vector2(26, 16), (room.size.x - 3) * Dungeon.CELL - 52, true)
-	if _isolated(mid):
-		_solid("font", mid, Vector2(26, 14), false)
-
-
-## Kostnica: kopiec czaszek na środku w kręgu kości i świec, otwarte trumny w narożnikach.
-func _ossuary(room: Rect2i) -> void:
-	var mid := _center(room)
-	var at := _px(mid) + Vector2(0, 20)
-	_used[mid] = true
-	_prop("skull_pile", at, false)
-	for i in 8:
-		var angle := TAU * i / 8.0
-		var spot := at + Vector2(cos(angle) * 54, sin(angle) * 36)
-		if i % 2 == 0:
-			_candles(spot)
-		else:
-			_prop("res://assets/cemetery/skulls.png", spot)
-	for corner: Vector2i in [Vector2i(1, 2), Vector2i(-2, 2), Vector2i(1, -2), Vector2i(-2, -2)]:
-		var v := Vector2i(room.position.x if corner.x > 0 else room.end.x, room.position.y if corner.y > 0 else room.end.y) + corner
-		if _isolated(v):
-			_solid("coffin", v, Vector2(48, 18))
-
-
-## Kaplica: ołtarz-grobowiec pod północną ścianą, chodnik do wejścia, rzędy ław po bokach, posągi i świeczniki.
-func _chapel(room: Rect2i) -> void:
-	var cx := _center(room).x
-	var altar := Vector2i(cx, room.position.y + 1)
-	if not _floor_at(altar):
-		_crypt(room)
-		return
-	_solid("sarcophagus_0", altar, Vector2(48, 18), false)
-	_light(_px(altar) + Vector2(0, -16), CANDLE, Vector2(160, 110))
-	_runner(_px(altar) + Vector2(0, 22), (room.end.y - 1 - altar.y) * Dungeon.CELL - 20, false)
-	for y in range(altar.y, room.end.y):
-		_used[Vector2i(cx, y)] = true
-	for side in [-1, 1]:
-		var statue := altar + Vector2i(side * 2, 0)
-		if _isolated(statue):
-			_solid(_pick(["statue_0", "statue_2"]), statue, Vector2(24, 14), false).flip_h = side > 0
-		var stand := _px(altar) + Vector2(side * 44, 18)
-		_prop("res://assets/village/candle_stand.png", stand, false)
-		_light(stand + Vector2(0, -26), CANDLE, Vector2(80, 64))
-		_candles(_px(altar) + Vector2(side * 84, 30))
-		# ławy: rzędy co wierzchołek, po dwie z każdej strony chodnika
-		for y in range(altar.y + 2, room.end.y - 1):
-			for x in [cx + side, cx + side * 2]:
-				var v := Vector2i(x, y)
-				if _floor_at(v) and not _used.has(v) and d._label(v + Vector2i.RIGHT * side) == "l":
-					_prop("bench", _px(v) + Vector2(-side * 8, 8), false)
-					_used[v] = true
-
-
-## Zawalona sala: złamana kolumnada (część kolumn leży w gruzie), gruz w kręgu wokół snopu zimnego światła
-## z dziury w sklepieniu i wirujący kurz.
-func _collapsed(room: Rect2i) -> void:
-	var mid := _center(room)
-	for x in range(room.position.x + 1, room.end.x - 1, 2):
-		for y in [room.position.y + 2, room.end.y - 2]:
-			var v := Vector2i(x, y)
-			if not _isolated(v) or absi(v.x - mid.x) <= 1 and absi(v.y - mid.y) <= 1:
-				continue
-			var roll := rng.randf()
-			if roll < 0.35:
-				_solid(_pick(["pillar_0", "pillar_2"]), v, Vector2(26, 14), false)
-			elif roll < 0.8:
-				_solid(_pick(["broken_0", "broken_1", "broken_2"]), v, Vector2(30, 14))
-			else:
-				_decal("rubble", _px(v) + Vector2(0, 10))
-				_used[v] = true
-	var shaft := _px(mid) + Vector2(0, 40)
-	_used[mid] = true
-	_light(shaft, COLD, Vector2(240, 160), false)
-	_light(shaft + Vector2(0, -90), Color(COLD, 0.18), Vector2(110, 260), false)
-	_decal("hole", shaft + Vector2(0, 4), false)
-	for i in 9:
-		var angle := TAU * i / 9.0 + rng.randf_range(-0.2, 0.2)
-		var spot := shaft + Vector2(cos(angle), sin(angle) * 0.7) * rng.randf_range(50, 80)
-		if i % 3 == 0:
-			_prop("res://assets/cemetery/fallen_stone.png", spot)
-		else:
-			_decal("rubble", spot)
-	_dust(shaft + Vector2(0, -60))
-
-
-## Kaźnia: rząd słupów z łańcuchami na osi komnaty, koksownik z węglami i stół na środku.
-func _prison(room: Rect2i) -> void:
-	var mid := _center(room)
-	if _isolated(mid):
-		_solid("brazier_iron", mid, Vector2(26, 14), false)
-		_light(_px(mid) + Vector2(0, -20), WARM, Vector2(220, 170))
-	var table := mid + Vector2i(0, 2)
-	if _isolated(table):
-		_solid("table", table, Vector2(40, 14), false)
-	for x in range(room.position.x + 1, room.end.x - 1, 2):
-		var v := Vector2i(x, mid.y)
-		if absi(x - mid.x) >= 2 and _isolated(v):
-			_solid(_pick(["chains", "cage"]), v, Vector2(26, 14), false)
-
-
+# ---------------------------------------------------------------- scenki wspólne
 ## Komnata Kryształu Watry: kolumnada wzdłuż ścian, środek (kryształ i walka wokół niego) wolny.
 func _event(room: Rect2i) -> void:
+	var names := event_pillars()
+	if names.is_empty():
+		return
 	var mid := _center(room)
-	var kind := _pick(["pillar_0", "pillar_2"])
+	var kind := _pick(names)
 	for x in range(room.position.x + 1, room.end.x - 1, 2):
 		for y in [room.position.y + 2, room.end.y - 2]:
 			var v := Vector2i(x, y)
 			if absi(v.x - mid.x) > 1 or absi(v.y - mid.y) > 1:
 				if _isolated(v):
 					_solid(kind, v, Vector2(26, 14), false)
+
+
+## Snop zimnego światła z dziury w sklepieniu nad `mid`: dziura w podłodze, krąg gruzu i odłamków
+## (`stones` - grafiki większych odłamków, `rubble` - nakładka gruzu) i wirujący kurz.
+func _light_shaft(mid: Vector2i, stones: Array, rubble := "rubble", hole := "hole") -> void:
+	var shaft := _px(mid) + Vector2(0, 40)
+	_used[mid] = true
+	_light(shaft, COLD, Vector2(240, 160), false)
+	_light(shaft + Vector2(0, -90), Color(COLD, 0.18), Vector2(110, 260), false)
+	_decal(hole, shaft + Vector2(0, 4), false)
+	for i in 9:
+		var angle := TAU * i / 9.0 + rng.randf_range(-0.2, 0.2)
+		var spot := shaft + Vector2(cos(angle), sin(angle) * 0.7) * rng.randf_range(50, 80)
+		if i % 3 == 0:
+			_prop(_pick(stones), spot)
+		else:
+			_decal(rubble, spot)
+	_dust(shaft + Vector2(0, -60))
+
+
+## Narożniki komnaty (o krok od ścian): wierzchołki do postawienia czegoś dużego.
+func _corners(room: Rect2i, inset := Vector2i(1, 2)) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for corner: Vector2i in [Vector2i(inset.x, inset.y), Vector2i(-inset.x - 1, inset.y), Vector2i(inset.x, -inset.y),
+			Vector2i(-inset.x - 1, -inset.y)]:
+		out.append(Vector2i(room.position.x if corner.x > 0 else room.end.x, room.position.y if corner.y > 0 else room.end.y) + corner)
+	return out
 
 
 func _dust(at: Vector2) -> void:
@@ -472,32 +381,3 @@ func _dust(at: Vector2) -> void:
 	dust.color = Color(0.85, 0.9, 1.0, 0.5)
 	dust.z_index = 20
 	w.add_child(dust)
-
-
-## Komnata wejściowa: koksowniki po bokach płomieni Watry, pod nimi środek wolny (miejsce pojawienia się).
-func _start(room: Rect2i) -> void:
-	var cx := _center(room).x
-	for x in range(cx - 1, cx + 2):
-		_used[Vector2i(x, room.position.y + 1)] = true
-	_runner(_px(Vector2i(cx, room.position.y + 1)) + Vector2(0, 46), (room.end.y - room.position.y - 2) * Dungeon.CELL - 40, false)
-	for side in [-2, 2]:
-		var v := Vector2i(cx + side, room.position.y + 2)
-		if _isolated(v):
-			_solid("brazier", v, Vector2(26, 14), false)
-			_light(_px(v) + Vector2(0, -36), WARM, Vector2(200, 160))
-
-
-## Komnata strażnika: krąg rytualny pod strażnikiem, fioletowa poświata, posągi w narożnikach.
-func _boss(room: Rect2i) -> void:
-	var center := Vector2(room.get_center()) * Dungeon.CELL + Vector2(0, Dungeon.CELL / 2.0)
-	_decal("res://assets/cemetery/ritual.png", center + Vector2(0, 8), false).scale = Vector2(1.5, 1.5)
-	_light(center, RITUAL, Vector2(300, 220))
-	# skarbiec pod północną ścianą (Dungeon._build_vault)
-	var cx := _center(room).x
-	for x in range(cx - 1, cx + 2):
-		_used[Vector2i(x, room.position.y + 1)] = true
-	for corner: Vector2i in [Vector2i(1, 2), Vector2i(-2, 2), Vector2i(1, -2), Vector2i(-2, -2)]:
-		var v := Vector2i(room.position.x if corner.x > 0 else room.end.x, room.position.y if corner.y > 0 else room.end.y) + corner
-		if _isolated(v):
-			_solid(_pick(["statue_0", "statue_2"]), v, Vector2(24, 14), false)
-			_light(_px(v) + Vector2(0, -20), Color(RITUAL, 0.3), Vector2(110, 90))
