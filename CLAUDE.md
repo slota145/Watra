@@ -228,10 +228,13 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     umiejętnościami podstawowymi i przebudzenia (np. Mgnienie, a zaraz po nim cień kosą);
   - proponowana kolejność: efekty łuku i księgi -> nekromancja w drzewku maga -> przebudzenia (jedna klasa naraz).
 - [ ] **Animacje postaci z bronią** (listopad 2026): broń nie leży stabilnie w dłoni, za mało animacji ataków.
-  Dziś broń to osobny obracany sprite (`Player._update_weapon_sprite`, chwyt `weapon.grip`) w stałym punkcie,
-  a ciało się porusza. Pomysł: punkt dłoni zapisany dla każdej klatki ciała (broń za nim podąża) i proceduralne
-  ruchy broni (krzywe zamachu, pchnięcia, uderzenia z góry) - dużo wariantów ataków bez rysowania klatek.
-  Autor dopuszcza jedną grywalną postać animowaną porządnie; pozostałe sprite'y mogą zostać poszukiwaczami przygód (NPC).
+  Ustalenia z autorem: porządnie animowany tylko **Wojciech** (reszta może zostać NPC), styl **zamaszysty jak w BDO**,
+  nowe pozy ciała (etap 4) na później. Etap 1 zrobiony (szczegóły w `docs/historia.md`, szukaj „Etap 1 animacji”):
+  ataki Wojciecha po 8 klatek z ruchów szkieletowych PixelLab, broń w dłoni w każdej klatce ataku. Dalej:
+  etap 2 - więcej ruchów miecza tą samą metodą (cios z góry `chop`, cięcie poziome `sweep`, pchnięcie `stab`,
+  cięcie od dołu `rising_cut`, obrót `spin_once` dla Młynka) przypisanych do zwykłych ataków (seria 3 różnych cięć)
+  i umiejętności (Rozpłatanie, Rozłupanie Ziemi, Szarża, Półksiężyc, Młynek); etap 3 - cięciwa łuku rysowana w kodzie
+  (naciąg, puszczenie) i gesty czarów (`cast_down`, ręce w górę) dla umiejętności księgi.
 - [ ] Lepsze dźwięki trafień przeciwników (mięsiste, różne dla miecza, strzał i czarów), pod nowe animacje efektów.
 - [ ] **Przebudowa rozwoju postaci** (do ustalenia z autorem): po dodaniu nekromancji do drzewka księgi - nowe węzły
   także w drzewkach miecza i łuku; może oddzielić umiejętności od drzewka (inny sposób odblokowania); więcej punktów
