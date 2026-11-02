@@ -123,6 +123,7 @@ func _die() -> void:
 func take_damage(amount: int, _from_position: Vector2, _knockback := 0.0) -> void:
 	if state == State.DEAD:
 		return
+	play_hit_sound()
 	health -= amount
 	DamageNumber.spawn(get_parent(), hurt_center(), amount)
 	_flash()

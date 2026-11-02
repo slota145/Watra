@@ -56,7 +56,7 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
   F2 awans, F3 kamienie, F4 drewno i kamień, F5 wydarzenie w świecie w tej krainie.
 - `scenes/`: sceny (`main_menu.tscn` startowa, `world.tscn` rozgrywka, potwory, `hud.tscn`).
 - `assets/`: grafiki, muzyka, dźwięki.
-- `pixellab_src/`: surowe grafiki z PixelLab.
+- `pixellab_src/`: surowe grafiki z PixelLab, `sfx_src/`: surowe nagrania dźwięków (Godot je pomija).
 - `tools/*.py`: generatory grafik i dźwięków (Pillow, numpy/scipy, ffmpeg). Uruchamia się je `python tools/<plik>.py`, a każdy plik ma opis w docstringu.
 - `shaders/`: shadery.
 - `tests/`: testy i symulacje.
@@ -137,6 +137,8 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
   `spell_skills.gd`, okno K), combo (`Skills.COMBOS`), paski szybkiego wyboru (`hotbar.gd`), ikony efektów (`status_effects.gd`).
 - **Efekty:** animacje z kreatora efektów PixelLab (`pixellab_src/vfx/ids.json`, `tools/vfx_art.py`; pomocnicy `SkillEffects`,
   `FxLoop`, `BossFx`, `LegendVfx`, `WorldVfx`, `MonsterFx`, `MiscVfx`).
+- **Dźwięki:** `sfx.gd` (`Sfx.SOUNDS`), generatory `tools/sfx_synth.py` i `tools/hit_sfx.py` (trafienia według broni
+  i żywiołu z nagrań CC0 w `sfx_src/hits`, wybór w `Player.hit_enemy`).
 - **Bossowie:** `boss.gd` (wejście do walki, fazy, śmierć, aura wściekłości), zapowiedzi ataków `telegraph.gd`,
   world bossy `world_boss.gd` (Żmij, Wij).
 - **Przedmioty:** łup z losowymi premiami (`loot.gd`, nazwy składane przy pokazywaniu - `Loot.compose_name`), legendy
@@ -236,7 +238,6 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   cięciwa łuku rysowana w kodzie (`BowString`, `tools/bow_strings.py`) i własne ruchy umiejętności łuku i księgi
   (`Player.SKILL_MOVES`, chwyt ze znaczników stanu „Znacznik” w PixelLab). Etap 4 zrobiony (szukaj „Etap 4 animacji”):
   oddech w spoczynku, chód po 8 klatek, zryw i upadek przy śmierci. Punkt do zamknięcia po ograniu przez autora.
-- [ ] Lepsze dźwięki trafień przeciwników (mięsiste, różne dla miecza, strzał i czarów), pod nowe animacje efektów.
 - [ ] **Przebudowa rozwoju postaci** (do ustalenia z autorem): po dodaniu nekromancji do drzewka księgi - nowe węzły
   także w drzewkach miecza i łuku; może oddzielić umiejętności od drzewka (inny sposób odblokowania); więcej punktów
   za awans albo osobne punkty statystyk i drzewka, albo statystyki tylko w drzewku (trudniejszy balans).

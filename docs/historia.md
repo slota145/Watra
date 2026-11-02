@@ -509,6 +509,16 @@ odpowiedniej sekcji.
   tylko różowy koniec pręta, kąt z sąsiedniej klatki (`_fill_angles`, `_tipless`), a spoczynek i chód z prętem prawie
   stale za plecami (północ, mniej niż `MIN_RODS` klatek z prętem) biorą chwyt ze starego znacznika spoczynku
   `mk_idle_<kierunek>.png`. Zrzuty: `tools/anim_shots.gd` (ruchy idle, walk, dash, death).
+- [x] **Dźwięki trafień zależne od broni** (listopad 2026): `tools/hit_sfx.py` składa je z nagrań CC0 w `sfx_src/hits`
+  (źródła i licencje w `sfx_src/hits/ZRODLA.md`: Impact qubodupa, Medieval Weapon impacts, Basic Spell Impacts
+  lentikuli) - przycina czary do początku uderzenia (`onset`, skok głośności), dokłada mięsiste plaśnięcie i niskie
+  tąpnięcie (`thump`). Dźwięki w `Sfx.SOUNDS`: `hit_blade` (miecz), `hit_arrow` (strzały i pociski bez żywiołu),
+  `hit_fire`, `hit_ice`, `hit_lightning`, `hit_magic` (pocisk księgi, z nagrań wody), `hit_crit` (warstwa przy ciosie
+  krytycznym) i `enemy_die` (teraz `kill_*`: podwójne plaśnięcie z trzaskiem kości, przy każdej śmierci potwora).
+  Wybór: `Player.hit_enemy(..., sound)` ustawia na czas ciosu `Goblin.hit_sound` (bez `sound` - według broni,
+  `Player.HIT_SOUNDS`; pociski - według `fire`/`fx_kind`/`magic`, czary piorunów i Zamieć podają żywioł same);
+  potwór gra go w `play_hit_sound` (w bossa o 2 dB głośniej; boss dotąd nie miał odgłosu trafienia). Ciosy
+  sojuszników, pułapek itp. zostają przy zwykłym `hit`. Test: `tests/test_audio.gd`.
 
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)
