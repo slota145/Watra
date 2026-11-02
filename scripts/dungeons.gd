@@ -70,6 +70,8 @@ const CLIMATES := {
 		"wall_props": ["res://assets/ancient/egg_sac.png", "res://assets/ancient/web_small.png", "res://assets/ancient/v2_roots.png",
 				"res://assets/ancient/glow_shroom.png"],
 		"map_floor": Color("47492c"), "map_wall": Color("1a130f"),
+		"decor": {"dir": "res://assets/dungeons/roots/", "tint": Color(0.58, 0.64, 0.6),
+				"themes": ["hatchery", "larder", "roots", "mycelium", "webhall", "treants", "camp", "altar"]},
 	},
 }
 const CLIMATE_ORDER: Array[String] = ["catacombs", "mine", "flooded", "roots"]

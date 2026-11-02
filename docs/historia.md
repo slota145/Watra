@@ -590,7 +590,7 @@ odpowiedniej sekcji.
   4 fale potworów idących na cel (`Goblin.objective`). Warianty: obrona kryształu albo dwóch górników kujących
   kryształ (im więcej przeżyje, tym większa nagroda); po porażce tylko część nagrody. Nagroda rośnie ze stopniem
   lochu (`WatraCrystal.reward`). Tryb deweloperski trwa po przejściu do innej krainy (`Game.dev_mode`).
-- [x] **Wystrój lochów: Katakumby, Kopalnia goblinów i Zatopione podziemia** (część punktu „Lochy ładne i bogate w środku”):
+- [x] **Wystrój lochów: Katakumby, Kopalnia goblinów, Zatopione podziemia i Pajęcze korzenie** (część punktu „Lochy ładne i bogate w środku”):
   - wspólna część w `scripts/dungeon_decor.gd` (`DungeonDecor`): rzędy mebli pod ścianami (`lines`, wzór na każdą
     stronę komnaty), światła w równych odstępach na licu ścian (`_wall_light`), nakładki na podłodze i cień u stóp
     ścian, siatki dużych rekwizytów na wierzchołkach z wolnym otoczeniem (`_isolated`, `Dungeon.solid`), snop światła
@@ -612,6 +612,16 @@ odpowiedniej sekcji.
     przez rozlewisko, sala wodnika - tron z wyrzuconego drewna i muszli, aleja posągów, misy z wodą w narożnikach;
     na licu ścian kinkiety z zielonym płomieniem, płaskorzeźby fal, mech i sieci; rozlewiska (`pool`, `pool_small`)
     i kładkę (`planks`) rysuje `tools/dungeon_props.py`;
+  - Pajęcze korzenie (`decor_roots.gd`, ustalenia z autorem: dzikie jaskinie pod Prastarym Lasem, bez śladów ludzi;
+    zapuszczają się tu tylko łowcy): wylęgarnia (siatka kopców jaj i rozdartych kokonów), spiżarnia (siatka kokonów
+    z ofiarami, kości i plecaki), korzenie (snop światła z dziury w stropie, krąg kolumn z korzeni), grzybnia (siatka
+    wielkich świecących grzybów, zarodniki - `_motes`), sieciowa sala (pajęczy most z nici między rzędami oplecionych
+    stalagmitów), kryjówka drzewców (wydrążony pień w kręgu głazów, żywica), obóz łowców (zgasłe ognisko, szałas,
+    nad nim kokony - łowcy nie wrócili), pajęczy ołtarz (stos czaszek i poroży w sieci, rzędy kokonów); wejście -
+    zejście po korzeniach, sala królowej - gniazdo z sieci i kości za skarbcem, aleja stalagmitów, kopce jaj
+    w narożnikach; na licu ścian świecące huby (niebieskie światło), zwisające korzenie, sieci i jaja; most
+    (`silk`) i zejście (`root_path`) rysuje `tools/dungeon_props.py`, a krotka rekwizytu może mieć skalę (czaszka,
+    plecak, jajo zmniejszone). `_grid` i `_motes` są wspólne w `DungeonDecor`;
   - grafiki: paczki PixelLab po 16 sztuk (64 px) w `pixellab_src/dungeons/<klimat>_small|_tall|_furniture`,
     `tools/dungeon_props.py` (tory i kładkę rysuje sam). Gdy pobieranie z PixelLab jest zablokowane, klatki to podglądy
     kandydatów z `get_object` (zapisują się w katalogu `tool-results` sesji jako przezroczyste PNG 64x64);

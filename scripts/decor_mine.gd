@@ -137,22 +137,6 @@ func _tracks(room: Rect2i) -> void:
 			_solid("ore_heap", v, Vector2(34, 14))
 
 
-## Siatka dużych rekwizytów co drugi wierzchołek (jak regały w magazynie); `place` stawia jeden na wierzchołku
-## (z numerem kolejnym), `aisle` - coś w przejściu między rzędami (albo nic).
-func _grid(room: Rect2i, place: Callable, aisle: Callable) -> void:
-	var i := 0
-	for x in range(room.position.x + 1, room.end.x - 1):
-		for y in range(room.position.y + 2, room.end.y - 1):
-			var v := Vector2i(x, y)
-			var col := (x - room.position.x) % 2 == 1
-			var row := (y - room.position.y) % 2 == 0
-			if col and row and _isolated(v):
-				place.call(v, i)
-				i += 1
-			elif _floor_at(v) and not _used.has(v):
-				aisle.call(v)
-
-
 ## Skład prochu: siatka stosów beczek, rozsypany proch w przejściach, słabe światło.
 func _powder(room: Rect2i) -> void:
 	_grid(room, func(v: Vector2i, _i: int) -> void:

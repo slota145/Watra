@@ -81,30 +81,6 @@ func _pool(at: Vector2, small := false) -> void:
 		_decal("lilies", at + _jitter(24 if not small else 12))
 
 
-## Ogniki: zielonkawe iskierki unoszące się powoli nad `at`.
-func _motes(at: Vector2, extents := Vector2(40, 30), amount := 8) -> void:
-	var motes := CPUParticles2D.new()
-	motes.position = at
-	motes.amount = amount
-	motes.lifetime = 4.0
-	motes.preprocess = 4.0
-	motes.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-	motes.emission_rect_extents = extents
-	motes.direction = Vector2(0, -1)
-	motes.spread = 60.0
-	motes.gravity = Vector2(0, -3)
-	motes.initial_velocity_min = 3.0
-	motes.initial_velocity_max = 9.0
-	motes.scale_amount_min = 1.5
-	motes.scale_amount_max = 2.5
-	var fade := Gradient.new()
-	fade.colors = PackedColorArray([Color(0.5, 1.0, 0.9, 0.0), Color(0.55, 1.0, 0.9, 0.9), Color(0.5, 1.0, 0.9, 0.0)])
-	fade.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
-	motes.color_ramp = fade
-	motes.z_index = 20
-	w.add_child(motes)
-
-
 ## Krople spadające ze stropu (źródło).
 func _drips(at: Vector2) -> void:
 	var drops := CPUParticles2D.new()
@@ -124,22 +100,6 @@ func _drips(at: Vector2) -> void:
 	drops.color = Color(0.7, 0.95, 1.0, 0.75)
 	drops.z_index = 20
 	w.add_child(drops)
-
-
-## Siatka dużych rekwizytów co drugi wierzchołek; `place` stawia jeden (z numerem kolejnym), `aisle` - coś
-## w przejściu między rzędami (albo nic).
-func _grid(room: Rect2i, place: Callable, aisle: Callable) -> void:
-	var i := 0
-	for x in range(room.position.x + 1, room.end.x - 1):
-		for y in range(room.position.y + 2, room.end.y - 1):
-			var v := Vector2i(x, y)
-			var col := (x - room.position.x) % 2 == 1
-			var row := (y - room.position.y) % 2 == 0
-			if col and row and _isolated(v):
-				place.call(v, i)
-				i += 1
-			elif _floor_at(v) and not _used.has(v):
-				aisle.call(v)
 
 
 # ---------------------------------------------------------------- scenki

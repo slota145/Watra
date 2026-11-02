@@ -269,8 +269,10 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   wersja zamknięta.
   Krok 1 (Katakumby) i krok 2 (Kopalnia goblinów: tory, skład prochu, kuźnia, obóz, szyb z windą, zawał, żyła
   kruszcu, tron wodza) i krok 3 (Zatopione podziemia - zalana świątynia bogów wody: świątynia, kładki, wraki,
-  gniazdo topielców, grota z ognikami, obóz żabołaków, sala rusałek, źródło, tron wodnika) zrobione, czekają na ocenę
-  autora - szczegóły w `docs/historia.md` (szukaj „Wystrój lochów”). Został klimat Pajęcze korzenie (`roots`).
+  gniazdo topielców, grota z ognikami, obóz żabołaków, sala rusałek, źródło, tron wodnika) i krok 4 (Pajęcze
+  korzenie - dzikie jaskinie: wylęgarnia, spiżarnia, korzenie, grzybnia, sieciowa sala, kryjówka drzewców, obóz
+  łowców, pajęczy ołtarz, gniazdo królowej) zrobione, czekają na ocenę autora - szczegóły w `docs/historia.md`
+  (szukaj „Wystrój lochów”). Wszystkie podziemne klimaty mają wystrój; dalej lochy na zewnątrz.
   Kolejny klimat: "decor" w `Dungeons.CLIMATES`, skrypt `scripts/decor_<klimat>.gd` (dziedziczy po `DungeonDecor`),
   paczki PixelLab w `pixellab_src/dungeons/` i wpis w `tools/dungeon_props.py`; zrzuty sal: `tools/dungeon_shots.gd`.
 - [ ] **Podział lochów na zwykłe i endgame'owe** (listopad 2026): zwykłe jak dziś; endgame'owe z przedmiotami w Watrze
