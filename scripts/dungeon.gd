@@ -10,6 +10,10 @@ extends Node
 ## Mrok (CanvasModulate w kolorze klimatu), pochodnie / koksowniki / grzyby ze światłem i światło wokół gracza.
 ## Komnaty mają wcięte narożniki i wnęki; klimat z "decor" (wszystkie klimaty) urządza je scenkami (DungeonDecor),
 ## pozostałe - porozrzucanym wystrojem (_build_props).
+## Loch na zewnątrz (klimat z "outdoor", np. Winnica satyrów): komnaty to polany o pofalowanym brzegu, połączone
+## krętymi ścieżkami, a zamiast skały granicą jest teren - skalne półki (klify z kafelków Wang), ściana drzew albo
+## staw (_plan_borders). Podłoże rysuje SoftGround z teksturami gór (łąka, ścieżka, kwiaty, woda), kafelki Wang
+## stoją tylko przy klifach. Przejścia, kolizje i droga potworów działają tak samo jak w podziemiach.
 
 const CELL := 64
 const GRID := Vector2i(40, 30)
@@ -68,6 +72,15 @@ var _time := 0.0
 ## Droga do gracza: wierzchołek podłogi -> liczba kroków do wierzchołka gracza (liczona od nowa, gdy gracz zmieni wierzchołek).
 var _flow := {}
 var _flow_from := Vector2i(-1, -1)
+## Loch na zewnątrz (patrz opis skryptu): granica z terenu zamiast skały.
+var outdoor := false
+## Wierzchołki poza podłogą lochu na zewnątrz: klif (skalna półka) albo woda; reszta to ściana drzew.
+var cliffs := {}
+var waters := {}
+## Komórki ścieżek (kafelki 16 px świata) - ubita ziemia pod krętymi ścieżkami między polanami.
+var path_tiles := {}
+## Gładkie linie krętych ścieżek (w wierzchołkach, przed zaokrągleniem) - po nich biegnie ubita ziemia.
+var _trails: Array[PackedVector2Array] = []
 const STEPS: Array[Vector2i] = [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN,
 		Vector2i(-1, -1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(1, 1)]
 
@@ -84,17 +97,27 @@ func generate(world, settings: Dictionary) -> void:
 	Goblin.dungeon_mods = {}
 	for key in ["health", "damage", "xp", "gold", "loot"]:
 		Goblin.dungeon_mods[key] = Dungeons.multiplier(mods, key)
+	outdoor = climate.get("outdoor", false)
 	_plan_rooms()
-	_shape_rooms()
+	if outdoor:
+		_shape_glades()
+	else:
+		_shape_rooms()
 	_plan_altar()
 	_connect_rooms()
-	_fix_corners()
+	if outdoor:
+		_plan_borders()
+	else:
+		_fix_corners()
 	_pick_rooms()
 	_pick_event()
 	_build_tiles()
 	_build_collision()
 	_build_map()
 	w._build_bounds()
+	if outdoor:
+		_build_ground()
+		_dress_borders()
 	_build_atmosphere()
 	if climate.has("decor"):
 		DungeonDecor.create(self).build()
@@ -165,6 +188,232 @@ func _shape_rooms() -> void:
 					floor_cells[Vector2i(x, y)] = true
 
 
+# ---------------------------------------------------------------- loch na zewnątrz
+## Polany: owal wpisany w prostokąt komnaty z brzegiem pofalowanym szumem, wybrzuszony najwyżej o wierzchołek
+## (z dala od innych polan). Środkowy rząd i kolumna zostają polaną (płomienie Watry, strażnik, skarbiec, ścieżki);
+## prostokąt w `rooms` zostaje jako obrys polany.
+func _shape_glades() -> void:
+	var noise := FastNoiseLite.new()
+	noise.seed = _rng.randi()
+	noise.frequency = 0.3
+	for room in rooms:
+		for x in range(room.position.x, room.end.x):
+			for y in range(room.position.y, room.end.y):
+				floor_cells.erase(Vector2i(x, y))
+	for room in rooms:
+		var mid := Vector2(room.position) + Vector2(room.size - Vector2i.ONE) / 2.0
+		# promień do skrajnych wierzchołków prostokąta z małym zapasem - narożniki prostokąta wypadają poza owal
+		var radius := Vector2(room.size - Vector2i.ONE) / 2.0 + Vector2(0.3, 0.3)
+		var area := room.grow(1)
+		for x in range(area.position.x, area.end.x):
+			for y in range(area.position.y, area.end.y):
+				var v := Vector2i(x, y)
+				if x < 2 or y < 2 or x > GRID.x - 3 or y > GRID.y - 3:
+					continue
+				var inside := room.has_point(v)
+				if not inside and rooms.any(func(other: Rect2i) -> bool: return other != room and other.grow(2).has_point(v)):
+					continue
+				var q := pow((x - mid.x) / radius.x, 2) + pow((y - mid.y) / radius.y, 2)
+				var core := inside and (x == room.position.x + room.size.x / 2 or y == room.position.y + room.size.y / 2)
+				if core or q <= 1.0 + 0.35 * noise.get_noise_2d(x, y):
+					floor_cells[v] = true
+
+
+## Kręta ścieżka szerokości 2-3 wierzchołków: idzie ku celowi, łagodnie skręcając na boki (fala o losowej fazie,
+## słabnąca przy celu). Skręt jest mniejszy niż kąt prosty, więc każdy krok zbliża do celu.
+func _dig_path(from: Vector2i, to: Vector2i) -> void:
+	var path := PackedVector2Array()
+	var at := Vector2(from)
+	var phase := _rng.randf() * TAU
+	var wave := _rng.randf_range(0.18, 0.32)
+	var swing := _rng.randf_range(0.55, 0.95)
+	var last := Vector2i(-99, -99)
+	var trail := PackedVector2Array([Vector2(from)])
+	for i in 600:
+		var left := Vector2(to) - at
+		if left.length() < 1.0:
+			break
+		var bend := sin(i * wave + phase) * swing * clampf(left.length() / 5.0, 0.0, 1.0)
+		at += left.normalized().rotated(bend) * 0.5
+		trail.append(at)
+		var cell := Vector2i(at.round()).clamp(Vector2i(2, 2), GRID - Vector2i(4, 4))
+		if cell != last:
+			_stamp_path(cell)
+			path.append(Vector2(cell))
+			last = cell
+	_stamp_path(to)
+	path.append(Vector2(to))
+	trail.append(Vector2(to))
+	_corridors.append(path)
+	_trails.append(trail)
+
+
+## Kawałek ścieżki: 2x2 wierzchołki, czasem poszerzony do 3x3 (brzeg ścieżki faluje).
+func _stamp_path(cell: Vector2i) -> void:
+	var wide := _rng.randf() < 0.3
+	for dx in range(-1 if wide else 0, 2):
+		for dy in range(-1 if wide else 0, 2):
+			var v := cell + Vector2i(dx, dy)
+			if v.x >= 1 and v.y >= 1 and v.x <= GRID.x - 2 and v.y <= GRID.y - 2:
+				floor_cells[v] = true
+
+
+## Granica polan: każdy wierzchołek poza podłogą to klif, woda albo drzewa wg szumu o dużych plamach (progi
+## w "terrain" klimatu). Klif, który nie pasuje do żadnego kafelka Wang, zamienia się w drzewa.
+func _plan_borders() -> void:
+	var noise := FastNoiseLite.new()
+	noise.seed = _rng.randi()
+	noise.frequency = 0.1
+	var terrain: Dictionary = climate["terrain"]
+	for x in range(-1, GRID.x + 1):
+		for y in range(-1, GRID.y + 1):
+			var v := Vector2i(x, y)
+			if floor_cells.has(v):
+				continue
+			var n := noise.get_noise_2d(x, y)
+			if n < terrain["cliff_below"]:
+				cliffs[v] = true
+			elif n > terrain["water_above"] and x >= 1 and y >= 1 and x <= GRID.x - 2 and y <= GRID.y - 2:
+				waters[v] = true
+	for _pass in 60:
+		var bad := 0
+		for x in range(-1, GRID.x):
+			for y in range(-1, GRID.y):
+				var cell := Vector2i(x, y)
+				if WANG.has(_key(cell)):
+					continue
+				bad += 1
+				for c: Vector2i in [cell, cell + Vector2i.RIGHT, cell + Vector2i.DOWN, cell + Vector2i.ONE]:
+					cliffs.erase(c)
+		if bad == 0:
+			break
+	# ubita ziemia ścieżek: kafelki świata (16 px) w pasie wzdłuż krętych ścieżek, tylko na podłodze
+	var tile: int = w.TILE
+	for trail in _trails:
+		for i in trail.size() - 1:
+			var a := (trail[i] + Vector2(0.5, 0.5)) * CELL
+			var b := (trail[i + 1] + Vector2(0.5, 0.5)) * CELL
+			var steps := maxi(1, int(a.distance_to(b) / 8.0))
+			for s in steps + 1:
+				var p := a.lerp(b, float(s) / steps)
+				for dx in range(-2, 3):
+					for dy in range(-2, 3):
+						var t := Vector2i(p / tile) + Vector2i(dx, dy)
+						var center := (Vector2(t) + Vector2(0.5, 0.5)) * tile
+						var v := Vector2i((center / CELL).round())
+						# ścieżka wtapia się w polanę kawałek za jej skrajem (owal mniejszy od polany)
+						if center.distance_to(p) <= 15.0 and floor_cells.has(v) and not _in_glade(center / CELL, 0.55):
+							path_tiles[t] = true
+
+
+## Czy punkt (w wierzchołkach) leży w owalu polany pomniejszonym do `share` jej rozmiaru.
+func _in_glade(at: Vector2, share: float) -> bool:
+	for room in rooms:
+		var mid := Vector2(room.position) + Vector2(room.size - Vector2i.ONE) / 2.0
+		var radius := Vector2(room.size) / 2.0 * share
+		if pow((at.x - mid.x) / radius.x, 2) + pow((at.y - mid.y) / radius.y, 2) <= 1.0:
+			return true
+	return false
+
+
+## Podłoże lochu na zewnątrz (SoftGround z teksturami gór): łąka, pod ścianą drzew gęsta trawa, na polanach płaty
+## kwiatów i gęstej trawy, ubita ścieżka, w stawach woda.
+func _build_ground() -> void:
+	var tile: int = w.TILE
+	var noise := FastNoiseLite.new()
+	noise.seed = _rng.randi()
+	noise.frequency = 0.05
+	var shore := FastNoiseLite.new()
+	shore.seed = _rng.randi()
+	shore.frequency = 0.2
+	var corners := {}
+	for x in w.map_size.x + 1:
+		for y in w.map_size.y + 1:
+			var c := Vector2i(x, y)
+			var px := Vector2(c) * tile
+			var v := Vector2i((px / CELL).round())
+			var kind := "meadow"
+			if waters.has(v):
+				# woda kończy się przed brzegiem kolizji w odległości falującej z szumem (brzeg nie jest prostokątem;
+				# trzciny zakrywają szparę): wszystkie punkty w kręgu wokół narożnika muszą leżeć nad wodą
+				kind = "w_deep"
+				var reach := 16.0 + 12.0 * shore.get_noise_2d(x, y)
+				for i in 8:
+					var probe := px + Vector2.from_angle(TAU * i / 8.0) * reach
+					if not waters.has(Vector2i((probe / CELL).round())):
+						kind = "m_dark"
+						break
+			elif floor_cells.has(v):
+				var near_path := false
+				for t: Vector2i in [c, c - Vector2i(1, 0), c - Vector2i(0, 1), c - Vector2i(1, 1)]:
+					if path_tiles.has(t):
+						near_path = true
+				var n := noise.get_noise_2d(x, y)
+				if near_path:
+					kind = "m_path"
+				elif n > 0.3:
+					kind = "m_flowers"
+				elif n < -0.35:
+					kind = "m_dark"
+			else:
+				kind = "m_dark"
+			corners[c] = kind
+	for x in w.map_size.x:
+		for y in w.map_size.y:
+			w.ground.set_cell(Vector2i(x, y), 0, Vector2i(0, w.ALPINE_WANG_ROW))
+	w._soft_corners = corners
+	w._soft_textures = {"w_deep": w.SWAMP_GROUND["w_deep"]}
+
+
+## Ściana drzew na wierzchołkach drzew (dwa drzewa na wierzchołek, korony zachodzą na siebie), krzewy, głazy
+## i drzewa na szczytach skalnych półek, trzciny przy brzegu stawów i grążele na wodzie. Bez własnej kolizji -
+## wierzchołek i tak jest zablokowany.
+func _dress_borders() -> void:
+	var terrain: Dictionary = climate["terrain"]
+	var trees: Array = terrain["trees"].map(func(path: String) -> Texture2D: return load(path))
+	var tops: Array = terrain["plateau"].map(func(path: String) -> Texture2D: return load(path))
+	var reeds: Texture2D = load(terrain["reeds"])
+	var lilies: Texture2D = load(terrain["lilies"])
+	for x in GRID.x:
+		for y in GRID.y:
+			var v := Vector2i(x, y)
+			if floor_cells.has(v):
+				continue
+			var at := Vector2(v) * CELL
+			if waters.has(v):
+				var shore := false
+				for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+					shore = shore or not waters.has(v + d)
+				if shore and _rng.randf() < 0.55:
+					var reed: Sprite2D = w._village_prop(reeds, at + Vector2(_rng.randf_range(-20, 20), _rng.randf_range(-12, 20)))
+					reed.hframes = 3
+					reed.frame = _rng.randi() % 3
+					reed.flip_h = _rng.randf() < 0.5
+				elif not shore and _rng.randf() < 0.35:
+					var lily := Sprite2D.new()
+					lily.texture = lilies
+					lily.hframes = 3
+					lily.frame = _rng.randi() % 3
+					lily.position = at + Vector2(_rng.randf_range(-16, 16), _rng.randf_range(-16, 16))
+					w.floors.add_child(lily)
+			elif cliffs.has(v):
+				# szczyt półki porasta zagajnik (nie tuż nad licem), żeby nie wyglądał jak polana
+				if not cliffs.has(v + Vector2i.DOWN):
+					continue
+				var roll := _rng.randf()
+				var tex: Texture2D = trees.pick_random() if roll < 0.55 else tops.pick_random() if roll < 0.85 else null
+				if tex != null:
+					var top: Sprite2D = w._village_prop(tex, at + Vector2(_rng.randf_range(-16, 16), _rng.randf_range(4, 22)))
+					top.flip_h = _rng.randf() < 0.5
+			else:
+				for i in 2:
+					var spot := at + Vector2(_rng.randf_range(-14, 14) + (i * 2 - 1) * 14, _rng.randf_range(-6, 6) + (24 if i == 0 else 4))
+					var tree: Sprite2D = w._village_prop(trees.pick_random(), spot)
+					tree.flip_h = _rng.randf() < 0.5
+					var shade := _rng.randf_range(0.82, 1.0)
+					tree.modulate = Color(shade, shade, shade)
+
+
 ## Ołtarz Welesa: rzadko (Essences.ALTAR_CHANCE, w trybie deweloperskim albo z "altar" w ustawieniach zawsze)
 ## mała komnata w wolnym miejscu mapy, połączona wąskim przejściem z najbliższą komnatą.
 func _plan_altar() -> void:
@@ -190,6 +439,8 @@ func _plan_altar() -> void:
 				nearest = other
 		_dig(center, nearest.position + nearest.size / 2)
 		_corridors.pop_back()  # w przejściu do ołtarza nie stoją potwory
+		if outdoor:
+			_trails.pop_back()  # ukryta ścieżka - bez ubitej ziemi
 		return
 
 
@@ -251,6 +502,9 @@ func _connect_rooms() -> void:
 
 
 func _dig(from: Vector2i, to: Vector2i) -> void:
+	if outdoor:
+		_dig_path(from, to)
+		return
 	var corner := Vector2i(to.x, from.y) if _rng.randf() < 0.5 else Vector2i(from.x, to.y)
 	var path := PackedVector2Array()
 	for leg in [[from, corner], [corner, to]]:
@@ -271,11 +525,26 @@ func _dig(from: Vector2i, to: Vector2i) -> void:
 func _label(v: Vector2i) -> String:
 	if not floor_cells.has(v):
 		return "u"
-	return "t" if not floor_cells.has(v + Vector2i.UP) else "l"
+	return "t" if _wall(v + Vector2i.UP) else "l"
+
+
+## Czy wierzchołek rysuje się jako ściana (skała, a na zewnątrz - klif; drzewa i woda nie mają lica).
+func _wall(v: Vector2i) -> bool:
+	return cliffs.has(v) if outdoor else not floor_cells.has(v)
+
+
+## Narożnik kafelka Wang: na zewnątrz "u" tylko pod klifem, a pod drzewami i wodą - łąka ("l").
+func _tile_label(v: Vector2i) -> String:
+	if not outdoor:
+		return _label(v)
+	if cliffs.has(v):
+		return "u"
+	return "t" if cliffs.has(v + Vector2i.UP) else "l"
 
 
 func _key(cell: Vector2i) -> String:
-	return _label(cell) + _label(cell + Vector2i.RIGHT) + _label(cell + Vector2i.DOWN) + _label(cell + Vector2i.ONE)
+	return _tile_label(cell) + _tile_label(cell + Vector2i.RIGHT) + _tile_label(cell + Vector2i.DOWN) \
+			+ _tile_label(cell + Vector2i.ONE)
 
 
 ## Komórki bez pasującego kafelka: skała w środku mapy zamienia się w podłogę (znika drobny występ, przejście zostaje),
@@ -392,6 +661,9 @@ func _build_tiles() -> void:
 	for x in GRID.x - 1:
 		for y in GRID.y - 1:
 			var key := _key(Vector2i(x, y))
+			# na zewnątrz kafelki tylko przy klifach - resztę rysuje podłoże (SoftGround)
+			if outdoor and key == "llll":
+				continue
 			var alternative := _rng.randi() % 4 if key == "llll" or key == "uuuu" else 0
 			layer.set_cell(Vector2i(x, y), 0, WANG[key], alternative)
 	w.ground.add_sibling(layer)
@@ -433,10 +705,17 @@ func _build_map() -> void:
 	for x in w.map_size.x:
 		for y in w.map_size.y:
 			var px := (Vector2(x, y) + Vector2(0.5, 0.5)) * tile
-			var label := _label(Vector2i((px / CELL).round()))
+			var v := Vector2i((px / CELL).round())
+			var label := _label(v)
 			var color: Color = climate["map_floor"] if label == "l" else climate["map_wall"]
 			if label == "t":
 				color = climate["map_wall"].lerp(climate["map_floor"], 0.35)
+			elif outdoor and waters.has(v):
+				color = climate["map_water"]
+			elif outdoor and label == "u" and not cliffs.has(v):
+				color = climate["map_trees"]
+			elif outdoor and path_tiles.has(Vector2i(x, y)):
+				color = climate["map_path"]
 			w._map_props[Vector2i(x, y)] = color
 
 
@@ -444,6 +723,9 @@ func _build_atmosphere() -> void:
 	var dark := CanvasModulate.new()
 	dark.color = climate["decor"]["tint"] if climate.has("decor") else climate["tint"]
 	w.add_child(dark)
+	if outdoor:
+		# wieczór pod gołym niebem - gracz nie niesie światła, świecą latarnie i ogniska
+		return
 	_light = _glow(Vector2.ZERO, Color(1.0, 0.85, 0.65, 0.42 if climate.has("decor") else 0.35),
 			Vector2(340, 250) if climate.has("decor") else Vector2(300, 220))
 

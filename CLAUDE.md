@@ -47,7 +47,7 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
   - `player.gd`, `character_stats.gd`, `items.gd`, `item_bases.gd`, `loot.gd`, `legends.gd`, `legendary_effects.gd`, `skills.gd`, `skill_effects.gd`, `levels.gd`, `quests.gd`, `bounties.gd`,
   - `hotbar.gd`: paski szybkiego wyboru (dane), `status_effects.gd`: lista efektów działających na gracza,
   - `skill_tree.gd`: drzewka umiejętności broni (dane), `sword_skills.gd`, `bow_skills.gd` i `spell_skills.gd`: umiejętności drzewek miecza, łuku i księgi,
-  - `dungeons.gd`: dane lochów (klimaty, stopnie, modyfikatory), `dungeon.gd`: generator lochu, wystrój `dungeon_decor.gd`
+  - `dungeons.gd`: dane lochów (klimaty, stopnie, modyfikatory), `dungeon.gd`: generator lochu (też lochy na zewnątrz), wystrój `dungeon_decor.gd`
     i `decor_<klimat>.gd`, okno `scripts/ui/dungeon_window.gd`,
   - `herbs.gd`: zioła i mikstury zielarki, `herb.gd`: zioło do zerwania (sadzone w każdej krainie przez `World._place_herbs`),
   - `scripts/ui/`: okna interfejsu (`ui_style.gd` to wspólny styl).
@@ -272,7 +272,9 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   gniazdo topielców, grota z ognikami, obóz żabołaków, sala rusałek, źródło, tron wodnika) i krok 4 (Pajęcze
   korzenie - dzikie jaskinie: wylęgarnia, spiżarnia, korzenie, grzybnia, sieciowa sala, kryjówka drzewców, obóz
   łowców, pajęczy ołtarz, gniazdo królowej) zrobione, czekają na ocenę autora - szczegóły w `docs/historia.md`
-  (szukaj „Wystrój lochów”). Wszystkie podziemne klimaty mają wystrój; dalej lochy na zewnątrz.
+  (szukaj „Wystrój lochów”). Wszystkie podziemne klimaty mają wystrój. Krok 5 (Winnica satyrów - pierwszy loch na
+  zewnątrz: polany, kręte ścieżki, granicą klify, ściana drzew i stawy - `Dungeon.outdoor`, `decor_vineyard.gd`) zrobiony,
+  czeka na ocenę autora; dalej kolejne lochy na zewnątrz (Oblężony gród, Wyspy na bagnie, Przesmyk w Turniach, Święty gaj).
   Kolejny klimat: "decor" w `Dungeons.CLIMATES`, skrypt `scripts/decor_<klimat>.gd` (dziedziczy po `DungeonDecor`),
   paczki PixelLab w `pixellab_src/dungeons/` i wpis w `tools/dungeon_props.py`; zrzuty sal: `tools/dungeon_shots.gd`.
 - [ ] **Podział lochów na zwykłe i endgame'owe** (listopad 2026): zwykłe jak dziś; endgame'owe z przedmiotami w Watrze

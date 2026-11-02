@@ -4,7 +4,8 @@ Narzędzie przycina każdą klatkę do zawartości, nakładkom na podłogę zmni
 i zapisuje wynik do assets/dungeons/<klimat>/<nazwa>.png. Pasy, które gra powtarza wzdłuż komnaty, rysuje samo
 (bezszwowe w pionie): chodnik Katakumb (runner), tory i kładkę z desek Kopalni (rails, walkway),
 mokrą kładkę i płytkie rozlewiska Zatopionych podziemi (planks, pool, pool_small), pajęczy most
-i zejście po korzeniach Pajęczych korzeni (silk, root_path).
+i zejście po korzeniach Pajęczych korzeni (silk, root_path). Winnica satyrów (loch na zewnątrz) ma też paczkę
+wielkich obiektów 128 px (vineyard_big), a jej paczkę wysokich obiektów tnie się z pasa klatek (strip_part).
 Gdy pobieranie z PixelLab jest zablokowane, klatki paczki to podglądy kandydatów z get_object (64x64, przezroczyste).
 Uruchom: python tools/dungeon_props.py"""
 import os
@@ -233,7 +234,94 @@ PROPS = {
         "antlers": ("roots_furniture", 14, 1.0),
         "sap_root": ("roots_furniture", 15, 1.0),
     },
+    "vineyard": {
+        # nakładki na trawę polan
+        "grapes": ("vineyard_small", 0, 0.95, 0.6),
+        "wine_spill": ("vineyard_small", 1, 0.85, 0.65),
+        "shards": ("vineyard_small", 2, 0.9, 0.55),
+        "leaves": ("vineyard_small", 3, 0.8, 0.6),
+        "flowers": ("vineyard_small", 4, 0.9, 0.6),
+        "grape_skins": ("vineyard_small", 9, 0.8, 0.6),
+        "hoofprints": ("vineyard_small", 11, 0.55, 0.6),
+        "stones": ("vineyard_small", 15, 0.9, 0.55),
+        # drobiazgi
+        "basket_tipped": ("vineyard_small", 5, 1.0, 0.55),
+        "pan_flute": ("vineyard_small", 6, 1.0, 0.45),
+        "wreath": ("vineyard_small", 7, 1.0, 0.5),
+        "goblets": ("vineyard_small", 8, 1.0, 0.5),
+        "wine_skin": ("vineyard_small", 10, 1.0, 0.5),
+        "jug": ("vineyard_small", 12, 1.0, 0.5),
+        "mushrooms": ("vineyard_small", 13, 1.0, 0.5),
+        "firewood": ("vineyard_small", 14, 1.0, 0.55),
+        # wysokie (z pasa paczki - kandydatki przesunięte, patrz strip_part)
+        "trellis": ("vineyard_tall", "s0", 1.0),
+        "pergola_post": ("vineyard_tall", "s1", 1.0),
+        "poplar": ("vineyard_tall", "s2", 1.0),
+        "vine_tree": ("vineyard_tall", "s3", 1.0),
+        "vine_tree_2": ("vineyard_tall", "s4", 1.0),
+        "amphora_stand": ("vineyard_tall", "s5", 1.0, 0.7),
+        "idol": ("vineyard_tall", "s6", 1.0, 0.85),
+        "ivy_pillar": ("vineyard_tall", "s7", 1.0),
+        "wineskins": ("vineyard_tall", "s8", 1.0, 0.8),
+        "elder": ("vineyard_tall", "s10", 1.0, 0.8),
+        "lantern_post": ("vineyard_tall", "s11", 1.0, 0.85),
+        "ribbon_pole": ("vineyard_tall", "s12", 1.0, 0.85),
+        "cattails": ("vineyard_tall", "s13", 1.0, 0.7),
+        "signpost": ("vineyard_tall", "s14", 1.0, 0.7),
+        "birch": ("vineyard_tall", "s15", 1.0),
+        "barrel_tower": ("vineyard_tall", "s16", 1.0, 0.75),
+        "scarecrow": ("vineyard_tall", "s17", 1.0, 0.8),
+        "totem": ("vineyard_tall", "s18", 1.0, 0.85),
+        "goat_totem": ("vineyard_tall", "s19", 1.0, 0.85),
+        # meble scenek
+        "press_small": ("vineyard_furniture", 0, 1.0, 0.65),
+        "grape_vat": ("vineyard_furniture", 1, 1.0, 0.65),
+        "barrel_rack": ("vineyard_furniture", 2, 1.0, 0.65),
+        "tapped_barrel": ("vineyard_furniture", 3, 1.0, 0.6),
+        "table": ("vineyard_furniture", 4, 1.0, 0.7),
+        "cushions": ("vineyard_furniture", 5, 1.0, 0.65),
+        "wine_basin": ("vineyard_furniture", 6, 1.0, 0.65),
+        "hay_rack": ("vineyard_furniture", 7, 1.0, 0.65),
+        "offering_altar": ("vineyard_furniture", 8, 1.0, 0.7),
+        "roast_spit": ("vineyard_furniture", 9, 1.0, 0.7),
+        "lyre": ("vineyard_furniture", 10, 1.0, 0.55),
+        "bench": ("vineyard_furniture", 11, 1.0, 0.65),
+        "barrel_cart": ("vineyard_furniture", 12, 1.0, 0.65),
+        "raisin_rack": ("vineyard_furniture", 13, 1.0, 0.7),
+        "grape_crate": ("vineyard_furniture", 14, 1.0, 0.55),
+        "well": ("vineyard_furniture", 15, 1.0, 0.7),
+        # wielkie, na środek polany (paczka 128 px)
+        "wine_press": ("vineyard_big", 0, 1.0, 0.8),
+        "gazebo": ("vineyard_big", 1, 1.0, 0.85),
+        "fountain": ("vineyard_big", 2, 1.0, 0.8),
+        "giant_vat": ("vineyard_big", 3, 1.0, 0.8),
+    },
 }
+
+
+def strip_part(pack, k, cache={}):
+    """Obiekt numer `k` z paczki sklejonej w jeden pas (16 klatek obok siebie). W niektórych paczkach kandydatki
+    wychodzą przesunięte - obiekt zaczyna się w jednej klatce, a kończy w następnej - więc dzielimy pas na grupy
+    kolumn z treścią (przerwy powyżej 3 px) zamiast brać klatki osobno."""
+    if pack not in cache:
+        frames = [Image.open(os.path.join(SRC, pack, "frame_%d.png" % i)).convert("RGBA") for i in range(16)]
+        size = frames[0].height
+        strip = Image.new("RGBA", (16 * size, size))
+        for i, frame in enumerate(frames):
+            strip.paste(frame, (i * size, 0))
+        alpha = strip.getchannel("A")
+        filled = [any(alpha.getpixel((x, y)) for y in range(size)) for x in range(strip.width)]
+        groups, start, last = [], None, 0
+        for x, on in enumerate(filled + [False] * 8):
+            if on:
+                start = x if start is None else start
+                last = x
+            elif start is not None and x - last > 3:
+                groups.append(strip.crop((start, 0, last + 1, size)))
+                start = None
+        cache[pack] = groups
+    img = cache[pack][k]
+    return img.crop(img.getbbox())
 
 
 def main_part(img):
@@ -435,8 +523,10 @@ def main():
         os.makedirs(out, exist_ok=True)
         for name, spec in props.items():
             pack, frame, alpha = spec[:3]
-            img = Image.open(os.path.join(SRC, pack, "frame_%d.png" % frame)).convert("RGBA")
-            img = main_part(img)
+            if isinstance(frame, str):
+                img = strip_part(pack, int(frame[1:]))
+            else:
+                img = main_part(Image.open(os.path.join(SRC, pack, "frame_%d.png" % frame)).convert("RGBA"))
             if len(spec) > 3:
                 img = img.resize((max(1, round(img.width * spec[3])), max(1, round(img.height * spec[3]))), Image.NEAREST)
             if alpha < 1.0:

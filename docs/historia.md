@@ -627,6 +627,31 @@ odpowiedniej sekcji.
     kandydatów z `get_object` (zapisują się w katalogu `tool-results` sesji jako przezroczyste PNG 64x64);
   - zrzuty: `tools/dungeon_shots.gd` (każda komnata osobno, nazwa pliku z rodzajem komnaty), `tools/overview.gd`
     przyjmuje też loch (kraina `dungeon`, klimat i stopień po ziarnie).
+- [x] **Wystrój lochów: Winnica satyrów - pierwszy loch na zewnątrz** (krok 5 punktu „Lochy ładne i bogate w środku”;
+  ustalenia z autorem: dzika winnica, w której satyrowie upili się winem z płomieni Watry i świętują bez końca,
+  strażnik - Król Satyrów, wariant 40 generacji PixelLab):
+  - generator (`Dungeon.outdoor`, klucz `"outdoor"` klimatu): komnaty to polany - owal wpisany w prostokąt komnaty
+    z brzegiem pofalowanym szumem (`_shape_glades`), korytarze to kręte ścieżki 2-3 wierzchołków (`_dig_path`,
+    fala o losowej fazie; gładka linia w `_trails`); wierzchołki poza podłogą to klif, staw albo ściana drzew według
+    szumu (`_plan_borders`, progi w `"terrain"` klimatu); klif bez pasującego kafelka Wang zamienia się w drzewa;
+  - lico ściany (`"t"`) tylko pod klifem (`Dungeon._wall`, `_tile_label`), kafelki Wang (klify Wietrznych Turni,
+    `pixellab_src/alpine/cliff.png` przez `tools/dungeon_tiles.py`) tylko przy klifach; resztę rysuje SoftGround
+    z teksturami gór (`_build_ground`: łąka, kwiaty, gęsta trawa pod drzewami, ubita ścieżka `path_tiles`,
+    woda bagien z brzegiem falującym szumem); kolizje, droga potworów i minimapa jak w podziemiach (kolory drzew,
+    wody i ścieżek: `map_trees`, `map_water`, `map_path`);
+  - `_dress_borders`: po dwa drzewa na wierzchołek ściany lasu, zagajnik na szczytach półek, trzciny przy brzegu
+    i grążele na wodzie; wieczór (ciepły CanvasModulate, gracz bez własnego światła);
+  - wystrój `scripts/decor_vineyard.gd` (`VineyardDecor`): winnica (rzędy winorośli, kosze, strach na wróble), tłocznia
+    (wielka prasa albo kadź, kadzie, beczki z kranem, rozlane wino), biesiada (stół, animowane ognisko, stoliki, rożen,
+    poduchy), tany (słup majowy, tyczki ze wstążkami, altana z lirą i bębnami), sad (drzewa co drugi wierzchołek),
+    zagroda kóz (płot, koryto, paśnik, kozy z poziomem lochu), obóz (namioty i szałasy wokół rożna), źródło wina
+    (fontanna z satyrem, pałki, brzozy, świetliki); wejście - łuk z winorośli i latarnie, strażnik - tron za skarbcem,
+    totemy z kozią czaszką; latarnie wzdłuż ścieżek i drogowskazy (`_trail_lights`), ślady święta na trawie (`_scatter`);
+    na licu klifów winorośl. Grafiki też z wioski satyrów (`assets/mountains/satyr/`, `assets/forest/props/satyr_*`);
+    ścieżka bez rozszerzenia w `DungeonDecor._tex` dostaje `.png`;
+  - grafiki PixelLab: paczki `vineyard_small`, `vineyard_tall`, `vineyard_furniture` (po 16, 64 px) i `vineyard_big`
+    (4 sztuki, 128 px) w `pixellab_src/dungeons/`; w paczce wysokich obiektów kandydatki wyszły przesunięte między
+    klatkami, więc `tools/dungeon_props.py` tnie ją z pasa sklejonych klatek (`strip_part`, klatka `"s<nr>"`).
 
 ## Zielarstwo (Pomysły i rzeczy do zrobienia)
 - [x] **Zioła i mikstury zielarki** (`scripts/herbs.gd`, roślina `scripts/herb.gd`, grafiki z PixelLab przez `tools/herb_art.py`):

@@ -108,6 +108,8 @@ func build() -> void:
 # ---------------------------------------------------------------- pomocnicy
 func _tex(name: String) -> Texture2D:
 	var path := name if name.begins_with("res://") else dir + name + ".png"
+	if path.get_extension() == "":
+		path += ".png"
 	if not _cache.has(path):
 		_cache[path] = load(path)
 	return _cache[path]
