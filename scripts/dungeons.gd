@@ -55,6 +55,8 @@ const CLIMATES := {
 		"wall_props": ["res://assets/frogs/clay_pots.png", "res://assets/frogs/fish_net.png", "res://assets/swamp/v2_pillar.png",
 				"res://assets/drowned/soul_jars.png"],
 		"map_floor": Color("455844"), "map_wall": Color("0c120b"),
+		"decor": {"dir": "res://assets/dungeons/flooded/", "tint": Color(0.6, 0.7, 0.68),
+				"themes": ["temple", "boardwalk", "wrecks", "nest", "wisps", "frogs", "rusalka", "spring"]},
 	},
 	"roots": {
 		"name": "Pajęcze korzenie", "description": "Podziemia pod Prastarym Lasem, oplecione korzeniami i siecią. Pająki i drzewce; w gnieździe królowa pająków.",

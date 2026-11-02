@@ -1,7 +1,7 @@
 class_name DungeonDecor
 extends RefCounted
 ## Wspólna część wystroju lochu klimatu z kluczem "decor" (Dungeons.CLIMATES). Każdy klimat ma własny skrypt
-## scripts/decor_<klimat>.gd (CatacombsDecor, MineDecor), który dziedziczy po tym i dopisuje: rzędy mebli pod
+## scripts/decor_<klimat>.gd (CatacombsDecor, MineDecor, FloodedDecor), który dziedziczy po tym i dopisuje: rzędy mebli pod
 ## ścianami (lines), nakładki na podłogę (floor_decals), wystrój lica ścian (_dress_wall) i scenki komnat
 ## (funkcje _<rodzaj>(room) dla rodzajów z "themes" oraz _start, _boss i _event).
 ## Wszystko stoi w porządku, a nie porozrzucane: na licu ścian światła w równych odstępach, pod ścianami komnat

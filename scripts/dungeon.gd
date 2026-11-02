@@ -8,7 +8,7 @@ extends Node
 ## Komnaty: wejściowa z płomieniami Watry (powrót do Ostoi), w pozostałych gromady potworów klimatu, w najdalszej
 ## strażnik (boss) przy zamkniętym skarbcu - po jego pokonaniu skarbiec się otwiera, a obok buchają płomienie powrotu.
 ## Mrok (CanvasModulate w kolorze klimatu), pochodnie / koksowniki / grzyby ze światłem i światło wokół gracza.
-## Komnaty mają wcięte narożniki i wnęki; klimat z "decor" (Katakumby, Kopalnia) urządza je scenkami (DungeonDecor),
+## Komnaty mają wcięte narożniki i wnęki; klimat z "decor" (Katakumby, Kopalnia, Zatopione podziemia) urządza je scenkami (DungeonDecor),
 ## pozostałe - porozrzucanym wystrojem (_build_props).
 
 const CELL := 64
