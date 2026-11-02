@@ -6,6 +6,7 @@ nadpisują dawne grafiki 16 px z tools/item_art.py, skill_art.py i ui_art.py:
 - ikony umiejętności i interfejsu -> assets/skills, assets/ui,
 - scripts/item_bases.gd - przedmioty bazowe z katalogu (tools/item_catalog.py) z ikonami, bronią w ręku i chwytem.
 Wywoływane z generate_art.py (na końcu) albo samodzielnie: python tools/pixellab_items.py
+Potem uruchom python tools/bow_strings.py - łuki w ręku są bez cięciwy (gra rysuje ją w kodzie).
 """
 import json
 import os

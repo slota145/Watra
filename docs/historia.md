@@ -472,6 +472,31 @@ odpowiedniej sekcji.
   `HAND_MAX_PIXELS` to twarz. Ręczne poprawki pojedynczych klatek: `FIST_FIX`. W Młynku, Szarży i pchnięciu po Mgnieniu
   miecz celujący w stronę kamery albo od niej jest skrócony jak w perspektywie (`GROUND_SQUASH`, `MIN_FORESHORTEN`).
 
+- [x] **Etap 3 animacji postaci z bronią** (listopad 2026, Wojciech): łuk i księga.
+  Cięciwa rysowana w kodzie: `tools/bow_strings.py` wymazuje cięciwę z grafik łuków w ręku (`assets/weapons/*bow*.png`,
+  przy okazji usuwa poziomą kreskę z `bow_t4*` i przesuwa ten łuk na chwyt - `FIX`) i zapisuje końce ramion do
+  `scripts/bow_rig.gd` (`BowRig.TIPS`); po ponownym wygenerowaniu łuków (`pixellab_items.py`, `legend_held.py`) uruchom go
+  znowu. Węzeł `BowString` (`scripts/bow_string.gd`, dziecko sprite'a broni) rysuje cięciwę od końca do końca, odciąga
+  ją o naciąg (`pull`, w kolejnych klatkach z `Player.BOW_PULL`), przy naciągu kładzie strzałę, po puszczeniu drga
+  (`TWANG_*`), a przy pełnym napięciu Grotu Swaroga drży (`tremble`). Grot Swaroga przy napinaniu pokazuje klatki
+  `POWER_DRAW_FRAMES` ruchu `bow_power` (naciąg = napięcie), po puszczeniu - od `POWER_RELEASE_FRAME`.
+  Nowe ruchy (PixelLab `skeleton-v3`, 8 klatek, opis bez słowa „bow” - inaczej model dorysowuje łuk):
+  `bow_power` (własne pozy: rozkrok, naciąg za ucho, drżenie) - Grot Swaroga, Balista, Strzała Wichru; `bow_sky`
+  (własne pozy, łuk celuje w górę - `BOW_SKY_TILT`) - Deszcz Strzał, Sokół; `bow_hop` (`hop_back` + `shoot_bow`) -
+  Odskok, Sidła; Salwa i Szybka salwa to zwykły strzał dwa razy szybciej, raz za razem (osobny ruch wychodził
+  z dorysowanymi łukami); Strzała tropiąca - zwykły strzał. Księga: `cast_push` (`shove`) - Kula ognia (też przy
+  ładowaniu), Włócznia Marzanny, Łańcuch błyskawic, Kula Piorunów; `cast_self` (własne pozy: dłonie przy piersi,
+  potem ramiona szeroko) - Tarcza Many, Krok przez Mgłę; `cast_down` - Fala piorunów, Kamień Runiczny; `cast_up`
+  (`arms_overhead`) - Spadająca Gwiazda, Burza Peruna, Zamieć. Mapa umiejętność -> [ruch, czas, powtórzenia] to
+  `Player.SKILL_MOVES`, a ruch włącza `Player.note_skill` (tylko wygląd, balans bez zmian).
+  Chwyt w nowych ruchach: ten sam ruch szkieletowy puszczony na stanie „Znacznik” postaci w PixelLab (Wojciech
+  z prętem w prawej dłoni, `e19cc73c-…`) daje klatki `mk_<ruch>_<kierunek>_<i>.png` (cięte `hero_frames_cut.py`
+  jako ruch `mk_<ruch>`); `hero_sheets.py` czyta pręt przez `_rod_ends(…, sword=False)` (szerszy odcień błękitu, sam
+  różowy koniec wystarczy), klatki bez pręta dostają chwyt w pół drogi, a pierwsza i ostatnia - chwyt spoczynku
+  (`_fill_between`), chwyt obok sylwetki przyciąga `_nearest_opaque`. Śledzenie dłoni po samym kolorze skóry nie
+  działało (myliło dłoń z twarzą i karkiem). Zrzuty w grze: `tools/anim_shots.gd` (ruchy shot, power, sky, hop, rapid,
+  cast, push, self, down, up). Dalej (etap 4, na później): nowe pozy ciała.
+
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)
   i 7 slotów umiejętności (LPM, PPM, Q, E, R, Z, X) z osobnym układem dla każdej broni. Każdy slot przyjmuje

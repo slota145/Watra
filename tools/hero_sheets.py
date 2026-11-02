@@ -31,10 +31,15 @@ OUT = os.path.join(ROOT, "assets", "heroes")
 
 HEROES = [("wojciech", "Wojciech"), ("bogdan", "Bogdan"), ("mira", "Mira"), ("jaga", "Jaga")]
 DIRS = ["south", "south-east", "east", "north-east", "north"]
-ANIMS = ["idle", "walk", "slash", "cast", "shoot", "chop", "sweep", "stab", "rising_cut", "spin"]
+ANIMS = ["idle", "walk", "slash", "cast", "shoot", "chop", "sweep", "stab", "rising_cut", "spin",
+         "bow_power", "bow_sky", "bow_hop", "cast_push", "cast_self", "cast_down", "cast_up"]
 ## Ruchy miecza z etapu 2: tu znacznik czytamy po całym pręcie (_rod_ends), bo bywa w ciemniejszym błękicie.
 ## Obrót (spin) nie ma znaczników: w Młynku miecz krąży wokół postaci w kodzie (Player).
 SWORD_MOVES = ("chop", "sweep", "stab", "rising_cut", "spin")
+## Ruchy łuku i księgi z etapu 3. Znaczniki (mk_<ruch>_<kierunek>_<i>.png) to ten sam ruch szkieletowy puszczony
+## na stanie postaci „Znacznik” w PixelLab (Wojciech z prętem w prawej dłoni) - pręt pokazuje dłoń w każdej klatce.
+## Łuk w grze celuje w cel, a księga stoi grzbietem w górę, więc liczy się tylko położenie dłoni.
+STAGE3_MOVES = ("bow_power", "bow_sky", "bow_hop", "cast_push", "cast_self", "cast_down", "cast_up")
 FRAMES = 8  # kolumny arkusza; chód i spoczynek mają 4 klatki, ataki do 8
 CELL = 72
 FEET_Y = 62  # stopy w komórce (od góry), przed zmniejszeniem
@@ -95,6 +100,7 @@ SKIN_ATTACK_DIRS = ("south", "south-east", "east")
 FIST_FIX = {
     "wojciech": {
         ("sweep", "south", 3): [-5.5, -15.0],
+        ("bow_hop", "east", 3): [4.0, -16.0], ("bow_hop", "north-east", 3): [6.0, -18.0],
     },
 }
 ## Większa plama skóry to twarz, nie dłoń.
@@ -314,8 +320,9 @@ def _marker(img):
     return far[0], far[1], cx, cy
 
 
-def _rod_ends(img):
-    """(x, y chwytu, x, y czubka) z pręta w ruchach miecza. Czubek to najdalszy od chwytu punkt błękitnej części
+def _rod_ends(img, sword=True):
+    """(x, y chwytu, x, y czubka) z pręta w ruchach miecza (sword) i etapu 3 (bez sword: szerszy odcień błękitu
+    i sam różowy koniec wystarczy). Czubek to najdalszy od chwytu punkt błękitnej części
     (także ciemnego błękitu). Chwyt to środek różowej części, a bez niej - koniec błękitu bliższy środka
     sylwetki. None, gdy pręta nie ma."""
     px = img.load()
@@ -328,12 +335,17 @@ def _rod_ends(img):
             h, sat, v = _hsv(r, g, b)
             if _is_magenta(r, g, b):
                 mag.append((x, y))
-            elif 170.0 <= h <= 200.0 and sat > 0.4 and v > 0.3:
+            elif (170.0 if sword else 155.0) <= h <= 200.0 and sat > 0.4 and v > 0.3:
                 cyan.append((x, y))
             else:
                 body.append((x, y))
     cyan = _largest_group(cyan)
     mag = _largest_group(mag)
+    if not sword and len(mag) >= 2 and len(cyan) < 2:
+        # ruchy łuku i księgi: kąt nie jest potrzebny, wystarczy różowy koniec w pięści (pręt bywa schowany)
+        hx = sum(p[0] for p in mag) / len(mag)
+        hy = sum(p[1] for p in mag) / len(mag)
+        return hx, hy, hx + 4.0, hy
     if len(cyan) < 2 or not body:
         return None
     if len(mag) >= 2:
@@ -415,7 +427,7 @@ def build(hero):
                 # klatka z wtopionym przedmiotem zastąpiona inną klatką tej animacji (razem ze znacznikiem)
                 src_f = FRAME_FIX.get(hero, {}).get((anim, direction, f), {}).get("copy", f)
                 img = _clean(hero, anim, direction, src_f, _open(paths[src_f]))
-                if anim in SWORD_MOVES:
+                if anim in SWORD_MOVES or anim in STAGE3_MOVES:
                     img = _drop_specks(img)
                 # płótna PixelLab są wyśrodkowane na postaci: stopy z obrotu, przesunięte o różnicę płócien
                 feet = _bottom(rot) + (img.height - rot.height) / 2.0
@@ -429,7 +441,7 @@ def build(hero):
                 grip = None
                 if os.path.exists(mk_path):
                     mk = _open(mk_path)
-                    found = _rod_ends(mk) if anim in SWORD_MOVES else _marker(mk)
+                    found = _rod_ends(mk, anim in SWORD_MOVES) if anim in SWORD_MOVES or anim in STAGE3_MOVES else _marker(mk)
                     if found:
                         found_raw = found
                         mx, my, cx, cy = found
@@ -472,6 +484,8 @@ def build(hero):
                 dir_grips.append(grip)
             # brakujące klatki biorą chwyt z poprzedniej (albo z najbliższej znalezionej)
             known = [g for g in dir_grips if g]
+            if anim in STAGE3_MOVES and dir_grips:
+                _fill_between(dir_grips, grips["idle"][d][0] if grips["idle"][d] else None)
             for i, g in enumerate(dir_grips):
                 if g is None and known:
                     dir_grips[i] = dir_grips[i - 1] if i > 0 and dir_grips[i - 1] else known[0]
@@ -510,6 +524,21 @@ def build(hero):
         _smooth_angles(grips)
         _fist_sheet(small, grips, hero).save(os.path.join(OUT, hero + "_fist.png"))
     return grips, counts
+
+
+def _fill_between(dir_grips, rest):
+    """Klatki bez znacznika między dwiema klatkami ze znacznikiem: chwyt w pół drogi (liniowo). Ruch zaczyna się
+    i kończy w spoczynku, więc pierwsza i ostatnia klatka bez znacznika dostają chwyt spoczynku (rest)."""
+    if rest:
+        for i in (0, len(dir_grips) - 1):
+            if dir_grips[i] is None:
+                dir_grips[i] = list(rest[:3])
+    found = [i for i, g in enumerate(dir_grips) if g]
+    for a, b in zip(found, found[1:]):
+        for i in range(a + 1, b):
+            t = (i - a) / float(b - a)
+            ga, gb = dir_grips[a], dir_grips[b]
+            dir_grips[i] = [round(ga[0] + (gb[0] - ga[0]) * t, 1), round(ga[1] + (gb[1] - ga[1]) * t, 1), ga[2]]
 
 
 def _smooth_angles(grips):
@@ -616,6 +645,23 @@ def _skin_hand(px, anim, direction, guess):
     return best[0], best[1]
 
 
+## Jak daleko (piksele zmniejszonej komórki) szukać sylwetki dla chwytu, który wisi obok postaci (ruchy etapu 3).
+NEAR_REACH = 5.0
+
+
+def _nearest_opaque(px, x, y, reach):
+    """Środek najbliższego nieprzezroczystego piksela komórki w promieniu reach albo None."""
+    best = None
+    r = int(math.ceil(reach))
+    for qy in range(int(y) - r, int(y) + r + 1):
+        for qx in range(int(x) - r, int(x) + r + 1):
+            if 0 <= qx < OUT_CELL and 0 <= qy < OUT_CELL and px[qx, qy][3] >= 128:
+                dist = math.hypot(qx + 0.5 - x, qy + 0.5 - y)
+                if dist <= reach and (best is None or dist < best[0]):
+                    best = (dist, qx + 0.5, qy + 0.5)
+    return (best[1], best[2]) if best else None
+
+
 def _fist_sheet(small, grips, hero="wojciech"):
     """Arkusz pięści (taki sam układ jak arkusz postaci): w każdej klatce z chwytem piksele dłoni wokół środka pięści.
     Przy okazji przesuwa chwyt (grips, w miejscu) do środka pięści - tam gra kładzie rękojeść broni."""
@@ -637,6 +683,11 @@ def _fist_sheet(small, grips, hero="wojciech"):
                     center = (OUT_CELL / 2.0 + fix[0], OUT_FEET_Y + fix[1])
                 else:
                     center = _skin_hand(px, anim, DIRS[d], (cx, cy)) or _fist_center(px, cx, cy, grip[2])
+                    if center is None and anim in STAGE3_MOVES:
+                        # chwyt wyliczony w pół drogi między znacznikami bywa obok ręki: najbliższy piksel sylwetki
+                        near = _nearest_opaque(px, cx, cy, NEAR_REACH)
+                        if near:
+                            center = _fist_center(px, near[0], near[1], grip[2]) or near
                 if center is None:
                     continue
                 fx, fy = center

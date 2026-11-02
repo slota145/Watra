@@ -119,6 +119,32 @@ const SWORD_CHAIN := ["sweep", "chop", "rising_cut"]
 const SWORD_CHAIN_RESET := 1.2
 ## Ile trwa sam ruch postaci przy umiejętności bez własnego czasu ataku (Rozpłatanie, Rozłupanie Ziemi).
 const SKILL_ANIM_TIME := 0.4
+## Ruchy postaci przy umiejętnościach łuku i księgi (włącza je note_skill; tylko wygląd): id -> [ruch, czas w sekundach,
+## ile razy ruch się powtarza]. Salwa i Szybka salwa to zwykły strzał dwa razy szybciej, raz za razem.
+const SKILL_MOVES := {
+	"power_shot": ["bow_power", 0.3], "ballista": ["bow_power", 0.5], "wind_arrow": ["bow_power", 0.45],
+	"arrow_rain": ["bow_sky", 0.5], "falcon": ["bow_sky", 0.5],
+	"multishot": ["shoot", 0.4, 2], "rapid_volley": ["shoot", 0.4, 2], "seeker": ["shoot", 0.3],
+	"vault": ["bow_hop", 0.45], "snare": ["bow_hop", 0.45],
+	"fireball": ["cast_push", 0.35], "frost_lance": ["cast_push", 0.35], "chain_lightning": ["cast_push", 0.3],
+	"ball_lightning": ["cast_push", 0.4],
+	"mana_shield": ["cast_self", 0.55], "blink": ["cast_self", 0.35],
+	"thunder_wave": ["cast_down", 0.4], "rune_stone": ["cast_down", 0.5],
+	"meteor": ["cast_up", 0.55], "storm_call": ["cast_up", 0.6], "blizzard": ["cast_up", 0.55],
+}
+## Naciąg cięciwy (0..1) w kolejnych klatkach ruchów z łukiem (BowString); po spadku z naciągu do zera cięciwa drga.
+const BOW_PULL := {
+	"shoot": [0.3, 0.7, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0],
+	"bow_power": [0.0, 0.1, 0.5, 1.0, 1.0, 1.0, 0.0, 0.0],
+	"bow_sky": [0.0, 0.2, 0.8, 1.0, 0.0, 0.0, 0.0, 0.0],
+	"bow_hop": [0.0, 0.0, 0.0, 0.0, 0.6, 1.0, 0.0, 0.0],
+}
+## Grot Swaroga: klatki ruchu bow_power przy napinaniu (od pierwszej do pełnego naciągu) i od której klatki
+## gra puszczenie strzały.
+const POWER_DRAW_FRAMES := Vector2i(1, 5)
+const POWER_RELEASE_FRAME := 6
+## Strzał w niebo (bow_sky): łuk celuje w górę, odchylony o tyle (radiany) w stronę, w którą patrzy postać.
+const BOW_SKY_TILT := 0.45
 ## Klatki animacji pchnięcia pokazywane w Szarży (ręka wyciągnięta do przodu).
 const LUNGE_FIRST_FRAME := 3
 const LUNGE_FRAMES := 3
@@ -198,6 +224,12 @@ var _chain_timer := 0.0
 ## Ruch postaci przy umiejętności (play_skill_anim) - tylko wygląd.
 var _skill_anim := ""
 var _skill_anim_timer := 0.0
+## Czas całego ruchu umiejętności, od której klatki się zaczyna i ile razy się powtarza.
+var _skill_anim_time := SKILL_ANIM_TIME
+var _skill_anim_from := 0
+var _skill_anim_loops := 1
+## Cięciwa łuku w ręku (dziecko sprite'a broni).
+var _bow_string: BowString
 ## Pchnięcie po skoku Mgnienia (play_thrust): ile jeszcze trwa i w którą stronę celuje ostrze - tylko wygląd.
 var _thrust_time := 0.0
 var _thrust_dir := Vector2.RIGHT
@@ -487,6 +519,15 @@ func note_skill(id: String) -> void:
 	_chain_skill = id
 	_chain_time = combo_window()
 	spell_skills.on_cast(id)
+	if SKILL_MOVES.has(id):
+		var move: Array = SKILL_MOVES[id]
+		# postać zwrócona w stronę celu, a łuk celuje tam, gdzie kursor
+		var aim := _aim_direction()
+		_attack_angle = aim.angle()
+		_face_direction(aim)
+		# Grot Swaroga po napięciu: już tylko puszczenie strzały
+		var from := POWER_RELEASE_FRAME if id == "power_shot" else 0
+		play_skill_anim(move[0], move[1], from, move[2] if move.size() > 2 else 1)
 
 
 ## Czy umiejętność użyta teraz zadziała jako combo (po pasującej umiejętności w oknie combo).
@@ -1343,9 +1384,15 @@ func _next_melee_anim(weapon: Dictionary) -> String:
 
 
 ## Ruch postaci przy umiejętności, która nie ma własnego czasu ataku. Działa tylko na wygląd.
-func play_skill_anim(anim: String) -> void:
+## `time` - ile trwa, `from` - od której klatki, `loops` - ile razy ruch się powtarza.
+func play_skill_anim(anim: String, time := SKILL_ANIM_TIME, from := 0, loops := 1) -> void:
+	if HeroRig.frames(hero, anim) <= 0:
+		return
 	_skill_anim = anim
-	_skill_anim_timer = SKILL_ANIM_TIME
+	_skill_anim_time = time
+	_skill_anim_timer = time
+	_skill_anim_from = from
+	_skill_anim_loops = loops
 	_thrust_time = 0.0
 
 
@@ -2403,15 +2450,21 @@ func _update_animation(delta: float) -> void:
 		anim = "stab"
 		frame = clampi(LUNGE_FIRST_FRAME + int((1.0 - _thrust_time / THRUST_POSE_TIME) * LUNGE_FRAMES), LUNGE_FIRST_FRAME, LUNGE_FIRST_FRAME + LUNGE_FRAMES - 1)
 	elif is_charging_fireball():
-		anim = "cast"
+		# dłonie zebrane przy piersi (pierwsza klatka pchnięcia)
+		anim = "cast_push" if HeroRig.frames(hero, "cast_push") > 0 else "cast"
 		frame = 1
+	elif bow_skills != null and bow_skills.power_charge() >= 0.0 and HeroRig.frames(hero, "bow_power") > 0:
+		anim = "bow_power"
+		frame = roundi(lerpf(POWER_DRAW_FRAMES.x, POWER_DRAW_FRAMES.y, bow_skills.power_charge()))
 	elif _harvest_target != null:
 		anim = "slash"
 		frame = clampi(int((1.0 - _harvest_hit / HARVEST_HIT_INTERVAL) * slash_frames), 0, slash_frames - 1)
 	elif _skill_anim_timer > 0.0 and not is_dead:
 		anim = _skill_anim
 		var skill_frames := HeroRig.frames(hero, anim)
-		frame = clampi(int((1.0 - _skill_anim_timer / SKILL_ANIM_TIME) * skill_frames), 0, skill_frames - 1)
+		var shown_frames := (skill_frames - _skill_anim_from) * _skill_anim_loops
+		var step := int((1.0 - _skill_anim_timer / _skill_anim_time) * shown_frames)
+		frame = _skill_anim_from + clampi(step, 0, shown_frames - 1) % (skill_frames - _skill_anim_from)
 	elif is_attacking():
 		anim = _melee_anim if _attack_kind == "melee" else ATTACK_ANIMS.get(_attack_kind, "slash")
 		var count := HeroRig.frames(hero, anim)
@@ -2427,6 +2480,7 @@ func _update_animation(delta: float) -> void:
 	var new_frame := shown != sprite.frame
 	sprite.frame = shown
 	_update_held_weapon(anim, frame)
+	_update_bow_string(anim, frame)
 	# nowa klatka postaci przeskakuje od razu, więc broń w dłoni też musi przeskoczyć: wygładzanie ruchu
 	# między krokami fizyki (physics interpolation) spóźniałoby ją o krok i odrywało od dłoni;
 	# w Młynku broń krąży płynnie, więc tam wygładzanie zostaje
@@ -2447,7 +2501,9 @@ func _lunge_frame() -> int:
 ## zachodnich. W ataku postaci z chwytem w klatkach ataku (Wojciech) broń też jest w dłoni
 ## (_follow_hand), u pozostałych kręci się wokół barku jak dotąd (pivot/sword).
 func _update_held_weapon(anim: String, frame: int) -> void:
-	var skill_pose := _skill_anim_timer > 0.0 or _lunge_time > 0.0 or _thrust_time > 0.0
+	# napinanie Grotu Swaroga i ładowanie kuli ognia też trzymają broń w dłoni z klatki ruchu
+	var skill_pose := _skill_anim_timer > 0.0 or _lunge_time > 0.0 or _thrust_time > 0.0 or is_charging_fireball() \
+			or (bow_skills != null and bow_skills.power_charge() >= 0.0)
 	var swinging := _whirling or skill_pose or is_charging_fireball() or _harvest_target != null or is_attacking()
 	var weapon := equipment.weapon()
 	# broń z PixelLab ma gęstszy piksel niż świat (held_scale 0,5); narzędzie do zbierania - zwykłą skalę;
@@ -2515,7 +2571,9 @@ func _follow_hand(weapon: Dictionary, anim: String, frame: int) -> bool:
 		flip_v = false
 	elif hold == "bow":
 		angle = _attack_angle
-		flip_v = absf(angle_difference(0.0, _attack_angle)) > PI / 2.0
+		if anim == "bow_sky":
+			angle = -PI / 2.0 + (BOW_SKY_TILT if cos(_attack_angle) >= 0.0 else -BOW_SKY_TILT)
+		flip_v = absf(angle_difference(0.0, angle)) > PI / 2.0
 	elif _lunge_time > 0.0 or _thrust_time > 0.0:
 		# Szarża i pchnięcie po Mgnieniu: ostrze zawsze do przodu, w stronę ruchu; pchnięcie w stronę kamery
 		# (albo od niej) widać z góry jako krótsze
@@ -2558,6 +2616,30 @@ func _whirl_hand() -> void:
 	var behind := sin(angle) < -0.2
 	pivot.z_index = 0 if behind else 1
 	_weapon_behind(behind)
+
+
+## Cięciwa łuku w ręku: przyczepiona do końców ramion (BowRig), naciągnięta według klatki ruchu (BOW_PULL),
+## a przy napinaniu Grotu Swaroga - według napięcia (z drżeniem przy pełnym).
+func _update_bow_string(anim: String, frame: int) -> void:
+	var is_bow := sword.visible and _hold_of(equipment.weapon()) == "bow" and _harvest_target == null
+	if not is_bow:
+		if _bow_string != null:
+			_bow_string.visible = false
+		return
+	if _bow_string == null:
+		_bow_string = BowString.new()
+		_bow_string.name = "BowString"
+		sword.add_child(_bow_string)
+	_bow_string.fit(sword)
+	var charge: float = bow_skills.power_charge() if bow_skills != null else -1.0
+	var pull := 0.0
+	if charge >= 0.0:
+		pull = 0.2 + 0.8 * charge
+	elif BOW_PULL.has(anim) and (is_attacking() or _skill_anim_timer > 0.0):
+		var table: Array = BOW_PULL[anim]
+		pull = table[mini(frame, table.size() - 1)]
+	_bow_string.tremble = charge >= 1.0
+	_bow_string.pull = pull
 
 
 ## Pięść nad bronią: ta sama klatka co postać, z arkusza pikseli dłoni (HeroRig.fist_sheet). Poza bronią zakrywa
