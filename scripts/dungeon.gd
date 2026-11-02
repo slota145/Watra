@@ -8,6 +8,8 @@ extends Node
 ## Komnaty: wejściowa z płomieniami Watry (powrót do Ostoi), w pozostałych gromady potworów klimatu, w najdalszej
 ## strażnik (boss) przy zamkniętym skarbcu - po jego pokonaniu skarbiec się otwiera, a obok buchają płomienie powrotu.
 ## Mrok (CanvasModulate w kolorze klimatu), pochodnie / koksowniki / grzyby ze światłem i światło wokół gracza.
+## Komnaty mają wcięte narożniki i wnęki; klimat z "decor" (Katakumby) urządza je scenkami (DungeonDecor),
+## pozostałe - porozrzucanym wystrojem (_build_props).
 
 const CELL := 64
 const GRID := Vector2i(40, 30)
@@ -50,6 +52,10 @@ var altar: Npc
 var _altar_sprite: Sprite2D
 var _altar_glow: Sprite2D
 var _corridors: Array[PackedVector2Array] = []
+## Wierzchołki zajęte przez duże rekwizyty z kolizją (kolumny, sarkofagi) - potwory je omijają.
+var solid := {}
+## Migoczące światła: [Sprite2D, krycie, faza].
+var flames: Array = []
 var _rng := RandomNumberGenerator.new()
 var _portals: Array[Dictionary] = []
 var _boss: Goblin
@@ -77,6 +83,7 @@ func generate(world, settings: Dictionary) -> void:
 	for key in ["health", "damage", "xp", "gold", "loot"]:
 		Goblin.dungeon_mods[key] = Dungeons.multiplier(mods, key)
 	_plan_rooms()
+	_shape_rooms()
 	_plan_altar()
 	_connect_rooms()
 	_fix_corners()
@@ -87,7 +94,10 @@ func generate(world, settings: Dictionary) -> void:
 	_build_map()
 	w._build_bounds()
 	_build_atmosphere()
-	_build_props()
+	if climate.has("decor"):
+		DungeonDecor.new(self).build()
+	else:
+		_build_props()
 	_build_entrance()
 	_populate(Dungeons.multiplier(mods, "count") * (1.0 + Dungeons.TIER_COUNT_BONUS * (int(settings["tier"]) - 1)))
 	_build_vault()
@@ -112,6 +122,45 @@ func _plan_rooms() -> void:
 		for x in range(room.position.x, room.end.x):
 			for y in range(room.position.y, room.end.y):
 				floor_cells[Vector2i(x, y)] = true
+
+
+## Nieregularne komnaty: wcięte narożniki (blok skały) i wnęki wychodzące poza prostokąt. Środek komnaty i środki
+## boków zostają wolne (płomienie Watry, strażnik, skarbiec, kryształ, wejścia korytarzy). Prostokąt w `rooms`
+## zostaje jako obrys komnaty.
+func _shape_rooms() -> void:
+	for room in rooms:
+		if room.size.x >= 6 and room.size.y >= 5:
+			for corner in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
+				if _rng.randf() >= 0.45:
+					continue
+				var cut := Vector2i(_rng.randi_range(2, mini(3, room.size.x / 2 - 1)), 2)
+				var origin := Vector2i(room.position.x if corner.x == 0 else room.end.x - cut.x,
+						room.position.y if corner.y == 0 else room.end.y - cut.y)
+				for x in range(origin.x, origin.x + cut.x):
+					for y in range(origin.y, origin.y + cut.y):
+						floor_cells.erase(Vector2i(x, y))
+		# wnęka: pas 2-3 wierzchołków szeroki, 1-2 głęboki, na losowym boku (z dala od innych komnat)
+		if _rng.randf() < 0.6:
+			var side: Vector2i = [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN][_rng.randi() % 4]
+			var depth := _rng.randi_range(1, 2)
+			var width := _rng.randi_range(2, 3)
+			var along := room.size.x if side.y != 0 else room.size.y
+			if along < width + 2:
+				continue
+			var offset := _rng.randi_range(1, along - width - 1)
+			var nook := Rect2i()
+			match side:
+				Vector2i.UP: nook = Rect2i(room.position.x + offset, room.position.y - depth, width, depth)
+				Vector2i.DOWN: nook = Rect2i(room.position.x + offset, room.end.y, width, depth)
+				Vector2i.LEFT: nook = Rect2i(room.position.x - depth, room.position.y + offset, depth, width)
+				_: nook = Rect2i(room.end.x, room.position.y + offset, depth, width)
+			if nook.position.x < 2 or nook.position.y < 2 or nook.end.x > GRID.x - 2 or nook.end.y > GRID.y - 2:
+				continue
+			if rooms.any(func(other: Rect2i) -> bool: return other != room and other.grow(1).intersects(nook)):
+				continue
+			for x in range(nook.position.x, nook.end.x):
+				for y in range(nook.position.y, nook.end.y):
+					floor_cells[Vector2i(x, y)] = true
 
 
 ## Ołtarz Welesa: rzadko (Essences.ALTAR_CHANCE, w trybie deweloperskim albo z "altar" w ustawieniach zawsze)
@@ -391,9 +440,10 @@ func _build_map() -> void:
 
 func _build_atmosphere() -> void:
 	var dark := CanvasModulate.new()
-	dark.color = climate["tint"]
+	dark.color = climate["decor"]["tint"] if climate.has("decor") else climate["tint"]
 	w.add_child(dark)
-	_light = _glow(Vector2.ZERO, Color(1.0, 0.85, 0.65, 0.35), Vector2(300, 220))
+	_light = _glow(Vector2.ZERO, Color(1.0, 0.85, 0.65, 0.42 if climate.has("decor") else 0.35),
+			Vector2(340, 250) if climate.has("decor") else Vector2(300, 220))
 
 
 ## Ciepła (albo zimna) plama światła na podłodze, pod postaciami.
@@ -561,6 +611,8 @@ func _blocked(pos: Vector2, margin := 10.0) -> bool:
 		for dy in range(-1, 2):
 			var v := center + Vector2i(dx, dy)
 			var kind := _label(v)
+			if solid.has(v) and Rect2(Vector2(v) * CELL + Vector2(-24, -22), Vector2(48, 30)).grow(margin).has_point(pos):
+				return true
 			if kind == "l":
 				continue
 			var top := v.y * CELL - CELL / 2.0
@@ -651,7 +703,7 @@ func _on_boss_died(_boss_node: Goblin = null) -> void:
 # ---------------------------------------------------------------- droga przez loch
 ## Czy po wierzchołku da się chodzić (podłoga, nie skała i nie lico ściany).
 func _walkable(v: Vector2i) -> bool:
-	return _label(v) == "l"
+	return _label(v) == "l" and not solid.has(v)
 
 
 ## Krok po skosie tylko wtedy, gdy oba boczne wierzchołki są wolne - bez ścinania rogów ścian.
@@ -716,6 +768,9 @@ func _process(delta: float) -> void:
 		portal["sprite"].frame = frame
 	if _light != null:
 		_light.global_position = w.player.global_position + Vector2(0, -8)
+	for flame: Array in flames:
+		var phase: float = flame[2]
+		flame[0].modulate.a = flame[1] * (0.86 + 0.08 * sin(_time * 9.0 + phase) + 0.06 * sin(_time * 23.0 + phase * 2.3))
 	var player_vertex := Vector2i((w.player.global_position / CELL).round())
 	if player_vertex != _flow_from:
 		_update_flow(player_vertex)

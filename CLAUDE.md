@@ -255,6 +255,19 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   w dół z coraz lepszym łupem, elitarne potwory z własnymi cechami, pułapki i zagadki, własni strażnicy lochów
   zamiast bossów z krain, sekretne komnaty, zlecenia gildii na lochy.
 - [ ] **Lochy ładne i bogate w środku** (listopad 2026): dokładniej przyjrzeć się wystrojowi lochów.
+  Ustalenia z autorem po zrzutach (2026-11-02): razi wszystko - mało rodzajów lochów, monotonne ściany, jednolite
+  podłogi, komnaty jako gołe prostokąty, ozdoby sypane losowo zamiast scenek, płaskie światło. Grafiki: PixelLab
+  (duże ozdoby, płytki) + kod (nakładki, światło, rozmieszczenie); gdzie pasuje, używać gotowych grafik z krain.
+  Kolejność: najpierw odnowić **Katakumby** na próbę, potem resztę podziemnych klimatów, potem nowe lochy
+  **na zewnątrz** (granicą woda, drzewa, skarpy, palisada, góry; polany połączone ścieżkami o organicznych
+  kształtach): Winnica satyrów (półki skalne i drzewa; grafiki `assets/forest/props/satyr_*`), Oblężony gród
+  (palisada, chaty), Wyspy na bagnie (kępy, kładki, brody), Przesmyk w Turniach (wąwozy, półki), Święty gaj / uręba
+  (ściana drzew, kręgi kamieni). Każdy klimat może mieć też wariant **otwarty** (połać terenu) z innym bossem niż
+  wersja zamknięta.
+  Krok 1 (Katakumby) zrobiony, czeka na ocenę autora: `scripts/dungeon_decor.gd` (scenki komnat, nakładki na licu
+  ścian i podłodze, cienie u ścian, migoczące światła), `Dungeon._shape_rooms` (wcięte narożniki i wnęki we wszystkich
+  klimatach), duże rekwizyty zajmują wierzchołki w `Dungeon.solid`; grafiki: `tools/dungeon_props.py`
+  (paczki PixelLab w `pixellab_src/dungeons/`, pobiera `fetch.py`). Kolejny klimat: dopisać mu "decor" w `Dungeons.CLIMATES`.
 - [ ] **Podział lochów na zwykłe i endgame'owe** (listopad 2026): zwykłe jak dziś; endgame'owe z przedmiotami w Watrze
   (skaraby), drzewkami lochów i mechanik, losowymi mechanikami i bossami szczytowymi (pinnacle), plus system jak
   atlas w PoE dający namacalny postęp. Wymaga projektu z autorem przed pracą.
