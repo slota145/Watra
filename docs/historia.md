@@ -435,6 +435,43 @@ odpowiedniej sekcji.
   Wybór postaci usunięty z menu: „Nowa gra” od razu pokazuje tryb świata, gracz zawsze gra Wojciechem
   (`Player.HERO`, `set_hero` ignoruje postać z zapisu); arkusze Bogdana, Miry i Jagi zostają na NPC.
 
+- [x] **Etap 2 animacji postaci z bronią** (listopad 2026, Wojciech): nowe ruchy miecza tą samą metodą
+  (`animate_character` w trybie `skeleton-v3`, `energy` 1.3 dla zamaszystego stylu, po 8 klatek na kierunek): `chop`, `sweep`,
+  `stab`, `rising_cut`, `spin` (`spin_once`). Zwykłe ataki mieczem to seria `sweep` -> `chop` -> `rising_cut`
+  (`Player.SWORD_CHAIN`, po 1,2 s przerwy od początku). Umiejętności: Rozpłatanie - `sweep`, Rozłupanie Ziemi - `chop`,
+  Szarża - `stab` (klatki 3-5), Półksiężyc - `rising_cut`, Młynek - `spin`. Rozpłatanie i Rozłupanie Ziemi nie mają własnego
+  czasu ataku, więc ruch włącza `Player.play_skill_anim` (tylko wygląd). Balans i działanie ataków bez zmian.
+  W `tools/hero_sheets.py` ruchy miecza czytają pręt przez `_rod_ends` (także ciemny błękit), chwyt zbyt daleko od dłoni
+  szuka sylwetki na przedłużeniu pręta (`_to_fist`), plamki usuwa `_drop_specks`, ręczne kąty są w `ANGLE_FIX`.
+  Młynek nie ma znaczników: pręty w obrocie wychodziły niespójne, więc miecz krąży wokół postaci w kodzie jak dotąd.
+  Limit `pixelart_workbench join` to 40 elementów (najwyżej 4 kierunki po 8 klatek), a PixelLab przyjmuje 10 zadań naraz.
+  Poprawki po uruchomieniu w grze: (1) przy zmianie klatki postaci broń przeskakuje od razu (`pivot`/`sword`
+  `reset_physics_interpolation` w `Player._update_animation`) - wygładzanie ruchu między krokami fizyki spóźniało ją
+  i odrywało od dłoni; (2) Młynek: postać stoi w pozie z rozłożonymi rękami (klatka 0 ruchu `spin`) zwrócona 90 stopni
+  przed mieczem, więc prawa ręka zawsze wskazuje miecz, a rękojeść krąży po spłaszczonej elipsie na wysokości rąk
+  (`Player._whirl_hand`, `WHIRL_HAND_CENTER`, `WHIRL_HAND_SQUASH`), za postacią, gdy jest u góry; (3) przerwa w serii
+  cięć liczona czasem gry (`_chain_timer`), nie zegarem. Szarża pokazuje klatki 3-5 pchnięcia, w których miecz jest
+  w jednej dłoni (przeskok między rękami w kierunku południowym jest tylko w klatkach 0-2). W klatce trafienia ostrze
+  zasłania biały łuk efektu cięcia - to zamierzone. Zrzuty klatek ataków w grze: `tools/anim_shots.gd`
+  (opis w nagłówku; z `--fixed-fps 60`, bo programowe renderowanie w chmurze jest wolne i gubi klatki).
+  Druga runda po uwagach autora (miecz obok dłoni, za płytko, przed palcami; Szarża i Mgnienie nie ostrzem do przodu):
+  (A) pięść jako osobna warstwa - `tools/hero_sheets.py` wycina piksele dłoni wokół chwytu do
+  `assets/heroes/wojciech_fist.png` (`_fist_sheet`, `FIST_*`), a gra rysuje je nad bronią (`Player._update_fist`,
+  węzeł `Fist` tuż za postacią i bronią, z tym samym z_index), więc rękojeść chowa się w dłoni; chwyt dostaje czwartą
+  liczbę - 1 to broń za postacią (kierunki "od kamery" albo zamach zza głowy: `_over_head`, `HEAD_ROWS`), używaną
+  przez `Player._grip_behind`; (B) chwyt w cięciach liczy `_rod_contact`: PixelLab rysuje między pięścią a różowym
+  końcem znacznika ciemny odcinek pręta, więc idziemy od różowego końca dalej wzdłuż pręta, dopóki klatka ze znacznikiem
+  różni się od czystej (`ROD_DIFF`), i jeszcze `ROD_INTO_FIST` w głąb dłoni; po zmniejszeniu chwyt idzie do środka pięści
+  (`_fist_center`), a pojedyncze odskakujące kąty wygładza `_smooth_angles`; (C) w Szarży i w krótkim pchnięciu po skoku
+  Mgnienia (`Player.play_thrust`, `THRUST_POSE_TIME`, klatki 3-5 ruchu `stab`) kąt miecza to kierunek ruchu.
+  Trzecia runda: klatki ze znacznikiem dla spoczynku i chodu PixelLab narysował w innej pozie (ręka uniesiona) niż
+  czyste klatki (ręka przy biodrze), więc chwyt wypadał obok dłoni (w prawo nawet 6 px). Dłonie Wojciecha mają kolor
+  skóry, a strój, włosy i buty nie (`_is_skin`), więc `_skin_hand` przyciąga środek pięści do plamy skóry: w spoczynku
+  i chodzie - do dłoni z mieczem poniżej głowy (`HAND_ROWS`, strona z `SKIN_SIDE`), w atakach - najdalej `SKIN_SNAP`
+  od chwytu i tylko w widokach od przodu (`SKIN_ATTACK_DIRS` - od tyłu kark udaje dłoń); plamy większe niż
+  `HAND_MAX_PIXELS` to twarz. Ręczne poprawki pojedynczych klatek: `FIST_FIX`. W Młynku, Szarży i pchnięciu po Mgnieniu
+  miecz celujący w stronę kamery albo od niej jest skrócony jak w perspektywie (`GROUND_SQUASH`, `MIN_FORESHORTEN`).
+
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)
   i 7 slotów umiejętności (LPM, PPM, Q, E, R, Z, X) z osobnym układem dla każdej broni. Każdy slot przyjmuje
