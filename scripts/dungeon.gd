@@ -750,6 +750,8 @@ func _build_tiles() -> void:
 func _build_collision() -> void:
 	var body := StaticBody2D.new()
 	body.name = "DungeonWalls"
+	# ściany podziemi to granica (zryw i Mgnienie ich nie przeskakują); na zewnątrz teren to zwykłe przeszkody
+	body.collision_layer = 1 if outdoor else 1 | w.BOUNDS_LAYER
 	w.add_child(body)
 	for y in GRID.y:
 		var run_start := -1

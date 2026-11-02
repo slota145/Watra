@@ -137,7 +137,8 @@ efekt w „My effects” autora na pixellab.ai). Jego pliki też się nie pobier
 Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `docs/historia.md` - szukaj w nim grepem.
 
 - **Walka i postać:** drzewka broni - miecz, łuk, księga magii (`skill_tree.gd`, `sword_skills.gd`, `bow_skills.gd`,
-  `spell_skills.gd`, okno K), combo (`Skills.COMBOS`), paski szybkiego wyboru (`hotbar.gd`), ikony efektów (`status_effects.gd`).
+  `spell_skills.gd`, okno K), combo (`Skills.COMBOS`), paski szybkiego wyboru (`hotbar.gd`), ikony efektów (`status_effects.gd`);
+  zryw, Mgnienie i teleport przeskakują przeszkody, zatrzymuje je tylko granica (`BOUNDS_LAYER`, `Player.free_landing`).
 - **Efekty:** animacje z kreatora efektów PixelLab (`pixellab_src/vfx/ids.json`, `tools/vfx_art.py`; pomocnicy `SkillEffects`,
   `FxLoop`, `BossFx`, `LegendVfx`, `WorldVfx`, `MonsterFx`, `MiscVfx`).
 - **Dźwięki:** `sfx.gd` (`Sfx.SOUNDS`), generatory `tools/sfx_synth.py` i `tools/hit_sfx.py` (trafienia według broni

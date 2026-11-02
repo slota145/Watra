@@ -277,7 +277,8 @@ func _jump(reach: float, level: int, spinning: bool) -> bool:
 	candidates.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
 	var best: Goblin = null
 	for candidate: Array in candidates:
-		var ray := PhysicsRayQueryParameters2D.create(origin, candidate[1].hurt_center(), 1)
+		# Mgnienie przeskakuje przeszkody - wroga zasłania tylko granica mapy i ściana podziemi
+		var ray := PhysicsRayQueryParameters2D.create(origin, candidate[1].hurt_center(), Player.JUMP_MASK)
 		if space.intersect_ray(ray).is_empty():
 			best = candidate[1]
 			break
@@ -323,13 +324,14 @@ func _jump(reach: float, level: int, spinning: bool) -> bool:
 
 
 ## Wolne miejsce za celem (na wylot): najpierw dokładnie na przedłużeniu skoku, potem coraz bardziej z boku,
-## a na końcu - gdy za celem ściana - od strony, z której przychodzimy.
+## a na końcu - gdy za celem ściana - od strony, z której przychodzimy. Nie w przeszkodzie ani w głębokiej wodzie,
+## ale za płotem czy klifem już tak (przegradza tylko granica mapy i ściana podziemi).
 func _landing_spot(target: Goblin) -> Vector2:
 	var shape := CircleShape2D.new()
 	shape.radius = 6.0
 	var query := PhysicsShapeQueryParameters2D.new()
 	query.shape = shape
-	query.collision_mask = 1
+	query.collision_mask = Player.SOLID_MASK | Player.JUMP_MASK
 	var space := _player.get_world_2d().direct_space_state
 	var through := (target.global_position - _player.global_position).normalized()
 	if through == Vector2.ZERO:
@@ -339,7 +341,7 @@ func _landing_spot(target: Goblin) -> Vector2:
 		var spot: Vector2 = target.global_position + through.rotated(turn) * distance
 		query.transform = Transform2D(0.0, spot)
 		if space.intersect_shape(query, 1).is_empty():
-			var ray := PhysicsRayQueryParameters2D.create(target.global_position, spot, 1)
+			var ray := PhysicsRayQueryParameters2D.create(target.global_position, spot, Player.JUMP_MASK)
 			if space.intersect_ray(ray).is_empty():
 				return spot
 	return Vector2.INF

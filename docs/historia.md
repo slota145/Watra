@@ -669,6 +669,14 @@ odpowiedniej sekcji.
     (4 sztuki, 128 px) w `pixellab_src/dungeons/`; w paczce wysokich obiektów kandydatki wyszły przesunięte między
     klatkami, więc `tools/dungeon_props.py` tnie ją z pasa sklejonych klatek (`strip_part`, klatka `"s<nr>"`).
 
+- [x] **Skoki przez przeszkody** (prośba autora): zryw, odskok łuku (`Player.leap`), Mgnienie (też wirujące
+  w Młynku) i Krok przez Mgłę przeskakują zwykłe przeszkody (płoty, klify, góry, drzewa, budynki, głęboką wodę),
+  ale nie granicę - warstwa `BOUNDS_LAYER` (16, `world.gd`): brzegi mapy (`Bounds`) i ściany podziemnych lochów
+  (`DungeonWalls`; w lochu na zewnątrz teren to zwykłe przeszkody). W skoku maska postaci to `Player.JUMP_MASK`,
+  po nim `SOLID_MASK`; gdy postać wyląduje w przeszkodzie, `Player.free_landing` przesuwa ją na wolne miejsce
+  dalej w kierunku skoku (do 96 px), a potem z powrotem po linii skoku (nigdy za granicą). Mgnienie widzi wrogów
+  za przeszkodami, a miejsce lądowania za celem omija przeszkody i wodę. Test: `tests/test_jump.gd`.
+
 ## Zielarstwo (Pomysły i rzeczy do zrobienia)
 - [x] **Zioła i mikstury zielarki** (`scripts/herbs.gd`, roślina `scripts/herb.gd`, grafiki z PixelLab przez `tools/herb_art.py`):
   w każdej krainie rośnie jej zioło (dziurawiec, rumianek, tatarak, arnika, kwiat paproci - rzadki, bieluń), zrywane klawiszem F

@@ -480,10 +480,13 @@ func meteor_impact(at: Vector2, radius: float, multiplier: float) -> void:
 func _blink() -> void:
 	var from := _player.global_position
 	var target := _aim_point(Skills.BLINK_RANGE)
-	var ray := PhysicsRayQueryParameters2D.create(from, target, 1)
+	# teleport przenosi nad przeszkodami (płoty, klify, drzewa) - zatrzymuje go tylko granica mapy i ściany
+	# podziemi, a w przeszkodzie postać ląduje obok, na linii teleportu
+	var ray := PhysicsRayQueryParameters2D.create(from, target, Player.JUMP_MASK)
 	var hit := _player.get_world_2d().direct_space_state.intersect_ray(ray)
 	if not hit.is_empty():
 		target = hit["position"] - (target - from).normalized() * 10.0
+	target = _player.free_landing(target, from)
 	SkillEffects.sheet_once(_player.get_parent(), BLINK_FX, 8, 14.0, _player.body_center(), Vector2(23, 21))
 	_player.global_position = target
 	_player.reset_physics_interpolation()
