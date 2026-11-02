@@ -32,6 +32,14 @@ func _process(_d: float) -> bool:
 	match _frame:
 		5:
 			check("muzyka menu", _sfx._music_track == "menu", _sfx._music_track)
+			var missing: Array[String] = []
+			for sound: String in _sfx.SOUNDS:
+				for file: String in _sfx.SOUNDS[sound][0]:
+					if not ResourceLoader.exists(_sfx.SFX_DIR + file + ".ogg"):
+						missing.append(file)
+			check("pliki wszystkich dźwięków istnieją", missing.is_empty(), str(missing))
+			for kind: String in ["blade", "arrow", "fire", "ice", "lightning", "magic", "crit"]:
+				check("dźwięk trafienia " + kind, _sfx.SOUNDS.has("hit_" + kind))
 			_menu._show_settings()
 		8:
 			var window = _menu.get_child(_menu.get_child_count() - 1)
@@ -48,6 +56,18 @@ func _process(_d: float) -> bool:
 			_world.player.reset_physics_interpolation()
 		60:
 			check("muzyka lasu", _sfx._music_track == "forest", _sfx._music_track)
+			# trafienie czarem gra odgłos żywiołu, a potem potwory wracają do zwykłego "hit"
+			var enemy = null
+			for e in root.get_tree().get_nodes_in_group("enemies"):
+				# zwykły goblin (kukła treningowa gra własny odgłos)
+				if e.get_script().resource_path == "res://scripts/goblin.gd":
+					enemy = e
+					break
+			enemy.global_position = _world.player.global_position + Vector2(30, 0)
+			_sfx._last_played.erase("hit_fire")
+			_world.player.hit_enemy(enemy, 1, _world.player.global_position, 0.0, "fire")
+			check("trafienie ogniem gra hit_fire", _sfx._last_played.has("hit_fire"))
+			check("dźwięk trafienia wraca do zwykłego", enemy.get_script().hit_sound == "hit", enemy.get_script().hit_sound)
 			var boss = null
 			for b in root.get_tree().get_nodes_in_group("bosses"):
 				boss = b

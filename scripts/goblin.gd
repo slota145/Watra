@@ -55,6 +55,9 @@ static var dungeon_mods := {}
 static var pathing: Object = null
 ## Myśliwy z Cienia (BowSkills): do tej chwili (Time.get_ticks_msec) potwory, poza bossami, nie widzą gracza.
 static var hidden_until := 0
+## Dźwięk najbliższego trafienia (Sfx.SOUNDS) - Player.hit_enemy ustawia go na czas ciosu zależnie od broni
+## i żywiołu; inne źródła obrażeń (sojusznicy, pułapki) grają zwykłe "hit".
+static var hit_sound := "hit"
 ## Pozycje potworów z bieżącej klatki (wspólne dla wszystkich, do rozpychania się).
 ## Pozycje potworów w kubełkach siatki (bok SEPARATION_RADIUS) - zbierane raz na klatkę fizyki tylko przez
 ## potwory, które potrzebują rozpychania; każdy sprawdza potem wyłącznie 9 sąsiednich kubełków.
@@ -163,10 +166,18 @@ func hurt_center() -> Vector2:
 	return global_position + Vector2(0, -hurt_height)
 
 
+## Odgłos trafienia: broń gracza (hit_sound) albo zwykłe uderzenie, w bossa cięższe.
+func play_hit_sound() -> void:
+	if hit_sound != "hit":
+		Sfx.play_at(hit_sound, global_position, 2.0 if self is Boss else 0.0)
+	else:
+		Sfx.play_at("hit_heavy" if self is Boss else "hit", global_position)
+
+
 func take_damage(amount: int, from_position: Vector2, knockback := 120.0) -> void:
 	if state == State.DEAD:
 		return
-	Sfx.play_at("hit_heavy" if self is Boss else "hit", global_position)
+	play_hit_sound()
 	health -= amount
 	DamageNumber.spawn(get_parent(), hurt_center(), amount)
 	_knockback = (global_position - from_position).normalized() * knockback

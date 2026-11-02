@@ -408,7 +408,7 @@ func _process_storm(delta: float) -> void:
 	var multiplier := Skills.storm_damage(_level("storm_call")) * (_player.combo_damage() if _storm_chain else 1.0)
 	SkillEffects.sheet_once(_player.get_parent(), STORM_FX, 7, 20.0, target.hurt_center(), Vector2(25, 141))
 	Sfx.play_at("zap", target.global_position, -2.0)
-	_player.hit_enemy(target, _damage(multiplier), target.global_position + Vector2(0, -20), 30.0)
+	_player.hit_enemy(target, _damage(multiplier), target.global_position + Vector2(0, -20), 30.0, "lightning")
 	if not _storm_chain:
 		return
 	var hit := [target]
@@ -428,7 +428,7 @@ func _process_storm(delta: float) -> void:
 		hit.append(next)
 		lightning(_player.get_parent(), from, next.hurt_center())
 		zap_flash(_player.get_parent(), next.hurt_center())
-		_player.hit_enemy(next, _damage(multiplier * STORM_JUMP_DAMAGE), from, 20.0)
+		_player.hit_enemy(next, _damage(multiplier * STORM_JUMP_DAMAGE), from, 20.0, "lightning")
 		from = next.hurt_center()
 
 
@@ -602,7 +602,7 @@ class _Blizzard:
 		_next = Skills.BLIZZARD_TICK
 		for enemy: Goblin in skills._enemies():
 			if _inside(enemy):
-				skills._player.hit_enemy(enemy, skills._damage(damage), enemy.global_position + Vector2(0, -20), 0.0)
+				skills._player.hit_enemy(enemy, skills._damage(damage), enemy.global_position + Vector2(0, -20), 0.0, "ice")
 				skills._chill(enemy)
 
 
@@ -649,7 +649,7 @@ class _Orb:
 			if enemy.state != Goblin.State.DEAD and enemy.hurt_center().distance_to(center) <= Skills.ORB_RADIUS + enemy.hurt_radius:
 				count += 1
 				SpellSkills.lightning(get_parent(), center, enemy.hurt_center())
-				skills._player.hit_enemy(enemy, skills._damage(damage), center, 20.0)
+				skills._player.hit_enemy(enemy, skills._damage(damage), center, 20.0, "lightning")
 		if count > 0:
 			Sfx.play_at("zap", global_position, -8.0)
 
@@ -660,7 +660,7 @@ class _Orb:
 		Sfx.play_at("thunder", global_position, -4.0)
 		for enemy: Goblin in skills._enemies():
 			if enemy.state != Goblin.State.DEAD and enemy.global_position.distance_to(global_position) <= Skills.ORB_BLAST + enemy.hurt_radius:
-				skills._player.hit_enemy(enemy, skills._damage(damage * 3.0), global_position, 120.0)
+				skills._player.hit_enemy(enemy, skills._damage(damage * 3.0), global_position, 120.0, "lightning")
 
 
 ## Spadająca Gwiazda: cień na ziemi rośnie, gwiazda spada z nieba i wybucha (SpellSkills.meteor_impact).

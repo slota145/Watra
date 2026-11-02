@@ -122,6 +122,8 @@ const BODY_OFFSET := Vector2(0, -13)
 ## Skala grafik broni w dłoni (bronie mają swój pierwotny rozmiar).
 const WEAPON_SCALE := {"melee": 1.0, "bow": 1.0, "spell": 1.0}
 const ATTACK_ANIMS := {"melee": "slash", "bow": "shoot", "spell": "cast"}
+## Odgłos trafienia według broni w ręku (Sfx "hit_<rodzaj>"), gdy cios nie podaje własnego (hit_enemy).
+const HIT_SOUNDS := {"melee": "blade", "bow": "arrow", "spell": "magic"}
 ## Seria zwykłych ataków mieczem: trzy różne cięcia po kolei. Po tej przerwie (sekundy) seria zaczyna się od nowa.
 const SWORD_CHAIN := ["sweep", "chop", "rising_cut"]
 const SWORD_CHAIN_RESET := 1.2
@@ -2067,7 +2069,9 @@ func basic_tags() -> Array:
 ## Każde trafienie wroga przez gracza (broń, umiejętności, pociski) przechodzi tędy,
 ## żeby legendarne pierścienie mogły odpalić swoje efekty. Tu działają też premie z przedmiotów:
 ## zwiększone obrażenia, cios krytyczny i zdrowie za trafienie.
-func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: float) -> void:
+## `sound` - rodzaj odgłosu trafienia (HIT_SOUNDS: "fire", "ice", "lightning", "magic", "arrow", "blade");
+## pusty - według broni w ręku. Cios krytyczny dokłada ciężkie łupnięcie.
+func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: float, sound := "") -> void:
 	if enemy.state == Goblin.State.DEAD:
 		return
 	amount = roundi(amount * legendary.damage_multiplier() * stats.damage_multiplier() * boons.damage_multiplier(enemy))
@@ -2079,8 +2083,12 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 	if critical:
 		amount = roundi(amount * stats.crit_multiplier())
 	DamageNumber.critical = critical
+	Goblin.hit_sound = "hit_" + (sound if sound != "" else HIT_SOUNDS.get(stats.weapon_type(), "blade"))
 	enemy.take_damage(amount, from_position, knockback)
+	Goblin.hit_sound = "hit"
 	DamageNumber.critical = false
+	if critical:
+		Sfx.play_at("hit_crit", enemy.global_position)
 	if bow:
 		bow_skills.on_hit(enemy, amount)
 	if not is_dead:
@@ -2300,7 +2308,7 @@ func _zap(from: Vector2, target: Goblin, multiplier: float) -> void:
 	SpellSkills.zap_flash(get_parent(), to)
 	ShockFx.apply(target, to, target.hurt_radius + 6.0)
 	Sfx.play("chain_zap")
-	hit_enemy(target, _skill_damage(multiplier, ["spell"]), from, 40.0)
+	hit_enemy(target, _skill_damage(multiplier, ["spell"]), from, 40.0, "lightning")
 
 
 ## Fala piorunów: szeroki stożek błyskawic przed postacią.
@@ -2321,7 +2329,7 @@ func _cast_wave(level: int) -> void:
 		if to_enemy.length() > enemy.hurt_radius and absf(angle_difference(dir.angle(), to_enemy.angle())) > half:
 			continue
 		SpellSkills.zap_flash(get_parent(), enemy.hurt_center())
-		hit_enemy(enemy, _skill_damage(Skills.WAVE_DAMAGE, ["spell"]), global_position, 140.0)
+		hit_enemy(enemy, _skill_damage(Skills.WAVE_DAMAGE, ["spell"]), global_position, 140.0, "lightning")
 	Sfx.play("thunder")
 	_shake = maxf(_shake, 4.0)
 

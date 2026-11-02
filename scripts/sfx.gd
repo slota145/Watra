@@ -1,6 +1,7 @@
 extends Node
 ## Dźwięki gry (autoload "Sfx"): efekty z paczek CC0 od Kenney (assets/sfx), własne efekty
-## z tools/sfx_synth.py (zaklinanie, kula ognia, kowadło, młotek, kukły, łuk), muzyka w tle
+## z tools/sfx_synth.py (zaklinanie, kula ognia, kowadło, młotek, kukły, łuk), trafienia potworów zależne od broni
+## i żywiołu z tools/hit_sfx.py (nagrania CC0 z sfx_src/hits), muzyka w tle
 ## z tools/music.py i tools/music_tracks.py (osobna do menu, osady, każdej krainy i walk z bossami - zmienia
 ## się płynnym przenikaniem, play_music) i odgłosy lasu z tools/ambient.py: co jakiś czas podmuch wiatru w koronach
 ## drzew i ptaki odzywające się losowo dookoła postaci (w budynkach ciszej).
@@ -44,8 +45,16 @@ const SOUNDS := {
 	"hit": [["impactPunch_medium_000", "impactPunch_medium_001", "impactPunch_medium_002",
 			"impactPunch_medium_003", "impactPunch_medium_004"], -8.0, 0.12, 0.04],
 	"hit_heavy": [["impactPunch_heavy_000", "impactPunch_heavy_001", "impactPunch_heavy_002"], -5.0, 0.08, 0.08],
+	# trafienia gracza zależne od broni i żywiołu (tools/hit_sfx.py, Player.hit_enemy)
+	"hit_blade": [["hit_blade_1", "hit_blade_2", "hit_blade_3", "hit_blade_4"], -6.0, 0.08, 0.04],
+	"hit_arrow": [["hit_arrow_1", "hit_arrow_2", "hit_arrow_3", "hit_arrow_4"], -6.0, 0.08, 0.04],
+	"hit_fire": [["hit_fire_1", "hit_fire_2", "hit_fire_3"], -9.0, 0.06, 0.06],
+	"hit_ice": [["hit_ice_1", "hit_ice_2", "hit_ice_3"], -9.0, 0.06, 0.06],
+	"hit_lightning": [["hit_lightning_1", "hit_lightning_2", "hit_lightning_3"], -10.0, 0.06, 0.06],
+	"hit_magic": [["hit_magic_1", "hit_magic_2", "hit_magic_3"], -8.0, 0.08, 0.05],
+	"hit_crit": [["hit_crit_1", "hit_crit_2", "hit_crit_3"], -4.0, 0.06, 0.06],
 	"hurt": [["impactSoft_heavy_000", "impactSoft_heavy_001", "impactSoft_heavy_002"], -3.0, 0.08, 0.15],
-	"enemy_die": [["impactSoft_medium_000", "impactSoft_medium_001", "impactSoft_medium_002"], -8.0, 0.15, 0.05],
+	"enemy_die": [["kill_1", "kill_2", "kill_3"], -6.0, 0.1, 0.05],
 	"bow": [["bow_shot_1", "bow_shot_2", "bow_shot_3"], -5.0, 0.06, 0.05],
 	"magic": [["maximize_003"], -9.0, 0.1, 0.05],
 	"explosion": [["explosion"], 0.0, 0.06, 0.08],
