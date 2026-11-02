@@ -116,6 +116,15 @@ const OBJECTIVE_PLAYER_RANGE := 60.0
 var _chill_until := 0
 var _chill_factor := 1.0
 const CHILL_COLOR := Color(0.65, 0.85, 1.25)
+## Elita lochu (DungeonElite, mechanika "elites"): cechy, tarcza, łup; u zwykłych potworów null.
+var elite: Node2D
+## Aury elit (DungeonElite.empower): rodzaj -> [moc, do kiedy (Time.get_ticks_msec)]; statystyki sprzed wzmocnienia
+## w _aura_base, najbliższy koniec którejś aury w _aura_until (0 - bez aur).
+var _auras := {}
+var _aura_base := {}
+var _aura_until := 0
+## Część obrażeń, którą zatrzymuje aura Osłaniającego.
+var _aura_guard := 0.0
 
 @onready var sprite: Sprite2D = $Sprite
 
@@ -178,6 +187,14 @@ func take_damage(amount: int, from_position: Vector2, knockback := 120.0) -> voi
 	if state == State.DEAD:
 		return
 	play_hit_sound()
+	if _aura_guard > 0.0:
+		amount = maxi(1, roundi(amount * (1.0 - _aura_guard)))
+	if elite != null:
+		amount = elite.absorb(amount, from_position)
+		if amount <= 0:
+			_flash()
+			aggro()
+			return
 	health -= amount
 	DamageNumber.spawn(get_parent(), hurt_center(), amount)
 	_knockback = (global_position - from_position).normalized() * knockback
@@ -289,6 +306,8 @@ func _physics_process(delta: float) -> void:
 	if state == State.DEAD or _process_stun(delta):
 		return
 	_cooldown = maxf(_cooldown - delta, 0.0)
+	if _aura_until > 0 and Time.get_ticks_msec() > _aura_until:
+		_refresh_auras()
 	_strike_anim = maxf(_strike_anim - delta, 0.0)
 
 	match state:
@@ -486,6 +505,8 @@ func _die() -> void:
 			Engine.set_meta("celebrate", true)
 	Sfx.play_at("enemy_die", global_position)
 	_spawn_poof()
+	if elite != null:
+		elite.on_died(not slain_by_travelers())
 	if slain_by_travelers():
 		var gone := create_tween().set_parallel()
 		gone.tween_property(sprite, "scale", Vector2(1.3, 0.6), 0.15)
@@ -507,6 +528,56 @@ func _die() -> void:
 	tween.tween_property(sprite, "scale", Vector2(1.3, 0.6), 0.15)
 	tween.tween_property(self, "modulate:a", 0.0, 0.3).set_delay(0.1)
 	tween.chain().tween_callback(queue_free)
+
+
+## Aura elity (DungeonElite): "commander" - mnożnik obrażeń 1 + moc, "hastening" - ruch i tempo ataku 1 + moc,
+## "warding" - zatrzymuje część obrażeń; trwa do `until`, odświeżana przez elitę co chwilę.
+func empower(kind: String, power: float, until: int) -> void:
+	if state == State.DEAD:
+		return
+	# znana aura tylko przedłuża czas (statystyki przeliczą się, gdy minie poprzedni termin - _physics_process)
+	var known: bool = _auras.has(kind) and is_equal_approx(float(_auras[kind][0]), power)
+	_auras[kind] = [power, until]
+	if not known:
+		_refresh_auras()
+
+
+## Przelicza statystyki z aktywnych aur (wygasłe usuwa); bez aur przywraca statystyki sprzed wzmocnienia.
+func _refresh_auras() -> void:
+	var now := Time.get_ticks_msec()
+	for kind: String in _auras.keys():
+		if int(_auras[kind][1]) < now:
+			_auras.erase(kind)
+	if _aura_base.is_empty():
+		_aura_base["speed"] = speed
+		_aura_base["attack_cooldown"] = attack_cooldown
+		for property in get_property_list():
+			var key: String = property["name"]
+			if key.ends_with("damage") and property["type"] == TYPE_INT and get(key) > 0 \
+					and key != "traveler_damage" and key != "event_damage":
+				_aura_base[key] = get(key)
+	var might: float = 1.0 + float(_auras["commander"][0]) if _auras.has("commander") else 1.0
+	var haste: float = 1.0 + float(_auras["hastening"][0]) if _auras.has("hastening") else 1.0
+	_aura_guard = float(_auras["warding"][0]) if _auras.has("warding") else 0.0
+	for key: String in _aura_base:
+		match key:
+			"speed":
+				speed = _aura_base[key] * haste
+			"attack_cooldown":
+				attack_cooldown = _aura_base[key] / haste
+			_:
+				set(key, maxi(1, roundi(int(_aura_base[key]) * might)))
+	_aura_until = 0
+	for kind: String in _auras:
+		var until := int(_auras[kind][1])
+		_aura_until = until if _aura_until == 0 else mini(_aura_until, until)
+	if _auras.is_empty():
+		_aura_base.clear()
+
+
+## Czy działa na niego aura elity (do testów i rysowania).
+func has_aura(kind: String) -> bool:
+	return _auras.has(kind) and int(_auras[kind][1]) >= Time.get_ticks_msec()
 
 
 ## Czy pokonali go głównie inni podróżnicy (wtedy bez łupu i doświadczenia dla gracza).

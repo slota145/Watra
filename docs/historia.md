@@ -728,6 +728,34 @@ odpowiedniej sekcji.
     `assets/ancient/v2_shrine.png` z poświatą w kolorze daru (`DungeonShrine.COLORS`).
   - Zrzuty z bliska: `SCRIPT=tools/dungeon_shots.gd tools/screenshot.sh /tmp/m catacombs 7 3 2.0 mechaniki`.
     Test: `tests/test_dungeon.gd` (losowanie, skrzynia zwykła i strzeżona, kapliczka, ikona daru).
+- [x] **Mechaniki w lochach, etap 2 - elitarne potwory** (listopad 2026): mechanika `"elites"` (waga 8, mała) - jak magiczne
+  potwory w PoE. Ustalenia z autorem: wszystkie 4 grupy cech, 3-5 pojedynczych elit w lochu, większe z poświatą,
+  łup - więcej i lepsze rzadkości.
+  - Z czwartą mechaniką w puli: skrzynie ~41% lochów, kapliczka ~33%, elity ~32%, Kryształ ~20% (wcześniej ~30%).
+  - Dane w `Dungeons`: `ELITE_TRAITS` (12 cech w 4 grupach, "power" - siła), `ELITES` (3-5), `ELITE_TRAIT_COUNT`
+    (1 cecha 45%, 2 - 40%, 3 - 15%), `roll_elite_traits` (każda cecha z innej grupy), mnożniki `ELITE_*`.
+  - `scripts/dungeon_elite.gd` (`DungeonElite`, dziecko potwora, `Goblin.elite`): `promote` - zdrowie x(3 + 0,75 za cechę),
+    obrażenia x1,3, doświadczenie x(3 + liczba cech), złoto x3, skala 1,25, grupa "elites". Cechy:
+    - aury (promień 120, odświeżane co 0,5 s, `Goblin.empower` / `_refresh_auras` - statystyki sprzed wzmocnienia
+      w `_aura_base`, wracają po wygaśnięciu): Dowódczy +40% obrażeń, Poganiający +30% ruchu i tempa ataku,
+      Osłaniający -35% otrzymywanych obrażeń (`Goblin._aura_guard`);
+    - obrona: Tarczowy (tarcza 60% zdrowia, wraca po 6 s bez obrażeń, niebieski krąg), Uzdrawiający (3% zdrowia/s
+      sobie, 4,2% sąsiadom), Kolczasty (odbija 20% obrażeń, najwyżej 1,5x cios elity, raz na 0,7 s);
+    - żywioły: Wybuchowy (po śmierci krąg `Telegraph` 1,1 s i wybuch 2,5x - statyczne `DungeonElite._strike`, żeby
+      odliczanie przetrwało zniknięcie potwora), Płonący (płonące plamy `FirePatch` za nim, 4 s), Mroźny (fala co 4 s
+      w promieniu 80: spowolnienie i obrażenia), Burzowy (piorun w miejscu gracza co 3,5 s z zapowiedzią 0,9 s);
+    - przywołanie: Przywołujący (co 8 s dwóch pomocników z puli klimatu, najwyżej 6; dają mniej łupu), Rozszczepialny
+      (po śmierci 3 mniejsze potwory tego rodzaju z 20% zdrowia elity).
+  - Wygląd: obrys w kolorze pierwszej cechy (`shaders/elite.gdshader` - z błyskiem trafienia, własny materiał elity),
+    pulsująca poświata pod stopami, napis z cechami nad głową (`label_text`, rozjaśniany `Dungeon.label_boost`),
+    złota kropka na mapie. Pasek bossa w HUD pokazuje najbliższą walczącą elitę („Elita: Dowódczy · Płonący”).
+  - Łup (`DungeonElite.roll_loot`, oprócz zwykłego): 1 + liczba cech przedmiotów, pierwszy co najmniej magiczny,
+    premia do rzadkości 0,1 za cechę, legenda 2% + 1,5% za cechę.
+  - `Dungeon._add_elite`: w każdej z wylosowanych komnat (`_mechanic_rooms`) elitą zostaje losowy potwór gromady
+    (nie strażnik, nie nieruchomy); w pustej komnacie elita staje sama. `Dungeon.elites`.
+  - Zrzuty: `SCRIPT=tools/dungeon_shots.gd tools/screenshot.sh /tmp/m catacombs 7 3 2.0 mechaniki` (też elity).
+    Test: `tests/test_dungeon.gd` (`_check_elites`: liczba i cechy, aura i jej koniec, Osłaniający, tarcza,
+    rozszczepienie, łup).
 
 ## Zielarstwo (Pomysły i rzeczy do zrobienia)
 - [x] **Zioła i mikstury zielarki** (`scripts/herbs.gd`, roślina `scripts/herb.gd`, grafiki z PixelLab przez `tools/herb_art.py`):

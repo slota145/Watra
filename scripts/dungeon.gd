@@ -60,6 +60,7 @@ var crystal: WatraCrystal
 var mechanics: Array[String] = []
 var chests: Array[DungeonChest] = []
 var shrines: Array[DungeonShrine] = []
+var elites: Array[DungeonElite] = []
 ## Ołtarz Welesa (Essences): ukryta komnata poza listą komnat - bez potworów i pochodni (pusta - brak ołtarza).
 var altar_room := Rect2i()
 ## Rodzaj wystroju każdej komnaty (DungeonDecor): Rect2i -> nazwa (np. "crypt", "forge", "start").
@@ -888,6 +889,33 @@ func _build_mechanics() -> void:
 		_shuffle(gifts)
 		for room in _mechanic_rooms(_rng.randi_range(Dungeons.SHRINE_COUNT.x, Dungeons.SHRINE_COUNT.y)):
 			_add_shrine(gifts.pop_back(), room)
+	if mechanics.has("elites"):
+		for room in _mechanic_rooms(_rng.randi_range(Dungeons.ELITES.x, Dungeons.ELITES.y)):
+			_add_elite(Dungeons.roll_elite_traits(_rng), room)
+
+
+## Elita w komnacie: jeden z potworów gromady (nie strażnik, nie nieruchomy jak kokon) dostaje cechy
+## (DungeonElite); w pustej komnacie elita staje sama.
+func _add_elite(traits: Array[String], room: Rect2i) -> DungeonElite:
+	var area := Rect2(Vector2(room.position) * CELL, Vector2(room.size) * CELL).grow(CELL / 2.0)
+	var candidates: Array[Dictionary] = []
+	for spawn: Dictionary in w._goblin_spawns:
+		var goblin: Goblin = w._live_goblins.get(spawn.get("id", -1))
+		if goblin != null and goblin.elite == null and not goblin is Boss and not goblin.fearless \
+				and area.has_point(goblin.position):
+			candidates.append(spawn)
+	var spawn: Dictionary
+	if candidates.is_empty():
+		var spot := _mechanic_spot(room)
+		spawn = _spawn(_pick(climate["monsters"]), spot, spot + Vector2(0, 20), level)
+	else:
+		spawn = candidates[_rng.randi_range(0, candidates.size() - 1)]
+	var target: Goblin = w._live_goblins.get(spawn["id"])
+	if target == null:
+		return null
+	var elite := DungeonElite.promote(target, traits, self, spawn["type"])
+	elites.append(elite)
+	return elite
 
 
 ## Komnaty na skrzynie i kapliczki: zwykłe komnaty (bez wejściowej, strażnika, Kryształu i ołtarza), każda inna,

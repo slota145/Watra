@@ -125,6 +125,7 @@ const MECHANICS := {
 	"chests": {"name": "Skrzynie", "weight": 10.0, "size": "small"},
 	"shrine": {"name": "Kapliczka", "weight": 8.0, "size": "small"},
 	"crystal": {"name": "Kryształ Watry", "weight": 5.0, "size": "large", "room": true},
+	"elites": {"name": "Elitarne potwory", "weight": 8.0, "size": "small"},
 }
 ## Szansa na drugą i trzecią mechanikę.
 const MECHANIC_EXTRA: Array[float] = [0.25, 0.08]
@@ -153,6 +154,67 @@ const CHESTS := Vector2i(2, 4)
 const SHRINES: Array[String] = ["shrine_might", "shrine_ward", "shrine_haste", "shrine_fortune", "shrine_wisdom", "shrine_moon"]
 ## Ile kapliczek w lochu z tą mechaniką (każda daje inny dar).
 const SHRINE_COUNT := Vector2i(1, 2)
+## Elitarne potwory (scripts/dungeon_elite.gd): zwykły potwór lochu wzmocniony 1-3 cechami, każda z innej grupy
+## (aura, obrona, żywioł, przywołanie). "name" - przymiotnik w napisie nad głową, "color" - poświata (od pierwszej cechy),
+## "power" - siła cechy (znaczenie w opisie każdej grupy w DungeonElite).
+const ELITE_TRAITS := {
+	# aury: wrogowie w promieniu ELITE_AURA_RADIUS (i sama elita)
+	"commander": {"name": "Dowódczy", "group": "aura", "color": Color(1.0, 0.35, 0.25), "power": 0.4},  # +40% obrażeń
+	"hastening": {"name": "Poganiający", "group": "aura", "color": Color(0.5, 1.0, 0.9), "power": 0.3},  # +30% ruchu i ataku
+	"warding": {"name": "Osłaniający", "group": "aura", "color": Color(0.55, 0.7, 1.0), "power": 0.35},  # -35% obrażeń
+	# obrona
+	"shielded": {"name": "Tarczowy", "group": "defense", "color": Color(0.45, 0.75, 1.0), "power": 0.6},  # tarcza 60% zdrowia
+	"healer": {"name": "Uzdrawiający", "group": "defense", "color": Color(0.45, 1.0, 0.45), "power": 0.03},  # 3% zdrowia/s
+	"thorns": {"name": "Kolczasty", "group": "defense", "color": Color(0.85, 0.85, 0.5), "power": 0.2},  # 20% odbija
+	# żywioły
+	"volatile": {"name": "Wybuchowy", "group": "element", "color": Color(1.0, 0.55, 0.15), "power": 2.5},  # wybuch po śmierci
+	"burning": {"name": "Płonący", "group": "element", "color": Color(1.0, 0.45, 0.1), "power": 0.35},  # płonący ślad
+	"frost": {"name": "Mroźny", "group": "element", "color": Color(0.6, 0.9, 1.0), "power": 0.7},  # mroźne fale
+	"storm": {"name": "Burzowy", "group": "element", "color": Color(0.8, 0.75, 1.0), "power": 1.3},  # pioruny z nieba
+	# przywołanie
+	"summoner": {"name": "Przywołujący", "group": "summon", "color": Color(0.8, 0.45, 1.0), "power": 2.0},  # pomocnicy
+	"splitting": {"name": "Rozszczepialny", "group": "summon", "color": Color(0.95, 0.5, 0.8), "power": 3.0},  # dzieli się
+}
+## Ile elit w lochu z tą mechaniką i szanse na 1, 2 i 3 cechy.
+const ELITES := Vector2i(3, 5)
+const ELITE_TRAIT_COUNT: Array[float] = [0.45, 0.4, 0.15]
+## Statystyki elity: zdrowie x(3 + 0,75 za cechę), obrażenia x1,3, doświadczenie x(3 + 1 za cechę), złoto x3.
+const ELITE_HEALTH := 3.0
+const ELITE_HEALTH_PER_TRAIT := 0.75
+const ELITE_DAMAGE := 1.3
+const ELITE_XP := 3.0
+const ELITE_GOLD := 3.0
+## Łup elity (oprócz zwykłego łupu potwora): 1 + liczba cech przedmiotów, pierwszy co najmniej magiczny; każda cecha
+## podnosi szansę na lepszą rzadkość (Loot.roll_quality) i na legendę.
+const ELITE_QUALITY_PER_TRAIT := 0.1
+const ELITE_LEGEND_CHANCE := 0.02
+const ELITE_LEGEND_PER_TRAIT := 0.015
+
+
+## Cechy elity: 1-3 (ELITE_TRAIT_COUNT), każda z innej grupy.
+static func roll_elite_traits(rng: RandomNumberGenerator) -> Array[String]:
+	var count := 1
+	var roll := rng.randf()
+	for i in ELITE_TRAIT_COUNT.size():
+		roll -= ELITE_TRAIT_COUNT[i]
+		if roll <= 0.0:
+			count = i + 1
+			break
+	var groups := {}
+	for id: String in ELITE_TRAITS:
+		var group: String = ELITE_TRAITS[id]["group"]
+		if not groups.has(group):
+			groups[group] = []
+		(groups[group] as Array).append(id)
+	var names: Array = groups.keys()
+	var result: Array[String] = []
+	while result.size() < count and not names.is_empty():
+		var group: String = names.pop_at(rng.randi_range(0, names.size() - 1))
+		var options: Array = groups[group]
+		result.append(options[rng.randi_range(0, options.size() - 1)])
+	return result
+
+
 ## Kamienie zaklinające ze skarbca strażnika (rzadko i po jednym - ich głównym źródłem jest Kryształ Watry):
 ## szansa na kamień każdego rodzaju (plus szansa z poziomu, Levels.stone_chances) i szansa na doskonały.
 const VAULT_STONE_CHANCE := 0.15

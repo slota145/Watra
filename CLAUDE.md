@@ -161,7 +161,7 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
   przedmioty niezidentyfikowane (`unidentified.gd`), encyklopedia (`codex.gd`, klawisz L).
 - **Watra i Ostoja:** Watra z ofiarami, żarem i Darami (`boons.gd`, `ui/watra_window.gd`), budowy osady (`settlement.gd`),
   lochy Watry (`dungeon.gd`, `dungeons.gd`) z mechanikami (`Dungeons.MECHANICS`: skrzynie `dungeon_chest.gd`, kapliczki
-  `dungeon_shrine.gd`, Kryształ Watry `watra_crystal.gd`) i Ołtarzem Welesa, zielarstwo (`herbs.gd`).
+  `dungeon_shrine.gd`, Kryształ Watry `watra_crystal.gd`, elity `dungeon_elite.gd`) i Ołtarzem Welesa, zielarstwo (`herbs.gd`).
 - **Świat jak w MMO** (po zbudowaniu gildii): podróżnicy (`travelers.gd`, `traveler.gd`), drużyny i prośby o pomoc,
   tryby świata i rywale (`world_modes.gd`, `rival.gd`), rynek (`market.gd`), zlecenia (`bounties.gd`), zadania główne
   (`main_quests.gd`), wydarzenia w świecie (`world_events.gd`, `event_site.gd`).
@@ -295,7 +295,9 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   Etap 1 zrobiony, czeka na ocenę autora (szczegóły w `docs/historia.md`, szukaj „Mechaniki w lochach, etap 1”):
   losowanie mechanik (`Dungeons.MECHANICS`, `roll_mechanics` z miejscem na premie drzewka Watry), skrzynie
   (`dungeon_chest.gd`), kapliczki (`dungeon_shrine.gd`), Kryształ w puli, mniej kamieni zaklinania ze skarbca.
-  Dalej: elitarne potwory, Uroczysko, Krąg Żertwy, Skarbnik, przeróbka Kryształu.
+  Etap 2 zrobiony, czeka na ocenę autora (szukaj „Mechaniki w lochach, etap 2”): elitarne potwory z cechami
+  (`dungeon_elite.gd`, `Dungeons.ELITE_TRAITS` - aury, obrona, żywioły, przywołanie).
+  Dalej: Uroczysko, Krąg Żertwy, Skarbnik, przeróbka Kryształu.
 - [ ] **Bożki** (jak skaraby w PoE): wypadają z małą szansą z każdego potwora (gracz nie musi grindować jednego
   miejsca), wkładane w sloty Watry przed wejściem, zmieniają loch (więcej danej mechaniki, silniejsze potwory i więcej
   łupu, więcej łupu danego rodzaju); mają rzadkości. Same są traktowane jak mechanika - z własnymi węzłami w drzewku
