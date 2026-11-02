@@ -4,7 +4,7 @@ extends SceneTree
 ## zapis gry z lochu (wraca do Ostoi), żar do wydania, a na koniec pełna droga: okno lochów przy Watrze ->
 ## wejście w płomienie (żar wydany, modyfikatory działają) -> płomienie w lochu -> powrót przed Watrę.
 
-const CLIMATES := ["catacombs", "mine", "flooded", "roots"]
+const CLIMATES := ["catacombs", "mine", "flooded", "roots", "vineyard"]
 
 var _world: Node
 var _frame := 0
@@ -66,7 +66,13 @@ func _check_dungeon() -> void:
 	var d = _world._dungeon
 	check("%s: kraina lochu" % climate, _world.zone == "dungeon" and d != null)
 	var layer: TileMapLayer = _world.get_node("DungeonTiles")
-	check("%s: kafelek w każdej komórce" % climate, layer.get_used_cells().size() == (d.GRID.x - 1) * (d.GRID.y - 1))
+	if d.outdoor:
+		# loch na zewnątrz: kafelki tylko przy klifach, granicą są też drzewa i stawy, pod spodem podłoże z teksturami
+		check("%s: klify, drzewa i woda" % climate, layer.get_used_cells().size() > 0 and d.cliffs.size() > 0 and d.waters.size() > 0
+				and _world._soft_corners.size() > 0, "%d klifów, %d wody" % [d.cliffs.size(), d.waters.size()])
+		check("%s: kręte ścieżki z ubitej ziemi" % climate, d._trails.size() >= d.rooms.size() - 1 and d.path_tiles.size() > 100)
+	else:
+		check("%s: kafelek w każdej komórce" % climate, layer.get_used_cells().size() == (d.GRID.x - 1) * (d.GRID.y - 1))
 	var distance: Dictionary = d._distances(d.start_room.position + d.start_room.size / 2)
 	var connected := true
 	for room: Rect2i in d.rooms:

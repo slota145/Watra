@@ -73,8 +73,30 @@ const CLIMATES := {
 		"decor": {"dir": "res://assets/dungeons/roots/", "tint": Color(0.58, 0.64, 0.6),
 				"themes": ["hatchery", "larder", "roots", "mycelium", "webhall", "treants", "camp", "altar"]},
 	},
+	# loch na zewnątrz (Dungeon.outdoor): polany i kręte ścieżki, granicą klify, ściana drzew i stawy (progi szumu
+	# w "terrain"); kafelki to klify Wietrznych Turni (tools/dungeon_tiles.py), podłoże - tekstury gór (SoftGround)
+	"vineyard": {
+		"name": "Winnica satyrów", "description": "Dzika winnica na skalnych tarasach. Satyrowie upili się winem z płomieni Watry i świętują bez końca; ucztą rządzi Król Satyrów.",
+		"tiles": preload("res://assets/dungeons/vineyard.png"), "outdoor": true,
+		"monsters": {"satyr": 5, "satyr_piper": 2, "satyr_brute": 1.5},
+		"boss": "satyr_king", "tint": Color(0.9, 0.78, 0.72), "light": Color(1.0, 0.7, 0.35, 0.55),
+		"terrain": {"cliff_below": -0.28, "water_above": 0.32,
+				"trees": ["res://assets/forest/trees/oak_0.png", "res://assets/forest/trees/oak_1.png", "res://assets/forest/trees/oak_2.png",
+						"res://assets/forest/trees/oak_3.png", "res://assets/forest/trees/oak_4.png", "res://assets/forest/trees/oak_5.png",
+						"res://assets/forest/trees/oak_6.png", "res://assets/forest/trees/oak_7.png", "res://assets/forest/trees/pine_0.png",
+						"res://assets/forest/trees/pine_1.png", "res://assets/forest/trees/pine_2.png"],
+				"plateau": ["res://assets/forest/trees/bush_0.png", "res://assets/forest/trees/bush_1.png", "res://assets/forest/trees/bush_2.png",
+						"res://assets/forest/trees/rock_0.png", "res://assets/forest/trees/rock_1.png"],
+				"reeds": "res://assets/swamp/v2_reeds.png", "lilies": "res://assets/swamp/v2_lilies.png",
+				# pola winorośli na terenie niedostępnym (Dungeon._vine_fields)
+				"vines": ["res://assets/mountains/satyr/vine_row.png", "res://assets/mountains/satyr/vine_row_2.png"], "vines_above": -0.45},
+		"map_floor": Color("4f8a2c"), "map_wall": Color("6e6652"), "map_trees": Color("1f3a17"), "map_water": Color("2f5f6e"),
+		"map_path": Color("8a7048"), "map_vines": Color("3e5a26"),
+		"decor": {"dir": "res://assets/dungeons/vineyard/", "tint": Color(0.92, 0.8, 0.74),
+				"themes": ["vines", "vines", "press", "feast", "dance", "vines", "orchard", "goats", "camp", "pond"]},
+	},
 }
-const CLIMATE_ORDER: Array[String] = ["catacombs", "mine", "flooded", "roots"]
+const CLIMATE_ORDER: Array[String] = ["catacombs", "mine", "flooded", "roots", "vineyard"]
 
 ## Kryształ Watry (scripts/watra_crystal.gd): szansa, że loch ma komnatę z kryształem, i warianty zdarzenia
 ## (obrona kryształu albo górników). W trybie deweloperskim kryształ jest w każdym lochu.

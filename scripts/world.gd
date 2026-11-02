@@ -1655,7 +1655,7 @@ func _process_music(delta: float) -> void:
 	_music_check = 0.5
 	var track: String = {"forest": "forest", "swamp": "swamp", "mountains": "mountains", "ancient": "ancient", "fields": "fields", "cemetery": "cemetery"}.get(zone, "forest")
 	if zone == Zones.DUNGEON:
-		track = {"catacombs": "cemetery", "mine": "fields", "flooded": "swamp", "roots": "ancient"}.get(_dungeon_config.get("climate", ""), "cemetery")
+		track = {"catacombs": "cemetery", "mine": "fields", "flooded": "swamp", "roots": "ancient", "vineyard": "mountains"}.get(_dungeon_config.get("climate", ""), "cemetery")
 	if zone == "forest" and _settlement.is_inside_palisade(Vector2i((player.global_position / TILE).floor())):
 		track = "ostoja"
 	for boss in get_tree().get_nodes_in_group("bosses"):
