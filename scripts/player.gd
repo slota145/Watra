@@ -67,7 +67,12 @@ const WHIRL_HAND_REACH := 10.0
 ## W Młynku postać stoi z rozłożonymi rękami (klatka 0 ruchu `spin`), a dłoń z mieczem krąży po elipsie
 ## (widok z góry spłaszcza okrąg) na wysokości rąk: środek elipsy od stóp i spłaszczenie w pionie.
 const WHIRL_HAND_CENTER := Vector2(0, -16)
-const WHIRL_HAND_SQUASH := 0.55
+const WHIRL_HAND_SQUASH := 0.4
+## Widok z góry skraca to, co celuje w stronę kamery albo od niej: kierunek na ziemi (x, y) widać na ekranie jako
+## (x, y * GROUND_SQUASH). Tak ustawiamy i skracamy miecz w Młynku, Szarży i pchnięciu po Mgnieniu.
+const GROUND_SQUASH := 0.55
+## Najkrótszy miecz (część pełnej długości), gdy celuje prosto w kamerę albo od niej.
+const MIN_FORESHORTEN := 0.45
 ## Oko Cyklonu: przyrost obrażeń Młynka na sekundę kręcenia, górna granica i siła wciągania wrogów.
 const CYCLONE_SPIN_UP := 0.25
 const CYCLONE_SPIN_MAX := 1.0
@@ -2512,9 +2517,13 @@ func _follow_hand(weapon: Dictionary, anim: String, frame: int) -> bool:
 		angle = _attack_angle
 		flip_v = absf(angle_difference(0.0, _attack_angle)) > PI / 2.0
 	elif _lunge_time > 0.0 or _thrust_time > 0.0:
-		# Szarża i pchnięcie po Mgnieniu: ostrze zawsze do przodu, w stronę ruchu
-		angle = (_lunge_dir if _lunge_time > 0.0 else _thrust_dir).angle()
+		# Szarża i pchnięcie po Mgnieniu: ostrze zawsze do przodu, w stronę ruchu; pchnięcie w stronę kamery
+		# (albo od niej) widać z góry jako krótsze
+		var forward := _lunge_dir if _lunge_time > 0.0 else _thrust_dir
+		var on_screen := Vector2(forward.x, forward.y * GROUND_SQUASH)
+		angle = on_screen.angle()
 		flip_v = absf(angle) > PI / 2.0
+		sword.scale.x *= maxf(on_screen.length(), MIN_FORESHORTEN)
 	sword.flip_v = flip_v
 	sword.offset = _held_offset(weapon, flip_v)
 	if not weapon.has("grip"):
@@ -2544,6 +2553,8 @@ func _whirl_hand() -> void:
 	sword.flip_v = false
 	sword.position = pivot.transform.affine_inverse() * (WHIRL_HAND_CENTER + around * WHIRL_HAND_REACH * 1.3)
 	sword.rotation = around.angle() - angle
+	# ostrze w stronę kamery (albo od niej) krótsze - jak w perspektywie
+	sword.scale.x *= maxf(Vector2(cos(angle), sin(angle) * GROUND_SQUASH).length(), MIN_FORESHORTEN)
 	var behind := sin(angle) < -0.2
 	pivot.z_index = 0 if behind else 1
 	_weapon_behind(behind)

@@ -464,6 +464,13 @@ odpowiedniej sekcji.
   różni się od czystej (`ROD_DIFF`), i jeszcze `ROD_INTO_FIST` w głąb dłoni; po zmniejszeniu chwyt idzie do środka pięści
   (`_fist_center`), a pojedyncze odskakujące kąty wygładza `_smooth_angles`; (C) w Szarży i w krótkim pchnięciu po skoku
   Mgnienia (`Player.play_thrust`, `THRUST_POSE_TIME`, klatki 3-5 ruchu `stab`) kąt miecza to kierunek ruchu.
+  Trzecia runda: klatki ze znacznikiem dla spoczynku i chodu PixelLab narysował w innej pozie (ręka uniesiona) niż
+  czyste klatki (ręka przy biodrze), więc chwyt wypadał obok dłoni (w prawo nawet 6 px). Dłonie Wojciecha mają kolor
+  skóry, a strój, włosy i buty nie (`_is_skin`), więc `_skin_hand` przyciąga środek pięści do plamy skóry: w spoczynku
+  i chodzie - do dłoni z mieczem poniżej głowy (`HAND_ROWS`, strona z `SKIN_SIDE`), w atakach - najdalej `SKIN_SNAP`
+  od chwytu i tylko w widokach od przodu (`SKIN_ATTACK_DIRS` - od tyłu kark udaje dłoń); plamy większe niż
+  `HAND_MAX_PIXELS` to twarz. Ręczne poprawki pojedynczych klatek: `FIST_FIX`. W Młynku, Szarży i pchnięciu po Mgnieniu
+  miecz celujący w stronę kamery albo od niej jest skrócony jak w perspektywie (`GROUND_SQUASH`, `MIN_FORESHORTEN`).
 
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)

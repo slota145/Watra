@@ -83,6 +83,25 @@ FIST_INSET = 0.5
 FIST_FIND_RADIUS = 1.6
 FIST_RADIUS = 1.9
 FIST_FRONT = 0.6
+## Dłonie Wojciecha mają kolor skóry (strój, włosy i buty nie), więc środek pięści przyciągamy do plamy skóry:
+## w spoczynku i chodzie - do dłoni poniżej głowy (klatki ze znacznikiem bywają tam w innej pozie niż czyste klatki),
+## w atakach - do plamy skóry najdalej SKIN_SNAP pikseli od chwytu ze znacznika. Dłoń z mieczem (prawa) w spoczynku
+## i chodzie: SKIN_SIDE - -1 ta bardziej z lewej na ekranie, 1 - z prawej, 0 - bliższa chwytowi ze znacznika.
+SKIN_SNAP = 3.5
+## W atakach tylko w widokach od przodu (od tyłu skóra na karku udaje dłoń).
+SKIN_ATTACK_DIRS = ("south", "south-east", "east")
+## Ręczne poprawki środka pięści w zmniejszonej komórce ([x, y] od stóp, jak w HeroRig) dla klatek, w których
+## ani znacznik, ani kolor skóry nie trafiają w dłoń (sprawdzone na powiększonych klatkach).
+FIST_FIX = {
+    "wojciech": {
+        ("sweep", "south", 3): [-5.5, -15.0],
+    },
+}
+## Większa plama skóry to twarz, nie dłoń.
+HAND_MAX_PIXELS = 9
+SKIN_SIDE = {"south": -1, "south-east": -1, "east": 0, "north-east": 1, "north": 1}
+## Pas wysokości (piksele nad stopami w zmniejszonej komórce), w którym szukamy dłoni w spoczynku i chodzie.
+HAND_ROWS = (3, 17)
 ## Pojedynczy kąt ataku, który odskakuje od obu sąsiednich klatek o więcej niż tyle stopni (a sąsiednie są
 ## zgodne), zastępujemy średnią sąsiadów - pręt ze znacznika bywa w jednej klatce przekręcony.
 ANGLE_JUMP = 100
@@ -489,7 +508,7 @@ def build(hero):
     small.save(os.path.join(OUT, hero + ".png"))
     if hero in FIST_HEROES:
         _smooth_angles(grips)
-        _fist_sheet(small, grips).save(os.path.join(OUT, hero + "_fist.png"))
+        _fist_sheet(small, grips, hero).save(os.path.join(OUT, hero + "_fist.png"))
     return grips, counts
 
 
@@ -545,7 +564,59 @@ def _over_head(px, fx, fy, ux, uy):
     return hits >= HEAD_HITS
 
 
-def _fist_sheet(small, grips):
+def _is_skin(r, g, b):
+    return r >= 190 and 0.48 <= g / r <= 0.85 and b / r >= 0.38
+
+
+def _skin_groups(px):
+    """Zwarte plamy skóry w komórce: lista (środek x, środek y, liczba pikseli)."""
+    left = {(x, y) for y in range(OUT_CELL) for x in range(OUT_CELL) if px[x, y][3] >= 128 and _is_skin(*px[x, y][:3])}
+    groups = []
+    while left:
+        stack = [left.pop()]
+        group = list(stack)
+        while stack:
+            x, y = stack.pop()
+            for dx in (-1, 0, 1):
+                for dy in (-1, 0, 1):
+                    n = (x + dx, y + dy)
+                    if n in left:
+                        left.remove(n)
+                        group.append(n)
+                        stack.append(n)
+        groups.append((sum(p[0] for p in group) / len(group) + 0.5, sum(p[1] for p in group) / len(group) + 0.5, len(group)))
+    return groups
+
+
+def _skin_hand(px, anim, direction, guess):
+    """Środek dłoni z mieczem z plamy skóry (SKIN_*, HAND_ROWS) albo None. guess - chwyt ze znacznika."""
+    groups = [g for g in _skin_groups(px) if g[2] <= HAND_MAX_PIXELS]
+    gx, gy = guess
+    if anim in ("idle", "walk"):
+        low, high = OUT_FEET_Y - HAND_ROWS[1], OUT_FEET_Y - HAND_ROWS[0]
+        hands = [g for g in groups if low <= g[1] <= high]
+        if not hands:
+            return None
+        side = SKIN_SIDE.get(direction, 0)
+        if side:
+            # tylko dłoń po właściwej stronie sylwetki (druga to dłoń bez miecza; schowana - zostaje znacznik)
+            hands = [g for g in hands if (g[0] - OUT_CELL / 2.0) * side > 0]
+            if not hands:
+                return None
+            best = min(hands, key=lambda g: g[0] * side * -1)
+        else:
+            best = min(hands, key=lambda g: (g[0] - gx) ** 2 + (g[1] - gy) ** 2)
+        return best[0], best[1]
+    if direction not in SKIN_ATTACK_DIRS:
+        return None
+    near = [g for g in groups if math.hypot(g[0] - gx, g[1] - gy) <= SKIN_SNAP]
+    if not near:
+        return None
+    best = min(near, key=lambda g: math.hypot(g[0] - gx, g[1] - gy))
+    return best[0], best[1]
+
+
+def _fist_sheet(small, grips, hero="wojciech"):
     """Arkusz pięści (taki sam układ jak arkusz postaci): w każdej klatce z chwytem piksele dłoni wokół środka pięści.
     Przy okazji przesuwa chwyt (grips, w miejscu) do środka pięści - tam gra kładzie rękojeść broni."""
     fist = Image.new("RGBA", small.size)
@@ -561,7 +632,11 @@ def _fist_sheet(small, grips):
                 cell = small.crop((ox, oy, ox + OUT_CELL, oy + OUT_CELL))
                 px = cell.load()
                 cx, cy = OUT_CELL / 2.0 + grip[0], OUT_FEET_Y + grip[1]
-                center = _fist_center(px, cx, cy, grip[2])
+                fix = FIST_FIX.get(hero, {}).get((anim, DIRS[d], f))
+                if fix:
+                    center = (OUT_CELL / 2.0 + fix[0], OUT_FEET_Y + fix[1])
+                else:
+                    center = _skin_hand(px, anim, DIRS[d], (cx, cy)) or _fist_center(px, cx, cy, grip[2])
                 if center is None:
                     continue
                 fx, fy = center
