@@ -1,42 +1,68 @@
 class_name ItemCraft
-## Rzemiosło statystyk przedmiotów (warsztat u kowala Bronisława - okno WorkshopWindow; ujście dla trofeów potworów).
+## Rzemiosło statystyk przedmiotów (warsztat u kowala Bronisława - okno WorkshopWindow). Premie zmienia się tylko
+## runami (przedmioty-waluty jak orby w Path of Exile; RUNES) - każde działanie zużywa swoją runę i trochę złota.
 ## Działania na premiach wylosowanego przedmiotu (przepis Loot):
-## - "value": przerzut wartości wybranej premii (ten sam tier - szansa na lepszą i gorszą),
-## - "reforge": wybrana premia od nowa (nowy tier i wartość, jak dawne przekuwanie),
-## - "remove": usunięcie wybranej premii,
-## - "add": nowa losowa premia (gdy jest wolne miejsce - Loot.AFFIX_COUNTS wg rzadkości),
-## - "rarity": ulepszenie rzadkości (zwykły -> magiczny -> rzadki) i dolosowanie premii do minimum nowej rzadkości,
-## - "chaos" (Runa Zmiany z lochów): wszystkie premie od nowa,
-## - "lock" (Runa Pieczęci z lochów i Serce Kryształu): wybrana premia zostaje, wszystkie pozostałe od nowa.
-## Koszt: złoto i trofea potworów z krainy pasującej do poziomu przedmiotu (TROPHIES); legendy - LEGEND_FACTOR razy drożej.
+## - "value" (Runa Szlifu): przerzut wartości wybranej premii (ten sam tier - szansa na lepszą i gorszą),
+## - "reforge" (Runa Przekucia): wybrana premia od nowa (nowy tier i wartość),
+## - "remove" (Runa Zatarcia): usunięcie wybranej premii,
+## - "add" (Runa Przydania): nowa losowa premia (gdy jest wolne miejsce - Loot.AFFIX_COUNTS wg rzadkości),
+## - "rarity" (Runa Wyniesienia): ulepszenie rzadkości (zwykły -> magiczny -> rzadki) i dolosowanie premii,
+## - "chaos" (Runa Zmiany): wszystkie premie od nowa,
+## - "lock" (Runa Pieczęci i Serce Kryształu): wybrana premia zostaje, wszystkie pozostałe od nowa.
+## Runy wypadają w lochach Watry: głównie z Uroczyska (Uroczysko), rzadziej ze skarbca strażnika i z Kryształu Watry;
+## kupuje się je też na rynku i za Znaki Zwycięstwa. Złoto rośnie z poziomem przedmiotu; legendy - LEGEND_FACTOR razy drożej.
 ## Zwykłe przedmioty ze sklepu dostają przepis przy pierwszym działaniu (nowe id - podmienia je wołający).
 
 const ACTIONS := {
-	"value": {"name": "Przerzuć wartość", "trophies": 2, "gold": 1.0, "stat": true,
+	"value": {"name": "Przerzuć wartość", "rune": "rune_polish", "gold": 1.0, "stat": true,
 			"description": "Ta sama premia, nowa wartość w jej zakresie - może wyjść lepsza albo gorsza."},
-	"reforge": {"name": "Przekuj premię", "trophies": 3, "gold": 1.5, "stat": true,
+	"reforge": {"name": "Przekuj premię", "rune": "rune_reforge", "gold": 1.5, "stat": true,
 			"description": "Wybrana premia losowana od nowa: nowy tier i wartość (rodzaj zostaje)."},
-	"remove": {"name": "Usuń premię", "trophies": 3, "gold": 1.5, "stat": true,
+	"remove": {"name": "Usuń premię", "rune": "rune_erase", "gold": 1.5, "stat": true,
 			"description": "Wybrana premia znika - zostaje miejsce na nową."},
-	"add": {"name": "Dodaj premię", "trophies": 5, "gold": 2.5, "stat": false, "extra": {"iron_ore": 5},
+	"add": {"name": "Dodaj premię", "rune": "rune_growth", "gold": 2.5, "stat": false,
 			"description": "Nowa losowa premia, jeśli przedmiot ma wolne miejsce."},
-	"rarity": {"name": "Ulepsz rzadkość", "trophies": 8, "gold": 4.0, "stat": false, "extra": {"iron_ore": 10},
+	"rarity": {"name": "Ulepsz rzadkość", "rune": "rune_ascend", "gold": 4.0, "stat": false,
 			"description": "Zwykły -> magiczny -> rzadki: więcej miejsc na premie, brakujące premie dolosowane."},
-	"chaos": {"name": "Runa Zmiany", "trophies": 0, "gold": 1.0, "stat": false, "extra": {"rune_chaos": 1},
+	"chaos": {"name": "Przelosuj premie", "rune": "rune_chaos", "gold": 1.0, "stat": false,
 			"description": "Wszystkie premie losowane od nowa (rzadkość i poziom zostają)."},
-	"lock": {"name": "Pieczęć", "trophies": 0, "gold": 3.0, "stat": true, "extra": {"rune_seal": 1, "crystal_heart": 1},
+	"lock": {"name": "Pieczęć", "rune": "rune_seal", "gold": 3.0, "stat": true, "extra": {"crystal_heart": 1},
 			"description": "Wybrana premia zostaje zapieczętowana, a wszystkie pozostałe losowane od nowa."},
 }
 const ORDER: Array[String] = ["value", "reforge", "remove", "add", "rarity", "chaos", "lock"]
-## Trofea krain (do kosztu) - kraina wg poziomu przedmiotu.
-const TROPHIES := {"forest": "goblin_heart", "fields": "kobold_fuse", "swamp": "frog_tongue", "mountains": "satyr_horn",
-		"ancient": "spider_silk", "cemetery": "bone_dust"}
+## Runy: "weight" - jak często wypadają (najprostsze najczęściej), "tier" - od którego stopnia lochu.
+const RUNES := {
+	"rune_polish": {"weight": 10.0, "tier": 1},
+	"rune_reforge": {"weight": 7.0, "tier": 1},
+	"rune_erase": {"weight": 5.0, "tier": 1},
+	"rune_growth": {"weight": 5.0, "tier": 1},
+	"rune_chaos": {"weight": 3.0, "tier": 1},
+	"rune_ascend": {"weight": 3.0, "tier": 2},
+	"rune_seal": {"weight": 0.8, "tier": 4},
+}
 const LEGEND_FACTOR := 3
 const GOLD_BASE := 20
 const GOLD_PER_LEVEL := 6
 ## Runy z lochów: szansa w skarbcu strażnika i w nagrodzie Kryształu Watry.
 const RUNE_VAULT_CHANCE := 0.35
 const RUNE_CRYSTAL_CHANCE := 0.3
+
+
+## Losowa runa na stopień lochu `tier` (wagi RUNES; rzadsze dopiero od swojego stopnia).
+static func roll_rune(tier: int, rng: RandomNumberGenerator = null) -> String:
+	var pool := {}
+	for id: String in RUNES:
+		if tier >= int(RUNES[id]["tier"]):
+			pool[id] = RUNES[id]["weight"]
+	var total := 0.0
+	for id: String in pool:
+		total += float(pool[id])
+	var roll := (rng.randf() if rng != null else randf()) * total
+	for id: String in pool:
+		roll -= float(pool[id])
+		if roll <= 0.0:
+			return id
+	return "rune_polish"
 
 
 static func can_craft(id: String) -> bool:
@@ -47,26 +73,14 @@ static func quality_of(id: String) -> String:
 	return Items.get_data(id).get("recipe", {}).get("quality", Items.get_data(id).get("rarity", "common"))
 
 
-## Trofeum potworów z krainy pasującej do poziomu przedmiotu.
-static func trophy_for(id: String) -> String:
-	var level := Items.item_level(id)
-	var best := "forest"
-	for zone: String in ["forest", "fields", "swamp", "mountains", "ancient", "cemetery"]:
-		if level >= Levels.ZONES[zone][0]:
-			best = zone
-	return TROPHIES[best]
-
-
 ## Koszt działania: {"gold": n, "items": {id: ilość}}.
 static func cost(id: String, action: String) -> Dictionary:
 	var data: Dictionary = ACTIONS[action]
 	var factor := LEGEND_FACTOR if quality_of(id) == Loot.LEGENDARY else 1
-	var items := {}
-	if int(data["trophies"]) > 0:
-		items[trophy_for(id)] = int(data["trophies"]) * factor
+	var items := {str(data["rune"]): 1}
 	var extra: Dictionary = data.get("extra", {})
 	for item: String in extra:
-		items[item] = int(items.get(item, 0)) + int(extra[item]) * (factor if item == "iron_ore" else 1)
+		items[item] = int(items.get(item, 0)) + int(extra[item])
 	var gold := roundi((GOLD_BASE + GOLD_PER_LEVEL * Items.item_level(id)) * float(data["gold"]) * factor)
 	return {"gold": gold, "items": items}
 

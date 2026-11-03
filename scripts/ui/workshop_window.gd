@@ -1,7 +1,7 @@
 class_name WorkshopWindow
 extends PanelContainer
 ## Warsztat kowala Bronisława (ItemCraft): po lewej przedmioty gracza (założone i z plecaka), po prawej zaznaczony
-## przedmiot - jego premie (kliknięcie zaznacza premię) i działania z kosztem w złocie i trofeach potworów
+## przedmiot - jego premie (kliknięcie zaznacza premię) i działania z kosztem w runach (ItemCraft.RUNES) i złocie
 ## (przerzut wartości, przekucie, usunięcie, dodanie premii, ulepszenie rzadkości, Runa Zmiany, Pieczęć).
 
 const LIST_SIZE := Vector2(200, 210)
@@ -25,7 +25,7 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
 	box.add_child(UiStyle.title(Lang.t("Warsztat - rzemiosło premii")))
-	var hint := UiStyle.label(Lang.t("Koszt: złoto i trofea potworów z krainy pasującej do poziomu przedmiotu. Legendy - 3 razy drożej. Runy wypadają w lochach."), 7, UiStyle.DIM_COLOR)
+	var hint := UiStyle.label(Lang.t("Każde działanie zużywa swoją runę i trochę złota (legendy - 3 razy więcej złota). Runy wypadają w lochach Watry, najwięcej z Uroczyska."), 7, UiStyle.DIM_COLOR)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.custom_minimum_size.x = LIST_SIZE.x + SIDE_WIDTH + 4.0
 	box.add_child(hint)
@@ -214,7 +214,7 @@ func _do(action: String) -> void:
 	var id := item_of(entry)
 	var reason := ItemCraft.check(id, action, _stat)
 	if reason != "" or not ItemCraft.afford(_player, id, action):
-		_status.text = reason if reason != "" else Lang.t("Brakuje złota albo materiałów.")
+		_status.text = reason if reason != "" else Lang.t("Brakuje runy albo złota.")
 		Sfx.play("ui_error")
 		return
 	var price := ItemCraft.cost(id, action)

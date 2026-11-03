@@ -1,7 +1,7 @@
 extends SceneTree
 ## Lochy w płomieniach Watry: każdy klimat (kafelki dla wszystkich komórek, komnaty połączone, gracz na podłodze,
 ## potwory klimatu na poziomie stopnia, strażnik, co najmniej jedna mechanika), mechaniki (losowanie, skrzynie,
-## kapliczki), modyfikatory, otwarcie skarbca po pokonaniu strażnika,
+## kapliczki, elity, Uroczysko), modyfikatory, otwarcie skarbca po pokonaniu strażnika,
 ## zapis gry z lochu (wraca do Ostoi), żar do wydania, a na koniec pełna droga: okno lochów przy Watrze ->
 ## wejście w płomienie (żar wydany, modyfikatory działają) -> płomienie w lochu -> powrót przed Watrę.
 
@@ -28,7 +28,7 @@ func _load_next() -> void:
 	var mods: Array = ["horde", "fury"] if _index == 0 else []
 	var config: Dictionary = _Dungeons.config(CLIMATES[_index], 2 + _index, mods, 1000 + _index * 77)
 	if _index == 0:
-		config["mechanics"] = ["chests", "shrine", "crystal", "elites"]
+		config["mechanics"] = ["chests", "shrine", "crystal", "elites", "uroczysko"]
 	root.get_node("Game")._pending_load = {"seed": 12345, "zone": "dungeon", "dungeon": config, "arrive": "start", "player": {}}
 	_world = load("res://scenes/world.tscn").instantiate()
 	root.add_child(_world)
@@ -130,7 +130,7 @@ func _check_dungeon() -> void:
 ## Mechaniki lochu: losowanie (zawsze co najmniej jedna, proste częściej), skrzynie (zwykła, strzeżona) i kapliczka.
 func _check_mechanics() -> void:
 	var d = _world._dungeon
-	check("mechaniki z ustawień wyprawy", d.mechanics.size() == 4 and d.crystal != null and d.chests.size() >= 2 and d.shrines.size() >= 1,
+	check("mechaniki z ustawień wyprawy", d.mechanics.size() == 5 and d.uroczyska.size() == 1 and d.crystal != null and d.chests.size() >= 2 and d.shrines.size() >= 1,
 			"%s, %d skrzyń, %d kapliczek" % [d.mechanics, d.chests.size(), d.shrines.size()])
 	var in_rooms := true
 	for node: Node2D in d.chests + d.shrines:
@@ -197,7 +197,62 @@ func _check_mechanics() -> void:
 			and not shrine.can_harvest(), str(player.boons.active))
 	var icons: Array = load("res://scripts/status_effects.gd").list(player).filter(func(e: Dictionary) -> bool: return e["left"] > 0.0 and e["total"] == 60.0)
 	check("ikona daru kapliczki pod paskami", icons.size() == 1)
+	_check_uroczysko(d)
 	_check_elites(d)
+
+
+## Uroczysko: dotknięcie otwiera krąg, upiory rodzą się w kręgu i nie wychodzą poza niego, zabójstwa poszerzają
+## krąg, a po jego zgaśnięciu upiory znikają i kamień sypie runy.
+func _check_uroczysko(d) -> void:
+	var stone = d.uroczyska[0]
+	check("Uroczysko czeka na dotknięcie", stone.can_harvest() and stone.state == "idle")
+	stone.harvest(stone.global_position)
+	check("dotknięcie otwiera krąg", stone.state == "open" and not stone.can_harvest() and is_equal_approx(stone.radius, _Dungeons.URO_START))
+	var enemies := _world.get_tree().get_nodes_in_group("enemies").size()
+	for i in 60:
+		stone._spawn_timer = 0.0
+		stone._process(0.0)
+	var inside := true
+	for entry: Array in stone.ghosts:
+		inside = inside and entry[0].global_position.distance_to(stone.global_position) <= stone.radius + 1.0 \
+				and entry[0].sprite.material.shader == load("res://shaders/ghost.gdshader")
+	check("upiory w kręgu (zjawy)", stone.ghosts.size() == stone.wanted_ghosts() and inside
+			and _world.get_tree().get_nodes_in_group("enemies").size() == enemies + stone.ghosts.size(), "%d upiorów" % stone.ghosts.size())
+	# upiór wypchnięty poza brzeg wraca do kręgu
+	var ghost = stone.ghosts[0][0]
+	ghost.global_position = stone.global_position + Vector2(stone.radius + 200.0, 0)
+	stone._keep_inside()
+	check("upiory nie wychodzą poza krąg", ghost.global_position.distance_to(stone.global_position) <= stone.radius)
+	var before: float = stone.radius
+	for i in 5:
+		stone.ghosts[0][0].take_damage(99999999, stone.global_position)
+	check("zabójstwa poszerzają krąg", stone.kills == 5 and stone.radius > before, "%.0f -> %.0f" % [before, stone.radius])
+	# krąg się kurczy (po chwili spokoju)
+	stone._elapsed = _Dungeons.URO_GRACE + 1.0
+	before = stone.radius
+	stone._process(1.0)
+	check("krąg się kurczy", stone.radius < before)
+	check("runy za upiory: więcej zabitych - więcej run", stone.reward_runes(0) == 0 and stone.reward_runes(5) == 1
+			and stone.reward_runes(60) > stone.reward_runes(20) and stone.reward_runes(9999) == _Dungeons.URO_RUNES_MAX)
+	var alive: Array = stone.ghosts.map(func(e: Array): return e[0])
+	stone.kills = 30
+	stone.radius = _Dungeons.URO_END - 1.0
+	stone._process(0.1)
+	var runes: Array = _world.entities.get_children().filter(func(n: Node) -> bool:
+			return n.get_script() == load("res://scripts/pickup.gd") and str(n.item_id).begins_with("rune_") \
+				and n.position.distance_to(stone.position) < 80.0)
+	check("krąg gaśnie: upiory znikają, kamień sypie runy", stone.state == "closed" and stone.ghosts.is_empty()
+			and alive.all(func(g) -> bool: return not g.is_in_group("enemies")) and runes.size() >= stone.reward_runes(30),
+			"%d run" % runes.size())
+	var R = load("res://scripts/item_craft.gd")
+	var rolled := {}
+	for i in 2000:
+		var id: String = R.roll_rune(1)
+		rolled[id] = rolled.get(id, 0) + 1
+	check("runy: proste częściej, Pieczęć dopiero od 4. stopnia", rolled.get("rune_polish", 0) > rolled.get("rune_chaos", 0)
+			and not rolled.has("rune_seal") and not rolled.has("rune_ascend") and R.roll_rune(9) != "", str(rolled))
+	# siatka „kto jest blisko” (Goblin.near) jest liczona raz na klatkę - test elit dodaje potwory w tej samej klatce
+	load("res://scripts/goblin.gd")._near_frame = -1
 
 
 ## Elitarne potwory: liczba, cechy z różnych grup, aura, tarcza, rozszczepienie i łup.

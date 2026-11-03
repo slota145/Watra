@@ -1,7 +1,7 @@
 extends SceneTree
 ## Rzemiosło premii (ItemCraft, okno warsztatu u kowala): przerzut wartości (ten sam tier), przekucie, usunięcie,
 ## dodanie premii (do limitu rzadkości), ulepszenie rzadkości (także zwykłego przedmiotu ze sklepu), Runa Zmiany,
-## Pieczęć (wybrana premia zostaje), koszty w trofeach krainy wg poziomu przedmiotu (legendy 3x), zakładany przedmiot,
+## Pieczęć (wybrana premia zostaje), koszt - runa działania i złoto (legendy 3x złota), zakładany przedmiot,
 ## runy z Kryształu Watry, przycisk "Warsztat" u kowala.
 
 var _world: Node
@@ -56,11 +56,13 @@ func _process(_d: float) -> bool:
 	hud.npc_dialog.close()
 	# materiały
 	p.stats.add_gold(1000000)
-	for item in ["goblin_heart", "kobold_fuse", "frog_tongue", "satyr_horn", "spider_silk", "bone_dust", "iron_ore"]:
-		p.storage.add_item(item, 500)
 	var sword: String = Loot.generate("sword_t2", "magic", 20)
 	p.inventory.add_item(sword, 1)
-	check("trofea wg poziomu przedmiotu", C.trophy_for(sword) == "satyr_horn" and C.trophy_for(Loot.generate("sword_t2", "magic", 3)) == "goblin_heart")
+	check("bez runy nie da się przerzucić wartości", not C.afford(p, sword, "value"))
+	for item in ["rune_polish", "rune_reforge", "rune_erase", "rune_growth", "rune_ascend"]:
+		p.storage.add_item(item, 50)
+	check("każde działanie ma swoją runę", C.ACTIONS.keys().all(func(a: String) -> bool:
+			return C.cost(sword, a)["items"].has(C.ACTIONS[a]["rune"]) and Items.get_data(C.ACTIONS[a]["rune"]).has("icon")))
 	var window = hud.workshop_window
 	window.open()
 	window._selected = {"inv": _index_of(p, sword)}
@@ -68,13 +70,13 @@ func _process(_d: float) -> bool:
 	var stat: String = recipe["affixes"].keys()[0]
 	var tier := int(recipe["tiers"][stat])
 	window._stat = stat
-	var hearts: int = p.count_owned("satyr_horn")
+	var polish: int = p.count_owned("rune_polish")
 	var gold: int = p.stats.gold
 	window._do("value")
 	recipe = Items.get_data(sword)["recipe"]
 	var span: Array = Loot.tier_range(stat, tier)
 	check("przerzut wartości: ten sam tier, płaci", int(recipe["tiers"][stat]) == tier and float(recipe["affixes"][stat]) >= span[0] - 0.01
-			and float(recipe["affixes"][stat]) <= span[1] + 0.01 and p.count_owned("satyr_horn") == hearts - 2 and p.stats.gold < gold)
+			and float(recipe["affixes"][stat]) <= span[1] + 0.01 and p.count_owned("rune_polish") == polish - 1 and p.stats.gold < gold)
 	window._do("reforge")
 	check("przekucie premii", Items.get_data(sword)["recipe"]["affixes"].has(stat))
 	var count: int = Items.get_data(sword)["recipe"]["affixes"].size()

@@ -91,6 +91,9 @@ static func _elixirs(player: Player, npc: Node) -> Dictionary:
 ## Wymiana Znaków Zwycięstwa (wydarzenia w świecie - WorldEvents) u pisarza gildii: [id, cena, ilość, opis].
 const MARK_OFFERS := [
 	["gem", 6, 1, "Losowy kamień szlachetny o szlifie na twój poziom (po zadaniu jubilera)."],
+	["rune_polish", 3, 1, "W warsztacie kowala przerzuci wartość wybranej premii."],
+	["rune_reforge", 5, 1, "W warsztacie kowala wylosuje wybraną premię od nowa."],
+	["rune_ascend", 10, 1, "W warsztacie kowala podniesie rzadkość przedmiotu."],
 	["rune_chaos", 12, 1, "W warsztacie kowala przelosuje wszystkie premie przedmiotu."],
 	["mercy_stone", 10, 1, "Przy nieudanym zaklinaniu przedmiot nie traci poziomu."],
 	["bag_expedition", 25, 1, "+24 miejsca w plecaku (załóż PPM)."],

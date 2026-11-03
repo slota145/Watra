@@ -124,8 +124,9 @@ const CLIMATE_ORDER: Array[String] = ["catacombs", "mine", "flooded", "roots", "
 const MECHANICS := {
 	"chests": {"name": "Skrzynie", "weight": 10.0, "size": "small"},
 	"shrine": {"name": "Kapliczka", "weight": 8.0, "size": "small"},
-	"crystal": {"name": "Kryształ Watry", "weight": 5.0, "size": "large", "room": true},
+	"crystal": {"name": "Kryształ Watry", "weight": 6.0, "size": "large", "room": true},
 	"elites": {"name": "Elitarne potwory", "weight": 8.0, "size": "small"},
+	"uroczysko": {"name": "Uroczysko", "weight": 5.0, "size": "large"},
 }
 ## Szansa na drugą i trzecią mechanikę.
 const MECHANIC_EXTRA: Array[float] = [0.25, 0.08]
@@ -154,6 +155,35 @@ const CHESTS := Vector2i(2, 4)
 const SHRINES: Array[String] = ["shrine_might", "shrine_ward", "shrine_haste", "shrine_fortune", "shrine_wisdom", "shrine_moon"]
 ## Ile kapliczek w lochu z tą mechaniką (każda daje inny dar).
 const SHRINE_COUNT := Vector2i(1, 2)
+## Uroczysko (scripts/uroczysko.gd) - jak Breach w PoE: dotknięty kamień otwiera krąg innego świata pełen upiorów.
+## Każdy zabity upiór poszerza krąg (URO_GROW px, mniej przy dużym kręgu), a krąg ciągle się kurczy (URO_SHRINK px/s,
+## coraz szybciej - URO_SPEEDUP s do podwojenia); gdy zmaleje do URO_END, gaśnie - upiory znikają, a kamień sypie runy
+## (1 + zabici / URO_KILLS_PER_RUNE, najwyżej URO_RUNES_MAX). Upiory to potwory klimatu lochu jako zjawy
+## (shaders/ghost.gdshader) - słabsze, ale liczne (URO_ALIVE + promień / URO_ALIVE_PER); żyją tylko w kręgu.
+## Co URO_LORD_EVERY zabitych pojawia się Upiorny Pan (mocniejszy, zawsze daje runę).
+const URO_START := 110.0
+const URO_MAX := 430.0
+const URO_END := 36.0
+const URO_GROW := 8.0
+const URO_SHRINK := 7.0
+const URO_SPEEDUP := 35.0
+## Grace: przez tyle sekund po otwarciu krąg się nie kurczy.
+const URO_GRACE := 4.0
+const URO_ALIVE := 5
+const URO_ALIVE_PER := 16.0
+const URO_SPAWN_EVERY := 0.22
+const URO_KILLS_PER_RUNE := 14
+const URO_RUNES_MAX := 10
+## Upiór: mnożniki zdrowia, obrażeń i nagród zwykłego potwora klimatu.
+const URO_HEALTH := 0.6
+const URO_DAMAGE := 0.8
+const URO_XP := 0.6
+## Szansa, że zwykły upiór upuści runę.
+const URO_GHOST_RUNE := 0.02
+const URO_LORD_EVERY := 25
+const URO_LORD_HEALTH := 6.0
+const URO_LORD_DAMAGE := 1.4
+
 ## Elitarne potwory (scripts/dungeon_elite.gd): zwykły potwór lochu wzmocniony 1-3 cechami, każda z innej grupy
 ## (aura, obrona, żywioł, przywołanie). "name" - przymiotnik w napisie nad głową, "color" - poświata (od pierwszej cechy),
 ## "power" - siła cechy (znaczenie w opisie każdej grupy w DungeonElite).
