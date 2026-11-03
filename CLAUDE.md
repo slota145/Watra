@@ -50,6 +50,7 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
   - `nawia_map.gd`: Mapa Nawii (endgame - węzły-lochy stopni 8-17), okno `scripts/ui/nawia_window.gd`,
     Błogosławieństwo Watry przy kapliczkach `scripts/ui/blessing_window.gd`, drzewko Watry `watra_tree.gd`
     (3 zakładki, okno `scripts/ui/watra_tree_window.gd`), bossowie szczytowi `pinnacles.gd` i `pinnacle_boss.gd`,
+    Władca Hordy `horde_lord.gd` (Pomrok - stopnie aren),
   - `dungeons.gd`: dane lochów (klimaty, stopnie, modyfikatory, mechaniki), `dungeon.gd`: generator lochu (też lochy na zewnątrz), wystrój `dungeon_decor.gd`
     i `decor_<klimat>.gd`, okno `scripts/ui/dungeon_window.gd`,
   - `herbs.gd`: zioła i mikstury zielarki, `herb.gd`: zioło do zerwania (sadzone w każdej krainie przez `World._place_herbs`),
@@ -369,8 +370,11 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   - etap 4 zrobiony, czeka na ocenę autora (szukaj „Mapa Nawii, etap 4”): **bossowie szczytowi** Weles, Marzanna,
     Czarnobóg (`scripts/pinnacles.gd`, `scripts/pinnacle_boss.gd`) - areny za 4 fragmenty kluczy z węzłów, serca
     na legendy, pasy w stylu Mageblooda i Headhuntera (Pas Wiecznych Ziół, Pas Łowcy Dusz, 10 serc);
-  - do zrobienia: Władca Hordy (ostateczny boss) i obce bogi; do ustalenia po ograniu: siła bogów, szanse na
-    fragmenty i pasy, liczby w drzewku Watry, ewentualne ikony węzłów drzewka z PixelLab.
+  - etap 5 zrobiony, czeka na ocenę autora (szukaj „Mapa Nawii, etap 5”): **Władca Hordy** (`scripts/horde_lord.gd`) -
+    wejście za serce każdego boga, 4 fazy z cieniami bogów i falami Hordy, legendy Władcy, Pas Zimowego Oddechu
+    (Marzanna), tytuł „Pogromca Hordy”, posąg w Ostoi i stopnie **Pomroku** I-X dla wszystkich aren;
+  - do zrobienia: obce bogi; do ustalenia po ograniu: siła bogów i Władcy, szanse na fragmenty i pasy, liczby
+    Pomroku, liczby w drzewku Watry, ewentualne ikony węzłów drzewka z PixelLab.
 - [ ] **Obce mitologie jako odległe królestwa** (luźny pomysł autora): świat zostaje słowiański, a królestwa grecki,
   nordycki, egipski tylko w końcówce gry (np. wrota w atlasie, najeźdźcy przez płomienie Watry), każde jako mały
   obszar z bossem szczytowym - obcym bogiem; tłumaczy hydrę i satyry. Na pinnacle nadają się też słowiańscy bogowie.

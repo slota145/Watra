@@ -140,6 +140,9 @@ func _refresh() -> void:
 		return
 	var s := _player.stats
 	_level_label.text = tr("Poziom %d") % s.level
+	var title := _player.boons.title()
+	if title != "":
+		_level_label.text += "  •  " + title
 	_xp_label.text = tr("Exp: %d / %d") % [s.xp, s.xp_to_next_level()]
 	_points_label.text = tr("Punkty do rozdania: %d") % s.unspent_points
 	_points_label.visible = s.unspent_points > 0

@@ -5,7 +5,8 @@ extends PanelContainer
 ## nieodkryte to tylko blade punkty we mgle. Kliknięcie wybiera węzeł, „Wyrusz” otwiera okno lochów w trybie węzła
 ## (DungeonWindow.open_node - modyfikatory i bożki jak zwykle, wejście bez kosztów).
 ## Kolumna „Bogowie” (Pinnacles): fragmenty kluczy i serca każdego boga; „Wyzwij” zużywa fragmenty i przenosi na arenę,
-## „Legenda” i „Pas” wymieniają serca na przedmioty boga.
+## „Legenda” i „Pas” wymieniają serca na przedmioty boga. Pod bogami Władca Hordy (wejście za serce każdego boga)
+## i - po jego pokonaniu - wybór stopnia Pomroku dla wszystkich aren.
 ## Rysowane w kodzie; ładna grafika mapy przyjdzie, gdy system będzie dopracowany.
 
 signal node_requested(node: Dictionary)
@@ -25,6 +26,8 @@ var _go: Button
 var _nodes: Array[Dictionary] = []
 ## Bóg -> {"info": Label, "fight": Button, "legend": Button, "belt": Button (albo brak)}.
 var _gods := {}
+var _pomrok_row: HBoxContainer
+var _pomrok_label: Label
 var _selected := -1
 
 
@@ -91,13 +94,47 @@ func _build_gods() -> VBoxContainer:
 			entry["belt"] = _button(Lang.t("Pas"), _exchange.bind(god, "belt"))
 			buttons.add_child(entry["belt"])
 		_gods[god] = entry
+	# Władca Hordy - ostateczny boss
+	column.add_child(HSeparator.new())
+	var lord := Pinnacles.LORD
+	var lord_info := _wrapped("", Pinnacles.GODS[lord]["color"])
+	column.add_child(lord_info)
+	var lord_buttons := HBoxContainer.new()
+	lord_buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	lord_buttons.add_theme_constant_override("separation", 2)
+	column.add_child(lord_buttons)
+	var lord_entry := {"info": lord_info, "fight": _button(Lang.t("Wyzwij"), _challenge.bind(lord)),
+			"legend": _button(Lang.t("Legenda"), _exchange.bind(lord, "legend"))}
+	lord_buttons.add_child(lord_entry["fight"])
+	lord_buttons.add_child(lord_entry["legend"])
+	_gods[lord] = lord_entry
+	# Pomrok - stopień trudności aren po pokonaniu Władcy
+	_pomrok_row = HBoxContainer.new()
+	_pomrok_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_pomrok_row.add_theme_constant_override("separation", 4)
+	_pomrok_row.add_child(_button("<", func() -> void: _player.boons.set_pomrok(_player.boons.pomrok - 1)))
+	_pomrok_label = UiStyle.label("", 8, Color(1.0, 0.5, 0.4))
+	_pomrok_label.mouse_filter = Control.MOUSE_FILTER_STOP
+	_pomrok_row.add_child(_pomrok_label)
+	_pomrok_row.add_child(_button(">", func() -> void: _player.boons.set_pomrok(_player.boons.pomrok + 1)))
+	column.add_child(_pomrok_row)
 	return column
 
 
 func _refresh_gods() -> void:
 	var inventory := _player.inventory
+	var pomrok := _player.boons.pomrok
+	_pomrok_row.visible = _player.boons.pomrok_unlocked > 0
+	_pomrok_label.text = Lang.t("Pomrok: %s") % (Pinnacles.roman(pomrok) if pomrok > 0 else Lang.t("brak"))
+	_pomrok_label.tooltip_text = Lang.t("Stopień Pomroku dla wszystkich aren: poziom +%d, zdrowie +%d%%, obrażenia +%d%%, skarbiec +%d%%, legendy i pasy +%d%%. Kolejny stopień odblokowuje zwycięstwo nad Władcą na najwyższym.") % [
+			Pinnacles.POMROK_LEVEL * pomrok, roundi((Pinnacles.pomrok_mult("health", pomrok) - 1.0) * 100.0),
+			roundi((Pinnacles.pomrok_mult("damage", pomrok) - 1.0) * 100.0), roundi((Pinnacles.pomrok_mult("loot", pomrok) - 1.0) * 100.0),
+			roundi((Pinnacles.pomrok_mult("drop", pomrok) - 1.0) * 100.0)]
 	for god: String in _gods:
 		var entry: Dictionary = _gods[god]
+		if Pinnacles.is_lord(god):
+			_refresh_lord(entry, pomrok)
+			continue
 		var fragments := inventory.count_of(Pinnacles.fragment(god))
 		var hearts := inventory.count_of(Pinnacles.heart(god))
 		var wins := int(_player.boons.pinnacle_kills.get(god, 0))
@@ -105,7 +142,7 @@ func _refresh_gods() -> void:
 				Lang.t("Fragmenty: %d / %d   Serca: %d   Zwycięstwa: %d") % [fragments, Pinnacles.FRAGMENTS, hearts, wins]]
 		var fight: Button = entry["fight"]
 		fight.disabled = fragments < Pinnacles.FRAGMENTS
-		fight.tooltip_text = Lang.t("Arena boga - poziom %d. Zużywa %d fragmenty.") % [Pinnacles.GODS[god]["level"], Pinnacles.FRAGMENTS]
+		fight.tooltip_text = Lang.t("Arena boga - poziom %d. Zużywa %d fragmenty.") % [Pinnacles.arena_level(god, pomrok), Pinnacles.FRAGMENTS]
 		var legend: Button = entry["legend"]
 		legend.disabled = hearts < Pinnacles.HEART_COST
 		legend.tooltip_text = Lang.t("%d serca: jedna z legend boga (%s)") % [Pinnacles.HEART_COST,
@@ -116,13 +153,35 @@ func _refresh_gods() -> void:
 			belt.tooltip_text = Lang.t("%d serc: %s") % [Pinnacles.BELT_COST, Lang.t(Legends.DATA[Pinnacles.GODS[god]["belt"]]["name"])]
 
 
-## Wyzwanie boga: zużywa fragmenty i przenosi na arenę (premie drzewka Watry jak w zwykłym lochu).
+func _refresh_lord(entry: Dictionary, pomrok: int) -> void:
+	var lord := Pinnacles.LORD
+	var hearts := _player.inventory.count_of(Pinnacles.heart(lord))
+	var wins := int(_player.boons.pinnacle_kills.get(lord, 0))
+	(entry["info"] as Label).text = "%s\n%s" % [Pinnacles.god_name(lord),
+			Lang.t("Wejście: serce każdego boga   Serca Władcy: %d   Zwycięstwa: %d") % [hearts, wins]]
+	var fight: Button = entry["fight"]
+	fight.disabled = not Pinnacles.can_challenge_lord(_player.inventory)
+	fight.tooltip_text = Lang.t("Ostateczny boss - poziom %d. Zużywa po %d sercu Welesa, Marzanny i Czarnoboga.") % [
+			Pinnacles.arena_level(lord, pomrok), Pinnacles.LORD_COST]
+	var legend: Button = entry["legend"]
+	legend.disabled = hearts < Pinnacles.HEART_COST
+	legend.tooltip_text = Lang.t("%d serca: jedna z legend boga (%s)") % [Pinnacles.HEART_COST,
+			", ".join((Pinnacles.GODS[lord]["legends"] as Array).map(func(id: String) -> String: return Lang.t(Legends.DATA[id]["name"])))]
+
+
+## Wyzwanie boga: zużywa fragmenty (Władca - serca bogów) i przenosi na arenę na wybranym stopniu Pomroku
+## (premie drzewka Watry jak w zwykłym lochu).
 func _challenge(god: String) -> void:
 	var world := get_tree().get_first_node_in_group("world")
-	if world == null or not _player.inventory.remove_item(Pinnacles.fragment(god), Pinnacles.FRAGMENTS):
+	if world == null:
+		return
+	if Pinnacles.is_lord(god):
+		if not Pinnacles.pay_lord(_player.inventory):
+			return
+	elif not _player.inventory.remove_item(Pinnacles.fragment(god), Pinnacles.FRAGMENTS):
 		return
 	visible = false
-	world.enter_dungeon(Pinnacles.config(god, randi(), _player.boons.tree_effects()))
+	world.enter_dungeon(Pinnacles.config(god, randi(), _player.boons.tree_effects(), _player.boons.pomrok))
 
 
 ## Wymiana serc na legendę albo pas boga (do plecaka, a gdy pełny - do magazynu).
@@ -130,7 +189,7 @@ func _exchange(god: String, what: String) -> void:
 	var item := Pinnacles.exchange_item(god, what)
 	if item == "" or not _player.inventory.remove_item(Pinnacles.heart(god), Pinnacles.exchange_cost(what)):
 		return
-	var id := Loot.legendary_at_level(item, int(Pinnacles.GODS[god]["level"]))
+	var id := Loot.legendary_at_level(item, mini(int(Pinnacles.GODS[god]["level"]), Loot.MAX_ITEM_LEVEL))
 	if _player.inventory.add_item(id, 1) > 0:
 		_player.storage.add_item(id, 1)
 	Sfx.play("magic")

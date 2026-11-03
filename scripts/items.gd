@@ -40,7 +40,7 @@ const LEGENDARY_COLOR := Color(1.0, 0.62, 0.15)
 const MODIFIED_COLOR := "#7cf07c"
 ## Efekty, których szanse zwiększa Łza Bulgora ("fortune").
 ## Efekty, których wartość to liczba sztuk (np. dodatkowe strzały), a nie procent.
-const COUNT_EFFECTS := ["hydra_seekers", "seeker_split", "ballista_volley", "ballista_seeker", "blizzard_freeze", "endless_storm"]
+const COUNT_EFFECTS := ["hydra_seekers", "seeker_split", "ballista_volley", "ballista_seeker", "blizzard_freeze", "endless_storm", "gods_echo", "eternal_herbs"]
 const CHANCE_EFFECTS := ["shockwave", "tide", "claws", "echo", "thunder", "whirlpool", "roots", "thorns", "venom", "brood", "fear",
 		"bomb", "blast_shot", "earth_arrow", "kaboom", "devour", "burrow", "raise_dead", "rend", "plunder", "pack_call", "tongue",
 		"storm_arrows", "web_burst", "corpse_blast", "venom_chain", "feather_storm", "wind_shield",
@@ -109,6 +109,17 @@ const EFFECT_TEXTS := {
 	"berserk": "Gdy masz mniej niż 40%% zdrowia, zadajesz +%s obrażeń",
 	"potion_saver": "%s szans, że wypita mikstura zdrowia albo many nie ubędzie z plecaka",
 	"potion_fury": "Po wypiciu mikstury zdrowia albo many przez 6 s zadajesz +%s obrażeń",
+	"nawia_grasp": "%s szans przy trafieniu: korzenie Nawii oplatają i zatruwają wrogów wokół trafionego",
+	"serpent_skin": "%s szans, gdy ktoś cię zrani: jad Nawii zatruwa wrogów wokół ciebie",
+	"winter_touch": "%s szans przy trafieniu: lodowy wybuch rani i zamraża trafionego i wrogów obok",
+	"frost_veil": "%s szans, gdy ktoś cię zrani: lód skuwa wrogów wokół ciebie",
+	"shadow_spikes": "%s szans przy trafieniu: kolce mroku wyrastają pod trafionym i dwoma najbliższymi wrogami",
+	"dark_pact": "%s szans, że zabity wróg wybuchnie mrokiem, raniąc wrogów obok, a część jego życia wróci do ciebie",
+	"soul_hunter": "Zabity elitarny potwór oddaje ci swoje cechy na 20 s (%s szans)",
+	"eternal_herbs": "Wypite mikstury zielarki działają bez końca - do %s różnych naraz",
+	"horde_rift": "%s szans przy trafieniu: ziemia pod trafionym pęka i bucha czerwonym ogniem, raniąc wrogów wokół",
+	"gods_echo": "W walce co %s s budzi się moc jednego z bogów: korzenie Welesa, lód Marzanny albo kolce Czarnoboga",
+	"winter_breath": "Zabity wróg zamarza i pęka (%s szans) - lód rani i zamraża wrogów obok, a zabici przez lód pękają dalej, łańcuchem",
 	"bile_spit": "Co 5. trafienie plujesz żółcią przed siebie - trujące kałuże ranią wrogów za %s obrażeń broni co pół sekundy",
 }
 const SLOT_TYPE_NAMES := {
@@ -714,6 +725,11 @@ const DATA := {
 		"name": "Serce Czarnoboga",
 		"description": "Czarne serce w fioletowym płomieniu. Zostaje po pokonanym bogu. W oknie Mapy Nawii serca wymienia się na legendy boga.",
 		"icon": preload("res://assets/items/pinnacle_heart_czarnobog.png"), "sell_price": 200,
+	},
+	"pinnacle_heart_horde": {
+		"name": "Serce Władcy Hordy",
+		"description": "Czarne serce w czerwonym ogniu, przebite kośćmi. Zostaje po pokonanym Władcy Hordy. W oknie Mapy Nawii serca wymienia się na jego legendy.",
+		"icon": preload("res://assets/items/pinnacle_heart_horde.png"), "sell_price": 400,
 	},
 	"mercy_stone": {
 		"name": "Kamień miłosierdzia",

@@ -125,6 +125,10 @@ var watra_tab := 0
 var watra_tab_names: Array = ["", "", ""]
 ## Bossowie szczytowi (Pinnacles): bóg -> liczba zwycięstw (pierwsze daje punkty Watry).
 var pinnacle_kills := {}
+## Pomrok (Pinnacles.POMROK_*): najwyższy odblokowany stopień (0 - Władca Hordy jeszcze niepokonany; każde zwycięstwo
+## nad Władcą na najwyższym stopniu odblokowuje następny) i stopień wybrany w oknie Mapy Nawii.
+var pomrok_unlocked := 0
+var pomrok := 0
 ## Pas Wiecznych Ziół (efekt "eternal_herbs"): ile mikstur zielarki działa naraz bez końca (0 - pas zdjęty;
 ## ustawia Player przy zmianie ekwipunku) i które to są (najstarsza wypada, gdy brak miejsca).
 var eternal_herbs := 0
@@ -341,12 +345,29 @@ func watra_points() -> int:
 	return NawiaMap.points(nawia_cleared) + Pinnacles.points(pinnacle_kills)
 
 
-## Pokonany bóg (Dungeon._pinnacle_rewards): true - pierwsze zwycięstwo (punkty Watry).
-func defeat_pinnacle(god: String) -> bool:
+## Pokonany bóg albo Władca Hordy (Dungeon._pinnacle_rewards) na stopniu Pomroku `level`: true - pierwsze zwycięstwo
+## (punkty Watry). Władca na najwyższym odblokowanym stopniu odblokowuje następny.
+func defeat_pinnacle(god: String, level := 0) -> bool:
 	var first := int(pinnacle_kills.get(god, 0)) == 0
 	pinnacle_kills[god] = int(pinnacle_kills.get(god, 0)) + 1
+	if Pinnacles.is_lord(god) and level >= pomrok_unlocked:
+		pomrok_unlocked = mini(level + 1, Pinnacles.POMROK_MAX)
 	changed.emit()
 	return first
+
+
+## Tytuł postaci („Pogromca Hordy” po pokonaniu Władcy, z najwyższym stopniem Pomroku) albo "".
+func title() -> String:
+	if int(pinnacle_kills.get(Pinnacles.LORD, 0)) <= 0:
+		return ""
+	var best := pomrok_unlocked - 1
+	return Lang.t("Pogromca Hordy") + (" " + Pinnacles.roman(best) if best > 0 else "")
+
+
+## Wybór stopnia Pomroku (okno Mapy Nawii) w granicach odblokowanych.
+func set_pomrok(level: int) -> void:
+	pomrok = clampi(level, 0, pomrok_unlocked)
+	changed.emit()
 
 
 # ---------------------------------------------------------------- drzewko Watry
@@ -411,7 +432,8 @@ func get_save_data() -> Dictionary:
 	return {"active": timed, "bestiary": bestiary.duplicate(), "ember": ember, "ember_spent": ember_spent,
 			"nawia": nawia_cleared.duplicate(), "blessed": nawia_blessed.duplicate(),
 			"watra_tabs": watra_tabs.duplicate(true), "watra_tab": watra_tab, "watra_tab_names": watra_tab_names.duplicate(),
-			"pinnacles": pinnacle_kills.duplicate(), "eternal": eternal.duplicate()}
+			"pinnacles": pinnacle_kills.duplicate(), "eternal": eternal.duplicate(),
+			"pomrok_unlocked": pomrok_unlocked, "pomrok": pomrok}
 
 
 func load_save_data(data: Dictionary) -> void:
@@ -454,6 +476,8 @@ func load_save_data(data: Dictionary) -> void:
 	for god: String in kills:
 		if Pinnacles.GODS.has(god):
 			pinnacle_kills[god] = int(kills[god])
+	pomrok_unlocked = clampi(int(data.get("pomrok_unlocked", 0)), 0, Pinnacles.POMROK_MAX)
+	pomrok = clampi(int(data.get("pomrok", 0)), 0, pomrok_unlocked)
 	bestiary.clear()
 	var saved: Dictionary = data.get("bestiary", {})
 	for kind: String in saved:

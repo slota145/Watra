@@ -1,9 +1,10 @@
 """Grafiki bossów szczytowych Mapy Nawii (scripts/pinnacles.gd) z PixelLab.
 Źródła w pixellab_src/pinnacles/:
-- <bóg>.png (weles, marzanna, czarnobog) - arkusz z pixelart_workbench join (pasek podpisu u góry, 18 klatek 160 px
+- <bóg>.png (weles, marzanna, czarnobog, horde - Władca Hordy) - arkusz z pixelart_workbench join (pasek podpisu u góry, 18 klatek 160 px
   w 6 kolumnach): klatki 0-8 to spoczynek, 9-17 atak (create_1_direction_object 160 px + 2x animate_object v3),
 - icons/<nazwa>.png - ikony 64 px (podglądy kandydatów z get_object, już przezroczyste): fragmenty kluczy i serca
-  bogów (assets/items/pinnacle_<...>.png) oraz legendy (assets/items/legends/<legenda>.png).
+  bogów (assets/items/pinnacle_<...>.png) oraz legendy (assets/items/legends/<legenda>.png),
+- props/horde_statue.png - posąg Władcy Hordy w Ostoi (assets/village/horde_statue.png).
 Ciemne tło arkuszy znika wypełnianiem od krawędzi klatki (herb_art.clear_background).
 Wynik: assets/pinnacles/<bóg>.png - 18 klatek w rzędzie.
 Uruchom: python tools/pinnacle_art.py"""
@@ -20,7 +21,7 @@ SRC = os.path.join(ROOT, "pixellab_src", "pinnacles")
 CELL = 160
 COLUMNS = 6
 FRAMES = 18
-GODS = ["weles", "marzanna", "czarnobog"]
+GODS = ["weles", "marzanna", "czarnobog", "horde"]
 
 
 def sheets():
@@ -48,6 +49,13 @@ def icons():
         print("ikona:", os.path.relpath(target, ROOT))
 
 
+def props():
+    src = os.path.join(SRC, "props", "horde_statue.png")
+    Image.open(src).convert("RGBA").save(os.path.join(ROOT, "assets", "village", "horde_statue.png"))
+    print("posąg: assets/village/horde_statue.png")
+
+
 if __name__ == "__main__":
     sheets()
     icons()
+    props()

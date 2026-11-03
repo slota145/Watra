@@ -871,6 +871,35 @@ odpowiedniej sekcji.
   - Skarbiec strażnika (`Dungeon._on_boss_died`) nie daje już kamieni zaklinających (usunięte `Dungeons.VAULT_STONE_*`),
     tylko kamienie uświęcone; Kryształ (waga 7, ~20% lochów) zostaje jedynym źródłem w lochach, rynek i zadanie główne
     jako drogie wyjście awaryjne. `tests/balance_sim.gd` liczy kamienie tylko z Kryształu, test w `tests/test_crystal.gd`.
+- [x] **Mapa Nawii, etap 5 - Władca Hordy** (listopad 2026). Ustalenia z autorem: wejście za serce każdego z trzech
+  bogów, 4 fazy z cieniami bogów, rogaty demon-król z PixelLab 160 px, nagrody: 2 legendy, pas dla Marzanny, tytuł
+  i posąg w Ostoi, rosnące stopnie Pomroku.
+  - Dane w `Pinnacles` (`LORD = "horde"` w `GODS` z kluczem `"lord"`, poza `ORDER`): poziom 98, arena w Kopalni goblinów,
+    wejście za `LORD_COST` serca każdego boga (`can_challenge_lord`, `pay_lord`), pierwsze zwycięstwo `LORD_POINTS` (5)
+    punktów Watry. Skarbiec Władcy 2x większy (`vault_rewards(level, rng, lord, pomrok)`).
+  - Boss `scripts/horde_lord.gd` (`HordeLord` extends `PinnacleBoss`, scena `scenes/pinnacle_horde.tscn`): zdrowie x1,5
+    względem boga (`LORD_HEALTH`), fazy przy 75/50/25% (`LORD_PHASES`, hak `PinnacleBoss._phase_marks` / `_on_phase`).
+    Własne ataki: Rozpłatanie (stożek), Ogień Hordy (deszcz ognia z płonącymi plamami), Skok Władcy, Zew Hordy
+    (przyzywa `CALL_COUNT` potworów). W fazach 2-4 cień Welesa, Marzanny i Czarnoboga (`PinnacleBoss.make_shade` -
+    15% zdrowia boga, ciemny, bez łupu); dopóki cień żyje, Władca dostaje 30% obrażeń (`SHADE_SHIELD`). Faza 4:
+    wściekłość i fale Hordy co `WAVE_TIME` s (`HORDE_KINDS` z różnych krain, najwyżej `MAX_MINIONS`). Śmierć zabija cień
+    i Hordę.
+  - **Pomrok** (`Pinnacles.POMROK_*`, `Boons.pomrok_unlocked` / `pomrok`, wybór „<” „>” w oknie Mapy Nawii): stopnie I-X
+    dla wszystkich aren (bogów i Władcy) - poziom +2, zdrowie +20%, obrażenia +10%, skarbiec +25%, legendy i pasy +50% za
+    stopień (`Dungeon.pomrok`, `Goblin.dungeon_mods`, `PinnacleBoss._pomrok`). Zwycięstwo nad Władcą na najwyższym
+    odblokowanym stopniu odblokowuje następny (`Boons.defeat_pinnacle(god, pomrok)`).
+  - Tytuł „Pogromca Hordy” (+ rzymska liczba najwyższego przebytego Pomroku): `Boons.title()`, okno postaci, opis zapisu
+    (`Game.describe_save`, pola `title` i `pomrok` w `.meta.json`). Posąg Władcy przy Watrze (`Settlement.update_trophies`,
+    `HORDE_STATUE`, grafika `assets/village/horde_statue.png`).
+  - Legendy: Ostrze Władcy Hordy (`horde_rift` - ogień spod trafionego), Korona Trzech Bogów (`gods_echo` - w walce co
+    ~4 s korzenie Welesa, lód Marzanny albo kolce Czarnoboga), serce Władcy (`pinnacle_heart_horde`, 3 serca - legenda).
+    Pas Marzanny **Pas Zimowego Oddechu** (`legend_marzanna_belt`, `winter_breath`): zabity wróg pęka lodem, zabici przez lód
+    pękają dalej (łańcuch, najwyżej `WINTER_CHAIN` wybuchów na sekundę); bez esencji (`Essences.UNIQUE_KINDS`).
+    Przy okazji opisy efektów legend bogów w `Items.EFFECT_TEXTS` (naprawia `tests/test_legends.gd`).
+  - Grafiki: `tools/pinnacle_art.py` (arkusz `pixellab_src/pinnacles/horde.png`, ikony, posąg z `pixellab_src/pinnacles/props/`);
+    koszt: 15 (postać) + 8 (animacje) + 10 (ikony) = 33 generacje. W paczce ikon został niewykorzystany odłamek
+    z okiem (`props/pomrok_shard.png`) - np. na ikonę Pomroku.
+  - Test: `tests/test_horde_lord.gd`. Do ustalenia po ograniu: siła Władcy i cieni, liczebność fal, liczby Pomroku.
 - [x] **Mapa Nawii, etap 4 - bossowie szczytowi** (listopad 2026). Ustalenia z autorem: trzech słowiańskich bogów
   (Władca Hordy i obce bogi później), dostęp za fragmenty kluczy z węzłów, nagrody: punkty Watry, własne legendy, dużo
   łupu i serca boga jako waluta; grafiki PixelLab 160 px z 2 animacjami; do tego dwa pasy w stylu Mageblooda

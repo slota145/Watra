@@ -11,6 +11,8 @@ extends Boss
 ##   areny, w fazie 3 więcej włóczni,
 ## - "czarnobog" - Czarnobóg, Czarny Bóg: Cięcie Mroku (szeroki stożek przed nim), Kolce Cienia (kolejne kolce po linii
 ##   do gracza - w fazie 3 trzy linie), Krok przez Cień (znika i staje za graczem, uderza wokół siebie).
+## Cień boga (`shade`): przyzwany przez Władcę Hordy (HordeLord) - słabszy, ciemny i półprzezroczysty, bez łupu.
+## Na arenie z Pomrokiem (Dungeon.pomrok) legendy i pas wypadają częściej (Pinnacles.POMROK_DROP).
 ## Animacja (assets/pinnacles/<bóg>.png, tools/pinnacle_art.py): klatki 0-8 spoczynek, 9-17 atak - zamach w czasie
 ## zapowiedzi, uderzenie po niej.
 
@@ -56,6 +58,8 @@ const FX_BLINK := preload("res://assets/effects/mortan_blink.png")
 const FX_SMOKE := preload("res://assets/effects/smoke_burst.png")
 
 var phase := 1
+## Cień boga przyzwany przez Władcę Hordy (make_shade).
+var shade := false
 var _aim := Vector2.DOWN
 var _from := Vector2.ZERO
 var _to := Vector2.ZERO
@@ -88,10 +92,11 @@ func _process_fight(delta: float) -> void:
 
 func take_damage(amount: int, from_position: Vector2, knockback := 0.0) -> void:
 	super(amount, from_position, knockback)
-	if state == State.DEAD:
+	if state == State.DEAD or shade:
 		return
-	for i in PHASES.size():
-		if phase == i + 1 and health < max_health * PHASES[i]:
+	var marks := _phase_marks()
+	for i in marks.size():
+		if phase == i + 1 and health < max_health * float(marks[i]):
 			phase = i + 2
 			attack_interval *= 0.75
 			speed *= 1.1
@@ -101,6 +106,37 @@ func take_damage(amount: int, from_position: Vector2, knockback := 0.0) -> void:
 			var hud := get_tree().get_first_node_in_group("hud")
 			if hud != null and hud.has_method("show_banner"):
 				hud.show_banner(Lang.t("%s - faza %d!") % [boss_name, phase], map_color)
+			_on_phase()
+			# jedna faza na cios - kolejna przy następnym (Władca nie przyzywa kilku cieni naraz)
+			break
+
+
+## Progi zdrowia kolejnych faz (podklasa może dać inne).
+func _phase_marks() -> Array:
+	return PHASES
+
+
+## Wejście w nową fazę (`phase`) - dla podklas.
+func _on_phase() -> void:
+	pass
+
+
+## Zamienia boga w cień przyzwany przez Władcę Hordy: `health_part` jego zdrowia, ciemny i półprzezroczysty,
+## mało doświadczenia, bez łupu, od razu w walce.
+func make_shade(health_part: float) -> void:
+	shade = true
+	max_health = maxi(1, roundi(max_health * health_part))
+	health = max_health
+	xp_reward = roundi(xp_reward * 0.1)
+	boss_name = Lang.t("Cień: %s") % Pinnacles.god_name(kind)
+	modulate = Color(0.75, 0.45, 0.55, 0.82)
+	home = global_position
+	aggro()
+
+
+## Stopień Pomroku areny (0 - zwykła albo poza lochem).
+func _pomrok() -> int:
+	return int(Goblin.pathing.pomrok) if Goblin.pathing is Dungeon else 0
 
 
 # ---------------------------------------------------------------- wybór ataku
@@ -461,9 +497,17 @@ func _animate(delta: float) -> void:
 		_face(_player.global_position)
 
 
+## Cień boga nie zostawia niczego; na Pomroku legendy wypadają częściej.
+func _drop_loot() -> void:
+	if shade:
+		return
+	legendary_drop_chance = minf(legendary_drop_chance * Pinnacles.pomrok_mult("drop", _pomrok()), 1.0)
+	super()
+
+
 ## Serce boga zawsze (waluta na legendy - Pinnacles.HEART_COST) i bardzo rzadko jego pas (Pinnacles.BELT_CHANCE).
 func _drop_trophies() -> void:
 	_spawn_pickup(Pinnacles.heart(kind), 1)
 	var belt := str(Pinnacles.GODS[kind].get("belt", ""))
-	if belt != "" and (_dev_mode() or randf() < Pinnacles.BELT_CHANCE):
+	if belt != "" and (_dev_mode() or randf() < Pinnacles.BELT_CHANCE * Pinnacles.pomrok_mult("drop", _pomrok())):
 		_spawn_pickup(Loot.legendary_at_level(belt, level), 1)
