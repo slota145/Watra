@@ -164,13 +164,19 @@ func _process(delta: float) -> void:
 		if _lords_due > 0:
 			if _spawn_ghost(true) != null:
 				_lords_due -= 1
-		elif ghosts.size() < wanted_ghosts():
-			_spawn_ghost(false)
+		else:
+			# gromada upiorów z jednego miejsca kręgu, aż krąg ma ich tyle, ile chce
+			var missing := wanted_ghosts() - ghosts.size()
+			if missing > 0:
+				var at := _ghost_spot()
+				for i in mini(missing, _rng.randi_range(Dungeons.URO_PACK.x, Dungeons.URO_PACK.y)):
+					_spawn_ghost(false, at)
 
 
-## Ilu upiorów naraz chce krąg (więcej przy większym kręgu).
+## Ilu upiorów naraz chce krąg (więcej przy większym kręgu i na wyższym stopniu lochu).
 func wanted_ghosts() -> int:
-	return Dungeons.URO_ALIVE + int(radius / Dungeons.URO_ALIVE_PER)
+	return mini(Dungeons.URO_ALIVE_MAX, roundi((Dungeons.URO_ALIVE + radius / Dungeons.URO_ALIVE_PER)
+			* Dungeons.uro_density(int(dungeon.config.get("tier", 1)))))
 
 
 ## Upiory nie wychodzą poza brzeg kręgu (także gdy krąg się kurczy).
@@ -186,12 +192,20 @@ func _keep_inside() -> void:
 			ghost.velocity = Vector2.ZERO
 
 
-## Nowy upiór w wolnym miejscu kręgu (podłoga lochu, nie w ścianie); null, gdy nie ma miejsca.
-func _spawn_ghost(lord: bool) -> Goblin:
+## Losowe miejsce w kręgu, z którego wychodzi gromada upiorów.
+func _ghost_spot() -> Vector2:
+	return global_position + Vector2.from_angle(_rng.randf() * TAU) * radius * sqrt(_rng.randf_range(0.12, 0.85))
+
+
+## Nowy upiór w wolnym miejscu kręgu (podłoga lochu, nie w ścianie) - przy `near` (miejsce gromady), jeśli podane;
+## null, gdy nie ma miejsca.
+func _spawn_ghost(lord: bool, near := Vector2.INF) -> Goblin:
 	var spot := Vector2.INF
 	for attempt in 8:
-		var at := global_position + Vector2.from_angle(_rng.randf() * TAU) * radius * sqrt(_rng.randf_range(0.12, 0.85))
-		if dungeon._walkable(Vector2i((at / Dungeon.CELL).round())) and not dungeon._blocked(at, 8.0):
+		var at := _ghost_spot() if near == Vector2.INF or attempt >= 4 \
+				else near + Vector2(_rng.randf_range(-26, 26), _rng.randf_range(-20, 20))
+		if at.distance_to(global_position) < radius - 6.0 and dungeon._walkable(Vector2i((at / Dungeon.CELL).round())) \
+				and not dungeon._blocked(at, 8.0):
 			spot = at
 			break
 	if spot == Vector2.INF:

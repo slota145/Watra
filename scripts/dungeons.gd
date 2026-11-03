@@ -161,28 +161,35 @@ const SHRINE_COUNT := Vector2i(1, 2)
 ## Każdy zabity upiór poszerza krąg (URO_GROW px, mniej przy dużym kręgu), a krąg ciągle się kurczy (URO_SHRINK px/s,
 ## coraz szybciej - URO_SPEEDUP s do podwojenia); gdy zmaleje do URO_END, gaśnie - upiory znikają, a kamień sypie runy
 ## (1 + zabici / URO_KILLS_PER_RUNE, najwyżej URO_RUNES_MAX). Upiory to potwory klimatu lochu jako zjawy
-## (shaders/ghost.gdshader) - słabsze, ale liczne (URO_ALIVE + promień / URO_ALIVE_PER); żyją tylko w kręgu.
+## (shaders/ghost.gdshader) - słabsze, ale liczne: (URO_ALIVE + promień / URO_ALIVE_PER) razy uro_density (rośnie ze
+## stopniem lochu), wychodzą gromadami po URO_PACK z jednego miejsca; żyją tylko w kręgu.
 ## Co URO_LORD_EVERY zabitych pojawia się Upiorny Pan (mocniejszy, zawsze daje runę).
 const URO_START := 110.0
 const URO_MAX := 430.0
 const URO_END := 36.0
-const URO_GROW := 8.0
+const URO_GROW := 2.5
 const URO_SHRINK := 7.0
 const URO_SPEEDUP := 35.0
 ## Grace: przez tyle sekund po otwarciu krąg się nie kurczy.
 const URO_GRACE := 4.0
-const URO_ALIVE := 5
-const URO_ALIVE_PER := 16.0
+const URO_ALIVE := 14
+const URO_ALIVE_PER := 9.0
 const URO_SPAWN_EVERY := 0.22
-const URO_KILLS_PER_RUNE := 14
+## Gromada upiorów wychodząca naraz z jednego miejsca kręgu [od, do].
+const URO_PACK := Vector2i(3, 5)
+## Gęstość upiorów rośnie ze stopniem lochu jak liczba potworów (count_multiplier), ale łagodniej (do tej potęgi).
+const URO_DENSITY_POWER := 0.25
+## Najwięcej upiorów naraz (wydajność: walka z setką zjaw naraz kosztuje dwa razy więcej niż w gromadzie krainy).
+const URO_ALIVE_MAX := 50
+const URO_KILLS_PER_RUNE := 30
 const URO_RUNES_MAX := 10
 ## Upiór: mnożniki zdrowia, obrażeń i nagród zwykłego potwora klimatu.
 const URO_HEALTH := 0.6
 const URO_DAMAGE := 0.8
 const URO_XP := 0.6
 ## Szansa, że zwykły upiór upuści runę.
-const URO_GHOST_RUNE := 0.02
-const URO_LORD_EVERY := 25
+const URO_GHOST_RUNE := 0.006
+const URO_LORD_EVERY := 80
 const URO_LORD_HEALTH := 6.0
 const URO_LORD_DAMAGE := 1.4
 
@@ -415,6 +422,11 @@ static func tier_level(tier: int) -> int:
 ## stopnie 8-17 liczą się jak 7 - trudność i łup rosną tam z poziomem potworów, a nie z liczbą wrogów naraz.
 static func power_tier(tier: int) -> int:
 	return clampi(tier, 1, BASE_TIERS)
+
+
+## Mnożnik liczby upiorów naraz w Uroczysku na danym stopniu lochu.
+static func uro_density(tier: int) -> float:
+	return pow(count_multiplier(tier), URO_DENSITY_POWER)
 
 
 ## Mnożnik liczby potworów w lochu danego stopnia (bez modyfikatorów i bożków).

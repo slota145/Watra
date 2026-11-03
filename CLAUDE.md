@@ -219,9 +219,11 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   szukaj „Końcówka gry trudniejsza”): krótsza nietykalność, limit kradzieży życia, odporność potworów na przerwanie
   zamachu i odrzut, słabszy pancerz, dużo mocniejsze potwory ponad 41. poziomem i do 4x więcej potworów w lochach
   najwyższych stopni (etap 2). Pomiar siły postaci z zapisu:
-  `godot --headless --path . -s res://tests/endgame_probe.gd -- <zapis.json> <stopień> <sekundy> [full|whirl|flicker|idle] [poziom] [poziom ekwipunku]`. Do ustalenia po ograniu: liczby (`Levels.ENDGAME_*`,
+  `godot --headless --path . -s res://tests/endgame_probe.gd -- <zapis.json> <stopień> <sekundy> [full|whirl|flicker|idle|uro] [poziom] [poziom ekwipunku]`. Do ustalenia po ograniu: liczby (`Levels.ENDGAME_*`,
   `LEECH_CAP`), czy umiejętności łuku i księgi też trzeba sprawdzić tym pomiarem.
-- [ ] **Za mała gęstość potworów w Uroczyskach** i ogólnie za mało potworów (autor, 3.11.2026) - w lochach też.
+- [ ] **Za mała gęstość potworów w Uroczyskach** i ogólnie za mało potworów (autor, 3.11.2026): poprawione, czeka na
+  ocenę autora - lochy do 4x więcej potworów w najwyższych stopniach, Uroczysko ok. 3x więcej upiorów naraz, gromadami
+  (szczegóły w `docs/historia.md`, szukaj „Gęstsze Uroczyska”).
 
 
 ## Pomysły i rzeczy do zrobienia
