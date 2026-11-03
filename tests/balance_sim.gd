@@ -73,13 +73,11 @@ func _avg_items(line: String, item_level: int, quality: String) -> Dictionary:
 	return total
 
 
-## Zwykłe kamienie na broń z jednego lochu przy poziomie potworów L: skarbiec strażnika (rzadko po jednym,
-## jak Dungeon._on_boss_died) i Kryształ Watry, gdy loch go ma (2-4 sztuki, WatraCrystal.reward).
-func _stones_per_dungeon(level: int) -> float:
+## Zwykłe kamienie na broń z jednego lochu: tylko z Kryształu Watry, gdy loch go ma (2-4 sztuki, WatraCrystal.reward);
+## skarbiec strażnika kamieni zaklinających nie daje.
+func _stones_per_dungeon(_level: int) -> float:
 	var dungeons = load("res://scripts/dungeons.gd")
-	var vault: float = minf(dungeons.VAULT_STONE_CHANCE + levels.stone_chances(level)[1] * dungeons.VAULT_STONE_LEVEL, 1.0)
-	var crystal: float = dungeons.mechanic_chance("crystal") * 3.0
-	return vault + crystal
+	return dungeons.mechanic_chance("crystal") * 3.0
 
 
 ## Zaklęcie broni osiągnięte z `stones` zwykłych kamieni (oczekiwanie przez symulację prób).

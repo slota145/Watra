@@ -1,14 +1,14 @@
 class_name WatraCrystal
 extends Node2D
-## Kryształ Watry - losowe zdarzenie w lochu (Dungeon) i jedyne, obok skarbca strażnika, źródło kamieni zaklinających
-## (wbija je kowal w Ostoi). Komnata z kryształem jest pusta, dopóki gracz nie podejdzie; wtedy kryształ się budzi
+## Kryształ Watry - losowe zdarzenie w lochu (Dungeon) i jedyne źródło kamieni zaklinających w lochach (wbija je
+## kowal w Ostoi; poza lochami tylko drogo na rynku i z zadania głównego). Komnata z kryształem jest pusta, dopóki gracz nie podejdzie; wtedy kryształ się budzi
 ## i z brzegów komnaty nadchodzą fale potworów klimatu lochu (Goblin.objective - idą bić cel, chyba że gracz jest
 ## blisko). Dwa warianty:
 ## - "crystal": trzeba obronić sam kryształ; po ostatniej fali rozpada się i wysypuje kamienie, a gdy padnie -
 ##   tylko garść odłamków,
 ## - "miners": dwaj krasnoludzcy górnicy kują kryształ kilofami, a potwory polują na nich; im więcej górników
 ##   przeżyje, tym więcej kamieni wykują.
-## Nagroda rośnie ze stopniem lochu (doskonałe kamienie od stopnia 3, kamienie miłosierdzia od stopnia 2).
+## Fale i nagroda rosną ze stopniem lochu (wave_count) (doskonałe kamienie od stopnia 3, kamienie miłosierdzia od stopnia 2).
 
 signal finished(success: bool)
 
@@ -25,6 +25,8 @@ const WAVE_SIZE := 5
 const WAVE_GROWTH := 3
 const WAVE_DELAY := 2.5
 const WAVE_TIMEOUT := 30.0
+## O ile liczniejsza każda fala na każdym kolejnym stopniu lochu (stopień 7: 2,5 raza tyle potworów co stopień 1).
+const WAVE_TIER_BONUS := 0.25
 ## Zdrowie kryształu i górnika - w ciosach potworów z poziomu lochu.
 const CRYSTAL_HITS := 45.0
 const MINER_HITS := 14.0
@@ -138,7 +140,7 @@ func _wake() -> void:
 func _spawn_wave() -> void:
 	wave += 1
 	_wave_timer = WAVE_TIMEOUT
-	var count := roundi((WAVE_SIZE + WAVE_GROWTH * (wave - 1)) * count_mult)
+	var count := wave_count(wave, tier, count_mult)
 	for i in count:
 		var spawn: Dictionary = dungeon._spawn(dungeon._pick(dungeon.climate["monsters"]), _edge_point(), global_position, level + 1)
 		var goblin: Goblin = dungeon.w._live_goblins.get(spawn["id"])
@@ -152,6 +154,12 @@ func _spawn_wave() -> void:
 		_alive.append(goblin)
 	Sfx.play("telegraph", -2.0)
 	dungeon.w.hud.show_banner(tr("Fala %d z %d") % [wave, WAVES], Color(1.0, 0.75, 0.45))
+
+
+## Liczba potworów w fali `wave_number` (od 1) na stopniu lochu `dungeon_tier`; `mult` - modyfikator Hordy itp.
+static func wave_count(wave_number: int, dungeon_tier: int, mult: float = 1.0) -> int:
+	var base := WAVE_SIZE + WAVE_GROWTH * (wave_number - 1)
+	return roundi(base * (1.0 + WAVE_TIER_BONUS * (maxi(dungeon_tier, 1) - 1)) * mult)
 
 
 ## Punkt przy brzegu komnaty, z dala od kryształu.

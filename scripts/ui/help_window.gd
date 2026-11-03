@@ -28,7 +28,7 @@ const TIPS := [
 	"Uświęcone kamienie dają pewne zaklęcie, a kamienie miłosierdzia chronią przed spadkiem poziomu.",
 	"Serca goblinów i skóry wilków sprzedasz u handlarzy za złoto.",
 	"Drzewa zetniesz, a głazy rozbijesz klawiszem F - odrastają po kilku minutach albo od razu po odpoczynku w karczmie.",
-	"Kamienie zaklinające zdobędziesz w lochach Watry: w skarbcu strażnika i z Kryształu Watry.",
+	"Kamienie zaklinające zdobędziesz w lochach Watry z Kryształu Watry (drogo także na rynku).",
 	"W każdej krainie rośnie inne zioło (iskierki nad rośliną, F - zerwij). Zielarka z lecznicy uwarzy z nich mikstury wzmacniające.",
 	"Łowiska są w prawym górnym i lewym dolnym rogu mapy. Zwierzyna ucieka - skóry i poroże sprzedasz, a mięso zjesz (PPM).",
 	"Sołtys Mirosław zleca zbieranie surowców - liczy się to, co masz w plecaku i w magazynie.",
