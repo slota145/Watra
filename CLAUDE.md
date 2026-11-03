@@ -217,9 +217,9 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 
 - [ ] **Gra za łatwa w końcówce** (autor, 3.11.2026): poprawione, czeka na ocenę autora (szczegóły w `docs/historia.md`,
   szukaj „Końcówka gry trudniejsza”): krótsza nietykalność, limit kradzieży życia, odporność potworów na przerwanie
-  zamachu i odrzut, słabszy pancerz i więcej zdrowia potworów ponad 41. poziomem. Pomiar siły postaci z zapisu:
-  `godot --headless --path . -s res://tests/endgame_probe.gd -- <zapis.json> <stopień> <sekundy> [full|whirl|flicker|idle] [poziom]`
-  (wyniki z jednego przebiegu się wahają - puszczać 2-3 razy). Do ustalenia po ograniu: liczby (`Levels.ENDGAME_*`,
+  zamachu i odrzut, słabszy pancerz, dużo mocniejsze potwory ponad 41. poziomem i do 4x więcej potworów w lochach
+  najwyższych stopni (etap 2). Pomiar siły postaci z zapisu:
+  `godot --headless --path . -s res://tests/endgame_probe.gd -- <zapis.json> <stopień> <sekundy> [full|whirl|flicker|idle] [poziom] [poziom ekwipunku]`. Do ustalenia po ograniu: liczby (`Levels.ENDGAME_*`,
   `LEECH_CAP`), czy umiejętności łuku i księgi też trzeba sprawdzić tym pomiarem.
 - [ ] **Za mała gęstość potworów w Uroczyskach** i ogólnie za mało potworów (autor, 3.11.2026) - w lochach też.
 - [ ] **Portal do miasta** (autor, 3.11.2026): przycisk (np. B) przenosi z lochu do Ostoi, a portalem w Ostoi

@@ -25,10 +25,10 @@ const STAGES := [1, 3, 5, 7, [8, "fields"], 9, [11, "fields"], 12, 14, [14, "fie
 const TARGET_NORMAL := Vector2(2.5, 6.0)
 ## Silny: od 5,5 ciosu - topielec w Rozlewiskach przy zaklęciu z lochów pada od ok. 6 (autor uznał to za w porządku).
 const TARGET_STRONG := Vector2(5.5, 18.0)
-## Końcówka gry (od Levels.ENDGAME_LEVEL): potwory mają więcej zdrowia (Levels.ENDGAME_HEALTH), bo gracz bije tam
-## głównie umiejętnościami (2-3 razy mocniej niż zwykły cios i w kilku wrogów naraz - tests/endgame_probe.gd).
-const TARGET_NORMAL_END := Vector2(2.5, 8.0)
-const TARGET_STRONG_END := Vector2(5.5, 24.0)
+## Końcówka gry (ponad Levels.ENDGAME_LEVEL): etapy są tylko wypisywane, bez widełek ciosów i przeżycia - gracz bije
+## tam umiejętnościami w gromady, ma unik, zdrowie za trafienie i kradzież życia, czego ta symulacja nie liczy.
+## Miarą końcówki jest tests/endgame_probe.gd (zapis autora z ekwipunkiem z ~40. poziomu ma w stopniu 17 padać
+## w kilka sekund, rzadki ekwipunek z 90. poziomu - wytrzymywać walkę).
 ## Gracz, który od STALE_LEVEL nie zmienia broni ani zbroi: przy najwyższym etapie ma przeżywać mniej ciosów, niż
 ## wynosi dolna granica TARGET_SURVIVE (końcówka wymaga lepszego ekwipunku - zgłoszenie autora z listopada 2026).
 const STALE_LEVEL := 40
@@ -134,11 +134,13 @@ func _run() -> void:
 			weapon_stones += dungeons_per_level * _stones_per_dungeon(l)
 		last_level = L
 		var enchant := _enchant_from(weapon_stones)
-		var weapon := _avg_items("sword", L, "magic")
+		# w końcówce gracz nosi rzadkie przedmioty (łup lochów Nawii), wcześniej magiczną broń i zwykłą zbroję
+		var late: bool = L > levels.ENDGAME_LEVEL
+		var weapon := _avg_items("sword", L, "rare" if late else "magic")
 		var armor := 0.0
 		var health := 0.0
 		for line in ["plate", "helm", "gauntlets", "greaves"]:
-			var piece := _avg_items(line, L, "common")
+			var piece := _avg_items(line, L, "rare" if late else "common")
 			armor += piece.get("armor", 0.0)
 			health += piece.get("health", 0.0)
 		var strength := player_level - 1
@@ -167,12 +169,12 @@ func _run() -> void:
 		print("%3d  %-9s %3d   %5.1f(+%.1f)   %5.1f  %6.1f    %6.1f      %6.1f   %5.1f   %6.0f (%2d%%)        %5.0f     %5.0f" % [
 				L, zone, player_level, hit, enchant, hits_normal, hits_strong, survive, kills_per_level, dungeons, per_kill * 100.0,
 				roundi(sales_share * 100.0), reforge, blessing])
-		var endgame: bool = L > levels.ENDGAME_LEVEL
-		_check(hits_normal, TARGET_NORMAL_END if endgame else TARGET_NORMAL, "L%d: ciosy na zwykłego" % L)
-		_check(hits_strong, TARGET_STRONG_END if endgame else TARGET_STRONG, "L%d: ciosy na silnego" % L)
-		if endgame:
+		if late:
 			_stale_report(L, player_level, normal, ref, enchant, strength, stage == STAGES.back())
-		_check(survive, TARGET_SURVIVE, "L%d: przeżywa ciosów" % L)
+		else:
+			_check(hits_normal, TARGET_NORMAL, "L%d: ciosy na zwykłego" % L)
+			_check(hits_strong, TARGET_STRONG, "L%d: ciosy na silnego" % L)
+			_check(survive, TARGET_SURVIVE, "L%d: przeżywa ciosów" % L)
 		_check(kills_per_level, TARGET_KILLS, "L%d: zabójstw na poziom" % L)
 		_check(reforge, TARGET_REFORGE, "L%d: zabójstw na przekucie" % L)
 		_check(blessing, TARGET_BLESSING, "L%d: zabójstw na błogosławieństwo" % L)
@@ -188,11 +190,11 @@ var _stale := {}
 
 func _stale_report(L: int, player_level: int, normal: Array, ref: Array, enchant: float, strength: int, last: bool) -> void:
 	if _stale.is_empty():
-		_stale["weapon"] = _avg_items("sword", STALE_LEVEL, "magic")
+		_stale["weapon"] = _avg_items("sword", STALE_LEVEL, "rare")
 		var armor := 0.0
 		var health := 0.0
 		for line in ["plate", "helm", "gauntlets", "greaves"]:
-			var piece := _avg_items(line, STALE_LEVEL, "common")
+			var piece := _avg_items(line, STALE_LEVEL, "rare")
 			armor += piece.get("armor", 0.0)
 			health += piece.get("health", 0.0)
 		_stale["armor"] = armor
