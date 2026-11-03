@@ -162,9 +162,11 @@ func _spawn_attacker(chosen: bool) -> Goblin:
 		if attempt >= 8:
 			gap = -_rng.randf_range(10.0, 50.0)
 		var at := global_position + Vector2.from_angle(_rng.randf() * TAU) * (Dungeons.ZER_RADIUS + gap)
-		if dungeon._walkable(Vector2i((at / Dungeon.CELL).round())) and not dungeon._blocked(at, 8.0):
+		if _free(at):
 			spot = at
 			break
+	if spot == Vector2.INF:
+		spot = _fallback_spot()
 	if spot == Vector2.INF:
 		return null
 	var kind: String = dungeon._pick(dungeon.climate["monsters"])
@@ -183,6 +185,22 @@ func _spawn_attacker(chosen: bool) -> Goblin:
 	wave.append([goblin, spawn["id"]])
 	MiscVfx.puff(get_parent(), goblin.global_position + Vector2(0, -6), COLOR, 0.8)
 	return goblin
+
+
+func _free(at: Vector2) -> bool:
+	return dungeon._walkable(Vector2i((at / Dungeon.CELL).round())) and not dungeon._blocked(at, 8.0)
+
+
+## Gdy losowe rzuty trafiają w ściany (krąg w ciasnej komnacie): po kolei kierunki co 15° od brzegu kręgu do środka,
+## a na końcu sam pień - potwór zawsze się pojawi (inaczej Wybraniec spóźniałby się bez powodu).
+func _fallback_spot() -> Vector2:
+	var start := _rng.randf() * TAU
+	for r in [Dungeons.ZER_RADIUS + Dungeons.ZER_SPAWN_GAP.x, Dungeons.ZER_RADIUS, Dungeons.ZER_RADIUS * 0.6, Dungeons.ZER_RADIUS * 0.3]:
+		for step in 24:
+			var at: Vector2 = global_position + Vector2.from_angle(start + step * TAU / 24.0) * r
+			if _free(at):
+				return at
+	return global_position if _free(global_position) else Vector2.INF
 
 
 ## Potwór fali: mniej nagród (danina to nagroda), Wybraniec - większy i mocniejszy.
