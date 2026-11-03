@@ -57,6 +57,12 @@ extends Node
 ## - wind_shield (Serce Wichru): wiatr odbija wrogie pociski (deflects).
 ## Legendy Faun-Króla: dance (Fletnia Fauna - wrogowie tańczą), horn_charge (Rogi Króla - unik jako szarża),
 ## vine_snare (Kopyta Fauna - pnącza po otrzymaniu ciosu), pan_echo (Berło - fala dźwięku płoszy wrogów).
+## Legendy bogów - bossów szczytowych (Pinnacles): nawia_grasp (Laska Welesa - korzenie oplatają i zatruwają wrogów
+## wokół trafionego), serpent_skin (Skóra Welesa - cios w gracza zatruwa wrogów wokół, on_hurt), winter_touch (Wieniec
+## Marzanny - lodowy wybuch zamraża trafionego i sąsiadów), frost_veil (Szata Pani Zimy - cios w gracza skuwa lodem
+## wrogów wokół, on_hurt), shadow_spikes (Miecz Czarnoboga - kolce mroku pod trafionym i dwoma najbliższymi wrogami),
+## dark_pact (Hełm Czarnoboga - zabity wróg wybucha mrokiem i leczy gracza, on_kill), soul_hunter (Pas Łowcy Dusz -
+## zabita elita oddaje cechy na Boons.SOUL_TIME s, on_kill); eternal_herbs (Pas Wiecznych Ziół) działa w Boons.grant.
 ## (Kieł Gruzłoga - "might" - działa biernie na obrażenia, w CharacterStats.)
 ## Obrażenia z efektów nie wywołują kolejnych efektów, a każdy efekt ma krótki czas odnowienia,
 ## żeby szybkie ataki (salwa, łańcuch) nie zamieniały ekranu w ciągłą falę.
@@ -87,7 +93,8 @@ const DASH_TRAIL_WIDTH := 20.0
 const ECHO_COLOR := Color(0.7, 0.85, 1.0)
 ## Efekty odpalane przy trafieniu (echo i fortune tylko je wzmacniają).
 const ON_HIT := ["shockwave", "tide", "claws", "thunder", "whirlpool", "roots", "venom", "fear", "bomb", "blast_shot", "earth_arrow", "rend",
-		"tongue", "storm_arrows", "web_burst", "venom_chain", "feather_storm", "dance", "pan_echo"]
+		"tongue", "storm_arrows", "web_burst", "venom_chain", "feather_storm", "dance", "pan_echo",
+		"nawia_grasp", "winter_touch", "shadow_spikes"]
 ## Efekty przy trafieniu działające tylko z danym rodzajem broni.
 const WEAPON_ONLY := {"blast_shot": ["bow", "spell"], "earth_arrow": ["bow"], "storm_arrows": ["bow"]}
 const BOMB_DAMAGE := 1.3
@@ -166,6 +173,24 @@ const FEAR_DAMAGE := 0.5
 const FEAR_TIME := 2.5
 const BLOODLUST_TIME := 5.0
 const BLOODLUST_STACKS := 5
+const NAWIA_RADIUS := 56.0
+const NAWIA_DAMAGE := 1.2
+const SERPENT_RADIUS := 72.0
+const WINTER_RADIUS := 50.0
+const WINTER_DAMAGE := 1.3
+const WINTER_FREEZE := 1.4
+const VEIL_RADIUS := 80.0
+const VEIL_DAMAGE := 0.6
+const VEIL_FREEZE := 1.6
+const SHADOW_DAMAGE := 1.8
+const SHADOW_TARGETS := 2
+const SHADOW_RANGE := 120.0
+const PACT_RADIUS := 55.0
+const PACT_DAMAGE := 1.2
+const PACT_HEAL := 0.015
+const ICE_FX := preload("res://assets/effects/ice_shatter.png")
+const SPIKE_FX := preload("res://assets/effects/mortan_spike.png")
+const SHADOW_COLOR := Color(0.7, 0.45, 1.0)
 
 var _player: Player
 var _bloodlust := 0
@@ -218,6 +243,16 @@ func statuses() -> Array[Dictionary]:
 	if _bone_orbit != null:
 		result.append({"name": Lang.t("Kościana tarcza"), "kind": "good", "left": -1.0, "icon": _effect_icon("bone_armor"),
 				"description": Lang.t("Pochłonie następny cios do %d%% maks. zdrowia") % roundi(_player.equipment.effect_power("bone_armor") * 100.0)})
+	for elite_trait: String in _player.boons.souls:
+		result.append({"name": Lang.t("Dusza: %s") % Lang.t(Dungeons.ELITE_TRAITS[elite_trait]["name"]), "kind": "good",
+				"left": _player.boons.souls[elite_trait], "total": Boons.SOUL_TIME, "icon": _effect_icon("soul_hunter"),
+				"description": Lang.t("Cecha zabitej elity (Pas Łowcy Dusz)")})
+	if _player.boons.eternal_herbs > 0 and not _player.boons.eternal.is_empty():
+		var herbs: Array[String] = []
+		for id in _player.boons.eternal:
+			herbs.append(Boons.name_of(id))
+		result.append({"name": Lang.t("Wieczne zioła"), "kind": "good", "left": -1.0, "icon": _effect_icon("eternal_herbs"),
+				"description": Lang.t("Działają bez końca (%d z %d): %s") % [herbs.size(), _player.boons.eternal_herbs, ", ".join(herbs)]})
 	for entry: Array in [["undying", Lang.t("Filakteria odnawia się"), Lang.t("Cios śmiertelny znów zostawi cię przy życiu po odnowieniu"), UNDYING_COOLDOWN],
 			["burrow", Lang.t("Łuski Czerwia odnawiają się"), Lang.t("Zakopanie się pod ziemię przy ciężkim ciosie wróci po odnowieniu"), BURROW_COOLDOWN]]:
 		var left: float = _cooldowns.get(entry[0], 0.0)
@@ -327,6 +362,12 @@ func _trigger(kind: String, enemy: Goblin, at: Vector2, away: Vector2, echo := f
 			_dance(at)
 		"pan_echo":
 			_pan_echo(away, echo)
+		"nawia_grasp":
+			_nawia_grasp(at + Vector2(0, 6), echo)
+		"winter_touch":
+			_winter_touch(at, echo)
+		"shadow_spikes":
+			_shadow_spikes(enemy)
 		"claws":
 			_claw(enemy, at, -1.0, echo)
 			get_tree().create_timer(CLAW_GAP).timeout.connect(_claw.bind(enemy, at, 1.0, echo))
@@ -482,6 +523,8 @@ func on_hurt(amount := 0) -> bool:
 	_thorns()
 	_pack_call()
 	_vine_snare()
+	_serpent_skin()
+	_frost_veil()
 	return false
 
 
@@ -578,11 +621,116 @@ func on_kill(enemy: Goblin) -> void:
 			_player.get_parent().add_child(spiderling)
 			spiderling.global_position = at + Vector2.from_angle(randf() * TAU) * 6.0
 		Sfx.play_at("cocoon_burst", at, -4.0)
+	if _cooldowns.get("dark_pact", 0.0) <= 0.0 and randf() < chance("dark_pact"):
+		_cooldowns["dark_pact"] = 0.3
+		_dark_pact(enemy.hurt_center())
+	if _player.equipment.effect_power("soul_hunter") > 0.0:
+		_steal_souls(enemy)
 	if _player.equipment.effect_power("bloodlust") > 0.0:
 		_bloodlust = mini(_bloodlust + 1, BLOODLUST_STACKS)
 		_bloodlust_time = BLOODLUST_TIME
 		DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -18), Lang.t("Żądza krwi x%d") % _bloodlust,
 				Color(1.0, 0.35, 0.3), 8)
+
+
+# ---------------------------------------------------------------- legendy bogów (Pinnacles)
+## Laska Welesa: korzenie Nawii oplatają (ogłuszają) i zatruwają wrogów wokół trafionego.
+func _nawia_grasp(at: Vector2, echo: bool) -> void:
+	var parent := _player.get_parent()
+	LegendVfx.roots(parent, at, NAWIA_RADIUS, 7, false, echo)
+	BossFx.acid(parent, at, NAWIA_RADIUS * 0.6)
+	Sfx.play_at("roots_burst", at, -3.0)
+	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if enemy.global_position.distance_to(at) > NAWIA_RADIUS + enemy.hurt_radius:
+			continue
+		enemy.take_damage(_player.roll_damage(NAWIA_DAMAGE), at, 0.0)
+		if enemy.state != Goblin.State.DEAD:
+			enemy.stun(ROOTS_HOLD)
+			poison(enemy)
+
+
+## Skóra Welesa: gdy gracz oberwie, jad Nawii zatruwa wrogów wokół niego.
+func _serpent_skin() -> void:
+	if _cooldowns.get("serpent_skin", 0.0) > 0.0 or randf() >= chance("serpent_skin"):
+		return
+	_cooldowns["serpent_skin"] = COOLDOWN * 2.0
+	var at := _player.global_position
+	BossFx.acid(_player.get_parent(), at, SERPENT_RADIUS)
+	Sfx.play_at("spit_hit", at, -4.0)
+	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if enemy.global_position.distance_to(at) <= SERPENT_RADIUS + enemy.hurt_radius:
+			poison(enemy)
+
+
+## Lodowy wybuch: rani i zamraża (ogłusza) wrogów w promieniu `radius`.
+func _ice_burst(at: Vector2, radius: float, damage: float, freeze: float, echo: bool) -> void:
+	var parent := _player.get_parent()
+	for i in 6:
+		SkillEffects.sheet_once(parent, ICE_FX, 8, 16.0, at + Vector2.from_angle(TAU * i / 6.0) * radius * 0.6, Vector2(27, 19),
+				0.0, 1.0, 0.9 if echo else 1.1)
+	Sfx.play_at("hit_ice", at, -3.0)
+	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if enemy.hurt_center().distance_to(at) > radius + enemy.hurt_radius:
+			continue
+		enemy.take_damage(_player.roll_damage(damage), at, 0.0)
+		if enemy.state != Goblin.State.DEAD:
+			enemy.stun(freeze)
+
+
+## Wieniec Marzanny: lodowy wybuch wokół trafionego.
+func _winter_touch(at: Vector2, echo: bool) -> void:
+	_ice_burst(at, WINTER_RADIUS, WINTER_DAMAGE, WINTER_FREEZE, echo)
+
+
+## Szata Pani Zimy: gdy gracz oberwie, lód skuwa wrogów wokół niego.
+func _frost_veil() -> void:
+	if _cooldowns.get("frost_veil", 0.0) > 0.0 or randf() >= chance("frost_veil"):
+		return
+	_cooldowns["frost_veil"] = COOLDOWN * 2.0
+	_ice_burst(_player.body_center(), VEIL_RADIUS, VEIL_DAMAGE, VEIL_FREEZE, false)
+
+
+## Miecz Czarnoboga: kolce mroku pod trafionym i SHADOW_TARGETS najbliższymi wrogami obok.
+func _shadow_spikes(enemy: Goblin) -> void:
+	var targets: Array[Goblin] = [enemy]
+	var others: Array = get_tree().get_nodes_in_group("enemies").filter(func(other: Goblin) -> bool:
+		return other != enemy and other.state != Goblin.State.DEAD and other.global_position.distance_to(enemy.global_position) <= SHADOW_RANGE)
+	others.sort_custom(func(a: Goblin, b: Goblin) -> bool:
+		return a.global_position.distance_squared_to(enemy.global_position) < b.global_position.distance_squared_to(enemy.global_position))
+	for other: Goblin in others.slice(0, SHADOW_TARGETS):
+		targets.append(other)
+	for target in targets:
+		if not is_instance_valid(target) or target.state == Goblin.State.DEAD:
+			continue
+		SkillEffects.sheet_once(_player.get_parent(), SPIKE_FX, 10, 16.0, target.global_position + Vector2(0, 6), Vector2(25, 34),
+				0.0, 1.0, 1.1)
+		target.take_damage(_player.roll_damage(SHADOW_DAMAGE), target.global_position, 0.0)
+	Sfx.play_at("rock_break", enemy.global_position, -6.0)
+
+
+## Hełm Czarnoboga: zabity wróg wybucha mrokiem (rani sąsiadów), a część życia wraca do gracza.
+func _dark_pact(at: Vector2) -> void:
+	BossFx.smoke(_player.get_parent(), at, 0.8)
+	Sfx.play_at("ghost_wail", at, -12.0)
+	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if enemy.state != Goblin.State.DEAD and enemy.hurt_center().distance_to(at) <= PACT_RADIUS + enemy.hurt_radius:
+			enemy.take_damage(_player.roll_damage(PACT_DAMAGE), at, 60.0)
+	_player.heal(_player.stats.max_health() * PACT_HEAL)
+
+
+## Pas Łowcy Dusz: zabity elitarny potwór (DungeonElite) oddaje graczowi swoje cechy (Boons.add_soul).
+func _steal_souls(enemy: Goblin) -> void:
+	var elite: Node = enemy.get("elite")
+	if elite == null or not is_instance_valid(elite) or not "traits" in elite:
+		return
+	var names: Array[String] = []
+	for elite_trait: String in elite.traits:
+		_player.boons.add_soul(elite_trait)
+		names.append(Lang.t(Dungeons.ELITE_TRAITS[elite_trait]["name"]))
+	if not names.is_empty():
+		DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -22), Lang.t("Dusze: %s") % ", ".join(names),
+				SHADOW_COLOR, 8)
+		LegendVfx.heal(_player.get_parent(), _player.global_position)
 
 
 ## Mnożnik obrażeń z żądzy krwi (Szpon Biesa).

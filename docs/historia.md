@@ -871,6 +871,33 @@ odpowiedniej sekcji.
   - Skarbiec strażnika (`Dungeon._on_boss_died`) nie daje już kamieni zaklinających (usunięte `Dungeons.VAULT_STONE_*`),
     tylko kamienie uświęcone; Kryształ (waga 7, ~20% lochów) zostaje jedynym źródłem w lochach, rynek i zadanie główne
     jako drogie wyjście awaryjne. `tests/balance_sim.gd` liczy kamienie tylko z Kryształu, test w `tests/test_crystal.gd`.
+- [x] **Mapa Nawii, etap 4 - bossowie szczytowi** (listopad 2026). Ustalenia z autorem: trzech słowiańskich bogów
+  (Władca Hordy i obce bogi później), dostęp za fragmenty kluczy z węzłów, nagrody: punkty Watry, własne legendy, dużo
+  łupu i serca boga jako waluta; grafiki PixelLab 160 px z 2 animacjami; do tego dwa pasy w stylu Mageblooda
+  i Headhuntera jako superrzadkie legendy (10 serc).
+  - `scripts/pinnacles.gd` (`Pinnacles`): Weles (poz. 92, klimat korzeni), Marzanna (93, zatopione podziemia),
+    Czarnobóg (95, katakumby). Fragment klucza wypada ze strażnika węzła Nawii (`Dungeon._drop_fragment`, 10% na
+    stopniu 8, +4% za stopień), bóg według obszaru węzła (`GODS["areas"]`). 4 fragmenty (`FRAGMENTS`) - „Wyzwij”
+    w nowej kolumnie „Bogowie” okna Mapy Nawii (`NawiaWindow._build_gods`).
+  - Arena: `Dungeons.config` z kluczem `"pinnacle"` (`Pinnacles.config`), `Dungeon._plan_arena` - komnata wejścia
+    i arena 18x16 (`ARENA_START`, `ARENA`), bez mechanik, bożków, ołtarza i zwykłych potworów, premie drzewka Watry
+    działają. `Dungeon._pinnacle_rewards`: złoto, 6 magicznych i 3 rzadkie przedmioty, runy, kamienie uświęcone, bożek,
+    kamień szlachetny; `Boons.defeat_pinnacle` - pierwsze zwycięstwo +3 punkty Watry (`Boons.pinnacle_kills`).
+  - Boss `scripts/pinnacle_boss.gd` (`PinnacleBoss`, sceny `scenes/pinnacle_<bóg>.tscn`): zdrowie x6 względem bossa
+    (`HEALTH_MULT`), fazy przy 66% i 33% (komunikat), nie wraca do leża. Weles: Korzenie Nawii, Jad Welesa (kałuże
+    i trujący opar), Wężowy Zryw; Marzanna: Lodowe Włócznie, Zamieć, Mroźny Wybuch (od fazy 2 znika we mgle); Czarnobóg:
+    Cięcie Mroku, Kolce Cienia (w fazie 3 trzy linie), Krok przez Cień. Animacja: klatki 0-8 spoczynek, 9-17 atak.
+  - Grafiki: `tools/pinnacle_art.py` (arkusze z `pixellab_src/pinnacles/<bóg>.png`, ikony z `pixellab_src/pinnacles/icons/`,
+    identyfikatory w `pixellab_src/pinnacles/ids.json`); koszt: 45 (postacie) + 24 (animacje) + 20 (ikony) generacji.
+  - Łup: serce boga zawsze (`pinnacle_heart_<bóg>`), 2 legendy na boga (15% każda): Laska Welesa (`nawia_grasp`),
+    Skóra Welesa (`serpent_skin`), Wieniec Marzanny (`winter_touch`), Szata Pani Zimy (`frost_veil`), Miecz Czarnoboga
+    (`shadow_spikes`), Hełm Czarnoboga (`dark_pact`) - efekty w `LegendaryEffects`. Wymiana w oknie Mapy Nawii:
+    3 serca - legenda boga, 10 serc - pas (`Pinnacles.exchange_*`).
+  - Pasy (2% z boga albo 10 serc, bez esencji - `Essences.UNIQUE_KINDS`): **Pas Wiecznych Ziół** (Weles,
+    `eternal_herbs`) - mikstury zielarki działają bez końca, do 4 różnych naraz (`Boons.eternal`, `Boons.grant`,
+    `Player._update_eternal_herbs`); **Pas Łowcy Dusz** (Czarnobóg, `soul_hunter`) - zabita elita oddaje cechy na 20 s
+    (`Boons.souls`, `Boons.SOUL_STATS` - każda cecha elity to premia gracza; ikony pod paskami).
+  - Encyklopedia: bogowie jako bossowie „świata”. Test: `tests/test_pinnacles.gd`.
 - [x] **Mapa Nawii, etap 3 - drzewko Watry** (listopad 2026). Ustalenia z autorem: siatka jak drzewko atlasu w PoE,
   więcej węzłów niż punktów z całej mapy (trzeba wybierać), wzmacnia mechaniki lochów, bożki, łup i Błogosławieństwo
   Watry; **3 zakładki** z osobnymi, pełnymi pulami punktów (3 wyspecjalizowane ustawienia), działa wybrana, zmiana za

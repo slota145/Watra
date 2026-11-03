@@ -684,6 +684,37 @@ const DATA := {
 		"description": "Dwie kościane kostki ducha starego górnika, z fal Skarbnika w lochach Watry. Za jedną Skarbnik przelosuje swoją ofertę (rodzaje premii, kamieni i run).",
 		"icon": preload("res://assets/items/skarbnik_bones.png"), "sell_price": 60,
 	},
+	# ---------------------------------------------------------------- bossowie szczytowi (Pinnacles)
+	"pinnacle_fragment_weles": {
+		"name": "Fragment klucza Welesa",
+		"description": "Rogaty amulet z wężową runą. Strażnicy węzłów Mapy Nawii czasem go strzegą. 4 fragmenty otwierają arenę boga w oknie Mapy Nawii.",
+		"icon": preload("res://assets/items/pinnacle_fragment_weles.png"), "sell_price": 50,
+	},
+	"pinnacle_heart_weles": {
+		"name": "Serce Welesa",
+		"description": "Zielone, bijące serce oplecione korzeniami. Zostaje po pokonanym bogu. W oknie Mapy Nawii serca wymienia się na legendy boga.",
+		"icon": preload("res://assets/items/pinnacle_heart_weles.png"), "sell_price": 200,
+	},
+	"pinnacle_fragment_marzanna": {
+		"name": "Fragment klucza Marzanny",
+		"description": "Odłamek lodowej korony. Strażnicy węzłów Mapy Nawii czasem go strzegą. 4 fragmenty otwierają arenę boga w oknie Mapy Nawii.",
+		"icon": preload("res://assets/items/pinnacle_fragment_marzanna.png"), "sell_price": 50,
+	},
+	"pinnacle_heart_marzanna": {
+		"name": "Serce Marzanny",
+		"description": "Skute lodem, blade serce. Zostaje po pokonanym bogu. W oknie Mapy Nawii serca wymienia się na legendy boga.",
+		"icon": preload("res://assets/items/pinnacle_heart_marzanna.png"), "sell_price": 200,
+	},
+	"pinnacle_fragment_czarnobog": {
+		"name": "Fragment klucza Czarnoboga",
+		"description": "Odłamek obsydianowej pieczęci. Strażnicy węzłów Mapy Nawii czasem go strzegą. 4 fragmenty otwierają arenę boga w oknie Mapy Nawii.",
+		"icon": preload("res://assets/items/pinnacle_fragment_czarnobog.png"), "sell_price": 50,
+	},
+	"pinnacle_heart_czarnobog": {
+		"name": "Serce Czarnoboga",
+		"description": "Czarne serce w fioletowym płomieniu. Zostaje po pokonanym bogu. W oknie Mapy Nawii serca wymienia się na legendy boga.",
+		"icon": preload("res://assets/items/pinnacle_heart_czarnobog.png"), "sell_price": 200,
+	},
 	"mercy_stone": {
 		"name": "Kamień miłosierdzia",
 		"description": "Lazurowa kula. Zebrane razem chronią przed utratą poziomu przy nieudanym zaklęciu: 10 szt. przy III, 20 przy IV, 30 przy V.",

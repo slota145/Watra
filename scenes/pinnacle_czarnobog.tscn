@@ -1,0 +1,55 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/pinnacle_boss.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/pinnacles/czarnobog.png" id="2_sheet"]
+[ext_resource type="Texture2D" path="res://assets/shadow.png" id="3_shadow"]
+[ext_resource type="Shader" path="res://shaders/flash.gdshader" id="4_flash"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_flash"]
+resource_local_to_scene = true
+shader = ExtResource("4_flash")
+shader_parameter/flash = 0.0
+shader_parameter/flash_color = Color(1, 1, 1, 1)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_feet"]
+radius = 20.0
+
+[node name="PinnacleBoss" type="CharacterBody2D"]
+collision_layer = 4
+motion_mode = 1
+script = ExtResource("1_script")
+kind = "czarnobog"
+boss_name = "Czarnobóg, Czarny Bóg"
+legendary_drops = PackedStringArray("legend_czarnobog_sword", "legend_czarnobog_helm")
+strike_damage = 80
+area_damage = 75
+special_damage = 110
+max_health = 1960
+speed = 50.0
+aggro_radius = 260.0
+alert_radius = 160.0
+leash_radius = 5000.0
+xp_reward = 9000
+gold_min = 80
+gold_max = 120
+gold_coins = 30
+heart_drop_chance = 0.0
+hurt_height = 60
+damage = 45
+attack_interval = 1.4
+legendary_drop_chance = 0.15
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(5, 2)
+texture = ExtResource("3_shadow")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+material = SubResource("ShaderMaterial_flash")
+texture = ExtResource("2_sheet")
+offset = Vector2(0, -70)
+hframes = 18
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -2)
+shape = SubResource("CircleShape2D_feet")

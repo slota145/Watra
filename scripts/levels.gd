@@ -46,6 +46,7 @@ const HOME := {
 	"hydra": "cemetery", "gryf": "cemetery",
 	"satyr_king": "mountains",
 	"world_boss_zmij": "cemetery", "world_boss_wij": "cemetery",
+	"pinnacle_weles": "cemetery", "pinnacle_marzanna": "cemetery", "pinnacle_czarnobog": "cemetery",
 }
 ## Krzywe zwykłego potwora: zdrowie i obrażenia rosną liniowo (jak obrażenia i zdrowie gracza z poziomu,
 ## przedmiotów i zaklęć), doświadczenie i złoto wolniej niż potrzebne doświadczenie gracza.

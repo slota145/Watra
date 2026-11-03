@@ -4,6 +4,8 @@ extends PanelContainer
 ## w środku, 6 obszarów (krainy) i węzły-lochy (NawiaMap). Odsłonięte węzły świecą, oczyszczone są jasne,
 ## nieodkryte to tylko blade punkty we mgle. Kliknięcie wybiera węzeł, „Wyrusz” otwiera okno lochów w trybie węzła
 ## (DungeonWindow.open_node - modyfikatory i bożki jak zwykle, wejście bez kosztów).
+## Kolumna „Bogowie” (Pinnacles): fragmenty kluczy i serca każdego boga; „Wyzwij” zużywa fragmenty i przenosi na arenę,
+## „Legenda” i „Pas” wymieniają serca na przedmioty boga.
 ## Rysowane w kodzie; ładna grafika mapy przyjdzie, gdy system będzie dopracowany.
 
 signal node_requested(node: Dictionary)
@@ -21,6 +23,8 @@ var _info: Label
 var _progress: Label
 var _go: Button
 var _nodes: Array[Dictionary] = []
+## Bóg -> {"info": Label, "fight": Button, "legend": Button, "belt": Button (albo brak)}.
+var _gods := {}
 var _selected := -1
 
 
@@ -60,6 +64,78 @@ func _ready() -> void:
 		visible = false
 		Sfx.play("ui_close")))
 	box.add_child(bottom)
+	row.add_child(VSeparator.new())
+	row.add_child(_build_gods())
+
+
+## Kolumna bogów - bossów szczytowych (Pinnacles).
+func _build_gods() -> VBoxContainer:
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 3)
+	column.add_child(UiStyle.title(Lang.t("Bogowie")))
+	column.add_child(_wrapped(Lang.t("Strażnicy węzłów czasem zostawiają fragmenty kluczy bogów. %d fragmenty otwierają arenę.") % Pinnacles.FRAGMENTS, UiStyle.DIM_COLOR))
+	for god: String in Pinnacles.ORDER:
+		column.add_child(HSeparator.new())
+		var info := _wrapped("", Pinnacles.GODS[god]["color"])
+		column.add_child(info)
+		var buttons := HBoxContainer.new()
+		buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+		buttons.add_theme_constant_override("separation", 2)
+		column.add_child(buttons)
+		var entry := {"info": info}
+		entry["fight"] = _button(Lang.t("Wyzwij"), _challenge.bind(god))
+		buttons.add_child(entry["fight"])
+		entry["legend"] = _button(Lang.t("Legenda"), _exchange.bind(god, "legend"))
+		buttons.add_child(entry["legend"])
+		if Pinnacles.GODS[god].has("belt"):
+			entry["belt"] = _button(Lang.t("Pas"), _exchange.bind(god, "belt"))
+			buttons.add_child(entry["belt"])
+		_gods[god] = entry
+	return column
+
+
+func _refresh_gods() -> void:
+	var inventory := _player.inventory
+	for god: String in _gods:
+		var entry: Dictionary = _gods[god]
+		var fragments := inventory.count_of(Pinnacles.fragment(god))
+		var hearts := inventory.count_of(Pinnacles.heart(god))
+		var wins := int(_player.boons.pinnacle_kills.get(god, 0))
+		(entry["info"] as Label).text = "%s\n%s" % [Pinnacles.god_name(god),
+				Lang.t("Fragmenty: %d / %d   Serca: %d   Zwycięstwa: %d") % [fragments, Pinnacles.FRAGMENTS, hearts, wins]]
+		var fight: Button = entry["fight"]
+		fight.disabled = fragments < Pinnacles.FRAGMENTS
+		fight.tooltip_text = Lang.t("Arena boga - poziom %d. Zużywa %d fragmenty.") % [Pinnacles.GODS[god]["level"], Pinnacles.FRAGMENTS]
+		var legend: Button = entry["legend"]
+		legend.disabled = hearts < Pinnacles.HEART_COST
+		legend.tooltip_text = Lang.t("%d serca: jedna z legend boga (%s)") % [Pinnacles.HEART_COST,
+				", ".join((Pinnacles.GODS[god]["legends"] as Array).map(func(id: String) -> String: return Lang.t(Legends.DATA[id]["name"])))]
+		if entry.has("belt"):
+			var belt: Button = entry["belt"]
+			belt.disabled = hearts < Pinnacles.BELT_COST
+			belt.tooltip_text = Lang.t("%d serc: %s") % [Pinnacles.BELT_COST, Lang.t(Legends.DATA[Pinnacles.GODS[god]["belt"]]["name"])]
+
+
+## Wyzwanie boga: zużywa fragmenty i przenosi na arenę (premie drzewka Watry jak w zwykłym lochu).
+func _challenge(god: String) -> void:
+	var world := get_tree().get_first_node_in_group("world")
+	if world == null or not _player.inventory.remove_item(Pinnacles.fragment(god), Pinnacles.FRAGMENTS):
+		return
+	visible = false
+	world.enter_dungeon(Pinnacles.config(god, randi(), _player.boons.tree_effects()))
+
+
+## Wymiana serc na legendę albo pas boga (do plecaka, a gdy pełny - do magazynu).
+func _exchange(god: String, what: String) -> void:
+	var item := Pinnacles.exchange_item(god, what)
+	if item == "" or not _player.inventory.remove_item(Pinnacles.heart(god), Pinnacles.exchange_cost(what)):
+		return
+	var id := Loot.legendary_at_level(item, int(Pinnacles.GODS[god]["level"]))
+	if _player.inventory.add_item(id, 1) > 0:
+		_player.storage.add_item(id, 1)
+	Sfx.play("magic")
+	_info.text = Lang.t("Otrzymano: %s") % Items.display_name(id)
+	_refresh_gods()
 
 
 func setup(player: Player) -> void:
@@ -67,6 +143,9 @@ func setup(player: Player) -> void:
 	player.boons.changed.connect(func() -> void:
 		if visible:
 			_refresh())
+	player.inventory.changed.connect(func() -> void:
+		if visible:
+			_refresh_gods())
 
 
 func open() -> void:
@@ -92,6 +171,7 @@ func select(id: int) -> void:
 func _refresh() -> void:
 	if _player == null:
 		return
+	_refresh_gods()
 	var done := cleared()
 	_progress.text = Lang.t("Oczyszczone węzły: %d / %d\nPunkty Watry: %d") % [done.size(), _nodes.size(), _player.boons.watra_points()]
 	var open_ids := NawiaMap.revealed(_nodes, done)

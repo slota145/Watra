@@ -26,6 +26,9 @@ const MONSTERS := {
 	"gryf": {"zone": "fields", "note": "Gryf strzegący wzgórza nad polami."},
 	"world_boss_zmij": {"zone": "world", "note": "Trójgłowy smok - world boss z wydarzeń w wyższych krainach. Zieje ogniem, ciska kulami ognia i spada z nieba."},
 	"world_boss_wij": {"zone": "world", "note": "Olbrzym o powiekach do ziemi - world boss z wydarzeń w niższych krainach. Jego wzrok pali, a korzenie chwytają."},
+	"pinnacle_weles": {"zone": "world", "note": "Pan Nawii, niedźwiedź-wąż - bóg z areny Mapy Nawii (4 fragmenty klucza). Korzenie, jad i wężowy zryw. Bardzo rzadko zostawia Pas Wiecznych Ziół."},
+	"pinnacle_marzanna": {"zone": "world", "note": "Pani Zimy - bogini z areny Mapy Nawii (4 fragmenty klucza). Lodowe włócznie, zamieć i mroźny wybuch, po którym znika we mgle."},
+	"pinnacle_czarnobog": {"zone": "world", "note": "Czarny Bóg - z areny Mapy Nawii (4 fragmenty klucza). Cięcie mroku, kolce cienia i krok przez cień. Bardzo rzadko zostawia Pas Łowcy Dusz."},
 	"frogman": {"name": "Żabołak", "zone": "swamp", "note": "Mieszkaniec rozlewisk z włócznią."},
 	"frog_spitter": {"name": "Żabołak plujący", "zone": "swamp", "note": "Pluje żrącym śluzem z daleka."},
 	"drowner": {"name": "Utopiec", "zone": "swamp", "note": "Czai się pod wodą sadzawek i wynurza, gdy ktoś podejdzie."},
@@ -153,6 +156,10 @@ static func legend_source(id: String) -> String:
 				_legend_sources[legend] = monster
 	if _legend_sources.has(id):
 		return monster_name(_legend_sources[id])
+	# pasy bogów (Pinnacles) - bardzo rzadko z boga albo za serca
+	for god: String in Pinnacles.GODS:
+		if Pinnacles.GODS[god].get("belt", "") == id:
+			return monster_name(Pinnacles.kind(god))
 	return Lang.t(VAULT_SOURCE) if id in Dungeons.VAULT_LEGENDS else Lang.t("nieznane")
 
 

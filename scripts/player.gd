@@ -406,6 +406,7 @@ func _ready() -> void:
 	set_hero(Game.hero)
 	stats.equipment = equipment
 	equipment.changed.connect(_update_weapon_sprite)
+	equipment.changed.connect(_update_eternal_herbs)
 	_update_weapon_sprite()
 	# skalowanie interfejsu powiększa cały obraz - kamera oddala się o tyle samo (Game._apply_ui_scale)
 	camera.zoom = Vector2.ONE / Game.ui_scale
@@ -2158,6 +2159,12 @@ func _skill_damage(multiplier: float, tags: Array = ["attack"]) -> int:
 
 
 ## Losowe obrażenia broni razy mnożnik (dla efektów legendarnych przedmiotów - bez premii do rodzaju).
+## Pas Wiecznych Ziół (Legends "eternal_herbs"): ile mikstur zielarki działa naraz bez końca (siła efektu = liczba).
+func _update_eternal_herbs() -> void:
+	boons.eternal_herbs = roundi(equipment.effect_power("eternal_herbs"))
+	boons.changed.emit()
+
+
 func roll_damage(multiplier: float) -> int:
 	return roundi(_skill_damage(multiplier, []) * legendary.damage_multiplier() * stats.damage_multiplier())
 

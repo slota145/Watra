@@ -46,7 +46,12 @@ static func is_essence(id: String) -> bool:
 
 static func is_legend(id: String) -> bool:
 	var data := Items.get_data(id)
-	return id != "" and data.get("rarity", "") == "legendary" and data.has("effect") and not data.has("essence")
+	return id != "" and data.get("rarity", "") == "legendary" and data.has("effect") and not data.has("essence") \
+			and not data["effect"].get("kind", "") in UNIQUE_KINDS
+
+
+## Efekty, z których nie wyciąga się esencji - pasy bogów (Pinnacles) mają działać tylko jako jeden przedmiot.
+const UNIQUE_KINDS: Array[String] = ["eternal_herbs", "soul_hunter"]
 
 
 ## Rodzaj miejsca przedmiotu: "weapon", "armor" albo "jewelry" ("" - nie wyposażenie).
