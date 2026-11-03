@@ -9,14 +9,15 @@ class_name Pinnacles
 ## legendy (PinnacleBoss.legendary_drops) i bogaty skarbiec (vault_rewards).
 
 ## bóg -> nazwa, klimat lochu (wygląd areny), poziom, kolor, obszary Mapy Nawii, z których wypadają jego fragmenty,
-## legendy.
+## legendy i bardzo rzadki pas (Weles - mikstury bez końca, Czarnobóg - cechy zabitych elit; BELT_CHANCE, BELT_COST).
 const GODS := {
 	"weles": {"name": "Weles, Pan Nawii", "climate": "roots", "level": 92, "color": Color(0.45, 0.95, 0.4),
-			"areas": ["forest", "swamp"], "legends": ["legend_weles_staff", "legend_weles_hide"]},
+			"areas": ["forest", "swamp"], "legends": ["legend_weles_staff", "legend_weles_hide"], "belt": "legend_weles_belt"},
 	"marzanna": {"name": "Marzanna, Pani Zimy", "climate": "flooded", "level": 93, "color": Color(0.6, 0.85, 1.0),
 			"areas": ["fields", "mountains"], "legends": ["legend_marzanna_wreath", "legend_marzanna_robe"]},
 	"czarnobog": {"name": "Czarnobóg, Czarny Bóg", "climate": "catacombs", "level": 95, "color": Color(0.7, 0.45, 1.0),
-			"areas": ["ancient", "cemetery"], "legends": ["legend_czarnobog_sword", "legend_czarnobog_helm"]},
+			"areas": ["ancient", "cemetery"], "legends": ["legend_czarnobog_sword", "legend_czarnobog_helm"],
+			"belt": "legend_czarnobog_belt"},
 }
 const ORDER: Array[String] = ["weles", "marzanna", "czarnobog"]
 ## Rodzaj potwora (World.scene_for) i przedmioty: fragment klucza i serce boga.
@@ -26,6 +27,9 @@ const HEART_PREFIX := "pinnacle_heart_"
 ## Ile fragmentów otwiera arenę i ile serc kosztuje legenda boga.
 const FRAGMENTS := 4
 const HEART_COST := 3
+## Pas boga: szansa z każdego zwycięstwa i cena w sercach.
+const BELT_CHANCE := 0.02
+const BELT_COST := 10
 ## Szansa na fragment ze strażnika węzła Nawii: na stopniu 8 i przyrost za każdy stopień wyżej (stopień 17 - 46%).
 const FRAGMENT_BASE := 0.1
 const FRAGMENT_PER_TIER := 0.04
@@ -57,6 +61,19 @@ static func god_of_area(area: String) -> String:
 		if area in (GODS[god]["areas"] as Array):
 			return god
 	return ""
+
+
+## Wymiana serc (okno Mapy Nawii): "legend" - jedna z legend boga, "belt" - jego pas. Zwraca id przedmiotu
+## albo "" (brak pasa).
+static func exchange_item(god: String, what: String) -> String:
+	if what == "belt":
+		return str(GODS[god].get("belt", ""))
+	var legends: Array = GODS[god]["legends"]
+	return legends[randi() % legends.size()]
+
+
+static func exchange_cost(what: String) -> int:
+	return BELT_COST if what == "belt" else HEART_COST
 
 
 static func fragment_chance(tier: int) -> float:

@@ -1625,6 +1625,8 @@ func _level_origin() -> Vector2:
 
 ## Scena potwora wg rodzaju z miejsca odrodzenia (także dla potworów wydarzeń - EventSite).
 func scene_for(kind: String) -> PackedScene:
+	if kind.begins_with(Pinnacles.KIND_PREFIX):
+		return load("res://scenes/%s.tscn" % kind)
 	if ANIMAL_SCENES.has(kind):
 		return ANIMAL_SCENES[kind]
 	if ANCIENT_SCENES.has(kind):

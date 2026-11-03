@@ -90,6 +90,10 @@ var _flow := {}
 var _flow_from := Vector2i(-1, -1)
 ## Loch na zewnątrz (patrz opis skryptu): granica z terenu zamiast skały.
 var outdoor := false
+## Bóg areny (Pinnacles) albo "" - zwykły loch.
+var pinnacle := ""
+const ARENA_START := Rect2i(3, 11, 7, 6)
+const ARENA := Rect2i(16, 6, 18, 16)
 ## Wierzchołki poza podłogą lochu na zewnątrz: klif (skalna półka) albo woda; reszta to ściana drzew.
 var cliffs := {}
 var waters := {}
@@ -115,6 +119,12 @@ func generate(world, settings: Dictionary) -> void:
 	climate = Dungeons.CLIMATES[settings["climate"]]
 	_rng.seed = int(settings["seed"])
 	level = Dungeons.tier_level(int(settings["tier"]))
+	# arena boga (Pinnacles): poziom boga, dwie komnaty, bez zwykłych potworów
+	pinnacle = str(settings.get("pinnacle", ""))
+	if Pinnacles.GODS.has(pinnacle):
+		level = int(Pinnacles.GODS[pinnacle]["level"])
+	else:
+		pinnacle = ""
 	Levels.zone_default = level
 	Goblin.safe_zone = Rect2()
 	Goblin.dungeon_mods = {}
@@ -123,7 +133,10 @@ func generate(world, settings: Dictionary) -> void:
 	for key in ["item_level", "quality", "herbs", "res_wood", "res_stone", "res_ore", "gem_cut"]:
 		Goblin.dungeon_mods[key] = Dungeons.added(settings, key)
 	outdoor = climate.get("outdoor", false)
-	_plan_rooms()
+	if pinnacle != "":
+		_plan_arena()
+	else:
+		_plan_rooms()
 	if outdoor:
 		_shape_glades()
 	else:
@@ -151,7 +164,8 @@ func generate(world, settings: Dictionary) -> void:
 	else:
 		_build_props()
 	_build_entrance()
-	_populate(Dungeons.mult(settings, "count") * (1.0 + Dungeons.TIER_COUNT_BONUS * (Dungeons.config_tier(settings) - 1)))
+	if pinnacle == "":
+		_populate(Dungeons.mult(settings, "count") * (1.0 + Dungeons.TIER_COUNT_BONUS * (Dungeons.config_tier(settings) - 1)))
 	_build_vault()
 	_apply_idols()
 	_build_mechanics()
@@ -161,6 +175,15 @@ func generate(world, settings: Dictionary) -> void:
 
 # ---------------------------------------------------------------- układ
 ## Prostokątne komnaty (w wierzchołkach) z odstępem co najmniej 2; pierwsza jest duża - nada się na komnatę strażnika.
+## Arena boga (Pinnacles): mała komnata wejścia po lewej i wielka arena po prawej, połączone korytarzem.
+func _plan_arena() -> void:
+	for room in [ARENA_START, ARENA]:
+		rooms.append(room)
+		for x in range(room.position.x, room.end.x):
+			for y in range(room.position.y, room.end.y):
+				floor_cells[Vector2i(x, y)] = true
+
+
 func _plan_rooms() -> void:
 	var tries := 0
 	while rooms.size() < ROOMS and tries < 3000:
@@ -1505,7 +1528,8 @@ func _free_spot(pos: Vector2, toward: Vector2) -> Vector2:
 ## Strażnik na środku najdalszej komnaty i zamknięta skrzynia skarbca pod jej północną ścianą.
 func _build_vault() -> void:
 	var center := Vector2(boss_room.get_center()) * CELL + Vector2(0, CELL / 2.0)
-	var spawn := _spawn(climate["boss"], center, center + Vector2(0, 40), level + Dungeons.BOSS_BONUS)
+	var spawn := _spawn(Pinnacles.kind(pinnacle), center, center + Vector2(0, 40), level) if pinnacle != "" \
+			else _spawn(climate["boss"], center, center + Vector2(0, 40), level + Dungeons.BOSS_BONUS)
 	_boss = w._live_goblins.get(spawn["id"])
 	if _boss != null:
 		_boss.died.connect(_on_boss_died)
@@ -1526,6 +1550,9 @@ func _on_boss_died(_boss_node: Goblin = null) -> void:
 		return
 	_vault_open = true
 	w.player.quests.note_event("dungeon_clear")
+	if pinnacle != "":
+		_pinnacle_rewards()
+		return
 	var treasure := Dungeons.mult(config, "treasure")
 	var loot_level := level + Dungeons.BOSS_BONUS
 	var level_bonus := int(Dungeons.added(config, "item_level"))
@@ -1556,12 +1583,42 @@ func _on_boss_died(_boss_node: Goblin = null) -> void:
 		_drop(at, Loot.legendary_at_level(Dungeons.VAULT_LEGENDS.pick_random(), loot_level), 1)
 	Sfx.play("quest_ready")
 	_add_portal(Vector2(boss_room.get_center()) * CELL + Vector2(0, CELL * 1.2), Lang.t("Płomienie Watry - powrót do Ostoi"))
+	_drop_fragment(at)
 	# węzeł Mapy Nawii oczyszczony - odsłania sąsiednie i daje punkt Watry
 	if config.has("nawia_node") and w.player.boons.clear_nawia_node(int(config["nawia_node"])):
 		w.hud.show_banner(Lang.t("Węzeł Nawii oczyszczony! Zdobywasz punkt Watry\nPłomienie Watry zabiorą cię do Ostoi"),
 				Color(0.75, 0.65, 1.0))
 		return
 	w.hud.show_banner(Lang.t("Strażnik pokonany! Skarbiec otwarty\nPłomienie Watry zabiorą cię do Ostoi"), Color(1.0, 0.8, 0.4))
+
+
+## Strażnik węzła Nawii czasem zostawia fragment klucza boga swojego obszaru (Pinnacles.fragment_chance).
+func _drop_fragment(at: Vector2) -> void:
+	if not config.has("nawia_node"):
+		return
+	var nodes := NawiaMap.nodes(int(w._seed))
+	var id := int(config["nawia_node"])
+	if id < 0 or id >= nodes.size():
+		return
+	var god := Pinnacles.god_of_area(nodes[id]["area"])
+	if god != "" and (Game.dev_mode or _rng.randf() < Pinnacles.fragment_chance(int(config.get("tier", 8)))):
+		_drop(at + Vector2(0, 14), Pinnacles.fragment(god), 1)
+
+
+## Bóg pokonany: skarbiec (Pinnacles.vault_rewards), punkty Watry za pierwsze zwycięstwo, płomienie powrotu.
+func _pinnacle_rewards() -> void:
+	var at := _chest.position + Vector2(0, 16)
+	_chest.modulate = Color.WHITE
+	_drop(at, "gold", roundi(Levels.gold(level) * 60.0 * Dungeons.mult(config, "gold")))
+	for reward: Array in Pinnacles.vault_rewards(level, _rng):
+		_drop(at, reward[0], reward[1])
+	var first: bool = w.player.boons.defeat_pinnacle(pinnacle)
+	Sfx.play("quest_ready")
+	_add_portal(Vector2(boss_room.get_center()) * CELL + Vector2(0, CELL * 1.2), Lang.t("Płomienie Watry - powrót do Ostoi"))
+	var text := Lang.t("%s pokonany!") % Pinnacles.god_name(pinnacle)
+	if first:
+		text += "\n" + Lang.t("Pierwsze zwycięstwo: +%d punkty Watry") % Pinnacles.FIRST_KILL_POINTS
+	w.hud.show_banner(text, Pinnacles.GODS[pinnacle]["color"])
 
 
 # ---------------------------------------------------------------- droga przez loch

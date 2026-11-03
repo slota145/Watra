@@ -1,0 +1,469 @@
+class_name PinnacleBoss
+extends Boss
+## Bóg - boss szczytowy Mapy Nawii (Pinnacles), sam na swojej arenie (Dungeon._plan_arena). Ogromne zdrowie
+## (HEALTH_MULT razy zwykły boss), trzy fazy: przy 66% i 33% zdrowia krótsze przerwy, szybszy ruch, mocniejsze
+## odmiany ataków i komunikat na ekranie. Trzy rodzaje (`kind`), po trzy ataki z zapowiedzią (Telegraph):
+## - "weles" - Weles, Pan Nawii (niedźwiedź-wąż): Korzenie Nawii (krąg wokół niego - rani i spowalnia), Jad Welesa
+##   (kałuże trucizny pod graczem i obok - zatruwają, zostaje trujący opar), Wężowy Zryw (szarża po linii);
+##   faza 3 - szerszy krąg korzeni i więcej kałuż,
+## - "marzanna" - Marzanna, Pani Zimy: Lodowe Włócznie (wachlarz linii - ranią i mrożą), Zamieć (krąg pod graczem -
+##   mocno spowalnia), Mroźny Wybuch (krąg wokół niej); od fazy 2 po wybuchu znika we mgle i staje w innym miejscu
+##   areny, w fazie 3 więcej włóczni,
+## - "czarnobog" - Czarnobóg, Czarny Bóg: Cięcie Mroku (szeroki stożek przed nim), Kolce Cienia (kolejne kolce po linii
+##   do gracza - w fazie 3 trzy linie), Krok przez Cień (znika i staje za graczem, uderza wokół siebie).
+## Animacja (assets/pinnacles/<bóg>.png, tools/pinnacle_art.py): klatki 0-8 spoczynek, 9-17 atak - zamach w czasie
+## zapowiedzi, uderzenie po niej.
+
+@export var kind := "weles"
+@export var strike_damage := 80
+@export var area_damage := 90
+@export var special_damage := 100
+
+## Ile razy więcej zdrowia niż zwykły boss tego poziomu (gracz walczy sam, bez podróżników).
+const HEALTH_MULT := 6.0
+const PHASES := [0.66, 0.33]
+const IDLE_FRAMES := 9
+const ATTACK_FRAMES := 9
+## Klatka ataku, w której pada cios (koniec zamachu) - wcześniejsze lecą w czasie zapowiedzi.
+const IMPACT_FRAME := 5
+const IDLE_FPS := 7.0
+
+const ROOTS_RADIUS := 120.0
+const VENOM_RADIUS := 44.0
+const SERPENT_TIME := 0.45
+const SERPENT_WIDTH := 64.0
+const SERPENT_REACH := 400.0
+const LANCE_LENGTH := 330.0
+const LANCE_WIDTH := 28.0
+const LANCE_SPREAD := deg_to_rad(18.0)
+const BLIZZARD_RADIUS := 95.0
+const NOVA_RADIUS := 130.0
+const BLINK_RANGE := Vector2(180.0, 320.0)
+const CLEAVE_RANGE := 170.0
+const CLEAVE_ARC := deg_to_rad(55.0)
+const SPIKE_RADIUS := 30.0
+const SPIKE_STEP := 46.0
+const SPIKE_DELAY := 0.08
+const STEP_RADIUS := 95.0
+
+const FX_ROOTS := preload("res://assets/effects/leshy_roots.png")
+const FX_LANCE := preload("res://assets/effects/frost_lance.png")
+const FX_SHATTER := preload("res://assets/effects/ice_shatter.png")
+const FX_BLIZZARD := preload("res://assets/effects/blizzard.png")
+const FX_MIST := preload("res://assets/effects/wij_mist.png")
+const FX_SPIKE := preload("res://assets/effects/mortan_spike.png")
+const FX_BLINK := preload("res://assets/effects/mortan_blink.png")
+const FX_SMOKE := preload("res://assets/effects/smoke_burst.png")
+
+var phase := 1
+var _aim := Vector2.DOWN
+var _from := Vector2.ZERO
+var _to := Vector2.ZERO
+var _spots: Array[Vector2] = []
+var _lines: Array[Vector2] = []
+## Czas zapowiedzi bieżącego ataku (do klatek zamachu).
+var _windup := 1.0
+
+
+func _ready() -> void:
+	super()
+	add_to_group("pinnacle_bosses")
+	hurt_radius = 34.0
+	map_color = Pinnacles.GODS[kind]["color"] if Pinnacles.GODS.has(kind) else Color.WHITE
+	quest_kind = "pinnacle"
+
+
+## Zdrowie bossa szczytowego: jak boss tego poziomu razy HEALTH_MULT.
+func _apply_level() -> void:
+	super()
+	max_health = roundi(max_health * HEALTH_MULT)
+
+
+## Bóg nie wraca do leża i nie leczy się, dopóki gracz żyje na arenie (arena jest zamknięta).
+func _process_fight(delta: float) -> void:
+	if _player_alive() and not _player_is_safe():
+		home = global_position
+	super(delta)
+
+
+func take_damage(amount: int, from_position: Vector2, knockback := 0.0) -> void:
+	super(amount, from_position, knockback)
+	if state == State.DEAD:
+		return
+	for i in PHASES.size():
+		if phase == i + 1 and health < max_health * PHASES[i]:
+			phase = i + 2
+			attack_interval *= 0.75
+			speed *= 1.1
+			Sfx.play_at("bear_roar" if kind == "weles" else ("ghost_wail" if kind == "marzanna" else "bies_roar"), global_position)
+			_shake_camera(9.0)
+			_fx_phase()
+			var hud := get_tree().get_first_node_in_group("hud")
+			if hud != null and hud.has_method("show_banner"):
+				hud.show_banner(Lang.t("%s - faza %d!") % [boss_name, phase], map_color)
+
+
+# ---------------------------------------------------------------- wybór ataku
+func _choose_attack(to_player: Vector2) -> bool:
+	_face(_player.global_position)
+	_aim = to_player.normalized() if to_player != Vector2.ZERO else Vector2.DOWN
+	match kind:
+		"weles":
+			return _choose_weles(to_player.length())
+		"marzanna":
+			return _choose_marzanna(to_player.length())
+		_:
+			return _choose_czarnobog(to_player.length())
+
+
+func _choose_weles(distance: float) -> bool:
+	if distance < ROOTS_RADIUS * 1.1 and randf() < 0.5:
+		_begin("roots", 0.9)
+		var circle := _show_telegraph(Telegraph.Shape.CIRCLE, global_position, 0.0, 0.9)
+		circle.radius = _roots_radius()
+		circle.modulate = Color(0.6, 1.0, 0.5)
+	elif distance < 420.0 and randf() < 0.55:
+		_begin("venom", 1.0)
+		_spots = [_player.global_position]
+		for i in 2 + phase * 2:
+			_spots.append(_player.global_position + Vector2.from_angle(randf() * TAU) * randf_range(50.0, 140.0))
+		for spot: Vector2 in _spots:
+			_marker(spot, VENOM_RADIUS, 1.0, Color(0.55, 1.0, 0.35))
+	elif distance < SERPENT_REACH:
+		_from = global_position
+		_to = global_position + _aim * minf(distance + 60.0, SERPENT_REACH)
+		_begin("serpent", 0.85)
+		var line := _show_telegraph(Telegraph.Shape.LINE, global_position, _aim.angle(), 0.85)
+		line.length = _from.distance_to(_to)
+		line.width = SERPENT_WIDTH
+	else:
+		return false
+	return true
+
+
+func _choose_marzanna(distance: float) -> bool:
+	if distance < NOVA_RADIUS and randf() < 0.45:
+		_begin("nova", 0.9)
+		var circle := _show_telegraph(Telegraph.Shape.CIRCLE, global_position, 0.0, 0.9)
+		circle.radius = NOVA_RADIUS
+		circle.modulate = Color(0.7, 0.9, 1.0)
+	elif distance < LANCE_LENGTH and randf() < 0.55:
+		_begin("lances", 1.0)
+		_lines.clear()
+		var count := 3 if phase < 3 else 5
+		for i in count:
+			var dir := _aim.rotated((i - (count - 1) / 2.0) * LANCE_SPREAD)
+			_lines.append(dir)
+			_line_marker(global_position, dir, LANCE_LENGTH, LANCE_WIDTH, 1.0, Color(0.7, 0.9, 1.0))
+	elif distance < 460.0:
+		_spots = [_player.global_position]
+		_begin("blizzard", 1.2)
+		var circle := _show_telegraph(Telegraph.Shape.CIRCLE, _spots[0], 0.0, 1.2)
+		circle.radius = BLIZZARD_RADIUS
+		circle.modulate = Color(0.7, 0.9, 1.0)
+		SkillEffects.sheet_once(get_parent(), FX_BLIZZARD, 12, 12.0, _spots[0], Vector2(72, 77), 0.0, 1.0,
+				BLIZZARD_RADIUS / 60.0)
+	else:
+		return false
+	return true
+
+
+func _choose_czarnobog(distance: float) -> bool:
+	if distance < CLEAVE_RANGE and randf() < 0.5:
+		_begin("cleave", 0.9)
+		var cone := _show_telegraph(Telegraph.Shape.CONE, global_position, _aim.angle(), 0.9)
+		cone.radius = CLEAVE_RANGE
+		cone.half_arc = CLEAVE_ARC
+		cone.modulate = Color(0.8, 0.6, 1.0)
+	elif distance < 480.0 and randf() < 0.55:
+		_begin("spikes", 0.7)
+		_spots.clear()
+		var directions: Array[Vector2] = [_aim]
+		if phase >= 3:
+			directions.append_array([_aim.rotated(0.5), _aim.rotated(-0.5)])
+		for dir in directions:
+			for i in 8 + phase * 2:
+				_spots.append(global_position + dir * SPIKE_STEP * (i + 1))
+		for i in _spots.size():
+			_marker(_spots[i], SPIKE_RADIUS, 0.7 + (i % (8 + phase * 2)) * SPIKE_DELAY, Color(0.8, 0.55, 1.0))
+	elif distance < 520.0:
+		_begin("step", 0.6)
+		SkillEffects.sheet_once(get_parent(), FX_BLINK, 10, 12.0, global_position + Vector2(0, -14), Vector2(30, 27), 0.0, 1.0, 2.0)
+		Sfx.play_at("ghost_wail", global_position)
+	else:
+		return false
+	return true
+
+
+func _begin(attack: String, time: float) -> void:
+	_start_attack(attack, time)
+	_windup = time
+	_wind_up(time)
+
+
+# ---------------------------------------------------------------- przebieg ataków
+func _update_attack(_delta: float) -> void:
+	velocity = Vector2.ZERO
+	match [_attack, _attack_stage]:
+		["roots", "telegraph"]:
+			if _stage_timer <= 0.0:
+				_snap(Vector2(1.2, 0.85))
+				if _player_in_telegraph():
+					_hurt_player(area_damage, 200.0)
+					_player.apply_slow(0.4, 2.0)
+				_remove_telegraph()
+				var radius := _roots_radius()
+				for i in 12:
+					var at := global_position + Vector2.from_angle(TAU * i / 12.0 + randf() * 0.3) * Vector2(radius * 0.8, radius * 0.55)
+					SkillEffects.sheet_once(get_parent(), FX_ROOTS, 10, 16.0, at, Vector2(24, 39), 0.0, 1.0, 1.5, 0.0, i % 2 == 0)
+				_ground_crack(global_position, radius * 0.7)
+				Sfx.play_at("roots_burst", global_position)
+				_shake_camera(6.0)
+				_set_stage("recover", 0.7)
+		["venom", "telegraph"]:
+			if _stage_timer <= 0.0:
+				_snap()
+				for spot: Vector2 in _spots:
+					BossFx.acid(get_parent(), spot, VENOM_RADIUS)
+					_poison_patch(spot)
+					if _player_alive() and _player.global_position.distance_to(spot) <= VENOM_RADIUS:
+						_hurt_player(strike_damage, 80.0)
+						_player.apply_poison(strike_damage * 0.1, 4.0)
+				Sfx.play_at("spit_hit", _spots[0])
+				_set_stage("recover", 0.6)
+		["serpent", "telegraph"]:
+			if _stage_timer <= 0.0:
+				_snap()
+				Sfx.play_at("wing_gust", global_position)
+				_set_stage("act", SERPENT_TIME)
+		["serpent", "act"]:
+			var t := clampf(1.0 - _stage_timer / SERPENT_TIME, 0.0, 1.0)
+			global_position = _from.lerp(_to, t)
+			if Engine.get_physics_frames() % 4 == 0:
+				_afterimage(Color(0.5, 1.0, 0.45, 0.4))
+			if _player_alive() and _player.global_position.distance_to(global_position) < SERPENT_WIDTH * 0.8:
+				_hurt_player(special_damage, 300.0)
+			if _stage_timer <= 0.0:
+				_remove_telegraph()
+				_debris(global_position, 8, 140.0, Color(0.3, 0.35, 0.2))
+				_set_stage("recover", 0.8)
+		["nova", "telegraph"]:
+			if _stage_timer <= 0.0:
+				_snap(Vector2(1.2, 0.85))
+				if _player_in_telegraph():
+					_hurt_player(area_damage, 220.0)
+					_player.apply_slow(0.3, 2.5)
+				_remove_telegraph()
+				for i in 10:
+					var at := global_position + Vector2.from_angle(TAU * i / 10.0) * NOVA_RADIUS * 0.7
+					SkillEffects.sheet_once(get_parent(), FX_SHATTER, 8, 16.0, at, Vector2(27, 19), 0.0, 1.0, 1.6)
+				Sfx.play_at("hit_ice", global_position)
+				_shake_camera(6.0)
+				# od fazy 2 Marzanna znika we mgle i staje gdzie indziej
+				if phase >= 2:
+					_set_stage("act", 0.5)
+					SkillEffects.sheet_once(get_parent(), FX_MIST, 14, 16.0, global_position, Vector2(73, 124), 0.0, 1.0, 1.1)
+					return
+				_set_stage("recover", 0.7)
+		["nova", "act"]:
+			if _stage_timer <= 0.0:
+				_teleport(_blink_spot())
+				SkillEffects.sheet_once(get_parent(), FX_MIST, 14, 16.0, global_position, Vector2(73, 124), 0.0, 1.0, 1.1)
+				_set_stage("recover", 0.6)
+		["lances", "telegraph"]:
+			if _stage_timer <= 0.0:
+				_snap()
+				for dir: Vector2 in _lines:
+					if _player_alive() and _on_line(_player.global_position, global_position, dir, LANCE_LENGTH, LANCE_WIDTH):
+						_hurt_player(strike_damage, 140.0)
+						_player.apply_slow(0.5, 2.0)
+					for k in 4:
+						SkillEffects.sheet_once(get_parent(), FX_LANCE, 6, 16.0, global_position + dir * (40.0 + k * 75.0) + Vector2(0, -12),
+								Vector2(35, 8), dir.angle(), 1.6, 1.4)
+				Sfx.play_at("hit_ice", global_position)
+				_set_stage("recover", 0.6)
+		["blizzard", "telegraph"]:
+			if _stage_timer <= 0.0:
+				if _player_in_telegraph():
+					_hurt_player(special_damage, 60.0)
+					_player.apply_slow(0.25, 3.5)
+				_remove_telegraph()
+				for i in 6:
+					var at := _spots[0] + Vector2.from_angle(randf() * TAU) * randf() * BLIZZARD_RADIUS * 0.8
+					SkillEffects.sheet_once(get_parent(), FX_SHATTER, 8, 16.0, at, Vector2(27, 19), 0.0, 1.0, 1.2)
+				Sfx.play_at("hit_ice", _spots[0])
+				_set_stage("recover", 0.6)
+		["cleave", "telegraph"]:
+			if _stage_timer <= 0.0:
+				_snap(Vector2(1.25, 0.82))
+				if _player_in_telegraph():
+					_hurt_player(special_damage, 260.0)
+				_remove_telegraph()
+				BossFx.cleave(get_parent(), global_position, _aim.angle(), CLEAVE_RANGE)
+				_ground_crack(global_position + _aim * 70.0, 50.0)
+				Sfx.play_at("big_slash", global_position)
+				_shake_camera(8.0)
+				_set_stage("recover", 0.8)
+		["spikes", "telegraph"]:
+			if _stage_timer <= 0.0:
+				_snap()
+				_set_stage("act", SPIKE_DELAY * (10 + phase * 2) + 0.1)
+				_spike_wave()
+		["spikes", "act"]:
+			if _stage_timer <= 0.0:
+				_set_stage("recover", 0.5)
+		["step", "telegraph"]:
+			if _stage_timer <= 0.0:
+				var behind := _player.global_position + (_player.global_position - global_position).normalized() * 60.0
+				_teleport(behind if not _blocked(behind) else _player.global_position + Vector2(0, 50))
+				SkillEffects.sheet_once(get_parent(), FX_SMOKE, 10, 14.0, global_position, Vector2(29, 40), 0.0, 1.0, 2.0)
+				_face(_player.global_position)
+				_hit_player = false
+				var circle := _show_telegraph(Telegraph.Shape.CIRCLE, global_position, 0.0, 0.55)
+				circle.radius = STEP_RADIUS
+				circle.modulate = Color(0.8, 0.6, 1.0)
+				_set_stage("act", 0.55)
+		["step", "act"]:
+			if _stage_timer <= 0.0:
+				_snap(Vector2(1.2, 0.85))
+				if _player_in_telegraph():
+					_hurt_player(strike_damage, 240.0)
+				_remove_telegraph()
+				_ground_crack(global_position, STEP_RADIUS * 0.7)
+				Sfx.play_at("rock_break", global_position)
+				_set_stage("recover", 0.7)
+		[_, "recover"]:
+			if _stage_timer <= 0.0:
+				_end_attack()
+
+
+## Kolce Cienia wyrastają po kolei wzdłuż linii (każdy rani gracza raz na atak).
+func _spike_wave() -> void:
+	var per_line := 8 + phase * 2
+	for i in _spots.size():
+		var spot := _spots[i]
+		get_tree().create_timer(SPIKE_DELAY * (i % per_line), false).timeout.connect(func() -> void:
+			if state == State.DEAD or not is_inside_tree():
+				return
+			SkillEffects.sheet_once(get_parent(), FX_SPIKE, 10, 16.0, spot + Vector2(0, 6), Vector2(25, 34), 0.0, 1.0, 1.3)
+			if _player_alive() and _player.global_position.distance_to(spot) <= SPIKE_RADIUS:
+				_hurt_player(area_damage, 160.0))
+	Sfx.play_at("rock_break", global_position)
+
+
+func _roots_radius() -> float:
+	return ROOTS_RADIUS * (1.3 if phase >= 3 else 1.0)
+
+
+## Trujący opar po Jadzie Welesa (BurningPatch w stylu trucizny).
+func _poison_patch(at: Vector2) -> void:
+	var patch := BurningPatch.new()
+	patch.style = "poison"
+	patch.radius = VENOM_RADIUS * 0.8
+	patch.damage = maxi(1, roundi(strike_damage * 0.1))
+	patch.life = 5.0
+	patch.position = at
+	get_parent().add_child(patch)
+
+
+## Znacznik miejsca uderzenia (krąg na ziemi znikający sam).
+func _marker(spot: Vector2, radius: float, time: float, color: Color) -> void:
+	var telegraph := Telegraph.new()
+	telegraph.radius = radius
+	telegraph.duration = time
+	telegraph.modulate = color
+	_place_marker(telegraph, spot, 0.0, time)
+
+
+## Znacznik linii (lodowa włócznia).
+func _line_marker(from: Vector2, dir: Vector2, length: float, width: float, time: float, color: Color) -> void:
+	var telegraph := Telegraph.new()
+	telegraph.shape = Telegraph.Shape.LINE
+	telegraph.length = length
+	telegraph.width = width
+	telegraph.duration = time
+	telegraph.modulate = color
+	_place_marker(telegraph, from, dir.angle(), time)
+
+
+func _place_marker(telegraph: Telegraph, at: Vector2, angle: float, time: float) -> void:
+	var layer := get_tree().get_first_node_in_group("floor_layer")
+	(layer if layer != null else get_parent()).add_child(telegraph)
+	telegraph.global_position = at
+	telegraph.rotation = angle
+	get_tree().create_timer(time + 0.1, false).timeout.connect(func() -> void:
+		if is_instance_valid(telegraph):
+			telegraph.queue_free())
+
+
+static func _on_line(point: Vector2, from: Vector2, dir: Vector2, length: float, width: float) -> bool:
+	var local := (point - from).rotated(-dir.angle())
+	return local.x >= -width / 2.0 and local.x <= length and absf(local.y) <= width / 2.0
+
+
+## Miejsce, w którym Marzanna staje po zniknięciu: z dala od gracza, na podłodze areny.
+func _blink_spot() -> Vector2:
+	for i in 12:
+		var at := _player.global_position + Vector2.from_angle(randf() * TAU) * randf_range(BLINK_RANGE.x, BLINK_RANGE.y)
+		if not _blocked(at):
+			return at
+	return global_position
+
+
+func _blocked(at: Vector2) -> bool:
+	return pathing != null and pathing.has_method("_blocked") and pathing._blocked(at, 20.0)
+
+
+func _teleport(at: Vector2) -> void:
+	global_position = at
+	reset_physics_interpolation()
+
+
+# ---------------------------------------------------------------- wygląd
+func _fx_engage() -> void:
+	match kind:
+		"weles":
+			for i in 8:
+				SkillEffects.sheet_once(get_parent(), FX_ROOTS, 10, 16.0, global_position + Vector2.from_angle(TAU * i / 8.0) * 60.0,
+						Vector2(24, 39), 0.0, 1.0, 1.4)
+		"marzanna":
+			SkillEffects.sheet_once(get_parent(), FX_MIST, 14, 16.0, global_position, Vector2(73, 124), 0.0, 1.0, 1.2)
+		_:
+			SkillEffects.sheet_once(get_parent(), FX_SMOKE, 10, 14.0, global_position, Vector2(29, 40), 0.0, 1.0, 3.0)
+	super()
+
+
+func _cancel_attack() -> void:
+	super()
+	if sprite != null:
+		sprite.position = Vector2.ZERO
+
+
+## Spoczynek w pętli (klatki 0-8), atak: zamach w czasie zapowiedzi (do IMPACT_FRAME), potem reszta klatek.
+func _animate(delta: float) -> void:
+	if _attack != "":
+		var index := 0
+		if _attack_stage == "telegraph":
+			var t := clampf(1.0 - _stage_timer / maxf(_windup, 0.01), 0.0, 1.0)
+			index = int(t * IMPACT_FRAME)
+		else:
+			_anim_time += delta * 12.0
+			index = mini(IMPACT_FRAME + int(_anim_time), ATTACK_FRAMES - 1)
+		sprite.frame = IDLE_FRAMES + clampi(index, 0, ATTACK_FRAMES - 1)
+		if _attack_stage == "telegraph":
+			_anim_time = 0.0
+		return
+	_anim_time += delta * IDLE_FPS
+	sprite.frame = int(_anim_time) % IDLE_FRAMES
+	if velocity.length() > 5.0:
+		sprite.flip_h = velocity.x < 0.0
+	elif state == State.CHASE and _player != null:
+		_face(_player.global_position)
+
+
+## Serce boga zawsze (waluta na legendy - Pinnacles.HEART_COST) i bardzo rzadko jego pas (Pinnacles.BELT_CHANCE).
+func _drop_trophies() -> void:
+	_spawn_pickup(Pinnacles.heart(kind), 1)
+	var belt := str(Pinnacles.GODS[kind].get("belt", ""))
+	if belt != "" and (_dev_mode() or randf() < Pinnacles.BELT_CHANCE):
+		_spawn_pickup(Loot.legendary_at_level(belt, level), 1)

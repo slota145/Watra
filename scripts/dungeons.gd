@@ -484,4 +484,7 @@ static func mechanic_bonus(config_data: Dictionary) -> Dictionary:
 
 
 static func title(config_data: Dictionary) -> String:
+	if Pinnacles.GODS.has(str(config_data.get("pinnacle", ""))):
+		return Lang.t("Arena: %s (poz. %d)") % [Pinnacles.god_name(config_data["pinnacle"]),
+				Pinnacles.GODS[config_data["pinnacle"]]["level"]]
 	return Lang.t("%s - stopień %d (poz. %d)") % [Lang.t(CLIMATES[config_data["climate"]]["name"]), config_data["tier"], tier_level(config_data["tier"])]

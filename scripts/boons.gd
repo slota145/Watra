@@ -123,6 +123,23 @@ var nawia_blessed: Array[String] = []
 var watra_tabs: Array = [[], [], []]
 var watra_tab := 0
 var watra_tab_names: Array = ["", "", ""]
+## Bossowie szczytowi (Pinnacles): bóg -> liczba zwycięstw (pierwsze daje punkty Watry).
+var pinnacle_kills := {}
+## Pas Wiecznych Ziół (efekt "eternal_herbs"): ile mikstur zielarki działa naraz bez końca (0 - pas zdjęty;
+## ustawia Player przy zmianie ekwipunku) i które to są (najstarsza wypada, gdy brak miejsca).
+var eternal_herbs := 0
+var eternal: Array[String] = []
+## Pas Łowcy Dusz (efekt "soul_hunter"): cechy zabitych elit (Dungeons.ELITE_TRAITS) -> pozostały czas.
+var souls := {}
+## Co daje graczowi cecha elity zabranej Pasem Łowcy Dusz (jak premie na przedmiotach).
+const SOUL_TIME := 20.0
+const SOUL_STATS := {
+	"commander": {"damage_percent": 0.4}, "hastening": {"move_speed": 0.2, "attack_speed": 0.2, "cast_speed": 0.2},
+	"warding": {"dodge_chance": 0.2}, "shielded": {"health_percent": 0.3}, "healer": {"health_regen": 25.0},
+	"thorns": {"crit_chance": 0.1}, "volatile": {"crit_damage": 0.4}, "burning": {"damage_percent": 0.2},
+	"frost": {"cooldown_reduction": 0.2}, "storm": {"cast_speed": 0.25, "damage_percent": 0.1},
+	"summoner": {"mana_regen": 10.0}, "splitting": {"xp_gain": 0.5, "item_find": 0.3},
+}
 
 
 func _process(delta: float) -> void:
@@ -133,14 +150,37 @@ func _process(delta: float) -> void:
 			expired.append(group)
 	for group: String in expired:
 		active.erase(group)
-	if not expired.is_empty():
+	var faded: Array = []
+	for elite_trait: String in souls:
+		souls[elite_trait] -= delta
+		if souls[elite_trait] <= 0.0:
+			faded.append(elite_trait)
+	for elite_trait: String in faded:
+		souls.erase(elite_trait)
+	if not expired.is_empty() or not faded.is_empty():
 		changed.emit()
 
 
 func grant(id: String) -> void:
 	var data: Dictionary = DEFS[id]
+	# Pas Wiecznych Ziół: mikstura zielarki zostaje na stałe obok innych (do eternal_herbs różnych naraz)
+	if data["group"] == "elixir" and eternal_herbs > 0:
+		eternal.erase(id)
+		eternal.append(id)
+		while eternal.size() > eternal_herbs:
+			eternal.pop_front()
+		active.erase("elixir")
+		changed.emit()
+		return
 	active[data["group"]] = {"id": id, "left": float(data["time"])}
 	changed.emit()
+
+
+## Pas Łowcy Dusz: cecha zabitej elity działa na gracza przez `time` sekund (odnawia się).
+func add_soul(elite_trait: String, time := SOUL_TIME) -> void:
+	if SOUL_STATS.has(elite_trait):
+		souls[elite_trait] = maxf(float(souls.get(elite_trait, 0.0)), time)
+		changed.emit()
 
 
 ## Cena po zniżce ze święta i karawany (sklepy, usługi w Ostoi, warsztat).
@@ -157,6 +197,11 @@ func bonus(stat: String) -> float:
 	var total := float(WATRA_PERKS.get(stat, 0.0)) * (watra_level() - 1)
 	for group: String in active:
 		total += float(DEFS[active[group]["id"]]["stats"].get(stat, 0.0))
+	if eternal_herbs > 0:
+		for id in eternal:
+			total += float(DEFS[id]["stats"].get(stat, 0.0))
+	for elite_trait: String in souls:
+		total += float(SOUL_STATS[elite_trait].get(stat, 0.0))
 	return total
 
 
@@ -293,7 +338,15 @@ func set_blessing(zone: String, on: bool) -> void:
 
 ## Punkty Watry z Mapy Nawii (do wydania w każdej zakładce drzewka Watry osobno).
 func watra_points() -> int:
-	return NawiaMap.points(nawia_cleared)
+	return NawiaMap.points(nawia_cleared) + Pinnacles.points(pinnacle_kills)
+
+
+## Pokonany bóg (Dungeon._pinnacle_rewards): true - pierwsze zwycięstwo (punkty Watry).
+func defeat_pinnacle(god: String) -> bool:
+	var first := int(pinnacle_kills.get(god, 0)) == 0
+	pinnacle_kills[god] = int(pinnacle_kills.get(god, 0)) + 1
+	changed.emit()
+	return first
 
 
 # ---------------------------------------------------------------- drzewko Watry
@@ -357,7 +410,8 @@ func get_save_data() -> Dictionary:
 		timed[group] = [active[group]["id"], active[group]["left"]]
 	return {"active": timed, "bestiary": bestiary.duplicate(), "ember": ember, "ember_spent": ember_spent,
 			"nawia": nawia_cleared.duplicate(), "blessed": nawia_blessed.duplicate(),
-			"watra_tabs": watra_tabs.duplicate(true), "watra_tab": watra_tab, "watra_tab_names": watra_tab_names.duplicate()}
+			"watra_tabs": watra_tabs.duplicate(true), "watra_tab": watra_tab, "watra_tab_names": watra_tab_names.duplicate(),
+			"pinnacles": pinnacle_kills.duplicate(), "eternal": eternal.duplicate()}
 
 
 func load_save_data(data: Dictionary) -> void:
@@ -391,6 +445,15 @@ func load_save_data(data: Dictionary) -> void:
 		watra_tabs.append(chosen.filter(func(id: String) -> bool: return linked.has(id)))
 		watra_tab_names.append(str(saved_names[tab]) if tab < saved_names.size() else "")
 	watra_tab = clampi(int(data.get("watra_tab", 0)), 0, WatraTree.TABS - 1)
+	eternal.clear()
+	for id in data.get("eternal", []):
+		if DEFS.has(str(id)) and DEFS[str(id)]["group"] == "elixir":
+			eternal.append(str(id))
+	pinnacle_kills.clear()
+	var kills: Dictionary = data.get("pinnacles", {})
+	for god: String in kills:
+		if Pinnacles.GODS.has(god):
+			pinnacle_kills[god] = int(kills[god])
 	bestiary.clear()
 	var saved: Dictionary = data.get("bestiary", {})
 	for kind: String in saved:
