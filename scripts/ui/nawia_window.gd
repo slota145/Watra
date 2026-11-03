@@ -39,6 +39,7 @@ func _ready() -> void:
 	row.add_child(box)
 	box.add_child(UiStyle.title(Lang.t("Mapa Nawii")))
 	box.add_child(_wrapped(Lang.t("Horda wylała zaświaty na świat. Oczyszczaj węzły - każdy pokonany strażnik odsłania kolejne i daje punkt Watry."), UiStyle.DIM_COLOR))
+	box.add_child(_wrapped(Lang.t("Oczyszczony węzeł pozwala rozpalić Błogosławieństwo Watry przy kapliczce krainy jego obszaru (F)."), FIRE))
 	box.add_child(HSeparator.new())
 	_progress = _wrapped("", NAWIA)
 	box.add_child(_progress)

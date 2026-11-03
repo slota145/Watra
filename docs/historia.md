@@ -871,6 +871,23 @@ odpowiedniej sekcji.
   - Skarbiec strażnika (`Dungeon._on_boss_died`) nie daje już kamieni zaklinających (usunięte `Dungeons.VAULT_STONE_*`),
     tylko kamienie uświęcone; Kryształ (waga 7, ~20% lochów) zostaje jedynym źródłem w lochach, rynek i zadanie główne
     jako drogie wyjście awaryjne. `tests/balance_sim.gd` liczy kamienie tylko z Kryształu, test w `tests/test_crystal.gd`.
+- [x] **Mapa Nawii, etap 2 - Błogosławieństwo Watry** (listopad 2026). Ustalenia z autorem: zamiast spaczenia krain,
+  które trzeba by usuwać, oczyszczone węzły dają **Błogosławieństwo Watry** - włączane przy kapliczce krainy, podnosi
+  jej potwory do poziomu mapy (to jest „wariant endgame krainy”); dzisiejsze krainy bez zmian.
+  - `NawiaMap.blessing_level` - poziom najtrudniejszego oczyszczonego węzła obszaru (działa od 1. węzła, rośnie
+    z postępem do 90); `blessing_range` - poziomy krainy [poziom - 4, poziom, bossowie poziom + 2] (`BLESS_SPREAD`);
+    `blessing_bonus` - premia do łupu i doświadczenia +2% za każdy oczyszczony węzeł obszaru (`BLESS_BONUS_PER_NODE`,
+    15 węzłów = +30%), tylko z włączonym błogosławieństwem.
+  - Przełącznik: `Boons.nawia_blessed` (zapis „blessed”), `Boons.set_blessing`. F przy kapliczce (`World.BLESSING_RANGE`,
+    `World.blessing_shrine_near`, podpowiedź „[F] Watra” w `Player._scan_harvestables`) otwiera okno
+    `scripts/ui/blessing_window.gd` (postęp obszaru, poziomy, premia, Rozpal / Wygaś). Zmiana przebudowuje krainę od razu
+    (`World.toggle_blessing` - podróż do tej samej kapliczki). W lesie kapliczką jest Ostoja.
+  - Świat: `World._apply_blessing` czyta przełącznik i postęp wprost z zapisu (potwory powstają przed wczytaniem postaci),
+    ustawia `Levels.blessed_zone` / `blessed_range` (`Levels.zone_range` - z niego korzystają `level_at` i `boss_level`)
+    i premię przez `Goblin.dungeon_mods` („loot”, „xp”). `World.blessing_bonus` trzyma premię bieżącej krainy.
+  - Mapa świata (`WorldMapView._blessed`): błogosławiona kraina ma ciepłą poświatę, złotą obwódkę i podpis. Okno Mapy
+    Nawii podpowiada, że oczyszczony węzeł pozwala rozpalić błogosławieństwo.
+  - Miejsce na obóz odłożone do punktu „Budowa i rozbudowa obozów”. Test: `tests/test_blessing.gd`.
 - [x] **Mapa Nawii, etap 1 - mapa, węzły i stopnie 8-17** (listopad 2026). Ustalenia z autorem: mapa duża, losowana
   z ziarna zapisu (ta sama w jednym zapisie), stopnie rosną od środka na zewnątrz, w obszarach przeważają klimaty
   pasujące do krainy, okno na razie rysowane w kodzie (ładna mapa z PixelLab, gdy systemy będą dopracowane).

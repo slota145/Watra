@@ -14,6 +14,7 @@ const SHRINE_ICON := preload("res://assets/ui/shrine_icon.png")
 const ICON_HIT := 8.0
 const OUTLINE := Color(0.1, 0.11, 0.17)
 const BORDER := Color(0.62, 0.5, 0.32)
+const BLESSED := Color(1.0, 0.72, 0.3)
 ## Ile kafelków nieodkrytego terenu otacza krainy na mapie świata.
 const WORLD_MARGIN := 40
 
@@ -89,6 +90,12 @@ func _process(delta: float) -> void:
 		queue_redraw()
 
 
+## Czy kraina ma włączone Błogosławieństwo Watry z oczyszczonym węzłem na Mapie Nawii.
+func _blessed(zone: String) -> bool:
+	return _player.boons.nawia_blessed.has(zone) \
+			and NawiaMap.blessing_level(NawiaMap.nodes(_seed), _player.boons.nawia_cleared, zone) > 0
+
+
 func _draw() -> void:
 	if _player == null:
 		return
@@ -106,6 +113,12 @@ func _draw() -> void:
 			_text(font, rect.get_center() + Vector2(-4, 6), "?", 16, Color(0.6, 0.62, 0.68))
 		if mode == "world":
 			draw_rect(rect, Color(BORDER, 0.9 if zone == _zone else 0.45), false, 1.0)
+			if texture != null and _blessed(zone):
+				# Błogosławieństwo Watry (NawiaMap.blessing_*) - ciepła poświata i złota obwódka
+				var pulse := 0.5 + 0.5 * sin(_time * 2.0)
+				draw_rect(rect, Color(BLESSED, 0.06 + 0.05 * pulse))
+				draw_rect(rect.grow(-1.0), Color(BLESSED, 0.6 + 0.3 * pulse), false, 2.0)
+				_text(font, rect.position + Vector2(4, rect.size.y - 5), Lang.t("Błogosławieństwo Watry"), 8, BLESSED)
 
 	if highlight.has_area() and "forest" in _visible_zones():
 		_draw_highlight(font)

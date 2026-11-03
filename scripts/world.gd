@@ -423,6 +423,10 @@ var _arrivals := {}
 var _spawn_point := Vector2.ZERO
 var _traveling := false
 var _shrine_check := 0.0
+## Premia Błogosławieństwa Watry w tej krainie (0 - bez błogosławieństwa; _apply_blessing).
+var blessing_bonus := 0.0
+## Odległość od kapliczki (piksele), z której F otwiera okno Błogosławieństwa Watry.
+const BLESSING_RANGE := 40.0
 ## Rozlewiska: rodzaj wody na komórce, most, nurt rzeki i środek rozlewiska.
 var _water := {}
 var _bridge_cells := {}
@@ -475,6 +479,7 @@ func _ready() -> void:
 	_rng.seed = _seed if zone == "forest" else hash([_seed, zone])
 	Goblin.dungeon_mods = {}
 	Goblin.pathing = null
+	_apply_blessing(save)
 	seed(_rng.seed)
 	_noise.seed = _rng.randi()
 	_noise.frequency = 0.07
@@ -488,7 +493,7 @@ func _ready() -> void:
 	if zone == Zones.DUNGEON:
 		Sfx.stop_ambient()
 	# potwory bez poziomu od świata (przywołane przez bossów) - środek zakresu krainy
-	var levels: Array = Levels.ZONES.get(zone, [1, 1, 1])
+	var levels: Array = Levels.zone_range(zone)
 	Levels.zone_default = roundi((levels[0] + levels[1]) / 2.0)
 
 	if zone == "swamp":
@@ -1563,6 +1568,29 @@ func _build_group(group_center: Vector2) -> void:
 		_add_goblin_spawn({"type": leader if k == 0 else "goblin", "position": pos, "sitting": false, "look_at": group_center})
 
 
+## Błogosławieństwo Watry (NawiaMap.blessing_*): gdy włączone przy kapliczce tej krainy i jej obszar Mapy Nawii ma
+## oczyszczony węzeł, potwory dostają poziom tego węzła (Levels.blessed_range), a łup i doświadczenie premię.
+## Czytane wprost z zapisu, bo potwory powstają, zanim postać wczyta swoje dane.
+func _apply_blessing(save: Dictionary) -> void:
+	Levels.blessed_zone = ""
+	Levels.blessed_range = []
+	blessing_bonus = 0.0
+	var boons: Dictionary = (save.get("player", {}) as Dictionary).get("boons", {})
+	if not Levels.ZONES.has(zone) or not zone in (boons.get("blessed", []) as Array):
+		return
+	var cleared: Array[int] = []
+	for id in boons.get("nawia", []):
+		cleared.append(int(id))
+	var nodes := NawiaMap.nodes(_seed)
+	var level := NawiaMap.blessing_level(nodes, cleared, zone)
+	if level <= 0:
+		return
+	Levels.blessed_zone = zone
+	Levels.blessed_range = NawiaMap.blessing_range(level)
+	blessing_bonus = NawiaMap.blessing_bonus(nodes, cleared, zone)
+	Goblin.dungeon_mods = {"loot": 1.0 + blessing_bonus, "xp": 1.0 + blessing_bonus}
+
+
 ## Rejestruje nowe miejsce goblina (nadaje mu id do zapisu) i stawia na nim goblina.
 func _add_goblin_spawn(spawn: Dictionary) -> void:
 	spawn["id"] = _goblin_spawns.size()
@@ -2419,6 +2447,29 @@ func _travel(target_zone: String, arrive: String) -> void:
 	data["zone"] = target_zone
 	data["arrive"] = arrive
 	Game.travel(data)
+
+
+## Kapliczka w zasięgu, przy której można przełączyć Błogosławieństwo Watry ("" - żadnej albo obszar Mapy Nawii
+## tej krainy nie ma jeszcze oczyszczonego węzła).
+func blessing_shrine_near(pos: Vector2) -> String:
+	if not Levels.ZONES.has(zone) or player == null:
+		return ""
+	for id: String in _zone_shrines:
+		if pos.distance_to(_zone_shrines[id]) < BLESSING_RANGE:
+			if NawiaMap.blessing_level(NawiaMap.nodes(_seed), player.boons.nawia_cleared, zone) > 0:
+				return id
+			return ""
+	return ""
+
+
+## Rozpala albo gasi Błogosławieństwo Watry tej krainy i od razu ją przebudowuje (podróż do tej samej kapliczki).
+func toggle_blessing(shrine_id: String) -> void:
+	if _traveling or player.is_dead:
+		return
+	var on := not player.boons.nawia_blessed.has(zone)
+	player.boons.set_blessing(zone, on)
+	Sfx.play("magic", 2.0, 0.7)
+	_travel(zone, "shrine:" + shrine_id)
 
 
 ## Teleport do odkrytej kapliczki (kliknięcie na dużej mapie).
