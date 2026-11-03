@@ -69,6 +69,15 @@ const ITEM_LEVEL_SPREAD := Vector2i(-1, 2)
 const ENDGAME_LEVEL := 41
 const ENDGAME_DAMAGE := 0.025
 const ENDGAME_XP := 0.016
+## Zdrowie w końcówce: +2,5% na poziom ponad ENDGAME_LEVEL (przy 90. poziomie około 2,2 razy więcej) - obrażenia gracza
+## rosną tam głównie z atrybutów, drzewek i umiejętności, a nie z poziomu łupu (pomiar: tests/endgame_probe.gd).
+const ENDGAME_HEALTH := 0.025
+## Ostrzejsze zasady walki w końcówce (endgame_share) wchodzą stopniowo od ENDGAME_LEVEL i działają w pełni
+## od ENDGAME_FULL poziomu potworów (krótsza nietykalność gracza, odporność potworów na przerwanie zamachu i odrzut).
+const ENDGAME_FULL := 65
+## Pancerz w końcówce: stała pancerza (CharacterStats.ARMOR_CONSTANT) rośnie o tyle na poziom potworów ponad
+## ENDGAME_LEVEL - ten sam pancerz chroni słabiej przed silniejszymi potworami.
+const ENDGAME_ARMOR := 0.06
 
 ## Poziom stosowany, gdy potwór nie dostał go od świata (np. przywołany przez bossa) - ustawia świat.
 static var zone_default := 1
@@ -100,7 +109,17 @@ static func reference_of(scene_path: String) -> Array:
 
 
 static func health(level: int) -> float:
-	return HEALTH_BASE * (1.0 + HEALTH_GROWTH * (level - 1))
+	return HEALTH_BASE * (1.0 + HEALTH_GROWTH * (level - 1)) * (1.0 + ENDGAME_HEALTH * maxi(level - ENDGAME_LEVEL, 0))
+
+
+## Jak bardzo działają zasady końcówki gry dla potworów danego poziomu: 0 do ENDGAME_LEVEL, 1 od ENDGAME_FULL.
+static func endgame_share(level: int) -> float:
+	return clampf(float(level - ENDGAME_LEVEL) / (ENDGAME_FULL - ENDGAME_LEVEL), 0.0, 1.0)
+
+
+## Mnożnik stałej pancerza przy potworach danego poziomu (1 do ENDGAME_LEVEL).
+static func armor_scale(level: int) -> float:
+	return 1.0 + ENDGAME_ARMOR * maxi(level - ENDGAME_LEVEL, 0)
 
 
 static func damage(level: int) -> float:

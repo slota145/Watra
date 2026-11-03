@@ -153,6 +153,29 @@ odpowiedniej sekcji.
   nadal nie sprzedaje. Test `test_village` sprawdza, że każdy towar ma cenę.
 - [x] `tests/test_party.gd`, „prośba przepada z drużyną” zawodziło losowo: drużyna bywa jednoosobowa, a test zabijał
   jej jedynego członka, więc późniejsza prośba nie miała drużyny do rozwiązania. Test dobiera wtedy nowego członka.
+- [x] **Końcówka gry trudniejsza** (zgłoszenie autora z 3.11.2026: Nawia przechodzona ekwipunkiem z ~20. poziomu bez
+  ryzyka śmierci). Pomiar zapisu autora (`docs/zapis_1793465464755.json`, Wojciech z buławą) narzędziem
+  `tests/endgame_probe.gd` (wczytuje zapis, loch stopnia T, gromada 8 wrogów dociągana do postaci, bot z paskiem miecza;
+  wypisuje obrażenia/s, zabójstwa, otrzymane obrażenia i leczenie): przed zmianami w stopniu 17 3000-4000 obrażeń/s,
+  potwór pada w ~0,25 s, w walce otrzymane obrażenia ~20/s równoważone leczeniem, stojąc w gromadzie pada po 11 s.
+  Postać 50. poziomu z tym samym ekwipunkiem bije tak samo (obrażenia nie zależą od poziomu). Przyczyny i zmiany
+  (wszystkie poza limitem kradzieży życia działają tylko ponad `Levels.ENDGAME_LEVEL`, w pełni od `ENDGAME_FULL` = 65,
+  udział liczy `Levels.endgame_share`; krainy bez zmian):
+  - nietykalność po trafieniu i uniku 0,5 s pozwalała trafić najwyżej 2 ciosom na sekundę - w końcówce do 0,15 s
+    (`Player.hurt_invulnerability`, `ENDGAME_INVULNERABILITY`), więc gromada bije mocniej niż jeden wróg;
+  - kradzież życia bez limitu (talizman 2,1% z kilku tysięcy obrażeń/s) - najwyżej 4% maks. zdrowia na sekundę
+    (`LegendaryEffects.LEECH_CAP`, `leech_heal`, też Krwawy Szał);
+  - każde trafienie przerywało zamach, a Młynek odpychał co 0,26 s - w końcówce zamach przerywa tylko cios za co najmniej
+    15% zdrowia potwora, a odrzut jest o połowę słabszy (`Goblin.ENDGAME_STAGGER`, `ENDGAME_KNOCKBACK_RESIST`);
+  - stała pancerza 50 niezależnie od poziomu potworów - rośnie o 6% na poziom ponad 41 (`Levels.ENDGAME_ARMOR`,
+    `Levels.armor_scale`, `CharacterStats.armor_reduction` z poziomem potworów okolicy `Levels.zone_default`);
+    86 pancerza przy poziomie 90 daje 30% zamiast 63%;
+  - zdrowie potworów +2,5% na poziom ponad 41 (`Levels.ENDGAME_HEALTH`, przy 90. poziomie 2,2x - także bossowie
+    szczytowi i Władca Hordy).
+  `tests/balance_sim.gd`: osobne widełki ciosów w końcówce (`TARGET_NORMAL_END`, `TARGET_STRONG_END` - gracz bije tam
+  umiejętnościami), pancerz z `armor_scale` i gracz z ekwipunkiem z 40. poziomu (`STALE_LEVEL`) - przy 90. poziomie
+  ma przeżywać mniej niż 6 ciosów (5,2). Pomiar po zmianach (stopień 17): potwór 2330 zdrowia, cios po redukcji 173,
+  stojąc w gromadzie pada po 3-4 s, w walce otrzymuje 40-140/s przy leczeniu 40-85/s (bez mikstur pada po 10-35 s).
 
 ## Gobliński Las i Prastary Las (`scripts/world.gd`, `scripts/ancient_forest.gd`) (Do poprawy)
 - [x] Gobliński Las: więcej grupek goblinów w lesie i większe siedlisko wilków - około 450 potworów (było około 340);

@@ -25,6 +25,13 @@ const STAGES := [1, 3, 5, 7, [8, "fields"], 9, [11, "fields"], 12, 14, [14, "fie
 const TARGET_NORMAL := Vector2(2.5, 6.0)
 ## Silny: od 5,5 ciosu - topielec w Rozlewiskach przy zaklęciu z lochów pada od ok. 6 (autor uznał to za w porządku).
 const TARGET_STRONG := Vector2(5.5, 18.0)
+## Końcówka gry (od Levels.ENDGAME_LEVEL): potwory mają więcej zdrowia (Levels.ENDGAME_HEALTH), bo gracz bije tam
+## głównie umiejętnościami (2-3 razy mocniej niż zwykły cios i w kilku wrogów naraz - tests/endgame_probe.gd).
+const TARGET_NORMAL_END := Vector2(2.5, 8.0)
+const TARGET_STRONG_END := Vector2(5.5, 24.0)
+## Gracz, który od STALE_LEVEL nie zmienia broni ani zbroi: przy najwyższym etapie ma przeżywać mniej ciosów, niż
+## wynosi dolna granica TARGET_SURVIVE (końcówka wymaga lepszego ekwipunku - zgłoszenie autora z listopada 2026).
+const STALE_LEVEL := 40
 const TARGET_SURVIVE := Vector2(6.0, 20.0)
 const TARGET_KILLS := Vector2(25.0, 260.0)
 const SAMPLES := 40
@@ -139,7 +146,8 @@ func _run() -> void:
 		var hit: float = (weapon["weapon_damage"] + enchant + weapon.get("damage", 0.0)) * (1.0 + strength * 0.01) \
 				* (1.0 + weapon.get("damage_percent", 0.0)) * (1.0 + weapon.get("crit_chance", 0.0) * 0.5)
 		var hp: float = 100.0 + 8.0 * (player_level - 1) + health
-		var reduction := (50.0 / (50.0 + armor)) * (1.0 - minf(strength * 0.005, 0.25))
+		var k: float = 50.0 * levels.armor_scale(L)
+		var reduction := (k / (k + armor)) * (1.0 - minf(strength * 0.005, 0.25))
 		var strong: Array = ENEMIES[zone]["strong"]
 		var normal_hp: float = levels.health(L) * normal[1] / ref[0]
 		var strong_hp: float = levels.health(L) * strong[1] / ref[0]
@@ -155,11 +163,15 @@ func _run() -> void:
 		var sales_share := EQUIPMENT_CHANCE * sale / per_kill
 		var reforge := (30.0 + 8.0 * L) / per_kill
 		var blessing: float = (40.0 + 8.0 * (player_level - 1)) / per_kill
+		if L >= 38: print("     pancerz %.0f -> redukcja %.0f%%" % [armor, (1.0 - reduction) * 100.0])
 		print("%3d  %-9s %3d   %5.1f(+%.1f)   %5.1f  %6.1f    %6.1f      %6.1f   %5.1f   %6.0f (%2d%%)        %5.0f     %5.0f" % [
 				L, zone, player_level, hit, enchant, hits_normal, hits_strong, survive, kills_per_level, dungeons, per_kill * 100.0,
 				roundi(sales_share * 100.0), reforge, blessing])
-		_check(hits_normal, TARGET_NORMAL, "L%d: ciosy na zwykłego" % L)
-		_check(hits_strong, TARGET_STRONG, "L%d: ciosy na silnego" % L)
+		var endgame: bool = L > levels.ENDGAME_LEVEL
+		_check(hits_normal, TARGET_NORMAL_END if endgame else TARGET_NORMAL, "L%d: ciosy na zwykłego" % L)
+		_check(hits_strong, TARGET_STRONG_END if endgame else TARGET_STRONG, "L%d: ciosy na silnego" % L)
+		if endgame:
+			_stale_report(L, player_level, normal, ref, enchant, strength, stage == STAGES.back())
 		_check(survive, TARGET_SURVIVE, "L%d: przeżywa ciosów" % L)
 		_check(kills_per_level, TARGET_KILLS, "L%d: zabójstw na poziom" % L)
 		_check(reforge, TARGET_REFORGE, "L%d: zabójstw na przekucie" % L)
@@ -168,6 +180,34 @@ func _run() -> void:
 	_skills_report()
 	print("WYNIK: ", "OK" if _fails == 0 else "%d poza widełkami" % _fails)
 	quit()
+
+
+## Ten sam etap końcówki z bronią i zbroją z poziomu STALE_LEVEL (gracz nie zmienia ekwipunku).
+var _stale := {}
+
+
+func _stale_report(L: int, player_level: int, normal: Array, ref: Array, enchant: float, strength: int, last: bool) -> void:
+	if _stale.is_empty():
+		_stale["weapon"] = _avg_items("sword", STALE_LEVEL, "magic")
+		var armor := 0.0
+		var health := 0.0
+		for line in ["plate", "helm", "gauntlets", "greaves"]:
+			var piece := _avg_items(line, STALE_LEVEL, "common")
+			armor += piece.get("armor", 0.0)
+			health += piece.get("health", 0.0)
+		_stale["armor"] = armor
+		_stale["health"] = health
+	var weapon: Dictionary = _stale["weapon"]
+	var hit: float = (weapon["weapon_damage"] + enchant + weapon.get("damage", 0.0)) * (1.0 + strength * 0.01) \
+			* (1.0 + weapon.get("damage_percent", 0.0)) * (1.0 + weapon.get("crit_chance", 0.0) * 0.5)
+	var k: float = 50.0 * levels.armor_scale(L)
+	var reduction: float = (k / (k + _stale["armor"])) * (1.0 - minf(strength * 0.005, 0.25))
+	var hp: float = 100.0 + 8.0 * (player_level - 1) + _stale["health"]
+	var survive := hp / maxf(levels.damage(L) * normal[2] / ref[1] * reduction, 1.0)
+	var hits: float = levels.health(L) * normal[1] / ref[0] / hit
+	print("     ekwipunek z %d. poziomu: cios %.0f, ciosy na zwykłego %.1f, przeżywa %.1f" % [STALE_LEVEL, hit, hits, survive])
+	if last:
+		_check(survive, Vector2(0.0, TARGET_SURVIVE.x), "L%d: przeżywa ciosów z ekwipunkiem z %d. poziomu" % [L, STALE_LEVEL])
 
 
 ## Umiejętności na 5. poziomie: obrażenia (w obrażeniach broni) na punkt many, przy typowej liczbie

@@ -212,6 +212,10 @@ var _bloodlust := 0
 var _bloodlust_time := 0.0
 ## Pas Bogatyra: ile sekund jeszcze trwa gniew po wypiciu mikstury.
 var _potion_fury := 0.0
+## Kradzież życia leczy najwyżej tyle maks. zdrowia na sekundę (jak limit w Path of Exile) - bez limitu 2% z kilku
+## tysięcy obrażeń na sekundę równoważyło każde obrażenia gromady.
+const LEECH_CAP := 0.04
+var _leech_budget := 0.0
 const POTION_FURY_TIME := 6.0
 ## rodzaj efektu -> pozostały czas odnowienia
 var _cooldowns := {}
@@ -241,6 +245,8 @@ func _process(delta: float) -> void:
 		_potion_fury -= delta
 		if _potion_fury <= 0.0:
 			_player.stats.set_temp("potion_fury", {})
+	var leech_max := _player.stats.max_health() * LEECH_CAP
+	_leech_budget = minf(_leech_budget + leech_max * delta, leech_max)
 
 
 ## Czasowe stany z legendarnych przedmiotów do listy efektów pod paskami zdrowia i many:
@@ -469,7 +475,15 @@ func _whirl_tick(at: Vector2) -> void:
 func leech(amount: int) -> void:
 	var power := _player.equipment.effect_power("leech")
 	if power > 0.0:
-		_player.heal(amount * power)
+		leech_heal(amount * power)
+
+
+## Leczenie z kradzieży życia (talizmany, Krwawy Szał) - najwyżej LEECH_CAP maks. zdrowia na sekundę.
+func leech_heal(value: float) -> void:
+	var healed := minf(value, _leech_budget)
+	if healed > 0.0:
+		_leech_budget -= healed
+		_player.heal(healed)
 
 
 ## Lotka Burzy: unik zostawia ślad piorunów od miejsca startu do końca - rani wrogów na drodze.
