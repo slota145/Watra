@@ -302,7 +302,29 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     (patrz „Modyfikacja premii tylko runami”);
   - **Krąg Żertwy** (nie „Ołtarz Welesa” - ta nazwa jest już zajęta przez esencje) - zabici wrogowie w kręgu dają
     daninę, za nią wybór nagrody - łup: **talizmany**;
-  - **Skarbnik** - duch strzeże skarbca, fale obrońców, rodzaj łupu znany z góry;
+  - **Skarbnik** - nagroda z ryzykiem (jak Ultimatum w PoE); ustalenia z autorem (listopad 2026):
+    - mechanika jak inne (szansa na pojawienie się), bazowo jeden na loch; więcej Skarbników w lochu dadzą później
+      drzewko Watry i przedmioty wkładane w Watrę;
+    - oferta 3-4 nagród (przedmioty do założenia, runy, kamienie zaklinania, kamienie szlachetne...), do wyboru:
+      **Weź** (jedna nagroda, koniec), **Wzmocnij** (fale potworów - ich liczba zależy od tego, które to wzmocnienie
+      z rzędu; po wygranej Skarbnik znika, a wzmocniona oferta czeka u następnego napotkanego Skarbnika, także
+      w kolejnym lochu - zapis w grze), **Przelosuj** (tylko za specjalny przedmiot z fal Skarbnika, np. „Kości
+      Skarbnika”; nie podnosi siły wrogów; losuje rodzaje premii / rodzaj kamienia / rodzaj runy; też wymaga fal,
+      zmieniona oferta czeka u następnego Skarbnika);
+    - wzmocnienie działa na całą ofertę: przedmiotom rosną tiery premii (rodzaje premii bez zmian), runom
+      i kamieniom zaklinania - liczba sztuk, kamieniom szlachetnym - szlif; szczyt to przedmiot z samymi T1, a ostatnia,
+      najdroższa decyzja - przemiana w losową legendę tego samego rodzaju z zachowaniem premii;
+    - każde wzmocnienie: wyższy poziom potworów, więcej wrogów naraz, mocniejsze fale (na wysokich poziomach cechy elit);
+      hordy mają być duże - sufit wrogów żywych naraz znaleźć pomiarem (`bench_combat`, `bench_village` z masowym
+      zabijaniem Mgnieniem i Młynkiem) i pokazać autorowi jako liczbę na maksymalnym wzmocnieniu; łączna liczba
+      zabitych może rosnąć dalej (ciągły strumień z kilku stron);
+    - śmierć w trakcie fal - oferta przepada; przy wzmocnieniu oferta zapisuje się jako „zagrożona”, zabezpiecza ją
+      dopiero wygrana (wyjście z lochu albo wczytanie gry w trakcie fal = śmierć);
+    - najpierw (osobny krok): przegląd siły tierów T1 (`Loot.TIER_VALUES`) na tle PoE, Diablo 4 i Last Epoch
+      i symulacja postaci na 40. poziomie w pełnym T1; wstępnie zdrowie T1 (+200 przy bazie ~400) i szansa na cios
+      krytyczny (+12% wprost) za mocne, szybkość ruchu (16%) za słaba - zmiany pokazać autorowi przed wprowadzeniem;
+    - do dopytania: waga w `MECHANICS`, ile wzmocnień najwyżej, ile fal przy kolejnych, wygląd Skarbnika, jak bardzo
+      rosną tiery przy jednym wzmocnieniu;
   - **Kryształ Watry** (do przerobienia) - jedyne źródło **kamieni zaklinania**: zabrać je ze skarbca strażnika
     (`Dungeon` - zostają kamienie błogosławione), rynek i nagroda zadania głównego zostają jako drogie wyjście
     awaryjne; Kryształ musi wypadać często;
