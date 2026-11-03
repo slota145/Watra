@@ -206,7 +206,7 @@ func _finish(success: bool) -> void:
 	MiscVfx.crystal_shatter(get_parent(), global_position, 70.0)
 	Sfx.play("rock_break", 2.0)
 	Sfx.play("quest_ready" if success else "ui_error")
-	for entry: Array in reward(tier, factor):
+	for entry: Array in reward(tier, factor * dungeon.mechanic_power("crystal")):
 		dungeon._drop(global_position + Vector2(0, 18), entry[0], entry[1])
 	var text := ""
 	if variant == "crystal":

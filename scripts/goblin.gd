@@ -603,12 +603,16 @@ func _drop_loot() -> void:
 		_spawn_pickup("goblin_heart", 1)
 	var item_find: float = dungeon_mods.get("loot", 1.0) * (_player.stats.item_find_multiplier() if _player != null else 1.0)
 	if randf() < equipment_drop_chance * item_find:
-		_spawn_pickup(Loot.drop_at_level(level), 1)
-	if quest_kind != "animal" and not scene_file_path.contains("dummy") and randf() < Loot.WORLD_LEGEND_CHANCE * dungeon_mods.get("loot", 1.0):
+		_spawn_pickup(Loot.drop_at_level(level, float(dungeon_mods.get("quality", 0.0)), "", int(dungeon_mods.get("item_level", 0))), 1)
+	var real := quest_kind != "animal" and not scene_file_path.contains("dummy")
+	if real and randf() < Loot.WORLD_LEGEND_CHANCE * dungeon_mods.get("loot", 1.0) * dungeon_mods.get("legend", 1.0):
 		_spawn_pickup(Loot.world_legend(level), 1)
 	# kamienie szlachetne po zadaniu jubilera (w lochach - lepsze, z szansą na trzecią premię)
-	if Gems.unlocked and randf() < Gems.DROP_CHANCE * item_find:
+	if Gems.unlocked and randf() < Gems.DROP_CHANCE * item_find * dungeon_mods.get("gems", 1.0):
 		_spawn_pickup(Gems.roll("", Gems.cut_for_level(level), pathing != null), 1)
+	# bożki (Idols) - z każdego potwora, gdy lochy Watry są otwarte
+	if real and _player != null and randf() < Idols.drop_chance(self is Boss) and MainQuests.dungeons_unlocked(_player.quests):
+		_spawn_pickup(Idols.roll(), 1)
 
 
 ## Torba z łupu (Bags) - wspólna dla wszystkich potworów (bossowie częściej), zwierzyna jej nie nosi.

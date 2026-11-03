@@ -829,6 +829,28 @@ odpowiedniej sekcji.
     do plecaka (`{"talisman": nr}` w `InventoryWindow._drop_on_bag`), PPM - wyjmij; pod siatką suma premii i efektów.
   - Zrzuty: `SCRIPT=tools/dungeon_shots.gd tools/screenshot.sh /tmp/m catacombs 7 3 1.0 mechaniki` (`_zertwa.png`
     i `_zertwa_open.png`). Testy: `tests/test_dungeon.gd` (`_check_zertwa`), `tests/test_talismans.gd`.
+- [x] **Bożki** (listopad 2026, jak skaraby w PoE). Ustalenia z autorem: 2 sloty na start (więcej z poziomem Watry),
+  bożek zużywa się przy wejściu do lochu, 4 grupy rodzajów (mechaniki, potwory, łup, ryzyko), 3 rzadkości jak w łupie,
+  węzły w drzewku Watry później (razem z drzewkiem).
+  - `scripts/idols.gd` (`Idols`): przedmiot bożka to stały identyfikator `idol_<rodzaj>_<rzadkość>` (`Items.get_data`
+    -> `Idols.data`, nazwa składana przy pokazywaniu: materiał Gliniany / Rzeźbiony / Złocony + rodzaj), więc bożki
+    układają się w stosy. 16 rodzajów (`Idols.KINDS`): po jednym na każdą z 7 mechanik (zwykły - waga mechaniki x4,
+    rzadki - mechanika zawsze, legendarny - zawsze i wzmocniona `MECHANIC_POWER` 1,5: +1-2 skrzynie, +1 kapliczka,
+    +1-2 elity, +1 Skarbnik, Kryształ i Uroczysko x1,5 nagrody, Krąg Żertwy 4 talizmany do wyboru), Hordy i Gniewu
+    (potwory), Złota, Łupu, Run (runy w skarbcu), Klejnotów, Legend (łup), Pychy (+obrażenia potworów, +poziom
+    przedmiotu łupu) i Mroku (+zdrowie potworów, szansa na lepszą rzadkość). Wartości `[zwykły, rzadki, legendarny]`.
+  - Wypadanie (`Goblin._drop_loot`): 0,35% z każdego potwora (bossowie x15) po otwarciu lochów Watry
+    (`MainQuests.dungeons_unlocked`); rzadkości 70 / 25 / 5. Miejsce na drzewko: `Idols.slot_count(…, extra_slots)`,
+    `Idols.drop_chance(…, chance_bonus)`.
+  - Sloty (`Idols.SLOT_LEVELS`): 2, trzeci od 4. i czwarty od 6. poziomu Watry. Okno lochów (`DungeonWindow`) ma
+    listy wyboru bożków z plecaka (każdy rodzaj raz), pod nimi zebrane działanie; „Wkrocz w płomienie” zabiera bożki
+    z plecaka i zapisuje je w ustawieniach wyprawy (`Dungeons.config(…, idols)`).
+  - W lochu: `Dungeons.mult(config, klucz)` łączy modyfikatory za żar z bożkami (zastąpiło `multiplier` w lochu,
+    skrzyniach i Krysztale), `Dungeons.added` - premie dodawane (poziom przedmiotu, rzadkość, runy skarbca),
+    `Dungeons.mechanic_bonus(config)` - premie mechanik z `config["mechanic_bonus"]` i bożków dla `roll_mechanics`,
+    `Dungeon.mechanic_power(id)` - moc mechaniki. `Goblin.dungeon_mods` ma nowe klucze gems, legend, item_level, quality.
+  - Ikony rysowane w kodzie (`tools/idol_art.py`, 48 plików w `assets/items/idols/`, 0 generacji PixelLab) - rzeźbiony
+    słup z twarzą w trzech materiałach, kamień na piersi w kolorze rodzaju. Test: `tests/test_idols.gd`.
 - [x] **Mechaniki w lochach, etap 6 - Kryształ Watry jedynym źródłem kamieni zaklinania** (listopad 2026). Ustalenia
   z autorem: obrona przed falami zostaje (warianty „crystal” i „miners”), fale liczniejsze na wyższych stopniach,
   kowadło na później.

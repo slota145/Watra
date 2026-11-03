@@ -3,6 +3,7 @@ extends PanelContainer
 ## Lochy w płomieniach Watry (przycisk "Lochy" w oknie Watry): wybór klimatu, stopnia trudności (najwyżej poziom
 ## Watry) i modyfikatorów kupowanych za żar (Dungeons.MODIFIERS - kolejne odblokowuje poziom Watry). "Wkrocz
 ## w płomienie" wydaje żar i przenosi gracza do nowo wygenerowanego lochu (World.enter_dungeon).
+## Sloty na bożki (Idols): wybór bożka z plecaka, każdy rodzaj najwyżej raz; bożki zużywają się przy wejściu.
 
 const WIDTH := 300.0
 const FIRE := Color(1.0, 0.6, 0.25)
@@ -18,6 +19,10 @@ var _tier_hint: Label
 var _mod_boxes := {}
 var _ember_label: Label
 var _enter: Button
+## Bożki w slotach (identyfikatory, "" - pusty slot) i listy wyboru.
+var _idols: Array[String] = []
+var _idol_pickers: Array[OptionButton] = []
+var _idol_text: Label
 
 
 func _ready() -> void:
@@ -67,6 +72,27 @@ func _ready() -> void:
 		check.toggled.connect(_toggle_mod.bind(id))
 		box.add_child(check)
 		_mod_boxes[id] = check
+
+	box.add_child(HSeparator.new())
+	box.add_child(_header(Lang.t("Bożki (zużywają się przy wejściu)")))
+	var pickers := GridContainer.new()
+	pickers.columns = 2
+	pickers.add_theme_constant_override("h_separation", 4)
+	pickers.add_theme_constant_override("v_separation", 3)
+	box.add_child(pickers)
+	for i in Idols.SLOT_LEVELS.size():
+		var picker := OptionButton.new()
+		picker.focus_mode = Control.FOCUS_NONE
+		picker.add_theme_font_size_override("font_size", 7)
+		picker.add_theme_constant_override("icon_max_width", 12)
+		picker.custom_minimum_size = Vector2(WIDTH / 2.0 - 2.0, 16)
+		picker.clip_text = true
+		picker.item_selected.connect(_choose_idol.bind(i))
+		pickers.add_child(picker)
+		_idol_pickers.append(picker)
+		_idols.append("")
+	_idol_text = _wrapped("", Color(0.75, 0.85, 1.0))
+	box.add_child(_idol_text)
 
 	var bottom := HBoxContainer.new()
 	bottom.add_theme_constant_override("separation", 6)
@@ -128,10 +154,80 @@ func _toggle_mod(on: bool, id: String) -> void:
 	_refresh()
 
 
+func _choose_idol(index: int, slot: int) -> void:
+	_idols[slot] = str(_idol_pickers[slot].get_item_metadata(index))
+	Sfx.play("ui_click")
+	_refresh()
+
+
+## Bożki w slotach, bez pustych.
+func chosen_idols() -> Array[String]:
+	var result: Array[String] = []
+	for id in _idols:
+		if id != "":
+			result.append(id)
+	return result
+
+
+## Listy bożków w slotach: w każdej bożki z plecaka, których rodzaju nie ma w innym slocie.
+func _refresh_idols(watra: int) -> void:
+	var count := Idols.slot_count(watra)
+	var owned := {}
+	for slot: Dictionary in _player.inventory.slots:
+		if not slot.is_empty() and Idols.is_idol(slot["id"]):
+			owned[slot["id"]] = int(owned.get(slot["id"], 0)) + int(slot.get("count", 1))
+	var ids: Array = owned.keys()
+	ids.sort_custom(func(a: String, b: String) -> bool:
+		var pa := Idols.parse(a)
+		var pb := Idols.parse(b)
+		var ka := Idols.KIND_ORDER.find(pa[0])
+		var kb := Idols.KIND_ORDER.find(pb[0])
+		return ka < kb if ka != kb else Idols.RARITIES.find(pa[1]) > Idols.RARITIES.find(pb[1]))
+	for i in _idol_pickers.size():
+		if i >= count or not owned.has(_idols[i]):
+			_idols[i] = ""
+	var lines: Array[String] = []
+	for i in _idol_pickers.size():
+		var picker := _idol_pickers[i]
+		picker.clear()
+		if i >= count:
+			picker.add_item(Lang.t("Slot od %d. poziomu Watry") % Idols.slot_unlock(i))
+			picker.set_item_metadata(0, "")
+			picker.disabled = true
+			picker.tooltip_text = ""
+			continue
+		picker.disabled = false
+		picker.add_item(Lang.t("Pusty slot"))
+		picker.set_item_metadata(0, "")
+		for id: String in ids:
+			var taken := false
+			for j in _idols.size():
+				if j != i and _idols[j] != "" and Idols.kind_of(_idols[j]) == Idols.kind_of(id):
+					taken = true
+			if taken:
+				continue
+			picker.add_icon_item(Items.get_data(id)["icon"], "%s (%d)" % [Items.display_name(id), owned[id]])
+			var index := picker.item_count - 1
+			picker.set_item_metadata(index, id)
+			picker.get_popup().set_item_icon_max_width(index, 12)
+			if id == _idols[i]:
+				picker.select(index)
+		if _idols[i] == "":
+			picker.select(0)
+			picker.tooltip_text = Lang.t("Bożki wypadają rzadko z potworów.") if ids.is_empty() else ""
+		else:
+			var effect := Idols.effect_lines(_idols[i])
+			picker.tooltip_text = "%s\n%s" % [Items.display_name(_idols[i]), "\n".join(effect)]
+			lines.append_array(effect.slice(1, effect.size() - 1))
+	_idol_text.text = ", ".join(lines) if not lines.is_empty() \
+			else (Lang.t("Nie masz bożków - wypadają rzadko z potworów.") if ids.is_empty() else "")
+
+
 func _refresh() -> void:
 	if _player == null:
 		return
 	var watra := _player.boons.watra_level()
+	_refresh_idols(watra)
 	for id: String in _climate_buttons:
 		_climate_buttons[id].set_pressed_no_signal(id == _climate)
 	_climate_text.text = Lang.t(Dungeons.CLIMATES[_climate]["description"])
@@ -157,13 +253,21 @@ func _refresh() -> void:
 
 func _on_enter() -> void:
 	var cost := Dungeons.mods_cost(_mods)
-	if not _player.boons.spend_ember(cost):
-		return
 	var world := get_tree().get_first_node_in_group("world")
 	if world == null:
 		return
+	var idols := chosen_idols()
+	if not Idols.can_combine(idols) or idols.any(func(id: String) -> bool: return _player.inventory.count_of(id) <= 0):
+		_refresh()
+		return
+	if not _player.boons.spend_ember(cost):
+		return
+	for id in idols:
+		_player.inventory.remove_item(id, 1)
+	for i in _idols.size():
+		_idols[i] = ""
 	visible = false
-	world.enter_dungeon(Dungeons.config(_climate, _tier, _mods, randi()))
+	world.enter_dungeon(Dungeons.config(_climate, _tier, _mods, randi(), idols))
 
 
 ## Puste pole wyboru: jasna ramka (domyślna jest prawie niewidoczna na ciemnym tle okna).
