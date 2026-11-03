@@ -21,7 +21,8 @@
   cocoon_burst / bear_roar / werewolf_howl / bies_roar / shroom_chime - Prastary Las,
 - weles_roar / weles_roots / weles_venom / weles_hiss / weles_death - Weles, bóg szczytowy Mapy Nawii,
 - marzanna_wail / marzanna_nova / marzanna_lance / marzanna_blizzard / marzanna_mist / marzanna_death - Marzanna,
-- czarnobog_roar / czarnobog_cleave / czarnobog_spike / czarnobog_step / czarnobog_strike / czarnobog_death - Czarnobóg.
+- czarnobog_roar / czarnobog_cleave / czarnobog_spike / czarnobog_step / czarnobog_strike / czarnobog_death - Czarnobóg,
+- horde_roar / horde_cleave / horde_meteor / horde_leap / horde_portal / horde_shade / horde_death - Władca Hordy.
 Wymaga numpy i scipy.
 Zapisuje do assets/sfx (wymaga ffmpeg w PATH).
 
@@ -1356,6 +1357,117 @@ CZARNOBOG = ((czarnobog_roar, "czarnobog_roar"), (czarnobog_cleave, "czarnobog_c
              (czarnobog_step, "czarnobog_step"), (czarnobog_strike, "czarnobog_strike"), (czarnobog_death, "czarnobog_death"))
 
 
+def flames(dur, seed, cutoff=1200.0, crackle=40):
+    """Płomienie: szum ognia z trzaskami żaru (fire_roar + crackles)."""
+    rng = np.random.default_rng(seed)
+    n = int(RATE * dur)
+    return fire_roar(n, rng, cutoff) * 2.0 + crackles(n, rng, crackle, crackle * 0.5, amp=0.3)
+
+
+def horde_roar(_variant):
+    """Władca Hordy: potężny, wielogłosowy ryk demona-króla z hukiem płomieni."""
+    a = growl(55, 2.0, 1600, rough=1.0, lo=35, hi=1100, fall=0.25)
+    b = growl(82, 2.0, 1601, rough=0.9, lo=60, hi=1800, fall=0.3)
+    c = growl(123, 2.0, 1602, rough=0.6, lo=100, hi=2600, fall=0.35)
+    n = len(a)
+    t = np.arange(n) / RATE
+    fire = flames(2.0, 1603) * np.minimum(t / 0.2, 1) * np.exp(-t * 0.9) * 0.6
+    return reverb(np.tanh((a + b * 0.8 + c * 0.5) * 1.3) + fire, 1.6, 0.35, 1604)
+
+
+def horde_cleave(_variant):
+    """Ogniste cięcie: ciężki świst ostrza ciągnący płomień, buch ognia i tąpnięcie."""
+    rng = np.random.default_rng(1610)
+    n = int(RATE * 1.1)
+    t = np.arange(n) / RATE
+    sweep = band(rng.standard_normal(n), 200, 3500) * np.sin(np.pi * np.minimum(t / 0.3, 1)) * (t < 0.3) * 1.1
+    whoomp = fire_roar(n, rng, 900.0) * np.exp(-np.maximum(t - 0.2, 0) * 4) * np.minimum(t / 0.2, 1) * 2.5
+    boom = np.sin(2 * np.pi * (55 * np.exp(-np.maximum(t - 0.28, 0) * 3)) * t) * np.exp(-np.maximum(t - 0.28, 0) * 6) * (t > 0.28)
+    return room(np.tanh(sweep + whoomp + boom * 1.3), 1611, 0.6, 0.25)
+
+
+def horde_meteor(_variant):
+    """Meteory: opadający gwizd lecących głazów i ognisty wybuch przy uderzeniu."""
+    rng = np.random.default_rng(1620)
+    dur = 2.0
+    n = int(RATE * dur)
+    t = np.arange(n) / RATE
+    fall = 0.3
+    f = 1800 * np.exp(-t * 2.5) + 300
+    whistle = np.sin(2 * np.pi * np.cumsum(f) / RATE) * 0.25 + band(rng.standard_normal(n), 800, 4000) * 0.5
+    whistle *= np.minimum(t / 0.1, 1) * (t < fall)
+    tt = np.maximum(t - fall, 0)
+    on = t > fall
+    boom = np.sin(2 * np.pi * (35 + 70 * np.exp(-tt * 9)) * tt) * np.exp(-tt * 3.5) * on * 1.4
+    body = fire_roar(n, rng, 1000.0) * np.exp(-tt * 2.5) * on * 2.4
+    debris = crackles(n, rng, 50, 5, amp=0.3) * np.exp(-tt * 2) * on
+    return reverb(np.tanh(whistle + boom + body + debris), 1.6, 0.25, 1621)
+
+
+def horde_leap(_variant):
+    """Skok Władcy: podmuch wybicia, krótki świst w powietrzu i ciężkie lądowanie z pękającą skałą."""
+    rng = np.random.default_rng(1630)
+    dur = 1.6
+    n = int(RATE * dur)
+    t = np.arange(n) / RATE
+    land = 0.45
+    air = band(rng.standard_normal(n), 300, 3000) * np.sin(np.pi * np.minimum(t / land, 1)) * (t < land) * 0.7
+    tt = np.maximum(t - land, 0)
+    on = t > land
+    slam = np.sin(2 * np.pi * (40 * np.exp(-tt * 2)) * tt) * np.exp(-tt * 4) * on * 1.8
+    rock = band(rng.standard_normal(n), 400, 5000) * np.exp(-tt * 12) * on * 1.5
+    fire = fire_roar(n, rng, 800.0) * np.exp(-tt * 3) * on * 1.5
+    return room(np.tanh(air + slam + rock + fire), 1631, 0.7, 0.3)
+
+
+def horde_portal(_variant):
+    """Portal Hordy: rozdzierający się ogień, wznoszący buch płomieni i trzask żaru."""
+    rng = np.random.default_rng(1640)
+    dur = 1.3
+    n = int(RATE * dur)
+    t = np.arange(n) / RATE
+    tear = band(rng.standard_normal(n), 600, 5000) * np.exp(-t * 10) * 1.0
+    rise = fire_roar(n, rng, 600.0 + 1400.0 * np.minimum(t / 0.6, 1)) * np.sin(np.pi * t / dur) * 2.2
+    crack = crackles(n, rng, 30, 10, amp=0.35) * np.exp(-t * 1.5)
+    return room(np.tanh(tear + rise + crack), 1641, 0.5, 0.2)
+
+
+def horde_shade(_variant):
+    """Przyzwanie cienia boga: narastający, odwrócony pogłos, niski chór i ciemne uderzenie dzwonu."""
+    dur = 2.0
+    n = int(RATE * dur)
+    t = np.arange(n) / RATE
+    swell = band(np.random.default_rng(1650).standard_normal(n), 200, 2500) * (t / 1.2) ** 2 * (t < 1.2)
+    choir = np.zeros(n)
+    for f0 in (110.0, 130.8, 164.8):
+        choir += np.sin(2 * np.pi * f0 * t * (1 + 0.004 * np.sin(2 * np.pi * 4 * t))) * 0.25
+    choir *= np.minimum(t / 0.6, 1) * np.minimum((dur - t) / 0.6, 1)
+    bell = chime([98.0, 146.8], np.maximum(t - 1.2, 0), 2.0) * (t > 1.2) * 1.2
+    return reverb(swell + choir + bell, 2.0, 0.5, 1651)
+
+
+def horde_death(_variant):
+    """Władca Hordy ginie: ryk przechodzący w skowyt, ogromny wybuch ognia i długo dogasający żar."""
+    roar = growl(70, 1.6, 1660, rough=1.0, lo=40, hi=1500, fall=0.8)
+    rng = np.random.default_rng(1661)
+    dur = 4.0
+    n = int(RATE * dur)
+    t = np.arange(n) / RATE
+    x = np.zeros(n)
+    x[:len(roar)] += roar
+    tt = np.maximum(t - 1.3, 0)
+    on = t > 1.3
+    x += np.sin(2 * np.pi * (28 + 60 * np.exp(-tt * 6)) * tt) * np.exp(-tt * 2) * on * 1.6
+    x += fire_roar(n, rng, 1100.0) * np.exp(-tt * 1.2) * on * 2.6
+    x += crackles(n, rng, 40, 3, amp=0.3) * np.exp(-tt * 0.7) * on
+    return reverb(np.tanh(x * 1.1), 2.2, 0.4, 1662)
+
+
+HORDE = ((horde_roar, "horde_roar"), (horde_cleave, "horde_cleave"), (horde_meteor, "horde_meteor"),
+         (horde_leap, "horde_leap"), (horde_portal, "horde_portal"), (horde_shade, "horde_shade"),
+         (horde_death, "horde_death"))
+
+
 def save_set(fn, name, count):
     for v in range(count):
         save(np.repeat(fn(v).reshape(-1, 1), 2, axis=1), f"{name}_{v + 1}")
@@ -1387,7 +1499,7 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     only = set(sys.argv[1:])
     if only:
-        for fn, name in LEGENDARY + WELES + MARZANNA + CZARNOBOG + ((chain_cast, "chain_cast"),):
+        for fn, name in LEGENDARY + WELES + MARZANNA + CZARNOBOG + HORDE + ((chain_cast, "chain_cast"),):
             if name in only:
                 save(np.repeat(fn(0).reshape(-1, 1), 2, axis=1), name)
         if "chain_zap" in only:
@@ -1411,7 +1523,7 @@ def main():
     save(np.repeat(chain_cast(0).reshape(-1, 1), 2, axis=1), "chain_cast")
     for fn, name in ((frog_attack, "frog_attack"), (frog_death, "frog_death"), (spit, "spit"), (spit_hit, "spit_hit"),
                      (frog_boss_roar, "frog_boss_roar"), (tongue_lash, "tongue_lash"), (boss_splash, "boss_splash"),
-                     (big_slash, "big_slash"), (seeker_whistle, "seeker_whistle"), (thunder, "thunder")) + LEGENDARY + WELES + MARZANNA + CZARNOBOG:
+                     (big_slash, "big_slash"), (seeker_whistle, "seeker_whistle"), (thunder, "thunder")) + LEGENDARY + WELES + MARZANNA + CZARNOBOG + HORDE:
         save(np.repeat(fn(0).reshape(-1, 1), 2, axis=1), name)
 
 

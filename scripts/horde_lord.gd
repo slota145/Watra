@@ -8,6 +8,8 @@ extends PinnacleBoss
 ##   dopóki cień żyje, Władca jest osłonięty (SHADE_SHIELD - obrywa dużo słabiej),
 ## - faza 4 - wściekłość (aura) i fale Hordy z krawędzi areny co WAVE_TIME s.
 ## Animacja jak u bogów (assets/pinnacles/horde.png): klatki 0-8 spoczynek, 9-17 atak.
+## Efekty z kreatora efektów PixelLab (ogień, czerwień i czerń - FX_HORDE_*, pixellab_src/vfx/ids.json) i dźwięki
+## horde_* z tools/sfx_synth.py; pojawienie się, zmiana fazy i śmierć - w PinnacleBoss (rodzaj "horde").
 
 const LORD_PHASES := [0.75, 0.5, 0.25]
 const LORD_HEALTH := 1.5
@@ -29,7 +31,23 @@ const LEAP_RADIUS := 110.0
 const LEAP_TIME := 0.4
 const FIRE := Color(1.0, 0.4, 0.25)
 
+const FX_HORDE_CLEAVE := preload("res://assets/effects/horde_cleave.png")
+const FX_HORDE_METEOR := preload("res://assets/effects/horde_meteor.png")
+const FX_HORDE_LEAP := preload("res://assets/effects/horde_leap.png")
+const FX_HORDE_PORTAL := preload("res://assets/effects/horde_portal.png")
+const FX_HORDE_CALL := preload("res://assets/effects/horde_call.png")
+const FX_HORDE_SHADE := preload("res://assets/effects/horde_shade.png")
+const FX_HORDE_SHIELD := preload("res://assets/effects/horde_shield.png")
+## Zasięg sierpa w horde_cleave, promień wybuchu w horde_meteor i lądowania w horde_leap przy skali 1 (piksele klatki).
+const HORDE_CLEAVE_ART_REACH := 90.0
+const HORDE_METEOR_ART_RADIUS := 45.0
+const HORDE_LEAP_ART_RADIUS := 85.0
+## Meteor w horde_meteor spada przez tyle sekund (4 klatki z 14 na sekundę), zanim wybuchnie.
+const METEOR_FALL := 0.29
+
 var _minions: Array[Goblin] = []
+## Kopuła osłony cienia (FxLoop) - widoczna, dopóki żyje cień boga.
+var _shield_fx: FxLoop
 var _shade: Goblin
 var _wave_timer := WAVE_TIME
 var _call_cooldown := 6.0
@@ -84,6 +102,7 @@ func minion_count() -> int:
 
 func _process_fight(delta: float) -> void:
 	super(delta)
+	_update_shield()
 	if state != State.CHASE:
 		return
 	_call_cooldown -= delta
@@ -92,6 +111,19 @@ func _process_fight(delta: float) -> void:
 		if _wave_timer <= 0.0:
 			_wave_timer = WAVE_TIME
 			_horde_wave()
+
+
+## Kopuła osłony cienia nad Władcą, dopóki żyje cień boga (półprzezroczysta, żeby Władca był widoczny).
+func _update_shield() -> void:
+	var show := shade_alive() and state != State.DEAD
+	if show and _shield_fx == null:
+		_shield_fx = FxLoop.make(FX_HORDE_SHIELD, 16, 12.0, Vector2(74, 74))
+		_shield_fx.modulate = Color(1, 1, 1, 0.45)
+		_shield_fx.scale = Vector2.ONE * fx_scale()
+		_shield_fx.z_index = 1
+		add_child(_shield_fx)
+	if _shield_fx != null:
+		_shield_fx.visible = show
 
 
 # ---------------------------------------------------------------- przyzwania
@@ -105,7 +137,8 @@ func _spawn_minion(kind_name: String, at: Vector2) -> Goblin:
 	if goblin != null:
 		_minions.append(goblin)
 		goblin.aggro()
-		SkillEffects.sheet_once(get_parent(), FX_SMOKE, 10, 14.0, goblin.global_position, Vector2(29, 40), 0.0, 1.0, 1.4)
+		SkillEffects.sheet_once(get_parent(), FX_HORDE_PORTAL, 22, 18.0, goblin.global_position, Vector2(44, 90), 0.0, 1.0, 1.2)
+		Sfx.play_at("horde_portal", goblin.global_position)
 	return goblin
 
 
@@ -129,8 +162,8 @@ func _summon_shade(god: String) -> void:
 		return
 	(node as PinnacleBoss).make_shade(SHADE_HEALTH)
 	_shade = node
-	SkillEffects.sheet_once(get_parent(), FX_MIST, 14, 16.0, node.global_position, Vector2(73, 124), 0.0, 1.0, 1.3)
-	Sfx.play_at("ghost_wail", node.global_position)
+	SkillEffects.sheet_once(get_parent(), FX_HORDE_SHADE, 16, 12.0, node.global_position, Vector2(50, 134), 0.0, 1.0, 1.3)
+	Sfx.play_at("horde_shade", node.global_position)
 	var hud := get_tree().get_first_node_in_group("hud")
 	if hud != null and hud.has_method("show_banner"):
 		hud.show_banner(Lang.t("Władca przyzywa cień: %s!\nZabij cień, by zdjąć osłonę") % Pinnacles.god_name(god), Pinnacles.GODS[god]["color"])
@@ -146,7 +179,7 @@ func _horde_wave() -> void:
 			if not _blocked(edge):
 				at = edge
 		_spawn_minion(HORDE_KINDS.pick_random(), at)
-	Sfx.play_at("bies_roar", global_position, -4.0)
+	Sfx.play_at("horde_roar", global_position, -4.0)
 
 
 # ---------------------------------------------------------------- ataki
@@ -173,6 +206,15 @@ func _choose_attack(to_player: Vector2) -> bool:
 			_spots.append(_free_around(_player.global_position, 40.0, 170.0))
 		for spot: Vector2 in _spots:
 			_marker(spot, METEOR_RADIUS, 1.1, FIRE)
+		# meteory zaczynają spadać tak, żeby uderzyć z końcem zapowiedzi
+		var spots := _spots.duplicate()
+		get_tree().create_timer(1.1 - METEOR_FALL, false).timeout.connect(func() -> void:
+			if state == State.DEAD or not is_inside_tree():
+				return
+			for spot: Vector2 in spots:
+				SkillEffects.sheet_once(get_parent(), FX_HORDE_METEOR, 12, 14.0, spot, Vector2(153, 132), 0.0, 1.0,
+						METEOR_RADIUS / HORDE_METEOR_ART_RADIUS)
+			Sfx.play_at("horde_meteor", spots[0]))
 	elif distance < 520.0:
 		_from = global_position
 		_to = _player.global_position
@@ -192,8 +234,8 @@ func _update_attack(delta: float) -> void:
 			if _stage_timer <= 0.0:
 				_snap(Vector2(1.2, 0.85))
 				_remove_telegraph()
-				BossFx.roar(get_parent(), global_position, 120.0)
-				Sfx.play_at("bies_roar", global_position)
+				SkillEffects.sheet_once(get_parent(), FX_HORDE_CALL, 12, 16.0, global_position, Vector2(66, 59), 0.0, 1.0, fx_scale() * 1.3)
+				Sfx.play_at("horde_roar", global_position)
 				_shake_camera(7.0)
 				for i in mini(CALL_COUNT, MAX_MINIONS - minion_count()):
 					_spawn_minion(HORDE_KINDS.pick_random(), _free_around(global_position, 60.0, 130.0))
@@ -204,27 +246,26 @@ func _update_attack(delta: float) -> void:
 				if _player_in_telegraph():
 					_hurt_player(special_damage, 260.0)
 				_remove_telegraph()
-				BossFx.cleave(get_parent(), global_position, _aim.angle(), CLEAVE_RANGE_LORD)
+				SkillEffects.sheet_once(get_parent(), FX_HORDE_CLEAVE, 12, 16.0, global_position, Vector2(4, 55), _aim.angle(), 1.0,
+						CLEAVE_RANGE_LORD / HORDE_CLEAVE_ART_REACH)
 				_ground_crack(global_position + _aim * 80.0, 60.0)
-				Sfx.play_at("big_slash", global_position)
+				Sfx.play_at("horde_cleave", global_position)
 				_shake_camera(8.0)
 				_set_stage("recover", 0.7)
 		["meteors", "telegraph"]:
 			if _stage_timer <= 0.0:
 				_snap()
 				for spot: Vector2 in _spots:
-					BossFx.bomb(get_parent(), spot, METEOR_RADIUS)
 					_fire_patch(spot)
 					if _player_alive() and _player.global_position.distance_to(spot) <= METEOR_RADIUS:
 						_hit_player = false
 						_hurt_player(area_damage, 120.0)
-				Sfx.play_at("explosion", _spots[0])
 				_shake_camera(6.0)
 				_set_stage("recover", 0.6)
 		["leap", "telegraph"]:
 			if _stage_timer <= 0.0:
 				_snap()
-				Sfx.play_at("wing_gust", global_position)
+				Sfx.play_at("horde_leap", global_position)
 				_set_stage("act", LEAP_TIME)
 		["leap", "act"]:
 			var t := clampf(1.0 - _stage_timer / LEAP_TIME, 0.0, 1.0)
@@ -241,8 +282,8 @@ func _update_attack(delta: float) -> void:
 				_remove_telegraph()
 				_ground_crack(global_position, LEAP_RADIUS * 0.7)
 				_debris(global_position, 10, 160.0, Color(0.35, 0.2, 0.15))
-				BossFx.slam(get_parent(), global_position, LEAP_RADIUS)
-				Sfx.play_at("rock_break", global_position)
+				SkillEffects.sheet_once(get_parent(), FX_HORDE_LEAP, 12, 12.0, global_position, Vector2(86, 41), 0.0, 1.0,
+						LEAP_RADIUS / HORDE_LEAP_ART_RADIUS)
 				_shake_camera(10.0)
 				_set_stage("recover", 0.8)
 		[_, "recover"]:

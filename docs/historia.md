@@ -929,7 +929,17 @@ odpowiedniej sekcji.
   `czarnobog_death` (otchłań, macki, czarny dym, czaszki). Dźwięki (`CZARNOBOG` w `tools/sfx_synth.py`, pomocnik
   `dark_whisper`): `czarnobog_roar` (trzy bardzo niskie pomruki z szeptami - pojawienie się i fazy),
   `czarnobog_cleave`, `czarnobog_spike` (seria chrzęstów), `czarnobog_step` (zassanie i trzask), `czarnobog_strike`,
-  `czarnobog_death`. Władca Hordy (`kind` "horde") zostaje przy wspólnych efektach do swojego etapu.
+  `czarnobog_death`.
+- [x] **Efekty i dźwięki bossów szczytowych, etap 4 - Władca Hordy** (listopad 2026; ogień, czerwień i czerń). Efekty
+  (`assets/effects/horde_*.png`, stałe `FX_HORDE_*` w `horde_lord.gd` i `pinnacle_boss.gd`): `horde_cleave` (ogniste
+  cięcie), `horde_meteor` (kometa spadająca ukosem i wybuch - puszczana `1.1 - METEOR_FALL` s po zapowiedzi, żeby
+  uderzyć z jej końcem; zamiast `BossFx.bomb`), `horde_leap` (lądowanie po skoku), `horde_call` (Zew Hordy),
+  `horde_portal` (płonąca szczelina przy każdym przyzwanym potworze i fali), `horde_shade` (przyzwanie cienia boga),
+  `horde_shield` (zapętlona kopuła osłony cienia - `FxLoop` z przezroczystością 0,45, `HordeLord._update_shield`),
+  `horde_engage`, `horde_phase`, `horde_death`. W kreatorze pocisk obraca się tylko o ćwierćobroty - ukośny lot
+  daje część `comet_trail`. Dźwięki (`HORDE` w `tools/sfx_synth.py`, pomocnik `flames`): `horde_roar` (pojawienie się,
+  fazy, Zew, fale), `horde_cleave`, `horde_meteor`, `horde_leap`, `horde_portal`, `horde_shade`, `horde_death`.
+  Wszyscy bossowie szczytowi mają już własne efekty; dalej efekty 9 legend.
 - [x] **Mapa Nawii, etap 4 - bossowie szczytowi** (listopad 2026). Ustalenia z autorem: trzech słowiańskich bogów
   (Władca Hordy i obce bogi później), dostęp za fragmenty kluczy z węzłów, nagrody: punkty Watry, własne legendy, dużo
   łupu i serca boga jako waluta; grafiki PixelLab 160 px z 2 animacjami; do tego dwa pasy w stylu Mageblooda

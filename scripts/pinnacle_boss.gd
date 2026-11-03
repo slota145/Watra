@@ -17,7 +17,8 @@ extends Boss
 ## zapowiedzi, uderzenie po niej.
 ## Efekty bogów z kreatora efektów PixelLab (pixellab_src/vfx/ids.json) i dźwięki z tools/sfx_synth.py: Weles -
 ## bagienna zieleń i złoto (FX_WELES_*, weles_*), Marzanna - lód, biel i błękit (FX_MARZANNA_*, marzanna_*),
-## Czarnobóg - czerń i fiolet (FX_CZARNOBOG_*, czarnobog_*); Władca Hordy (HordeLord) na razie wspólne efekty bossów.
+## Czarnobóg - czerń i fiolet (FX_CZARNOBOG_*, czarnobog_*), Władca Hordy - ogień, czerwień i czerń (FX_HORDE_* tu
+## i w HordeLord, horde_*).
 
 @export var kind := "weles"
 @export var strike_damage := 80
@@ -51,8 +52,6 @@ const SPIKE_STEP := 46.0
 const SPIKE_DELAY := 0.08
 const STEP_RADIUS := 95.0
 
-const FX_MIST := preload("res://assets/effects/wij_mist.png")
-const FX_SMOKE := preload("res://assets/effects/smoke_burst.png")
 const FX_WELES_ROOTS := preload("res://assets/effects/weles_roots.png")
 const FX_WELES_VENOM := preload("res://assets/effects/weles_venom.png")
 const FX_WELES_SERPENT := preload("res://assets/effects/weles_serpent.png")
@@ -73,6 +72,9 @@ const FX_CZARNOBOG_STRIKE := preload("res://assets/effects/czarnobog_strike.png"
 const FX_CZARNOBOG_ENGAGE := preload("res://assets/effects/czarnobog_engage.png")
 const FX_CZARNOBOG_PHASE := preload("res://assets/effects/czarnobog_phase.png")
 const FX_CZARNOBOG_DEATH := preload("res://assets/effects/czarnobog_death.png")
+const FX_HORDE_ENGAGE := preload("res://assets/effects/horde_engage.png")
+const FX_HORDE_PHASE := preload("res://assets/effects/horde_phase.png")
+const FX_HORDE_DEATH := preload("res://assets/effects/horde_death.png")
 ## Zasięg sierpa w czarnobog_cleave i promień uderzenia w czarnobog_strike przy skali 1 (piksele klatki).
 const CZARNOBOG_CLEAVE_ART_REACH := 90.0
 const CZARNOBOG_STRIKE_ART_RADIUS := 70.0
@@ -127,7 +129,7 @@ func take_damage(amount: int, from_position: Vector2, knockback := 0.0) -> void:
 			phase = i + 2
 			attack_interval *= 0.75
 			speed *= 1.1
-			Sfx.play_at("weles_roar" if kind == "weles" else ("marzanna_wail" if kind == "marzanna" else ("czarnobog_roar" if kind == "czarnobog" else "bies_roar")), global_position)
+			Sfx.play_at("weles_roar" if kind == "weles" else ("marzanna_wail" if kind == "marzanna" else ("czarnobog_roar" if kind == "czarnobog" else "horde_roar")), global_position)
 			_shake_camera(9.0)
 			_fx_phase()
 			var hud := get_tree().get_first_node_in_group("hud")
@@ -497,12 +499,14 @@ func _fx_engage() -> void:
 					fx_scale() * 1.1)
 			Sfx.play_at("czarnobog_roar", global_position)
 		_:
-			SkillEffects.sheet_once(get_parent(), FX_SMOKE, 10, 14.0, global_position, Vector2(29, 40), 0.0, 1.0, 3.0)
+			SkillEffects.sheet_once(get_parent(), FX_HORDE_ENGAGE, 22, 14.0, global_position, Vector2(78, 141), 0.0, 1.0,
+					fx_scale() * 1.1)
+			Sfx.play_at("horde_roar", global_position)
 	super()
 
 
 ## Zmiana fazy: Weles - zielono-złoty wybuch mocy z monetami, Marzanna - mroźny błysk, Czarnobóg - wybuch
-## ciemności z czaszkami, reszta - wspólny wybuch bossów.
+## ciemności z czaszkami, Władca Hordy - wybuch ognia.
 func _fx_phase() -> void:
 	match kind:
 		"weles":
@@ -515,11 +519,12 @@ func _fx_phase() -> void:
 			SkillEffects.sheet_once(get_parent(), FX_CZARNOBOG_PHASE, 16, 12.0, global_position, Vector2(78, 54), 0.0, 1.0,
 					fx_scale() * 1.2)
 		_:
-			super()
+			SkillEffects.sheet_once(get_parent(), FX_HORDE_PHASE, 12, 12.0, global_position, Vector2(78, 60), 0.0, 1.0,
+					fx_scale() * 1.3)
 
 
 ## Śmierć: Weles - bagienny wybuch i sypiące się złoto, Marzanna - wybuch lodu i śnieg, Czarnobóg -
-## zapadnięcie w otchłań, reszta - wspólna śmierć bossów.
+## zapadnięcie w otchłań, Władca Hordy - ogromny wybuch ognia.
 func _fx_death() -> void:
 	match kind:
 		"weles":
@@ -535,7 +540,9 @@ func _fx_death() -> void:
 					fx_scale() * 1.3)
 			Sfx.play_at("czarnobog_death", global_position)
 		_:
-			super()
+			SkillEffects.sheet_once(get_parent(), FX_HORDE_DEATH, 18, 14.0, global_position, Vector2(86, 78), 0.0, 1.0,
+					fx_scale() * 1.5)
+			Sfx.play_at("horde_death", global_position)
 
 
 ## Czarnobóg znika albo pojawia się w kłębie czarnego dymu (Krok przez Cień).
