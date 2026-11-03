@@ -115,10 +115,11 @@ func generate(world, settings: Dictionary) -> void:
 	level = Dungeons.tier_level(int(settings["tier"]))
 	Levels.zone_default = level
 	Goblin.safe_zone = Rect2()
-	var mods: Array = settings.get("mods", [])
 	Goblin.dungeon_mods = {}
-	for key in ["health", "damage", "xp", "gold", "loot"]:
-		Goblin.dungeon_mods[key] = Dungeons.multiplier(mods, key)
+	for key in ["health", "damage", "xp", "gold", "loot", "gems", "legend"]:
+		Goblin.dungeon_mods[key] = Dungeons.mult(settings, key)
+	for key in ["item_level", "quality"]:
+		Goblin.dungeon_mods[key] = Dungeons.added(settings, key)
 	outdoor = climate.get("outdoor", false)
 	_plan_rooms()
 	if outdoor:
@@ -148,7 +149,7 @@ func generate(world, settings: Dictionary) -> void:
 	else:
 		_build_props()
 	_build_entrance()
-	_populate(Dungeons.multiplier(mods, "count") * (1.0 + Dungeons.TIER_COUNT_BONUS * (int(settings["tier"]) - 1)))
+	_populate(Dungeons.mult(settings, "count") * (1.0 + Dungeons.TIER_COUNT_BONUS * (int(settings["tier"]) - 1)))
 	_build_vault()
 	_build_mechanics()
 	_build_altar()
@@ -854,7 +855,7 @@ func _pick_mechanics() -> void:
 	elif Game.dev_mode:
 		mechanics.assign(Dungeons.MECHANICS.keys())
 	else:
-		mechanics = Dungeons.roll_mechanics(_rng, config.get("mechanic_bonus", {}))
+		mechanics = Dungeons.roll_mechanics(_rng, Dungeons.mechanic_bonus(config))
 	event = str(config.get("event", ""))
 	if event != "" and not mechanics.has("crystal"):
 		mechanics.append("crystal")
@@ -873,6 +874,16 @@ func _pick_mechanics() -> void:
 	if best < 0:
 		event = ""
 		mechanics.erase("crystal")
+
+
+## Moc mechaniki z legendarnego bożka (Idols.MECHANIC_POWER; 1 - zwykła mechanika).
+func mechanic_power(id: String) -> float:
+	return float(Dungeons.mechanic_bonus(config).get("power", {}).get(id, 1.0))
+
+
+## Dodatkowe sztuki mechaniki przy wzmocnieniu (moc 1.5 -> `extra`, moc 1 -> 0).
+func _power_extra(id: String, extra: int) -> int:
+	return roundi((mechanic_power(id) - 1.0) * 2.0 * extra)
 
 
 ## Buduje wylosowane mechaniki (po potworach - strażnicy skrzyń i fale Kryształu dochodzą później).
@@ -903,7 +914,7 @@ func _build_mechanics() -> void:
 		var taken: Array[Rect2i] = []
 		for other: Node2D in uroczyska + zertwy:
 			taken.append(_room_of(other.position))
-		var count := int(config.get("mechanic_bonus", {}).get("skarbnik_count", Dungeons.SKA_COUNT))
+		var count := int(config.get("mechanic_bonus", {}).get("skarbnik_count", Dungeons.SKA_COUNT)) + _power_extra("skarbnik", 1)
 		var spare := _mechanic_rooms(rooms.size()).filter(func(room: Rect2i) -> bool: return not taken.has(room))
 		for room: Rect2i in spare.slice(0, count):
 			_add_skarbnik(room)
@@ -911,7 +922,7 @@ func _build_mechanics() -> void:
 		var kinds := {}
 		for kind: String in Dungeons.CHEST_KINDS:
 			kinds[kind] = Dungeons.CHEST_KINDS[kind]["weight"]
-		for room in _mechanic_rooms(_rng.randi_range(Dungeons.CHESTS.x, Dungeons.CHESTS.y)):
+		for room in _mechanic_rooms(_rng.randi_range(Dungeons.CHESTS.x, Dungeons.CHESTS.y) + _power_extra("chests", 2)):
 			var traits: Array[String] = []
 			for id: String in Dungeons.CHEST_TRAITS:
 				if _rng.randf() < Dungeons.CHEST_TRAITS[id]["chance"]:
@@ -920,10 +931,10 @@ func _build_mechanics() -> void:
 	if mechanics.has("shrine"):
 		var gifts := Dungeons.SHRINES.duplicate()
 		_shuffle(gifts)
-		for room in _mechanic_rooms(_rng.randi_range(Dungeons.SHRINE_COUNT.x, Dungeons.SHRINE_COUNT.y)):
+		for room in _mechanic_rooms(mini(gifts.size(), _rng.randi_range(Dungeons.SHRINE_COUNT.x, Dungeons.SHRINE_COUNT.y) + _power_extra("shrine", 1))):
 			_add_shrine(gifts.pop_back(), room)
 	if mechanics.has("elites"):
-		for room in _mechanic_rooms(_rng.randi_range(Dungeons.ELITES.x, Dungeons.ELITES.y)):
+		for room in _mechanic_rooms(_rng.randi_range(Dungeons.ELITES.x, Dungeons.ELITES.y) + _power_extra("elites", 2)):
 			_add_elite(Dungeons.roll_elite_traits(_rng), room)
 
 
@@ -1080,7 +1091,7 @@ func _build_crystal() -> void:
 	crystal.room = event_room
 	crystal.level = level
 	crystal.tier = int(config.get("tier", 1))
-	crystal.count_mult = Dungeons.multiplier(config.get("mods", []), "count")
+	crystal.count_mult = Dungeons.mult(config, "count")
 	crystal.position = Vector2(event_room.get_center()) * CELL + Vector2(0, CELL / 2.0)
 	w.entities.add_child(crystal)
 	_glow(crystal.position + Vector2(0, -16), Color(1.0, 0.45, 0.2, 0.6), Vector2(200, 140))
@@ -1422,29 +1433,33 @@ func _on_boss_died(_boss_node: Goblin = null) -> void:
 		return
 	_vault_open = true
 	w.player.quests.note_event("dungeon_clear")
-	var mods: Array = config.get("mods", [])
-	var treasure := Dungeons.multiplier(mods, "treasure")
+	var treasure := Dungeons.mult(config, "treasure")
 	var loot_level := level + Dungeons.BOSS_BONUS
+	var level_bonus := int(Dungeons.added(config, "item_level"))
+	var quality := Dungeons.added(config, "quality")
 	var at := _chest.position + Vector2(0, 16)
 	_chest.modulate = Color.WHITE
-	_drop(at, "gold", roundi(Levels.gold(loot_level) * 30.0 * treasure * Dungeons.multiplier(mods, "gold")))
-	for i in roundi(3 * treasure):
-		_drop(at, Loot.drop_at_level(loot_level, 0.3, Loot.MAGIC), 1)
+	_drop(at, "gold", roundi(Levels.gold(loot_level) * 30.0 * treasure * Dungeons.mult(config, "gold")))
+	for i in roundi(3 * treasure * Idols.multiplier(config.get("idols", []), "loot")):
+		_drop(at, Loot.drop_at_level(loot_level, 0.3 + quality, Loot.MAGIC, level_bonus), 1)
 	if treasure > 1.0:
 		for i in 2:
-			_drop(at, Loot.drop_at_level(loot_level, 0.5, Loot.RARE), 1)
+			_drop(at, Loot.drop_at_level(loot_level, 0.5 + quality, Loot.RARE, level_bonus), 1)
 	# kamieni zaklinających tu nie ma - jedynym źródłem w lochach jest Kryształ Watry
 	_drop(at, "blessed_stone", roundi(_rng.randi_range(1, 3) * treasure))
 	if int(config.get("tier", 1)) >= Essences.HEART_MIN_TIER and _rng.randf() < Essences.HEART_VAULT_CHANCE * treasure:
 		_drop(at, Essences.HEART, 1)
 	if _rng.randf() < ItemCraft.RUNE_VAULT_CHANCE * treasure:
 		_drop(at, ItemCraft.roll_rune(int(config.get("tier", 1)), _rng), 1)
+	# runy z Bożka Run
+	for i in int(Dungeons.added(config, "vault_runes")):
+		_drop(at, ItemCraft.roll_rune(int(config.get("tier", 1)), _rng), 1)
 	if _rng.randf() < Gems.RADIUS_VAULT_CHANCE * treasure:
 		_drop(at, Gems.roll_radius(int(config.get("tier", 1))), 1)
 	var bag := Bags.roll_vault(loot_level, treasure)
 	if bag != "":
 		_drop(at, bag, 1)
-	if _rng.randf() < Dungeons.VAULT_LEGEND_CHANCE * treasure:
+	if _rng.randf() < Dungeons.VAULT_LEGEND_CHANCE * treasure * Idols.multiplier(config.get("idols", []), "legend"):
 		_drop(at, Loot.legendary_at_level(Dungeons.VAULT_LEGENDS.pick_random(), loot_level), 1)
 	Sfx.play("quest_ready")
 	_add_portal(Vector2(boss_room.get_center()) * CELL + Vector2(0, CELL * 1.2), Lang.t("Płomienie Watry - powrót do Ostoi"))

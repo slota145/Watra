@@ -163,7 +163,7 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
 - **Watra i Ostoja:** Watra z ofiarami, żarem i Darami (`boons.gd`, `ui/watra_window.gd`), budowy osady (`settlement.gd`),
   lochy Watry (`dungeon.gd`, `dungeons.gd`) z mechanikami (`Dungeons.MECHANICS`: skrzynie `dungeon_chest.gd`, kapliczki
   `dungeon_shrine.gd`, Kryształ Watry `watra_crystal.gd`, elity `dungeon_elite.gd`, Uroczysko `uroczysko.gd`, Krąg Żertwy
-  `zertwa.gd`, Skarbnik `skarbnik.gd`) i Ołtarzem Welesa, zielarstwo (`herbs.gd`).
+  `zertwa.gd`, Skarbnik `skarbnik.gd`) i Ołtarzem Welesa, bożki zmieniające loch (`idols.gd`), zielarstwo (`herbs.gd`).
 - **Świat jak w MMO** (po zbudowaniu gildii): podróżnicy (`travelers.gd`, `traveler.gd`), drużyny i prośby o pomoc,
   tryby świata i rywale (`world_modes.gd`, `rival.gd`), rynek (`market.gd`), zlecenia (`bounties.gd`), zadania główne
   (`main_quests.gd`), wydarzenia w świecie (`world_events.gd`, `event_site.gd`).
@@ -324,10 +324,11 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   Do ustalenia po ograniu: liczby fal i wrogów, szansa na Kości, czy Skarbnik ma mieć własną grafikę.
   Etap 6 zrobiony, czeka na ocenę autora (szukaj „Mechaniki w lochach, etap 6”): obrona Kryształu zostaje, fale rosną
   ze stopniem lochu (`WatraCrystal.wave_count`), skarbiec strażnika bez kamieni zaklinających.
-- [ ] **Bożki** (jak skaraby w PoE): wypadają z małą szansą z każdego potwora (gracz nie musi grindować jednego
-  miejsca), wkładane w sloty Watry przed wejściem, zmieniają loch (więcej danej mechaniki, silniejsze potwory i więcej
-  łupu, więcej łupu danego rodzaju); mają rzadkości. Same są traktowane jak mechanika - z własnymi węzłami w drzewku
-  Watry (częściej wypadają, rzadsze odmiany, dodatkowy slot).
+- [ ] **Bożki** (jak skaraby w PoE): zrobione, czekają na ocenę autora (szczegóły w `docs/historia.md`, szukaj „Bożki”):
+  `scripts/idols.gd`, 16 rodzajów x 3 rzadkości, sloty w oknie lochów (2, więcej z poziomem Watry), zużywają się przy
+  wejściu. Do zrobienia razem z drzewkiem Watry: węzły bożków (częściej wypadają, rzadsze odmiany, dodatkowy slot -
+  `Idols.slot_count` / `drop_chance` mają na to parametry). Do ustalenia po ograniu: szansa wypadania, siła rodzajów,
+  czy ikony mają być z PixelLab (paczka 16 obiektów - 10 generacji).
 - [ ] **Talizmany** (jak idole w Last Epoch): zrobione razem z Kręgiem Żertwy (szukaj „Mechaniki w lochach, etap 4”) -
   siatka 4x3, kształty 1x1, 1x2, 2x1, 2x2, magiczne z premiami, rzadkie z efektem legendy. Do ustalenia: rosnąca
   siatka (poziom, drzewko Watry), własne efekty talizmanów zamiast efektów legend (np. ognista tarcza przy niskim

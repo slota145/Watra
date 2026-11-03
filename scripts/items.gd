@@ -807,6 +807,8 @@ static func get_data(id: String) -> Dictionary:
 		return Legends.data(id)
 	if id.begins_with(Unidentified.PREFIX):
 		return Unidentified.data(id)
+	if id.begins_with(Idols.PREFIX):
+		return Idols.data(id)
 	var item: Dictionary = generated.get(id, {})
 	# nazwa i opis wylosowanego przedmiotu są w języku z chwili rejestracji - po zmianie języka powstają od nowa
 	if not item.is_empty() and item.get("name_lang", "") != TranslationServer.get_locale():
@@ -840,6 +842,8 @@ static func rarity_color(id: String) -> Color:
 
 ## Krótka nazwa do ciasnych miejsc (np. powiadomień o łupie).
 static func short_name(id: String) -> String:
+	if id.begins_with(Idols.PREFIX):
+		return Idols.display_name(id)
 	var item := get_data(id)
 	return Lang.t(item.get("short_name", item.get("name", "")))
 
@@ -900,6 +904,8 @@ static func max_stack(id: String) -> int:
 
 ## Nazwa z poziomem zaklęcia, np. "Żelazny miecz +7" albo "Kolczuga III".
 static func display_name(id: String, enchant := 0) -> String:
+	if id.begins_with(Idols.PREFIX):
+		return Idols.display_name(id)
 	var item_name := Lang.t(get_data(id).get("name", ""))
 	return item_name if enchant <= 0 else "%s %s" % [item_name, Enchanting.level_name(enchant)]
 
@@ -984,6 +990,8 @@ static func describe(id: String, enchant := 0, against := {}) -> String:
 			lines.append(Lang.t("Poziom przedmiotu: %d") % item["item_level"])
 	if item.has("gem"):
 		lines.append(Lang.t("%s - Kamień szlachetny") % Lang.t(RARITY_NAMES.get(item.get("rarity", "magic"), "")))
+	if item.has("idol"):
+		lines.append_array(Idols.effect_lines(id))
 	if item.has("talisman"):
 		var size: Vector2i = Talismans.size_of(id)
 		lines.append(Lang.t("%s - Talizman %dx%d") % [Lang.t(RARITY_NAMES.get(item.get("rarity", "magic"), "")), size.x, size.y])

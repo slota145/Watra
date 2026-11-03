@@ -279,7 +279,7 @@ func close() -> void:
 	sprite.modulate = Color(0.7, 0.7, 0.75)
 	if glow != null:
 		glow.visible = false
-	var runes := reward_runes(kills)
+	var runes := roundi(reward_runes(kills) * dungeon.mechanic_power("uroczysko"))
 	var tier := int(dungeon.config.get("tier", 1))
 	for i in runes:
 		dungeon._drop(global_position + Vector2(0, 18), ItemCraft.roll_rune(tier, _rng), 1)
