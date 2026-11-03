@@ -122,6 +122,13 @@ const SOUNDS := {
 	"marzanna_blizzard": [["marzanna_blizzard"], -4.0, 0.06, 0.3],
 	"marzanna_mist": [["marzanna_mist"], -5.0, 0.06, 0.2],
 	"marzanna_death": [["marzanna_death"], 0.0, 0.03, 1.0],
+	# Czarnobóg - bóg szczytowy Mapy Nawii
+	"czarnobog_roar": [["czarnobog_roar"], -1.0, 0.04, 1.0],
+	"czarnobog_cleave": [["czarnobog_cleave"], -3.0, 0.06, 0.1],
+	"czarnobog_spike": [["czarnobog_spike"], -5.0, 0.06, 0.2],
+	"czarnobog_step": [["czarnobog_step"], -4.0, 0.06, 0.2],
+	"czarnobog_strike": [["czarnobog_strike"], -3.0, 0.06, 0.1],
+	"czarnobog_death": [["czarnobog_death"], 0.0, 0.03, 1.0],
 	"telegraph": [["impactBell_heavy_000"], -10.0, 0.05, 0.3],
 	"death": [["jingles_PIZZI01"], -6.0, 0.0, 1.0],
 	# świat

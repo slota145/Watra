@@ -2304,5 +2304,110 @@
       90
     ],
     "columns": 5
+  },
+  "czarnobog_cleave": {
+    "effect": "e0727db5-1d1c-4582-84ee-aa198414fc98",
+    "name": "Czarnobóg - Cięcie Mroku",
+    "frame": [
+      96,
+      119
+    ],
+    "frames": 14,
+    "fps": 14,
+    "anchor": [
+      4,
+      62
+    ],
+    "columns": 7
+  },
+  "czarnobog_spike": {
+    "effect": "e25db0c9-fac1-42e6-b3ef-0e86c9a96899",
+    "name": "Czarnobóg - Kolec Cienia",
+    "frame": [
+      103,
+      65
+    ],
+    "frames": 18,
+    "fps": 16,
+    "anchor": [
+      51,
+      47
+    ],
+    "columns": 9
+  },
+  "czarnobog_step": {
+    "effect": "606e892d-d59d-40b9-a43c-837c1c8305f9",
+    "name": "Czarnobóg - Krok przez Cień",
+    "frame": [
+      106,
+      83
+    ],
+    "frames": 10,
+    "fps": 12,
+    "anchor": [
+      56,
+      50
+    ],
+    "columns": 5
+  },
+  "czarnobog_strike": {
+    "effect": "6ead1bb8-5744-4ebf-9c48-b1f4480f15d5",
+    "name": "Czarnobóg - uderzenie z cienia",
+    "frame": [
+      158,
+      76
+    ],
+    "frames": 10,
+    "fps": 12,
+    "anchor": [
+      78,
+      39
+    ],
+    "columns": 5
+  },
+  "czarnobog_engage": {
+    "effect": "c4ae5263-280d-4bdd-b31a-e52cb8d3c96e",
+    "name": "Czarnobóg - pojawienie się",
+    "frame": [
+      126,
+      161
+    ],
+    "frames": 22,
+    "fps": 14,
+    "anchor": [
+      63,
+      134
+    ],
+    "columns": 8
+  },
+  "czarnobog_phase": {
+    "effect": "5630741f-b9dc-48f5-9561-1abd1f2d7be9",
+    "name": "Czarnobóg - zmiana fazy",
+    "frame": [
+      158,
+      106
+    ],
+    "frames": 16,
+    "fps": 12,
+    "anchor": [
+      78,
+      54
+    ],
+    "columns": 6
+  },
+  "czarnobog_death": {
+    "effect": "9c0fbe2d-4b9a-400a-8d3e-0f95c2eb495b",
+    "name": "Czarnobóg - śmierć",
+    "frame": [
+      140,
+      146
+    ],
+    "frames": 22,
+    "fps": 14,
+    "anchor": [
+      70,
+      76
+    ],
+    "columns": 7
   }
 }

@@ -20,7 +20,8 @@
 - treant_groan / tree_rumble / roots_burst / leshy_whisper / spider_hiss / spider_death / queen_screech /
   cocoon_burst / bear_roar / werewolf_howl / bies_roar / shroom_chime - Prastary Las,
 - weles_roar / weles_roots / weles_venom / weles_hiss / weles_death - Weles, bóg szczytowy Mapy Nawii,
-- marzanna_wail / marzanna_nova / marzanna_lance / marzanna_blizzard / marzanna_mist / marzanna_death - Marzanna.
+- marzanna_wail / marzanna_nova / marzanna_lance / marzanna_blizzard / marzanna_mist / marzanna_death - Marzanna,
+- czarnobog_roar / czarnobog_cleave / czarnobog_spike / czarnobog_step / czarnobog_strike / czarnobog_death - Czarnobóg.
 Wymaga numpy i scipy.
 Zapisuje do assets/sfx (wymaga ffmpeg w PATH).
 
@@ -1266,6 +1267,95 @@ MARZANNA = ((marzanna_wail, "marzanna_wail"), (marzanna_nova, "marzanna_nova"), 
             (marzanna_blizzard, "marzanna_blizzard"), (marzanna_mist, "marzanna_mist"), (marzanna_death, "marzanna_death"))
 
 
+def dark_whisper(dur, seed):
+    """Szepty ciemności: wiele cichych, szumiących "głosów" z formantami, falujących w głośności."""
+    rng = np.random.default_rng(seed)
+    n = int(RATE * dur)
+    t = np.arange(n) / RATE
+    x = np.zeros(n)
+    for k in range(5):
+        lo = 600 + rng.random() * 900
+        flutter = 0.5 + 0.5 * np.sin(2 * np.pi * (3 + rng.random() * 4) * t + rng.random() * 6)
+        x += band(rng.standard_normal(n), lo, lo * 2.2) * flutter
+    return x * 0.25
+
+
+def czarnobog_roar(_variant):
+    """Czarnobóg: bardzo niski, demoniczny głos (trzy rozstrojone pomruki) z szeptami ciemności."""
+    a = growl(48, 2.2, 1500, rough=1.0, lo=30, hi=900, fall=0.3)
+    b = growl(72, 2.2, 1501, rough=0.8, lo=50, hi=1400, fall=0.35)
+    c = growl(97, 2.2, 1502, rough=0.5, lo=80, hi=2000, fall=0.4)
+    n = len(a)
+    t = np.arange(n) / RATE
+    sub_ = np.sin(2 * np.pi * 30 * t) * np.minimum(t / 0.3, 1) * np.exp(-t * 0.8) * 0.9
+    whisper = dark_whisper(2.2, 1503) * np.minimum(t / 0.6, 1) * np.minimum((2.2 - t) / 0.6, 1)
+    return reverb(np.tanh((a + b * 0.7 + c * 0.4 + sub_) * 1.2) + whisper, 1.8, 0.4, 1504)
+
+
+def czarnobog_cleave(_variant):
+    """Cięcie Mroku: ciężki, ciemny świst ostrza i głuche tąpnięcie."""
+    rng = np.random.default_rng(1510)
+    n = int(RATE * 1.0)
+    t = np.arange(n) / RATE
+    sweep = band(rng.standard_normal(n), 150, 2500) * np.sin(np.pi * np.minimum(t / 0.35, 1)) * (t < 0.35) * 1.2
+    boom = np.sin(2 * np.pi * (60 * np.exp(-np.maximum(t - 0.3, 0) * 3)) * t) * np.exp(-np.maximum(t - 0.3, 0) * 6) * (t > 0.3) * 1.4
+    return room(np.tanh(sweep + boom), 1511, 0.6, 0.25)
+
+
+def czarnobog_spike(_variant):
+    """Kolce Cienia: seria ciemnych, szklistych chrzęstów wyrastających jeden po drugim."""
+    rng = np.random.default_rng(1520)
+    n = int(RATE * 1.4)
+    t = np.arange(n) / RATE
+    x = np.zeros(n)
+    for k in range(10):
+        at = k * 0.09
+        tt = np.maximum(t - at, 0)
+        on = t > at
+        x += band(rng.standard_normal(n), 200, 3000) * np.exp(-tt * 25) * on * 0.9
+        x += np.sin(2 * np.pi * (180 + k * 6) * tt) * np.exp(-tt * 18) * on * 0.5
+    return room(np.tanh(x), 1521, 0.5, 0.2)
+
+
+def czarnobog_step(_variant):
+    """Krok przez Cień: zasysający, odwrócony świst i głuchy trzask znikania."""
+    rng = np.random.default_rng(1530)
+    dur = 0.8
+    n = int(RATE * dur)
+    t = np.arange(n) / RATE
+    suck = band(rng.standard_normal(n), 300, 4000) * (t / dur) ** 2 * (t < dur * 0.85) * 1.3
+    pop = np.sin(2 * np.pi * 90 * np.maximum(t - dur * 0.82, 0)) * np.exp(-np.maximum(t - dur * 0.82, 0) * 20) * (t > dur * 0.82)
+    return reverb(np.tanh(suck + pop * 1.2), 0.8, 0.35, 1531)
+
+
+def czarnobog_strike(_variant):
+    """Uderzenie z cienia: niski wybuch ciemności i pękająca ziemia."""
+    rng = np.random.default_rng(1540)
+    n = int(RATE * 1.1)
+    t = np.arange(n) / RATE
+    boom = np.sin(2 * np.pi * (50 * np.exp(-t * 2)) * t) * np.exp(-t * 5) * 1.6
+    crack = band(rng.standard_normal(n), 400, 5000) * np.exp(-t * 14) * 1.2
+    rumble = band(rng.standard_normal(n), 30, 200) * np.exp(-t * 3) * 1.0
+    return room(np.tanh(boom + crack + rumble), 1541, 0.6, 0.25)
+
+
+def czarnobog_death(_variant):
+    """Czarnobóg ginie: opadający, demoniczny ryk, zapadanie się w otchłań i cichnące szepty."""
+    roar = growl(60, 2.2, 1550, rough=1.0, lo=30, hi=1200, fall=0.7)
+    n = int(RATE * 3.4)
+    t = np.arange(n) / RATE
+    x = np.zeros(n)
+    x[:len(roar)] += roar
+    implode = band(np.random.default_rng(1551).standard_normal(n), 100, 3000) * np.exp(-((t - 1.8) / 0.25) ** 2) * 1.2
+    boom = np.sin(2 * np.pi * (40 * np.exp(-np.maximum(t - 2.0, 0) * 1.5)) * t) * np.exp(-np.maximum(t - 2.0, 0) * 3) * (t > 2.0) * 1.5
+    whisper = dark_whisper(3.4, 1552) * np.exp(-t * 0.7)
+    return reverb(np.tanh(x + implode + boom) + whisper, 2.0, 0.45, 1553)
+
+
+CZARNOBOG = ((czarnobog_roar, "czarnobog_roar"), (czarnobog_cleave, "czarnobog_cleave"), (czarnobog_spike, "czarnobog_spike"),
+             (czarnobog_step, "czarnobog_step"), (czarnobog_strike, "czarnobog_strike"), (czarnobog_death, "czarnobog_death"))
+
+
 def save_set(fn, name, count):
     for v in range(count):
         save(np.repeat(fn(v).reshape(-1, 1), 2, axis=1), f"{name}_{v + 1}")
@@ -1297,7 +1387,7 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     only = set(sys.argv[1:])
     if only:
-        for fn, name in LEGENDARY + WELES + MARZANNA + ((chain_cast, "chain_cast"),):
+        for fn, name in LEGENDARY + WELES + MARZANNA + CZARNOBOG + ((chain_cast, "chain_cast"),):
             if name in only:
                 save(np.repeat(fn(0).reshape(-1, 1), 2, axis=1), name)
         if "chain_zap" in only:
@@ -1321,7 +1411,7 @@ def main():
     save(np.repeat(chain_cast(0).reshape(-1, 1), 2, axis=1), "chain_cast")
     for fn, name in ((frog_attack, "frog_attack"), (frog_death, "frog_death"), (spit, "spit"), (spit_hit, "spit_hit"),
                      (frog_boss_roar, "frog_boss_roar"), (tongue_lash, "tongue_lash"), (boss_splash, "boss_splash"),
-                     (big_slash, "big_slash"), (seeker_whistle, "seeker_whistle"), (thunder, "thunder")) + LEGENDARY + WELES + MARZANNA:
+                     (big_slash, "big_slash"), (seeker_whistle, "seeker_whistle"), (thunder, "thunder")) + LEGENDARY + WELES + MARZANNA + CZARNOBOG:
         save(np.repeat(fn(0).reshape(-1, 1), 2, axis=1), name)
 
 
