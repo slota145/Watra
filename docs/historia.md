@@ -523,6 +523,12 @@ odpowiedniej sekcji.
   (`Sfx.ATTENUATION` 1,6) ściszał je o 10-15 dB względem miecza - trafienia gracza mają łagodne `HIT_ATTENUATION`
   (piąte pole w `Sfx.SOUNDS`). Widmowe Ostrza i strzały tropiące podają swój dźwięk same (po zmianie broni
   krążące ostrza grały `hit_magic`).
+- [x] **Szersze okno tierów premii** (listopad 2026, `Loot.best_tier`, `tier_reach`, `top_tier`, `roll_tier`): zwykłe
+  okno 10 tierów sięga tieru 1 już od poziomu przedmiotu 90 (`TIER_TOP_LEVEL`, wcześniej 100). Ponad oknem pasmo
+  szczęścia: 3 + 15 x (poziom / 60)^2 tierów, pierwszy z szansą 3% (`TIER_LUCK`), każdy następny 0,8 razy rzadszy -
+  razem 7-15% premii trafia ponad okno. Najlepszy możliwy tier: poziom 20 - 31, 40 - 16, od 60 - tier 1. Szansa na
+  tier 1 (jedna premia rzadkiego): poziom 60 - 0,13%, 70 - 0,4%, 80 - 1,2%, 90 - 19%. Wzorem PoE najwyższe tiery są
+  dostępne przed maksymalnym poziomem, a najsłabsze przedmioty nie dostaną najwyższych tierów. Test: `tests/test_loot.gd`.
 
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)

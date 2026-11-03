@@ -6,7 +6,9 @@ class_name Loot
 ##
 ## Poziom przedmiotu (1-100) skaluje statystyki bazowe (obrażenia broni, pancerz, premie biżuterii)
 ## i wyznacza okno tierów premii: tier 45 jest najsłabszy, 1 najlepszy. Wyższy poziom odblokowuje lepsze
-## tiery i odcina najsłabsze (okno ma TIER_WINDOW tierów). Liczba premii zależy od jakości: zwykły 0-2,
+## tiery i odcina najsłabsze (okno ma TIER_WINDOW tierów, tier 1 w oknie od poziomu TIER_TOP_LEVEL). Ponad oknem jest
+## pasmo szczęścia (tier_reach tierów): lepsze tiery z małą szansą, każdy kolejny rzadszy - od 60. poziomu sięga
+## aż do tieru 1, a na niskich poziomach tylko kilka tierów wyżej. Liczba premii zależy od jakości: zwykły 0-2,
 ## magiczny 2-4, rzadki 4-6, legendarny 6-8 - a im mniej premii, tym większa szansa na lepsze tiery.
 
 const COMMON := "common"
@@ -19,6 +21,16 @@ const MAX_ITEM_LEVEL := 100
 const TIERS := 45
 ## Ile tierów obejmuje okno losowania na danym poziomie przedmiotu (od najlepszego dostępnego w dół).
 const TIER_WINDOW := 10
+## Poziom przedmiotu, od którego zwykłe okno sięga tieru 1 (wyżej okno już się nie przesuwa).
+const TIER_TOP_LEVEL := 90
+## Pasmo szczęścia ponad oknem: TIER_REACH_BASE + TIER_REACH_GROWTH * (poziom / TIER_REACH_LEVEL)^2 tierów
+## (najwyżej przy 1,5 x TIER_REACH_LEVEL). Pierwszy tier nad oknem ma szansę TIER_LUCK, każdy następny
+## TIER_LUCK_DECAY razy mniejszą (razem 7-15% premii trafia ponad okno).
+const TIER_REACH_BASE := 3.0
+const TIER_REACH_GROWTH := 15.0
+const TIER_REACH_LEVEL := 60.0
+const TIER_LUCK := 0.03
+const TIER_LUCK_DECAY := 0.8
 ## O ile rośnie statystyka bazowa na każdy poziom przedmiotu (poziom 100 - prawie 7 razy więcej niż 1).
 const BASE_GROWTH := 0.06
 ## Liczba premii [min, max] wg jakości.
@@ -89,9 +101,20 @@ static func base_multiplier(item_level: int) -> float:
 	return 1.0 + (clampi(item_level, 1, MAX_ITEM_LEVEL) - 1) * BASE_GROWTH
 
 
-## Najlepszy tier dostępny na danym poziomie przedmiotu (poziom 1 - tylko 45, poziom 100 - aż do 1).
+## Najlepszy tier zwykłego okna na danym poziomie przedmiotu (poziom 1 - tylko 45, od TIER_TOP_LEVEL - aż do 1).
 static func best_tier(item_level: int) -> int:
-	return TIERS - roundi((clampi(item_level, 1, MAX_ITEM_LEVEL) - 1) * (TIERS - 1) / float(MAX_ITEM_LEVEL - 1))
+	return TIERS - roundi((clampi(item_level, 1, TIER_TOP_LEVEL) - 1) * (TIERS - 1) / float(TIER_TOP_LEVEL - 1))
+
+
+## Ile tierów ponad zwykłym oknem sięga pasmo szczęścia.
+static func tier_reach(item_level: int) -> int:
+	var x := minf(clampi(item_level, 1, MAX_ITEM_LEVEL) / TIER_REACH_LEVEL, 1.5)
+	return roundi(TIER_REACH_BASE + TIER_REACH_GROWTH * x * x)
+
+
+## Najlepszy tier, jaki w ogóle może wypaść na danym poziomie (z pasmem szczęścia).
+static func top_tier(item_level: int) -> int:
+	return maxi(1, best_tier(item_level) - tier_reach(item_level))
 
 
 ## Najsłabszy tier dostępny na danym poziomie przedmiotu.
@@ -99,9 +122,19 @@ static func worst_tier(item_level: int) -> int:
 	return mini(TIERS, best_tier(item_level) + TIER_WINDOW - 1)
 
 
-## Losuje tier z okna poziomu przedmiotu - mniej premii (niższa jakość) przesuwa los ku lepszym tierom.
+## Losuje tier: najpierw pasmo szczęścia ponad oknem (rzadko, im wyżej, tym rzadziej), a zwykle okno poziomu
+## przedmiotu - mniej premii (niższa jakość) przesuwa los w oknie ku lepszym tierom.
 static func roll_tier(item_level: int, quality: String) -> int:
 	var best := best_tier(item_level)
+	var luck := randf()
+	var chance := TIER_LUCK
+	for k in range(1, tier_reach(item_level) + 1):
+		if best - k < 1:
+			break
+		if luck < chance:
+			return best - k
+		luck -= chance
+		chance *= TIER_LUCK_DECAY
 	var span := worst_tier(item_level) - best + 1
 	var t := pow(randf(), TIER_BIAS.get(quality, 1.0))
 	return best + mini(int(t * span), span - 1)
