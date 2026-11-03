@@ -230,7 +230,7 @@ func _process_flicker(delta: float) -> void:
 	var endless := whirling and _endless_whirl() and _player.is_skill_held("flicker")
 	if whirling and (_whirl_jumps_left > 0 or endless):
 		if _whirl_jump_timer <= 0.0:
-			_whirl_jump_timer = Skills.WHIRL_FLICKER_INTERVAL / _player._skill_speed()
+			_whirl_jump_timer = maxf(Skills.WHIRL_FLICKER_INTERVAL / _player._skill_speed(), Skills.WHIRL_FLICKER_MIN_INTERVAL)
 			if _jump(Skills.FLICKER_RANGE * 1.2, level, true):
 				_whirl_jumps_left -= 1
 				_player.note_skill("flicker")
@@ -256,7 +256,7 @@ func _process_flicker(delta: float) -> void:
 		return
 	_player.spend_mana(cost)
 	_player.note_skill("flicker")
-	_flicker_timer = Skills.FLICKER_INTERVAL / _player._skill_speed()
+	_flicker_timer = maxf(Skills.FLICKER_INTERVAL / _player._skill_speed(), Skills.FLICKER_MIN_INTERVAL)
 
 
 ## Skok na wylot przez najbliższego widocznego wroga (innego niż poprzedni, jeśli jest wybór): postać ląduje za nim
@@ -299,14 +299,16 @@ func _jump(reach: float, level: int, spinning: bool) -> bool:
 		_player.play_thrust(travel)  # ostrze do przodu, w stronę skoku
 	var trail_from := from + Player.BODY_OFFSET
 	var trail := _player.body_center() - trail_from
+	# efekty przyspieszają z szybkością ataku (najwyżej 2x), żeby przy szybkich skokach nie nakładały się w bałagan
+	var fps := 16.0 * clampf(_player._skill_speed(), 1.0, 2.0)
 	if spinning:
 		_spin_fx_time = SPIN_FX_TIME
-		SkillEffects.sheet_once(_player.get_parent(), FLICKER_SPIN_TRAIL, 7, 16.0, trail_from, FLICKER_SPIN_TRAIL_ANCHOR,
+		SkillEffects.sheet_once(_player.get_parent(), FLICKER_SPIN_TRAIL, 7, fps, trail_from, FLICKER_SPIN_TRAIL_ANCHOR,
 				trail.angle(), maxf(0.5, (trail.length() - 8.0) / FLICKER_SPIN_TRAIL_LENGTH))
 	else:
-		SkillEffects.sheet_once(_player.get_parent(), FLICKER_TRAIL, 7, 16.0, trail_from, FLICKER_TRAIL_ANCHOR,
+		SkillEffects.sheet_once(_player.get_parent(), FLICKER_TRAIL, 7, fps, trail_from, FLICKER_TRAIL_ANCHOR,
 				trail.angle(), maxf(0.5, (trail.length() - 8.0) / FLICKER_TRAIL_LENGTH))
-	SkillEffects.sheet_once(_player.get_parent(), FLICKER_SLASH, 8, 16.0, best.hurt_center(), FLICKER_SLASH_ANCHOR,
+	SkillEffects.sheet_once(_player.get_parent(), FLICKER_SLASH, 8, fps, best.hurt_center(), FLICKER_SLASH_ANCHOR,
 			travel.angle() + FLICKER_SLASH_TILT * (1.0 if randf() < 0.5 else -1.0))
 	Sfx.play("dash" if spinning else "swing", 0.0, 1.2)
 	var multiplier := Skills.flicker_damage(level) * (1.0 + _player.skills.tree_bonus("melee", "flicker_damage")

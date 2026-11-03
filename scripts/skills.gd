@@ -245,6 +245,9 @@ const FLICKER_INTERVAL := 0.32
 const FLICKER_RANGE := 190.0
 const WHIRL_FLICKER_COOLDOWN := 8.0
 const WHIRL_FLICKER_INTERVAL := 0.11
+## Najkrótsze odstępy skoków Mgnienia przy dużej szybkości ataku (inaczej w Młynku ponad 20 skoków na sekundę).
+const FLICKER_MIN_INTERVAL := 0.16
+const WHIRL_FLICKER_MIN_INTERVAL := 0.07
 ## Dymne Wybuchy: mana, czas ładowania jednego rzędu, odległość, promień i rozstaw kątowy wybuchów w rzędach 1-3.
 const SMOKE_MANA := 14.0
 const SMOKE_CHARGE_TIME := 0.45
