@@ -225,12 +225,18 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
 
 - [ ] **Dopieszczenie i usystematyzowanie walki** (plan z autorem, listopad 2026; każdy krok osobny PR):
   1. prędkość ataku - zrobione (szukaj „Malejące zyski szybkości” w `docs/historia.md`): malejące zyski i sufit
-     +150% (`CharacterStats.speed_gain`), 1% za punkt zręczności / inteligencji, Salwa z najkrótszym odstępem;
+     +150% (`CharacterStats.speed_gain`), 1% za punkt zręczności / inteligencji, Salwa i Mgnienie z najkrótszym
+     odstępem (umiejętności liczą tylko szybkość postaci, bez szybkości broni - do przemyślenia przy statystykach);
   2. **tagi umiejętności** (dziś `Skills.TAGS` ma tylko atak / czar / okrzyk): rodzaj (atak, czar, okrzyk, **aura** -
      pod aury rezerwujące manę), forma (cios, pocisk, obszar, przywołanie, ruch), obrażenia (fizyczne, ogień, lód,
      piorun, trucizna, obrażenia w czasie); ikonki w opisie umiejętności (okno K, paski), premie działają według tagów;
   3. **nowe premie (afiksy)** na tagach: obrażenia żywiołów, pocisków / ciosów / obszarowe, w czasie, szanse na
      podpalenie / zamrożenie / porażenie, obszar, przebicie odporności;
+  2b. **statystyki jak w Last Epoch** (decyzja autora, listopad 2026; razem z tagami): atrybut to jeden z tagów
+     umiejętności i daje +% obrażeń umiejętnościom z tym tagiem, a do tego premię obronną - siła: redukcja obrażeń,
+     zręczność: unik (zamiast szybkości ataku, malejące zyski), inteligencja: mana, witalność: zdrowie; szybkość ataku
+     tylko z broni, przedmiotów i drzewek. Dopytać: limit i wartość uniku, czy procenty zastępują płaskie +1 obrażeń
+     za punkt, darmowy reset atrybutów w starych zapisach;
   4. **gniazda i kamienie wsparcia** (jak w PoE): gniazda tylko w umiejętnościach aktywnych, bazowo umiejętność nie ma
      żadnego, gniazda dorabia się po jednym rzadkimi przedmiotami (do 4-5), kamienie wsparcia (większy obszar, więcej
      pocisków itp.) pasują tylko do umiejętności z danym tagiem; łup z nowej mechaniki lochów - autor skłania się ku

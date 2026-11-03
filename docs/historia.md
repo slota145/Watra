@@ -959,7 +959,9 @@ odpowiedniej sekcji.
   (`SPEED_CAP`; np. surowe +100% daje +92%, +500% daje +149%); 1% za punkt zręczności i inteligencji
   (`ATTACK_SPEED_PER_DEXTERITY`, `CAST_SPEED_PER_INTELLIGENCE`). Szybka Salwa (`Player._cast_volley`): odstęp
   `VOLLEY_INTERVAL` 0,07 s skracany szybkością, ale nie poniżej `VOLLEY_MIN_INTERVAL` 0,05 s, a strzały wylatują
-  na zmianę z lewej i z prawej (`VOLLEY_SPREAD`), żeby nie chowały się jedna za drugą. Test: `test_stats`.
+  na zmianę z lewej i z prawej (`VOLLEY_SPREAD`), żeby nie chowały się jedna za drugą. Mgnienie: skoki nie częściej
+  niż co `Skills.FLICKER_MIN_INTERVAL` (0,16 s), w Młynku co `WHIRL_FLICKER_MIN_INTERVAL` (0,07 s), a smuga i cięcie
+  przyspieszają z szybkością ataku (najwyżej 2x). Test: `test_stats`.
 - [x] **Mapa Nawii, etap 4 - bossowie szczytowi** (listopad 2026). Ustalenia z autorem: trzech słowiańskich bogów
   (Władca Hordy i obce bogi później), dostęp za fragmenty kluczy z węzłów, nagrody: punkty Watry, własne legendy, dużo
   łupu i serca boga jako waluta; grafiki PixelLab 160 px z 2 animacjami; do tego dwa pasy w stylu Mageblooda
