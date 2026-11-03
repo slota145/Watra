@@ -17,7 +17,7 @@ extends Boss
 ## zapowiedzi, uderzenie po niej.
 ## Efekty bogów z kreatora efektów PixelLab (pixellab_src/vfx/ids.json) i dźwięki z tools/sfx_synth.py: Weles -
 ## bagienna zieleń i złoto (FX_WELES_*, weles_*), Marzanna - lód, biel i błękit (FX_MARZANNA_*, marzanna_*),
-## Czarnobóg na razie pożyczone.
+## Czarnobóg - czerń i fiolet (FX_CZARNOBOG_*, czarnobog_*); Władca Hordy (HordeLord) na razie wspólne efekty bossów.
 
 @export var kind := "weles"
 @export var strike_damage := 80
@@ -52,8 +52,6 @@ const SPIKE_DELAY := 0.08
 const STEP_RADIUS := 95.0
 
 const FX_MIST := preload("res://assets/effects/wij_mist.png")
-const FX_SPIKE := preload("res://assets/effects/mortan_spike.png")
-const FX_BLINK := preload("res://assets/effects/mortan_blink.png")
 const FX_SMOKE := preload("res://assets/effects/smoke_burst.png")
 const FX_WELES_ROOTS := preload("res://assets/effects/weles_roots.png")
 const FX_WELES_VENOM := preload("res://assets/effects/weles_venom.png")
@@ -68,6 +66,16 @@ const FX_MARZANNA_MIST := preload("res://assets/effects/marzanna_mist.png")
 const FX_MARZANNA_ENGAGE := preload("res://assets/effects/marzanna_engage.png")
 const FX_MARZANNA_PHASE := preload("res://assets/effects/marzanna_phase.png")
 const FX_MARZANNA_DEATH := preload("res://assets/effects/marzanna_death.png")
+const FX_CZARNOBOG_CLEAVE := preload("res://assets/effects/czarnobog_cleave.png")
+const FX_CZARNOBOG_SPIKE := preload("res://assets/effects/czarnobog_spike.png")
+const FX_CZARNOBOG_STEP := preload("res://assets/effects/czarnobog_step.png")
+const FX_CZARNOBOG_STRIKE := preload("res://assets/effects/czarnobog_strike.png")
+const FX_CZARNOBOG_ENGAGE := preload("res://assets/effects/czarnobog_engage.png")
+const FX_CZARNOBOG_PHASE := preload("res://assets/effects/czarnobog_phase.png")
+const FX_CZARNOBOG_DEATH := preload("res://assets/effects/czarnobog_death.png")
+## Zasięg sierpa w czarnobog_cleave i promień uderzenia w czarnobog_strike przy skali 1 (piksele klatki).
+const CZARNOBOG_CLEAVE_ART_REACH := 90.0
+const CZARNOBOG_STRIKE_ART_RADIUS := 70.0
 ## Promień kręgu lodowych kolców w marzanna_nova, lot włóczni w marzanna_lance i promień zamieci w marzanna_blizzard
 ## przy skali 1 (piksele klatki).
 const MARZANNA_NOVA_ART_RADIUS := 70.0
@@ -119,7 +127,7 @@ func take_damage(amount: int, from_position: Vector2, knockback := 0.0) -> void:
 			phase = i + 2
 			attack_interval *= 0.75
 			speed *= 1.1
-			Sfx.play_at("weles_roar" if kind == "weles" else ("marzanna_wail" if kind == "marzanna" else "bies_roar"), global_position)
+			Sfx.play_at("weles_roar" if kind == "weles" else ("marzanna_wail" if kind == "marzanna" else ("czarnobog_roar" if kind == "czarnobog" else "bies_roar")), global_position)
 			_shake_camera(9.0)
 			_fx_phase()
 			var hud := get_tree().get_first_node_in_group("hud")
@@ -245,8 +253,7 @@ func _choose_czarnobog(distance: float) -> bool:
 			_marker(_spots[i], SPIKE_RADIUS, 0.7 + (i % (8 + phase * 2)) * SPIKE_DELAY, Color(0.8, 0.55, 1.0))
 	elif distance < 520.0:
 		_begin("step", 0.6)
-		SkillEffects.sheet_once(get_parent(), FX_BLINK, 10, 12.0, global_position + Vector2(0, -14), Vector2(30, 27), 0.0, 1.0, 2.0)
-		Sfx.play_at("ghost_wail", global_position)
+		_czarnobog_step()
 	else:
 		return false
 	return true
@@ -351,9 +358,10 @@ func _update_attack(_delta: float) -> void:
 				if _player_in_telegraph():
 					_hurt_player(special_damage, 260.0)
 				_remove_telegraph()
-				BossFx.cleave(get_parent(), global_position, _aim.angle(), CLEAVE_RANGE)
+				SkillEffects.sheet_once(get_parent(), FX_CZARNOBOG_CLEAVE, 14, 14.0, global_position, Vector2(4, 62), _aim.angle(),
+						1.0, CLEAVE_RANGE / CZARNOBOG_CLEAVE_ART_REACH)
 				_ground_crack(global_position + _aim * 70.0, 50.0)
-				Sfx.play_at("big_slash", global_position)
+				Sfx.play_at("czarnobog_cleave", global_position)
 				_shake_camera(8.0)
 				_set_stage("recover", 0.8)
 		["spikes", "telegraph"]:
@@ -368,7 +376,7 @@ func _update_attack(_delta: float) -> void:
 			if _stage_timer <= 0.0:
 				var behind := _player.global_position + (_player.global_position - global_position).normalized() * 60.0
 				_teleport(behind if not _blocked(behind) else _player.global_position + Vector2(0, 50))
-				SkillEffects.sheet_once(get_parent(), FX_SMOKE, 10, 14.0, global_position, Vector2(29, 40), 0.0, 1.0, 2.0)
+				_czarnobog_step()
 				_face(_player.global_position)
 				_hit_player = false
 				var circle := _show_telegraph(Telegraph.Shape.CIRCLE, global_position, 0.0, 0.55)
@@ -381,8 +389,10 @@ func _update_attack(_delta: float) -> void:
 				if _player_in_telegraph():
 					_hurt_player(strike_damage, 240.0)
 				_remove_telegraph()
+				SkillEffects.sheet_once(get_parent(), FX_CZARNOBOG_STRIKE, 10, 12.0, global_position, Vector2(78, 39), 0.0, 1.0,
+						STEP_RADIUS / CZARNOBOG_STRIKE_ART_RADIUS)
 				_ground_crack(global_position, STEP_RADIUS * 0.7)
-				Sfx.play_at("rock_break", global_position)
+				Sfx.play_at("czarnobog_strike", global_position)
 				_set_stage("recover", 0.7)
 		[_, "recover"]:
 			if _stage_timer <= 0.0:
@@ -397,10 +407,10 @@ func _spike_wave() -> void:
 		get_tree().create_timer(SPIKE_DELAY * (i % per_line), false).timeout.connect(func() -> void:
 			if state == State.DEAD or not is_inside_tree():
 				return
-			SkillEffects.sheet_once(get_parent(), FX_SPIKE, 10, 16.0, spot + Vector2(0, 6), Vector2(25, 34), 0.0, 1.0, 1.3)
+			SkillEffects.sheet_once(get_parent(), FX_CZARNOBOG_SPIKE, 18, 16.0, spot + Vector2(0, 6), Vector2(51, 47), 0.0, 1.0, 1.0)
 			if _player_alive() and _player.global_position.distance_to(spot) <= SPIKE_RADIUS:
 				_hurt_player(area_damage, 160.0))
-	Sfx.play_at("rock_break", global_position)
+	Sfx.play_at("czarnobog_spike", global_position)
 
 
 func _roots_radius() -> float:
@@ -482,12 +492,17 @@ func _fx_engage() -> void:
 			SkillEffects.sheet_once(get_parent(), FX_MARZANNA_ENGAGE, 16, 14.0, global_position, Vector2(77, 167), 0.0, 1.0,
 					fx_scale() * 1.1)
 			Sfx.play_at("marzanna_wail", global_position)
+		"czarnobog":
+			SkillEffects.sheet_once(get_parent(), FX_CZARNOBOG_ENGAGE, 22, 14.0, global_position, Vector2(63, 134), 0.0, 1.0,
+					fx_scale() * 1.1)
+			Sfx.play_at("czarnobog_roar", global_position)
 		_:
 			SkillEffects.sheet_once(get_parent(), FX_SMOKE, 10, 14.0, global_position, Vector2(29, 40), 0.0, 1.0, 3.0)
 	super()
 
 
-## Zmiana fazy: Weles - zielono-złoty wybuch mocy z monetami, Marzanna - mroźny błysk, reszta - wspólny wybuch bossów.
+## Zmiana fazy: Weles - zielono-złoty wybuch mocy z monetami, Marzanna - mroźny błysk, Czarnobóg - wybuch
+## ciemności z czaszkami, reszta - wspólny wybuch bossów.
 func _fx_phase() -> void:
 	match kind:
 		"weles":
@@ -496,11 +511,15 @@ func _fx_phase() -> void:
 		"marzanna":
 			SkillEffects.sheet_once(get_parent(), FX_MARZANNA_PHASE, 16, 12.0, global_position, Vector2(76, 78), 0.0, 1.0,
 					fx_scale() * 1.2)
+		"czarnobog":
+			SkillEffects.sheet_once(get_parent(), FX_CZARNOBOG_PHASE, 16, 12.0, global_position, Vector2(78, 54), 0.0, 1.0,
+					fx_scale() * 1.2)
 		_:
 			super()
 
 
-## Śmierć: Weles - bagienny wybuch i sypiące się złoto, Marzanna - wybuch lodu i śnieg, reszta - wspólna śmierć bossów.
+## Śmierć: Weles - bagienny wybuch i sypiące się złoto, Marzanna - wybuch lodu i śnieg, Czarnobóg -
+## zapadnięcie w otchłań, reszta - wspólna śmierć bossów.
 func _fx_death() -> void:
 	match kind:
 		"weles":
@@ -511,8 +530,18 @@ func _fx_death() -> void:
 			SkillEffects.sheet_once(get_parent(), FX_MARZANNA_DEATH, 16, 14.0, global_position, Vector2(93, 90), 0.0, 1.0,
 					fx_scale() * 1.3)
 			Sfx.play_at("marzanna_death", global_position)
+		"czarnobog":
+			SkillEffects.sheet_once(get_parent(), FX_CZARNOBOG_DEATH, 22, 14.0, global_position, Vector2(70, 76), 0.0, 1.0,
+					fx_scale() * 1.3)
+			Sfx.play_at("czarnobog_death", global_position)
 		_:
 			super()
+
+
+## Czarnobóg znika albo pojawia się w kłębie czarnego dymu (Krok przez Cień).
+func _czarnobog_step() -> void:
+	SkillEffects.sheet_once(get_parent(), FX_CZARNOBOG_STEP, 10, 12.0, global_position, Vector2(56, 50), 0.0, 1.0, fx_scale() * 1.1)
+	Sfx.play_at("czarnobog_step", global_position)
 
 
 ## Marzanna znika albo pojawia się w lodowej mgle.

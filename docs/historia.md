@@ -920,6 +920,16 @@ odpowiedniej sekcji.
   (wybuch lodu, mgła, śnieg). Dźwięki (`MARZANNA` w `tools/sfx_synth.py`, pomocnicy `icy_wind`, `ice_crack`):
   `marzanna_wail` (dwugłosowe zawodzenie nad wiatrem - pojawienie się i fazy), `marzanna_nova`, `marzanna_lance`,
   `marzanna_blizzard` (narastające wycie z trzaskiem lodu na końcu), `marzanna_mist`, `marzanna_death`.
+- [x] **Efekty i dźwięki bossów szczytowych, etap 3 - Czarnobóg** (listopad 2026; czerń i fiolet). Efekty
+  (`assets/effects/czarnobog_*.png`, stałe `FX_CZARNOBOG_*` w `pinnacle_boss.gd`): `czarnobog_cleave` (ciemny sierp
+  z fioletowym brzegiem, obrót z kierunku ciosu, skala z `CLEAVE_RANGE`), `czarnobog_spike` (Kolec Cienia, po jednym
+  na miejsce w szeregu), `czarnobog_step` (czarny dym znikania i pojawienia się - `_czarnobog_step`), `czarnobog_strike`
+  (uderzenie po Kroku przez Cień - fioletowe pęknięcia i ciemny pył, skala z `STEP_RADIUS`), `czarnobog_engage`
+  (czarna szczelina, kolumna ciemności, macki cienia), `czarnobog_phase` (zassanie, ciemny błysk, czaszki),
+  `czarnobog_death` (otchłań, macki, czarny dym, czaszki). Dźwięki (`CZARNOBOG` w `tools/sfx_synth.py`, pomocnik
+  `dark_whisper`): `czarnobog_roar` (trzy bardzo niskie pomruki z szeptami - pojawienie się i fazy),
+  `czarnobog_cleave`, `czarnobog_spike` (seria chrzęstów), `czarnobog_step` (zassanie i trzask), `czarnobog_strike`,
+  `czarnobog_death`. Władca Hordy (`kind` "horde") zostaje przy wspólnych efektach do swojego etapu.
 - [x] **Mapa Nawii, etap 4 - bossowie szczytowi** (listopad 2026). Ustalenia z autorem: trzech słowiańskich bogów
   (Władca Hordy i obce bogi później), dostęp za fragmenty kluczy z węzłów, nagrody: punkty Watry, własne legendy, dużo
   łupu i serca boga jako waluta; grafiki PixelLab 160 px z 2 animacjami; do tego dwa pasy w stylu Mageblooda
