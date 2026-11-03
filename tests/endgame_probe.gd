@@ -8,7 +8,8 @@ extends SceneTree
 ## porównanie z graczem, który zmienia ekwipunek na bieżąco.
 ## Tryby: whirl (sam Młynek), flicker (samo Mgnienie), full (cały pasek miecza + Dymne Wybuchy pod E), idle (stoi),
 ## bow / spell (pasek łuku / księgi z zapisu, broń zastąpiona rzadkim łukiem / księgą poziomu ekwipunku albo 51.,
-## punkty siły przeniesione do zręczności / inteligencji), uro (Uroczysko: bot otwiera krąg i walczy jak full, aż krąg zgaśnie - upiory naraz, zabici, runy, czas).
+## punkty siły przeniesione do zręczności / inteligencji),
+## bow_kite / spell_kite (to samo, ale bot trzyma dystans - odchodzi od gromady i krąży po komnacie), uro (Uroczysko: bot otwiera krąg i walczy jak full, aż krąg zgaśnie - upiory naraz, zabici, runy, czas).
 
 var _world: Node
 var _args: PackedStringArray
@@ -29,6 +30,8 @@ var _engaged := 0.0
 var _cd := {}
 var _smoke_hold := 0.0
 var Sk
+## Łucznik / mag trzyma dystans (tryby bow_kite, spell_kite): ucieka od gromady i krąży po komnacie.
+var _kite := false
 var _uro := false
 var _stone: Node
 var _ghost_sum := 0.0
@@ -47,6 +50,9 @@ func _initialize() -> void:
 	_seconds = float(_args[2])
 	if _args.size() > 3:
 		_mode = _args[3]
+	if _mode.ends_with("_kite"):
+		_mode = _mode.trim_suffix("_kite")
+		_kite = true
 	var p: Dictionary = save["player"]
 	p["stats"]["attribute_rules"] = 2
 	if _args.size() > 4:
@@ -206,7 +212,7 @@ func _keep_pack(pl) -> void:
 		_arena = (Vector2(best.position) + Vector2(best.size) / 2.0) * 64.0
 		pl.global_position = _arena
 		pl.reset_physics_interpolation()
-	if pl.global_position.distance_to(_arena) > 120.0:
+	if pl.global_position.distance_to(_arena) > (320.0 if _kite else 120.0):
 		pl.global_position = _arena
 		pl.reset_physics_interpolation()
 	var near := 0
@@ -214,13 +220,14 @@ func _keep_pack(pl) -> void:
 	for e in get_nodes_in_group("enemies"):
 		if e.state == e.State.DEAD or is_instance_of(e, _boss):
 			continue
-		if e.global_position.distance_to(pl.global_position) < 90.0:
+		if e.global_position.distance_to(pl.global_position) < (260.0 if _kite else 90.0):
 			near += 1
 		else:
 			far.append(e)
 	far.shuffle()
 	for e in far.slice(0, maxi(PACK - near, 0)):
-		e.global_position = _arena + Vector2.from_angle(randf() * TAU) * randf_range(50.0, 80.0)
+		e.global_position = (pl.global_position + Vector2.from_angle(randf() * TAU) * randf_range(170.0, 230.0)) if _kite \
+				else _arena + Vector2.from_angle(randf() * TAU) * randf_range(50.0, 80.0)
 		e.reset_physics_interpolation()
 		e.home = e.global_position
 		e.leash_radius = 100000.0
@@ -315,6 +322,8 @@ func _process(delta: float) -> bool:
 		if to.length() > 400.0:
 			pl.global_position = target.global_position + Vector2(randf_range(-30, 30), 40)
 			pl.reset_physics_interpolation()
+		elif _kite:
+			_kite_move(pl)
 		elif to.length() > 20.0:
 			if to.x < -8: Input.action_press("move_left")
 			if to.x > 8: Input.action_press("move_right")
@@ -363,6 +372,28 @@ func _bot(pl, delta: float, dist: float) -> void:
 			if _smoke_hold <= 0.0:
 				_release(pl, 3)
 				_cd["smoke"] = 3.0
+
+
+## Ucieczka od gromady: od środka wrogów bliżej niż 130 px, z ruchem po okręgu (żeby nie utknąć w rogu) i powrotem
+## ku środkowi komnaty, gdy postać od niego odejdzie; nikogo blisko - stoi i strzela.
+func _kite_move(pl) -> void:
+	var center := Vector2.ZERO
+	var close := 0
+	for e in get_nodes_in_group("enemies"):
+		if e.state != e.State.DEAD and e.global_position.distance_to(pl.global_position) < 130.0:
+			center += e.global_position
+			close += 1
+	if close == 0:
+		return
+	var away: Vector2 = (pl.global_position - center / close).normalized()
+	var dir := away + away.orthogonal() * 0.8
+	var home: Vector2 = _arena - pl.global_position
+	if home.length() > 150.0:
+		dir += home.normalized() * 1.2
+	if dir.x < -0.35: Input.action_press("move_left")
+	if dir.x > 0.35: Input.action_press("move_right")
+	if dir.y < -0.35: Input.action_press("move_up")
+	if dir.y > 0.35: Input.action_press("move_down")
 
 
 ## Łuk i księga: zwykły atak trzymany, reszta paska po kolei, gdy gotowa (trzymana chwilę - ładowane strzały).

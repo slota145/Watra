@@ -228,6 +228,16 @@ odpowiedniej sekcji.
   łuk 4515 / 6442, księga 4886 / 7041; stopień 17 - miecz 13024 / 23559, łuk 12118 / 21860, księga 11190 / 19036.
   Łuk i księga trafiają więcej wrogów naraz (stopień 17: 9-13 zamiast 5), ale stojąc w gromadzie dostają 2-4x więcej
   obrażeń niż miecz (bez Młynka, który odpycha i przerywa zamachy, i z lżejszą zbroją).
+  Z botem trzymającym dystans (tryby `bow_kite` / `spell_kite` - ucieka od wrogów bliżej niż 130 px, krąży po
+  komnacie; dociągani wrogowie pojawiają się 170-230 px od postaci) - zabójstwa/s i otrzymane / leczenie na sekundę
+  (ekwipunek autora | rzadki z poziomu lochu): stopień 12 - miecz 3,4 (165/103) | 4,9 (152/148), łuk 1,6 (94/54) |
+  2,7 (76/76), księga 1,9 (115/110) | 2,7 (80/80); stopień 17 - miecz 2,7 (572/135) | 6,4 (247/108), łuk 1,6 (589/88) |
+  3,2 (69/69), księga 1,8 (270/76) | 3,7 (196/197). Na dystansie łuk i księga są bezpieczniejsze od miecza (z dobrym
+  ekwipunkiem nie tracą zdrowia), ale zabijają mniej więcej o połowę wolniej.
+  Decyzja autora: **+25% wszystkich obrażeń z łukiem i księgą** (`CharacterStats.WEAPON_DAMAGE`, w
+  `damage_multiplier`). Pomiar po zmianie (zabójstwa/s, ekwipunek autora | rzadki): stopień 12 - łuk 2,1 | 2,8,
+  księga 2,2 | 3,4; stopień 17 - łuk 2,6 | 3,5, księga 1,8 | 3,8 (miecz 3,4 | 4,9 i 2,7 | 6,4) - łuk i księga
+  zabijają w 55-95% tempa miecza (średnio ok. 2/3), z dobrym ekwipunkiem nadal bez utraty zdrowia.
 
 ## Gobliński Las i Prastary Las (`scripts/world.gd`, `scripts/ancient_forest.gd`) (Do poprawy)
 - [x] Gobliński Las: więcej grupek goblinów w lesie i większe siedlisko wilków - około 450 potworów (było około 340);
