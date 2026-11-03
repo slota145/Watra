@@ -3,7 +3,8 @@ extends PanelContainer
 ## Lochy w płomieniach Watry (przycisk "Lochy" w oknie Watry): wybór klimatu, stopnia trudności (najwyżej poziom
 ## Watry) i modyfikatorów kupowanych za żar (Dungeons.MODIFIERS - kolejne odblokowuje poziom Watry). "Wkrocz
 ## w płomienie" wydaje żar i przenosi gracza do nowo wygenerowanego lochu (World.enter_dungeon).
-## Sloty na bożki (Idols): wybór bożka z plecaka, każdy rodzaj najwyżej raz; bożki zużywają się przy wejściu.
+## Sloty na bożki (Idols): wybór bożka z plecaka (bożki potworów i łupu mogą być w kilku slotach, reszta raz - Idols.fits);
+## bożki zużywają się przy wejściu.
 
 const WIDTH := 300.0
 const FIRE := Color(1.0, 0.6, 0.25)
@@ -169,7 +170,8 @@ func chosen_idols() -> Array[String]:
 	return result
 
 
-## Listy bożków w slotach: w każdej bożki z plecaka, których rodzaju nie ma w innym slocie.
+## Listy bożków w slotach: w każdej bożki z plecaka, które pasują do bożków z innych slotów (Idols.fits) i których
+## zostały jeszcze sztuki.
 func _refresh_idols(watra: int) -> void:
 	var count := Idols.slot_count(watra)
 	var owned := {}
@@ -183,9 +185,12 @@ func _refresh_idols(watra: int) -> void:
 		var ka := Idols.KIND_ORDER.find(pa[0])
 		var kb := Idols.KIND_ORDER.find(pb[0])
 		return ka < kb if ka != kb else Idols.RARITIES.find(pa[1]) > Idols.RARITIES.find(pb[1]))
+	var used := {}
 	for i in _idol_pickers.size():
-		if i >= count or not owned.has(_idols[i]):
+		if i >= count or int(used.get(_idols[i], 0)) >= int(owned.get(_idols[i], 0)):
 			_idols[i] = ""
+		if _idols[i] != "":
+			used[_idols[i]] = int(used.get(_idols[i], 0)) + 1
 	var lines: Array[String] = []
 	for i in _idol_pickers.size():
 		var picker := _idol_pickers[i]
@@ -199,14 +204,15 @@ func _refresh_idols(watra: int) -> void:
 		picker.disabled = false
 		picker.add_item(Lang.t("Pusty slot"))
 		picker.set_item_metadata(0, "")
+		var others: Array[String] = []
+		for j in _idols.size():
+			if j != i and _idols[j] != "":
+				others.append(_idols[j])
 		for id: String in ids:
-			var taken := false
-			for j in _idols.size():
-				if j != i and _idols[j] != "" and Idols.kind_of(_idols[j]) == Idols.kind_of(id):
-					taken = true
-			if taken:
+			var left: int = owned[id] - others.count(id)
+			if id != _idols[i] and (left <= 0 or not Idols.fits(others, id)):
 				continue
-			picker.add_icon_item(Items.get_data(id)["icon"], "%s (%d)" % [Items.display_name(id), owned[id]])
+			picker.add_icon_item(Items.get_data(id)["icon"], "%s (%d)" % [Items.display_name(id), left])
 			var index := picker.item_count - 1
 			picker.set_item_metadata(index, id)
 			picker.get_popup().set_item_icon_max_width(index, 12)
@@ -218,7 +224,9 @@ func _refresh_idols(watra: int) -> void:
 		else:
 			var effect := Idols.effect_lines(_idols[i])
 			picker.tooltip_text = "%s\n%s" % [Items.display_name(_idols[i]), "\n".join(effect)]
-			lines.append_array(effect.slice(1, effect.size() - 1))
+			var skip := [Lang.t("Można włożyć w kilka slotów - działanie się sumuje."),
+					Lang.t("Włóż w slot w oknie lochów Watry - zużywa się przy wejściu.")]
+			lines.append_array(effect.slice(1).filter(func(line: String) -> bool: return not skip.has(line)))
 	_idol_text.text = ", ".join(lines) if not lines.is_empty() \
 			else (Lang.t("Nie masz bożków - wypadają rzadko z potworów.") if ids.is_empty() else "")
 
@@ -244,7 +252,7 @@ func _refresh() -> void:
 		check.set_pressed_no_signal(id in _mods)
 		check.text = Lang.t("%s (%d żaru): %s") % [Lang.t(data["name"]), data["cost"], Lang.t(data["description"])] if not locked \
 				else Lang.t("%s - od %d. poziomu Watry") % [Lang.t(data["name"]), data["unlock"]]
-	var cost := Dungeons.mods_cost(_mods)
+	var cost := Dungeons.mods_cost(_mods, chosen_idols())
 	var available := _player.boons.available_ember()
 	_ember_label.text = Lang.t("Żar: %d  •  koszt: %d") % [available, cost]
 	_ember_label.add_theme_color_override("font_color", FIRE if cost <= available else Color(1, 0.4, 0.4))
@@ -252,12 +260,12 @@ func _refresh() -> void:
 
 
 func _on_enter() -> void:
-	var cost := Dungeons.mods_cost(_mods)
+	var cost := Dungeons.mods_cost(_mods, chosen_idols())
 	var world := get_tree().get_first_node_in_group("world")
 	if world == null:
 		return
 	var idols := chosen_idols()
-	if not Idols.can_combine(idols) or idols.any(func(id: String) -> bool: return _player.inventory.count_of(id) <= 0):
+	if not Idols.can_combine(idols) or idols.any(func(id: String) -> bool: return _player.inventory.count_of(id) < idols.count(id)):
 		_refresh()
 		return
 	if not _player.boons.spend_ember(cost):

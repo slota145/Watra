@@ -325,8 +325,8 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   Etap 6 zrobiony, czeka na ocenę autora (szukaj „Mechaniki w lochach, etap 6”): obrona Kryształu zostaje, fale rosną
   ze stopniem lochu (`WatraCrystal.wave_count`), skarbiec strażnika bez kamieni zaklinających.
 - [ ] **Bożki** (jak skaraby w PoE): zrobione, czekają na ocenę autora (szczegóły w `docs/historia.md`, szukaj „Bożki”):
-  `scripts/idols.gd`, 16 rodzajów x 3 rzadkości, sloty w oknie lochów (2, więcej z poziomem Watry), zużywają się przy
-  wejściu. Do zrobienia razem z drzewkiem Watry: węzły bożków (częściej wypadają, rzadsze odmiany, dodatkowy slot -
+  `scripts/idols.gd`, 27 rodzajów (3 rzadkości, 2 prastare), sloty w oknie lochów (2, więcej z poziomem Watry), zużywają
+  się przy wejściu, bożki potworów i łupu mogą być w kilku slotach. Do zrobienia razem z drzewkiem Watry: węzły bożków (częściej wypadają, rzadsze odmiany, dodatkowy slot -
   `Idols.slot_count` / `drop_chance` mają na to parametry). Do ustalenia po ograniu: szansa wypadania, siła rodzajów,
   czy ikony mają być z PixelLab (paczka 16 obiektów - 10 generacji).
 - [ ] **Talizmany** (jak idole w Last Epoch): zrobione razem z Kręgiem Żertwy (szukaj „Mechaniki w lochach, etap 4”) -

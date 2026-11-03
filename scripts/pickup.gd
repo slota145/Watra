@@ -38,7 +38,7 @@ func _ready() -> void:
 	# ikony mają 64 px - na ziemi leżą w rozmiarze 16 px (moneta 10 px)
 	sprite.scale = Vector2.ONE * (10.0 if item_id == "gold" else 16.0) / sprite.texture.get_width()
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	if item_id != "gold" and Items.is_legendary(item_id):
+	if item_id != "gold" and (Items.is_legendary(item_id) or Items.rarity_of(item_id) == "ancient"):
 		_add_legendary_beam()
 		Sfx.play_at("legendary_drop", global_position)
 	elif item_id != "gold" and Items.rarity_of(item_id) in ["magic", "rare"]:

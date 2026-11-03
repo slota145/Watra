@@ -28,9 +28,10 @@ const GOLD_ICON := preload("res://assets/items/coin.png")
 const ARROW := preload("res://assets/projectiles/arrow.png")
 const MAGIC_MISSILE := preload("res://assets/projectiles/magic_missile.png")
 
-const RARITY_NAMES := {"common": "Zwykły", "magic": "Magiczny", "rare": "Rzadki", "legendary": "Legendarny"}
+const RARITY_NAMES := {"common": "Zwykły", "magic": "Magiczny", "rare": "Rzadki", "legendary": "Legendarny",
+		"ancient": "Prastary"}
 const RARITY_COLORS := {"common": Color(0.92, 0.92, 0.95), "magic": Color(0.45, 0.65, 1.0),
-		"rare": Color(1.0, 0.86, 0.3), "legendary": Color(1.0, 0.62, 0.15)}
+		"rare": Color(1.0, 0.86, 0.3), "legendary": Color(1.0, 0.62, 0.15), "ancient": Color(1.0, 0.32, 0.3)}
 ## Premie dolosowane do przedmiotu (Loot) są w opisie niebieskie.
 const AFFIX_COLOR := "#8ab4ff"
 const LEGENDARY_COLOR := Color(1.0, 0.62, 0.15)

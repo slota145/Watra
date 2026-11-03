@@ -851,6 +851,18 @@ odpowiedniej sekcji.
     `Dungeon.mechanic_power(id)` - moc mechaniki. `Goblin.dungeon_mods` ma nowe klucze gems, legend, item_level, quality.
   - Ikony rysowane w kodzie (`tools/idol_art.py`, 48 plików w `assets/items/idols/`, 0 generacji PixelLab) - rzeźbiony
     słup z twarzą w trzech materiałach, kamień na piersi w kolorze rodzaju. Test: `tests/test_idols.gd`.
+  - **Druga partia bożków** (listopad 2026, pomysły autora i propozycje do wyboru). Bożki potworów i łupu
+    (`Idols.STACK_GROUPS`) można wkładać w kilka slotów - działanie się sumuje (szanse z górną granicą `ADD_CAPS`);
+    reszta raz, prastary najwyżej jeden (`Idols.can_combine` / `fits`). Nowe rodzaje: Gromad (+3 / 5 / 5 gromad,
+    złocony - w każdej elita; `Dungeon._apply_idols`), Nawii (10 / 20 / 30% szansy, że zabity wróg wstaje jako upiór -
+    `Dungeon._on_nawia_death`), Zielarki (zioła krain do poziomu lochu, `Idols.herb_for_level`), Drwala, Kamieniarza,
+    Górnika (drewno, kamień, ruda z potworów, `Goblin.IDOL_RESOURCES`; wszystkie 5 / 10 / 15%), Szlifierza (25 / 50 /
+    100% szansy na lepszy szlif kamieni szlachetnych, `Idols.better_cut`), Strażnika (strażnik wściekły, +50-150%
+    zdrowia, +20-40% obrażeń, skarbiec x1,5-2,5), Echa (1 / 1 / 2 bossów z innych klimatów lochów -
+    `Idols.boss_pool`, rzadki i złocony +3 poziomy), Żaru (modyfikatory za żar -25 / 50 / 100% kosztu,
+    `Dungeons.mods_cost(mods, idols)`). Rzadkość **prastara** (`Items.RARITY_COLORS["ancient"]`, czerwona, z promieniem
+    łupu jak legendy), ~1% bożków (`Idols.ANCIENT_CHANCE`): Bożek Zastępów (połowa potworów, wszystkie elitami - test:
+    76 elit) i Bożek Władców (w każdej komnacie boss zamiast gromady, korytarze bez zmian).
 - [x] **Mechaniki w lochach, etap 6 - Kryształ Watry jedynym źródłem kamieni zaklinania** (listopad 2026). Ustalenia
   z autorem: obrona przed falami zostaje (warianty „crystal” i „miners”), fale liczniejsze na wyższych stopniach,
   kowadło na później.

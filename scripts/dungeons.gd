@@ -406,11 +406,12 @@ static func tier_level(tier: int) -> int:
 	return TIER_LEVELS[clampi(tier, 1, TIER_LEVELS.size()) - 1]
 
 
-static func mods_cost(mods: Array) -> int:
+## Koszt modyfikatorów w żarze; `idols` - bożki w slotach (Bożek Żaru obniża koszt).
+static func mods_cost(mods: Array, idols: Array = []) -> int:
 	var total := 0
 	for id: String in mods:
 		total += int(MODIFIERS[id]["cost"])
-	return total
+	return roundi(total * Idols.multiplier(idols, "ember_cost"))
 
 
 ## Łączny mnożnik danego rodzaju z wybranych modyfikatorów (1 - bez zmian).

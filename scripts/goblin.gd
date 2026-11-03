@@ -51,6 +51,8 @@ static var safe_zone := Rect2()
 ## Modyfikatory lochu Watry (Dungeons.MODIFIERS) dla wszystkich potworów bieżącej krainy - mnożniki "health",
 ## "damage", "xp", "gold", "loot"; poza lochem puste (świat zeruje je przy budowie krainy).
 static var dungeon_mods := {}
+## Surowce z bożków (Idols: Drwala, Kamieniarza, Górnika): klucz w dungeon_mods -> przedmiot.
+const IDOL_RESOURCES := {"res_wood": "wood", "res_stone": "stone", "res_ore": "iron_ore"}
 ## Droga przez loch (Dungeon.steer): goniący potwór idzie po niej zamiast prosto w ścianę; poza lochem null.
 static var pathing: Object = null
 ## Myśliwy z Cienia (BowSkills): do tej chwili (Time.get_ticks_msec) potwory, poza bossami, nie widzą gracza.
@@ -609,7 +611,15 @@ func _drop_loot() -> void:
 		_spawn_pickup(Loot.world_legend(level), 1)
 	# kamienie szlachetne po zadaniu jubilera (w lochach - lepsze, z szansą na trzecią premię)
 	if Gems.unlocked and randf() < Gems.DROP_CHANCE * item_find * dungeon_mods.get("gems", 1.0):
-		_spawn_pickup(Gems.roll("", Gems.cut_for_level(level), pathing != null), 1)
+		var cut := Idols.better_cut(Gems.cut_for_level(level), float(dungeon_mods.get("gem_cut", 0.0)))
+		_spawn_pickup(Gems.roll("", cut, pathing != null), 1)
+	# zioła i surowce z bożków (tylko w lochu)
+	if real and dungeon_mods.has("herbs"):
+		if randf() < float(dungeon_mods["herbs"]):
+			_spawn_pickup(Idols.herb_for_level(level), randi_range(1, 2))
+		for key: String in IDOL_RESOURCES:
+			if randf() < float(dungeon_mods.get(key, 0.0)):
+				_spawn_pickup(IDOL_RESOURCES[key], randi_range(1, 3))
 	# bożki (Idols) - z każdego potwora, gdy lochy Watry są otwarte
 	if real and _player != null and randf() < Idols.drop_chance(self is Boss) and MainQuests.dungeons_unlocked(_player.quests):
 		_spawn_pickup(Idols.roll(), 1)
