@@ -259,6 +259,8 @@ const PLAZA_RADIUS := 3.2
 const WATRA_POS := Vector2(32.0, 16.6)
 const WATRA_SHRINE := Vector2(38.0, 16.6)
 const WATRA_FPS := 7.0
+## Posąg Władcy Hordy (po jego pokonaniu - Pinnacles.LORD) obok Watry.
+const HORDE_STATUE := Vector2(25.6, 17.0)
 const LINES_FIREWOOD: Array[String] = [
 	"Dopóki płonie ogień, Ostoja trwa.",
 	"Drewno dla Watry! Nie może przygasnąć.",
@@ -486,6 +488,7 @@ var _smith: Npc
 var _traveler: Npc
 var _tax_timer := TAX_TIME
 var _watra: Sprite2D
+var _horde_statue: Node
 var _watra_glow: Sprite2D
 var _watra_sparks: CPUParticles2D
 var _watra_time := 0.0
@@ -1845,6 +1848,16 @@ func load_save_data(data: Dictionary) -> void:
 	if not _projects.is_empty() and _player.quests.state_of(UNLOCK_QUEST) != Quests.STATE_DONE:
 		_player.quests.states[UNLOCK_QUEST] = Quests.STATE_DONE
 		_player.quests.changed.emit()
+	update_trophies()
+
+
+## Posąg Władcy Hordy przy Watrze, gdy gracz go pokonał (trofeum - Boons.pinnacle_kills).
+func update_trophies() -> void:
+	if _player == null or _horde_statue != null or int(_player.boons.pinnacle_kills.get(Pinnacles.LORD, 0)) <= 0:
+		return
+	_horde_statue = _body_of(_prop("horde_statue", HORDE_STATUE, Vector2(30, 12)))
+	_glow_node(_px(HORDE_STATUE) + Vector2(0, -24), Color(1.0, 0.35, 0.25, 0.3), Vector2(70, 60))
+	map_markers.append({"position": _px(HORDE_STATUE), "color": Color(1.0, 0.35, 0.25), "size": 2.0})
 
 
 func set_project(project: String, state: String, time_left := 0.0) -> void:

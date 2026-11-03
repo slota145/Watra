@@ -51,7 +51,7 @@ static func is_legend(id: String) -> bool:
 
 
 ## Efekty, z których nie wyciąga się esencji - pasy bogów (Pinnacles) mają działać tylko jako jeden przedmiot.
-const UNIQUE_KINDS: Array[String] = ["eternal_herbs", "soul_hunter"]
+const UNIQUE_KINDS: Array[String] = ["eternal_herbs", "soul_hunter", "winter_breath"]
 
 
 ## Rodzaj miejsca przedmiotu: "weapon", "armor" albo "jewelry" ("" - nie wyposażenie).

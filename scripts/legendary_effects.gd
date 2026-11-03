@@ -63,6 +63,9 @@ extends Node
 ## wrogów wokół, on_hurt), shadow_spikes (Miecz Czarnoboga - kolce mroku pod trafionym i dwoma najbliższymi wrogami),
 ## dark_pact (Hełm Czarnoboga - zabity wróg wybucha mrokiem i leczy gracza, on_kill), soul_hunter (Pas Łowcy Dusz -
 ## zabita elita oddaje cechy na Boons.SOUL_TIME s, on_kill); eternal_herbs (Pas Wiecznych Ziół) działa w Boons.grant.
+## Pas Zimowego Oddechu (Marzanna): winter_breath - zabity wróg pęka lodem, zamrażając sąsiadów, a zabici przez lód
+## pękają dalej (łańcuch do WINTER_CHAIN wybuchów na sekundę, on_kill). Legendy Władcy Hordy: horde_rift (Ostrze Władcy
+## Hordy - ogień spod trafionego), gods_echo (Korona Trzech Bogów - w walce co kilka sekund moc jednego z bogów).
 ## (Kieł Gruzłoga - "might" - działa biernie na obrażenia, w CharacterStats.)
 ## Obrażenia z efektów nie wywołują kolejnych efektów, a każdy efekt ma krótki czas odnowienia,
 ## żeby szybkie ataki (salwa, łańcuch) nie zamieniały ekranu w ciągłą falę.
@@ -94,7 +97,7 @@ const ECHO_COLOR := Color(0.7, 0.85, 1.0)
 ## Efekty odpalane przy trafieniu (echo i fortune tylko je wzmacniają).
 const ON_HIT := ["shockwave", "tide", "claws", "thunder", "whirlpool", "roots", "venom", "fear", "bomb", "blast_shot", "earth_arrow", "rend",
 		"tongue", "storm_arrows", "web_burst", "venom_chain", "feather_storm", "dance", "pan_echo",
-		"nawia_grasp", "winter_touch", "shadow_spikes"]
+		"nawia_grasp", "winter_touch", "shadow_spikes", "horde_rift"]
 ## Efekty przy trafieniu działające tylko z danym rodzajem broni.
 const WEAPON_ONLY := {"blast_shot": ["bow", "spell"], "earth_arrow": ["bow"], "storm_arrows": ["bow"]}
 const BOMB_DAMAGE := 1.3
@@ -188,6 +191,19 @@ const SHADOW_RANGE := 120.0
 const PACT_RADIUS := 55.0
 const PACT_DAMAGE := 1.2
 const PACT_HEAL := 0.015
+const BREATH_RADIUS := 60.0
+const BREATH_DAMAGE := 1.0
+const BREATH_FREEZE := 1.2
+## Najwięcej wybuchów Zimowego Oddechu na sekundę (łańcuch w wielkiej gromadzie nie zamraża gry).
+const WINTER_CHAIN := 12
+const BREATH_DELAY := 0.12
+const RIFT_RADIUS := 64.0
+const RIFT_DAMAGE := 1.6
+## Korona Trzech Bogów: zasięg, w którym musi być wróg, żeby moc bogów się obudziła.
+const GODS_RANGE := 220.0
+var _breaths := 0
+var _breath_reset := 0.0
+var _gods_timer := 0.0
 const ICE_FX := preload("res://assets/effects/ice_shatter.png")
 const SPIKE_FX := preload("res://assets/effects/mortan_spike.png")
 const SHADOW_COLOR := Color(0.7, 0.45, 1.0)
@@ -213,6 +229,11 @@ func _process(delta: float) -> void:
 	_process_bone_armor(delta)
 	_process_rooted_regen(delta)
 	_process_hydra_gryf(delta)
+	_process_gods_echo(delta)
+	_breath_reset -= delta
+	if _breath_reset <= 0.0:
+		_breath_reset = 1.0
+		_breaths = 0
 	if _bloodlust > 0:
 		_bloodlust_time -= delta
 		if _bloodlust_time <= 0.0:
@@ -368,6 +389,8 @@ func _trigger(kind: String, enemy: Goblin, at: Vector2, away: Vector2, echo := f
 			_winter_touch(at, echo)
 		"shadow_spikes":
 			_shadow_spikes(enemy)
+		"horde_rift":
+			_horde_rift(enemy.global_position, echo)
 		"claws":
 			_claw(enemy, at, -1.0, echo)
 			get_tree().create_timer(CLAW_GAP).timeout.connect(_claw.bind(enemy, at, 1.0, echo))
@@ -626,6 +649,8 @@ func on_kill(enemy: Goblin) -> void:
 		_dark_pact(enemy.hurt_center())
 	if _player.equipment.effect_power("soul_hunter") > 0.0:
 		_steal_souls(enemy)
+	if randf() < chance("winter_breath"):
+		_winter_breath(enemy.hurt_center())
 	if _player.equipment.effect_power("bloodlust") > 0.0:
 		_bloodlust = mini(_bloodlust + 1, BLOODLUST_STACKS)
 		_bloodlust_time = BLOODLUST_TIME
@@ -706,6 +731,69 @@ func _shadow_spikes(enemy: Goblin) -> void:
 				0.0, 1.0, 1.1)
 		target.take_damage(_player.roll_damage(SHADOW_DAMAGE), target.global_position, 0.0)
 	Sfx.play_at("rock_break", enemy.global_position, -6.0)
+
+
+## Pas Zimowego Oddechu: lodowy wybuch w miejscu zabitego - rani i zamraża sąsiadów; każdy zabity przez lód pęka
+## chwilę później (łańcuch, najwyżej WINTER_CHAIN wybuchów na sekundę).
+func _winter_breath(at: Vector2) -> void:
+	if _breaths >= WINTER_CHAIN:
+		return
+	_breaths += 1
+	var parent := _player.get_parent()
+	for i in 5:
+		SkillEffects.sheet_once(parent, ICE_FX, 8, 16.0, at + Vector2.from_angle(TAU * i / 5.0) * BREATH_RADIUS * 0.5, Vector2(27, 19),
+				0.0, 1.0, 1.0)
+	Sfx.play_at("hit_ice", at, -6.0)
+	var killed: Array[Vector2] = []
+	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if enemy.state == Goblin.State.DEAD or enemy.hurt_center().distance_to(at) > BREATH_RADIUS + enemy.hurt_radius:
+			continue
+		enemy.take_damage(_player.roll_damage(BREATH_DAMAGE), at, 0.0)
+		if enemy.state == Goblin.State.DEAD:
+			killed.append(enemy.hurt_center())
+		else:
+			enemy.stun(BREATH_FREEZE)
+	for spot in killed:
+		get_tree().create_timer(BREATH_DELAY, false).timeout.connect(func() -> void:
+			if is_instance_valid(_player) and not _player.is_dead:
+				_winter_breath(spot))
+
+
+## Ostrze Władcy Hordy: ziemia pod trafionym pęka i bucha czerwonym ogniem.
+func _horde_rift(at: Vector2, echo: bool) -> void:
+	var layer := get_tree().get_first_node_in_group("floor_layer")
+	SkillEffects.ground_crack(layer if layer != null else _player.get_parent(), at, RIFT_RADIUS * 0.6, 1.5)
+	_explosion(at + Vector2(0, -8), RIFT_RADIUS * (0.8 if echo else 1.0), RIFT_DAMAGE, echo)
+
+
+## Korona Trzech Bogów: gdy wróg jest blisko, co `power` s budzi się moc losowego boga przy najbliższym wrogu.
+func _process_gods_echo(delta: float) -> void:
+	var period := _player.equipment.effect_power("gods_echo")
+	if period <= 0.0 or _player.is_dead:
+		return
+	_gods_timer -= delta
+	if _gods_timer > 0.0:
+		return
+	var nearest: Goblin = null
+	var best := GODS_RANGE
+	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if enemy.state == Goblin.State.DEAD:
+			continue
+		var d := enemy.global_position.distance_to(_player.global_position)
+		if d < best:
+			best = d
+			nearest = enemy
+	if nearest == null:
+		_gods_timer = 0.5
+		return
+	_gods_timer = maxf(period, 1.0)
+	match randi() % 3:
+		0:
+			_nawia_grasp(nearest.global_position + Vector2(0, 6), false)
+		1:
+			_ice_burst(nearest.hurt_center(), WINTER_RADIUS * 1.3, WINTER_DAMAGE, WINTER_FREEZE, false)
+		_:
+			_shadow_spikes(nearest)
 
 
 ## Hełm Czarnoboga: zabity wróg wybucha mrokiem (rani sąsiadów), a część życia wraca do gracza.

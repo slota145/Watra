@@ -153,3 +153,4 @@ o ujednolicenie tłumaczeń w `translations/teksty.csv`.
 | rynek, oferta, zamówienie, podatek, okazja | market, listing, order, tax, bargain |
 | osłona (zbieracza) | escort |
 | zadanie główne, zadanie poboczne, dziennik | main quest, side quest, journal |
+| Władca Hordy, Pomrok, Pogromca Hordy, cień boga | Lord of the Horde, Gloom, Horde Slayer, shade of a god |

@@ -90,8 +90,9 @@ var _flow := {}
 var _flow_from := Vector2i(-1, -1)
 ## Loch na zewnątrz (patrz opis skryptu): granica z terenu zamiast skały.
 var outdoor := false
-## Bóg areny (Pinnacles) albo "" - zwykły loch.
+## Bóg areny (Pinnacles) albo "" - zwykły loch; stopień Pomroku areny (0 - zwykła).
 var pinnacle := ""
+var pomrok := 0
 const ARENA_START := Rect2i(3, 11, 7, 6)
 const ARENA := Rect2i(16, 6, 18, 16)
 ## Wierzchołki poza podłogą lochu na zewnątrz: klif (skalna półka) albo woda; reszta to ściana drzew.
@@ -121,8 +122,10 @@ func generate(world, settings: Dictionary) -> void:
 	level = Dungeons.tier_level(int(settings["tier"]))
 	# arena boga (Pinnacles): poziom boga, dwie komnaty, bez zwykłych potworów
 	pinnacle = str(settings.get("pinnacle", ""))
+	pomrok = 0
 	if Pinnacles.GODS.has(pinnacle):
-		level = int(Pinnacles.GODS[pinnacle]["level"])
+		pomrok = clampi(int(settings.get("pomrok", 0)), 0, Pinnacles.POMROK_MAX)
+		level = Pinnacles.arena_level(pinnacle, pomrok)
 	else:
 		pinnacle = ""
 	Levels.zone_default = level
@@ -132,6 +135,9 @@ func generate(world, settings: Dictionary) -> void:
 		Goblin.dungeon_mods[key] = Dungeons.mult(settings, key)
 	for key in ["item_level", "quality", "herbs", "res_wood", "res_stone", "res_ore", "gem_cut"]:
 		Goblin.dungeon_mods[key] = Dungeons.added(settings, key)
+	if pomrok > 0:
+		Goblin.dungeon_mods["health"] *= Pinnacles.pomrok_mult("health", pomrok)
+		Goblin.dungeon_mods["damage"] *= Pinnacles.pomrok_mult("damage", pomrok)
 	outdoor = climate.get("outdoor", false)
 	if pinnacle != "":
 		_plan_arena()
@@ -1610,14 +1616,20 @@ func _pinnacle_rewards() -> void:
 	var at := _chest.position + Vector2(0, 16)
 	_chest.modulate = Color.WHITE
 	_drop(at, "gold", roundi(Levels.gold(level) * 60.0 * Dungeons.mult(config, "gold")))
-	for reward: Array in Pinnacles.vault_rewards(level, _rng):
+	var lord := Pinnacles.is_lord(pinnacle)
+	for reward: Array in Pinnacles.vault_rewards(level, _rng, lord, pomrok):
 		_drop(at, reward[0], reward[1])
-	var first: bool = w.player.boons.defeat_pinnacle(pinnacle)
+	var unlocked: int = w.player.boons.pomrok_unlocked
+	var first: bool = w.player.boons.defeat_pinnacle(pinnacle, pomrok)
 	Sfx.play("quest_ready")
 	_add_portal(Vector2(boss_room.get_center()) * CELL + Vector2(0, CELL * 1.2), Lang.t("Płomienie Watry - powrót do Ostoi"))
 	var text := Lang.t("%s pokonany!") % Pinnacles.god_name(pinnacle)
 	if first:
-		text += "\n" + Lang.t("Pierwsze zwycięstwo: +%d punkty Watry") % Pinnacles.FIRST_KILL_POINTS
+		text += "\n" + Lang.t("Pierwsze zwycięstwo: +%d punkty Watry") % (Pinnacles.LORD_POINTS if lord else Pinnacles.FIRST_KILL_POINTS)
+	if lord and first:
+		text += "\n" + Lang.t("Zdobywasz tytuł: Pogromca Hordy")
+	if lord and w.player.boons.pomrok_unlocked > unlocked:
+		text += "\n" + Lang.t("Odblokowano Pomrok %s") % Pinnacles.roman(w.player.boons.pomrok_unlocked)
 	w.hud.show_banner(text, Pinnacles.GODS[pinnacle]["color"])
 
 

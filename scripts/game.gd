@@ -298,6 +298,11 @@ func save_game(data: Dictionary, save_name := "", slot := "", thumbnail: Image =
 		"zone": str(data.get("zone", "forest")),
 		"hero": str(player.get("hero", hero)),
 	}
+	# tytuł „Pogromca Hordy” (pokonany Władca Hordy) z najwyższym przebytym stopniem Pomroku
+	var boons: Dictionary = player.get("boons", {})
+	if int((boons.get("pinnacles", {}) as Dictionary).get(Pinnacles.LORD, 0)) > 0:
+		meta["title"] = "horde"
+		meta["pomrok"] = maxi(int(boons.get("pomrok_unlocked", 1)) - 1, 0)
 	var meta_file := FileAccess.open(_slot_path(slot, "meta.json"), FileAccess.WRITE)
 	if meta_file != null:
 		meta_file.store_string(JSON.stringify(meta))
@@ -383,7 +388,11 @@ func default_save_name(data: Dictionary) -> String:
 ## Krótki opis zapisu, np. "Poziom 3  •  Gobliński Las  •  2026-10-25 20:15".
 func describe_save(meta: Dictionary) -> String:
 	var date := str(meta.get("saved_at", "")).substr(0, 16)
-	return Lang.t("Poziom %d  •  %s  •  %s") % [int(meta.get("level", 1)), Zones.zone_name(str(meta.get("zone", "forest"))), date]
+	var text := Lang.t("Poziom %d  •  %s  •  %s") % [int(meta.get("level", 1)), Zones.zone_name(str(meta.get("zone", "forest"))), date]
+	if str(meta.get("title", "")) == "horde":
+		var pomrok := int(meta.get("pomrok", 0))
+		text += "  •  " + Lang.t("Pogromca Hordy") + (" " + Pinnacles.roman(pomrok) if pomrok > 0 else "")
+	return text
 
 
 func _slot_path(slot: String, ext: String) -> String:
