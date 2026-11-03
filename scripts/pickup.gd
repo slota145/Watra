@@ -31,6 +31,13 @@ func _init() -> void:
 func _ready() -> void:
 	_player = get_tree().get_first_node_in_group("player")
 	add_to_group("pickups")  # dymek łupu na ziemi (GroundTooltip)
+	# filtr łupu (Ustawienia): odrzucony przedmiot od razu zamienia się w złoto za cenę skupu
+	if item_id != "gold":
+		var gold := Loot.filtered_gold(item_id)
+		if gold >= 0:
+			Items.generated.erase(item_id)
+			item_id = "gold"
+			amount = maxi(1, gold) * amount
 	# opcja „łup niezidentyfikowany” - magiczne i rzadkie przedmioty zawinięte w płótno
 	if item_id != "gold":
 		item_id = Unidentified.convert(item_id)

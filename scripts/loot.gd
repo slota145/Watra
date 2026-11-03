@@ -389,6 +389,34 @@ static func reforge(id: String) -> Dictionary:
 	return {"id": new_id, "stat": stat, "before": before, "after": recipe["affixes"][stat]}
 
 
+## Filtr łupu (Ustawienia - Game.loot_filter_*): przedmioty z łupu, które gracz odrzucił, od razu zamieniają się
+## w złoto za cenę skupu (Pickup._ready). FILTER_QUALITIES[filter_quality] - jakości odrzucane (0 - filtr wyłączony);
+## filter_tier > 0 - odrzucany jest też przedmiot, którego najlepsza premia ma tier słabszy (wyższy numer) niż ten.
+## Legend, talizmanów, bożków, kamieni i surowców filtr nigdy nie rusza.
+const FILTER_QUALITIES: Array = [[], [COMMON], [COMMON, MAGIC], [COMMON, MAGIC, RARE]]
+static var filter_quality := 0
+static var filter_tier := 0
+
+
+## Ile złota daje odrzucony przedmiot z łupu (-1 - przedmiot zostaje).
+static func filtered_gold(id: String) -> int:
+	if filter_quality <= 0 and filter_tier <= 0:
+		return -1
+	var recipe: Dictionary = Items.get_data(id).get("recipe", {})
+	if not recipe.has("base") or recipe.has("talisman"):
+		return -1
+	var quality := str(recipe.get("quality", ""))
+	if not quality in [COMMON, MAGIC, RARE]:
+		return -1
+	var drop: bool = quality in FILTER_QUALITIES[clampi(filter_quality, 0, FILTER_QUALITIES.size() - 1)]
+	if not drop and filter_tier > 0:
+		var best := TIERS + 1
+		for tier in (recipe.get("tiers", {}) as Dictionary).values():
+			best = mini(best, int(tier))
+		drop = best > filter_tier
+	return sell_value(quality, int(recipe.get("level", 1))) if drop else -1
+
+
 static func sell_value(quality: String, item_level: int) -> int:
 	return maxi(1, roundi(SELL_BASE * (1.0 + SELL_GROWTH * (item_level - 1)) * SELL_QUALITY.get(quality, 1.0)))
 

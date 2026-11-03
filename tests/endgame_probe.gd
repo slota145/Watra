@@ -7,7 +7,8 @@ extends SceneTree
 ## Poziom ekwipunku (np. 90): ekwipunek z zapisu zastąpiony rzadkimi przedmiotami tego poziomu (bez zaklęć) -
 ## porównanie z graczem, który zmienia ekwipunek na bieżąco.
 ## Tryby: whirl (sam Młynek), flicker (samo Mgnienie), full (cały pasek miecza + Dymne Wybuchy pod E), idle (stoi),
-## uro (Uroczysko: bot otwiera krąg i walczy jak full, aż krąg zgaśnie - upiory naraz, zabici, runy, czas).
+## bow / spell (pasek łuku / księgi z zapisu, broń zastąpiona rzadkim łukiem / księgą poziomu ekwipunku albo 51.,
+## punkty siły przeniesione do zręczności / inteligencji), uro (Uroczysko: bot otwiera krąg i walczy jak full, aż krąg zgaśnie - upiory naraz, zabici, runy, czas).
 
 var _world: Node
 var _args: PackedStringArray
@@ -57,6 +58,10 @@ func _initialize() -> void:
 	if uro:
 		_mode = "full"
 		_uro = true
+	if _mode in ["bow", "spell"]:
+		var attrs: Dictionary = p["stats"]["attributes"]
+		attrs["dexterity" if _mode == "bow" else "intelligence"] = int(attrs.get("strength", 0))
+		attrs["strength"] = 0
 	if _mode == "full":
 		p["hotbar"]["skills"]["melee"][3] = "smoke_burst"
 	var game := root.get_node("Game")
@@ -78,10 +83,24 @@ const GEAR_LINES := {"weapon": "mace", "helmet": "helm", "chest": "plate", "glov
 		"belt": "girdle", "ring_1": "signet", "ring_2": "signet", "earring_1": "fang", "earring_2": "fang", "necklace": "amulet"}
 
 
-func _regear(pl, item_level: int) -> void:
+## Łucznik (zręczność) i mag (inteligencja).
+const GEAR_BOW := {"weapon": "bow", "helmet": "hood", "chest": "jerkin", "gloves": "gloves", "boots": "boots",
+		"belt": "belt", "ring_1": "band", "ring_2": "band", "earring_1": "stud", "earring_2": "stud", "necklace": "amulet"}
+const GEAR_SPELL := {"weapon": "book", "helmet": "hood", "chest": "robe", "gloves": "gloves", "boots": "boots",
+		"belt": "belt", "ring_1": "band", "ring_2": "band", "earring_1": "stud", "earring_2": "stud", "necklace": "amulet"}
+
+
+func _gear_lines() -> Dictionary:
+	return GEAR_BOW if _mode == "bow" else (GEAR_SPELL if _mode == "spell" else GEAR_LINES)
+
+
+func _regear(pl, item_level: int, only_weapon := false) -> void:
 	var loot = load("res://scripts/loot.gd")
-	for slot: String in GEAR_LINES:
-		var id: String = loot.generate(loot.base_for(GEAR_LINES[slot], item_level), "rare", item_level)
+	var lines := _gear_lines()
+	for slot: String in lines:
+		if only_weapon and slot != "weapon":
+			continue
+		var id: String = loot.generate(loot.base_for(lines[slot], item_level), "rare", item_level)
 		pl.equipment.equip_to(slot, id)
 
 
@@ -226,6 +245,8 @@ func _process(delta: float) -> bool:
 		_load_classes()
 		if _args.size() > 5 and int(_args[5]) > 0:
 			_regear(pl, int(_args[5]))
+		elif _mode in ["bow", "spell"]:
+			_regear(pl, 51, true)
 		_report_static(pl)
 		pl.health = pl.stats.max_health()
 		pl.mana = pl.stats.max_mana()
@@ -314,6 +335,9 @@ func _bot(pl, delta: float, dist: float) -> void:
 		return
 	for k in _cd:
 		_cd[k] -= delta
+	if _mode in ["bow", "spell"]:
+		_bot_ranged(pl, dist)
+		return
 	var near := dist < 140.0
 	if _mode in ["whirl", "full"]:
 		if near and not pl._held_slots[1]:
@@ -339,6 +363,28 @@ func _bot(pl, delta: float, dist: float) -> void:
 			if _smoke_hold <= 0.0:
 				_release(pl, 3)
 				_cd["smoke"] = 3.0
+
+
+## Łuk i księga: zwykły atak trzymany, reszta paska po kolei, gdy gotowa (trzymana chwilę - ładowane strzały).
+func _bot_ranged(pl, dist: float) -> void:
+	var near := dist < 260.0
+	if near and not pl._held_slots[0]:
+		_press(pl, 0)
+	elif not near and pl._held_slots[0]:
+		_release(pl, 0)
+	if not near:
+		return
+	for i in range(1, 7):
+		var id: String = pl.hotbar.entry(pl.stats.weapon_type(), i)
+		if id == "":
+			continue
+		if pl._held_slots[i]:
+			if _cd.get(i, 0.0) <= 0.7:
+				_release(pl, i)
+			continue
+		if _cd.get(i, 0.0) <= 0.0 and pl.cooldown_of(id).x <= 0.0:
+			_cd[i] = 1.0
+			_press(pl, i)
 
 
 func _finish(pl) -> void:

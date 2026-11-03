@@ -97,9 +97,14 @@ func _ready() -> void:
 	load_game.disabled = saves.is_empty()
 	box.add_child(load_game)
 	box.add_child(UiStyle.menu_button(Lang.t("Ustawienia"), _show_settings))
+	box.add_child(UiStyle.menu_button(Lang.t("Dla testerów"), _show_tester))
 	box.add_child(UiStyle.menu_button(Lang.t("Wyjdź z gry"), Game.quit_game))
 
 	(continue_button if not continue_button.disabled else new_game).grab_focus()
+	# ekran dla testerów raz po uruchomieniu gry (do wyłączenia w nim samym)
+	if Game.tester_info and not Game.tester_shown:
+		Game.tester_shown = true
+		_show_tester.call_deferred()
 
 
 func _process(delta: float) -> void:
@@ -135,8 +140,18 @@ func _show_modes(center: CenterContainer) -> void:
 func _show_saves() -> void:
 	var browser := SaveBrowser.new()
 	browser.mode = "load"
-	browser.closed.connect(func() -> void: (_menu.get_child(_menu.get_child_count() - 2) as Button).grab_focus())
+	browser.closed.connect(func() -> void: (_menu.get_child(_menu.get_child_count() - 3) as Button).grab_focus())
 	add_child(browser)
+
+
+## Ekran dla testerów; po zmianie języka w nim menu buduje się od nowa (jak po zmianie w ustawieniach).
+func _show_tester() -> void:
+	var window := TesterWindow.new()
+	var language := Game.language
+	window.closed.connect(func() -> void:
+		if Game.language != language:
+			get_tree().reload_current_scene.call_deferred())
+	add_child(window)
 
 
 func _show_settings() -> void:
@@ -147,7 +162,7 @@ func _show_settings() -> void:
 		if Game.language != language:
 			get_tree().reload_current_scene.call_deferred()
 			return
-		(_menu.get_child(_menu.get_child_count() - 2) as Button).grab_focus())
+		(_menu.get_child(_menu.get_child_count() - 3) as Button).grab_focus())
 	add_child(settings)
 
 

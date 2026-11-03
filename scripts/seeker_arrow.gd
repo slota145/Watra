@@ -119,12 +119,13 @@ func _split(enemy: Goblin) -> void:
 	MiscVfx.spark(get_parent(), global_position + Vector2(0, -HEIGHT), Color(1.0, 0.8, 0.3), 1.0)
 
 
-func _is_alive(enemy: Goblin) -> bool:
+## Bez typu parametru: trafiony wróg mógł już zniknąć z gry (zwolniony węzeł nie przejdzie sprawdzenia typu).
+func _is_alive(enemy) -> bool:
 	return is_instance_valid(enemy) and enemy.state != Goblin.State.DEAD and enemy.is_in_group("enemies")
 
 
 ## Najbliższy wróg w zasięgu - najlepiej inny niż `exclude` (ostatnio trafiony).
-func _find_target(exclude: Goblin) -> Goblin:
+func _find_target(exclude) -> Goblin:
 	var best: Goblin = null
 	var best_distance := SEARCH_RADIUS
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):

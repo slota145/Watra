@@ -196,6 +196,8 @@ var _idle_time := 0.0
 var _dash_anim := 0.0
 var _dash_anim_total := 0.0
 var _death_time := 0.0
+## Tween upadku i zanikania po śmierci - przerywany przy odrodzeniu.
+var _death_tween: Tween
 var _dash_timer := 0.0
 ## Spowolnienie (np. śpiew topielicy): mnożnik prędkości i ile jeszcze trwa.
 var _slow_factor := 1.0
@@ -2543,6 +2545,7 @@ func _die() -> void:
 	_death_time = 0.0
 	_dash_anim = 0.0
 	var tween := create_tween()
+	_death_tween = tween
 	# upadek z arkusza postaci (ruch death), a bez niego - przewrócenie sprite'a
 	if HeroRig.frames(hero, "death") <= 0:
 		tween.tween_property(sprite, "rotation", PI / 2.0, 0.3)
@@ -2555,6 +2558,11 @@ func _die() -> void:
 
 
 func _respawn() -> void:
+	# zanikanie po śmierci (do 2,2 s) trwa dłużej niż czekanie na odrodzenie (2 s) - bez zatrzymania dokończyłoby
+	# zanikanie już odrodzonej postaci i zostałaby niewidzialna
+	if _death_tween != null and _death_tween.is_valid():
+		_death_tween.kill()
+	_death_tween = null
 	global_position = spawn_point
 	reset_physics_interpolation()
 	health = stats.max_health()

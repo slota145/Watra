@@ -59,6 +59,12 @@ var vsync := true
 var screen_shake := 1.0
 ## Łup magiczny i rzadki wypada niezidentyfikowany (Unidentified) - opcja rozgrywki, domyślnie wyłączona.
 var unidentified_loot := false
+## Filtr łupu (Loot.filter_quality, Loot.filter_tier) - odrzucone przedmioty od razu zamieniają się w złoto.
+var loot_filter_quality := 0
+## Ekran dla testerów (TesterWindow) przy starcie gry - do odznaczenia; tester_shown - już był w tym uruchomieniu.
+var tester_info := true
+var tester_shown := false
+var loot_filter_tier := 0
 ## Język gry (Lang.LANGUAGES), zapisany w user://settings.cfg.
 var language := Lang.DEFAULT
 ## Skalowanie interfejsu (okno ustawień): 1 - jak dotąd, więcej - większe okna i napisy.
@@ -77,12 +83,17 @@ func _load_display_settings() -> void:
 		vsync = bool(config.get_value("display", "vsync", vsync))
 		screen_shake = clampf(float(config.get_value("display", "screen_shake", screen_shake)), 0.0, 1.0)
 		unidentified_loot = bool(config.get_value("gameplay", "unidentified_loot", unidentified_loot))
+		loot_filter_quality = int(config.get_value("gameplay", "loot_filter_quality", loot_filter_quality))
+		tester_info = bool(config.get_value("gameplay", "tester_info", tester_info))
+		loot_filter_tier = int(config.get_value("gameplay", "loot_filter_tier", loot_filter_tier))
 		language = str(config.get_value("gameplay", "language", language))
 		ui_scale = clampf(float(config.get_value("display", "ui_scale", ui_scale)), UI_SCALE_RANGE.x, UI_SCALE_RANGE.y)
 		window_layouts = config.get_value("display", "windows", {})
 	Lang.set_language(language)
 	_apply_ui_scale()
 	Unidentified.enabled = unidentified_loot
+	Loot.filter_quality = loot_filter_quality
+	Loot.filter_tier = loot_filter_tier
 	_apply_display()
 
 
@@ -103,6 +114,9 @@ func _save_display_settings() -> void:
 	config.set_value("display", "vsync", vsync)
 	config.set_value("display", "screen_shake", screen_shake)
 	config.set_value("gameplay", "unidentified_loot", unidentified_loot)
+	config.set_value("gameplay", "loot_filter_quality", loot_filter_quality)
+	config.set_value("gameplay", "tester_info", tester_info)
+	config.set_value("gameplay", "loot_filter_tier", loot_filter_tier)
 	config.set_value("gameplay", "language", language)
 	config.set_value("display", "ui_scale", ui_scale)
 	config.set_value("display", "windows", window_layouts)
@@ -124,6 +138,21 @@ func set_vsync(value: bool) -> void:
 func set_unidentified_loot(value: bool) -> void:
 	unidentified_loot = value
 	Unidentified.enabled = value
+	_save_display_settings()
+
+
+## Filtr łupu: jakości odrzucane od razu (indeks Loot.FILTER_QUALITIES) i najsłabszy zostawiany tier najlepszej
+## premii (0 - bez filtra tierów).
+func set_loot_filter(quality: int, tier: int) -> void:
+	loot_filter_quality = quality
+	loot_filter_tier = tier
+	Loot.filter_quality = quality
+	Loot.filter_tier = tier
+	_save_display_settings()
+
+
+func set_tester_info(value: bool) -> void:
+	tester_info = value
 	_save_display_settings()
 
 

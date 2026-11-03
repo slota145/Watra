@@ -207,6 +207,27 @@ odpowiedniej sekcji.
   Pomiar `tests/endgame_probe.gd` w trybie `uro` (bot otwiera krąg i walczy, aż zgaśnie; łup sprzątany co sekundę):
   przed - stopień 7: 10 upiorów naraz, 651 zabitych w 161 s; po - stopnie 7 / 12 / 17: 31 / 34 / 39 upiorów naraz,
   2100-2350 zabitych w 166-176 s, klatka 8,8 / 12,4 / 18,2 ms (chmura; przed zmianą stopień 17 ~12 ms).
+- [x] **Poprawki po testach autora (listopad 2026)**:
+  - postać niewidzialna po odrodzeniu w lochu: zanikanie po śmierci (do 2,2 s) trwało dłużej niż czekanie na
+    odrodzenie (2 s) - `Player._death_tween` przerywany w `_respawn`; test `tests/test_respawn.gd`;
+  - strzała tropiąca sypała błędami, gdy jej cel znikał (`SeekerArrow._is_alive` / `_find_target` bez typu parametru);
+  - legenda dużej mapy budowana z potworów bieżącej krainy (`BigMap._fill_legend` - grupy wg koloru kropki,
+    nazwy z encyklopedii, najliczniejsze `LEGEND_GROUPS`) zamiast stałej listy z Goblińskiego Lasu;
+  - **filtr łupu** (Ustawienia - Rozgrywka): „Sprzedaj od razu” (zwykłe / do magicznych / do rzadkich) i „Najlepsza
+    premia słabsza niż T…” - odrzucony przedmiot zamienia się przy wypadnięciu w złoto za cenę skupu
+    (`Loot.filtered_gold`, `Pickup._ready`, `Game.set_loot_filter`); legendy, talizmany, kamienie i runy zostają;
+    test `tests/test_loot_filter.gd`; okno ustawień przewijane;
+  - **ekran dla testerów** (`ui/tester_window.gd`, raz po uruchomieniu, do wyłączenia - `Game.tester_info`; przycisk
+    „Dla testerów” w menu głównym): powitanie, sterowanie, tryb deweloperski i jego klawisze, wybór języka;
+  - **zgłoś uwagę** (`ui/feedback_window.gd`, w ekranie testerów i w menu gry pod Esc): rodzaj, tytuł, opis + dane gry
+    (wersja, system, język, kraina / loch, poziom, tryb deweloperski); „Wyślij na GitHub” otwiera gotowe zgłoszenie
+    (issue) w przeglądarce (potrzebne konto GitHub, gra nie trzyma żadnego klucza), „Kopiuj” - do schowka.
+- [x] **Pomiar łuku i księgi w końcówce** (`tests/endgame_probe.gd`, tryby `bow` / `spell`: pasek łuku / księgi z zapisu
+  autora, broń - rzadki łuk / księga 51. poziomu, punkty siły przeniesione do zręczności / inteligencji; bot stoi
+  w gromadzie, nie ucieka). Obrażenia/s (ekwipunek autora / rzadki z poziomu lochu): stopień 12 - miecz 7063 / 9202,
+  łuk 4515 / 6442, księga 4886 / 7041; stopień 17 - miecz 13024 / 23559, łuk 12118 / 21860, księga 11190 / 19036.
+  Łuk i księga trafiają więcej wrogów naraz (stopień 17: 9-13 zamiast 5), ale stojąc w gromadzie dostają 2-4x więcej
+  obrażeń niż miecz (bez Młynka, który odpycha i przerywa zamachy, i z lżejszą zbroją).
 
 ## Gobliński Las i Prastary Las (`scripts/world.gd`, `scripts/ancient_forest.gd`) (Do poprawy)
 - [x] Gobliński Las: więcej grupek goblinów w lesie i większe siedlisko wilków - około 450 potworów (było około 340);
