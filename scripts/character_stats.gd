@@ -32,6 +32,9 @@ const SPEED_CAP := 1.5
 const DAMAGE_ATTRIBUTE := {"melee": "strength", "bow": "dexterity", "spell": "intelligence"}
 ## Każdy punkt atrybutu z tagu umiejętności (Skills.TAGS: siła, zręczność, inteligencja) daje tyle obrażeń (+1%).
 const DAMAGE_PER_ATTRIBUTE := 0.01
+## Mnożnik wszystkich obrażeń według rodzaju broni: łuk i księga trzymają wrogów na dystansie (bezpieczniej), ale bez
+## tego zabijały o połowę wolniej niż miecz (tests/endgame_probe.gd, tryby bow_kite / spell_kite, listopad 2026).
+const WEAPON_DAMAGE := {"melee": 1.0, "bow": 1.25, "spell": 1.25}
 ## Wersja zasad atrybutów w zapisie: starsze zapisy (atrybuty dawały szybkość i płaskie obrażenia) dostają
 ## przy wczytaniu wszystkie punkty atrybutów z powrotem do rozdania.
 const ATTRIBUTE_RULES := 2
@@ -184,7 +187,7 @@ func reduce_damage(amount: int) -> int:
 
 ## Mnożnik wszystkich zadawanych obrażeń z premii "zwiększone obrażenia".
 func damage_multiplier() -> float:
-	return 1.0 + _bonus("damage_percent")
+	return (1.0 + _bonus("damage_percent")) * float(WEAPON_DAMAGE.get(weapon_type(), 1.0))
 
 
 func crit_chance() -> float:
