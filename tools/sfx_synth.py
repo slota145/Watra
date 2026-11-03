@@ -22,7 +22,9 @@
 - weles_roar / weles_roots / weles_venom / weles_hiss / weles_death - Weles, bóg szczytowy Mapy Nawii,
 - marzanna_wail / marzanna_nova / marzanna_lance / marzanna_blizzard / marzanna_mist / marzanna_death - Marzanna,
 - czarnobog_roar / czarnobog_cleave / czarnobog_spike / czarnobog_step / czarnobog_strike / czarnobog_death - Czarnobóg,
-- horde_roar / horde_cleave / horde_meteor / horde_leap / horde_portal / horde_shade / horde_death - Władca Hordy.
+- horde_roar / horde_cleave / horde_meteor / horde_leap / horde_portal / horde_shade / horde_death - Władca Hordy,
+- legend_roots / legend_venom / legend_frost / legend_veil / legend_shatter / legend_shadow_spike / legend_dark_pact /
+  legend_horde_rift / legend_gods_echo - legendy bossów szczytowych (krótkie, bo grają często).
 Wymaga numpy i scipy.
 Zapisuje do assets/sfx (wymaga ffmpeg w PATH).
 
@@ -1468,6 +1470,128 @@ HORDE = ((horde_roar, "horde_roar"), (horde_cleave, "horde_cleave"), (horde_mete
          (horde_death, "horde_death"))
 
 
+def legend_roots(_variant):
+    """Laska Welesa: krótkie tąpnięcie, trzask cierni wyrastających z ziemi i złoty brzęk."""
+    rng = np.random.default_rng(1710)
+    n = int(RATE * 0.7)
+    t = np.arange(n) / RATE
+    thud = np.sin(2 * np.pi * (70 * np.exp(-t * 3)) * t) * np.exp(-t * 10) * 1.2
+    crack = band(rng.standard_normal(n), 400, 5000) * np.exp(-t * 14) * 1.1
+    splinter = band((rng.random(n) < 0.01) * rng.standard_normal(n), 1500, 7000) * 3.0 * np.exp(-t * 6)
+    gold = chime([2637.0, 3520.0], np.maximum(t - 0.05, 0), 14.0) * (t > 0.05) * 0.25
+    return room(np.tanh(thud + crack + splinter) + gold, 1711, 0.4, 0.2)
+
+
+def legend_venom(_variant):
+    """Skóra Welesa: wężowy syk i mokry plusk jadu rozlewającego się wokół."""
+    rng = np.random.default_rng(1720)
+    n = int(RATE * 0.8)
+    t = np.arange(n) / RATE
+    splat = band(rng.standard_normal(n), 150, 1500) * np.exp(-t * 12) * 1.4
+    hiss = np.zeros(n)
+    h = snake_hiss(0.6, 1721, 3000, 9000)
+    hiss[:len(h)] = h * 0.8
+    blub = np.zeros(n)
+    for k in range(5):
+        at = 0.05 + k * 0.1 + rng.random() * 0.03
+        tt = np.maximum(t - at, 0)
+        blub += np.sin(2 * np.pi * (250 + rng.random() * 300) * (1 + 2 * tt) * tt) * np.exp(-tt * 45) * (t > at) * 0.4
+    return room(np.tanh(splat + hiss + blub), 1722, 0.3, 0.15)
+
+
+def legend_frost(_variant):
+    """Wieniec Marzanny: ostry trzask lodowych kolców i krótkie szkliste dzwonienie."""
+    n = int(RATE * 0.7)
+    t = np.arange(n) / RATE
+    thud = np.sin(2 * np.pi * (110 * np.exp(-t * 4)) * t) * np.exp(-t * 14) * 0.8
+    bells = chime([2093.0, 3136.0], t, 9.0, shimmer=0.6) * 0.25
+    return room(np.tanh(thud + ice_crack(n, 1730, 12.0, 1.4)) + bells, 1731, 0.4, 0.2)
+
+
+def legend_veil(_variant):
+    """Szata Pani Zimy: mroźny podmuch rozchodzący się wokół, pękający pierścień lodu."""
+    dur = 0.9
+    n = int(RATE * dur)
+    t = np.arange(n) / RATE
+    gust = icy_wind(dur, 1740, 500, 6000, 1.2) * np.minimum(t / 0.04, 1) * np.exp(-t * 4) * 1.2
+    crack = np.zeros(n)
+    start = int(RATE * 0.12)
+    crack[start:] = ice_crack(n - start, 1741, 8.0, 1.4)
+    bells = chime([1760.0, 2637.0], t, 5.0, shimmer=1.0) * 0.25
+    return reverb(np.tanh(gust + crack) + bells, 0.8, 0.3, 1742)
+
+
+def legend_shatter(_variant):
+    """Pas Zimowego Oddechu: zamarznięte ciało pęka w drobny lód (krótko, bo idzie łańcuchem)."""
+    rng = np.random.default_rng(1750)
+    n = int(RATE * 0.55)
+    t = np.arange(n) / RATE
+    pop = band(rng.standard_normal(n), 800, 6000) * np.exp(-t * 30) * 1.4
+    shards = band((rng.random(n) < 0.02) * rng.standard_normal(n), 3000, 10000) * 2.5 * np.exp(-t * 7)
+    return room(np.tanh(pop + ice_crack(n, 1751, 14.0, 1.0) + shards), 1752, 0.3, 0.15)
+
+
+def legend_shadow_spike(_variant):
+    """Miecz Czarnoboga: ciemny, szklisty chrzęst kolca wyrastającego spod ziemi."""
+    rng = np.random.default_rng(1760)
+    n = int(RATE * 0.6)
+    t = np.arange(n) / RATE
+    crunch = band(rng.standard_normal(n), 200, 3500) * np.exp(-t * 20) * 1.3
+    tone = np.sin(2 * np.pi * (150 * np.exp(-t * 2)) * t) * np.exp(-t * 12) * 0.9
+    ring = np.sin(2 * np.pi * 740 * t) * np.exp(-t * 18) * 0.15
+    return room(np.tanh(crunch + tone + ring), 1761, 0.4, 0.22)
+
+
+def legend_dark_pact(_variant):
+    """Hełm Czarnoboga: zassanie i niski wybuch mroku z szeptami, potem ciche ciepło leczenia."""
+    rng = np.random.default_rng(1770)
+    dur = 1.0
+    n = int(RATE * dur)
+    t = np.arange(n) / RATE
+    suck = band(rng.standard_normal(n), 300, 3000) * (t / 0.15) ** 2 * (t < 0.15) * 0.8
+    tt = np.maximum(t - 0.15, 0)
+    on = t > 0.15
+    boom = np.sin(2 * np.pi * (55 * np.exp(-tt * 3)) * tt) * np.exp(-tt * 6) * on * 1.4
+    burst = band(rng.standard_normal(n), 150, 2000) * np.exp(-tt * 9) * on * 0.9
+    whisper = dark_whisper(dur, 1771) * np.exp(-t * 2) * 0.6
+    heal = chime([440.0, 659.3], np.maximum(t - 0.3, 0), 5.0) * (t > 0.3) * 0.18
+    return reverb(np.tanh(suck + boom + burst) + whisper + heal, 1.0, 0.35, 1772)
+
+
+def legend_horde_rift(_variant):
+    """Ostrze Władcy Hordy: ziemia pęka z trzaskiem i bucha ogniem."""
+    rng = np.random.default_rng(1780)
+    n = int(RATE * 0.9)
+    t = np.arange(n) / RATE
+    crack = band(rng.standard_normal(n), 500, 6000) * np.exp(-t * 18) * 1.3
+    tt = np.maximum(t - 0.06, 0)
+    on = t > 0.06
+    boom = np.sin(2 * np.pi * (45 + 50 * np.exp(-tt * 10)) * tt) * np.exp(-tt * 6) * on * 1.3
+    whoosh = fire_roar(n, rng, 1100.0) * np.minimum(tt / 0.08, 1) * np.exp(-tt * 4) * on * 2.2
+    embers = crackles(n, rng, 40, 10, amp=0.25) * np.exp(-t * 3)
+    return room(np.tanh(crack + boom + whoosh + embers), 1781, 0.5, 0.2)
+
+
+def legend_gods_echo(_variant):
+    """Korona Trzech Bogów: trzy dzwony jeden po drugim (Weles, Marzanna, Czarnobóg) nad niskim pomrukiem ognia."""
+    rng = np.random.default_rng(1790)
+    dur = 1.0
+    n = int(RATE * dur)
+    t = np.arange(n) / RATE
+    x = np.zeros(n)
+    for k, freqs in enumerate(([392.0, 784.0], [1318.5, 1975.5], [196.0, 293.7])):
+        at = k * 0.07
+        x += chime(freqs, np.maximum(t - at, 0), 4.5) * (t > at) * 0.4
+    hum = fire_roar(n, rng, 500.0) * np.sin(np.pi * t / dur) * 0.6
+    return reverb(x + np.tanh(hum), 1.2, 0.4, 1791)
+
+
+LEGENDS = ((legend_roots, "legend_roots"), (legend_venom, "legend_venom"), (legend_frost, "legend_frost"),
+           (legend_veil, "legend_veil"), (legend_shatter, "legend_shatter"), (legend_shadow_spike, "legend_shadow_spike"),
+           (legend_dark_pact, "legend_dark_pact"), (legend_horde_rift, "legend_horde_rift"),
+           (legend_gods_echo, "legend_gods_echo"))
+
+
 def save_set(fn, name, count):
     for v in range(count):
         save(np.repeat(fn(v).reshape(-1, 1), 2, axis=1), f"{name}_{v + 1}")
@@ -1499,7 +1623,7 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     only = set(sys.argv[1:])
     if only:
-        for fn, name in LEGENDARY + WELES + MARZANNA + CZARNOBOG + HORDE + ((chain_cast, "chain_cast"),):
+        for fn, name in LEGENDARY + WELES + MARZANNA + CZARNOBOG + HORDE + LEGENDS + ((chain_cast, "chain_cast"),):
             if name in only:
                 save(np.repeat(fn(0).reshape(-1, 1), 2, axis=1), name)
         if "chain_zap" in only:
@@ -1523,7 +1647,7 @@ def main():
     save(np.repeat(chain_cast(0).reshape(-1, 1), 2, axis=1), "chain_cast")
     for fn, name in ((frog_attack, "frog_attack"), (frog_death, "frog_death"), (spit, "spit"), (spit_hit, "spit_hit"),
                      (frog_boss_roar, "frog_boss_roar"), (tongue_lash, "tongue_lash"), (boss_splash, "boss_splash"),
-                     (big_slash, "big_slash"), (seeker_whistle, "seeker_whistle"), (thunder, "thunder")) + LEGENDARY + WELES + MARZANNA + CZARNOBOG + HORDE:
+                     (big_slash, "big_slash"), (seeker_whistle, "seeker_whistle"), (thunder, "thunder")) + LEGENDARY + WELES + MARZANNA + CZARNOBOG + HORDE + LEGENDS:
         save(np.repeat(fn(0).reshape(-1, 1), 2, axis=1), name)
 
 

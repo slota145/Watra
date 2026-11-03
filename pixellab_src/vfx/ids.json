@@ -2560,5 +2560,134 @@
       78
     ],
     "columns": 5
+  },
+  "legend_nawia_grasp": {
+    "effect": "6323a880-6752-4d14-9fca-94845aafb5f7",
+    "name": "Legenda - Laska Welesa, korzenie Nawii",
+    "frame": [
+      83,
+      77
+    ],
+    "frames": 12,
+    "fps": 14,
+    "anchor": [
+      41,
+      45
+    ]
+  },
+  "legend_serpent_skin": {
+    "effect": "b4b00e91-b7bc-437a-93f2-00a23cc59e97",
+    "name": "Legenda - Skóra Welesa, jad wokół gracza",
+    "frame": [
+      148,
+      63
+    ],
+    "frames": 10,
+    "fps": 14,
+    "anchor": [
+      74,
+      32
+    ],
+    "columns": 5
+  },
+  "legend_winter_touch": {
+    "effect": "06895304-df75-43ad-b2ca-64d0227d4694",
+    "name": "Legenda - Wieniec Marzanny, lodowe kolce",
+    "frame": [
+      57,
+      86
+    ],
+    "frames": 12,
+    "fps": 14,
+    "anchor": [
+      31,
+      43
+    ]
+  },
+  "legend_frost_veil": {
+    "effect": "fa482681-1b8d-4a44-b7d3-88226baf6ed0",
+    "name": "Legenda - Szata Pani Zimy, mroźny pierścień",
+    "frame": [
+      160,
+      91
+    ],
+    "frames": 10,
+    "fps": 14,
+    "anchor": [
+      80,
+      40
+    ],
+    "columns": 5
+  },
+  "legend_winter_breath": {
+    "effect": "d4e9b574-fcd6-4ec2-a7e8-4bc144c9ead5",
+    "name": "Legenda - Pas Zimowego Oddechu, pękający lód",
+    "frame": [
+      87,
+      113
+    ],
+    "frames": 10,
+    "fps": 14,
+    "anchor": [
+      46,
+      41
+    ]
+  },
+  "legend_shadow_spikes": {
+    "effect": "eab4a4fc-ecab-4936-9815-e97a23716906",
+    "name": "Legenda - Miecz Czarnoboga, kolce mroku",
+    "frame": [
+      103,
+      63
+    ],
+    "frames": 12,
+    "fps": 14,
+    "anchor": [
+      51,
+      45
+    ],
+    "columns": 6
+  },
+  "legend_dark_pact": {
+    "effect": "e677695b-a5de-4061-bf10-3eeaa05a52b1",
+    "name": "Legenda - Hełm Czarnoboga, wybuch mroku",
+    "frame": [
+      80,
+      63
+    ],
+    "frames": 12,
+    "fps": 14,
+    "anchor": [
+      42,
+      38
+    ]
+  },
+  "legend_horde_rift": {
+    "effect": "6e317c8d-0b6f-4c68-9c44-063705a47da7",
+    "name": "Legenda - Ostrze Władcy Hordy, ogień spod ziemi",
+    "frame": [
+      91,
+      70
+    ],
+    "frames": 11,
+    "fps": 14,
+    "anchor": [
+      45,
+      35
+    ]
+  },
+  "legend_gods_echo": {
+    "effect": "0947d371-f87d-4445-a25b-e498c2c35f79",
+    "name": "Legenda - Korona Trzech Bogów, błysk mocy",
+    "frame": [
+      85,
+      72
+    ],
+    "frames": 10,
+    "fps": 15,
+    "anchor": [
+      41,
+      40
+    ]
   }
 }

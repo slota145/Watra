@@ -940,6 +940,19 @@ odpowiedniej sekcji.
   daje część `comet_trail`. Dźwięki (`HORDE` w `tools/sfx_synth.py`, pomocnik `flames`): `horde_roar` (pojawienie się,
   fazy, Zew, fale), `horde_cleave`, `horde_meteor`, `horde_leap`, `horde_portal`, `horde_shade`, `horde_death`.
   Wszyscy bossowie szczytowi mają już własne efekty; dalej efekty 9 legend.
+- [x] **Efekty i dźwięki legend bossów szczytowych** (listopad 2026; wszystkie 9 naraz, w kolorach swoich bogów).
+  Efekty z kreatora (`assets/effects/legend_<legenda>.png`, wpisy `legend_*` w `pixellab_src/vfx/ids.json`, funkcje
+  w `LegendVfx`, krótsze niż u bossów - 10-12 klatek): `nawia_grasp` (krąg zielonych cierni, złoty błysk, plusk jadu -
+  zamiast korzeni Leszego i kwasu), `serpent_skin` (zielono-złoty pierścień jadu wokół gracza), `winter_touch` (kępa
+  lodowych kolców i 3 mniejsze dookoła), `frost_veil` (mroźny pierścień z kolcami wokół gracza), `winter_breath`
+  (lodowy blok pęka w odłamki), `shadow_spikes` (czarno-fioletowe kolce mroku zamiast kolca Mortana), `dark_pact`
+  (fioletowy błysk i kłąb mroku z czaszkami zamiast szarego dymu), `horde_rift` (rozżarzone pęknięcia i czerwony
+  ogień z czarnym dymem zamiast wybuchu bomby), `gods_echo` (błysk w barwach trzech bogów nad głową, gdy Korona
+  budzi moc). Pierścienie wokół gracza mają przezroczystość `LegendVfx.RING_ALPHA` (0,8). Promienie efektów w klatce
+  (`*_RADIUS` w `LegendVfx`) skalują efekt do zasięgu legendy. Dźwięki (`LEGENDS` w `tools/sfx_synth.py`, wpisy
+  `legend_*` w `Sfx.SOUNDS`, ciszej i z odstępem, bo grają często): `legend_roots`, `legend_venom`, `legend_frost`,
+  `legend_veil`, `legend_shatter`, `legend_shadow_spike`, `legend_dark_pact`, `legend_horde_rift`, `legend_gods_echo`
+  (trzy dzwony bogów). Do oceny po ograniu: wielkość i głośność przy dużych gromadach.
 - [x] **Mapa Nawii, etap 4 - bossowie szczytowi** (listopad 2026). Ustalenia z autorem: trzech słowiańskich bogów
   (Władca Hordy i obce bogi później), dostęp za fragmenty kluczy z węzłów, nagrody: punkty Watry, własne legendy, dużo
   łupu i serca boga jako waluta; grafiki PixelLab 160 px z 2 animacjami; do tego dwa pasy w stylu Mageblooda

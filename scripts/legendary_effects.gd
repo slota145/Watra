@@ -66,6 +66,7 @@ extends Node
 ## Pas Zimowego Oddechu (Marzanna): winter_breath - zabity wróg pęka lodem, zamrażając sąsiadów, a zabici przez lód
 ## pękają dalej (łańcuch do WINTER_CHAIN wybuchów na sekundę, on_kill). Legendy Władcy Hordy: horde_rift (Ostrze Władcy
 ## Hordy - ogień spod trafionego), gods_echo (Korona Trzech Bogów - w walce co kilka sekund moc jednego z bogów).
+## Legendy bogów mają własne efekty w barwach swojego boga (LegendVfx.nawia_grasp itd.) i dźwięki Sfx "legend_*".
 ## (Kieł Gruzłoga - "might" - działa biernie na obrażenia, w CharacterStats.)
 ## Obrażenia z efektów nie wywołują kolejnych efektów, a każdy efekt ma krótki czas odnowienia,
 ## żeby szybkie ataki (salwa, łańcuch) nie zamieniały ekranu w ciągłą falę.
@@ -204,8 +205,6 @@ const GODS_RANGE := 220.0
 var _breaths := 0
 var _breath_reset := 0.0
 var _gods_timer := 0.0
-const ICE_FX := preload("res://assets/effects/ice_shatter.png")
-const SPIKE_FX := preload("res://assets/effects/mortan_spike.png")
 const SHADOW_COLOR := Color(0.7, 0.45, 1.0)
 
 var _player: Player
@@ -662,9 +661,8 @@ func on_kill(enemy: Goblin) -> void:
 ## Laska Welesa: korzenie Nawii oplatają (ogłuszają) i zatruwają wrogów wokół trafionego.
 func _nawia_grasp(at: Vector2, echo: bool) -> void:
 	var parent := _player.get_parent()
-	LegendVfx.roots(parent, at, NAWIA_RADIUS, 7, false, echo)
-	BossFx.acid(parent, at, NAWIA_RADIUS * 0.6)
-	Sfx.play_at("roots_burst", at, -3.0)
+	LegendVfx.nawia_grasp(parent, at, NAWIA_RADIUS, echo)
+	Sfx.play_at("legend_roots", at)
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if enemy.global_position.distance_to(at) > NAWIA_RADIUS + enemy.hurt_radius:
 			continue
@@ -680,20 +678,23 @@ func _serpent_skin() -> void:
 		return
 	_cooldowns["serpent_skin"] = COOLDOWN * 2.0
 	var at := _player.global_position
-	BossFx.acid(_player.get_parent(), at, SERPENT_RADIUS)
-	Sfx.play_at("spit_hit", at, -4.0)
+	LegendVfx.serpent_skin(_player.get_parent(), at, SERPENT_RADIUS)
+	Sfx.play_at("legend_venom", at)
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if enemy.global_position.distance_to(at) <= SERPENT_RADIUS + enemy.hurt_radius:
 			poison(enemy)
 
 
-## Lodowy wybuch: rani i zamraża (ogłusza) wrogów w promieniu `radius`.
-func _ice_burst(at: Vector2, radius: float, damage: float, freeze: float, echo: bool) -> void:
+## Lodowy wybuch: rani i zamraża (ogłusza) wrogów w promieniu `radius`. `veil` - mroźny pierścień wokół gracza
+## (Szata Pani Zimy), inaczej lodowe kolce przy trafionym (Wieniec Marzanny, Korona Trzech Bogów).
+func _ice_burst(at: Vector2, radius: float, damage: float, freeze: float, echo: bool, veil := false) -> void:
 	var parent := _player.get_parent()
-	for i in 6:
-		SkillEffects.sheet_once(parent, ICE_FX, 8, 16.0, at + Vector2.from_angle(TAU * i / 6.0) * radius * 0.6, Vector2(27, 19),
-				0.0, 1.0, 0.9 if echo else 1.1)
-	Sfx.play_at("hit_ice", at, -3.0)
+	if veil:
+		LegendVfx.frost_veil(parent, at, radius)
+		Sfx.play_at("legend_veil", at)
+	else:
+		LegendVfx.winter_touch(parent, at, radius, echo)
+		Sfx.play_at("legend_frost", at)
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if enemy.hurt_center().distance_to(at) > radius + enemy.hurt_radius:
 			continue
@@ -712,7 +713,7 @@ func _frost_veil() -> void:
 	if _cooldowns.get("frost_veil", 0.0) > 0.0 or randf() >= chance("frost_veil"):
 		return
 	_cooldowns["frost_veil"] = COOLDOWN * 2.0
-	_ice_burst(_player.body_center(), VEIL_RADIUS, VEIL_DAMAGE, VEIL_FREEZE, false)
+	_ice_burst(_player.body_center(), VEIL_RADIUS, VEIL_DAMAGE, VEIL_FREEZE, false, true)
 
 
 ## Miecz Czarnoboga: kolce mroku pod trafionym i SHADOW_TARGETS najbliższymi wrogami obok.
@@ -727,10 +728,9 @@ func _shadow_spikes(enemy: Goblin) -> void:
 	for target in targets:
 		if not is_instance_valid(target) or target.state == Goblin.State.DEAD:
 			continue
-		SkillEffects.sheet_once(_player.get_parent(), SPIKE_FX, 10, 16.0, target.global_position + Vector2(0, 6), Vector2(25, 34),
-				0.0, 1.0, 1.1)
+		LegendVfx.shadow_spike(_player.get_parent(), target.global_position + Vector2(0, 6))
 		target.take_damage(_player.roll_damage(SHADOW_DAMAGE), target.global_position, 0.0)
-	Sfx.play_at("rock_break", enemy.global_position, -6.0)
+	Sfx.play_at("legend_shadow_spike", enemy.global_position)
 
 
 ## Pas Zimowego Oddechu: lodowy wybuch w miejscu zabitego - rani i zamraża sąsiadów; każdy zabity przez lód pęka
@@ -739,11 +739,8 @@ func _winter_breath(at: Vector2) -> void:
 	if _breaths >= WINTER_CHAIN:
 		return
 	_breaths += 1
-	var parent := _player.get_parent()
-	for i in 5:
-		SkillEffects.sheet_once(parent, ICE_FX, 8, 16.0, at + Vector2.from_angle(TAU * i / 5.0) * BREATH_RADIUS * 0.5, Vector2(27, 19),
-				0.0, 1.0, 1.0)
-	Sfx.play_at("hit_ice", at, -6.0)
+	LegendVfx.winter_breath(_player.get_parent(), at, BREATH_RADIUS)
+	Sfx.play_at("legend_shatter", at)
 	var killed: Array[Vector2] = []
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if enemy.state == Goblin.State.DEAD or enemy.hurt_center().distance_to(at) > BREATH_RADIUS + enemy.hurt_radius:
@@ -761,9 +758,12 @@ func _winter_breath(at: Vector2) -> void:
 
 ## Ostrze Władcy Hordy: ziemia pod trafionym pęka i bucha czerwonym ogniem.
 func _horde_rift(at: Vector2, echo: bool) -> void:
-	var layer := get_tree().get_first_node_in_group("floor_layer")
-	SkillEffects.ground_crack(layer if layer != null else _player.get_parent(), at, RIFT_RADIUS * 0.6, 1.5)
-	_explosion(at + Vector2(0, -8), RIFT_RADIUS * (0.8 if echo else 1.0), RIFT_DAMAGE, echo)
+	var radius := RIFT_RADIUS * (0.8 if echo else 1.0)
+	LegendVfx.horde_rift(_player.get_parent(), at, radius, echo)
+	Sfx.play_at("legend_horde_rift", at)
+	for other: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if other.hurt_center().distance_to(at + Vector2(0, -8)) <= radius + other.hurt_radius:
+			other.take_damage(_player.roll_damage(RIFT_DAMAGE), at, 140.0)
 
 
 ## Korona Trzech Bogów: gdy wróg jest blisko, co `power` s budzi się moc losowego boga przy najbliższym wrogu.
@@ -787,6 +787,8 @@ func _process_gods_echo(delta: float) -> void:
 		_gods_timer = 0.5
 		return
 	_gods_timer = maxf(period, 1.0)
+	LegendVfx.gods_echo(_player.get_parent(), _player.body_center() + Vector2(0, -22))
+	Sfx.play_at("legend_gods_echo", _player.global_position)
 	match randi() % 3:
 		0:
 			_nawia_grasp(nearest.global_position + Vector2(0, 6), false)
@@ -798,8 +800,8 @@ func _process_gods_echo(delta: float) -> void:
 
 ## Hełm Czarnoboga: zabity wróg wybucha mrokiem (rani sąsiadów), a część życia wraca do gracza.
 func _dark_pact(at: Vector2) -> void:
-	BossFx.smoke(_player.get_parent(), at, 0.8)
-	Sfx.play_at("ghost_wail", at, -12.0)
+	LegendVfx.dark_pact(_player.get_parent(), at, PACT_RADIUS)
+	Sfx.play_at("legend_dark_pact", at)
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if enemy.state != Goblin.State.DEAD and enemy.hurt_center().distance_to(at) <= PACT_RADIUS + enemy.hurt_radius:
 			enemy.take_damage(_player.roll_damage(PACT_DAMAGE), at, 60.0)
