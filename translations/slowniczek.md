@@ -47,6 +47,7 @@ o ujednolicenie tłumaczeń w `translations/teksty.csv`.
 | Dar Watry, Dary Watry | Watra's Gift, Watra's Gifts |
 | Kryształ Watry | Watra Crystal |
 | Krąg Żertwy, danina, pień ofiarny, Wybraniec | Sacrificial Circle, tribute, sacrificial stump, Chosen |
+| Skarbnik, Kości Skarbnika, wzmocnienie, przelosowanie, sufit tierów | Skarbnik, Skarbnik's Bones, empowerment, reroll, tier ceiling |
 | talizman (mały, podłużny, szeroki, wielki), siatka talizmanów | talisman (small, long, wide, great), talisman grid |
 | płomienie Watry (powrót) | Watra's flames |
 | ofiara (złożona w Watrze) | offering |

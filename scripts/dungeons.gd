@@ -124,10 +124,11 @@ const CLIMATE_ORDER: Array[String] = ["catacombs", "mine", "flooded", "roots", "
 const MECHANICS := {
 	"chests": {"name": "Skrzynie", "weight": 10.0, "size": "small"},
 	"shrine": {"name": "Kapliczka", "weight": 8.0, "size": "small"},
-	"crystal": {"name": "Kryształ Watry", "weight": 6.0, "size": "large", "room": true},
+	"crystal": {"name": "Kryształ Watry", "weight": 7.0, "size": "large", "room": true},
 	"elites": {"name": "Elitarne potwory", "weight": 8.0, "size": "small"},
 	"uroczysko": {"name": "Uroczysko", "weight": 5.0, "size": "large"},
 	"zertwa": {"name": "Krąg Żertwy", "weight": 5.0, "size": "large"},
+	"skarbnik": {"name": "Skarbnik", "weight": 5.0, "size": "large"},
 }
 ## Szansa na drugą i trzecią mechanikę.
 const MECHANIC_EXTRA: Array[float] = [0.25, 0.08]
@@ -213,6 +214,56 @@ const ZER_LARGE_CHANCE := 0.1
 const ZER_LARGE_BONUS := 0.3
 ## Poziom przedmiotu talizmanów: poziom lochu plus tyle za stopień.
 const ZER_LEVEL_PER_TIER := 1
+
+## Skarbnik (scripts/skarbnik.gd, oferta - scripts/skarbnik_offer.gd) - jak Ultimatum w PoE: duch starego górnika
+## pokazuje ofertę SKA_OFFER (czasem o 1 więcej) nagród. Weź - jedna nagroda i koniec. Wzmocnij - fale potworów
+## (SKA_WAVES fal na kolejnym wzmocnieniu), po wygranej oferta (silniejsza) czeka u następnego Skarbnika, także
+## w kolejnym lochu. Przelosuj - za Kości Skarbnika (SKA_BONES): rodzaje premii, kamieni i run od nowa, fale bez
+## wzrostu siły. Śmierć, wyjście z lochu albo wczytanie gry w trakcie fal - oferta przepada.
+## Ilu Skarbników w lochu z tą mechaniką (więcej dadzą drzewko Watry i przedmioty w Watrze: "skarbnik_count"
+## w premiach mechanik - Dungeons.roll_mechanics, config["mechanic_bonus"]).
+const SKA_COUNT := 1
+const SKA_OFFER := 3
+const SKA_OFFER_EXTRA := 0.4
+## Rodzaje nagród w ofercie (pierwsza to zawsze przedmiot; kamień szlachetny dopiero po zadaniu jubilera).
+const SKA_REWARDS := {"item": 2.0, "rune": 2.0, "stone": 2.0, "gem": 1.5}
+## Kamienie zaklinania w ofercie: [najmniej, najwięcej] sztuk i waga.
+const SKA_STONES := {"weapon_stone": [3, 6, 3.0], "armor_stone": [3, 6, 3.0], "jewelry_stone": [3, 6, 3.0],
+		"blessed_stone": [20, 40, 1.0], "mercy_stone": [3, 6, 1.0]}
+const SKA_RUNES := Vector2i(2, 4)
+## Najwięcej wzmocnień; ostatnie podnosi premie przedmiotów na sufit i przemienia je w legendy.
+const SKA_MAX_STEPS := 6
+## Fale na kolejnych wzmocnieniach (1-6) i przy przelosowaniu (jak przy obecnym wzmocnieniu, co najmniej pierwszym).
+const SKA_WAVES: Array[int] = [1, 2, 2, 3, 3, 4]
+## Wrogowie do pokonania w jednej fali i żywi naraz na kolejnych wzmocnieniach. Sufit 150 żywych - pomiar
+## tests/bench_skarbnik.gd (listopad 2026): Mgnienie wśród 150 wrogów kosztuje mniej niż walka w największej gromadzie
+## Turni i Cmentarza (bench_village), przy 200 już więcej. Na 6. wzmocnieniu 4 fale po 340 = 1360 zabitych.
+const SKA_WAVE_KILLS: Array[int] = [60, 100, 140, 200, 260, 340]
+const SKA_ALIVE: Array[int] = [30, 50, 70, 95, 120, 150]
+## Poziom potworów fal: poziom lochu plus tyle za każde wzmocnienie.
+const SKA_LEVEL_PER_STEP := 2
+## Cechy elit w falach od tego wzmocnienia: szansa na elitę rośnie o SKA_ELITE_CHANCE za każde wzmocnienie wyżej.
+const SKA_ELITE_FROM := 4
+const SKA_ELITE_CHANCE := 0.03
+## Wrogowie wychodzą z kilku stron: tyle bram w odległości SKA_GATE_DISTANCE od Skarbnika, nowe bramy co falę.
+const SKA_GATES := 3
+const SKA_GATE_DISTANCE := Vector2(220.0, 420.0)
+const SKA_SPAWN_EVERY := 0.12
+const SKA_WAVE_PAUSE := 3.0
+## O ile tierów rośnie każda premia przy jednym wzmocnieniu; sufit - najlepszy tier z pasma szczęścia dla poziomu
+## przedmiotu minus SKA_CEILING_EXTRA (poziom 43: T8; T1 dopiero dla przedmiotów 80.+ poziomu).
+const SKA_TIER_STEP := 4
+## Poziom przedmiotów w ofercie: poziom lochu plus tyle (stopień 7: 43).
+const SKA_ITEM_LEVEL_BONUS := 2
+const SKA_CEILING_EXTRA := 5
+## Runy i kamienie zaklinania: +50% sztuk za wzmocnienie; kamień szlachetny: szlif +1.
+const SKA_COUNT_GROWTH := 0.5
+## Kości Skarbnika (przelosowanie): pewna sztuka po wygranych falach i szansa z każdego wroga fal.
+const SKA_BONES := "skarbnik_bones"
+const SKA_BONES_CHANCE := 0.004
+## Fale: mnożniki nagród zwykłego potwora (doświadczenie, szansa na przedmiot).
+const SKA_XP := 0.6
+const SKA_ITEMS := 0.25
 
 ## Elitarne potwory (scripts/dungeon_elite.gd): zwykły potwór lochu wzmocniony 1-3 cechami, każda z innej grupy
 ## (aura, obrona, żywioł, przywołanie). "name" - przymiotnik w napisie nad głową, "color" - poświata (od pierwszej cechy),

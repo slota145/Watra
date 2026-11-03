@@ -41,13 +41,15 @@ const TIER_BIAS := {COMMON: 3.0, MAGIC: 2.0, RARE: 1.4, LEGENDARY: 1.0}
 ## i bossowie); bossowie dokładają BOSS_LEVEL_BONUS.
 const LOOT_ITEM_LEVELS := {1: [1, 12], 2: [10, 24], 3: [20, 36]}
 const BOSS_LEVEL_BONUS := 5
-## Wartość premii na tierze 45 i na tierze 1 - zakresy tierów pomiędzy rosną geometrycznie.
+## Wartość premii na tierze 45 i na tierze 1 - zakresy tierów pomiędzy rosną geometrycznie. T1 to przedmioty
+## 90.-100. poziomu; zdrowie, cios krytyczny i szybkość ruchu przestawione po przeglądzie na tle PoE, Diablo 4
+## i Last Epoch (tests/tier_sim.gd, listopad 2026).
 const TIER_VALUES := {
-	"health": [5.0, 200.0], "mana": [4.0, 140.0], "armor": [1.0, 45.0], "damage": [1.0, 35.0],
+	"health": [5.0, 120.0], "mana": [4.0, 140.0], "armor": [1.0, 45.0], "damage": [1.0, 35.0],
 	"strength": [1.0, 35.0], "dexterity": [1.0, 35.0], "intelligence": [1.0, 35.0], "vitality": [1.0, 35.0],
-	"attack_speed": [0.02, 0.22], "move_speed": [0.02, 0.16], "cast_speed": [0.02, 0.22],
+	"attack_speed": [0.02, 0.22], "move_speed": [0.02, 0.20], "cast_speed": [0.02, 0.22],
 	"physical_damage": [0.03, 0.40], "spell_damage": [0.03, 0.40],
-	"damage_percent": [0.02, 0.30], "crit_chance": [0.01, 0.12], "crit_damage": [0.05, 0.60],
+	"damage_percent": [0.02, 0.30], "crit_chance": [0.01, 0.07], "crit_damage": [0.05, 0.45],
 	"life_on_hit": [1.0, 15.0], "health_regen": [0.2, 8.0], "mana_regen": [0.2, 6.0], "dodge_chance": [0.01, 0.10],
 	"cooldown_reduction": [0.01, 0.15], "gold_find": [0.03, 0.40], "xp_gain": [0.02, 0.25], "area": [0.02, 0.25],
 	"potion_power": [0.04, 0.50],
