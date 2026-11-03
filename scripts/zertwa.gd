@@ -253,7 +253,7 @@ func claim() -> void:
 	if dungeon != null and dungeon.w != null and dungeon.w.goblin_died.is_connected(_on_goblin_died):
 		dungeon.w.goblin_died.disconnect(_on_goblin_died)
 	_close_ring()
-	var tier := int(dungeon.config.get("tier", 1)) if dungeon != null else 1
+	var tier := Dungeons.config_tier(dungeon.config) if dungeon != null else 1
 	var item_level: int = clampi((dungeon.level if dungeon != null else 1) + tier * Dungeons.ZER_LEVEL_PER_TIER, 1, Loot.MAX_ITEM_LEVEL)
 	var choices := Dungeons.ZER_OFFER + (1 if dungeon != null and dungeon.mechanic_power("zertwa") > 1.0 else 0)
 	offer = Talismans.roll_offer(item_level, overflow(), choices, _rng)

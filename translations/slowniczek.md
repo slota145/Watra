@@ -51,6 +51,7 @@ o ujednolicenie tłumaczeń w `translations/teksty.csv`.
 | talizman (mały, podłużny, szeroki, wielki), siatka talizmanów | talisman (small, long, wide, great), talisman grid |
 | bożek (gliniany, rzeźbiony, złocony, prastary), slot | idol (clay, carved, gilded, ancient), slot |
 | płomienie Watry (powrót) | Watra's flames |
+| Mapa Nawii, węzeł, obszar, oczyszczony, punkt Watry | Map of Nawia, node, region, cleansed, Watra point |
 | ofiara (złożona w Watrze) | offering |
 | Gildia poszukiwaczy przygód | Adventurers' Guild |
 | tablica ogłoszeń, zlecenie | notice board, bounty |

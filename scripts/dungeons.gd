@@ -326,10 +326,13 @@ static func roll_elite_traits(rng: RandomNumberGenerator) -> Array[String]:
 	return result
 
 
-## Poziom potworów na stopniach 1-7 (stopień wybiera gracz, najwyżej poziom Watry); strażnik ma o 2 więcej.
-const TIER_LEVELS: Array[int] = [5, 11, 17, 23, 29, 35, 41]
+## Poziom potworów na stopniach: 1-7 w oknie lochów (stopień wybiera gracz, najwyżej poziom Watry), 8-17 tylko
+## z węzłów Mapy Nawii (NawiaMap, poziomy 45-90); strażnik ma o 2 więcej.
+const TIER_LEVELS: Array[int] = [5, 11, 17, 23, 29, 35, 41, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90]
+## Stopnie dostępne w zwykłym oknie lochów (wyższe są na Mapie Nawii).
+const BASE_TIERS := 7
 const BOSS_BONUS := 2
-## O ile więcej potworów na każdym kolejnym stopniu (stopień 7: +42%).
+## O ile więcej potworów na każdym kolejnym stopniu (stopień 7: +42%; wyżej już nie rośnie - patrz power_tier).
 const TIER_COUNT_BONUS := 0.07
 
 ## Modyfikatory za żar (dostępny żar = zebrany minus wydany - wydawanie nie obniża poziomu Watry).
@@ -404,6 +407,17 @@ static func weighted(rng: RandomNumberGenerator, weights: Dictionary) -> String:
 
 static func tier_level(tier: int) -> int:
 	return TIER_LEVELS[clampi(tier, 1, TIER_LEVELS.size()) - 1]
+
+
+## Stopień do liczebności i nagród mechanik (liczba potworów, fale, strażnicy skrzyń, runy, kamienie): na Mapie Nawii
+## stopnie 8-17 liczą się jak 7 - trudność i łup rosną tam z poziomem potworów, a nie z liczbą wrogów naraz.
+static func power_tier(tier: int) -> int:
+	return clampi(tier, 1, BASE_TIERS)
+
+
+## power_tier dla ustawień wyprawy (config).
+static func config_tier(config_data: Dictionary) -> int:
+	return power_tier(int(config_data.get("tier", 1)))
 
 
 ## Koszt modyfikatorów w żarze; `idols` - bożki w slotach (Bożek Żaru obniża koszt).

@@ -102,7 +102,7 @@ func harvest(_from: Vector2) -> void:
 
 func _release_guards() -> void:
 	state = "guarded"
-	var tier := int(dungeon.config.get("tier", 1))
+	var tier := Dungeons.config_tier(dungeon.config)
 	var count := roundi((GUARDS + floori(tier / 2.0)) * Dungeons.mult(dungeon.config, "count"))
 	for i in count:
 		var angle := TAU * i / count + randf_range(-0.3, 0.3)

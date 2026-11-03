@@ -114,6 +114,8 @@ var bestiary := {}
 var ember := 0
 ## Żar wydany na modyfikatory lochów - zmniejsza żar do wydania, ale nie poziom Watry.
 var ember_spent := 0
+## Oczyszczone węzły Mapy Nawii (NawiaMap) - kolejne odsłaniają sąsiednie, każdy daje punkt Watry.
+var nawia_cleared: Array[int] = []
 
 
 func _process(delta: float) -> void:
@@ -264,12 +266,27 @@ func damage_multiplier(enemy: Node) -> float:
 	return 1.0 + rank(kind) * BESTIARY_STEP if kind != "" else 1.0
 
 
+## Pokonany strażnik lochu z węzła Mapy Nawii: zapisuje węzeł (true - nowy, z punktem Watry).
+func clear_nawia_node(id: int) -> bool:
+	if id < 0 or nawia_cleared.has(id):
+		return false
+	nawia_cleared.append(id)
+	changed.emit()
+	return true
+
+
+## Punkty Watry z Mapy Nawii (do przyszłego drzewka Watry).
+func watra_points() -> int:
+	return NawiaMap.points(nawia_cleared)
+
+
 # ---------------------------------------------------------------- zapis
 func get_save_data() -> Dictionary:
 	var timed := {}
 	for group: String in active:
 		timed[group] = [active[group]["id"], active[group]["left"]]
-	return {"active": timed, "bestiary": bestiary.duplicate(), "ember": ember, "ember_spent": ember_spent}
+	return {"active": timed, "bestiary": bestiary.duplicate(), "ember": ember, "ember_spent": ember_spent,
+			"nawia": nawia_cleared.duplicate()}
 
 
 func load_save_data(data: Dictionary) -> void:
@@ -281,6 +298,10 @@ func load_save_data(data: Dictionary) -> void:
 			active[group] = {"id": str(entry[0]), "left": float(entry[1])}
 	ember = int(data.get("ember", 0))
 	ember_spent = int(data.get("ember_spent", 0))
+	nawia_cleared.clear()
+	for id in data.get("nawia", []):
+		if not nawia_cleared.has(int(id)):
+			nawia_cleared.append(int(id))
 	bestiary.clear()
 	var saved: Dictionary = data.get("bestiary", {})
 	for kind: String in saved:
