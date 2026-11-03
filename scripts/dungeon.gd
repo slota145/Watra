@@ -103,6 +103,8 @@ var palisade_lines: Array[PackedVector2Array] = []
 var path_tiles := {}
 ## Gładkie linie krętych ścieżek (w wierzchołkach, przed zaokrągleniem) - po nich biegnie ubita ziemia.
 var _trails: Array[PackedVector2Array] = []
+## Kolor upiorów Nawii (Bożek Nawii).
+const NAWIA_COLOR := Color(0.62, 0.55, 1.0)
 const STEPS: Array[Vector2i] = [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN,
 		Vector2i(-1, -1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(1, 1)]
 
@@ -118,7 +120,7 @@ func generate(world, settings: Dictionary) -> void:
 	Goblin.dungeon_mods = {}
 	for key in ["health", "damage", "xp", "gold", "loot", "gems", "legend"]:
 		Goblin.dungeon_mods[key] = Dungeons.mult(settings, key)
-	for key in ["item_level", "quality"]:
+	for key in ["item_level", "quality", "herbs", "res_wood", "res_stone", "res_ore", "gem_cut"]:
 		Goblin.dungeon_mods[key] = Dungeons.added(settings, key)
 	outdoor = climate.get("outdoor", false)
 	_plan_rooms()
@@ -151,6 +153,7 @@ func generate(world, settings: Dictionary) -> void:
 	_build_entrance()
 	_populate(Dungeons.mult(settings, "count") * (1.0 + Dungeons.TIER_COUNT_BONUS * (int(settings["tier"]) - 1)))
 	_build_vault()
+	_apply_idols()
 	_build_mechanics()
 	_build_altar()
 	Goblin.pathing = self
@@ -876,6 +879,89 @@ func _pick_mechanics() -> void:
 		mechanics.erase("crystal")
 
 
+# ---------------------------------------------------------------- bożki
+## Działanie bożków na potwory lochu (po strażniku, przed mechanikami): dodatkowe gromady (z elitą), bossowie echa,
+## same elity, wściekły strażnik i upiory Nawii.
+func _apply_idols() -> void:
+	var free_rooms: Array[Rect2i] = []
+	for room in rooms:
+		if room != start_room and room != boss_room and room != altar_room and not (event != "" and room == event_room):
+			free_rooms.append(room)
+	if free_rooms.is_empty():
+		return
+	var pack_elite := Dungeons.added(config, "pack_elites") > 0.0
+	for i in int(Dungeons.added(config, "packs")):
+		var room: Rect2i = free_rooms[_rng.randi() % free_rooms.size()]
+		var center := _room_point(room, 28.0)
+		var pack: Array[Dictionary] = []
+		for j in _rng.randi_range(PACK.x, PACK.y):
+			pack.append(_spawn(_pick(climate["monsters"]), center + Vector2(_rng.randf_range(-30, 30), _rng.randf_range(-22, 22)), center, level))
+		if pack_elite:
+			_promote_spawn(pack.pick_random())
+	var echo_pool := Idols.boss_pool(climate["boss"])
+	var echo_level := level + Dungeons.BOSS_BONUS + int(Dungeons.added(config, "echo_level"))
+	for i in int(Dungeons.added(config, "echo")):
+		var room: Rect2i = free_rooms[_rng.randi() % free_rooms.size()]
+		var at := _room_point(room, 28.0)
+		_spawn(echo_pool[_rng.randi() % echo_pool.size()], at, at + Vector2(0, 40), echo_level)
+	if Dungeons.added(config, "all_elite") > 0.0:
+		for spawn: Dictionary in w._goblin_spawns.duplicate():
+			var goblin: Goblin = w._live_goblins.get(spawn.get("id", -1))
+			if goblin != null and goblin.elite == null and not goblin is Boss and goblin.speed > 0.0:
+				_promote_spawn(spawn)
+	if _boss != null and Dungeons.mult(config, "boss_health") > 1.0:
+		_boss.max_health = roundi(_boss.max_health * Dungeons.mult(config, "boss_health"))
+		_boss.health = _boss.max_health
+		var damage := Dungeons.mult(config, "boss_damage")
+		for property in _boss.get_property_list():
+			var key: String = property["name"]
+			if key.ends_with("damage") and property["type"] == TYPE_INT and _boss.get(key) > 0 \
+					and key != "traveler_damage" and key != "event_damage":
+				_boss.set(key, maxi(1, roundi(_boss.get(key) * damage)))
+		if _boss is Boss:
+			_boss.enraged = true
+	if Dungeons.added(config, "nawia") > 0.0 and not w.goblin_died.is_connected(_on_nawia_death):
+		w.goblin_died.connect(_on_nawia_death)
+
+
+## Elita z potwora z danego miejsca (cechy losowe).
+func _promote_spawn(spawn: Dictionary) -> void:
+	var target: Goblin = w._live_goblins.get(spawn.get("id", -1))
+	if target == null or target.elite != null or target is Boss or target.speed <= 0.0:
+		return
+	elites.append(DungeonElite.promote(target, Dungeons.roll_elite_traits(_rng), self, spawn["type"]))
+
+
+## Bożek Nawii: zabity wróg (nie upiór, nie boss) z szansą wstaje jako upiór w tym samym miejscu.
+func _on_nawia_death(goblin: Goblin) -> void:
+	if goblin is Boss or goblin.has_meta("nawia") or goblin.has_meta("ghost") or goblin.speed <= 0.0:
+		return
+	if _rng.randf() >= Dungeons.added(config, "nawia"):
+		return
+	_raise_nawia.call_deferred(goblin.global_position)
+
+
+func _raise_nawia(at: Vector2) -> void:
+	if not is_instance_valid(w) or w._dungeon != self:
+		return
+	var spawn := _spawn(_pick(climate["monsters"]), at, at, level)
+	var ghost: Goblin = w._live_goblins.get(spawn.get("id", -1))
+	if ghost == null:
+		return
+	ghost.set_meta("nawia", true)
+	ghost.heart_drop_chance = 0.0
+	ghost.map_color = NAWIA_COLOR
+	var mat := ShaderMaterial.new()
+	mat.shader = Uroczysko.SHADER
+	mat.set_shader_parameter("ghost", NAWIA_COLOR)
+	mat.set_shader_parameter("phase", _rng.randf() * TAU)
+	ghost.sprite.material = mat
+	ghost.sitting = false
+	ghost.appear()
+	ghost.aggro()
+	MiscVfx.puff(ghost.get_parent(), at + Vector2(0, -6), NAWIA_COLOR, 0.8)
+
+
 ## Moc mechaniki z legendarnego bożka (Idols.MECHANIC_POWER; 1 - zwykła mechanika).
 func mechanic_power(id: String) -> float:
 	return float(Dungeons.mechanic_bonus(config).get("power", {}).get(id, 1.0))
@@ -1317,6 +1403,8 @@ func _add_portal(pos: Vector2, text: String) -> void:
 ## strażnik ze świtą w komnacie skarbca.
 func _populate(count_mult: float) -> void:
 	var weights: Dictionary = climate["monsters"]
+	var lords := Dungeons.added(config, "lords") > 0.0
+	var lord_pool := Idols.boss_pool(climate["boss"])
 	var distance := _distances(start_room.position + start_room.size / 2)
 	var far := 1
 	for d: int in distance.values():
@@ -1329,6 +1417,11 @@ func _populate(count_mult: float) -> void:
 		var total := roundi(room.size.x * room.size.y * DENSITY * count_mult)
 		if room == boss_room:
 			total = roundi(6 * count_mult)
+		elif lords:
+			# Bożek Władców: zamiast gromady boss krainy
+			var at := _room_point(room, 28.0)
+			_spawn(lord_pool[_rng.randi() % lord_pool.size()], at, at + Vector2(0, 40), lvl + Dungeons.BOSS_BONUS)
+			continue
 		while total > 0:
 			var n := mini(total, _rng.randi_range(PACK.x, PACK.y))
 			total -= n

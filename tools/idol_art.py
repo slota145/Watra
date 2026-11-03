@@ -1,5 +1,6 @@
 """Ikony bożków (scripts/idols.gd): rzeźbiony słup z twarzą (jak Światowid) w trzech materiałach według rzadkości
-(glina - zwykły, ciemne drewno - rzadki, złoto - legendarny) i z żarzącym się kamieniem na piersi w kolorze rodzaju.
+(glina - zwykły, ciemne drewno - rzadki, złoto - legendarny, krwawy kamień - prastary; prastare są tylko
+rodzaje z ANCIENT) i z żarzącym się kamieniem na piersi w kolorze rodzaju.
 Rysuje w siatce 32x32 i powiększa dwa razy (piksele 2x2 jak w innych ikonach 64 px).
 
 Uruchom: python tools/idol_art.py   (wynik: assets/items/idols/<rodzaj>_<rzadkość>.png)
@@ -17,7 +18,10 @@ MATERIALS = {
 	"common": ((104, 62, 40), (150, 92, 58), (190, 128, 84), (46, 26, 18)),
 	"rare": ((58, 40, 34), (92, 64, 50), (128, 94, 72), (24, 15, 12)),
 	"legendary": ((150, 98, 24), (214, 160, 48), (252, 222, 120), (72, 42, 10)),
+	"ancient": ((96, 22, 26), (150, 36, 40), (204, 70, 64), (34, 6, 10)),
 }
+# rodzaje tylko w rzadkości prastarej
+ANCIENT = {"hosts", "lords"}
 # kolor kamienia na piersi dla każdego rodzaju bożka
 KINDS = {
 	"chests": (230, 170, 70), "shrine": (120, 220, 255), "crystal": (255, 120, 50), "elites": (230, 80, 230),
@@ -26,6 +30,10 @@ KINDS = {
 	"gold": (255, 200, 40), "items": (110, 150, 255), "runes": (180, 200, 230), "gems": (60, 230, 120),
 	"legends": (255, 150, 30),
 	"pride": (160, 40, 200), "gloom": (90, 90, 200),
+	"packs": (230, 120, 60), "nawia": (170, 150, 255), "herbs": (120, 220, 80), "wood": (170, 120, 70),
+	"stone": (170, 170, 180), "ore": (200, 130, 110), "cutter": (120, 255, 240), "guardian": (255, 90, 60),
+	"echo": (200, 120, 255), "ember": (255, 160, 40),
+	"hosts": (255, 230, 120), "lords": (255, 255, 255),
 }
 
 
@@ -110,10 +118,14 @@ def draw(material: tuple, gem: tuple) -> Image.Image:
 
 def main() -> None:
 	os.makedirs(OUT, exist_ok=True)
+	count = 0
 	for kind, gem in KINDS.items():
 		for rarity, material in MATERIALS.items():
+			if (rarity == "ancient") != (kind in ANCIENT):
+				continue
 			draw(material, gem).save(os.path.join(OUT, f"{kind}_{rarity}.png"))
-	print(f"Zapisano {len(KINDS) * len(MATERIALS)} ikon w {OUT}")
+			count += 1
+	print(f"Zapisano {count} ikon w {OUT}")
 
 
 if __name__ == "__main__":
