@@ -39,6 +39,7 @@ var offer_window: OfferWindow
 var watra_window: WatraWindow
 var dungeon_window: DungeonWindow
 var nawia_window: NawiaWindow
+var watra_tree_window: WatraTreeWindow
 var codex_window: CodexWindow
 var jeweler_window: JewelerWindow
 var essence_window: EssenceWindow
@@ -145,6 +146,10 @@ func _ready() -> void:
 	nawia_window.name = "NawiaWindow"
 	add_child(nawia_window)
 	move_child(nawia_window, dungeon_window.get_index())
+	watra_tree_window = WatraTreeWindow.new()
+	watra_tree_window.name = "WatraTreeWindow"
+	add_child(watra_tree_window)
+	move_child(watra_tree_window, nawia_window.get_index() + 1)
 	codex_window = CodexWindow.new()
 	codex_window.name = "CodexWindow"
 	add_child(codex_window)
@@ -292,6 +297,9 @@ func connect_player(player: Player) -> void:
 	blessing_window.setup(player)
 	watra_window.nawia_requested.connect(nawia_window.open)
 	nawia_window.node_requested.connect(dungeon_window.open_node)
+	watra_tree_window.setup(player)
+	watra_window.tree_requested.connect(watra_tree_window.open)
+	nawia_window.tree_requested.connect(watra_tree_window.open)
 	watra_window.essence_requested.connect(essence_window.open.bind("watra"))
 	status_row.setup(player)
 	party_frames.setup(player)
@@ -363,7 +371,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_window(codex_window, "ui_book")
 	elif event.is_action_pressed("ui_cancel"):
 		# Esc najpierw zamyka otwarte okna, a dopiero potem otwiera menu pauzy
-		var windows: Array[Control] = [character_window, inventory_window, big_map, shop_window, skill_window, enchant_window, crafting_window, build_window, board_window, sage_window, forge_window, watra_window, dungeon_window, nawia_window, help_window, quest_journal, npc_dialog, storage_window, codex_window, jeweler_window, essence_window, market_window, travelers_window, workshop_window, talisman_window, talisman_offer, skarbnik_window, blessing_window]
+		var windows: Array[Control] = [character_window, inventory_window, big_map, shop_window, skill_window, enchant_window, crafting_window, build_window, board_window, sage_window, forge_window, watra_window, dungeon_window, nawia_window, watra_tree_window, help_window, quest_journal, npc_dialog, storage_window, codex_window, jeweler_window, essence_window, market_window, travelers_window, workshop_window, talisman_window, talisman_offer, skarbnik_window, blessing_window]
 		if windows.any(func(w: Control) -> bool: return w.visible):
 			Sfx.play("ui_close")
 			for w in windows:

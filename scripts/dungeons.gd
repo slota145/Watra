@@ -437,40 +437,49 @@ static func multiplier(mods: Array, key: String) -> float:
 
 
 ## Ustawienia wyprawy: {"climate", "tier", "mods", "seed", "idols"} - zapisywane przy przejściu do lochu.
-## `idols` - bożki włożone w sloty (Idols), zużyte przy wejściu.
+## `idols` - bożki włożone w sloty (Idols), zużyte przy wejściu. Okno lochów dokłada "tree" - premie działającej
+## zakładki drzewka Watry z chwili wejścia (WatraTree.effects).
 static func config(climate: String, tier: int, mods: Array, seed_value: int, idols: Array = []) -> Dictionary:
 	return {"climate": climate, "tier": tier, "mods": mods.duplicate(), "seed": seed_value, "idols": idols.duplicate()}
 
 
-## Łączny mnożnik wyprawy: modyfikatory za żar razy bożki (1 - bez zmian).
+## Łączny mnożnik wyprawy: modyfikatory za żar razy bożki razy drzewko Watry (1 - bez zmian).
 static func mult(config_data: Dictionary, key: String) -> float:
-	return multiplier(config_data.get("mods", []), key) * Idols.multiplier(config_data.get("idols", []), key)
+	return multiplier(config_data.get("mods", []), key) * Idols.multiplier(config_data.get("idols", []), key) \
+			* WatraTree.mult(config_data.get("tree", {}), key)
 
 
-## Premia dodawana z bożków wyprawy (item_level, quality, vault_runes; 0 - bez zmian).
+## Premia dodawana z bożków i drzewka Watry (item_level, quality, vault_runes; 0 - bez zmian).
 static func added(config_data: Dictionary, key: String) -> float:
-	return Idols.added(config_data.get("idols", []), key)
+	return Idols.added(config_data.get("idols", []), key) + WatraTree.added(config_data.get("tree", {}), key)
 
 
-## Premie mechanik wyprawy (dla roll_mechanics): z config["mechanic_bonus"] (testy, później drzewko Watry) i z bożków -
-## wagi się mnożą, wymuszone mechaniki sumują, moc mechanik bierze większą.
+## Premie mechanik wyprawy (dla roll_mechanics): z config["mechanic_bonus"] (testy), z drzewka Watry (config["tree"])
+## i z bożków - wagi się mnożą, wymuszone mechaniki i szanse na drugą i trzecią sumują, a moc ponad 1 się dodaje.
 static func mechanic_bonus(config_data: Dictionary) -> Dictionary:
-	var base: Dictionary = config_data.get("mechanic_bonus", {})
-	var idols := Idols.mechanic_bonus(config_data.get("idols", []))
-	var result := base.duplicate(true)
-	var weights: Dictionary = result.get("weights", {})
-	for id: String in idols["weights"]:
-		weights[id] = float(weights.get(id, 1.0)) * float(idols["weights"][id])
-	result["weights"] = weights
-	var forced: Array = result.get("forced", [])
-	for id: String in idols["forced"]:
-		if not forced.has(id):
-			forced.append(id)
-	result["forced"] = forced
-	var power: Dictionary = result.get("power", {})
-	for id: String in idols["power"]:
-		power[id] = maxf(float(power.get(id, 1.0)), float(idols["power"][id]))
-	result["power"] = power
+	var result: Dictionary = config_data.get("mechanic_bonus", {}).duplicate(true)
+	for extra: Dictionary in [WatraTree.mechanic_bonus(config_data.get("tree", {})),
+			Idols.mechanic_bonus(config_data.get("idols", []))]:
+		var weights: Dictionary = result.get("weights", {})
+		for id: String in extra["weights"]:
+			weights[id] = float(weights.get(id, 1.0)) * float(extra["weights"][id])
+		result["weights"] = weights
+		var forced: Array = result.get("forced", [])
+		for id: String in extra["forced"]:
+			if not forced.has(id):
+				forced.append(id)
+		result["forced"] = forced
+		var power: Dictionary = result.get("power", {})
+		for id: String in extra["power"]:
+			power[id] = float(power.get(id, 1.0)) + float(extra["power"][id]) - 1.0
+		result["power"] = power
+		var chances: Array = result.get("extra", [])
+		var more: Array = extra.get("extra", [])
+		for i in more.size():
+			if chances.size() <= i:
+				chances.append(0.0)
+			chances[i] = float(chances[i]) + float(more[i])
+		result["extra"] = chances
 	return result
 
 

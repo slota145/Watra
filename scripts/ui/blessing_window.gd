@@ -70,11 +70,14 @@ func _refresh() -> void:
 	var cleared := _player.boons.nawia_cleared
 	var progress := NawiaMap.area_progress(nodes, cleared, zone)
 	var range := NawiaMap.blessing_range(NawiaMap.blessing_level(nodes, cleared, zone))
-	var bonus := roundi(NawiaMap.blessing_bonus(nodes, cleared, zone) * 100.0)
+	var tree := _player.boons.tree_effects()
+	var bonus := roundi((NawiaMap.blessing_bonus(nodes, cleared, zone) + WatraTree.blessing_bonus(tree, progress.x)) * 100.0)
 	var on := _player.boons.nawia_blessed.has(zone)
 	var text := Lang.t("Kraina: %s\nOczyszczone węzły obszaru: %d / %d") % [Zones.zone_name(zone), progress.x, progress.y]
 	text += "\n" + Lang.t("Potwory: poz. %d-%d, bossowie poz. %d") % [range[0], range[1], range[2]]
 	text += "\n" + Lang.t("Łup i doświadczenie: +%d%%") % bonus
+	if float(tree.get("bless_gold", 0.0)) > 0.0:
+		text += "\n" + Lang.t("Złoto: +%d%% (drzewko Watry)") % roundi(float(tree["bless_gold"]) * 100.0)
 	text += "\n\n" + (Lang.t("Błogosławieństwo działa.") if on else Lang.t("Błogosławieństwo nie działa - kraina ma zwykłe poziomy."))
 	_info.text = text
 	_info.add_theme_color_override("font_color", FIRE if on else UiStyle.TEXT_COLOR)

@@ -962,13 +962,13 @@ func _raise_nawia(at: Vector2) -> void:
 	MiscVfx.puff(ghost.get_parent(), at + Vector2(0, -6), NAWIA_COLOR, 0.8)
 
 
-## Moc mechaniki z legendarnego bożka (Idols.MECHANIC_POWER; 1 - zwykła mechanika).
+## Moc mechaniki z legendarnego bożka (Idols.MECHANIC_POWER) i drzewka Watry (WatraTree; 1 - zwykła mechanika).
 func mechanic_power(id: String) -> float:
 	return float(Dungeons.mechanic_bonus(config).get("power", {}).get(id, 1.0))
 
 
 ## Dodatkowe sztuki mechaniki przy wzmocnieniu (moc 1.5 -> `extra`, moc 1 -> 0).
-func _power_extra(id: String, extra: int) -> int:
+func power_extra(id: String, extra: int) -> int:
 	return roundi((mechanic_power(id) - 1.0) * 2.0 * extra)
 
 
@@ -1000,7 +1000,7 @@ func _build_mechanics() -> void:
 		var taken: Array[Rect2i] = []
 		for other: Node2D in uroczyska + zertwy:
 			taken.append(_room_of(other.position))
-		var count := int(config.get("mechanic_bonus", {}).get("skarbnik_count", Dungeons.SKA_COUNT)) + _power_extra("skarbnik", 1)
+		var count := int(config.get("mechanic_bonus", {}).get("skarbnik_count", Dungeons.SKA_COUNT)) + power_extra("skarbnik", 1)
 		var spare := _mechanic_rooms(rooms.size()).filter(func(room: Rect2i) -> bool: return not taken.has(room))
 		for room: Rect2i in spare.slice(0, count):
 			_add_skarbnik(room)
@@ -1008,7 +1008,7 @@ func _build_mechanics() -> void:
 		var kinds := {}
 		for kind: String in Dungeons.CHEST_KINDS:
 			kinds[kind] = Dungeons.CHEST_KINDS[kind]["weight"]
-		for room in _mechanic_rooms(_rng.randi_range(Dungeons.CHESTS.x, Dungeons.CHESTS.y) + _power_extra("chests", 2)):
+		for room in _mechanic_rooms(_rng.randi_range(Dungeons.CHESTS.x, Dungeons.CHESTS.y) + power_extra("chests", 2)):
 			var traits: Array[String] = []
 			for id: String in Dungeons.CHEST_TRAITS:
 				if _rng.randf() < Dungeons.CHEST_TRAITS[id]["chance"]:
@@ -1017,10 +1017,10 @@ func _build_mechanics() -> void:
 	if mechanics.has("shrine"):
 		var gifts := Dungeons.SHRINES.duplicate()
 		_shuffle(gifts)
-		for room in _mechanic_rooms(mini(gifts.size(), _rng.randi_range(Dungeons.SHRINE_COUNT.x, Dungeons.SHRINE_COUNT.y) + _power_extra("shrine", 1))):
+		for room in _mechanic_rooms(mini(gifts.size(), _rng.randi_range(Dungeons.SHRINE_COUNT.x, Dungeons.SHRINE_COUNT.y) + power_extra("shrine", 1))):
 			_add_shrine(gifts.pop_back(), room)
 	if mechanics.has("elites"):
-		for room in _mechanic_rooms(_rng.randi_range(Dungeons.ELITES.x, Dungeons.ELITES.y) + _power_extra("elites", 2)):
+		for room in _mechanic_rooms(_rng.randi_range(Dungeons.ELITES.x, Dungeons.ELITES.y) + power_extra("elites", 2)):
 			_add_elite(Dungeons.roll_elite_traits(_rng), room)
 
 

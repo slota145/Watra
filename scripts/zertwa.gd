@@ -255,7 +255,7 @@ func claim() -> void:
 	_close_ring()
 	var tier := Dungeons.config_tier(dungeon.config) if dungeon != null else 1
 	var item_level: int = clampi((dungeon.level if dungeon != null else 1) + tier * Dungeons.ZER_LEVEL_PER_TIER, 1, Loot.MAX_ITEM_LEVEL)
-	var choices := Dungeons.ZER_OFFER + (1 if dungeon != null and dungeon.mechanic_power("zertwa") > 1.0 else 0)
+	var choices: int = Dungeons.ZER_OFFER + (dungeon.power_extra("zertwa", 1) if dungeon != null else 0)
 	offer = Talismans.roll_offer(item_level, overflow(), choices, _rng)
 	MiscVfx.spark(get_parent(), global_position + Vector2(0, -40), COLOR, 1.4)
 	_update_label()

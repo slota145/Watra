@@ -7,6 +7,7 @@ extends PanelContainer
 ## Rysowane w kodzie; ładna grafika mapy przyjdzie, gdy system będzie dopracowany.
 
 signal node_requested(node: Dictionary)
+signal tree_requested
 
 const FIRE := Color(1.0, 0.6, 0.25)
 const NAWIA := Color(0.62, 0.55, 1.0)
@@ -52,6 +53,9 @@ func _ready() -> void:
 	bottom.add_theme_constant_override("separation", 6)
 	_go = _button(Lang.t("Wyrusz"), _on_go)
 	bottom.add_child(_go)
+	bottom.add_child(_button(Lang.t("Drzewko"), func() -> void:
+		visible = false
+		tree_requested.emit()))
 	bottom.add_child(_button(Lang.t("Zamknij"), func() -> void:
 		visible = false
 		Sfx.play("ui_close")))

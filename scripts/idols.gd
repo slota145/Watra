@@ -15,8 +15,8 @@ class_name Idols
 ## a prastary najwyżej jeden.
 ## Siła rośnie z rzadkością (wartości w KINDS: [zwykły, rzadki, legendarny], prastare - jedna wartość). Mnożniki łączą się z modyfikatorami
 ## za żar (Dungeons.mult), premie mechanik idą do Dungeons.roll_mechanics (Dungeons.mechanic_bonus).
-## Slotów jest 2, kolejne odblokowuje poziom Watry (SLOT_LEVELS); miejsce na premie z drzewka Watry: `extra_slots`
-## w slot_count i `chance_bonus` w drop_chance.
+## Slotów jest 2, kolejne odblokowuje poziom Watry (SLOT_LEVELS); drzewko Watry (WatraTree) dokłada sloty
+## (`extra_slots` w slot_count), częstsze wypadanie (`chance_bonus` w drop_chance) i rzadsze odmiany (roll).
 
 const PREFIX := "idol_"
 const RARITIES: Array[String] = ["common", "rare", "legendary", "ancient"]
@@ -287,7 +287,7 @@ static func effect_lines(id: String) -> Array[String]:
 
 
 # ---------------------------------------------------------------- sloty i wypadanie
-## Ile slotów na bożki przy danym poziomie Watry. `extra_slots` - na później (drzewko Watry).
+## Ile slotów na bożki przy danym poziomie Watry. `extra_slots` - z drzewka Watry (WatraTree.idol_slots).
 static func slot_count(watra_level: int, extra_slots := 0) -> int:
 	var count := 0
 	for level in SLOT_LEVELS:
@@ -301,24 +301,28 @@ static func slot_unlock(index: int) -> int:
 	return SLOT_LEVELS[index] if index < SLOT_LEVELS.size() else 0
 
 
-## Szansa na bożka z jednego potwora. `chance_bonus` - mnożnik na później (drzewko Watry).
+## Szansa na bożka z jednego potwora. `chance_bonus` - mnożnik z drzewka Watry (1 + premia "idol_drop").
 static func drop_chance(boss: bool, chance_bonus := 1.0) -> float:
 	return DROP_CHANCE * (BOSS_MULT if boss else 1.0) * chance_bonus
 
 
 ## Losowy bożek: z szansą ANCIENT_CHANCE prastary, inaczej zwykły rodzaj (KINDS "weight") w rzadkości według
-## RARITY_WEIGHTS.
-static func roll(rng: RandomNumberGenerator = null) -> String:
+## RARITY_WEIGHTS. Drzewko Watry: `rarity_bonus` podnosi wagi rzadkich i legendarnych, `ancient_bonus` szansę
+## na prastarego (ułamki, np. 0.3 = +30%).
+static func roll(rng: RandomNumberGenerator = null, rarity_bonus := 0.0, ancient_bonus := 0.0) -> String:
 	if rng == null:
 		rng = RandomNumberGenerator.new()
 		rng.randomize()
-	var ancient := rng.randf() < ANCIENT_CHANCE
+	var ancient := rng.randf() < ANCIENT_CHANCE * (1.0 + ancient_bonus)
 	var kinds := {}
 	for kind: String in KINDS:
 		if rarities_of(kind).has("ancient") == ancient:
 			kinds[kind] = KINDS[kind]["weight"]
 	var kind := Dungeons.weighted(rng, kinds)
-	return id_of(kind, "ancient" if ancient else Dungeons.weighted(rng, RARITY_WEIGHTS))
+	var rarities := RARITY_WEIGHTS.duplicate()
+	for rarity: String in ["rare", "legendary"]:
+		rarities[rarity] = float(rarities[rarity]) * (1.0 + rarity_bonus)
+	return id_of(kind, "ancient" if ancient else Dungeons.weighted(rng, rarities))
 
 
 # ---------------------------------------------------------------- działanie w lochu

@@ -621,8 +621,11 @@ func _drop_loot() -> void:
 			if randf() < float(dungeon_mods.get(key, 0.0)):
 				_spawn_pickup(IDOL_RESOURCES[key], randi_range(1, 3))
 	# bożki (Idols) - z każdego potwora, gdy lochy Watry są otwarte
-	if real and _player != null and randf() < Idols.drop_chance(self is Boss) and MainQuests.dungeons_unlocked(_player.quests):
-		_spawn_pickup(Idols.roll(), 1)
+	# drzewko Watry (WatraTree) - częstsze i rzadsze bożki
+	if real and _player != null and MainQuests.dungeons_unlocked(_player.quests):
+		var tree := _player.boons.tree_effects()
+		if randf() < Idols.drop_chance(self is Boss, 1.0 + float(tree.get("idol_drop", 0.0))):
+			_spawn_pickup(Idols.roll(null, float(tree.get("idol_rarity", 0.0)), float(tree.get("idol_ancient", 0.0))), 1)
 
 
 ## Torba z łupu (Bags) - wspólna dla wszystkich potworów (bossowie częściej), zwierzyna jej nie nosi.

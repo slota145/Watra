@@ -871,6 +871,31 @@ odpowiedniej sekcji.
   - Skarbiec strażnika (`Dungeon._on_boss_died`) nie daje już kamieni zaklinających (usunięte `Dungeons.VAULT_STONE_*`),
     tylko kamienie uświęcone; Kryształ (waga 7, ~20% lochów) zostaje jedynym źródłem w lochach, rynek i zadanie główne
     jako drogie wyjście awaryjne. `tests/balance_sim.gd` liczy kamienie tylko z Kryształu, test w `tests/test_crystal.gd`.
+- [x] **Mapa Nawii, etap 3 - drzewko Watry** (listopad 2026). Ustalenia z autorem: siatka jak drzewko atlasu w PoE,
+  więcej węzłów niż punktów z całej mapy (trzeba wybierać), wzmacnia mechaniki lochów, bożki, łup i Błogosławieństwo
+  Watry; **3 zakładki** z osobnymi, pełnymi pulami punktów (3 wyspecjalizowane ustawienia), działa wybrana, zmiana za
+  darmo poza lochem; cofanie za złoto - pojedynczy węzeł albo cała zakładka naraz (taniej).
+  - `scripts/watra_tree.gd` (`WatraTree`): 12 gałęzi wokół Watry (`BRANCH_ORDER`), w każdej korzeń i dwie ścieżki po
+    4 małe węzły z węzłem na końcu - 133 węzły (punktów z mapy jest 90). Gałęzie mechanik (7): ścieżka „częściej”
+    (waga x1,2 za węzeł, `MECH_WEIGHT`) z węzłem kluczowym „mechanika w każdym lochu” (romb) i ścieżka „mocniej” (+10%
+    mocy, węzeł znaczący +30% - `MECH_POWER*`). Pozostałe (`BRANCHES`): Splot mechanik (szansa na 2. i 3. mechanikę),
+    Bożki (częściej, rzadsze odmiany, prastare, 2 sloty), Łup potworów (łup, złoto, doświadczenie, legendy, kamienie),
+    Skarbiec (skarbiec strażnika, rzadkość, +1 poziom przedmiotów, runa), Błogosławieństwo Watry (stała premia, premia
+    za węzeł obszaru, złoto). Premie: `effects` (wagi się mnożą, „forced” włącza, reszta sumuje), opisy `effect_lines`.
+  - Zapis w `Boons`: `watra_tabs` (3 listy węzłów), `watra_tab`, `watra_tab_names`; `tree_allocate` / `tree_refund` /
+    `tree_reset` / `set_tree_tab` / `tree_effects`. Przy wczytaniu nieznane i odcięte od Watry węzły wracają jako punkty.
+    Ceny: `WatraTree.REFUND_GOLD_PER_LEVEL` (20 zł za poziom postaci za węzeł), `RESET_GOLD_PER_LEVEL` (8 za węzeł).
+  - Lochy: okno lochów zapisuje premie działającej zakładki w ustawieniach wyprawy (`config["tree"]`), więc zmiana
+    zakładki w lochu niczego nie rusza. `Dungeons.mult` / `added` mnożą i dodają premie drzewka, `Dungeons.mechanic_bonus`
+    łączy drzewko z bożkami (moc ponad 1 się teraz **dodaje**, zamiast brać większą). `Dungeon.power_extra` (wcześniej
+    `_power_extra`) liczy też talizmany do wyboru w Kręgu Żertwy.
+  - Bożki: `Idols.drop_chance(boss, 1 + idol_drop)`, `Idols.roll(rng, rarity_bonus, ancient_bonus)` (w `Goblin`);
+    sloty z drzewka to osobne pola w oknie lochów pod slotami z poziomu Watry (`DungeonWindow._slot_open`).
+  - Błogosławieństwo: `World._apply_blessing` dolicza `WatraTree.blessing_bonus` i złoto (czyta zakładkę z zapisu przez
+    `WatraTree.effects_from_save`), okno kapliczki pokazuje sumę.
+  - Okno `scripts/ui/watra_tree_window.gd` (przycisk „Drzewko” w oknie Watry i na Mapie Nawii, od 40. poziomu jak mapa):
+    sieć rysowana w kodzie (przeciąganie, kółko myszy), zakładki z nazwami, Wybierz / Cofnij / Wyczyść zakładkę
+    (drugie kliknięcie potwierdza). Test: `tests/test_watra_tree.gd`.
 - [x] **Mapa Nawii, etap 2 - Błogosławieństwo Watry** (listopad 2026). Ustalenia z autorem: zamiast spaczenia krain,
   które trzeba by usuwać, oczyszczone węzły dają **Błogosławieństwo Watry** - włączane przy kapliczce krainy, podnosi
   jej potwory do poziomu mapy (to jest „wariant endgame krainy”); dzisiejsze krainy bez zmian.
