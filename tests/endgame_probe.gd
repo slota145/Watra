@@ -6,7 +6,8 @@ extends SceneTree
 ## Użycie: -s tests/endgame_probe.gd -- <zapis.json> <stopień> <sekundy> [tryb] [poziom postaci] [poziom ekwipunku]
 ## Poziom ekwipunku (np. 90): ekwipunek z zapisu zastąpiony rzadkimi przedmiotami tego poziomu (bez zaklęć) -
 ## porównanie z graczem, który zmienia ekwipunek na bieżąco.
-## Tryby: whirl (sam Młynek), flicker (samo Mgnienie), full (cały pasek miecza + Dymne Wybuchy pod E), idle (stoi).
+## Tryby: whirl (sam Młynek), flicker (samo Mgnienie), full (cały pasek miecza + Dymne Wybuchy pod E), idle (stoi),
+## uro (Uroczysko: bot otwiera krąg i walczy jak full, aż krąg zgaśnie - upiory naraz, zabici, runy, czas).
 
 var _world: Node
 var _args: PackedStringArray
@@ -27,6 +28,10 @@ var _engaged := 0.0
 var _cd := {}
 var _smoke_hold := 0.0
 var Sk
+var _uro := false
+var _stone: Node
+var _ghost_sum := 0.0
+var _ghost_max := 0
 var _crowd := 0
 var _crowd_frames := 0
 var Lv
@@ -48,12 +53,16 @@ func _initialize() -> void:
 	p.erase("position")
 	p["health"] = 999999
 	p["mana"] = 999999.0
+	var uro := _mode == "uro"
+	if uro:
+		_mode = "full"
+		_uro = true
 	if _mode == "full":
 		p["hotbar"]["skills"]["melee"][3] = "smoke_burst"
 	var game := root.get_node("Game")
 	game.save_path = "user://test_savegame.json"
 	game._pending_load = {"seed": int(save["seed"]), "zone": "dungeon", "player": p,
-			"dungeon": {"climate": "catacombs", "tier": tier, "mods": [], "seed": 777, "mechanics": []}}
+			"dungeon": {"climate": "catacombs", "tier": tier, "mods": [], "seed": 777, "mechanics": ["uroczysko"] if uro else []}}
 	_world = load("res://scenes/world.tscn").instantiate()
 	root.add_child.call_deferred(_world)
 
@@ -142,6 +151,26 @@ var _frame_max := 0.0
 var _frames := 0
 var _probe_t0 := 0
 var _probe_us := 0.0
+
+
+## Uroczysko: postać przy kamieniu, krąg otwarty od razu; koniec pomiaru, gdy krąg zgaśnie.
+func _keep_uro(pl) -> void:
+	if _stone == null:
+		_stone = _world._dungeon.uroczyska[0]
+		_arena = _stone.global_position + Vector2(0, 30)
+		pl.global_position = _arena
+		pl.reset_physics_interpolation()
+		for e in get_nodes_in_group("enemies"):
+			if e.global_position.distance_to(_arena) < 500.0 and not is_instance_of(e, _boss):
+				e.queue_free()
+		_stone.open()
+	if pl.global_position.distance_to(_arena) > 120.0:
+		pl.global_position = _arena
+		pl.reset_physics_interpolation()
+	_ghost_sum += _stone.ghosts.size()
+	_ghost_max = maxi(_ghost_max, _stone.ghosts.size())
+	if _stone.state == "closed":
+		_seconds = _time
 
 
 func _keep_pack(pl) -> void:
@@ -248,7 +277,14 @@ func _process(delta: float) -> bool:
 		pl.is_dead = false
 		pl.health = pl.stats.max_health()
 	_player_hp = pl.health
-	_keep_pack(pl)
+	# łup sprząta się co sekundę (gracz go zbiera) - inaczej setki leżących przedmiotów zawyżałyby czas klatki
+	if _frame % 60 == 0:
+		for pickup in get_nodes_in_group("pickups"):
+			pickup.queue_free()
+	if _uro:
+		_keep_uro(pl)
+	else:
+		_keep_pack(pl)
 	# bot: do najbliższego wroga, a gdy daleko - skok w jego pobliże
 	var target := _nearest(pl)
 	for a in ["move_left", "move_right", "move_up", "move_down"]:
@@ -306,11 +342,14 @@ func _bot(pl, delta: float, dist: float) -> void:
 
 
 func _finish(pl) -> void:
+	if _uro:
+		print("UROCZYSKO: trwało %.0f s, zabitych %d, upiorów naraz średnio %.1f (najwięcej %d), runy %d, największy krąg %.0f" % [
+				_time, _stone.kills, _ghost_sum / maxi(_frames, 1), _ghost_max, _stone.reward_runes(_stone.kills), _stone.best_radius])
 	var t := _time
 	_kills = _world.hud.kills - _kills
 	print("WALKA tryb %s, %.0f s (w zwarciu %.0f s): obrażenia/s %.0f  zabójstw %d (%.1f/s)  trafionych naraz %.1f  wrogów przy graczu (<50 px) %.1f" % [
 			_mode, t, _engaged, _dealt / t, _kills, _kills / t, float(_hit_enemies) / maxi(_hits_frames, 1), float(_crowd) / maxi(_crowd_frames, 1)])
 	print("  otrzymane/s %.0f  leczenie/s %.0f  zdrowie %d  -> bez leczenia pada po %.1f s, zejść poniżej 25%%: %d" % [
 			_taken / t, _healed / t, pl.stats.max_health(), pl.stats.max_health() / maxf(_taken / t, 0.01), _low])
-	print("  klatka średnio %.1f ms, najdłuższa %.1f ms (z tego pomiar %.1f ms), wrogów w lochu %d" % [_frame_sum / maxi(_frames, 1), _frame_max, _probe_us / 1000.0 / maxi(_frames, 1), get_nodes_in_group("enemies").size()])
+	print("  klatka średnio %.1f ms, najdłuższa %.1f ms (z tego pomiar %.1f ms), łupu na ziemi %d, węzłów %d, wrogów w lochu %d" % [_frame_sum / maxi(_frames, 1), _frame_max, _probe_us / 1000.0 / maxi(_frames, 1), get_nodes_in_group("pickups").size(), get_node_count(), get_nodes_in_group("enemies").size()])
 	quit()

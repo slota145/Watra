@@ -199,6 +199,14 @@ odpowiedniej sekcji.
   wylosowanymi przedmiotami); postać staje przy płomieniu portalu do Ostoi w miejscu otwarcia (można przechodzić
   dowolnie wiele razy). Portal jest w zapisie gracza (`Player.town_portal`), gaśnie po wyjściu płomieniami Watry
   i przy nowej wyprawie. Nie działa w arenach bogów. Test `tests/test_town_portal.gd`.
+- [x] **Gęstsze Uroczyska** (zgłoszenie autora z 3.11.2026 „za mała gęstość potworów w Uroczyskach”): upiorów naraz
+  (`URO_ALIVE` 14 + promień / `URO_ALIVE_PER` 9) razy `Dungeons.uro_density` (count_multiplier stopnia do potęgi
+  `URO_DENSITY_POWER` 0,25), najwyżej `URO_ALIVE_MAX` 50 (wydajność); wychodzą gromadami po `URO_PACK` 3-5 z jednego
+  miejsca kręgu (`Uroczysko._ghost_spot`). Żeby krąg nie trwał bez końca przy 3x szybszym zabijaniu: `URO_GROW` 8 -> 2,5;
+  nagrody bez zmian w sumie: `URO_KILLS_PER_RUNE` 14 -> 30, `URO_LORD_EVERY` 25 -> 80, `URO_GHOST_RUNE` 2% -> 0,6%.
+  Pomiar `tests/endgame_probe.gd` w trybie `uro` (bot otwiera krąg i walczy, aż zgaśnie; łup sprzątany co sekundę):
+  przed - stopień 7: 10 upiorów naraz, 651 zabitych w 161 s; po - stopnie 7 / 12 / 17: 31 / 34 / 39 upiorów naraz,
+  2100-2350 zabitych w 166-176 s, klatka 8,8 / 12,4 / 18,2 ms (chmura; przed zmianą stopień 17 ~12 ms).
 
 ## Gobliński Las i Prastary Las (`scripts/world.gd`, `scripts/ancient_forest.gd`) (Do poprawy)
 - [x] Gobliński Las: więcej grupek goblinów w lesie i większe siedlisko wilków - około 450 potworów (było około 340);
