@@ -34,6 +34,17 @@ const FIRE_TRAIL := preload("res://assets/effects/bow_power_trail.png")
 const FIRE_BLAST := preload("res://assets/effects/fire_blast.png")
 const IMPACT := preload("res://assets/effects/lunge_hit.png")
 const SPLASH := preload("res://assets/effects/bulgor_splash.png")
+## Legendy bossów szczytowych - w kolorach swoich bogów (Weles - bagienna zieleń i złoto, Marzanna - lód,
+## Czarnobóg - czerń i fiolet, Władca Hordy - ogień, czerwień i czerń).
+const NAWIA_GRASP := preload("res://assets/effects/legend_nawia_grasp.png")
+const SERPENT_SKIN := preload("res://assets/effects/legend_serpent_skin.png")
+const WINTER_TOUCH := preload("res://assets/effects/legend_winter_touch.png")
+const FROST_VEIL := preload("res://assets/effects/legend_frost_veil.png")
+const WINTER_BREATH := preload("res://assets/effects/legend_winter_breath.png")
+const SHADOW_SPIKE := preload("res://assets/effects/legend_shadow_spikes.png")
+const DARK_PACT := preload("res://assets/effects/legend_dark_pact.png")
+const HORDE_RIFT := preload("res://assets/effects/legend_horde_rift.png")
+const GODS_ECHO := preload("res://assets/effects/legend_gods_echo.png")
 
 ## Promienie efektów w ich klatkach (do skalowania na promień działania legendy).
 const SHOCKWAVE_RADIUS := 44.0
@@ -46,6 +57,15 @@ const STOMP_RADIUS := 48.0
 const SOULS_RADIUS := 58.0
 const GHOUL_SLAM_RADIUS := 50.0
 const FIRE_TRAIL_LENGTH := 36.0
+const NAWIA_GRASP_RADIUS := 38.0
+const SERPENT_SKIN_RADIUS := 64.0
+const WINTER_TOUCH_RADIUS := 26.0
+const FROST_VEIL_RADIUS := 76.0
+const WINTER_BREATH_RADIUS := 40.0
+const DARK_PACT_RADIUS := 46.0
+const HORDE_RIFT_RADIUS := 50.0
+## Pierścienie wokół gracza (Skóra Welesa, Szata Pani Zimy) są w arkuszu pełne - w grze lekko prześwitują.
+const RING_ALPHA := 0.8
 ## Kolor echa (Kieł Alfy) - ten sam co LegendaryEffects.ECHO_COLOR.
 const ECHO := Color(0.7, 0.85, 1.0)
 
@@ -233,3 +253,56 @@ static func impact(parent: Node, at: Vector2, angle: float) -> void:
 ## Plusk przy przyciągniętym językiem wrogu (Płetwy Bulgora).
 static func splash(parent: Node, at: Vector2) -> void:
 	once(parent, SPLASH, 12, 14.0, at, Vector2(46, 35), 0.0, 0.4)
+
+
+# ---------------------------------------------------------------- legendy bossów szczytowych
+## Laska Welesa: krąg zielonych cierni ze złotym błyskiem i pluskiem jadu.
+static func nawia_grasp(parent: Node, at: Vector2, radius: float, echo := false) -> void:
+	once(parent, NAWIA_GRASP, 12, 14.0, at, Vector2(41, 45), 0.0, maxf(radius / NAWIA_GRASP_RADIUS, 0.6), _tint(echo))
+
+
+## Skóra Welesa: jad rozlewa się wokół gracza złoto-zielonym pierścieniem.
+static func serpent_skin(parent: Node, at: Vector2, radius: float) -> void:
+	once(parent, SERPENT_SKIN, 10, 14.0, at, Vector2(74, 32), 0.0, maxf(radius / SERPENT_SKIN_RADIUS, 0.6),
+			Color(1, 1, 1, RING_ALPHA))
+
+
+## Wieniec Marzanny: lodowe kolce w miejscu trafienia i mniejsze kępy dookoła.
+static func winter_touch(parent: Node, at: Vector2, radius: float, echo := false) -> void:
+	var tint := _tint(echo)
+	once(parent, WINTER_TOUCH, 12, 14.0, at, Vector2(31, 43), 0.0, 1.1, tint)
+	var size := clampf(radius / WINTER_TOUCH_RADIUS * 0.35, 0.5, 0.9)
+	for i in 3:
+		var spot := at + Vector2.from_angle(TAU * i / 3.0 + 0.5) * Vector2(radius * 0.7, radius * 0.45)
+		once(parent, WINTER_TOUCH, 12, 14.0, spot, Vector2(31, 43), 0.0, size, tint)
+
+
+## Szata Pani Zimy: mroźny pierścień z kępami kolców wokół gracza.
+static func frost_veil(parent: Node, at: Vector2, radius: float) -> void:
+	once(parent, FROST_VEIL, 10, 14.0, at, Vector2(80, 40), 0.0, maxf(radius / FROST_VEIL_RADIUS, 0.6),
+			Color(1, 1, 1, RING_ALPHA))
+
+
+## Pas Zimowego Oddechu: zamarznięty wróg pęka w lodowe odłamki.
+static func winter_breath(parent: Node, at: Vector2, radius: float) -> void:
+	once(parent, WINTER_BREATH, 10, 14.0, at, Vector2(46, 41), 0.0, clampf(radius / WINTER_BREATH_RADIUS, 0.6, 1.1))
+
+
+## Miecz Czarnoboga: kolce mroku z fioletowym brzegiem pod jednym wrogiem.
+static func shadow_spike(parent: Node, at: Vector2) -> void:
+	once(parent, SHADOW_SPIKE, 12, 14.0, at, Vector2(51, 45), 0.0, 0.8)
+
+
+## Hełm Czarnoboga: fioletowy błysk i kłąb mroku z czaszkami.
+static func dark_pact(parent: Node, at: Vector2, radius: float) -> void:
+	once(parent, DARK_PACT, 12, 14.0, at, Vector2(42, 38), 0.0, maxf(radius / DARK_PACT_RADIUS, 0.6))
+
+
+## Ostrze Władcy Hordy: rozżarzone pęknięcia i czerwony ogień z czarnym dymem.
+static func horde_rift(parent: Node, at: Vector2, radius: float, echo := false) -> void:
+	once(parent, HORDE_RIFT, 11, 14.0, at, Vector2(45, 35), 0.0, maxf(radius / HORDE_RIFT_RADIUS, 0.6), _tint(echo))
+
+
+## Korona Trzech Bogów: błysk w barwach trzech bogów nad głową gracza, gdy budzi się ich moc.
+static func gods_echo(parent: Node, at: Vector2) -> void:
+	once(parent, GODS_ECHO, 10, 15.0, at, Vector2(41, 40), 0.0, 0.9)

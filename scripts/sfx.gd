@@ -137,6 +137,16 @@ const SOUNDS := {
 	"horde_portal": [["horde_portal"], -7.0, 0.1, 0.15],
 	"horde_shade": [["horde_shade"], -3.0, 0.03, 1.0],
 	"horde_death": [["horde_death"], 0.0, 0.03, 1.0],
+	# legendy bossów szczytowych (grają często, więc ciszej i z odstępem)
+	"legend_roots": [["legend_roots"], -6.0, 0.1, 0.12],
+	"legend_venom": [["legend_venom"], -7.0, 0.1, 0.2],
+	"legend_frost": [["legend_frost"], -6.0, 0.1, 0.12],
+	"legend_veil": [["legend_veil"], -5.0, 0.06, 0.2],
+	"legend_shatter": [["legend_shatter"], -9.0, 0.15, 0.08],
+	"legend_shadow_spike": [["legend_shadow_spike"], -7.0, 0.12, 0.1],
+	"legend_dark_pact": [["legend_dark_pact"], -7.0, 0.08, 0.15],
+	"legend_horde_rift": [["legend_horde_rift"], -6.0, 0.08, 0.12],
+	"legend_gods_echo": [["legend_gods_echo"], -6.0, 0.03, 0.5],
 	"telegraph": [["impactBell_heavy_000"], -10.0, 0.05, 0.3],
 	"death": [["jingles_PIZZI01"], -6.0, 0.0, 1.0],
 	# świat
