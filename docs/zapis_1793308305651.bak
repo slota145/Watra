@@ -1,0 +1,1595 @@
+{
+	"kills": 237,
+	"player": {
+		"bags": [
+			"backpack",
+			"backpack",
+			"backpack",
+			"backpack",
+			"backpack"
+		],
+		"boons": {
+			"active": {},
+			"bestiary": {}
+		},
+		"equipment": {
+			"boots": {
+				"enchant": 0,
+				"id": "gen_13"
+			},
+			"chest": {
+				"enchant": 0,
+				"id": "gen_30"
+			},
+			"earring_1": {},
+			"earring_2": {},
+			"gloves": {
+				"enchant": 0,
+				"id": "gen_11"
+			},
+			"helmet": {
+				"enchant": 0,
+				"id": "gen_14"
+			},
+			"necklace": {
+				"enchant": 0,
+				"id": "gen_29"
+			},
+			"ring_1": {},
+			"ring_2": {},
+			"weapon": {
+				"enchant": 0,
+				"id": "gen_31"
+			}
+		},
+		"generated_items": {
+			"gen_10": {
+				"affixes": {
+					"attack_speed": 0.05,
+					"crit_chance": 0.02,
+					"health": 24,
+					"intelligence": 3,
+					"mana": 20,
+					"mana_regen": 0.5,
+					"vitality": 3
+				},
+				"base": "legend_gryf_blade",
+				"level": 45,
+				"name": "Ostrze Gryfa",
+				"quality": "legendary",
+				"tiers": {
+					"attack_speed": 30,
+					"crit_chance": 30,
+					"health": 27,
+					"intelligence": 31,
+					"mana": 25,
+					"mana_regen": 34,
+					"vitality": 31
+				}
+			},
+			"gen_11": {
+				"affixes": {
+					"armor": 4,
+					"attack_speed": 0.05,
+					"crit_chance": 0.03,
+					"crit_damage": 0.1,
+					"dexterity": 3,
+					"intelligence": 5,
+					"life_on_hit": 3,
+					"strength": 3
+				},
+				"base": "legend_gryf_talons",
+				"level": 46,
+				"name": "Szpony Gryfa",
+				"quality": "legendary",
+				"tiers": {
+					"armor": 30,
+					"attack_speed": 29,
+					"crit_chance": 28,
+					"crit_damage": 33,
+					"dexterity": 30,
+					"intelligence": 25,
+					"life_on_hit": 25,
+					"strength": 31
+				}
+			},
+			"gen_12": {
+				"affixes": {
+					"attack_speed": 0.06,
+					"damage": 3,
+					"damage_percent": 0.05,
+					"dexterity": 4,
+					"intelligence": 3,
+					"mana_regen": 0.7,
+					"vitality": 3
+				},
+				"base": "legend_gryf_tome",
+				"level": 46,
+				"name": "Księga Gryfiego Płomienia",
+				"quality": "legendary",
+				"tiers": {
+					"attack_speed": 25,
+					"damage": 33,
+					"damage_percent": 30,
+					"dexterity": 27,
+					"intelligence": 33,
+					"mana_regen": 29,
+					"vitality": 32
+				}
+			},
+			"gen_13": {
+				"affixes": {
+					"armor": 5,
+					"dexterity": 2,
+					"gold_find": 0.09,
+					"mana": 17,
+					"move_speed": 0.04,
+					"strength": 3
+				},
+				"base": "legend_gryf_wings",
+				"level": 43,
+				"name": "Skrzydlate Buty",
+				"quality": "legendary",
+				"tiers": {
+					"armor": 28,
+					"dexterity": 35,
+					"gold_find": 27,
+					"mana": 28,
+					"move_speed": 31,
+					"strength": 32
+				}
+			},
+			"gen_14": {
+				"affixes": {
+					"armor": 3,
+					"cooldown_reduction": 0.02,
+					"dexterity": 3,
+					"health": 12,
+					"health_regen": 0.6,
+					"vitality": 3,
+					"xp_gain": 0.04
+				},
+				"base": "legend_gryf_crest",
+				"level": 43,
+				"name": "Grzebień Gryfa",
+				"quality": "legendary",
+				"tiers": {
+					"armor": 35,
+					"cooldown_reduction": 33,
+					"dexterity": 34,
+					"health": 35,
+					"health_regen": 32,
+					"vitality": 30,
+					"xp_gain": 31
+				}
+			},
+			"gen_15": {
+				"affixes": {
+					"cooldown_reduction": 0.02,
+					"crit_damage": 0.1,
+					"gold_find": 0.08,
+					"health_regen": 0.5,
+					"mana": 15,
+					"strength": 4,
+					"vitality": 2,
+					"xp_gain": 0.04
+				},
+				"base": "legend_gryf_heart",
+				"level": 43,
+				"name": "Serce Wichru",
+				"quality": "legendary",
+				"tiers": {
+					"cooldown_reduction": 31,
+					"crit_damage": 33,
+					"gold_find": 27,
+					"health_regen": 35,
+					"mana": 29,
+					"strength": 30,
+					"vitality": 35,
+					"xp_gain": 31
+				}
+			},
+			"gen_16": {
+				"affixes": {
+					"armor": 2,
+					"crit_damage": 0.07,
+					"dexterity": 2,
+					"gold_find": 0.03,
+					"health": 7,
+					"mana": 6
+				},
+				"base": "talisman_t2",
+				"level": 20,
+				"name": "Srebrny talizman Kata i Rysia",
+				"quality": "rare",
+				"tiers": {
+					"armor": 37,
+					"crit_damage": 38,
+					"dexterity": 37,
+					"gold_find": 44,
+					"health": 41,
+					"mana": 39
+				}
+			},
+			"gen_17": {
+				"affixes": {
+					"intelligence": 1,
+					"life_on_hit": 1,
+					"mana_regen": 0.3,
+					"strength": 1
+				},
+				"base": "copper_ring",
+				"level": 17,
+				"name": "Miedziany pierścień Sowy i Wampira",
+				"quality": "rare",
+				"tiers": {
+					"intelligence": 41,
+					"life_on_hit": 44,
+					"mana_regen": 42,
+					"strength": 43
+				}
+			},
+			"gen_18": {
+				"affixes": {
+					"armor": 2,
+					"damage": 2,
+					"dexterity": 2,
+					"health_regen": 0.3,
+					"intelligence": 2,
+					"vitality": 2,
+					"xp_gain": 0.02
+				},
+				"base": "legend_devourer_helm",
+				"level": 18,
+				"name": "Szczęka Pożeracza",
+				"quality": "legendary",
+				"tiers": {
+					"armor": 40,
+					"damage": 38,
+					"dexterity": 38,
+					"health_regen": 43,
+					"intelligence": 39,
+					"vitality": 40,
+					"xp_gain": 43
+				}
+			},
+			"gen_19": {
+				"affixes": {
+					"armor": 1,
+					"damage": 2,
+					"dexterity": 1,
+					"health": 5,
+					"health_regen": 0.2,
+					"intelligence": 1
+				},
+				"base": "legend_devourer_chest",
+				"level": 19,
+				"name": "Pancerz z Łusek Czerwia",
+				"quality": "legendary",
+				"tiers": {
+					"armor": 44,
+					"damage": 40,
+					"dexterity": 42,
+					"health": 44,
+					"health_regen": 45,
+					"intelligence": 41
+				}
+			},
+			"gen_20": {
+				"affixes": {
+					"attack_speed": 0.02,
+					"dexterity": 1,
+					"health": 6,
+					"intelligence": 1,
+					"life_on_hit": 1,
+					"mana": 8,
+					"mana_regen": 0.3,
+					"vitality": 1
+				},
+				"base": "legend_devourer_bow",
+				"level": 17,
+				"name": "Łuk z Żuchwy",
+				"quality": "legendary",
+				"tiers": {
+					"attack_speed": 42,
+					"dexterity": 43,
+					"health": 44,
+					"intelligence": 42,
+					"life_on_hit": 41,
+					"mana": 38,
+					"mana_regen": 41,
+					"vitality": 41
+				}
+			},
+			"gen_21": {
+				"affixes": {
+					"crit_damage": 0.07,
+					"damage": 2,
+					"dexterity": 1,
+					"health": 6,
+					"health_regen": 0.4,
+					"intelligence": 1,
+					"mana": 6,
+					"vitality": 1
+				},
+				"base": "legend_devourer_amulet",
+				"level": 20,
+				"name": "Serce Głębin",
+				"quality": "legendary",
+				"tiers": {
+					"crit_damage": 39,
+					"damage": 40,
+					"dexterity": 45,
+					"health": 43,
+					"health_regen": 39,
+					"intelligence": 44,
+					"mana": 40,
+					"vitality": 42
+				}
+			},
+			"gen_22": {
+				"affixes": {
+					"attack_speed": 0.04,
+					"dexterity": 5,
+					"strength": 5
+				},
+				"base": "sword_t3",
+				"level": 49,
+				"name": "Mithrilowy miecz Niedźwiedzia i Wiatru",
+				"quality": "magic",
+				"tiers": {
+					"attack_speed": 32,
+					"dexterity": 25,
+					"strength": 25
+				}
+			},
+			"gen_23": {
+				"affixes": {
+					"armor": 5,
+					"dodge_chance": 0.02,
+					"health_regen": 1.1,
+					"strength": 4
+				},
+				"base": "jerkin_t3",
+				"level": 48,
+				"name": "Elfi kaftan Cienia i Niedźwiedzia",
+				"quality": "rare",
+				"tiers": {
+					"armor": 25,
+					"dodge_chance": 32,
+					"health_regen": 24,
+					"strength": 28
+				}
+			},
+			"gen_24": {
+				"affixes": {
+					"armor": 6,
+					"mana": 14,
+					"strength": 6,
+					"vitality": 4
+				},
+				"base": "helm_t3",
+				"level": 50,
+				"name": "Mithrilowy hełm Niedźwiedzia i Żółwia",
+				"quality": "magic",
+				"tiers": {
+					"armor": 23,
+					"mana": 30,
+					"strength": 23,
+					"vitality": 27
+				}
+			},
+			"gen_25": {
+				"affixes": {
+					"attack_speed": 0.05,
+					"crit_chance": 0.03
+				},
+				"base": "sword_t3",
+				"level": 47,
+				"name": "Mithrilowy miecz Sokoła i Wiatru",
+				"quality": "magic",
+				"tiers": {
+					"attack_speed": 27,
+					"crit_chance": 25
+				}
+			},
+			"gen_26": {
+				"affixes": {
+					"armor": 6,
+					"attack_speed": 0.06,
+					"crit_chance": 0.03,
+					"crit_damage": 0.16,
+					"damage": 6,
+					"dexterity": 6,
+					"health": 19,
+					"intelligence": 6
+				},
+				"base": "legend_hydra_gloves",
+				"level": 50,
+				"name": "Rękawice Jadu",
+				"quality": "legendary",
+				"tiers": {
+					"armor": 23,
+					"attack_speed": 26,
+					"crit_chance": 24,
+					"crit_damage": 25,
+					"damage": 23,
+					"dexterity": 23,
+					"health": 29,
+					"intelligence": 24
+				}
+			},
+			"gen_27": {
+				"affixes": {
+					"crit_damage": 0.1,
+					"damage": 3,
+					"dexterity": 6,
+					"vitality": 4
+				},
+				"base": "sword_t3",
+				"level": 49,
+				"name": "Mithrilowy miecz Rysia i Kata",
+				"quality": "rare",
+				"tiers": {
+					"crit_damage": 33,
+					"damage": 32,
+					"dexterity": 24,
+					"vitality": 27
+				}
+			},
+			"gen_28": {
+				"affixes": {
+					"dexterity": 4,
+					"gold_find": 0.08,
+					"intelligence": 3,
+					"move_speed": 0.04
+				},
+				"base": "greaves_t3",
+				"level": 48,
+				"name": "Mithrilowe trzewiki Zająca i Skarbnika",
+				"quality": "rare",
+				"tiers": {
+					"dexterity": 26,
+					"gold_find": 27,
+					"intelligence": 33,
+					"move_speed": 31
+				}
+			},
+			"gen_29": {
+				"affixes": {
+					"crit_damage": 0.13,
+					"damage": 5,
+					"dexterity": 5,
+					"gold_find": 0.11,
+					"health_regen": 1.0,
+					"xp_gain": 0.06
+				},
+				"base": "legend_hydra_fang",
+				"level": 50,
+				"name": "Kieł Hydry",
+				"quality": "legendary",
+				"tiers": {
+					"crit_damage": 28,
+					"damage": 26,
+					"dexterity": 26,
+					"gold_find": 23,
+					"health_regen": 25,
+					"xp_gain": 25
+				}
+			},
+			"gen_30": {
+				"affixes": {
+					"damage": 3,
+					"dexterity": 6,
+					"dodge_chance": 0.03,
+					"health": 24,
+					"health_regen": 1.1,
+					"vitality": 5
+				},
+				"base": "legend_hydra_scales",
+				"level": 50,
+				"name": "Łuski Hydry",
+				"quality": "legendary",
+				"tiers": {
+					"damage": 32,
+					"dexterity": 23,
+					"dodge_chance": 27,
+					"health": 27,
+					"health_regen": 25,
+					"vitality": 25
+				}
+			},
+			"gen_31": {
+				"affixes": {
+					"crit_damage": 0.13,
+					"damage_percent": 0.05,
+					"health": 29,
+					"intelligence": 5,
+					"mana": 18,
+					"strength": 4,
+					"vitality": 3
+				},
+				"base": "legend_hydra_bow",
+				"level": 48,
+				"name": "Łuk Siedmiu Głów",
+				"quality": "legendary",
+				"tiers": {
+					"crit_damage": 29,
+					"damage_percent": 29,
+					"health": 24,
+					"intelligence": 25,
+					"mana": 26,
+					"strength": 30,
+					"vitality": 32
+				}
+			},
+			"gen_32": {
+				"affixes": {
+					"armor": 5,
+					"damage": 5,
+					"dexterity": 5,
+					"health": 14,
+					"health_regen": 0.9,
+					"intelligence": 5,
+					"mana": 10
+				},
+				"base": "legend_hydra_crown",
+				"level": 48,
+				"name": "Korona Odrastających Głów",
+				"quality": "legendary",
+				"tiers": {
+					"armor": 27,
+					"damage": 26,
+					"dexterity": 26,
+					"health": 33,
+					"health_regen": 27,
+					"intelligence": 25,
+					"mana": 33
+				}
+			},
+			"gen_33": {
+				"affixes": {
+					"armor": 3,
+					"crit_damage": 0.12,
+					"dexterity": 5,
+					"intelligence": 3,
+					"life_on_hit": 3,
+					"strength": 5
+				},
+				"base": "legend_hydra_gloves",
+				"level": 47,
+				"name": "Rękawice Jadu",
+				"quality": "legendary",
+				"tiers": {
+					"armor": 31,
+					"crit_damage": 30,
+					"dexterity": 25,
+					"intelligence": 31,
+					"life_on_hit": 27,
+					"strength": 25
+				}
+			},
+			"gen_34": {
+				"affixes": {
+					"armor": 4,
+					"dodge_chance": 0.03,
+					"gold_find": 0.06,
+					"intelligence": 3,
+					"move_speed": 0.04,
+					"vitality": 4
+				},
+				"base": "legend_hydra_boots",
+				"level": 47,
+				"name": "Buty Bagiennego Śladu",
+				"quality": "legendary",
+				"tiers": {
+					"armor": 29,
+					"dodge_chance": 25,
+					"gold_find": 34,
+					"intelligence": 31,
+					"move_speed": 30,
+					"vitality": 28
+				}
+			},
+			"gen_39": {
+				"affixes": {
+					"armor": 4,
+					"crit_chance": 0.03
+				},
+				"base": "gauntlets_t3",
+				"level": 46,
+				"name": "Mithrilowe rękawice Sokoła i Żółwia",
+				"quality": "magic",
+				"tiers": {
+					"armor": 29,
+					"crit_chance": 25
+				}
+			},
+			"gen_4": {
+				"affixes": {
+					"armor": 1,
+					"crit_damage": 0.06,
+					"dexterity": 1,
+					"health": 5,
+					"life_on_hit": 1,
+					"vitality": 1
+				},
+				"base": "legend_kaszlak_gloves",
+				"level": 20,
+				"name": "Rękawice Podpalacza",
+				"quality": "legendary",
+				"tiers": {
+					"armor": 42,
+					"crit_damage": 42,
+					"dexterity": 45,
+					"health": 45,
+					"life_on_hit": 44,
+					"vitality": 42
+				}
+			},
+			"gen_40": {
+				"affixes": {
+					"dexterity": 3,
+					"dodge_chance": 0.02,
+					"health_regen": 0.5,
+					"intelligence": 3,
+					"strength": 5
+				},
+				"base": "plate_t3",
+				"level": 44,
+				"name": "Mithrilowy napierśnik Rysia i Sowy",
+				"quality": "rare",
+				"tiers": {
+					"dexterity": 32,
+					"dodge_chance": 28,
+					"health_regen": 34,
+					"intelligence": 34,
+					"strength": 26
+				}
+			},
+			"gen_43": {
+				"affixes": {
+					"crit_damage": 0.11,
+					"intelligence": 2,
+					"strength": 3,
+					"vitality": 3,
+					"xp_gain": 0.05
+				},
+				"base": "signet_t2",
+				"level": 37,
+				"name": "Srebrny sygnet Tura i Kata",
+				"quality": "rare",
+				"tiers": {
+					"crit_damage": 31,
+					"intelligence": 35,
+					"strength": 33,
+					"vitality": 33,
+					"xp_gain": 29
+				}
+			},
+			"gen_44": {
+				"affixes": {
+					"crit_damage": 0.1,
+					"damage": 4,
+					"health": 21,
+					"life_on_hit": 2
+				},
+				"base": "book_t3",
+				"level": 44,
+				"name": "Elfi grimuar Dębu i Wampira",
+				"quality": "rare",
+				"tiers": {
+					"crit_damage": 34,
+					"damage": 28,
+					"health": 28,
+					"life_on_hit": 34
+				}
+			},
+			"gen_45": {
+				"affixes": {
+					"crit_damage": 0.14,
+					"damage_percent": 0.06,
+					"dexterity": 4,
+					"mana": 19,
+					"vitality": 4,
+					"xp_gain": 0.04
+				},
+				"base": "amulet_t3",
+				"level": 45,
+				"name": "Złoty amulet Furii i Gwiazd",
+				"quality": "rare",
+				"tiers": {
+					"crit_damage": 26,
+					"damage_percent": 28,
+					"dexterity": 27,
+					"mana": 26,
+					"vitality": 28,
+					"xp_gain": 33
+				}
+			},
+			"gen_46": {
+				"affixes": {
+					"attack_speed": 0.04,
+					"dexterity": 4,
+					"health": 12,
+					"intelligence": 3,
+					"life_on_hit": 2,
+					"mana": 14,
+					"vitality": 2
+				},
+				"base": "legend_mortan_staff",
+				"level": 44,
+				"name": "Kostur Mortana",
+				"quality": "legendary",
+				"tiers": {
+					"attack_speed": 33,
+					"dexterity": 28,
+					"health": 35,
+					"intelligence": 30,
+					"life_on_hit": 32,
+					"mana": 30,
+					"vitality": 34
+				}
+			},
+			"gen_47": {
+				"affixes": {
+					"armor": 3,
+					"damage": 2,
+					"dexterity": 3,
+					"dodge_chance": 0.02,
+					"mana": 14,
+					"strength": 3
+				},
+				"base": "legend_mortan_robe",
+				"level": 46,
+				"name": "Całun Nekromanty",
+				"quality": "legendary",
+				"tiers": {
+					"armor": 34,
+					"damage": 34,
+					"dexterity": 34,
+					"dodge_chance": 30,
+					"mana": 30,
+					"strength": 33
+				}
+			},
+			"gen_48": {
+				"affixes": {
+					"damage": 3,
+					"dexterity": 3,
+					"health_regen": 0.9,
+					"intelligence": 3,
+					"vitality": 5,
+					"xp_gain": 0.04
+				},
+				"base": "legend_mortan_crown",
+				"level": 46,
+				"name": "Kościana Korona",
+				"quality": "legendary",
+				"tiers": {
+					"damage": 31,
+					"dexterity": 33,
+					"health_regen": 28,
+					"intelligence": 32,
+					"vitality": 25,
+					"xp_gain": 33
+				}
+			},
+			"gen_49": {
+				"affixes": {
+					"armor": 5,
+					"cooldown_reduction": 0.04,
+					"crit_damage": 0.11,
+					"damage": 4,
+					"mana": 14,
+					"strength": 3,
+					"vitality": 3,
+					"xp_gain": 0.06
+				},
+				"base": "legend_mortan_phylactery",
+				"level": 46,
+				"name": "Filakteria Mortana",
+				"quality": "legendary",
+				"tiers": {
+					"armor": 25,
+					"cooldown_reduction": 25,
+					"crit_damage": 31,
+					"damage": 29,
+					"mana": 30,
+					"strength": 33,
+					"vitality": 31,
+					"xp_gain": 26
+				}
+			},
+			"gen_5": {
+				"affixes": {
+					"dexterity": 1,
+					"dodge_chance": 0.01,
+					"gold_find": 0.03,
+					"health": 5,
+					"health_regen": 0.2,
+					"mana": 5,
+					"move_speed": 0.02,
+					"vitality": 2
+				},
+				"base": "legend_kaszlak_boots",
+				"level": 19,
+				"name": "Buty Sapera",
+				"quality": "legendary",
+				"tiers": {
+					"dexterity": 45,
+					"dodge_chance": 45,
+					"gold_find": 44,
+					"health": 45,
+					"health_regen": 45,
+					"mana": 43,
+					"move_speed": 44,
+					"vitality": 40
+				}
+			},
+			"gen_50": {
+				"affixes": {
+					"armor": 3
+				},
+				"base": "plate_t2",
+				"level": 38,
+				"name": "Stalowy napierśnik Żółwia",
+				"quality": "common",
+				"tiers": {
+					"armor": 33
+				}
+			},
+			"gen_52": {
+				"affixes": {
+					"crit_chance": 0.01,
+					"health": 8,
+					"vitality": 1
+				},
+				"base": "spellbook",
+				"level": 13,
+				"name": "Księga magicznych pocisków Tura i Sokoła",
+				"quality": "magic",
+				"tiers": {
+					"crit_chance": 45,
+					"health": 40,
+					"vitality": 42
+				}
+			},
+			"gen_53": {
+				"affixes": {
+					"armor": 2,
+					"dexterity": 1,
+					"health_regen": 0.4,
+					"intelligence": 2
+				},
+				"base": "jerkin_t2",
+				"level": 21,
+				"name": "Ćwiekowana kurta Sowy i Żółwia",
+				"quality": "rare",
+				"tiers": {
+					"armor": 37,
+					"dexterity": 40,
+					"health_regen": 39,
+					"intelligence": 38
+				}
+			},
+			"gen_54": {
+				"affixes": {
+					"dexterity": 1,
+					"dodge_chance": 0.02,
+					"health_regen": 0.4,
+					"mana": 4,
+					"move_speed": 0.03,
+					"xp_gain": 0.02
+				},
+				"base": "stud_t2",
+				"level": 22,
+				"name": "Kolczyk z szafirem Cienia i Mędrca",
+				"quality": "rare",
+				"tiers": {
+					"dexterity": 42,
+					"dodge_chance": 37,
+					"health_regen": 37,
+					"mana": 44,
+					"move_speed": 40,
+					"xp_gain": 42
+				}
+			},
+			"gen_55": {
+				"affixes": {
+					"attack_speed": 0.03,
+					"damage": 1,
+					"damage_percent": 0.02,
+					"dexterity": 1,
+					"intelligence": 2,
+					"vitality": 1
+				},
+				"base": "ring_bulgor",
+				"level": 22,
+				"name": "Oko Przypływu",
+				"quality": "legendary",
+				"tiers": {
+					"attack_speed": 40,
+					"damage": 41,
+					"damage_percent": 45,
+					"dexterity": 44,
+					"intelligence": 37,
+					"vitality": 45
+				}
+			},
+			"gen_56": {
+				"affixes": {
+					"cooldown_reduction": 0.01,
+					"dexterity": 1,
+					"health": 6,
+					"intelligence": 2,
+					"mana": 9,
+					"mana_regen": 0.3,
+					"vitality": 1,
+					"xp_gain": 0.02
+				},
+				"base": "earring_bulgor",
+				"level": 21,
+				"name": "Łza Bulgora",
+				"quality": "legendary",
+				"tiers": {
+					"cooldown_reduction": 45,
+					"dexterity": 40,
+					"health": 43,
+					"intelligence": 39,
+					"mana": 36,
+					"mana_regen": 40,
+					"vitality": 43,
+					"xp_gain": 45
+				}
+			},
+			"gen_57": {
+				"affixes": {
+					"armor": 1,
+					"dodge_chance": 0.01,
+					"gold_find": 0.04,
+					"health": 9,
+					"intelligence": 1,
+					"strength": 1,
+					"vitality": 2
+				},
+				"base": "legend_bulgor_boots",
+				"level": 19,
+				"name": "Płetwy Bulgora",
+				"quality": "legendary",
+				"tiers": {
+					"armor": 43,
+					"dodge_chance": 42,
+					"gold_find": 40,
+					"health": 39,
+					"intelligence": 44,
+					"strength": 42,
+					"vitality": 37
+				}
+			},
+			"gen_6": {
+				"affixes": {
+					"armor": 2,
+					"crit_damage": 0.06,
+					"damage": 2,
+					"dexterity": 2,
+					"health": 9,
+					"intelligence": 1,
+					"mana": 5,
+					"vitality": 1
+				},
+				"base": "legend_kaszlak_cord",
+				"level": 17,
+				"name": "Naszyjnik z Lontów",
+				"quality": "legendary",
+				"tiers": {
+					"armor": 41,
+					"crit_damage": 44,
+					"damage": 38,
+					"dexterity": 39,
+					"health": 38,
+					"intelligence": 42,
+					"mana": 43,
+					"vitality": 42
+				}
+			},
+			"gen_7": {
+				"affixes": {
+					"crit_chance": 0.01,
+					"crit_damage": 0.07,
+					"damage": 2,
+					"dexterity": 1,
+					"life_on_hit": 1,
+					"vitality": 1
+				},
+				"base": "legend_kaszlak_staff",
+				"level": 18,
+				"name": "Kostur Bombardiera",
+				"quality": "legendary",
+				"tiers": {
+					"crit_chance": 45,
+					"crit_damage": 41,
+					"damage": 37,
+					"dexterity": 45,
+					"life_on_hit": 41,
+					"vitality": 43
+				}
+			},
+			"gen_8": {
+				"affixes": {
+					"armor": 4,
+					"cooldown_reduction": 0.03,
+					"damage": 5,
+					"mana_regen": 0.5,
+					"strength": 5,
+					"xp_gain": 0.05
+				},
+				"base": "helm_t3",
+				"level": 44,
+				"name": "Mithrilowy hełm Źródła i Mędrca",
+				"quality": "rare",
+				"tiers": {
+					"armor": 28,
+					"cooldown_reduction": 27,
+					"damage": 26,
+					"mana_regen": 35,
+					"strength": 26,
+					"xp_gain": 28
+				}
+			},
+			"gen_9": {
+				"affixes": {
+					"armor": 4,
+					"dexterity": 5,
+					"gold_find": 0.07,
+					"health_regen": 0.7,
+					"mana": 18,
+					"vitality": 3
+				},
+				"base": "greaves_t3",
+				"level": 43,
+				"name": "Mithrilowe trzewiki Trolla i Skarbnika",
+				"quality": "rare",
+				"tiers": {
+					"armor": 30,
+					"dexterity": 26,
+					"gold_find": 30,
+					"health_regen": 29,
+					"mana": 27,
+					"vitality": 34
+				}
+			}
+		},
+		"health": 1335,
+		"hero": "jaga",
+		"inventory": [
+			{
+				"count": 1,
+				"id": "gen_19"
+			},
+			{
+				"count": 41,
+				"id": "weapon_stone_perfect"
+			},
+			{
+				"count": 44,
+				"id": "weapon_stone"
+			},
+			{
+				"count": 1,
+				"id": "gen_15"
+			},
+			{
+				"count": 447,
+				"id": "mercy_stone"
+			},
+			{
+				"count": 1,
+				"id": "gen_16"
+			},
+			{
+				"count": 41,
+				"id": "armor_stone_perfect"
+			},
+			{
+				"count": 1,
+				"id": "gen_18"
+			},
+			{
+				"count": 1454,
+				"id": "blessed_stone"
+			},
+			{
+				"count": 8,
+				"id": "worm_tooth"
+			},
+			{
+				"count": 1,
+				"id": "gen_7"
+			},
+			{
+				"count": 1,
+				"id": "gen_20"
+			},
+			{
+				"count": 1,
+				"id": "gen_21"
+			},
+			{
+				"count": 1,
+				"id": "gen_5"
+			},
+			{
+				"count": 1,
+				"id": "gen_12"
+			},
+			{
+				"count": 1,
+				"id": "gen_17"
+			},
+			{
+				"count": 1,
+				"id": "gen_8"
+			},
+			{
+				"count": 1,
+				"id": "gen_4"
+			},
+			{
+				"count": 1,
+				"id": "gen_9"
+			},
+			{
+				"count": 1,
+				"id": "kobold_fuse"
+			},
+			{
+				"count": 9,
+				"id": "armor_stone"
+			},
+			{
+				"count": 28,
+				"id": "health_potion"
+			},
+			{
+				"count": 27,
+				"id": "mana_potion"
+			},
+			{
+				"count": 10,
+				"id": "drowned_algae"
+			},
+			{
+				"count": 6,
+				"id": "jewelry_stone"
+			},
+			{
+				"count": 3,
+				"id": "jewelry_stone_perfect"
+			},
+			{
+				"count": 1,
+				"id": "gen_23"
+			},
+			{
+				"count": 18,
+				"id": "hydra_scale"
+			},
+			{
+				"count": 1,
+				"id": "gen_22"
+			},
+			{
+				"count": 1,
+				"id": "gen_24"
+			},
+			{
+				"count": 1,
+				"id": "gen_26"
+			},
+			{
+				"count": 1,
+				"id": "gen_25"
+			},
+			{
+				"count": 2,
+				"id": "drowned_pearl"
+			},
+			{
+				"count": 1,
+				"enchant": 15,
+				"id": "gen_10"
+			},
+			{
+				"count": 1,
+				"id": "gen_34"
+			},
+			{
+				"count": 1,
+				"id": "gen_33"
+			},
+			{
+				"count": 1,
+				"id": "gen_32"
+			},
+			{
+				"count": 1,
+				"id": "gen_27"
+			},
+			{
+				"count": 19,
+				"id": "bone_dust"
+			},
+			{
+				"count": 1,
+				"id": "gen_28"
+			},
+			{
+				"count": 1,
+				"id": "gen_6"
+			},
+			{
+				"count": 10,
+				"id": "ghoul_claw"
+			},
+			{
+				"count": 1,
+				"id": "gen_40"
+			},
+			{
+				"count": 1,
+				"id": "gen_39"
+			},
+			{
+				"count": 1,
+				"id": "gen_43"
+			},
+			{
+				"count": 1,
+				"id": "gen_46"
+			},
+			{
+				"count": 1,
+				"id": "gen_44"
+			},
+			{
+				"count": 1,
+				"id": "gen_48"
+			},
+			{
+				"count": 1,
+				"id": "gen_47"
+			},
+			{
+				"count": 1,
+				"id": "gen_49"
+			},
+			{
+				"count": 1,
+				"id": "gen_45"
+			},
+			{
+				"count": 1,
+				"id": "gen_50"
+			},
+			{
+				"count": 12,
+				"id": "frog_tongue"
+			},
+			{
+				"count": 1,
+				"id": "gen_57"
+			},
+			{
+				"count": 5,
+				"id": "fish"
+			},
+			{
+				"count": 1,
+				"id": "gen_54"
+			},
+			{
+				"count": 1,
+				"id": "gen_56"
+			},
+			{
+				"count": 1,
+				"id": "gen_55"
+			},
+			{
+				"count": 1,
+				"id": "gen_52"
+			},
+			{
+				"count": 1,
+				"id": "gen_53"
+			},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{}
+		],
+		"mana": 174.0,
+		"position": [
+			1300.94860839844,
+			1597.32421875
+		],
+		"quests": {
+			"bounties": {
+				"defs": {},
+				"done": 0,
+				"serial": 0
+			},
+			"progress": {},
+			"states": {},
+			"tracked": []
+		},
+		"skills": {
+			"battle_focus": 5,
+			"chain_lightning": 5,
+			"crescent": 5,
+			"fireball": 5,
+			"hunter_breath": 5,
+			"hunter_patience": 5,
+			"lunge": 5,
+			"mana_stream": 4,
+			"multishot": 5,
+			"mystic_renewal": 2,
+			"rapid_volley": 5,
+			"seeker": 5,
+			"thunder_wave": 5,
+			"warrior_blood": 5,
+			"whirlwind": 5
+		},
+		"stats": {
+			"attributes": {
+				"dexterity": 0,
+				"intelligence": 0,
+				"strength": 27,
+				"vitality": 24
+			},
+			"gold": 2576,
+			"level": 52,
+			"unspent_points": 0,
+			"xp": 14175
+		},
+		"storage": [
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{}
+		]
+	},
+	"saved_at": "2026-10-30 08:08:59",
+	"seed": 2152079586,
+	"shrines": {
+		"eagle_pass": [
+			75.5,
+			94.5
+		],
+		"grave_chapel": [
+			91.0,
+			88.0
+		],
+		"old_mill": [
+			120.5,
+			86.0
+		],
+		"old_oak": [
+			112.5,
+			92.0
+		],
+		"ostoja": [
+			99.0,
+			58.1749992370605
+		],
+		"swamp_ford": [
+			93.0,
+			73.9000015258789
+		]
+	},
+	"version": 1,
+	"zone": "mountains",
+	"zones": {
+		"ancient": {
+			"dead_goblins": [],
+			"stumps": []
+		},
+		"cemetery": {
+			"dead_goblins": [
+				{
+					"id": 182,
+					"time": 159.991939000069
+				},
+				{
+					"id": 126,
+					"time": 206.375971000045
+				},
+				{
+					"id": 142,
+					"time": 16.5104019999955
+				},
+				{
+					"id": 139,
+					"time": 16.7478639999955
+				},
+				{
+					"id": 141,
+					"time": 17.5602339999958
+				},
+				{
+					"id": 130,
+					"time": 20.2098099999967
+				}
+			],
+			"stumps": []
+		},
+		"fields": {
+			"bosses_reset": true,
+			"dead_goblins": [
+				{
+					"id": 84,
+					"time": 195.464364000052
+				},
+				{
+					"id": 46,
+					"time": 24.9898979999984
+				},
+				{
+					"id": 47,
+					"time": 24.9898979999984
+				},
+				{
+					"id": 48,
+					"time": 24.9898979999984
+				}
+			],
+			"stumps": []
+		},
+		"forest": {
+			"dead_goblins": [],
+			"settlement": {
+				"projects": {}
+			},
+			"stumps": []
+		},
+		"mountains": {
+			"dead_goblins": [
+				{
+					"id": 2,
+					"time": 77.3936840000064
+				},
+				{
+					"id": 1,
+					"time": 77.5603240000063
+				}
+			],
+			"stumps": []
+		},
+		"swamp": {
+			"dead_goblins": [
+				{
+					"id": 165,
+					"time": 149.918998666741
+				},
+				{
+					"id": 27,
+					"time": 254.053503000022
+				},
+				{
+					"id": 44,
+					"time": 15.4115839999953
+				},
+				{
+					"id": 41,
+					"time": 15.4615759999953
+				},
+				{
+					"id": 40,
+					"time": 15.5115679999953
+				},
+				{
+					"id": 42,
+					"time": 15.5157339999953
+				},
+				{
+					"id": 43,
+					"time": 15.5157339999953
+				}
+			],
+			"stumps": []
+		}
+	}
+}
