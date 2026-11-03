@@ -48,7 +48,8 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
   - `hotbar.gd`: paski szybkiego wyboru (dane), `status_effects.gd`: lista efektów działających na gracza,
   - `skill_tree.gd`: drzewka umiejętności broni (dane), `sword_skills.gd`, `bow_skills.gd` i `spell_skills.gd`: umiejętności drzewek miecza, łuku i księgi,
   - `nawia_map.gd`: Mapa Nawii (endgame - węzły-lochy stopni 8-17), okno `scripts/ui/nawia_window.gd`,
-    Błogosławieństwo Watry przy kapliczkach `scripts/ui/blessing_window.gd`,
+    Błogosławieństwo Watry przy kapliczkach `scripts/ui/blessing_window.gd`, drzewko Watry `watra_tree.gd`
+    (3 zakładki, okno `scripts/ui/watra_tree_window.gd`),
   - `dungeons.gd`: dane lochów (klimaty, stopnie, modyfikatory, mechaniki), `dungeon.gd`: generator lochu (też lochy na zewnątrz), wystrój `dungeon_decor.gd`
     i `decor_<klimat>.gd`, okno `scripts/ui/dungeon_window.gd`,
   - `herbs.gd`: zioła i mikstury zielarki, `herb.gd`: zioło do zerwania (sadzone w każdej krainie przez `World._place_herbs`),
@@ -328,8 +329,8 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   ze stopniem lochu (`WatraCrystal.wave_count`), skarbiec strażnika bez kamieni zaklinających.
 - [ ] **Bożki** (jak skaraby w PoE): zrobione, czekają na ocenę autora (szczegóły w `docs/historia.md`, szukaj „Bożki”):
   `scripts/idols.gd`, 27 rodzajów (3 rzadkości, 2 prastare), sloty w oknie lochów (2, więcej z poziomem Watry), zużywają
-  się przy wejściu, bożki potworów i łupu mogą być w kilku slotach. Do zrobienia razem z drzewkiem Watry: węzły bożków (częściej wypadają, rzadsze odmiany, dodatkowy slot -
-  `Idols.slot_count` / `drop_chance` mają na to parametry). Do ustalenia po ograniu: szansa wypadania, siła rodzajów,
+  się przy wejściu, bożki potworów i łupu mogą być w kilku slotach. Węzły bożków w drzewku Watry zrobione (gałąź „Bożki”).
+  Do ustalenia po ograniu: szansa wypadania, siła rodzajów,
   czy ikony mają być z PixelLab (paczka 16 obiektów - 10 generacji).
 - [ ] **Talizmany** (jak idole w Last Epoch): zrobione razem z Kręgiem Żertwy (szukaj „Mechaniki w lochach, etap 4”) -
   siatka 4x3, kształty 1x1, 1x2, 2x1, 2x2, magiczne z premiami, rzadkie z efektem legendy. Do ustalenia: rosnąca
@@ -362,7 +363,10 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     - F przy kapliczce krainy (od 1. oczyszczonego węzła jej obszaru) podnosi potwory do poziomu najtrudniejszego
     oczyszczonego węzła, łup i doświadczenie +2% za węzeł (`NawiaMap.blessing_*`, `Boons.nawia_blessed`,
     `ui/blessing_window.gd`, `Levels.zone_range`); miejsce na obóz odłożone do punktu o obozach;
-  - do ustalenia: nagrody za bossów szczytowych.
+  - etap 3 zrobiony, czeka na ocenę autora (szukaj „Mapa Nawii, etap 3”): **drzewko Watry** (`scripts/watra_tree.gd`,
+    okno `ui/watra_tree_window.gd`) - 133 węzły w 12 gałęziach (mechaniki, bożki, łup, skarbiec, Błogosławieństwo),
+    3 zakładki z osobnymi pulami punktów, cofanie za złoto; premie idą do lochu w `config["tree"]`;
+  - do ustalenia: nagrody za bossów szczytowych, liczby w drzewku po ograniu, ewentualne ikony węzłów z PixelLab.
 - [ ] **Obce mitologie jako odległe królestwa** (luźny pomysł autora): świat zostaje słowiański, a królestwa grecki,
   nordycki, egipski tylko w końcówce gry (np. wrota w atlasie, najeźdźcy przez płomienie Watry), każde jako mały
   obszar z bossem szczytowym - obcym bogiem; tłumaczy hydrę i satyry. Na pinnacle nadają się też słowiańscy bogowie.

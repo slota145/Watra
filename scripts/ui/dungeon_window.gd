@@ -91,7 +91,8 @@ func _ready() -> void:
 	pickers.add_theme_constant_override("h_separation", 4)
 	pickers.add_theme_constant_override("v_separation", 3)
 	box.add_child(pickers)
-	for i in Idols.SLOT_LEVELS.size():
+	# zapasowe pola na sloty z drzewka Watry (WatraTree.idol_slots) - widoczne dopiero po ich wybraniu
+	for i in Idols.SLOT_LEVELS.size() + WatraTree.MAX_IDOL_SLOTS:
 		var picker := OptionButton.new()
 		picker.focus_mode = Control.FOCUS_NONE
 		picker.add_theme_font_size_override("font_size", 7)
@@ -206,10 +207,17 @@ func chosen_idols() -> Array[String]:
 	return result
 
 
+## Czy slot `i` działa: pierwsze sloty odblokowuje poziom Watry (Idols.SLOT_LEVELS), kolejne - drzewko Watry.
+static func _slot_open(i: int, watra: int, extra: int) -> bool:
+	if i < Idols.SLOT_LEVELS.size():
+		return watra >= Idols.SLOT_LEVELS[i]
+	return i < Idols.SLOT_LEVELS.size() + extra
+
+
 ## Listy bożków w slotach: w każdej bożki z plecaka, które pasują do bożków z innych slotów (Idols.fits) i których
 ## zostały jeszcze sztuki.
 func _refresh_idols(watra: int) -> void:
-	var count := Idols.slot_count(watra)
+	var extra := WatraTree.idol_slots(_player.boons.tree_effects())
 	var owned := {}
 	for slot: Dictionary in _player.inventory.slots:
 		if not slot.is_empty() and Idols.is_idol(slot["id"]):
@@ -223,15 +231,16 @@ func _refresh_idols(watra: int) -> void:
 		return ka < kb if ka != kb else Idols.RARITIES.find(pa[1]) > Idols.RARITIES.find(pb[1]))
 	var used := {}
 	for i in _idol_pickers.size():
-		if i >= count or int(used.get(_idols[i], 0)) >= int(owned.get(_idols[i], 0)):
+		if not _slot_open(i, watra, extra) or int(used.get(_idols[i], 0)) >= int(owned.get(_idols[i], 0)):
 			_idols[i] = ""
 		if _idols[i] != "":
 			used[_idols[i]] = int(used.get(_idols[i], 0)) + 1
 	var lines: Array[String] = []
 	for i in _idol_pickers.size():
 		var picker := _idol_pickers[i]
+		picker.visible = i < Idols.SLOT_LEVELS.size() + extra
 		picker.clear()
-		if i >= count:
+		if not _slot_open(i, watra, extra):
 			picker.add_item(Lang.t("Slot od %d. poziomu Watry") % Idols.slot_unlock(i))
 			picker.set_item_metadata(0, "")
 			picker.disabled = true
@@ -317,6 +326,8 @@ func _on_enter() -> void:
 	var settings := Dungeons.config(_climate, _tier, _mods, randi(), idols)
 	if _nawia_node >= 0:
 		settings["nawia_node"] = _nawia_node
+	# premie drzewka Watry z chwili wejścia - zmiana zakładki w lochu już ich nie rusza
+	settings["tree"] = _player.boons.tree_effects()
 	world.enter_dungeon(settings)
 
 

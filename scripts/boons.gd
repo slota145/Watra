@@ -118,6 +118,11 @@ var ember_spent := 0
 var nawia_cleared: Array[int] = []
 ## Krainy z włączonym Błogosławieństwem Watry (przełącznik przy kapliczce; NawiaMap.blessing_level).
 var nawia_blessed: Array[String] = []
+## Drzewko Watry (WatraTree): wybrane węzły w każdej z zakładek (każda ma pełną pulę punktów Watry), numer
+## działającej zakładki i nazwy zakładek nadane przez gracza ("" - domyślna).
+var watra_tabs: Array = [[], [], []]
+var watra_tab := 0
+var watra_tab_names: Array = ["", "", ""]
 
 
 func _process(delta: float) -> void:
@@ -286,9 +291,63 @@ func set_blessing(zone: String, on: bool) -> void:
 	changed.emit()
 
 
-## Punkty Watry z Mapy Nawii (do przyszłego drzewka Watry).
+## Punkty Watry z Mapy Nawii (do wydania w każdej zakładce drzewka Watry osobno).
 func watra_points() -> int:
 	return NawiaMap.points(nawia_cleared)
+
+
+# ---------------------------------------------------------------- drzewko Watry
+## Wybrane węzły zakładki (-1 - działającej).
+func tree_nodes(tab := -1) -> Array:
+	return watra_tabs[watra_tab if tab < 0 else tab]
+
+
+## Wolne punkty Watry w zakładce (-1 - działającej).
+func tree_free(tab := -1) -> int:
+	return watra_points() - tree_nodes(tab).size()
+
+
+func tree_can_allocate(id: String) -> bool:
+	return tree_free() > 0 and WatraTree.can_allocate(tree_nodes(), id)
+
+
+func tree_allocate(id: String) -> bool:
+	if not tree_can_allocate(id):
+		return false
+	tree_nodes().append(id)
+	changed.emit()
+	return true
+
+
+## Cofa węzeł w działającej zakładce (złoto pobiera okno drzewka).
+func tree_refund(id: String) -> bool:
+	if not WatraTree.can_refund(tree_nodes(), id):
+		return false
+	tree_nodes().erase(id)
+	changed.emit()
+	return true
+
+
+## Czyści całą zakładkę (-1 - działającą).
+func tree_reset(tab := -1) -> void:
+	tree_nodes(tab).clear()
+	changed.emit()
+
+
+func set_tree_tab(tab: int) -> void:
+	watra_tab = clampi(tab, 0, WatraTree.TABS - 1)
+	changed.emit()
+
+
+## Nazwa zakładki do pokazania.
+func tree_tab_name(tab: int) -> String:
+	var custom := str(watra_tab_names[tab])
+	return custom if custom != "" else Lang.t("Zakładka %d") % (tab + 1)
+
+
+## Premie działającej zakładki (WatraTree.effects) - loch zapamiętuje je przy wejściu.
+func tree_effects() -> Dictionary:
+	return WatraTree.effects(tree_nodes())
 
 
 # ---------------------------------------------------------------- zapis
@@ -297,7 +356,8 @@ func get_save_data() -> Dictionary:
 	for group: String in active:
 		timed[group] = [active[group]["id"], active[group]["left"]]
 	return {"active": timed, "bestiary": bestiary.duplicate(), "ember": ember, "ember_spent": ember_spent,
-			"nawia": nawia_cleared.duplicate(), "blessed": nawia_blessed.duplicate()}
+			"nawia": nawia_cleared.duplicate(), "blessed": nawia_blessed.duplicate(),
+			"watra_tabs": watra_tabs.duplicate(true), "watra_tab": watra_tab, "watra_tab_names": watra_tab_names.duplicate()}
 
 
 func load_save_data(data: Dictionary) -> void:
@@ -317,6 +377,20 @@ func load_save_data(data: Dictionary) -> void:
 	for zone in data.get("blessed", []):
 		if Levels.ZONES.has(str(zone)) and not nawia_blessed.has(str(zone)):
 			nawia_blessed.append(str(zone))
+	watra_tabs = []
+	watra_tab_names = []
+	var saved_tabs: Array = data.get("watra_tabs", [])
+	var saved_names: Array = data.get("watra_tab_names", [])
+	for tab in WatraTree.TABS:
+		var chosen: Array = []
+		for id in (saved_tabs[tab] if tab < saved_tabs.size() else []):
+			if WatraTree.has_node(str(id)) and str(id) != WatraTree.START and not chosen.has(str(id)):
+				chosen.append(str(id))
+		# węzły odcięte od Watry (np. po zmianie układu drzewka) wracają jako punkty
+		var linked := WatraTree.connected(chosen)
+		watra_tabs.append(chosen.filter(func(id: String) -> bool: return linked.has(id)))
+		watra_tab_names.append(str(saved_names[tab]) if tab < saved_names.size() else "")
+	watra_tab = clampi(int(data.get("watra_tab", 0)), 0, WatraTree.TABS - 1)
 	bestiary.clear()
 	var saved: Dictionary = data.get("bestiary", {})
 	for kind: String in saved:

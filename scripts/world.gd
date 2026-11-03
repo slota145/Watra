@@ -1587,8 +1587,12 @@ func _apply_blessing(save: Dictionary) -> void:
 		return
 	Levels.blessed_zone = zone
 	Levels.blessed_range = NawiaMap.blessing_range(level)
-	blessing_bonus = NawiaMap.blessing_bonus(nodes, cleared, zone)
-	Goblin.dungeon_mods = {"loot": 1.0 + blessing_bonus, "xp": 1.0 + blessing_bonus}
+	# drzewko Watry (WatraTree, działająca zakładka) wzmacnia błogosławieństwo i dokłada złoto
+	var tree := WatraTree.effects_from_save(boons)
+	blessing_bonus = NawiaMap.blessing_bonus(nodes, cleared, zone) \
+			+ WatraTree.blessing_bonus(tree, NawiaMap.area_progress(nodes, cleared, zone).x)
+	Goblin.dungeon_mods = {"loot": 1.0 + blessing_bonus, "xp": 1.0 + blessing_bonus,
+			"gold": 1.0 + float(tree.get("bless_gold", 0.0))}
 
 
 ## Rejestruje nowe miejsce goblina (nadaje mu id do zapisu) i stawia na nim goblina.

@@ -4,11 +4,13 @@ extends PanelContainer
 ## (spalone - przepadają). Ofiary dokładają żaru (Boons.ember); od żaru zależy poziom Watry, a od poziomu stałe
 ## premie postaci i rozwój Ostoi (większy podatek, szybsze budowy). Za złoto można też przyjąć jeden z darów Watry
 ## (czasowe błogosławieństwo); zapłata za dar także dokłada żaru. Przycisk "Lochy" otwiera wybór lochu
-## w płomieniach Watry (DungeonWindow), a „Nawia” - Mapę Nawii (NawiaWindow, od NawiaMap.UNLOCK_LEVEL poziomu postaci).
+## w płomieniach Watry (DungeonWindow), „Nawia” - Mapę Nawii (NawiaWindow, od NawiaMap.UNLOCK_LEVEL poziomu postaci),
+## a „Drzewko” - drzewko Watry (WatraTreeWindow, razem z Mapą Nawii).
 
 signal offered(ember: int, level_up: bool)
 signal dungeon_requested
 signal nawia_requested
+signal tree_requested
 signal essence_requested
 
 const WIDTH := 300.0
@@ -30,6 +32,8 @@ var _status: Label
 var _dungeons: Button
 ## Przycisk Mapy Nawii - od NawiaMap.UNLOCK_LEVEL poziomu postaci (i po otwarciu lochów).
 var _nawia: Button
+## Przycisk drzewka Watry - odblokowany razem z Mapą Nawii.
+var _tree: Button
 
 
 func _ready() -> void:
@@ -105,6 +109,10 @@ func _ready() -> void:
 		visible = false
 		nawia_requested.emit())
 	bottom.add_child(_nawia)
+	_tree = _button(tr("Drzewko"), func() -> void:
+		visible = false
+		tree_requested.emit())
+	bottom.add_child(_tree)
 	bottom.add_child(_button(tr("Zamknij"), func() -> void:
 		visible = false
 		Sfx.play("ui_close")))
@@ -146,6 +154,9 @@ func _refresh() -> void:
 	_dungeons.disabled = not unlocked
 	var nawia := unlocked and NawiaMap.unlocked(_player.stats.level)
 	_nawia.disabled = not nawia
+	_tree.disabled = not nawia
+	_tree.tooltip_text = tr("Drzewko Watry - punkty za oczyszczone węzły Nawii (wolne: %d)") % _player.boons.tree_free() if nawia \
+			else tr("Drzewko Watry otwiera się razem z Mapą Nawii")
 	_nawia.tooltip_text = tr("Mapa Nawii - lochy końcówki gry") if nawia \
 			else tr("Mapa Nawii otwiera się od %d. poziomu postaci (i po otwarciu lochów)") % NawiaMap.UNLOCK_LEVEL
 	_dungeons.tooltip_text = "" if unlocked else tr("Żerca Wszebor otworzy lochy, gdy Watra urośnie (zadanie główne „Płomień Watry”)")
