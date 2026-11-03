@@ -129,6 +129,14 @@ const SOUNDS := {
 	"czarnobog_step": [["czarnobog_step"], -4.0, 0.06, 0.2],
 	"czarnobog_strike": [["czarnobog_strike"], -3.0, 0.06, 0.1],
 	"czarnobog_death": [["czarnobog_death"], 0.0, 0.03, 1.0],
+	# Władca Hordy - ostateczny boss Mapy Nawii
+	"horde_roar": [["horde_roar"], -1.0, 0.04, 1.0],
+	"horde_cleave": [["horde_cleave"], -3.0, 0.06, 0.1],
+	"horde_meteor": [["horde_meteor"], -3.0, 0.06, 0.2],
+	"horde_leap": [["horde_leap"], -2.0, 0.05, 0.3],
+	"horde_portal": [["horde_portal"], -7.0, 0.1, 0.15],
+	"horde_shade": [["horde_shade"], -3.0, 0.03, 1.0],
+	"horde_death": [["horde_death"], 0.0, 0.03, 1.0],
 	"telegraph": [["impactBell_heavy_000"], -10.0, 0.05, 0.3],
 	"death": [["jingles_PIZZI01"], -6.0, 0.0, 1.0],
 	# świat
