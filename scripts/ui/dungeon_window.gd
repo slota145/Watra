@@ -5,6 +5,7 @@ extends PanelContainer
 ## w płomienie" wydaje żar i przenosi gracza do nowo wygenerowanego lochu (World.enter_dungeon).
 ## Sloty na bożki (Idols): wybór bożka z plecaka (bożki potworów i łupu mogą być w kilku slotach, reszta raz - Idols.fits);
 ## bożki zużywają się przy wejściu.
+## Węzeł Mapy Nawii (open_node): klimat i stopień są z góry ustalone (wybór ukryty), reszta jak zwykle.
 
 const WIDTH := 300.0
 const FIRE := Color(1.0, 0.6, 0.25)
@@ -24,6 +25,11 @@ var _enter: Button
 var _idols: Array[String] = []
 var _idol_pickers: Array[OptionButton] = []
 var _idol_text: Label
+var _title: Label
+var _climate_row: HBoxContainer
+var _tier_arrows: Array[Button] = []
+## Węzeł Mapy Nawii, do którego prowadzi wyprawa (-1 - zwykły loch).
+var _nawia_node := -1
 
 
 func _ready() -> void:
@@ -33,13 +39,15 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
-	box.add_child(UiStyle.title(Lang.t("Lochy w płomieniach Watry")))
+	_title = UiStyle.title(Lang.t("Lochy w płomieniach Watry"))
+	box.add_child(_title)
 	box.add_child(_wrapped(Lang.t("Wkrocz w płomienie i zejdź do lochu. W najdalszej komnacie czeka strażnik ze skarbcem; płomienie wyprowadzą cię z powrotem do Ostoi."), UiStyle.DIM_COLOR))
 
 	var climates := HBoxContainer.new()
 	climates.alignment = BoxContainer.ALIGNMENT_CENTER
 	climates.add_theme_constant_override("separation", 3)
 	box.add_child(climates)
+	_climate_row = climates
 	for id in Dungeons.CLIMATE_ORDER:
 		var button := _button(Lang.t(Dungeons.CLIMATES[id]["name"]), _choose_climate.bind(id))
 		button.toggle_mode = true
@@ -52,12 +60,14 @@ func _ready() -> void:
 	var tiers := HBoxContainer.new()
 	tiers.alignment = BoxContainer.ALIGNMENT_CENTER
 	tiers.add_theme_constant_override("separation", 6)
-	tiers.add_child(_button("<", _change_tier.bind(-1)))
+	_tier_arrows.append(_button("<", _change_tier.bind(-1)))
+	tiers.add_child(_tier_arrows[0])
 	_tier_label = UiStyle.label("", 8, FIRE)
 	_tier_label.custom_minimum_size.x = 140
 	_tier_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	tiers.add_child(_tier_label)
-	tiers.add_child(_button(">", _change_tier.bind(1)))
+	_tier_arrows.append(_button(">", _change_tier.bind(1)))
+	tiers.add_child(_tier_arrows[1])
 	box.add_child(tiers)
 	_tier_hint = _wrapped("", UiStyle.DIM_COLOR)
 	box.add_child(_tier_hint)
@@ -116,9 +126,35 @@ func setup(player: Player) -> void:
 
 
 func open() -> void:
+	if _nawia_node >= 0:
+		_nawia_node = -1
+		_tier = 1
+	_set_node_mode(false)
 	visible = true
 	_tier = clampi(_tier, 1, _max_tier())
 	_refresh()
+	_center()
+
+
+## Wyprawa do węzła Mapy Nawii (NawiaMap): klimat i stopień węzła, modyfikatory i bożki do wyboru.
+func open_node(node: Dictionary) -> void:
+	_nawia_node = int(node["id"])
+	_climate = str(node["climate"])
+	_tier = int(node["tier"])
+	_set_node_mode(true)
+	visible = true
+	_refresh()
+	_center()
+
+
+func _set_node_mode(on: bool) -> void:
+	_title.text = Lang.t("Węzeł Mapy Nawii") if on else Lang.t("Lochy w płomieniach Watry")
+	_climate_row.visible = not on
+	for arrow in _tier_arrows:
+		arrow.visible = not on
+
+
+func _center() -> void:
 	reset_size()
 	position = ((get_viewport_rect().size - size) / 2.0).floor().max(Vector2.ZERO)
 	Sfx.play("ui_open")
@@ -132,7 +168,7 @@ func toggle() -> void:
 
 
 func _max_tier() -> int:
-	return mini(_player.boons.watra_level(), Dungeons.TIER_LEVELS.size()) if _player != null else 1
+	return mini(_player.boons.watra_level(), Dungeons.BASE_TIERS) if _player != null else 1
 
 
 func _choose_climate(id: String) -> void:
@@ -240,8 +276,11 @@ func _refresh() -> void:
 		_climate_buttons[id].set_pressed_no_signal(id == _climate)
 	_climate_text.text = Lang.t(Dungeons.CLIMATES[_climate]["description"])
 	_tier_label.text = Lang.t("Stopień %d  (potwory poz. %d)") % [_tier, Dungeons.tier_level(_tier)]
-	_tier_hint.text = Lang.t("Najwyższy stopień: %d. Kolejne odblokowuje wyższy poziom Watry.") % _max_tier() \
-			if _max_tier() < Dungeons.TIER_LEVELS.size() else Lang.t("Wszystkie stopnie odblokowane.")
+	if _nawia_node >= 0:
+		_tier_hint.text = Lang.t("Pokonaj strażnika, żeby oczyścić węzeł i odsłonić sąsiednie.")
+	else:
+		_tier_hint.text = Lang.t("Najwyższy stopień: %d. Kolejne odblokowuje wyższy poziom Watry.") % _max_tier() \
+				if _max_tier() < Dungeons.BASE_TIERS else Lang.t("Wszystkie stopnie odblokowane.")
 	for id: String in _mod_boxes:
 		var data: Dictionary = Dungeons.MODIFIERS[id]
 		var check: CheckBox = _mod_boxes[id]
@@ -275,7 +314,10 @@ func _on_enter() -> void:
 	for i in _idols.size():
 		_idols[i] = ""
 	visible = false
-	world.enter_dungeon(Dungeons.config(_climate, _tier, _mods, randi(), idols))
+	var settings := Dungeons.config(_climate, _tier, _mods, randi(), idols)
+	if _nawia_node >= 0:
+		settings["nawia_node"] = _nawia_node
+	world.enter_dungeon(settings)
 
 
 ## Puste pole wyboru: jasna ramka (domyślna jest prawie niewidoczna na ciemnym tle okna).

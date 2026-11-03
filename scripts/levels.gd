@@ -61,6 +61,12 @@ const GOLD_POWER := 0.7
 const BOSS_HEALTH := Vector2(10.0, 14.0)
 ## Przedmioty: poziom potwora -1 ... +2.
 const ITEM_LEVEL_SPREAD := Vector2i(-1, 2)
+## Końcówka gry (Mapa Nawii, poziomy 45-90): ponad ENDGAME_LEVEL obrażenia i doświadczenie rosną szybciej, bo gracz
+## ma tam więcej zdrowia z przedmiotów i potrzebuje coraz więcej doświadczenia na poziom (tests/balance_sim.gd).
+## Krainy (do 42. poziomu) zostają bez zmian.
+const ENDGAME_LEVEL := 41
+const ENDGAME_DAMAGE := 0.025
+const ENDGAME_XP := 0.016
 
 ## Poziom stosowany, gdy potwór nie dostał go od świata (np. przywołany przez bossa) - ustawia świat.
 static var zone_default := 1
@@ -85,11 +91,11 @@ static func health(level: int) -> float:
 
 
 static func damage(level: int) -> float:
-	return DAMAGE_BASE * (1.0 + DAMAGE_GROWTH * (level - 1))
+	return DAMAGE_BASE * (1.0 + DAMAGE_GROWTH * (level - 1)) * (1.0 + ENDGAME_DAMAGE * maxi(level - ENDGAME_LEVEL, 0))
 
 
 static func xp(level: int) -> float:
-	return XP_BASE * pow(level, XP_POWER)
+	return XP_BASE * pow(level, XP_POWER) * (1.0 + ENDGAME_XP * maxi(level - ENDGAME_LEVEL, 0))
 
 
 static func gold(level: int) -> float:

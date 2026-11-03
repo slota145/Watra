@@ -19,7 +19,8 @@ const ENEMIES := {
 	"cemetery": {"normal": ["skeleton", 140, 20, 95, 10.0], "strong": ["skeleton_knight", 420, 42, 260, 21.5]},
 }
 ## Etap: poziom (kraina wg poziomu) albo [poziom, kraina] - Pola Zbożowe to boczna droga obok rozlewisk.
-const STAGES := [1, 3, 5, 7, [8, "fields"], 9, [11, "fields"], 12, 14, [14, "fields"], 16, 18, 21, 24, 26, 29, 32, 35, 38]
+const STAGES := [1, 3, 5, 7, [8, "fields"], 9, [11, "fields"], 12, 14, [14, "fields"], 16, 18, 21, 24, 26, 29, 32, 35, 38,
+		45, 55, 65, 75, 90]
 ## Docelowe widełki: ciosy na zwykłego, ciosy na silnego, ciosy zwykłego potwora do śmierci gracza, zabójstwa na poziom.
 const TARGET_NORMAL := Vector2(2.5, 6.0)
 ## Silny: od 5,5 ciosu - topielec w Rozlewiskach przy zaklęciu z lochów pada od ok. 6 (autor uznał to za w porządku).

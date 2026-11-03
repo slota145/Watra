@@ -253,7 +253,7 @@ func _on_ghost_died(ghost: Goblin, lord: bool) -> void:
 	best_radius = maxf(best_radius, radius)
 	if kills % Dungeons.URO_LORD_EVERY == 0:
 		_lords_due += 1
-	var tier := int(dungeon.config.get("tier", 1))
+	var tier := Dungeons.config_tier(dungeon.config)
 	if lord or _rng.randf() < Dungeons.URO_GHOST_RUNE:
 		dungeon._drop(ghost.global_position, ItemCraft.roll_rune(tier, _rng), 1)
 	_update_label()
@@ -280,7 +280,7 @@ func close() -> void:
 	if glow != null:
 		glow.visible = false
 	var runes := roundi(reward_runes(kills) * dungeon.mechanic_power("uroczysko"))
-	var tier := int(dungeon.config.get("tier", 1))
+	var tier := Dungeons.config_tier(dungeon.config)
 	for i in runes:
 		dungeon._drop(global_position + Vector2(0, 18), ItemCraft.roll_rune(tier, _rng), 1)
 	MiscVfx.spark(get_parent(), global_position + Vector2(0, -40), COLOR, 1.4)

@@ -871,6 +871,25 @@ odpowiedniej sekcji.
   - Skarbiec strażnika (`Dungeon._on_boss_died`) nie daje już kamieni zaklinających (usunięte `Dungeons.VAULT_STONE_*`),
     tylko kamienie uświęcone; Kryształ (waga 7, ~20% lochów) zostaje jedynym źródłem w lochach, rynek i zadanie główne
     jako drogie wyjście awaryjne. `tests/balance_sim.gd` liczy kamienie tylko z Kryształu, test w `tests/test_crystal.gd`.
+- [x] **Mapa Nawii, etap 1 - mapa, węzły i stopnie 8-17** (listopad 2026). Ustalenia z autorem: mapa duża, losowana
+  z ziarna zapisu (ta sama w jednym zapisie), stopnie rosną od środka na zewnątrz, w obszarach przeważają klimaty
+  pasujące do krainy, okno na razie rysowane w kodzie (ładna mapa z PixelLab, gdy systemy będą dopracowane).
+  - `scripts/nawia_map.gd` (`NawiaMap`): koło z Watrą w środku, 6 obszarów (`AREAS`, po jednym na krainę), w każdym
+    10 pierścieni (`RING_NODES` - 15 węzłów na obszar, 90 razem); pierścień = stopień 8-17. Klimat węzła: 75% klimat
+    krainy (`AREA_CLIMATES`), reszta losowa. Drogi: do najbliższego węzła poprzedniego pierścienia (czasem drugiego),
+    między sąsiadami w pierścieniu, czasem do sąsiedniego obszaru (`LINK_*`); każdy węzeł osiągalny. Na start widać
+    pierwszy pierścień, oczyszczony węzeł odsłania sąsiadów (`revealed`). Mapa od 40. poziomu postaci (`UNLOCK_LEVEL`).
+  - Postęp: `Boons.nawia_cleared` (zapis „nawia”), `Boons.clear_nawia_node`, punkty Watry `Boons.watra_points`
+    (1 za każdy nowy węzeł - `NawiaMap.POINTS_PER_NODE`; drzewko Watry jeszcze ich nie wydaje).
+  - Okno `scripts/ui/nawia_window.gd` (przycisk „Nawia” w oknie Watry): obszary jak kawałki tortu (oczyszczony
+    jaśniejszy), mgła (blade punkty), świecące odsłonięte węzły, jasne oczyszczone; „Wyrusz” otwiera okno lochów
+    w trybie węzła (`DungeonWindow.open_node` - klimat i stopień ustalone, modyfikatory i bożki jak zwykle).
+    Wyprawa ma w ustawieniach `nawia_node`; pokonany strażnik (`Dungeon._on_boss_died`) oczyszcza węzeł.
+  - Stopnie: `Dungeons.TIER_LEVELS` ma 17 pozycji (8-17: poziomy 45-90 co 5), zwykłe okno lochów do `BASE_TIERS` (7).
+    Liczebność potworów i nagrody mechanik zależne od stopnia liczą się najwyżej jak stopień 7 (`Dungeons.power_tier`,
+    `config_tier`) - trudność i łup rosną z poziomem potworów, a nie liczbą wrogów naraz (wydajność).
+  - Balans końcówki (`Levels.ENDGAME_*`): ponad 41. poziomem obrażenia potworów +2,5% i doświadczenie +1,6% na poziom;
+    krainy bez zmian. `tests/balance_sim.gd` liczy też poziomy 45-90 (w widełkach). Test: `tests/test_nawia.gd`.
 - [x] **Mechaniki w lochach, etap 5 - Skarbnik i przegląd tierów T1** (listopad 2026): nagroda z ryzykiem jak Ultimatum
   w PoE. Ustalenia z autorem w opisie punktu w CLAUDE.md (historia: „Skarbnik”).
   - **Przegląd tierów T1** (krok 1, `tests/tier_sim.gd` - wojownik na 40. poziomie, 11 przedmiotów): T1 to przedmioty

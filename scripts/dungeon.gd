@@ -151,7 +151,7 @@ func generate(world, settings: Dictionary) -> void:
 	else:
 		_build_props()
 	_build_entrance()
-	_populate(Dungeons.mult(settings, "count") * (1.0 + Dungeons.TIER_COUNT_BONUS * (int(settings["tier"]) - 1)))
+	_populate(Dungeons.mult(settings, "count") * (1.0 + Dungeons.TIER_COUNT_BONUS * (Dungeons.config_tier(settings) - 1)))
 	_build_vault()
 	_apply_idols()
 	_build_mechanics()
@@ -1176,7 +1176,7 @@ func _build_crystal() -> void:
 	crystal.variant = event
 	crystal.room = event_room
 	crystal.level = level
-	crystal.tier = int(config.get("tier", 1))
+	crystal.tier = Dungeons.config_tier(config)
 	crystal.count_mult = Dungeons.mult(config, "count")
 	crystal.position = Vector2(event_room.get_center()) * CELL + Vector2(0, CELL / 2.0)
 	w.entities.add_child(crystal)
@@ -1540,15 +1540,15 @@ func _on_boss_died(_boss_node: Goblin = null) -> void:
 			_drop(at, Loot.drop_at_level(loot_level, 0.5 + quality, Loot.RARE, level_bonus), 1)
 	# kamieni zaklinających tu nie ma - jedynym źródłem w lochach jest Kryształ Watry
 	_drop(at, "blessed_stone", roundi(_rng.randi_range(1, 3) * treasure))
-	if int(config.get("tier", 1)) >= Essences.HEART_MIN_TIER and _rng.randf() < Essences.HEART_VAULT_CHANCE * treasure:
+	if Dungeons.config_tier(config) >= Essences.HEART_MIN_TIER and _rng.randf() < Essences.HEART_VAULT_CHANCE * treasure:
 		_drop(at, Essences.HEART, 1)
 	if _rng.randf() < ItemCraft.RUNE_VAULT_CHANCE * treasure:
-		_drop(at, ItemCraft.roll_rune(int(config.get("tier", 1)), _rng), 1)
+		_drop(at, ItemCraft.roll_rune(Dungeons.config_tier(config), _rng), 1)
 	# runy z Bożka Run
 	for i in int(Dungeons.added(config, "vault_runes")):
-		_drop(at, ItemCraft.roll_rune(int(config.get("tier", 1)), _rng), 1)
+		_drop(at, ItemCraft.roll_rune(Dungeons.config_tier(config), _rng), 1)
 	if _rng.randf() < Gems.RADIUS_VAULT_CHANCE * treasure:
-		_drop(at, Gems.roll_radius(int(config.get("tier", 1))), 1)
+		_drop(at, Gems.roll_radius(Dungeons.config_tier(config)), 1)
 	var bag := Bags.roll_vault(loot_level, treasure)
 	if bag != "":
 		_drop(at, bag, 1)
@@ -1556,6 +1556,11 @@ func _on_boss_died(_boss_node: Goblin = null) -> void:
 		_drop(at, Loot.legendary_at_level(Dungeons.VAULT_LEGENDS.pick_random(), loot_level), 1)
 	Sfx.play("quest_ready")
 	_add_portal(Vector2(boss_room.get_center()) * CELL + Vector2(0, CELL * 1.2), Lang.t("Płomienie Watry - powrót do Ostoi"))
+	# węzeł Mapy Nawii oczyszczony - odsłania sąsiednie i daje punkt Watry
+	if config.has("nawia_node") and w.player.boons.clear_nawia_node(int(config["nawia_node"])):
+		w.hud.show_banner(Lang.t("Węzeł Nawii oczyszczony! Zdobywasz punkt Watry\nPłomienie Watry zabiorą cię do Ostoi"),
+				Color(0.75, 0.65, 1.0))
+		return
 	w.hud.show_banner(Lang.t("Strażnik pokonany! Skarbiec otwarty\nPłomienie Watry zabiorą cię do Ostoi"), Color(1.0, 0.8, 0.4))
 
 

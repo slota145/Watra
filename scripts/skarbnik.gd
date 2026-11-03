@@ -117,7 +117,7 @@ func current_offer() -> Dictionary:
 		if player != null and not player.skarbnik_offer.is_empty():
 			offer = player.skarbnik_offer
 		else:
-			var tier := int(dungeon.config.get("tier", 1)) if dungeon != null else 1
+			var tier := Dungeons.config_tier(dungeon.config) if dungeon != null else 1
 			offer = SkarbnikOffer.roll(dungeon.level if dungeon != null else 1, tier, _rng)
 	return offer
 

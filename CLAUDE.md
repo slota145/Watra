@@ -47,6 +47,7 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
   - `player.gd`, `character_stats.gd`, `items.gd`, `item_bases.gd`, `loot.gd`, `legends.gd`, `legendary_effects.gd`, `skills.gd`, `skill_effects.gd`, `levels.gd`, `quests.gd`, `bounties.gd`,
   - `hotbar.gd`: paski szybkiego wyboru (dane), `status_effects.gd`: lista efektów działających na gracza,
   - `skill_tree.gd`: drzewka umiejętności broni (dane), `sword_skills.gd`, `bow_skills.gd` i `spell_skills.gd`: umiejętności drzewek miecza, łuku i księgi,
+  - `nawia_map.gd`: Mapa Nawii (endgame - węzły-lochy stopni 8-17), okno `scripts/ui/nawia_window.gd`,
   - `dungeons.gd`: dane lochów (klimaty, stopnie, modyfikatory, mechaniki), `dungeon.gd`: generator lochu (też lochy na zewnątrz), wystrój `dungeon_decor.gd`
     i `decor_<klimat>.gd`, okno `scripts/ui/dungeon_window.gd`,
   - `herbs.gd`: zioła i mikstury zielarki, `herb.gd`: zioło do zerwania (sadzone w każdej krainie przez `World._place_herbs`),
@@ -352,7 +353,11 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     nowy węzeł** (bossowie szczytowi więcej; punkty zbierane, zanim drzewko powstanie);
   - kolejność: 1) okno mapy, węzły, odsłanianie, stopnie 8-17 z balansem (`tests/balance_sim.gd`), 2) oczyszczanie
     krain, 3) drzewko Watry (razem z węzłami bożków), 4) bossowie szczytowi po jednym;
-  - do ustalenia: nagrody za bossów szczytowych, wygląd okna mapy (grafika z PixelLab czy rysowana w kodzie).
+  - etap 1 zrobiony, czeka na ocenę autora (szczegóły w `docs/historia.md`, szukaj „Mapa Nawii, etap 1”): mapa
+    losowana z ziarna zapisu (`scripts/nawia_map.gd`, 90 węzłów), okno `ui/nawia_window.gd` (przycisk „Nawia” w oknie
+    Watry, rysowane w kodzie - ładna mapa z PixelLab później), stopnie 8-17 (`Dungeons.TIER_LEVELS`, `BASE_TIERS`,
+    `power_tier`), balans końcówki `Levels.ENDGAME_*`, postęp i punkty Watry w `Boons.nawia_cleared`;
+  - do ustalenia: nagrody za bossów szczytowych.
 - [ ] **Obce mitologie jako odległe królestwa** (luźny pomysł autora): świat zostaje słowiański, a królestwa grecki,
   nordycki, egipski tylko w końcówce gry (np. wrota w atlasie, najeźdźcy przez płomienie Watry), każde jako mały
   obszar z bossem szczytowym - obcym bogiem; tłumaczy hydrę i satyry. Na pinnacle nadają się też słowiańscy bogowie.

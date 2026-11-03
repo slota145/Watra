@@ -4,10 +4,11 @@ extends PanelContainer
 ## (spalone - przepadają). Ofiary dokładają żaru (Boons.ember); od żaru zależy poziom Watry, a od poziomu stałe
 ## premie postaci i rozwój Ostoi (większy podatek, szybsze budowy). Za złoto można też przyjąć jeden z darów Watry
 ## (czasowe błogosławieństwo); zapłata za dar także dokłada żaru. Przycisk "Lochy" otwiera wybór lochu
-## w płomieniach Watry (DungeonWindow).
+## w płomieniach Watry (DungeonWindow), a „Nawia” - Mapę Nawii (NawiaWindow, od NawiaMap.UNLOCK_LEVEL poziomu postaci).
 
 signal offered(ember: int, level_up: bool)
 signal dungeon_requested
+signal nawia_requested
 signal essence_requested
 
 const WIDTH := 300.0
@@ -27,6 +28,8 @@ var _gold_label: Label
 var _status: Label
 ## Przycisk lochów - zablokowany do zadania głównego „Płomień Watry” (MainQuests.DUNGEON_STEP).
 var _dungeons: Button
+## Przycisk Mapy Nawii - od NawiaMap.UNLOCK_LEVEL poziomu postaci (i po otwarciu lochów).
+var _nawia: Button
 
 
 func _ready() -> void:
@@ -98,6 +101,10 @@ func _ready() -> void:
 		visible = false
 		dungeon_requested.emit())
 	bottom.add_child(_dungeons)
+	_nawia = _button(tr("Nawia"), func() -> void:
+		visible = false
+		nawia_requested.emit())
+	bottom.add_child(_nawia)
 	bottom.add_child(_button(tr("Zamknij"), func() -> void:
 		visible = false
 		Sfx.play("ui_close")))
@@ -137,6 +144,10 @@ func _refresh() -> void:
 		return
 	var unlocked := MainQuests.dungeons_unlocked(_player.quests)
 	_dungeons.disabled = not unlocked
+	var nawia := unlocked and NawiaMap.unlocked(_player.stats.level)
+	_nawia.disabled = not nawia
+	_nawia.tooltip_text = tr("Mapa Nawii - lochy końcówki gry") if nawia \
+			else tr("Mapa Nawii otwiera się od %d. poziomu postaci (i po otwarciu lochów)") % NawiaMap.UNLOCK_LEVEL
 	_dungeons.tooltip_text = "" if unlocked else tr("Żerca Wszebor otworzy lochy, gdy Watra urośnie (zadanie główne „Płomień Watry”)")
 	var boons := _player.boons
 	var level := boons.watra_level()
