@@ -790,6 +790,45 @@ odpowiedniej sekcji.
     (Szlifu, Przekucia, Wyniesienia).
   - Zrzuty: `SCRIPT=tools/dungeon_shots.gd tools/screenshot.sh /tmp/m catacombs 7 3 1.0 mechaniki` (`_uroczysko.png`
     i `_uroczysko_open.png`). Testy: `tests/test_dungeon.gd` (`_check_uroczysko`), `tests/test_workshop.gd`.
+- [x] **Mechaniki w lochach, etap 4 - Krąg Żertwy i talizmany** (listopad 2026): mechanika `"zertwa"` (waga 5, duża) -
+  jak Ritual w PoE, łup - nowy rodzaj przedmiotu, talizmany (jak idole w Last Epoch). Ustalenia z autorem: krąg
+  w miejscu, danina na liczbę zabitych (bez limitu czasu), nagroda - wybór 1 z 3 talizmanów, siatka talizmanów
+  z rozmiarami, premie do statystyk plus unikalne efekty w rzadkich.
+  - Szanse z szóstą mechaniką (`Dungeons.mechanic_chance`, wagi bez zmian, Krąg - 5 jak Uroczysko): skrzynie ~29%
+    lochów, kapliczka ~25%, elity ~23%, Kryształ ~19%, Krąg Żertwy ~16%, Uroczysko ~15%.
+  - `scripts/zertwa.gd` (`Zertwa`, dziedziczy po `Harvestable`, `Zertwa.create`): pień ofiarny `assets/ancient/altar_stump.png`
+    (x1,25) na środku największej z 4 wolnych komnat, ale nie w komnacie Uroczyska (`Dungeon._add_zertwa`,
+    `Dungeon._room_of`, `Dungeon.zertwy`), poświata i kropka na mapie. F (0,8 s) zapala krąg `ZER_RADIUS` 170 px
+    (shader Uroczyska w kolorze krwi). Spoza kręgu (`ZER_SPAWN_GAP` 30-150 px za brzegiem, gdy tam ściana - skraj
+    kręgu) co `ZER_SPAWN_EVERY` 0,45 s nadciągają potwory klimatu, `ZER_ALIVE` 9 naraz, od razu na gracza
+    (doświadczenie x0,7, przedmioty x0,3).
+  - Danina: nowy sygnał `World.goblin_died` (potwór pokonany przez gracza); każdy wróg zabity w kręgu (także zwykły
+    potwór lochu) daje `ZER_TRIBUTE` 1, elita, boss i Wybraniec - `ZER_ELITE_TRIBUTE` 5 (`Zertwa.tribute_of`). Co
+    `ZER_CHOSEN_EVERY` 20 daniny nadciąga Wybraniec (x1,35, zdrowie x5, obrażenia x1,3, zwykły łup).
+  - Po `ZER_GOAL` 60 daninie pień czeka na odebranie (F); kto walczy dalej, aż do `ZER_GOAL` x `ZER_OVERFLOW` (120),
+    dostaje lepszą ofertę („Bogowie są syci” - fale ustają). Odbiór gasi krąg (żywi zostają jak zwykłe potwory)
+    i losuje ofertę `Talismans.roll_offer` (poziom przedmiotu = poziom lochu + stopień): szansa na rzadki
+    `ZER_RARE_CHANCE` 25% + do 50% za nadwyżkę, na wielki 2x2 10% + do 30%, pierwszy zawsze co najmniej 1x2.
+    Okno `scripts/ui/talisman_offer.gd` (`TalismanOffer`, w HUD `talisman_offer`): 3 kolumny z ikoną, opisem
+    i „Weź”; „Później” zamyka - wybór czeka przy pniu (F). Wybrany talizman trafia do plecaka (`Player._gain_item`).
+  - **Talizmany** (`scripts/talismans.gd`, `Talismans`): wylosowany przedmiot (`Items.generated`, przepis z "talisman",
+    zapis przez `Loot.export_used` / `Loot.import`, nazwa od nowa po zmianie języka - `Items._retranslate`).
+    Kształty `SHAPES`: mały 1x1 (1 premia), podłużny 1x2 i szeroki 2x1 (2 premie, moc x1,15), wielki 2x2 (3, x1,35).
+    Premie z puli `POOL` (bez płaskich obrażeń i pancerza), wartość z tierów łupu (`Loot.roll_tier` / `tier_range`)
+    razy `VALUE_SCALE` 0,8 i moc kształtu. Rzadki (nie 1x1) ma efekt warunkowy - jeden z efektów legend (`EFFECTS`:
+    żądza krwi, Pożeracz, nieśmiertelność, kościana zbroja, wysysanie życia, ciernie, zakopanie się, wybuch zabitych,
+    oszczędna mikstura, tarcza wiatru) o około połowie siły legendy, z dopiskiem w nazwie („Wielki talizman Szału”).
+    Ikony rysowane w kodzie (`tools/talisman_art.py`, bez PixelLab): kość z niebieskimi runami (magiczne), bursztyn
+    w złotej oprawie (rzadkie); obrazek ma rozmiar kratek (64 px na kratkę).
+  - Siatka `Talismans.GRID` 4x3 w `Equipment.talismans` ({"id", "cell"}; `can_place_talisman`, `place_talisman`,
+    `move_talisman`, `remove_talisman`, `free_talisman_cell`, `talisman_at`); premie liczy `Equipment.bonus`, efekty -
+    `Equipment.effect_power` (łączą się z legendami i esencjami). Zapis w `equipment.talismans` jako [id, x, y].
+    Gracz: `Player.place_talisman` (PPM na talizmanie w plecaku - pierwsze wolne miejsce) i `Player.remove_talisman`.
+  - Okno `scripts/ui/talisman_window.gd` (`TalismanWindow`, przycisk „Talizmany” w ekwipunku, otwiera się po lewej):
+    siatka, przeciąganie z plecaka (środek talizmanu pod kursorem - `drop_cell`), przesuwanie w siatce, przeciąganie
+    do plecaka (`{"talisman": nr}` w `InventoryWindow._drop_on_bag`), PPM - wyjmij; pod siatką suma premii i efektów.
+  - Zrzuty: `SCRIPT=tools/dungeon_shots.gd tools/screenshot.sh /tmp/m catacombs 7 3 1.0 mechaniki` (`_zertwa.png`
+    i `_zertwa_open.png`). Testy: `tests/test_dungeon.gd` (`_check_zertwa`), `tests/test_talismans.gd`.
 
 ## Zielarstwo (Pomysły i rzeczy do zrobienia)
 - [x] **Zioła i mikstury zielarki** (`scripts/herbs.gd`, roślina `scripts/herb.gd`, grafiki z PixelLab przez `tools/herb_art.py`):

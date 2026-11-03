@@ -127,6 +127,7 @@ const MECHANICS := {
 	"crystal": {"name": "Kryształ Watry", "weight": 6.0, "size": "large", "room": true},
 	"elites": {"name": "Elitarne potwory", "weight": 8.0, "size": "small"},
 	"uroczysko": {"name": "Uroczysko", "weight": 5.0, "size": "large"},
+	"zertwa": {"name": "Krąg Żertwy", "weight": 5.0, "size": "large"},
 }
 ## Szansa na drugą i trzecią mechanikę.
 const MECHANIC_EXTRA: Array[float] = [0.25, 0.08]
@@ -183,6 +184,35 @@ const URO_GHOST_RUNE := 0.02
 const URO_LORD_EVERY := 25
 const URO_LORD_HEALTH := 6.0
 const URO_LORD_DAMAGE := 1.4
+
+## Krąg Żertwy (scripts/zertwa.gd) - jak Ritual w PoE: pień ofiarny dotknięty (F) otwiera krąg o promieniu ZER_RADIUS;
+## spoza kręgu nadciągają fale potworów klimatu (ZER_ALIVE naraz, co ZER_SPAWN_EVERY s, ZER_SPAWN_GAP px za brzegiem).
+## Każdy wróg zabity w kręgu (także zwykły potwór lochu) to danina: ZER_TRIBUTE, elita i Wybraniec - ZER_ELITE_TRIBUTE;
+## co ZER_CHOSEN_EVERY daniny nadciąga Wybraniec (większy, zdrowie x ZER_CHOSEN_HEALTH). Po ZER_GOAL daninie pień
+## czeka na odebranie nagrody (F) - kto składa dalej (do ZER_GOAL * ZER_OVERFLOW), dostaje lepszą ofertę.
+## Nagroda: wybór 1 z ZER_OFFER talizmanów (Talismans.roll_offer) - szanse na rzadki i wielki rosną z nadwyżką daniny.
+const ZER_RADIUS := 170.0
+const ZER_GOAL := 60
+const ZER_OVERFLOW := 2.0
+const ZER_TRIBUTE := 1
+const ZER_ELITE_TRIBUTE := 5
+const ZER_ALIVE := 9
+const ZER_SPAWN_EVERY := 0.45
+const ZER_SPAWN_GAP := Vector2(30.0, 150.0)
+const ZER_CHOSEN_EVERY := 20
+const ZER_CHOSEN_HEALTH := 5.0
+const ZER_CHOSEN_DAMAGE := 1.3
+## Fale: mnożniki nagród zwykłego potwora (doświadczenie, szansa na przedmiot).
+const ZER_XP := 0.7
+const ZER_ITEMS := 0.3
+const ZER_OFFER := 3
+## Oferta talizmanów: szansa na rzadki i na wielki (2x2) bez nadwyżki daniny i dodatek przy pełnej nadwyżce.
+const ZER_RARE_CHANCE := 0.25
+const ZER_RARE_BONUS := 0.5
+const ZER_LARGE_CHANCE := 0.1
+const ZER_LARGE_BONUS := 0.3
+## Poziom przedmiotu talizmanów: poziom lochu plus tyle za stopień.
+const ZER_LEVEL_PER_TIER := 1
 
 ## Elitarne potwory (scripts/dungeon_elite.gd): zwykły potwór lochu wzmocniony 1-3 cechami, każda z innej grupy
 ## (aura, obrona, żywioł, przywołanie). "name" - przymiotnik w napisie nad głową, "color" - poświata (od pierwszej cechy),

@@ -62,6 +62,8 @@ var chests: Array[DungeonChest] = []
 var shrines: Array[DungeonShrine] = []
 var elites: Array[DungeonElite] = []
 var uroczyska: Array[Uroczysko] = []
+## Kręgi Żertwy (pnie ofiarne, mechanika "zertwa").
+var zertwy: Array[Zertwa] = []
 ## Ołtarz Welesa (Essences): ukryta komnata poza listą komnat - bez potworów i pochodni (pusta - brak ołtarza).
 var altar_room := Rect2i()
 ## Rodzaj wystroju każdej komnaty (DungeonDecor): Rect2i -> nazwa (np. "crypt", "forge", "start").
@@ -883,6 +885,17 @@ func _build_mechanics() -> void:
 				best = room
 		if best.get_area() > 0:
 			_add_uroczysko(best)
+	if mechanics.has("zertwa"):
+		# największa z kilku wolnych komnat (bez Uroczyska) - fale potrzebują miejsca wokół kręgu
+		var taken: Array[Rect2i] = []
+		for stone in uroczyska:
+			taken.append(_room_of(stone.position))
+		var best := Rect2i()
+		for room in _mechanic_rooms(4):
+			if not taken.has(room) and room.get_area() > best.get_area():
+				best = room
+		if best.get_area() > 0:
+			_add_zertwa(best)
 	if mechanics.has("chests"):
 		var kinds := {}
 		for kind: String in Dungeons.CHEST_KINDS:
@@ -968,7 +981,7 @@ func _mechanic_spot(room: Rect2i) -> Vector2:
 			var d := at.distance_to(spot)
 			if d < 70.0:
 				score += 70.0 - d
-		for other: Node2D in chests + shrines + uroczyska:
+		for other: Node2D in chests + shrines + uroczyska + zertwy:
 			if other.position.distance_to(spot) < 120.0:
 				score += 500.0
 		if score < best_score:
@@ -1003,6 +1016,27 @@ func _add_uroczysko(room: Rect2i) -> Uroczysko:
 	stone.glow = _glow(stone.position + Vector2(0, -20), Color(Uroczysko.COLOR, 0.45), Vector2(140, 110))
 	w._map_markers.append({"position": stone.position, "color": Uroczysko.COLOR, "size": 2.5})
 	return stone
+
+
+## Krąg Żertwy (pień ofiarny) na środku komnaty.
+func _add_zertwa(room: Rect2i) -> Zertwa:
+	var altar := Zertwa.create(self)
+	var center := Vector2(room.get_center()) * CELL + Vector2(0, CELL / 2.0)
+	altar.position = _free_spot(center, Vector2(room.get_center()) * CELL)
+	zertwy.append(altar)
+	w.entities.add_child(altar)
+	altar.glow = _glow(altar.position + Vector2(0, -16), Color(Zertwa.COLOR, 0.45), Vector2(140, 110))
+	w._map_markers.append({"position": altar.position, "color": Zertwa.COLOR, "size": 2.5})
+	return altar
+
+
+## Komnata, w której leży punkt (pusty prostokąt - w korytarzu).
+func _room_of(pos: Vector2) -> Rect2i:
+	var cell := Vector2i((pos / CELL).round())
+	for room in rooms:
+		if room.grow(1).has_point(cell):
+			return room
+	return Rect2i()
 
 
 func _add_shrine(gift: String, room: Rect2i) -> DungeonShrine:

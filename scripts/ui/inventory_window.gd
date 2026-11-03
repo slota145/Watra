@@ -13,6 +13,8 @@ extends PanelContainer
 ## na koszu - wyrzucić (cenne po potwierdzeniu). Przycisk obok kosza sortuje plecak.
 
 signal crafting_requested
+## Przycisk „Talizmany” - siatka talizmanów (TalismanWindow) obok ekwipunku.
+signal talismans_requested
 
 const COLUMNS := 8
 ## Kratki postaci i toreb; plecak ma mniejsze, żeby było ich widać więcej.
@@ -176,6 +178,13 @@ func _ready() -> void:
 	craft_button.pressed.connect(crafting_requested.emit)
 	# zaklinanie jest u kowala w Ostoi (NpcDialog), tu tylko rzemiosło
 	bottom.add_child(craft_button)
+	var talisman_button := Button.new()
+	talisman_button.text = Lang.t("Talizmany")
+	talisman_button.focus_mode = Control.FOCUS_NONE
+	talisman_button.add_theme_font_size_override("font_size", 8)
+	talisman_button.tooltip_text = Lang.t("Otwiera siatkę talizmanów (nagrody Kręgu Żertwy w lochach)")
+	talisman_button.pressed.connect(talismans_requested.emit)
+	bottom.add_child(talisman_button)
 	box.add_child(bottom)
 	var hint := UiStyle.label(Lang.t("PPM - załóż / użyj / zdejmij / zidentyfikuj   •   przeciągnij - przenieś / do kosza"), 7, UiStyle.DIM_COLOR)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -288,6 +297,9 @@ func _on_bag_input(event: InputEvent, index: int) -> void:
 		_player.use_item(data["id"])
 	elif Items.is_equippable(data["id"]):
 		_player.equip_from_inventory(index)
+	elif Talismans.is_talisman(data["id"]):
+		if _player.place_talisman(index):
+			Sfx.play("pickup")
 	elif Items.is_bag(data["id"]):
 		_player.equip_bag(index)
 
@@ -339,7 +351,7 @@ func _drag_from_gear(_at: Vector2, slot_name: String) -> Variant:
 
 
 func _can_drop_on_bag(_at: Vector2, data: Variant) -> bool:
-	return data is Dictionary and (data.has("inventory") or data.has("gear_slot")) and _can_rearrange()
+	return data is Dictionary and (data.has("inventory") or data.has("gear_slot") or data.has("talisman")) and _can_rearrange()
 
 
 ## Na kratkę plecaka: przestawienie w plecaku, przedmiot z magazynu albo zdjęcie z postaci (na wolną
@@ -351,7 +363,11 @@ func _drop_on_bag(_at: Vector2, data: Variant, index: int) -> void:
 		if target != "":
 			_socket_by_drag(data["index"], _player.inventory.slots[index]["id"], target, "")
 			return
-	if data.has("gear_slot"):
+	if data.has("talisman"):
+		if not _player.remove_talisman(data["talisman"], index):
+			Sfx.play("ui_error")
+			return
+	elif data.has("gear_slot"):
 		var target: Dictionary = _player.inventory.slots[index]
 		if not target.is_empty() and _player.equipment.fits(data["gear_slot"], target["id"]):
 			_player.equip_from_inventory(index, data["gear_slot"])
@@ -475,6 +491,8 @@ func _refresh() -> void:
 			extra += "\n" + Lang.t("PPM - użyj")
 		elif Items.is_equippable(id) or Items.is_bag(id):
 			extra += "\n" + Lang.t("PPM - załóż")
+		elif Talismans.is_talisman(id):
+			extra += "\n" + Lang.t("PPM - włóż do siatki talizmanów")
 		_slots[i].tooltip_text = Items.tooltip(id, enchant, extra)
 
 	for i in _bag_slots.size():

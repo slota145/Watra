@@ -5,7 +5,7 @@ extends SceneTree
 ## Na Linuksie bez ekranu: SCRIPT=tools/dungeon_shots.gd tools/screenshot.sh /tmp/kopalnia mine 7 3 0.8
 ## Szósty argument "mechaniki" - loch ze wszystkimi mechanikami i zrzuty każdej skrzyni, kapliczki i elity z bliska
 ## (<prefiks>_<nr>_chest.png / _shrine.png); Uroczysko z bliska zgaszone i z otwartym kręgiem pełnym upiorów
-## (_uroczysko.png, _uroczysko_open.png).
+## (_uroczysko.png, _uroczysko_open.png), a Krąg Żertwy zgaszony i zapalony z falą potworów (_zertwa.png, _zertwa_open.png).
 
 var _world: Node
 var _frame := 0
@@ -26,7 +26,7 @@ func _initialize() -> void:
 	root.get_node("Game")._pending_load = {"seed": seed_value, "zone": "dungeon", "player": {},
 			"dungeon": {"climate": _args[1], "tier": tier, "mods": [], "seed": seed_value}}
 	if _args.size() > 5 and _args[5] == "mechaniki":
-		root.get_node("Game")._pending_load["dungeon"]["mechanics"] = ["chests", "shrine", "crystal", "elites", "uroczysko"]
+		root.get_node("Game")._pending_load["dungeon"]["mechanics"] = ["chests", "shrine", "crystal", "elites", "uroczysko", "zertwa"]
 	_world = load("res://scenes/world.tscn").instantiate()
 	root.add_child.call_deferred(_world)
 
@@ -39,7 +39,7 @@ func _process(_delta: float) -> bool:
 		if _args.size() > 5 and _args[5] == "mechaniki":
 			for node in _world._dungeon.chests + _world._dungeon.shrines + _world._dungeon.elites:
 				_rooms.append(node)
-			for node in _world._dungeon.uroczyska:
+			for node in _world._dungeon.uroczyska + _world._dungeon.zertwy:
 				_rooms.append(node)
 				_rooms.append(node)
 		else:
@@ -65,9 +65,10 @@ func _process(_delta: float) -> bool:
 		_wait -= 1
 	elif _frame % 12 == 0:
 		var theme: String = _world._dungeon.room_themes.get(target, "room") if target is Rect2i else ("elite" if target.get("goblin") != null \
-				else "chest" if target.get("traits") != null else "uroczysko" if target.get("kills") != null else "shrine")
-		if theme == "uroczysko" and target.state == "open":
-			theme = "uroczysko_open"
+				else "chest" if target.get("traits") != null else "zertwa" if target.get("tribute") != null \
+				else "uroczysko" if target.get("kills") != null else "shrine")
+		if (theme == "uroczysko" or theme == "zertwa") and target.state == "open":
+			theme += "_open"
 		root.get_texture().get_image().save_png("%s_%02d_%s.png" % [_args[0], _index, theme])
 		_index += 1
 		# drugi zrzut Uroczyska: krąg otwarty i pełen upiorów
@@ -76,6 +77,8 @@ func _process(_delta: float) -> bool:
 			for i in 40:
 				target._spawn_timer = 0.0
 				target._process(0.0)
+			if target.get("tribute") != null:
+				target.add_tribute(23)
 			_wait = 120  # upiory zdążą się pojawić i podejść
 		if _index >= _rooms.size():
 			quit()

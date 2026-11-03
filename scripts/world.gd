@@ -82,6 +82,9 @@
 @export var lair_radius := 10
 ## Po ilu sekundach pokonany boss wraca do swojego leża (odpoczynek w karczmie wskrzesza go od razu).
 @export var boss_respawn_time := 300.0
+## Potwór pokonany przez gracza (nie przez podróżników) - np. danina Kręgu Żertwy w lochu.
+signal goblin_died(goblin: Goblin)
+
 const BOSS_TYPES := ["chief", "alpha", "frog_chief", "storm_eagle", "wodnik", "leshy", "spider_queen", "bies",
 		"bombardier", "giant_worm", "necromancer", "colossal_ghoul", "hydra", "gryf", "satyr_king"]
 ## Jak blisko leża trzeba stać, żeby użyć przedmiotu przyzwania.
@@ -1634,6 +1637,7 @@ func _on_goblin_died(goblin: Goblin, spawn: Dictionary) -> void:
 		if zone != Zones.DUNGEON:
 			_respawn_queue.append({"spawn": spawn, "time": spawn.get("respawn", goblin_respawn_time)})
 		return
+	goblin_died.emit(goblin)
 	# upolowana zwierzyna nie liczy się do pokonanych potworów
 	if goblin.quest_kind != "animal":
 		hud.on_enemy_killed(goblin)

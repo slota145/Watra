@@ -1,8 +1,8 @@
 class_name Equipment
 extends Node
 ## Przedmioty założone na postać: broń, hełm, napierśnik, rękawice, buty,
-## dwa kolczyki, dwa pierścienie, naszyjnik i pas. Sumuje premie do statystyk
-## (z uwzględnieniem poziomu zaklęcia każdego przedmiotu).
+## dwa kolczyki, dwa pierścienie, naszyjnik i pas, a do tego talizmany w siatce (Talismans.GRID). Sumuje premie
+## do statystyk (z uwzględnieniem poziomu zaklęcia każdego przedmiotu) i efekty legend.
 
 signal changed
 
@@ -22,6 +22,8 @@ const SLOT_TYPES := {
 
 ## miejsce -> {} (puste) albo {"id": String, "enchant": int}
 var items := {}
+## Talizmany w siatce: {"id": String, "cell": Vector2i - lewa górna kratka}.
+var talismans: Array[Dictionary] = []
 ## Księga umiejętności gracza - esencja w gnieździe legendarnym drzewka założonej broni (ustawia gracz).
 var skill_book: SkillBook:
 	set(value):
@@ -141,6 +143,8 @@ func _bonus(stat: String) -> float:
 	for slot in SLOTS:
 		if not items[slot].is_empty():
 			total += float(Items.stats_of(items[slot]["id"], items[slot]["enchant"]).get(stat, 0.0))
+	for entry: Dictionary in talismans:
+		total += float(Items.get_data(entry["id"]).get("stats", {}).get(stat, 0.0))
 	return total
 
 
@@ -171,6 +175,10 @@ func _effect_power(kind: String) -> float:
 		var essence: Variant = data.get("essence_socket")
 		if essence is Dictionary and essence.get("kind", "") == kind:
 			values.append([float(essence["value"]), essence.get("inverse", false)])
+	for entry: Dictionary in talismans:
+		var effect: Dictionary = Items.get_data(entry["id"]).get("effect", {})
+		if effect.get("kind", "") == kind:
+			values.append([float(effect["chance"]), false])
 	if skill_book != null:
 		var essence := skill_book.essence_in(weapon().get("type", "melee"))
 		if essence.get("kind", "") == kind:
@@ -178,10 +186,75 @@ func _effect_power(kind: String) -> float:
 	return Essences.combine(kind, values)
 
 
+# ---------------------------------------------------------------- talizmany
+## Kratki zajęte przez talizman `id` położony lewym górnym rogiem w `cell`.
+static func talisman_rect(id: String, cell: Vector2i) -> Rect2i:
+	return Rect2i(cell, Talismans.size_of(id))
+
+
+## Który talizman leży na kratce (-1 - żaden).
+func talisman_at(cell: Vector2i) -> int:
+	for i in talismans.size():
+		if talisman_rect(talismans[i]["id"], talismans[i]["cell"]).has_point(cell):
+			return i
+	return -1
+
+
+## Czy talizman zmieści się w siatce w `cell` (lewy górny róg); `ignore` - talizman, który właśnie się przenosi.
+func can_place_talisman(id: String, cell: Vector2i, ignore := -1) -> bool:
+	if not Talismans.is_talisman(id):
+		return false
+	var rect := talisman_rect(id, cell)
+	if not Rect2i(Vector2i.ZERO, Talismans.GRID).encloses(rect):
+		return false
+	for i in talismans.size():
+		if i != ignore and talisman_rect(talismans[i]["id"], talismans[i]["cell"]).intersects(rect):
+			return false
+	return true
+
+
+## Pierwsze wolne miejsce na talizman (rzędami od lewej górnej kratki); Vector2i(-1, -1) - brak miejsca.
+func free_talisman_cell(id: String) -> Vector2i:
+	for y in Talismans.GRID.y:
+		for x in Talismans.GRID.x:
+			if can_place_talisman(id, Vector2i(x, y)):
+				return Vector2i(x, y)
+	return Vector2i(-1, -1)
+
+
+func place_talisman(id: String, cell: Vector2i) -> bool:
+	if not can_place_talisman(id, cell):
+		return false
+	talismans.append({"id": id, "cell": cell})
+	changed.emit()
+	return true
+
+
+## Przesuwa talizman w siatce (false - nie mieści się w nowym miejscu).
+func move_talisman(index: int, cell: Vector2i) -> bool:
+	if index < 0 or index >= talismans.size() or not can_place_talisman(talismans[index]["id"], cell, index):
+		return false
+	talismans[index]["cell"] = cell
+	changed.emit()
+	return true
+
+
+## Wyjmuje talizman z siatki i zwraca jego id ("" - nie ma takiego).
+func remove_talisman(index: int) -> String:
+	if index < 0 or index >= talismans.size():
+		return ""
+	var id: String = talismans[index]["id"]
+	talismans.remove_at(index)
+	changed.emit()
+	return id
+
+
 func get_save_data() -> Dictionary:
 	var data := {}
 	for slot in SLOTS:
 		data[slot] = items[slot].duplicate()
+	data["talismans"] = talismans.map(func(entry: Dictionary) -> Array:
+		return [entry["id"], entry["cell"].x, entry["cell"].y])
 	return data
 
 
@@ -195,4 +268,11 @@ func load_save_data(data: Dictionary) -> void:
 			items[slot] = {"id": id, "enchant": enchant}
 		else:
 			items[slot] = {}
+	talismans.clear()
+	for saved: Variant in data.get("talismans", []):
+		if saved is Array and saved.size() >= 3:
+			var id := str(saved[0])
+			var cell := Vector2i(int(saved[1]), int(saved[2]))
+			if can_place_talisman(id, cell):
+				talismans.append({"id": id, "cell": cell})
 	changed.emit()
