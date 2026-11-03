@@ -270,6 +270,26 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
 - [ ] **Przebudowa rozwoju postaci** (do ustalenia z autorem): po dodaniu nekromancji do drzewka księgi - nowe węzły
   także w drzewkach miecza i łuku; może oddzielić umiejętności od drzewka (inny sposób odblokowania); więcej punktów
   za awans albo osobne punkty statystyk i drzewka, albo statystyki tylko w drzewku (trudniejszy balans).
+- [ ] **Punkty umiejętności z osobnego paska doświadczenia** (pomysł autora, listopad 2026; jak w BDO, poziomy
+  umiejętności jak kamienie w PoE). Dziś: 1 punkt za awans na statystyki albo węzeł drzewka, poziomy umiejętności
+  (najwyżej 5, `Skills.MAX_LEVEL`) za złoto (`Skills.ACTIVE_COSTS`). Nowy plan:
+  - osobny pasek doświadczenia umiejętności (napełnia się zwykłym doświadczeniem), po wypełnieniu punkt umiejętności;
+    nie liczy poziomu, płynie bez końca (gracz może stać się absurdalnie silny), a przy kilku progach (liczba
+    zdobytych punktów) zwalnia; koszt punktu między progami prawie stały, nie rośnie jak poziom postaci;
+  - punktami umiejętności: odblokowanie umiejętności, węzły drzewek i poziomy umiejętności - do 20 poziomów, wyższe
+    poziomy za kilka punktów (propozycja: 1-5 po 1, 6-10 po 2, 11-15 po 3, 16-20 po 5);
+  - awans postaci daje już tylko punkty statystyk - 2 za poziom;
+  - cofanie wydanych punktów umiejętności za złoto (zastępuje ujście złota, które dziś dają poziomy umiejętności);
+  - do zrobienia przy tym: wzory umiejętności rozciągnięte z 5 na 20 poziomów, przeliczenie starych zapisów (poziomy
+    kupione złotem i punkty w drzewkach na punkty umiejętności), sprawdzić gospodarkę złota.
+- [ ] **Szersze okno tierów premii** (pomysł autora, listopad 2026; `Loot.best_tier`, `worst_tier`, `roll_tier`,
+  `TIER_WINDOW`). Dziś przedmiot losuje premie z okna 10 tierów (z 45) zależnego tylko od poziomu przedmiotu, a tier 1
+  dopiero na poziomie 100. Plan: okno poszerzone w górę - kilka tierów lepszych niż dziś z małą szansą, malejącą
+  z odległością od zwykłego okna (najwyższy tier NIE może wypaść na najsłabszych przedmiotach); najwyższe tiery
+  osiągalne wcześniej, około 60. poziomu przedmiotu (z małą szansą, rosnącą z poziomem), żeby gracz nie czuł, że bez
+  100. poziomu marnuje czas. W PoE: każdy tier ma minimalny poziom przedmiotu (najlepsze ok. 75-86 przy maks. 86),
+  poziom przedmiotu bierze się z poziomu obszaru, nie postaci, a wysoki przedmiot dalej może trafić słabe tiery.
+  Do ustalenia z autorem: o ile tierów poszerzyć okno, od którego poziomu tier 1 i z jaką szansą.
 
 ### Watra i Ostoja
 
