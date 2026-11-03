@@ -145,13 +145,16 @@ func _refresh() -> void:
 		_level_label.text += "  •  " + title
 	_xp_label.text = tr("Exp: %d / %d") % [s.xp, s.xp_to_next_level()]
 	_points_label.text = tr("Punkty do rozdania: %d") % s.unspent_points
+	if s.attributes_reset:
+		# stary zapis: atrybuty działają teraz inaczej, więc wszystkie punkty wróciły do rozdania
+		_points_label.text += "\n" + tr("Atrybuty działają teraz inaczej - punkty wróciły do rozdania.")
 	_points_label.visible = s.unspent_points > 0
 	for id: String in _value_labels:
 		var from_items := s.attribute(id) - int(s.attributes[id])
 		_value_labels[id].text = str(s.attributes[id]) + (" (+%d)" % from_items if from_items > 0 else "")
 		_plus_buttons[id].disabled = s.unspent_points <= 0
 	var weapon_id := _player.equipment.get_item("weapon")
-	var weapon_speed: float = _player.equipment.weapon().get("speed", 1.0)
+	var weapon_speed := s.weapon_speed()
 	_reset_button.disabled = s.spent_points() == 0
 	_derived_label.text = tr("Broń: %s\nZdrowie: %d\nMana: %d\nObrażenia: %d-%d\nSzybkość ataku: %d%%\nPancerz: %d\nRedukcja obrażeń: %d%%\nZłoto: %d") % [
 		Items.display_name(weapon_id, _player.equipment.get_enchant("weapon")) if weapon_id != "" else tr("pięści"),
@@ -164,11 +167,16 @@ func _refresh() -> void:
 		extras.append(tr("Zwiększone obrażenia: +%d%%") % roundi((s.damage_multiplier() - 1.0) * 100.0))
 	if s.cast_speed() > 1.0:
 		extras.append(tr("Szybkość rzucania czarów: %d%%") % roundi(s.cast_speed() * 100.0))
-	var physical := s.kind_multiplier(["attack"]) - 1.0
-	var magic := s.kind_multiplier(["spell"]) - 1.0
-	if physical > 0.0:
+	# premie z atrybutów do umiejętności z ich tagiem (Skills.ATTRIBUTE_TAGS)
+	for tag: String in Skills.ATTRIBUTE_TAGS:
+		var bonus := s.attribute_damage([tag])
+		if bonus > 0.0:
+			extras.append(tr("Umiejętności z tagiem „%s”: +%d%% obrażeń") % [Skills.tag_name(tag), roundi(bonus * 100.0)])
+	var physical := s.kind_multiplier(["attack"]) - 1.0 - s.attribute_damage(["attack"])
+	var magic := s.kind_multiplier(["spell"]) - 1.0 - s.attribute_damage(["spell"])
+	if physical > 0.005:
 		extras.append(tr("Obrażenia fizyczne (ataki): +%d%%") % roundi(physical * 100.0))
-	if magic > 0.0:
+	if magic > 0.005:
 		extras.append(tr("Obrażenia magiczne (czary): +%d%%") % roundi(magic * 100.0))
 	if s.crit_chance() > 0.0:
 		extras.append(tr("Cios krytyczny: %d%% szans, %d%% obrażeń") % [roundi(s.crit_chance() * 100.0), roundi(s.crit_multiplier() * 100.0)])

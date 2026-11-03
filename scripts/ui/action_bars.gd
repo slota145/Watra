@@ -107,6 +107,7 @@ func _skill_tooltip(id: String, key: String, weapon_type: String) -> String:
 	if id == Hotbar.ATTACK:
 		var combo := _player.skills.combo_for(weapon_type)
 		var text := tr("%s [%s]\nZwykły atak założoną bronią w stronę kursora.") % [Hotbar.attack_name(), key]
+		text += "\n" + Skills.tags_bbcode(Skills.basic_tags(weapon_type))
 		if combo != "":
 			text += "\n" + tr("Zaraz po uderzeniu: %s (%s)") % [Skills.name_of(combo), Skills.mana_cost_text(combo)]
 		return text
@@ -115,7 +116,8 @@ func _skill_tooltip(id: String, key: String, weapon_type: String) -> String:
 		return tr("%s [%s] - działa z bronią: %s") % [Skills.name_of(id), key, Skills.weapon_name(data["weapon"]).to_lower()]
 	if _player.skills.level_of(id) <= 0:
 		return tr("%s [%s] - nieodblokowana (K)") % [Skills.name_of(id), key]
-	return "%s [%s]  •  %s\n%s" % [Skills.name_of(id), key, Skills.mana_cost_text(id), Skills.description_of(id)]
+	return "%s [%s]  •  %s\n%s\n%s" % [Skills.name_of(id), key, Skills.mana_cost_text(id), Skills.tags_bbcode(Skills.tags(id)),
+			Skills.description_of(id)]
 
 
 func _process(_delta: float) -> void:

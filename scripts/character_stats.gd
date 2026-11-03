@@ -11,24 +11,30 @@ signal gold_changed(gold: int)
 
 const ATTRIBUTES := {
 	"vitality": {"name": "Witalność", "description": "Za punkt: +5 do maks. zdrowia"},
-	"strength": {"name": "Siła", "description": "Za punkt: +1 do obrażeń broni białej\ni 0,5% mniej otrzymywanych obrażeń (maks. 25%)"},
-	"dexterity": {"name": "Zręczność", "description": "Za punkt: +1% szybkości ataku i umiejętności\ni +1 do obrażeń z łuków"},
-	"intelligence": {"name": "Inteligencja", "description": "Za punkt: +5 do maks. many, +1% szybkości\nrzucania czarów i +1 do obrażeń magicznych"},
+	"strength": {"name": "Siła", "description": "Za punkt: +1% obrażeń umiejętności z tagiem siły\ni 0,5% mniej otrzymywanych obrażeń (maks. 25%)"},
+	"dexterity": {"name": "Zręczność", "description": "Za punkt: +1% obrażeń umiejętności z tagiem zręczności\ni 0,4% szansy na unik (coraz mniej przy wysokich wartościach)"},
+	"intelligence": {"name": "Inteligencja", "description": "Za punkt: +1% obrażeń umiejętności z tagiem inteligencji\ni +5 do maks. many"},
 }
 const HEALTH_PER_VITALITY := 5
 ## Każdy poziom powyżej pierwszego dodaje tyle maksymalnego zdrowia.
 const HEALTH_PER_LEVEL := 8
 const MANA_PER_INTELLIGENCE := 5
-const ATTACK_SPEED_PER_DEXTERITY := 0.01
-## Szybkość rzucania czarów rośnie z inteligencją tak jak szybkość ataku ze zręcznością.
-const CAST_SPEED_PER_INTELLIGENCE := 0.01
+## Unik ze zręczności: DODGE_PER_DEXTERITY za punkt, do DODGE_SOFT w całości, powyżej coraz słabiej, najwyżej DODGE_CAP
+## (razem z unikiem z przedmiotów i tak najwyżej MAX_DODGE_CHANCE).
+const DODGE_PER_DEXTERITY := 0.004
+const DODGE_SOFT := 0.15
+const DODGE_CAP := 0.35
 ## Malejące zyski z szybkości ataku i rzucania (speed_gain): do SPEED_SOFT premia liczy się w całości, powyżej
 ## coraz słabiej i nigdy nie przekracza SPEED_CAP (+150%), żeby nie dało się uzyskać absurdalnej szybkości.
 const SPEED_SOFT := 0.6
 const SPEED_CAP := 1.5
-## Który atrybut zwiększa obrażenia danego rodzaju broni (o 1 za punkt).
+## Główny atrybut rodzaju broni - liczy się dla obrażeń bez tagów atrybutu (efekty legend, stare wywołania).
 const DAMAGE_ATTRIBUTE := {"melee": "strength", "bow": "dexterity", "spell": "intelligence"}
-const DAMAGE_PER_ATTRIBUTE := 1
+## Każdy punkt atrybutu z tagu umiejętności (Skills.TAGS: siła, zręczność, inteligencja) daje tyle obrażeń (+1%).
+const DAMAGE_PER_ATTRIBUTE := 0.01
+## Wersja zasad atrybutów w zapisie: starsze zapisy (atrybuty dawały szybkość i płaskie obrażenia) dostają
+## przy wczytaniu wszystkie punkty atrybutów z powrotem do rozdania.
+const ATTRIBUTE_RULES := 2
 const REDUCTION_PER_STRENGTH := 0.005
 const MAX_STRENGTH_REDUCTION := 0.25
 const POINTS_PER_LEVEL := 1
@@ -54,6 +60,8 @@ var xp := 0
 var unspent_points := 0
 var gold := 0
 var attributes := {"vitality": 0, "strength": 0, "dexterity": 0, "intelligence": 0}
+## Czy przy wczytaniu starego zapisu punkty atrybutów wróciły do rozdania (gracz dostaje o tym wiadomość).
+var attributes_reset := false
 ## Premie z osady (posiłki, błogosławieństwa) - ustawiane przez gracza.
 var boons: Boons:
 	set(value):
@@ -88,21 +96,28 @@ func max_mana() -> int:
 
 
 func damage_min() -> int:
-	return _weapon_damage()[0] + _flat_damage()
+	return _weapon_damage()[0] + int(_bonus("damage"))
 
 
 func damage_max() -> int:
-	return _weapon_damage()[1] + _flat_damage()
+	return _weapon_damage()[1] + int(_bonus("damage"))
 
 
-## Mnożnik szybkości ataku (1.0 = bazowa), bez prędkości samej broni.
+## Mnożnik szybkości ataku (1.0 = bazowa) z przedmiotów, drzewek i premii, bez prędkości samej broni.
 func attack_speed() -> float:
-	return 1.0 + speed_gain(attribute("dexterity") * ATTACK_SPEED_PER_DEXTERITY + _bonus("attack_speed"))
+	return 1.0 + speed_gain(_bonus("attack_speed"))
 
 
-## Mnożnik szybkości rzucania czarów (1.0 = bazowa).
+## Mnożnik szybkości rzucania czarów (1.0 = bazowa) z przedmiotów, drzewek i premii.
 func cast_speed() -> float:
-	return 1.0 + speed_gain(attribute("intelligence") * CAST_SPEED_PER_INTELLIGENCE + _bonus("cast_speed"))
+	return 1.0 + speed_gain(_bonus("cast_speed"))
+
+
+## Prędkość założonej broni (1.0 = zwykła, sztylet szybszy, topór wolniejszy).
+func weapon_speed() -> float:
+	if equipment == null or equipment.weapon().is_empty():
+		return 1.0
+	return float(equipment.weapon().get("speed", 1.0))
 
 
 ## Premia do szybkości po malejących zyskach: do SPEED_SOFT bez zmian, dalej łagodnie do sufitu SPEED_CAP
@@ -115,18 +130,22 @@ static func speed_gain(raw: float) -> float:
 
 
 ## Szybkość umiejętności z danymi rodzajami (Skills.tags): atak - szybkość ataku, czar - rzucania,
-## atak i czar - średnia obu.
+## atak i czar - średnia obu; razy prędkość założonej broni.
 func skill_speed(tags: Array) -> float:
 	var attack := "attack" in tags
 	var spell := "spell" in tags
+	var speed := attack_speed()
 	if attack and spell:
-		return (attack_speed() + cast_speed()) / 2.0
-	return cast_speed() if spell else attack_speed()
+		speed = (attack_speed() + cast_speed()) / 2.0
+	elif spell:
+		speed = cast_speed()
+	return speed * weapon_speed()
 
 
-## Mnożnik obrażeń z premii do rodzaju: obrażenia fizyczne dla ataków, magiczne dla czarów (atak i czar - obie).
+## Mnożnik obrażeń z premii do rodzaju (obrażenia fizyczne dla ataków, magiczne dla czarów, atak i czar - obie)
+## i z atrybutów z tagów umiejętności (attribute_damage) - wszystkie premie się dodają.
 func kind_multiplier(tags: Array) -> float:
-	var total := 1.0
+	var total := 1.0 + attribute_damage(tags)
 	if "attack" in tags:
 		total += _bonus("physical_damage")
 	if "spell" in tags:
@@ -200,7 +219,16 @@ func mana_regen() -> float:
 
 
 func dodge_chance() -> float:
-	return minf(_bonus("dodge_chance"), MAX_DODGE_CHANCE)
+	return minf(dexterity_dodge() + _bonus("dodge_chance"), MAX_DODGE_CHANCE)
+
+
+## Unik ze zręczności po malejących zyskach (jak speed_gain): do DODGE_SOFT w całości, dalej łagodnie do DODGE_CAP.
+func dexterity_dodge() -> float:
+	var raw := attribute("dexterity") * DODGE_PER_DEXTERITY
+	if raw <= DODGE_SOFT:
+		return maxf(raw, 0.0)
+	var room := DODGE_CAP - DODGE_SOFT
+	return DODGE_SOFT + room * (1.0 - exp(-(raw - DODGE_SOFT) / room))
 
 
 ## Mnożnik czasu odnowienia umiejętności (1,0 = bez skrócenia).
@@ -273,18 +301,26 @@ func _bonus(stat: String) -> float:
 	return total + (boons.bonus(stat) if boons != null else 0.0)
 
 
-## Premia do obrażeń z atrybutu pasującego do broni oraz z przedmiotów. Kieł Gruzłoga
-## sprawia, że pozostałe dwa atrybuty bojowe (siła / zręczność / inteligencja) też dodają
-## obrażenia (część premii głównego); witalność się nie liczy.
-func _flat_damage() -> int:
-	var main: String = DAMAGE_ATTRIBUTE[weapon_type()]
-	var damage := float(attribute(main) * DAMAGE_PER_ATTRIBUTE)
+## Premia procentowa do obrażeń z atrybutów z tagów umiejętności (+1% za punkt, Skills.ATTRIBUTE_TAGS).
+## Bez tagu atrybutu (efekty legend, zwykłe "attack" / "spell") liczy się główny atrybut założonej broni.
+## Kieł Gruzłoga sprawia, że pozostałe atrybuty bojowe (siła / zręczność / inteligencja) też dodają obrażenia
+## (część premii); witalność się nie liczy.
+func attribute_damage(tags: Array) -> float:
+	var own: Array[String] = []
+	for tag: String in Skills.ATTRIBUTE_TAGS:
+		if tag in tags:
+			own.append(Skills.ATTRIBUTE_TAGS[tag])
+	if own.is_empty():
+		own.append(DAMAGE_ATTRIBUTE[weapon_type()])
+	var points := 0.0
+	for id in own:
+		points += attribute(id)
 	var might := equipment.effect_power("might") if equipment != null else 0.0
 	if might > 0.0:
 		for other: String in DAMAGE_ATTRIBUTE.values():
-			if other != main:
-				damage += attribute(other) * DAMAGE_PER_ATTRIBUTE * might
-	return roundi(damage) + int(_bonus("damage"))
+			if not other in own:
+				points += attribute(other) * might
+	return maxf(points, 0.0) * DAMAGE_PER_ATTRIBUTE
 
 
 func _weapon_damage() -> Array:
@@ -343,6 +379,7 @@ func get_save_data() -> Dictionary:
 		"unspent_points": unspent_points,
 		"gold": gold,
 		"attributes": attributes.duplicate(),
+		"attribute_rules": ATTRIBUTE_RULES,
 	}
 
 
@@ -354,6 +391,13 @@ func load_save_data(data: Dictionary) -> void:
 	var saved_attributes: Dictionary = data.get("attributes", {})
 	for id: String in attributes:
 		attributes[id] = int(saved_attributes.get(id, 0))
+	# starszy zapis: atrybuty działały inaczej - wszystkie punkty wracają do rozdania (darmowy reset)
+	attributes_reset = false
+	if int(data.get("attribute_rules", 1)) < ATTRIBUTE_RULES:
+		for id: String in attributes:
+			unspent_points += attributes[id]
+			attributes_reset = attributes_reset or attributes[id] > 0
+			attributes[id] = 0
 	changed.emit()
 	xp_changed.emit(xp, xp_to_next_level(), level)
 	gold_changed.emit(gold)

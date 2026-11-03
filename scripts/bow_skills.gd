@@ -840,7 +840,7 @@ class _Ballista:
 		return global_position + Vector2(0, -14)
 
 	func _shoot(dir: Vector2) -> void:
-		var kind := player.stats.kind_multiplier(["attack"])
+		var kind := player.stats.kind_multiplier(Skills.tags("ballista"))
 		var low := maxi(1, roundi(player.stats.damage_min() * damage * kind))
 		var high := maxi(1, roundi(player.stats.damage_max() * damage * kind))
 		var seekers := roundi(player.equipment.effect_power("ballista_seeker"))

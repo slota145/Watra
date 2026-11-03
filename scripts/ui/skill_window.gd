@@ -26,7 +26,7 @@ var _tabs := {}
 var _tab := "melee"
 var _gold_label: Label
 var _status: Label
-## rodzaj broni -> {"view": SkillTreeView, "points": Label, "info": Label, "take": Button, "upgrade": Button}
+## rodzaj broni -> {"view": SkillTreeView, "points": Label, "info": RichTextLabel, "take": Button, "upgrade": Button}
 var _trees := {}
 
 
@@ -142,8 +142,17 @@ func _make_tree_page(weapon_type: String) -> VBoxContainer:
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 4)
 	details.add_child(column)
-	var info := UiStyle.label(tr("Kliknij węzeł, żeby zobaczyć szczegóły. Przeciągaj puste miejsce, żeby przesunąć drzewko; kółko myszy przybliża."), 7, UiStyle.TEXT_COLOR)
+	# opis w BBCode: linia tagów umiejętności z ikonkami (Skills.tags_bbcode)
+	var info := RichTextLabel.new()
+	info.bbcode_enabled = true
+	info.scroll_active = false
+	info.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.add_theme_font_size_override("normal_font_size", 7)
+	info.add_theme_color_override("default_color", UiStyle.TEXT_COLOR)
+	info.add_theme_color_override("font_outline_color", UiStyle.OUTLINE)
+	info.add_theme_constant_override("outline_size", 3)
+	info.text = tr("Kliknij węzeł, żeby zobaczyć szczegóły. Przeciągaj puste miejsce, żeby przesunąć drzewko; kółko myszy przybliża.")
 	info.custom_minimum_size.x = DETAILS_WIDTH - 8.0
 	info.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(info)

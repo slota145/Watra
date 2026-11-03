@@ -459,7 +459,7 @@ func _meteor(at: Vector2, combo: bool) -> void:
 func meteor_impact(at: Vector2, radius: float, multiplier: float) -> void:
 	if not is_instance_valid(_player):
 		return
-	var kind := _player.stats.kind_multiplier(["spell"])
+	var kind := _player.stats.kind_multiplier(Skills.tags("meteor"))
 	var blast: Projectile = _player.PROJECTILE.instantiate()
 	blast.texture = METEOR_TEXTURE
 	blast.fire = true

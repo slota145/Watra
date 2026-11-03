@@ -67,6 +67,11 @@ func _init(slot_size: float, key: String) -> void:
 
 
 ## Odnowienie: `left` sekund z `total`; po zejściu do zera slot krótko błyska.
+## Dymek rozumie BBCode - tagi umiejętności z ikonkami (Skills.tags_bbcode).
+func _make_custom_tooltip(for_text: String) -> Object:
+	return RichTooltip.build(self, for_text)
+
+
 func set_cooldown(left: float, total: float) -> void:
 	var fraction := clampf(left / total, 0.0, 1.0) if total > 0.0 and left > 0.0 else 0.0
 	if cooldown > 0.0 and fraction == 0.0:

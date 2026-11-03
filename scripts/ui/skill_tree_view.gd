@@ -226,20 +226,29 @@ func _clamp_offset() -> void:
 	queue_redraw()
 
 
+## Dymek rozumie BBCode - tagi umiejętności z ikonkami (Skills.tags_bbcode).
+func _make_custom_tooltip(for_text: String) -> Object:
+	return RichTooltip.build(self, for_text)
+
+
 func _get_tooltip(at_position: Vector2) -> String:
 	var id := node_at(at_position)
 	return describe(id) if id != "" else ""
 
 
-## Opis węzła do dymku i panelu szczegółów.
+## Opis węzła do dymku i panelu szczegółów (BBCode - linia tagów z ikonkami).
 func describe(id: String) -> String:
 	var node: Dictionary = SkillTree.nodes(weapon_type)[id]
 	var lines: Array[String] = [SkillTree.node_name(weapon_type, id)]
 	match node["kind"]:
 		"skill":
 			var skill: String = node["skill"]
-			var tags := Skills.tags_text(skill)
-			lines[0] += ("  (%s  •  %s)" % [tags, Skills.mana_cost_text(skill)]) if tags != "" else tr("  (umiejętność pasywna)")
+			var tags := Skills.tags(skill)
+			if tags.is_empty():
+				lines[0] += tr("  (umiejętność pasywna)")
+			else:
+				lines[0] += "  (%s)" % Skills.mana_cost_text(skill)
+				lines.append(Skills.tags_bbcode(tags))
 			lines.append(Skills.description_of(skill))
 		"passive":
 			lines.append(SkillTree.stats_text(node.get("stats", {})))
