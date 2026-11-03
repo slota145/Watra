@@ -1598,6 +1598,85 @@ func _on_boss_died(_boss_node: Goblin = null) -> void:
 	w.hud.show_banner(Lang.t("Strażnik pokonany! Skarbiec otwarty\nPłomienie Watry zabiorą cię do Ostoi"), Color(1.0, 0.8, 0.4))
 
 
+# ---------------------------------------------------------------- portal do miasta
+## Stan lochu w chwili wyjścia portalem do miasta (World.open_town_portal): pokonane potwory (numery miejsc),
+## zużyte mechaniki (indeksy w listach - loch z tego samego ziarna ma je w tej samej kolejności), otwarty skarbiec,
+## zużyty ołtarz, łup na ziemi i miejsce portalu. Trwające zdarzenia (fale) przepadają.
+func portal_state(at: Vector2) -> Dictionary:
+	var dead := []
+	for id in w._goblin_spawns.size():
+		if not w._live_goblins.has(id):
+			dead.append(id)
+	var spent := {"chests": [], "shrines": [], "uroczyska": [], "zertwy": [], "skarbniki": []}
+	for i in chests.size():
+		if not is_instance_valid(chests[i]) or chests[i].state != "closed":
+			spent["chests"].append(i)
+	for i in shrines.size():
+		if not is_instance_valid(shrines[i]) or shrines[i].used:
+			spent["shrines"].append(i)
+	for key: String in ["uroczyska", "zertwy", "skarbniki"]:
+		var list: Array = get(key)
+		for i in list.size():
+			if not is_instance_valid(list[i]) or list[i].state != "idle":
+				spent[key].append(i)
+	var items := []
+	var ids := []
+	for pickup in get_tree().get_nodes_in_group("pickups"):
+		if pickup is Pickup and pickup.is_inside_tree() and not pickup.is_queued_for_deletion():
+			items.append([pickup.item_id, pickup.amount, pickup.global_position.x, pickup.global_position.y])
+			ids.append(pickup.item_id)
+	return {
+		"dead": dead, "spent": spent, "vault": _vault_open,
+		"crystal": crystal != null and (not is_instance_valid(crystal) or crystal.state != "dormant"),
+		"altar": altar != null and (not is_instance_valid(altar) or altar.services.is_empty()),
+		"items": items, "generated": Loot.export_used(ids), "position": [at.x, at.y],
+	}
+
+
+## Powrót portalem: loch wygenerowany od nowa z tego samego ziarna wraca do stanu z portal_state - bez pokonanych
+## potworów i zużytych mechanik, z łupem na ziemi; postać staje przy płomieniu portalu do Ostoi.
+func restore_portal(state: Dictionary) -> void:
+	Loot.import(state.get("generated", {}))
+	for value in state.get("dead", []):
+		var id := int(value)
+		var goblin: Goblin = w._live_goblins.get(id)
+		if goblin == null:
+			continue
+		w._live_goblins.erase(id)
+		goblin.remove_from_group("enemies")
+		goblin.queue_free()
+	var spent: Dictionary = state.get("spent", {})
+	for key: String in ["chests", "shrines", "uroczyska", "zertwy", "skarbniki"]:
+		var list: Array = get(key)
+		for value in spent.get(key, []):
+			var i := int(value)
+			if i < list.size() and is_instance_valid(list[i]):
+				list[i].queue_free()
+	if state.get("crystal", false) and is_instance_valid(crystal):
+		crystal.queue_free()
+	if state.get("altar", false):
+		_spend_altar()
+	if state.get("vault", false) and not _vault_open:
+		_vault_open = true
+		_chest.modulate = Color.WHITE
+		_add_portal(Vector2(boss_room.get_center()) * CELL + Vector2(0, CELL * 1.2), Lang.t("Płomienie Watry - powrót do Ostoi"))
+	for entry: Array in state.get("items", []):
+		var pickup: Pickup = Goblin.pickup_scene().instantiate()
+		pickup.item_id = str(entry[0])
+		pickup.amount = int(entry[1])
+		pickup.position = Vector2(float(entry[2]), float(entry[3]))
+		w.entities.add_child(pickup)
+	var pos: Array = state.get("position", [])
+	if pos.size() == 2:
+		var at := Vector2(float(pos[0]), float(pos[1]))
+		var portal := TownPortal.new()
+		portal.position = at
+		w.entities.add_child(portal)
+		# obok płomienia, a nie w nim - inaczej od razu zabrałby z powrotem do Ostoi
+		w.player.global_position = at + Vector2(0, 34)
+		w.player.reset_physics_interpolation()
+
+
 ## Strażnik węzła Nawii czasem zostawia fragment klucza boga swojego obszaru (Pinnacles.fragment_chance).
 func _drop_fragment(at: Vector2) -> void:
 	if not config.has("nawia_node"):
@@ -1712,5 +1791,7 @@ func _process(delta: float) -> void:
 	for portal: Dictionary in _portals:
 		if portal["rect"].has_point(w.player.global_position):
 			Sfx.play("magic", 2.0, 0.7)
+			# płomienie Watry kończą wyprawę - portal do miasta gaśnie
+			w.player.town_portal = {}
 			w._travel("forest", "watra")
 			return
