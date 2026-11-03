@@ -185,6 +185,13 @@ func play_hit_sound() -> void:
 		Sfx.play_at("hit_heavy" if self is Boss else "hit", global_position)
 
 
+## Końcówka gry (Levels.endgame_share): zamach przerywa tylko cios za co najmniej tę część zdrowia potwora,
+## a odrzut jest słabszy o ENDGAME_KNOCKBACK_RESIST - inaczej Młynek trafiający co ćwierć sekundy nie pozwala
+## gromadzie uderzyć ani razu (pomiar: tests/endgame_probe.gd).
+const ENDGAME_STAGGER := 0.15
+const ENDGAME_KNOCKBACK_RESIST := 0.5
+
+
 func take_damage(amount: int, from_position: Vector2, knockback := 120.0) -> void:
 	if state == State.DEAD:
 		return
@@ -199,13 +206,14 @@ func take_damage(amount: int, from_position: Vector2, knockback := 120.0) -> voi
 			return
 	health -= amount
 	DamageNumber.spawn(get_parent(), hurt_center(), amount)
-	_knockback = (global_position - from_position).normalized() * knockback
+	var endgame := Levels.endgame_share(level)
+	_knockback = (global_position - from_position).normalized() * knockback * (1.0 - ENDGAME_KNOCKBACK_RESIST * endgame)
 	_flash()
 	if health <= 0:
 		_die()
 		return
-	# trafienie przerywa zamach
-	if state == State.ATTACK:
+	# trafienie przerywa zamach - w końcówce gry tylko mocny cios (część zdrowia potwora)
+	if state == State.ATTACK and amount >= max_health * ENDGAME_STAGGER * endgame:
 		state = State.CHASE
 		_cooldown = 0.3
 	aggro()

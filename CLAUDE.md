@@ -215,11 +215,12 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 
 ### Zgłoszenia z listopada 2026
 
-- [ ] **Gra za łatwa w końcówce** (autor, 3.11.2026): początek gry jest w porządku, ale autor przeszedł wszystkie
-  mapy endgame'owe (Nawia) bez zmiany broni i ekwipunku (ekwipunek z ~20. poziomu) i ani razu nie był blisko śmierci.
-  Do sprawdzenia: przyrost statystyk potworów na poziom (`Levels`, `ENDGAME_*`), czy `tests/balance_sim.gd` mierzy
-  właściwą rzecz (liczy gracza z ekwipunkiem z danego poziomu, a nie gracza, który ekwipunku nie zmienia), groźniejsze
-  ataki potworów (więcej obrażeń od gromady, a nie od pojedynczego ciosu).
+- [ ] **Gra za łatwa w końcówce** (autor, 3.11.2026): poprawione, czeka na ocenę autora (szczegóły w `docs/historia.md`,
+  szukaj „Końcówka gry trudniejsza”): krótsza nietykalność, limit kradzieży życia, odporność potworów na przerwanie
+  zamachu i odrzut, słabszy pancerz i więcej zdrowia potworów ponad 41. poziomem. Pomiar siły postaci z zapisu:
+  `godot --headless --path . -s res://tests/endgame_probe.gd -- <zapis.json> <stopień> <sekundy> [full|whirl|flicker|idle] [poziom]`
+  (wyniki z jednego przebiegu się wahają - puszczać 2-3 razy). Do ustalenia po ograniu: liczby (`Levels.ENDGAME_*`,
+  `LEECH_CAP`), czy umiejętności łuku i księgi też trzeba sprawdzić tym pomiarem.
 - [ ] **Za mała gęstość potworów w Uroczyskach** i ogólnie za mało potworów (autor, 3.11.2026) - w lochach też.
 - [ ] **Portal do miasta** (autor, 3.11.2026): przycisk (np. B) przenosi z lochu do Ostoi, a portalem w Ostoi
   wraca się do tego samego lochu (jak portal w PoE).

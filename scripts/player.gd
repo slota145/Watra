@@ -49,6 +49,8 @@ const LANDING_REACH := 96.0
 ## Bazowa regeneracja many (0 - manę odnawiają tylko umiejętności i mikstury).
 @export var mana_regen := 0.0
 @export var invulnerability_time := 0.5
+## Nietykalność po trafieniu w końcówce gry (Levels.endgame_share): krótsza, żeby gromada biła mocniej niż pojedynczy wróg.
+const ENDGAME_INVULNERABILITY := 0.15
 @export var respawn_delay := 2.0
 @export var respawn_invulnerability := 1.5
 
@@ -806,6 +808,12 @@ func spend_mana(amount: float) -> bool:
 	return true
 
 
+## Nietykalność po trafieniu (i uniku): w krainach invulnerability_time, w końcówce gry coraz krótsza
+## (ENDGAME_INVULNERABILITY przy potworach od Levels.ENDGAME_FULL poziomu).
+func hurt_invulnerability() -> float:
+	return lerpf(invulnerability_time, ENDGAME_INVULNERABILITY, Levels.endgame_share(Levels.zone_default))
+
+
 ## Środek "ciała" postaci (tułów, nie stopy) - stąd liczymy zasięg ciosów.
 func body_center() -> Vector2:
 	return global_position + BODY_OFFSET
@@ -827,7 +835,7 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 	# unik z przedmiotów: cios chybia, a chwilowa nietykalność jak po trafieniu chroni przed resztą zamachu
 	if randf() < stats.dodge_chance():
 		DamageNumber.spawn_text(get_parent(), body_center(), tr("Unik"), DODGE_COLOR, 9)
-		_invulnerable_timer = invulnerability_time
+		_invulnerable_timer = hurt_invulnerability()
 		return
 	# Riposta: zasłona przyjmuje cios i odpowiada kontrą
 	if sword_skills.try_parry(from_position):
@@ -837,7 +845,7 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 	amount = spell_skills.absorb(amount)
 	if amount <= 0:
 		DamageNumber.spawn_text(get_parent(), body_center(), tr("Tarcza"), Color(0.6, 0.8, 1.0), 9)
-		_invulnerable_timer = invulnerability_time
+		_invulnerable_timer = hurt_invulnerability()
 		return
 	# Pancerz z Łusek Czerwia może pochłonąć cios zakopaniem się w ziemi
 	if legendary.on_hurt(amount):
@@ -846,7 +854,7 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 	health_changed.emit(health, stats.max_health())
 	DamageNumber.spawn(get_parent(), body_center(), amount, HURT_COLOR)
 	_knockback = (global_position - from_position).normalized() * 120.0
-	_invulnerable_timer = invulnerability_time
+	_invulnerable_timer = hurt_invulnerability()
 	_shake = 3.0
 	_flash(HURT_COLOR)
 	Sfx.play("hurt")

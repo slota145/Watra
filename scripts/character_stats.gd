@@ -161,9 +161,11 @@ func armor() -> int:
 	return int(_bonus("armor"))
 
 
-## Ile procent obrażeń pochłania pancerz.
-func armor_reduction() -> float:
-	return 1.0 - ARMOR_CONSTANT / (ARMOR_CONSTANT + armor())
+## Ile procent obrażeń pochłania pancerz przy potworach poziomu `level` (domyślnie - poziom potworów w okolicy);
+## w końcówce gry stała pancerza rośnie (Levels.armor_scale), więc pancerz chroni słabiej.
+func armor_reduction(level := -1) -> float:
+	var k := ARMOR_CONSTANT * Levels.armor_scale(Levels.zone_default if level < 0 else level)
+	return 1.0 - k / (k + armor())
 
 
 ## Ile procent obrażeń pochłania siła.

@@ -482,7 +482,7 @@ func bleed_enemy(enemy: Goblin, multiplier: float) -> void:
 				enemy.take_damage(per_tick, enemy.global_position, 0.0)
 				SkillEffects.sheet_once(enemy.get_parent(), REND_WOUND_FX, 9, 15.0, enemy.hurt_center(), REND_WOUND_ANCHOR, 0.0, 1.0, 0.45)
 				if frenzy and is_instance_valid(_player) and not _player.is_dead:
-					_player.heal(per_tick * FRENZY_LEECH))
+					_player.legendary.leech_heal(per_tick * FRENZY_LEECH))
 
 
 # ---------------------------------------------------------------- Rozłupanie Ziemi
