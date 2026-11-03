@@ -333,8 +333,19 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   siatka 4x3, kształty 1x1, 1x2, 2x1, 2x2, magiczne z premiami, rzadkie z efektem legendy. Do ustalenia: rosnąca
   siatka (poziom, drzewko Watry), własne efekty talizmanów zamiast efektów legend (np. ognista tarcza przy niskim
   zdrowiu), grafiki z PixelLab zamiast rysowanych w kodzie, rzemiosło talizmanów runami.
-- [ ] **Atlas** (po mechanikach): mapa węzłów-lochów, ukończenie odblokowuje sąsiednie i daje punkty do drzewka
-  wzmacniającego mechaniki; razem z podziałem lochów na zwykłe i endgame'owe (punkt niżej).
+- [ ] **Mapa Nawii - endgame jak atlas w PoE** (ustalenia z autorem, listopad 2026; przed drzewkiem Watry albo razem
+  z nim). Z PoE bierzemy szkielet (mapa węzłów-lochów, przejście odsłania sąsiednie, rosnące stopnie, punkty do
+  drzewka, bossowie szczytowi), wygląd i nazwy własne, słowiańskie:
+  - osobna **Mapa Nawii** (zaświaty wylane na świat przez Hordę) w oknie Watry; węzły to lochy z klimatem i stopniem;
+  - **wpływ na świat**: oczyszczone obszary mapy zdejmują spaczenie z prawdziwych krain (premie, obozy - łączy się
+    z punktem „Budowa i rozbudowa obozów” w „Świat”);
+  - **wejście bez kosztów** (ograniczeniem jest tylko trudność); bożki nadal wkładane przed wejściem;
+  - **dzisiejsze lochy zostają do ~40. poziomu** (nauka mechanik, rozwój postaci); po 40. poziomie / Cmentarzu
+    otwiera się mapa z wyższymi stopniami;
+  - **bossowie szczytowi**: słowiańscy bogowie (np. Weles, Marzanna, Czarnobóg), obce bogi (grecki, nordycki,
+    egipski - patrz „Obce mitologie”) i Władca Hordy jako ostateczny boss;
+  - do ustalenia: układ i wielkość mapy, ile stopni ponad dzisiejsze 7, poziomy potworów powyżej 41 (Levels, łup do
+    poziomu 100), jak dokładnie oczyszczenie zmienia krainy, punkty do drzewka Watry, nagrody za bossów szczytowych.
 - [ ] **Obce mitologie jako odległe królestwa** (luźny pomysł autora): świat zostaje słowiański, a królestwa grecki,
   nordycki, egipski tylko w końcówce gry (np. wrota w atlasie, najeźdźcy przez płomienie Watry), każde jako mały
   obszar z bossem szczytowym - obcym bogiem; tłumaczy hydrę i satyry. Na pinnacle nadają się też słowiańscy bogowie.
