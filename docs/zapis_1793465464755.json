@@ -1,0 +1,6026 @@
+{
+	"kills": 10987,
+	"player": {
+		"bags": [
+			"bag_hunter",
+			"bag_expedition",
+			"bag_expedition",
+			"bag_hunter",
+			"bag_hunter"
+		],
+		"boons": {
+			"active": {},
+			"bestiary": {},
+			"blessed": [],
+			"ember": 17733,
+			"ember_spent": 2390,
+			"eternal": [],
+			"nawia": [
+				30,
+				31,
+				32,
+				33,
+				35,
+				37,
+				39,
+				41,
+				43,
+				44
+			],
+			"pinnacles": {},
+			"pomrok": 0,
+			"pomrok_unlocked": 0,
+			"watra_tab": 0,
+			"watra_tab_names": [
+				"",
+				"",
+				""
+			],
+			"watra_tabs": [
+				[],
+				[],
+				[]
+			]
+		},
+		"codex": {
+			"items": [
+				"health_potion",
+				"rusty_sword",
+				"mana_potion",
+				"wood",
+				"herb_wort",
+				"stone",
+				"iron_ore",
+				"wolf_pelt",
+				"weapon_stone",
+				"weapon_stone_perfect",
+				"armor_stone",
+				"armor_stone_perfect",
+				"jewelry_stone",
+				"jewelry_stone_perfect",
+				"blessed_stone",
+				"mercy_stone",
+				"elixir_wort",
+				"gauntlets_t1",
+				"goblin_heart",
+				"talisman_t1",
+				"leather_cap",
+				"greaves_t1",
+				"spellbook",
+				"staff_t1",
+				"silver_earring",
+				"short_bow",
+				"leather_gloves",
+				"ring_of_strength",
+				"greater_health_potion",
+				"fang_earring",
+				"leather_armor",
+				"iron_helmet",
+				"bone_dust",
+				"ghoul_claw",
+				"mace_t1",
+				"amber_necklace",
+				"robe_t1",
+				"rune_chaos",
+				"deer_hide",
+				"meat",
+				"boar_hide",
+				"chainmail",
+				"leather_boots",
+				"bag_satchel",
+				"belt_t1",
+				"copper_ring",
+				"victory_mark",
+				"crystal_heart",
+				"robe_t2",
+				"gauntlets_t2",
+				"girdle_t2",
+				"fang_t2",
+				"dagger_t2",
+				"hare_pelt",
+				"kobold_fuse",
+				"unid_armor_magic_18",
+				"unid_weapon_rare_17",
+				"drowned_algae",
+				"unid_weapon_magic_10",
+				"drowned_pearl",
+				"herb_calamus",
+				"frog_tongue",
+				"fish",
+				"unid_armor_magic_13",
+				"unid_armor_magic_21",
+				"greater_mana_potion",
+				"unid_armor_magic_47",
+				"unid_jewelry_magic_47",
+				"hydra_scale",
+				"legend_hydra_fang",
+				"herb_arnica",
+				"rough_gem",
+				"storm_feather",
+				"unid_armor_magic_24",
+				"signet_t2",
+				"talisman_t2",
+				"unid_armor_magic_22",
+				"axe_t2",
+				"staff_t2",
+				"unid_weapon_magic_24",
+				"stud_t2",
+				"unid_armor_magic_27",
+				"unid_weapon_magic_28",
+				"goat_hide",
+				"bag_hunter",
+				"unid_jewelry_magic_38",
+				"unid_jewelry_magic_36",
+				"unid_armor_magic_35",
+				"book_t2",
+				"unid_jewelry_rare_41",
+				"earring_gruzlog",
+				"ring_gruzlog",
+				"legend_gruzlog_club",
+				"unid_weapon_rare_40",
+				"ring_alpha",
+				"legend_bogatyr_girdle",
+				"legend_perun_crown",
+				"legend_tracker_talisman",
+				"legend_engineer_gloves",
+				"legend_swarog_bow",
+				"legend_endless_amulet",
+				"unid_armor_rare_8",
+				"legend_mortan_crown",
+				"legend_mortan_robe",
+				"legend_mortan_phylactery",
+				"unid_jewelry_rare_7",
+				"unid_armor_rare_9",
+				"unid_weapon_rare_8",
+				"unid_armor_magic_6",
+				"unid_weapon_magic_8",
+				"bag_purse",
+				"unid_armor_rare_6",
+				"unid_jewelry_magic_4",
+				"satyr_horn",
+				"unid_armor_magic_19",
+				"war_axe",
+				"iron_sword",
+				"unid_weapon_magic_19",
+				"unid_armor_rare_22",
+				"unid_armor_rare_18",
+				"hood_t2",
+				"belt_t2",
+				"legend_faun_scepter",
+				"unid_jewelry_rare_27",
+				"legend_faun_hooves",
+				"legend_faun_flute",
+				"unid_armor_rare_27",
+				"legend_faun_horns",
+				"gloves_t3",
+				"unid_weapon_magic_52",
+				"stud_t3",
+				"sword_t3",
+				"unid_armor_magic_52",
+				"axe_t3",
+				"mace_t3",
+				"amulet_t3",
+				"unid_weapon_magic_51",
+				"unid_jewelry_magic_50",
+				"unid_jewelry_rare_50",
+				"bow_t3",
+				"band_t3",
+				"plate_t3",
+				"fang_t3",
+				"dagger_t3",
+				"unid_weapon_rare_51",
+				"idol_wood_common",
+				"gauntlets_t3",
+				"jerkin_t3",
+				"greaves_t3",
+				"hood_t3",
+				"bag_expedition",
+				"unid_jewelry_magic_51",
+				"unid_weapon_magic_50",
+				"book_t3",
+				"belt_t3",
+				"unid_weapon_rare_55",
+				"unid_weapon_magic_55",
+				"unid_jewelry_rare_54",
+				"unid_armor_magic_51",
+				"unid_jewelry_rare_53",
+				"unid_armor_rare_52",
+				"unid_armor_rare_54",
+				"unid_jewelry_magic_53",
+				"rune_erase",
+				"unid_jewelry_rare_51",
+				"helm_t3",
+				"unid_armor_magic_50",
+				"unid_weapon_magic_56",
+				"talisman_t3",
+				"unid_armor_magic_56",
+				"unid_weapon_magic_57",
+				"unid_weapon_magic_54",
+				"unid_armor_magic_57",
+				"unid_armor_magic_55",
+				"idol_gloom_common",
+				"unid_weapon_rare_56",
+				"unid_jewelry_rare_55",
+				"staff_t3",
+				"unid_armor_magic_54",
+				"robe_t3",
+				"unid_jewelry_magic_58",
+				"unid_armor_rare_59",
+				"unid_weapon_magic_58",
+				"unid_armor_magic_58",
+				"rune_seal",
+				"unid_armor_rare_58",
+				"unid_armor_magic_59",
+				"unid_weapon_magic_61",
+				"signet_t4",
+				"unid_weapon_magic_62",
+				"mace_t4",
+				"talisman_t4",
+				"gloves_t4",
+				"robe_t4",
+				"unid_weapon_magic_59",
+				"unid_jewelry_magic_60",
+				"book_t4",
+				"unid_jewelry_magic_62",
+				"hood_t4",
+				"unid_armor_magic_62",
+				"unid_jewelry_rare_59",
+				"unid_armor_magic_60",
+				"boots_t4",
+				"idol_shrine_common",
+				"bow_t4",
+				"plate_t4",
+				"unid_jewelry_magic_59",
+				"sword_t4",
+				"idol_uroczysko_legendary",
+				"dagger_t4",
+				"amulet_t4",
+				"unid_armor_rare_61",
+				"band_t4",
+				"unid_armor_magic_61",
+				"unid_weapon_rare_62",
+				"unid_armor_magic_64",
+				"unid_armor_magic_65",
+				"jerkin_t4",
+				"unid_weapon_magic_65",
+				"fang_t4",
+				"axe_t4",
+				"gen_744",
+				"unid_weapon_rare_65",
+				"unid_armor_magic_66",
+				"unid_armor_magic_68",
+				"staff_t4",
+				"unid_jewelry_magic_67",
+				"idol_ore_common",
+				"rune_ascend",
+				"rune_reforge",
+				"rune_polish",
+				"idol_horde_rare",
+				"rune_growth",
+				"stud_t4",
+				"belt_t4",
+				"unid_armor_rare_65",
+				"girdle_t4",
+				"greaves_t4",
+				"unid_armor_rare_66",
+				"unid_weapon_rare_69",
+				"unid_armor_rare_69",
+				"unid_armor_rare_68",
+				"unid_weapon_magic_69",
+				"unid_weapon_magic_68",
+				"unid_jewelry_magic_66",
+				"legend_kaszlak_boots",
+				"unid_jewelry_rare_68",
+				"legend_kaszlak_gloves",
+				"legend_kaszlak_cord",
+				"legend_kaszlak_staff",
+				"spider_silk",
+				"ancient_bark",
+				"unid_armor_magic_70",
+				"spider_venom",
+				"unid_jewelry_magic_69",
+				"unid_armor_rare_72",
+				"helm_t4",
+				"gauntlets_t4",
+				"unid_weapon_magic_70",
+				"unid_jewelry_magic_71",
+				"idol_uroczysko_rare",
+				"unid_armor_magic_72",
+				"unid_armor_rare_70",
+				"unid_weapon_magic_71",
+				"unid_weapon_magic_72",
+				"unid_weapon_rare_71",
+				"gen_939",
+				"unid_jewelry_magic_73",
+				"unid_jewelry_rare_75",
+				"unid_weapon_magic_75",
+				"unid_jewelry_rare_77",
+				"unid_jewelry_magic_76",
+				"pinnacle_fragment_marzanna",
+				"unid_jewelry_magic_77",
+				"unid_jewelry_magic_78",
+				"unid_weapon_magic_77",
+				"unid_weapon_rare_77",
+				"unid_weapon_rare_78",
+				"unid_weapon_rare_76",
+				"unid_jewelry_rare_80",
+				"unid_armor_magic_82",
+				"unid_weapon_magic_82",
+				"unid_armor_rare_80",
+				"unid_armor_magic_80",
+				"staff_t5",
+				"unid_weapon_magic_81",
+				"unid_armor_magic_81",
+				"mace_t5",
+				"girdle_t5",
+				"stud_t5",
+				"unid_jewelry_rare_82",
+				"unid_armor_rare_84",
+				"unid_jewelry_magic_81",
+				"unid_armor_magic_84",
+				"unid_armor_rare_86",
+				"unid_armor_rare_85",
+				"bag_legendary",
+				"amulet_t5",
+				"hood_t5",
+				"gauntlets_t5",
+				"unid_weapon_magic_87",
+				"unid_jewelry_rare_86",
+				"sword_t5",
+				"unid_armor_magic_86",
+				"talisman_t5",
+				"fang_t5",
+				"unid_armor_magic_85",
+				"bow_t5",
+				"unid_armor_rare_89",
+				"unid_armor_rare_91",
+				"unid_weapon_magic_88",
+				"unid_armor_magic_87",
+				"unid_weapon_rare_88",
+				"unid_jewelry_magic_89",
+				"unid_jewelry_rare_89",
+				"unid_armor_rare_92",
+				"unid_weapon_magic_92",
+				"boots_t5",
+				"unid_weapon_magic_91",
+				"unid_armor_magic_89",
+				"gloves_t5",
+				"plate_t5",
+				"unid_jewelry_magic_90",
+				"unid_armor_magic_90",
+				"robe_t5",
+				"signet_t5",
+				"unid_armor_magic_92",
+				"unid_weapon_rare_89",
+				"unid_weapon_magic_90",
+				"greaves_t5",
+				"book_t5",
+				"unid_jewelry_rare_96",
+				"unid_jewelry_magic_93",
+				"axe_t5",
+				"unid_armor_rare_95",
+				"unid_weapon_rare_91",
+				"unid_jewelry_rare_90",
+				"unid_weapon_magic_94",
+				"unid_armor_magic_91",
+				"unid_jewelry_magic_96",
+				"unid_weapon_rare_94",
+				"unid_weapon_magic_96"
+			],
+			"kills": {
+				"alpha_wolf": 2,
+				"ancient_tree": 11,
+				"birdman": 1001,
+				"birdman_shaman": 298,
+				"birdman_thrower": 647,
+				"boar": 36,
+				"cocoon": 13,
+				"deer": 23,
+				"drowner": 221,
+				"frog_chief": 1,
+				"frog_spitter": 101,
+				"frogman": 174,
+				"ghoul": 53,
+				"goat": 16,
+				"goblin": 1061,
+				"goblin_archer": 201,
+				"goblin_brute": 102,
+				"goblin_chief": 4,
+				"hare": 20,
+				"hydra": 1,
+				"kobold": 900,
+				"kobold_bombardier": 3,
+				"kobold_bomber": 368,
+				"kobold_slinger": 512,
+				"leshy": 1,
+				"necromancer": 3,
+				"roe": 18,
+				"rusalka": 39,
+				"satyr": 1220,
+				"satyr_brute": 318,
+				"satyr_king": 8,
+				"satyr_piper": 453,
+				"skeleton": 553,
+				"skeleton_archer": 218,
+				"skeleton_knight": 103,
+				"spider": 517,
+				"spider_queen": 1,
+				"spiderling": 364,
+				"storm_eagle": 3,
+				"treant": 200,
+				"warg": 57,
+				"web_spider": 271,
+				"wisp": 92,
+				"wodnik": 2,
+				"wolf": 828,
+				"world_boss_wij": 1,
+				"zombie": 61
+			}
+		},
+		"equipment": {
+			"belt": {
+				"enchant": 0,
+				"id": "gen_179"
+			},
+			"boots": {
+				"enchant": 0,
+				"id": "gen_13"
+			},
+			"chest": {
+				"enchant": 0,
+				"id": "gen_853"
+			},
+			"earring_1": {
+				"enchant": 0,
+				"id": "gen_20"
+			},
+			"earring_2": {
+				"enchant": 0,
+				"id": "gen_42"
+			},
+			"gloves": {
+				"enchant": 0,
+				"id": "gen_182"
+			},
+			"helmet": {
+				"enchant": 0,
+				"id": "gen_300"
+			},
+			"necklace": {
+				"enchant": 0,
+				"id": "gen_184"
+			},
+			"ring_1": {
+				"enchant": 0,
+				"id": "gen_175"
+			},
+			"ring_2": {
+				"enchant": 0,
+				"id": "gen_178"
+			},
+			"talismans": [
+				[
+					"gen_744",
+					0,
+					0
+				],
+				[
+					"gen_939",
+					2,
+					0
+				]
+			],
+			"weapon": {
+				"enchant": 0,
+				"id": "gen_437"
+			}
+		},
+		"events": {
+			"active": {},
+			"next_in": 9.39061633333299,
+			"shrine_down": {}
+		},
+		"free_sockets": 0,
+		"generated_items": {
+			"gen_1000": {
+				"affixes": {
+					"attack_speed": 0.09,
+					"physical_damage": 0.14
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "topaz"
+			},
+			"gen_1001": {
+				"affixes": {
+					"crit_chance": 0.04,
+					"crit_damage": 0.18,
+					"life_on_hit": 4
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "ruby"
+			},
+			"gen_1007": {
+				"affixes": {},
+				"base": "signet_t4",
+				"level": 77,
+				"name_stats": [],
+				"quality": "common",
+				"tiers": {}
+			},
+			"gen_1019": {
+				"affixes": {
+					"armor": 12,
+					"health_regen": 2.7
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "onyx"
+			},
+			"gen_1020": {
+				"affixes": {
+					"attack_speed": 0.13,
+					"crit_chance": 0.05,
+					"crit_damage": 0.4,
+					"damage": 11,
+					"physical_damage": 0.19,
+					"strength": 14,
+					"vitality": 20
+				},
+				"base": "legend_kaszlak_gloves",
+				"level": 80,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"attack_speed": 10,
+					"crit_chance": 9,
+					"crit_damage": 3,
+					"damage": 15,
+					"physical_damage": 14,
+					"strength": 12,
+					"vitality": 7
+				}
+			},
+			"gen_1021": {
+				"affixes": {
+					"armor": 19,
+					"dodge_chance": 0.06,
+					"health": 50,
+					"health_regen": 2.5,
+					"intelligence": 15,
+					"mana": 78,
+					"move_speed": 0.15,
+					"strength": 12
+				},
+				"base": "legend_kaszlak_boots",
+				"level": 79,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"armor": 10,
+					"dodge_chance": 10,
+					"health": 13,
+					"health_regen": 15,
+					"intelligence": 11,
+					"mana": 8,
+					"move_speed": 5,
+					"strength": 15
+				}
+			},
+			"gen_1022": {
+				"affixes": {
+					"area": 0.14,
+					"armor": 28,
+					"damage": 20,
+					"damage_percent": 0.13,
+					"dexterity": 13,
+					"intelligence": 17,
+					"mana": 123,
+					"vitality": 14
+				},
+				"base": "legend_kaszlak_cord",
+				"level": 81,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"area": 11,
+					"armor": 6,
+					"damage": 8,
+					"damage_percent": 14,
+					"dexterity": 14,
+					"intelligence": 10,
+					"mana": 2,
+					"vitality": 12
+				}
+			},
+			"gen_1023": {
+				"affixes": {
+					"attack_speed": 0.1,
+					"cast_speed": 0.11,
+					"crit_damage": 0.31,
+					"damage": 21,
+					"damage_percent": 0.21,
+					"health": 50,
+					"strength": 15,
+					"vitality": 15
+				},
+				"base": "legend_kaszlak_staff",
+				"level": 78,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"attack_speed": 16,
+					"cast_speed": 14,
+					"crit_damage": 8,
+					"damage": 7,
+					"damage_percent": 7,
+					"health": 13,
+					"strength": 11,
+					"vitality": 12
+				}
+			},
+			"gen_1025": {
+				"affixes": {
+					"crit_chance": 0.04,
+					"dexterity": 9
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "emerald"
+			},
+			"gen_1026": {
+				"affixes": {
+					"crit_chance": 0.05,
+					"spell_damage": 0.14
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "sapphire"
+			},
+			"gen_1033": {
+				"affixes": {
+					"area": 0.1,
+					"physical_damage": 0.1
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "topaz"
+			},
+			"gen_1036": {
+				"affixes": {
+					"cast_speed": 0.09,
+					"crit_damage": 0.21,
+					"dexterity": 7
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "emerald"
+			},
+			"gen_1040": {
+				"affixes": {
+					"life_on_hit": 10
+				},
+				"base": "staff_t5",
+				"level": 80,
+				"name_stats": [
+					"life_on_hit"
+				],
+				"quality": "common",
+				"tiers": {
+					"life_on_hit": 7
+				}
+			},
+			"gen_1058": {
+				"affixes": {
+					"mana": 87
+				},
+				"base": "girdle_t5",
+				"level": 82,
+				"name_stats": [
+					"mana"
+				],
+				"quality": "common",
+				"tiers": {
+					"mana": 6
+				}
+			},
+			"gen_1059": {
+				"affixes": {},
+				"base": "mace_t5",
+				"level": 82,
+				"name_stats": [],
+				"quality": "common",
+				"tiers": {}
+			},
+			"gen_1063": {
+				"affixes": {
+					"cast_speed": 0.07,
+					"crit_damage": 0.22,
+					"damage_percent": 0.09
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "onyx"
+			},
+			"gen_1065": {
+				"affixes": {
+					"health": 53,
+					"health_regen": 2.1,
+					"mana_regen": 2.2
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "ruby"
+			},
+			"gen_1066": {
+				"affixes": {
+					"dodge_chance": 0.07,
+					"xp_gain": 0.12
+				},
+				"base": "stud_t5",
+				"level": 82,
+				"name_stats": [
+					"xp_gain",
+					"dodge_chance"
+				],
+				"quality": "common",
+				"tiers": {
+					"dodge_chance": 7,
+					"xp_gain": 13
+				}
+			},
+			"gen_1076": {
+				"affixes": {
+					"area": 0.19,
+					"crit_damage": 0.34,
+					"damage": 16,
+					"health_regen": 3.8,
+					"intelligence": 19,
+					"mana": 81,
+					"xp_gain": 0.17
+				},
+				"base": "legend_endless_amulet",
+				"level": 85,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"area": 5,
+					"crit_damage": 7,
+					"damage": 11,
+					"health_regen": 10,
+					"intelligence": 8,
+					"mana": 7,
+					"xp_gain": 7
+				}
+			},
+			"gen_1079": {
+				"affixes": {
+					"area": 0.13,
+					"vitality": 9
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "onyx"
+			},
+			"gen_1080": {
+				"affixes": {
+					"attack_speed": 0.17,
+					"cast_speed": 0.14,
+					"crit_damage": 0.27,
+					"damage_percent": 0.29,
+					"dexterity": 27,
+					"gold_find": 0.21,
+					"mana": 68,
+					"vitality": 30
+				},
+				"base": "ring_gruzlog",
+				"level": 85,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"attack_speed": 6,
+					"cast_speed": 9,
+					"crit_damage": 11,
+					"damage_percent": 1,
+					"dexterity": 4,
+					"gold_find": 11,
+					"mana": 10,
+					"vitality": 3
+				}
+			},
+			"gen_1081": {
+				"affixes": {
+					"armor": 34,
+					"dexterity": 16,
+					"dodge_chance": 0.07,
+					"health_regen": 2.9,
+					"mana": 72,
+					"move_speed": 0.15,
+					"strength": 14,
+					"vitality": 26
+				},
+				"base": "earring_gruzlog",
+				"level": 83,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"armor": 4,
+					"dexterity": 11,
+					"dodge_chance": 8,
+					"health_regen": 13,
+					"mana": 9,
+					"move_speed": 5,
+					"strength": 12,
+					"vitality": 4
+				}
+			},
+			"gen_1082": {
+				"affixes": {
+					"cast_speed": 0.17,
+					"crit_chance": 0.04,
+					"damage": 20,
+					"damage_percent": 0.24,
+					"mana_regen": 3.8,
+					"spell_damage": 0.27,
+					"vitality": 19
+				},
+				"base": "legend_gruzlog_club",
+				"level": 83,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"cast_speed": 6,
+					"crit_chance": 11,
+					"damage": 7,
+					"damage_percent": 5,
+					"mana_regen": 7,
+					"spell_damage": 8,
+					"vitality": 9
+				}
+			},
+			"gen_1089": {
+				"affixes": {
+					"strength": 28
+				},
+				"base": "amulet_t5",
+				"level": 85,
+				"name_stats": [
+					"strength"
+				],
+				"quality": "common",
+				"tiers": {
+					"strength": 3
+				}
+			},
+			"gen_1093": {
+				"affixes": {
+					"cast_speed": 0.19
+				},
+				"base": "sword_t5",
+				"level": 85,
+				"name_stats": [
+					"cast_speed"
+				],
+				"quality": "common",
+				"tiers": {
+					"cast_speed": 3
+				}
+			},
+			"gen_1094": {
+				"affixes": {},
+				"base": "hood_t5",
+				"level": 87,
+				"name_stats": [],
+				"quality": "common",
+				"tiers": {}
+			},
+			"gen_1096": {
+				"affixes": {
+					"cast_speed": 0.12
+				},
+				"base": "gauntlets_t5",
+				"level": 86,
+				"name_stats": [
+					"cast_speed"
+				],
+				"quality": "common",
+				"tiers": {
+					"cast_speed": 11
+				}
+			},
+			"gen_1100": {
+				"affixes": {
+					"attack_speed": 0.07,
+					"crit_chance": 0.04,
+					"dexterity": 8
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "emerald"
+			},
+			"gen_1104": {
+				"affixes": {
+					"vitality": 30
+				},
+				"base": "talisman_t5",
+				"level": 85,
+				"name_stats": [
+					"vitality"
+				],
+				"quality": "common",
+				"tiers": {
+					"vitality": 3
+				}
+			},
+			"gen_1109": {
+				"affixes": {
+					"strength": 19,
+					"vitality": 27
+				},
+				"base": "fang_t5",
+				"level": 84,
+				"name_stats": [
+					"strength",
+					"vitality"
+				],
+				"quality": "common",
+				"tiers": {
+					"strength": 8,
+					"vitality": 4
+				}
+			},
+			"gen_1112": {
+				"affixes": {
+					"armor": 16,
+					"damage": 20,
+					"dexterity": 30,
+					"health": 55,
+					"health_regen": 4.2,
+					"mana_regen": 4.2,
+					"xp_gain": 0.13
+				},
+				"base": "legend_mortan_crown",
+				"level": 86,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"armor": 12,
+					"damage": 8,
+					"dexterity": 3,
+					"health": 12,
+					"health_regen": 9,
+					"mana_regen": 5,
+					"xp_gain": 12
+				}
+			},
+			"gen_1114": {
+				"affixes": {
+					"health": 79,
+					"intelligence": 20
+				},
+				"base": "bow_t5",
+				"level": 85,
+				"name_stats": [
+					"health",
+					"intelligence"
+				],
+				"quality": "common",
+				"tiers": {
+					"health": 7,
+					"intelligence": 7
+				}
+			},
+			"gen_1126": {
+				"affixes": {
+					"radius_power": 0.38
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "radius"
+			},
+			"gen_1129": {
+				"affixes": {
+					"mana_regen": 1.8,
+					"spell_damage": 0.14
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "sapphire"
+			},
+			"gen_1130": {
+				"affixes": {
+					"cooldown_reduction": 0.13,
+					"damage_percent": 0.2,
+					"dexterity": 30,
+					"gold_find": 0.39,
+					"intelligence": 27,
+					"mana": 80,
+					"xp_gain": 0.21
+				},
+				"base": "legend_faun_flute",
+				"level": 91,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"cooldown_reduction": 3,
+					"damage_percent": 7,
+					"dexterity": 3,
+					"gold_find": 1,
+					"intelligence": 4,
+					"mana": 8,
+					"xp_gain": 4
+				}
+			},
+			"gen_1131": {
+				"affixes": {
+					"armor": 23,
+					"cooldown_reduction": 0.11,
+					"damage": 29,
+					"dexterity": 26,
+					"health_regen": 7.6,
+					"intelligence": 17,
+					"mana_regen": 5.3,
+					"xp_gain": 0.18
+				},
+				"base": "legend_faun_horns",
+				"level": 90,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"armor": 9,
+					"cooldown_reduction": 6,
+					"damage": 3,
+					"dexterity": 5,
+					"health_regen": 1,
+					"intelligence": 10,
+					"mana_regen": 2,
+					"xp_gain": 6
+				}
+			},
+			"gen_1132": {
+				"affixes": {
+					"armor": 30,
+					"dodge_chance": 0.09,
+					"gold_find": 0.34,
+					"mana": 72,
+					"move_speed": 0.19,
+					"vitality": 30
+				},
+				"base": "legend_faun_hooves",
+				"level": 88,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"armor": 5,
+					"dodge_chance": 2,
+					"gold_find": 3,
+					"mana": 9,
+					"move_speed": 2,
+					"vitality": 3
+				}
+			},
+			"gen_1133": {
+				"affixes": {
+					"attack_speed": 0.19,
+					"crit_damage": 0.43,
+					"health": 117,
+					"life_on_hit": 13,
+					"mana": 68,
+					"vitality": 19
+				},
+				"base": "legend_faun_scepter",
+				"level": 91,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"attack_speed": 4,
+					"crit_damage": 1,
+					"health": 1,
+					"life_on_hit": 3,
+					"mana": 10,
+					"vitality": 9
+				}
+			},
+			"gen_1137": {
+				"affixes": {
+					"mana_regen": 5.9,
+					"strength": 32
+				},
+				"base": "bow_t5",
+				"level": 92,
+				"name_stats": [
+					"strength",
+					"mana_regen"
+				],
+				"quality": "common",
+				"tiers": {
+					"mana_regen": 1,
+					"strength": 1
+				}
+			},
+			"gen_1142": {
+				"affixes": {
+					"area": 0.12,
+					"cast_speed": 0.07,
+					"intelligence": 9
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "amethyst"
+			},
+			"gen_1143": {
+				"affixes": {
+					"life_on_hit": 15
+				},
+				"base": "bow_t5",
+				"level": 89,
+				"name_stats": [
+					"life_on_hit"
+				],
+				"quality": "common",
+				"tiers": {
+					"life_on_hit": 1
+				}
+			},
+			"gen_1151": {
+				"affixes": {
+					"vitality": 33
+				},
+				"base": "gloves_t5",
+				"level": 90,
+				"name_stats": [
+					"vitality"
+				],
+				"quality": "common",
+				"tiers": {
+					"vitality": 1
+				}
+			},
+			"gen_1154": {
+				"affixes": {},
+				"base": "plate_t5",
+				"level": 90,
+				"name_stats": [],
+				"quality": "common",
+				"tiers": {}
+			},
+			"gen_1156": {
+				"affixes": {
+					"area": 0.12,
+					"damage_percent": 0.09,
+					"health_regen": 2.5
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "onyx"
+			},
+			"gen_1161": {
+				"affixes": {},
+				"base": "sword_t5",
+				"level": 92,
+				"name_stats": [],
+				"quality": "common",
+				"tiers": {}
+			},
+			"gen_1169": {
+				"affixes": {
+					"damage": 32,
+					"dexterity": 31
+				},
+				"base": "robe_t5",
+				"level": 89,
+				"name_stats": [
+					"dexterity",
+					"damage"
+				],
+				"quality": "common",
+				"tiers": {
+					"damage": 1,
+					"dexterity": 2
+				}
+			},
+			"gen_1171": {
+				"affixes": {
+					"gold_find": 0.28,
+					"spell_damage": 0.4
+				},
+				"base": "signet_t5",
+				"level": 89,
+				"name_stats": [
+					"spell_damage",
+					"gold_find"
+				],
+				"quality": "common",
+				"tiers": {
+					"gold_find": 6,
+					"spell_damage": 1
+				}
+			},
+			"gen_1182": {
+				"affixes": {
+					"spell_damage": 0.39
+				},
+				"base": "staff_t5",
+				"level": 90,
+				"name_stats": [
+					"spell_damage"
+				],
+				"quality": "common",
+				"tiers": {
+					"spell_damage": 1
+				}
+			},
+			"gen_1196": {
+				"affixes": {
+					"dexterity": 32,
+					"life_on_hit": 15
+				},
+				"base": "book_t5",
+				"level": 92,
+				"name_stats": [
+					"dexterity",
+					"life_on_hit"
+				],
+				"quality": "common",
+				"tiers": {
+					"dexterity": 1,
+					"life_on_hit": 1
+				}
+			},
+			"gen_1197": {
+				"affixes": {
+					"mana_regen": 5.9
+				},
+				"base": "bow_t5",
+				"level": 93,
+				"name_stats": [
+					"mana_regen"
+				],
+				"quality": "common",
+				"tiers": {
+					"mana_regen": 1
+				}
+			},
+			"gen_1199": {
+				"affixes": {},
+				"base": "gauntlets_t5",
+				"level": 92,
+				"name_stats": [],
+				"quality": "common",
+				"tiers": {}
+			},
+			"gen_1202": {
+				"affixes": {},
+				"base": "fang_t5",
+				"level": 92,
+				"name_stats": [],
+				"quality": "common",
+				"tiers": {}
+			},
+			"gen_1204": {
+				"affixes": {
+					"vitality": 17
+				},
+				"base": "greaves_t5",
+				"level": 92,
+				"name_stats": [
+					"vitality"
+				],
+				"quality": "common",
+				"tiers": {
+					"vitality": 10
+				}
+			},
+			"gen_1205": {
+				"affixes": {
+					"armor": 42,
+					"attack_speed": 0.22
+				},
+				"base": "gloves_t5",
+				"level": 89,
+				"name_stats": [
+					"armor",
+					"attack_speed"
+				],
+				"quality": "common",
+				"tiers": {
+					"armor": 1,
+					"attack_speed": 1
+				}
+			},
+			"gen_1207": {
+				"affixes": {},
+				"base": "hood_t5",
+				"level": 89,
+				"name_stats": [],
+				"quality": "common",
+				"tiers": {}
+			},
+			"gen_1212": {
+				"affixes": {
+					"cast_speed": 0.16,
+					"damage": 35
+				},
+				"base": "signet_t5",
+				"level": 91,
+				"name_stats": [
+					"cast_speed",
+					"damage"
+				],
+				"quality": "common",
+				"tiers": {
+					"cast_speed": 6,
+					"damage": 1
+				}
+			},
+			"gen_1213": {
+				"affixes": {
+					"cast_speed": 0.09,
+					"dexterity": 8
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "emerald"
+			},
+			"gen_1216": {
+				"affixes": {
+					"dexterity": 28
+				},
+				"base": "bow_t5",
+				"level": 90,
+				"name_stats": [
+					"dexterity"
+				],
+				"quality": "common",
+				"tiers": {
+					"dexterity": 3
+				}
+			},
+			"gen_1221": {
+				"affixes": {
+					"intelligence": 34
+				},
+				"base": "stud_t5",
+				"level": 93,
+				"name_stats": [
+					"intelligence"
+				],
+				"quality": "common",
+				"tiers": {
+					"intelligence": 1
+				}
+			},
+			"gen_1226": {
+				"affixes": {
+					"vitality": 33
+				},
+				"base": "book_t5",
+				"level": 90,
+				"name_stats": [
+					"vitality"
+				],
+				"quality": "common",
+				"tiers": {
+					"vitality": 1
+				}
+			},
+			"gen_1230": {
+				"affixes": {},
+				"base": "axe_t5",
+				"level": 92,
+				"name_stats": [],
+				"quality": "common",
+				"tiers": {}
+			},
+			"gen_1242": {
+				"affixes": {
+					"cast_speed": 0.08,
+					"damage": 7
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "topaz"
+			},
+			"gen_1243": {
+				"affixes": {
+					"damage": 17,
+					"damage_percent": 0.21,
+					"dexterity": 26,
+					"health_regen": 5.3,
+					"mana": 132,
+					"strength": 31,
+					"xp_gain": 0.23
+				},
+				"base": "legend_faun_flute",
+				"level": 94,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"damage": 9,
+					"damage_percent": 7,
+					"dexterity": 4,
+					"health_regen": 6,
+					"mana": 1,
+					"strength": 2,
+					"xp_gain": 2
+				}
+			},
+			"gen_1244": {
+				"affixes": {
+					"armor": 21,
+					"damage": 19,
+					"dexterity": 22,
+					"intelligence": 25,
+					"mana": 122,
+					"strength": 22,
+					"vitality": 19
+				},
+				"base": "legend_faun_horns",
+				"level": 93,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"armor": 10,
+					"damage": 8,
+					"dexterity": 7,
+					"intelligence": 5,
+					"mana": 2,
+					"strength": 6,
+					"vitality": 9
+				}
+			},
+			"gen_1245": {
+				"affixes": {
+					"dexterity": 25,
+					"dodge_chance": 0.07,
+					"health_regen": 6.0,
+					"intelligence": 32,
+					"mana": 102,
+					"strength": 28
+				},
+				"base": "legend_faun_hooves",
+				"level": 96,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"dexterity": 5,
+					"dodge_chance": 9,
+					"health_regen": 4,
+					"intelligence": 2,
+					"mana": 4,
+					"strength": 3
+				}
+			},
+			"gen_1246": {
+				"affixes": {
+					"attack_speed": 0.2,
+					"cast_speed": 0.14,
+					"crit_chance": 0.07,
+					"damage": 16,
+					"intelligence": 26,
+					"mana": 66,
+					"physical_damage": 0.22,
+					"vitality": 22
+				},
+				"base": "legend_faun_scepter",
+				"level": 95,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"attack_speed": 2,
+					"cast_speed": 9,
+					"crit_chance": 2,
+					"damage": 10,
+					"intelligence": 5,
+					"mana": 10,
+					"physical_damage": 10,
+					"vitality": 7
+				}
+			},
+			"gen_1257": {
+				"affixes": {
+					"health": 113
+				},
+				"base": "talisman_t5",
+				"level": 91,
+				"name_stats": [
+					"health"
+				],
+				"quality": "common",
+				"tiers": {
+					"health": 1
+				}
+			},
+			"gen_1258": {
+				"affixes": {},
+				"base": "stud_t5",
+				"level": 90,
+				"name_stats": [],
+				"quality": "common",
+				"tiers": {}
+			},
+			"gen_1259": {
+				"affixes": {
+					"health": 97,
+					"health_regen": 3.9
+				},
+				"base": "stud_t5",
+				"level": 89,
+				"name_stats": [
+					"health_regen",
+					"health"
+				],
+				"quality": "common",
+				"tiers": {
+					"health": 4,
+					"health_regen": 9
+				}
+			},
+			"gen_1260": {
+				"affixes": {
+					"life_on_hit": 4,
+					"mana_regen": 1.6
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "ruby"
+			},
+			"gen_1262": {
+				"affixes": {
+					"armor": 33
+				},
+				"base": "boots_t5",
+				"level": 91,
+				"name_stats": [
+					"armor"
+				],
+				"quality": "common",
+				"tiers": {
+					"armor": 4
+				}
+			},
+			"gen_1270": {
+				"affixes": {
+					"mana_regen": 2.4,
+					"strength": 9
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "topaz"
+			},
+			"gen_1286": {
+				"affixes": {
+					"radius_power": 0.4
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "radius"
+			},
+			"gen_1289": {
+				"affixes": {
+					"crit_chance": 0.05,
+					"move_speed": 0.05
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "emerald"
+			},
+			"gen_13": {
+				"affixes": {
+					"dexterity": 1,
+					"intelligence": 1,
+					"vitality": 1
+				},
+				"base": "greaves_t1",
+				"level": 2,
+				"name_stats": [
+					"dexterity",
+					"intelligence"
+				],
+				"quality": "magic",
+				"tiers": {
+					"dexterity": 45,
+					"intelligence": 45,
+					"vitality": 45
+				}
+			},
+			"gen_175": {
+				"affixes": {
+					"dexterity": 4,
+					"gold_find": 0.05,
+					"health": 16,
+					"mana": 17,
+					"mana_regen": 0.4,
+					"physical_damage": 0.08,
+					"vitality": 2
+				},
+				"base": "ring_gruzlog",
+				"level": 41,
+				"name": "Sygnet Gruzłoga",
+				"quality": "legendary",
+				"tiers": {
+					"dexterity": 27,
+					"gold_find": 36,
+					"health": 32,
+					"mana": 28,
+					"mana_regen": 36,
+					"physical_damage": 29,
+					"vitality": 34
+				}
+			},
+			"gen_178": {
+				"affixes": {
+					"crit_chance": 0.02,
+					"crit_damage": 0.07,
+					"mana": 9,
+					"mana_regen": 0.4,
+					"spell_damage": 0.05,
+					"strength": 2,
+					"vitality": 3
+				},
+				"base": "ring_alpha",
+				"level": 37,
+				"name": "Kieł Alfy",
+				"quality": "legendary",
+				"tiers": {
+					"crit_chance": 37,
+					"crit_damage": 38,
+					"mana": 35,
+					"mana_regen": 38,
+					"spell_damage": 38,
+					"strength": 37,
+					"vitality": 33
+				}
+			},
+			"gen_179": {
+				"affixes": {
+					"dexterity": 3,
+					"dodge_chance": 0.02,
+					"health": 18,
+					"life_on_hit": 2,
+					"mana": 10,
+					"mana_regen": 0.4
+				},
+				"base": "legend_bogatyr_girdle",
+				"level": 38,
+				"name": "Pas Bogatyra",
+				"quality": "legendary",
+				"tiers": {
+					"dexterity": 32,
+					"dodge_chance": 31,
+					"health": 30,
+					"life_on_hit": 37,
+					"mana": 34,
+					"mana_regen": 37
+				}
+			},
+			"gen_182": {
+				"affixes": {
+					"area": 0.04,
+					"cast_speed": 0.04,
+					"crit_damage": 0.1,
+					"health": 20,
+					"intelligence": 4,
+					"physical_damage": 0.08
+				},
+				"base": "legend_engineer_gloves",
+				"level": 40,
+				"name": "Rękawice Cieśli Wojennego",
+				"quality": "legendary",
+				"tiers": {
+					"area": 32,
+					"cast_speed": 32,
+					"crit_damage": 34,
+					"health": 29,
+					"intelligence": 29,
+					"physical_damage": 28
+				}
+			},
+			"gen_184": {
+				"affixes": {
+					"armor": 3,
+					"dexterity": 3,
+					"gold_find": 0.05,
+					"health": 18,
+					"health_regen": 0.8,
+					"mana": 11,
+					"strength": 3,
+					"vitality": 3
+				},
+				"base": "legend_endless_amulet",
+				"level": 37,
+				"name": "Amulet Wiecznego Wiru",
+				"quality": "legendary",
+				"tiers": {
+					"armor": 32,
+					"dexterity": 32,
+					"gold_find": 36,
+					"health": 30,
+					"health_regen": 29,
+					"mana": 32,
+					"strength": 33,
+					"vitality": 33
+				}
+			},
+			"gen_20": {
+				"affixes": {
+					"health": 5,
+					"health_regen": 0.3,
+					"intelligence": 2,
+					"move_speed": 0.02
+				},
+				"base": "silver_earring",
+				"level": 13,
+				"name_stats": [
+					"intelligence",
+					"health_regen"
+				],
+				"quality": "magic",
+				"tiers": {
+					"health": 44,
+					"health_regen": 41,
+					"intelligence": 40,
+					"move_speed": 42
+				}
+			},
+			"gen_300": {
+				"affixes": {
+					"cooldown_reduction": 0.01,
+					"damage": 3,
+					"dexterity": 3,
+					"health_regen": 0.4,
+					"strength": 3,
+					"vitality": 2
+				},
+				"base": "legend_faun_horns",
+				"level": 28,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"cooldown_reduction": 42,
+					"damage": 33,
+					"dexterity": 34,
+					"health_regen": 36,
+					"strength": 33,
+					"vitality": 35
+				}
+			},
+			"gen_42": {
+				"affixes": {
+					"armor": 1,
+					"mana_regen": 0.3,
+					"strength": 1
+				},
+				"base": "fang_earring",
+				"level": 10,
+				"name_stats": [
+					"mana_regen",
+					"strength"
+				],
+				"quality": "magic",
+				"tiers": {
+					"armor": 45,
+					"mana_regen": 41,
+					"strength": 43
+				}
+			},
+			"gen_437": {
+				"affixes": {
+					"damage": 6,
+					"health": 31,
+					"intelligence": 5,
+					"spell_damage": 0.12,
+					"vitality": 4
+				},
+				"base": "mace_t3",
+				"level": 51,
+				"name_stats": [
+					"intelligence",
+					"health"
+				],
+				"quality": "rare",
+				"tiers": {
+					"damage": 22,
+					"health": 20,
+					"intelligence": 24,
+					"spell_damage": 21,
+					"vitality": 29
+				}
+			},
+			"gen_642": {
+				"affixes": {
+					"cast_speed": 0.09,
+					"health_regen": 2.7
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "ruby"
+			},
+			"gen_643": {
+				"affixes": {
+					"area": 0.13,
+					"crit_damage": 0.17,
+					"intelligence": 8
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "amethyst"
+			},
+			"gen_644": {
+				"affixes": {
+					"crit_damage": 0.19,
+					"damage_percent": 0.09,
+					"mana_regen": 2.2
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "onyx"
+			},
+			"gen_669": {
+				"affixes": {
+					"crit_damage": 0.2,
+					"damage_percent": 0.08
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "onyx"
+			},
+			"gen_678": {
+				"affixes": {
+					"attack_speed": 0.07,
+					"mana_regen": 2.4
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "sapphire"
+			},
+			"gen_682": {
+				"affixes": {
+					"attack_speed": 0.1,
+					"mana_regen": 2.3
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "sapphire"
+			},
+			"gen_710": {
+				"affixes": {
+					"area": 0.13,
+					"life_on_hit": 5
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "ruby"
+			},
+			"gen_714": {
+				"affixes": {
+					"cast_speed": 0.08,
+					"damage": 9
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "topaz"
+			},
+			"gen_716": {
+				"affixes": {
+					"health_regen": 2.4,
+					"spell_damage": 0.12
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "sapphire"
+			},
+			"gen_732": {
+				"affixes": {
+					"crit_damage": 0.19,
+					"strength": 9
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "topaz"
+			},
+			"gen_735": {
+				"affixes": {
+					"health_regen": 2.6,
+					"physical_damage": 0.11
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "topaz"
+			},
+			"gen_737": {
+				"affixes": {
+					"area": 0.11,
+					"mana_regen": 2.1
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "sapphire"
+			},
+			"gen_739": {
+				"affixes": {
+					"cast_speed": 0.08,
+					"life_on_hit": 3
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "ruby"
+			},
+			"gen_740": {
+				"affixes": {
+					"cast_speed": 0.08,
+					"dexterity": 8
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "emerald"
+			},
+			"gen_741": {
+				"affixes": {
+					"crit_chance": 0.05,
+					"mana": 47,
+					"mana_regen": 2.1
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "sapphire"
+			},
+			"gen_744": {
+				"affixes": {
+					"health": 72,
+					"mana": 66,
+					"move_speed": 0.09
+				},
+				"effect": {
+					"kind": "leech",
+					"value": 0.021
+				},
+				"level": 72,
+				"quality": "rare",
+				"shape": "large",
+				"talisman": true,
+				"tiers": {
+					"health": 9,
+					"mana": 11,
+					"move_speed": 19
+				}
+			},
+			"gen_784": {
+				"affixes": {
+					"mana_regen": 2.0,
+					"physical_damage": 0.1
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "topaz"
+			},
+			"gen_810": {
+				"affixes": {
+					"area": 0.12,
+					"spell_damage": 0.13
+				},
+				"cut": 4,
+				"gem": true,
+				"kind": "sapphire"
+			},
+			"gen_811": {
+				"affixes": {
+					"cast_speed": 0.14,
+					"crit_damage": 0.41,
+					"damage": 8,
+					"dexterity": 17,
+					"health": 34,
+					"intelligence": 8,
+					"life_on_hit": 8
+				},
+				"base": "legend_kaszlak_gloves",
+				"level": 70,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"cast_speed": 10,
+					"crit_damage": 2,
+					"damage": 18,
+					"dexterity": 10,
+					"health": 19,
+					"intelligence": 20,
+					"life_on_hit": 11
+				}
+			},
+			"gen_812": {
+				"affixes": {
+					"dexterity": 30,
+					"dodge_chance": 0.07,
+					"gold_find": 0.14,
+					"health": 50,
+					"health_regen": 2.4,
+					"strength": 14
+				},
+				"base": "legend_kaszlak_boots",
+				"level": 69,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"dexterity": 3,
+					"dodge_chance": 9,
+					"gold_find": 19,
+					"health": 13,
+					"health_regen": 15,
+					"strength": 13
+				}
+			},
+			"gen_813": {
+				"affixes": {
+					"cooldown_reduction": 0.07,
+					"crit_damage": 0.18,
+					"gold_find": 0.22,
+					"health_regen": 1.8,
+					"intelligence": 8,
+					"strength": 8,
+					"xp_gain": 0.14
+				},
+				"base": "legend_kaszlak_cord",
+				"level": 69,
+				"name_stats": [],
+				"quality": "legendary",
+				"tiers": {
+					"cooldown_reduction": 13,
+					"crit_damage": 20,
+					"gold_find": 11,
+					"health_regen": 19,
+					"intelligence": 20,
+					"strength": 19,
+					"xp_gain": 11
+				}
+			},
+			"gen_853": {
+				"affixes": {
+					"armor": 12,
+					"dexterity": 15,
+					"health": 39,
+					"mana": 61
+				},
+				"base": "jerkin_t4",
+				"level": 69,
+				"name_stats": [
+					"armor",
+					"mana"
+				],
+				"quality": "rare",
+				"sockets": [
+					{}
+				],
+				"tiers": {
+					"armor": 17,
+					"dexterity": 11,
+					"health": 17,
+					"mana": 11
+				}
+			},
+			"gen_939": {
+				"affixes": {
+					"mana": 60,
+					"move_speed": 0.15,
+					"physical_damage": 0.37
+				},
+				"level": 77,
+				"quality": "magic",
+				"shape": "large",
+				"talisman": true,
+				"tiers": {
+					"mana": 12,
+					"move_speed": 7,
+					"physical_damage": 3
+				}
+			},
+			"gen_999": {
+				"affixes": {
+					"life_on_hit": 7
+				},
+				"base": "sword_t4",
+				"level": 76,
+				"name_stats": [
+					"life_on_hit"
+				],
+				"quality": "common",
+				"tiers": {
+					"life_on_hit": 14
+				}
+			}
+		},
+		"health": 1560,
+		"hero": "wojciech",
+		"hotbar": {
+			"items": [
+				"health_potion",
+				"mana_potion",
+				"elixir_wort",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				""
+			],
+			"skills": {
+				"bow": [
+					"attack",
+					"ballista",
+					"seeker",
+					"arrow_rain",
+					"multishot",
+					"wind_arrow",
+					"falcon"
+				],
+				"melee": [
+					"flicker",
+					"whirlwind",
+					"spectral_blades",
+					"",
+					"lunge",
+					"riposte",
+					"war_cry"
+				],
+				"spell": [
+					"attack",
+					"chain_lightning",
+					"blink",
+					"ball_lightning",
+					"storm_call",
+					"blizzard",
+					"frost_lance"
+				]
+			}
+		},
+		"inventory": [
+			{
+				"count": 1,
+				"id": "gen_1133"
+			},
+			{
+				"count": 1,
+				"id": "gen_1082"
+			},
+			{
+				"count": 1,
+				"id": "gen_1023"
+			},
+			{
+				"count": 1,
+				"id": "gen_1197"
+			},
+			{
+				"count": 1,
+				"id": "gen_1196"
+			},
+			{
+				"count": 1,
+				"id": "gen_1161"
+			},
+			{
+				"count": 1,
+				"id": "gen_1137"
+			},
+			{
+				"count": 1,
+				"id": "gen_1226"
+			},
+			{
+				"count": 1,
+				"id": "gen_1182"
+			},
+			{
+				"count": 1,
+				"id": "gen_1216"
+			},
+			{
+				"count": 1,
+				"id": "gen_1143"
+			},
+			{
+				"count": 1,
+				"id": "gen_1093"
+			},
+			{
+				"count": 1,
+				"id": "gen_1114"
+			},
+			{
+				"count": 1,
+				"id": "gen_1059"
+			},
+			{
+				"count": 1,
+				"id": "gen_1040"
+			},
+			{
+				"count": 1,
+				"id": "gen_999"
+			},
+			{
+				"count": 1,
+				"id": "gen_1131"
+			},
+			{
+				"count": 1,
+				"id": "gen_1112"
+			},
+			{
+				"count": 1,
+				"id": "gen_1207"
+			},
+			{
+				"count": 1,
+				"id": "gen_1094"
+			},
+			{
+				"count": 1,
+				"id": "gen_1154"
+			},
+			{
+				"count": 1,
+				"id": "gen_1169"
+			},
+			{
+				"count": 1,
+				"id": "gen_1020"
+			},
+			{
+				"count": 1,
+				"id": "gen_1199"
+			},
+			{
+				"count": 1,
+				"id": "gen_1151"
+			},
+			{
+				"count": 1,
+				"id": "gen_1205"
+			},
+			{
+				"count": 1,
+				"id": "gen_1096"
+			},
+			{
+				"count": 1,
+				"id": "gen_1132"
+			},
+			{
+				"count": 1,
+				"id": "gen_1021"
+			},
+			{
+				"count": 1,
+				"id": "gen_1204"
+			},
+			{
+				"count": 1,
+				"id": "gen_1242"
+			},
+			{
+				"count": 1,
+				"id": "unid_jewelry_rare_96"
+			},
+			{
+				"count": 1,
+				"id": "gen_1058"
+			},
+			{
+				"count": 1,
+				"id": "gen_1081"
+			},
+			{
+				"count": 1,
+				"id": "gen_1221"
+			},
+			{
+				"count": 1,
+				"id": "gen_1202"
+			},
+			{
+				"count": 1,
+				"id": "gen_1109"
+			},
+			{
+				"count": 1,
+				"id": "gen_1066"
+			},
+			{
+				"count": 1,
+				"id": "gen_1080"
+			},
+			{
+				"count": 1,
+				"id": "gen_1212"
+			},
+			{
+				"count": 1,
+				"id": "gen_1171"
+			},
+			{
+				"count": 1,
+				"id": "gen_1007"
+			},
+			{
+				"count": 1,
+				"id": "gen_1130"
+			},
+			{
+				"count": 1,
+				"id": "gen_1076"
+			},
+			{
+				"count": 1,
+				"id": "gen_1022"
+			},
+			{
+				"count": 1,
+				"id": "gen_1104"
+			},
+			{
+				"count": 1,
+				"id": "gen_1089"
+			},
+			{
+				"count": 1,
+				"id": "bag_legendary"
+			},
+			{
+				"count": 1,
+				"id": "bag_expedition"
+			},
+			{
+				"count": 1,
+				"id": "bag_expedition"
+			},
+			{
+				"count": 1,
+				"id": "bag_hunter"
+			},
+			{
+				"count": 18,
+				"id": "blessed_stone"
+			},
+			{
+				"count": 1,
+				"id": "gen_1142"
+			},
+			{
+				"count": 4,
+				"id": "pinnacle_fragment_marzanna"
+			},
+			{
+				"count": 1,
+				"id": "gen_1126"
+			},
+			{
+				"count": 46,
+				"id": "kobold_fuse"
+			},
+			{
+				"count": 1,
+				"id": "unid_armor_rare_95"
+			},
+			{
+				"count": 1,
+				"id": "gen_1244"
+			},
+			{
+				"count": 1,
+				"id": "gen_1246"
+			},
+			{
+				"count": 1,
+				"id": "unid_jewelry_magic_81"
+			},
+			{
+				"count": 1,
+				"id": "gen_1230"
+			},
+			{
+				"count": 3,
+				"id": "unid_jewelry_magic_90"
+			},
+			{
+				"count": 1,
+				"id": "unid_jewelry_rare_75"
+			},
+			{
+				"count": 1,
+				"id": "unid_jewelry_rare_77"
+			},
+			{
+				"count": 1,
+				"id": "unid_jewelry_rare_80"
+			},
+			{
+				"count": 2,
+				"id": "unid_jewelry_rare_82"
+			},
+			{
+				"count": 2,
+				"id": "unid_jewelry_rare_86"
+			},
+			{
+				"count": 2,
+				"id": "unid_jewelry_rare_89"
+			},
+			{
+				"count": 1,
+				"id": "unid_weapon_magic_75"
+			},
+			{
+				"count": 2,
+				"id": "unid_weapon_magic_77"
+			},
+			{
+				"count": 2,
+				"id": "unid_weapon_magic_81"
+			},
+			{
+				"count": 2,
+				"id": "unid_weapon_magic_82"
+			},
+			{
+				"count": 2,
+				"id": "unid_weapon_magic_87"
+			},
+			{
+				"count": 1,
+				"id": "unid_weapon_magic_88"
+			},
+			{
+				"count": 3,
+				"id": "unid_weapon_magic_90"
+			},
+			{
+				"count": 2,
+				"id": "unid_weapon_magic_91"
+			},
+			{
+				"count": 5,
+				"id": "unid_weapon_magic_92"
+			},
+			{
+				"count": 1,
+				"id": "unid_weapon_rare_76"
+			},
+			{
+				"count": 2,
+				"id": "unid_weapon_rare_77"
+			},
+			{
+				"count": 2,
+				"id": "unid_weapon_rare_78"
+			},
+			{
+				"count": 1,
+				"id": "unid_weapon_rare_88"
+			},
+			{
+				"count": 1,
+				"id": "unid_weapon_rare_89"
+			},
+			{
+				"count": 1,
+				"id": "unid_armor_magic_80"
+			},
+			{
+				"count": 3,
+				"id": "unid_armor_magic_81"
+			},
+			{
+				"count": 3,
+				"id": "unid_armor_magic_82"
+			},
+			{
+				"count": 2,
+				"id": "unid_armor_magic_84"
+			},
+			{
+				"count": 1,
+				"id": "unid_armor_magic_85"
+			},
+			{
+				"count": 2,
+				"id": "unid_armor_magic_86"
+			},
+			{
+				"count": 2,
+				"id": "unid_armor_magic_87"
+			},
+			{
+				"count": 1,
+				"id": "unid_armor_magic_89"
+			},
+			{
+				"count": 3,
+				"id": "unid_armor_magic_90"
+			},
+			{
+				"count": 2,
+				"id": "unid_armor_magic_92"
+			},
+			{
+				"count": 1,
+				"id": "unid_armor_rare_80"
+			},
+			{
+				"count": 3,
+				"id": "unid_armor_rare_84"
+			},
+			{
+				"count": 1,
+				"id": "unid_armor_rare_85"
+			},
+			{
+				"count": 1,
+				"id": "unid_armor_rare_86"
+			},
+			{
+				"count": 4,
+				"id": "unid_armor_rare_89"
+			},
+			{
+				"count": 1,
+				"id": "unid_armor_rare_91"
+			},
+			{
+				"count": 2,
+				"id": "unid_armor_rare_92"
+			},
+			{
+				"count": 1,
+				"id": "gen_1257"
+			},
+			{
+				"count": 1,
+				"id": "gen_1258"
+			},
+			{
+				"count": 1,
+				"id": "gen_1259"
+			},
+			{
+				"count": 1,
+				"id": "gen_1260"
+			},
+			{
+				"count": 1,
+				"id": "unid_weapon_rare_91"
+			},
+			{
+				"count": 1,
+				"id": "gen_1262"
+			},
+			{
+				"count": 1,
+				"id": "unid_jewelry_rare_90"
+			},
+			{
+				"count": 1,
+				"id": "gen_1270"
+			},
+			{
+				"count": 1,
+				"id": "unid_weapon_magic_94"
+			},
+			{
+				"count": 61,
+				"id": "satyr_horn"
+			},
+			{
+				"count": 1,
+				"id": "unid_armor_magic_91"
+			},
+			{
+				"count": 28,
+				"id": "goblin_heart"
+			},
+			{
+				"count": 1,
+				"id": "gen_1286"
+			},
+			{
+				"count": 1,
+				"id": "rune_growth"
+			},
+			{
+				"count": 1,
+				"id": "unid_jewelry_magic_96"
+			},
+			{
+				"count": 1,
+				"id": "unid_weapon_rare_94"
+			},
+			{
+				"count": 1,
+				"id": "gen_1289"
+			},
+			{
+				"count": 1,
+				"id": "unid_weapon_magic_96"
+			},
+			{},
+			{},
+			{
+				"count": 1,
+				"id": "gen_1243"
+			},
+			{
+				"count": 1,
+				"id": "gen_1245"
+			},
+			{
+				"count": 1,
+				"id": "unid_jewelry_magic_93"
+			}
+		],
+		"mana": 385.0,
+		"market": {
+			"fresh": {
+				"wood": [
+					[
+						2,
+						"Unisław Rudy"
+					]
+				]
+			},
+			"history": {
+				"armor_stone": [
+					60.5954776870528,
+					61.1748927743036,
+					60.9625175378191,
+					58.2019285204221,
+					57.1922825269702,
+					59.1978867211325,
+					58.9428983860735,
+					58.2909453056374,
+					60.8741139002409,
+					61.9902421241954,
+					64.4940388232905,
+					66.6488886309484,
+					68.1662351204703,
+					69.2192074040847,
+					71.792926488649,
+					73.6345172055526,
+					72.5809590376318,
+					70.7262122174345,
+					69.3072075276211,
+					68.448363571188,
+					71.3277392395756,
+					73.5459931428465,
+					70.5257815230453,
+					68.6233493729966
+				],
+				"armor_stone_perfect": [
+					406.708083730943,
+					396.08593513297,
+					385.613889362814,
+					378.761725231297,
+					387.386008676271,
+					383.083197921791,
+					379.828358011333,
+					389.670398216589,
+					398.113286033722,
+					389.967555146735,
+					391.552199391472,
+					405.209982230855,
+					401.716672755097,
+					396.5064769831,
+					394.250772461533,
+					377.934157788606,
+					394.981788533994,
+					410.156138985342,
+					422.864606176378,
+					409.523242561166,
+					411.152940266886,
+					398.895947016567,
+					413.575922477906,
+					421.583457564255
+				],
+				"blessed_stone": [
+					38.4172107666052,
+					37.9592286718016,
+					37.8679940198906,
+					37.195759408217,
+					36.9632646539302,
+					35.4697162920583,
+					37.0346573631738,
+					38.4715419401008,
+					38.7302343494294,
+					38.1635157561844,
+					37.8706313708919,
+					38.6647664442032,
+					38.7438081458301,
+					40.1717546056467,
+					38.3906198735963,
+					39.9298014585715,
+					40.7856129484586,
+					39.7645229115239,
+					39.5915688794849,
+					41.1972531302118,
+					40.618570354807,
+					40.2357421262545,
+					41.8320377288748,
+					40.7126311925661
+				],
+				"boar_hide": [
+					13.1247829799766,
+					13.5621666461701,
+					13.4218012246674,
+					12.9315256639834,
+					12.9665121879129,
+					13.3376661648412,
+					12.9763897675728,
+					12.9264510437966,
+					12.7037981450686,
+					12.2062652109114,
+					12.0030402651195,
+					12.2028473849179,
+					12.6057964982803,
+					13.1868970462239,
+					13.8066459808667,
+					13.8061632879589,
+					13.9366592557149,
+					13.9036504071712,
+					14.0063922253502,
+					13.3545434576992,
+					13.4926349747681,
+					13.3211155965236,
+					13.11861528877,
+					13.0157359235714
+				],
+				"bone_dust": [
+					15.2314855970184,
+					15.3469252846154,
+					15.3903072704238,
+					14.9721289421836,
+					15.4832286316112,
+					15.2413739559525,
+					15.7849479984721,
+					16.4490530977557,
+					16.5645841500476,
+					17.0740618347009,
+					17.0530939545257,
+					16.9043655336604,
+					17.3569276896245,
+					17.132366253106,
+					16.4955241796155,
+					17.131955059315,
+					17.2166712761965,
+					16.6269658565438,
+					17.1042286256742,
+					16.2543094554564,
+					15.9438192671501,
+					15.595493632253,
+					15.8582155621617,
+					15.6420561213233
+				],
+				"crystal_heart": [
+					1047.10375758189,
+					1067.90266186972,
+					1044.77815314029,
+					983.949252902347,
+					971.442990150369,
+					1011.82462719493,
+					974.199766526394,
+					944.548466234019,
+					927.207872245268,
+					930.599586353307,
+					963.225542347608,
+					931.509581673806,
+					962.333634847544,
+					974.376853974605,
+					1014.07793830056,
+					987.990139514667,
+					961.716093908845,
+					911.643774308811,
+					913.422356823777,
+					947.21693907852,
+					904.241358399739,
+					925.012824849439,
+					892.735689360603,
+					926.993244560262
+				],
+				"deer_hide": [
+					11.3405293331354,
+					11.2678953657492,
+					10.7320453713294,
+					10.5619870832793,
+					10.511506093869,
+					10.2073569762325,
+					9.81287007503671,
+					9.57254247246935,
+					9.16446131853126,
+					9.45682366134909,
+					9.81407883661222,
+					10.2725836007167,
+					10.2830956014363,
+					10.7028789475444,
+					10.9295526098959,
+					11.2650718749165,
+					10.9948843946625,
+					11.1441395849838,
+					11.0014002157632,
+					10.8542075877525,
+					11.2775617624739,
+					11.2514298397291,
+					11.5657111551701,
+					11.2855944438425
+				],
+				"fish": [
+					5.73165003559473,
+					5.94901717904679,
+					5.86184181543586,
+					5.67941408143528,
+					5.77140611535533,
+					5.99669802977178,
+					6.18530326881243,
+					5.97852851069181,
+					6.17931471490879,
+					5.99275680519624,
+					6.01710179244436,
+					5.8565495540564,
+					5.66324332533602,
+					5.79946712218156,
+					5.5540705060466,
+					5.769481350301,
+					5.50776562914553,
+					5.51645259956023,
+					5.65268838841646,
+					5.70903278781826,
+					5.58642302508929,
+					5.32524986916672,
+					5.1762903126734,
+					5.41154259670114
+				],
+				"frog_tongue": [
+					15.6433743873243,
+					16.2523846360021,
+					15.9673413851751,
+					16.1169875677298,
+					15.8960732468156,
+					15.7564854802572,
+					15.8130284494361,
+					15.3429520437492,
+					16.0503862713268,
+					16.2103378134729,
+					16.0769804643304,
+					15.4763722176374,
+					15.8980496817192,
+					15.2962307078015,
+					14.7086410342197,
+					14.2362158428023,
+					13.7892198127399,
+					14.1309985090448,
+					14.2991704673374,
+					14.5513369110106,
+					14.9610937847108,
+					15.0635332123954,
+					14.3775785014433,
+					14.3350065844202
+				],
+				"goat_hide": [
+					16.7032395168896,
+					17.2429837105882,
+					17.8454619034512,
+					17.7452174420303,
+					18.1831048622882,
+					17.6178412649172,
+					18.0049597659719,
+					18.7382352204921,
+					18.9747731073558,
+					18.0213975685102,
+					17.56611500405,
+					17.6197553098178,
+					18.2011729794111,
+					17.4354824928832,
+					17.170904352651,
+					17.1616398253444,
+					17.1797205427848,
+					16.7434329795938,
+					17.1176543736932,
+					16.623687504801,
+					16.6456999740213,
+					15.979587738004,
+					15.5132768359129,
+					15.7814662881103
+				],
+				"goblin_heart": [
+					10.8377093092653,
+					11.2641218260869,
+					11.4573515909131,
+					10.9710570228619,
+					11.0631810604695,
+					10.6111591541093,
+					10.4435573566049,
+					10.1643552199448,
+					9.80434805351667,
+					10.1878221745957,
+					9.95984675300582,
+					9.58610228167974,
+					9.97779648763129,
+					10.194564104244,
+					10.448773936359,
+					10.672273302686,
+					10.716465111885,
+					10.8279790255323,
+					10.847756455995,
+					10.3085447432547,
+					10.7459167353872,
+					10.3298835084921,
+					9.91244102089612,
+					9.65986070771219
+				],
+				"greater_health_potion": [
+					97.0078185579511,
+					99.4019245803015,
+					94.1813484736076,
+					92.8907439007562,
+					90.5789194509553,
+					87.3777716995075,
+					83.7594600755093,
+					82.0472566373452,
+					83.4572548490601,
+					82.8122609507068,
+					86.804076753592,
+					86.7036022715294,
+					89.5208118787415,
+					92.4337326089162,
+					89.2142757513254,
+					90.6207539434684,
+					88.5324572113754,
+					91.3121006246225,
+					88.1619855527984,
+					92.4865256914106,
+					90.8582812894461,
+					94.2686179332111,
+					90.8799547473129,
+					89.5752545374341
+				],
+				"greater_mana_potion": [
+					85.222060783554,
+					85.1740080435938,
+					88.6180352476938,
+					87.7618059257632,
+					84.1852283512651,
+					87.3520684379645,
+					87.4302453039528,
+					90.1889404898646,
+					93.7407069147022,
+					98.0182607589329,
+					101.590577783734,
+					104.183146602541,
+					103.840518865837,
+					101.780936672767,
+					99.4052086250307,
+					98.3970258788589,
+					95.205910701491,
+					91.0230927046524,
+					92.3266289314574,
+					89.5174381289733,
+					88.7952594125665,
+					86.4714283451397,
+					90.0742394716092,
+					93.9060281237285
+				],
+				"health_potion": [
+					32.5336722436167,
+					31.3425418705773,
+					32.4241672949375,
+					32.8636810817147,
+					31.7502015117059,
+					30.9438548405566,
+					30.475059289411,
+					29.9096565518785,
+					29.0519512805681,
+					29.8435704865898,
+					28.4960915110343,
+					29.5846193359448,
+					29.5258200667692,
+					29.9696719082102,
+					31.2396073048476,
+					30.5315463695813,
+					29.0026181289598,
+					28.1051806833571,
+					27.6584250698487,
+					29.1655169511316,
+					30.3552493982703,
+					29.1289873166783,
+					28.8934858903613,
+					30.1501950467976
+				],
+				"herb_arnica": [
+					27.9124167671551,
+					26.700001537134,
+					27.7202744235244,
+					28.937360707967,
+					28.2052262429637,
+					29.3188675928878,
+					30.2409129694055,
+					28.6077596994495,
+					28.4570300425902,
+					27.0089627255716,
+					26.4337651857411,
+					27.6540290533969,
+					26.8679175277692,
+					26.5591608549942,
+					26.2564457285777,
+					25.5983418348172,
+					26.6663805022489,
+					25.4145303719109,
+					25.7411729742055,
+					25.6757236648516,
+					24.5536024300759,
+					24.3775821932259,
+					23.3810705897286,
+					24.6813490057189
+				],
+				"herb_calamus": [
+					24.0320007458088,
+					24.9156810484636,
+					25.0250010850064,
+					25.3323116996976,
+					23.8629748504601,
+					22.6970162014461,
+					22.5958443904451,
+					23.5235492818624,
+					22.1955570757544,
+					22.9855483729146,
+					23.2746962841209,
+					22.1959406124216,
+					21.0861269100268,
+					20.4553524343543,
+					20.097666574746,
+					20.7872865782587,
+					21.3286945738073,
+					21.3689488188951,
+					21.4339763876008,
+					21.7710968262038,
+					21.5041611536426,
+					21.9313861815989,
+					22.4288127007295,
+					21.5810567341622
+				],
+				"herb_chamomile": [
+					13.9189374839353,
+					14.1578039415415,
+					13.7551761412352,
+					13.9131972548714,
+					13.8228116319706,
+					14.0751550753136,
+					14.4849623689924,
+					14.4543009766216,
+					13.916458346101,
+					14.7141420246852,
+					14.799554272654,
+					14.4548722044107,
+					14.6227947497352,
+					15.3392054041139,
+					16.1342602094028,
+					15.3923529057678,
+					16.1836498634153,
+					16.9649040723016,
+					16.9603188293562,
+					16.3873140762809,
+					17.0668703824192,
+					17.0859003382937,
+					16.7050628375345,
+					16.636599409791
+				],
+				"herb_datura": [
+					37.0350565430875,
+					38.362198675233,
+					39.4137814302987,
+					39.9753355516201,
+					40.4764928676987,
+					41.4657717941462,
+					40.3531017694016,
+					38.5683983790816,
+					37.948162111767,
+					36.3231325925207,
+					36.6054637329177,
+					36.3820218366733,
+					37.1805345253216,
+					35.666778988665,
+					35.5703269398315,
+					35.1342357273671,
+					36.475015463901,
+					38.3846177855576,
+					37.3545050265672,
+					38.6309584344595,
+					37.1763512064975,
+					38.2198083796553,
+					38.1772777709067,
+					39.3208582785381
+				],
+				"herb_fern": [
+					87.3422150524659,
+					84.2182309866488,
+					86.2115790890051,
+					88.1878020313608,
+					91.5527809872939,
+					93.8759379179756,
+					95.7524085421888,
+					95.4185370689947,
+					98.6146056203876,
+					95.8064831577789,
+					90.8440914238414,
+					94.8005269531506,
+					90.4878670482771,
+					93.6245335410534,
+					95.2935390321074,
+					96.858866651734,
+					92.0359313033014,
+					91.6644722920089,
+					87.4381878856048,
+					86.8695192252037,
+					85.5493588085198,
+					85.3984946639676,
+					86.3351206921977,
+					88.5054408579714
+				],
+				"herb_wort": [
+					11.187492644128,
+					11.1430532067035,
+					11.4836509792951,
+					11.4652108646288,
+					11.9353230442031,
+					11.4270465948621,
+					11.0792378779933,
+					11.4714254216414,
+					11.0248807594802,
+					10.9284107563524,
+					11.2442856562941,
+					11.6880398979579,
+					11.6425349725984,
+					11.8411594933803,
+					11.5203561923316,
+					11.4785436112045,
+					11.0255195000712,
+					10.5713760756409,
+					11.1628656877044,
+					11.01341593164,
+					11.2808232836004,
+					10.82531319047,
+					11.1932975716583,
+					11.1851926804677
+				],
+				"hydra_scale": [
+					65.427449706622,
+					63.9649526989112,
+					62.2244747280421,
+					63.963884445442,
+					63.1199598930903,
+					62.4704624227766,
+					61.6854447026031,
+					63.3561792337081,
+					63.6026932431861,
+					65.7677643182715,
+					68.1718458723297,
+					66.5145022922624,
+					68.4056146105817,
+					69.3288904680543,
+					65.8654131303682,
+					65.1209490171084,
+					61.916956853083,
+					63.9633417091681,
+					62.4218154329798,
+					64.6767772513466,
+					65.4365503711552,
+					64.2954238796347,
+					62.1911486460432,
+					60.3689283504013
+				],
+				"iron_ore": [
+					12.7546920546414,
+					12.6871506933126,
+					12.4659603991613,
+					12.2141815287655,
+					12.5981595785688,
+					13.0285045480833,
+					13.2248654198829,
+					13.7965748897513,
+					13.5050001077701,
+					14.0413666827004,
+					14.48300148506,
+					14.6535653581441,
+					14.9963419886133,
+					14.5172689044816,
+					14.8424566805547,
+					14.5018812586243,
+					14.6282268993288,
+					14.1600504490803,
+					14.4433951907722,
+					13.832654834949,
+					14.1741647022768,
+					14.2926998998038,
+					14.4568332972246,
+					14.6967588906732
+				],
+				"jewelry_stone": [
+					62.3071960541667,
+					63.5670438567509,
+					63.4731631491222,
+					63.9552479392413,
+					65.6094791654774,
+					67.2862896800822,
+					64.9606976476985,
+					67.8119662672475,
+					71.1336432472394,
+					71.1000165760919,
+					71.0316940437197,
+					71.6358525422407,
+					71.5373862547059,
+					70.4380411103379,
+					67.1240755435191,
+					66.1067753306077,
+					66.3509804901488,
+					65.6746441494966,
+					64.7519848668719,
+					66.1943645526184,
+					65.2407127517976,
+					66.2002476438244,
+					66.5377156260092,
+					65.9685338506534
+				],
+				"jewelry_stone_perfect": [
+					480.161228907566,
+					493.397161713135,
+					470.90188430417,
+					451.914138462375,
+					436.370147350045,
+					449.092635912274,
+					458.358411755041,
+					452.166161656988,
+					431.101955875789,
+					450.748653384889,
+					446.048968155789,
+					448.670991911584,
+					469.246637112425,
+					459.744162022907,
+					454.465577058327,
+					439.400382638528,
+					433.555735314914,
+					453.363845235394,
+					441.859111789578,
+					456.583616902096,
+					458.495751341919,
+					474.205593183596,
+					493.657247322277,
+					500.441189211422
+				],
+				"kobold_fuse": [
+					13.1577848691814,
+					12.6818962036045,
+					12.4309416606587,
+					12.9349701117041,
+					13.3592962009199,
+					13.2975279358279,
+					12.879814492749,
+					13.5326969030337,
+					13.2519011861359,
+					13.9220767985914,
+					14.2944146908903,
+					14.8139116027006,
+					14.4836191975746,
+					14.8888304868158,
+					14.6812347083963,
+					15.1025047194067,
+					15.6364500354599,
+					15.6158717990283,
+					15.6025464493941,
+					15.8795044965818,
+					16.2736197499859,
+					16.6710108182224,
+					16.4195804683473,
+					16.6692847953286
+				],
+				"mana_potion": [
+					25.5161993988368,
+					24.6067499214027,
+					24.4504847149018,
+					25.235729590127,
+					26.5047459532517,
+					25.8477144446875,
+					25.5453841851384,
+					26.4878356532129,
+					25.9237405491853,
+					27.1076126181247,
+					28.0791195590831,
+					29.3274333585817,
+					29.7681008339311,
+					28.4622352074398,
+					29.6126822226033,
+					30.1000879110272,
+					28.6306398938616,
+					28.16922117664,
+					28.8858877178228,
+					27.8144723814578,
+					28.3874828905591,
+					27.9809428287827,
+					28.5776547740872,
+					28.4818597103219
+				],
+				"meat": [
+					5.72846233733912,
+					5.86390762333962,
+					5.87007988171842,
+					6.06907321604625,
+					6.32103179947822,
+					6.43389141676972,
+					6.47495050374953,
+					6.73560922354023,
+					6.73765113262376,
+					6.87556730764731,
+					6.80885329484436,
+					6.44249205891375,
+					6.61294189785014,
+					6.66722628562196,
+					6.62223975162123,
+					6.34023567587746,
+					6.28116508703234,
+					6.43795419753732,
+					6.378061044428,
+					6.3826230683571,
+					6.66055108275088,
+					6.8962123232206,
+					6.69312011743935,
+					6.56205467694283
+				],
+				"mercy_stone": [
+					177.218281096707,
+					180.604104903395,
+					187.44485609859,
+					196.36386133823,
+					204.863819689007,
+					210.629948573146,
+					204.973554874732,
+					200.912840369126,
+					194.819725246753,
+					199.753611153831,
+					192.090799118189,
+					198.83748481224,
+					202.414001250149,
+					210.81107700868,
+					206.209290620283,
+					212.131342357418,
+					204.278884990295,
+					212.64733026197,
+					200.839598420386,
+					192.793419125002,
+					199.933901962657,
+					198.218055574888,
+					201.952743241842,
+					201.18820708113
+				],
+				"rune_ascend": [
+					430.445077959552,
+					415.423766378177,
+					418.614276958085,
+					400.332337392939,
+					395.895486875694,
+					398.227654117857,
+					407.598617430055,
+					386.582548701703,
+					374.867769335817,
+					375.943865743993,
+					371.227672080997,
+					361.03265108705,
+					374.603950953067,
+					367.984480914549,
+					376.621174796464,
+					393.581845879285,
+					395.322625824453,
+					379.039956799514,
+					377.026239172695,
+					376.695457154333,
+					378.849096561302,
+					388.221656582712,
+					375.203708626626,
+					362.941284907566
+				],
+				"rune_chaos": [
+					543.972394143263,
+					519.899274350235,
+					510.012474006893,
+					517.366509204024,
+					530.53724503303,
+					520.694887045032,
+					524.550631423797,
+					531.635936487958,
+					556.198505353762,
+					530.023984194666,
+					553.010365996519,
+					538.409882049207,
+					510.74073029432,
+					487.471639770323,
+					491.356603494055,
+					472.537441970993,
+					476.109356113156,
+					487.353799863631,
+					464.147044954066,
+					485.564589801994,
+					503.275884477241,
+					510.901849940071,
+					505.625037964552,
+					502.097028876169
+				],
+				"rune_erase": [
+					215.743165041823,
+					218.128271884308,
+					216.521025313836,
+					207.377660240422,
+					217.224240460295,
+					217.570382684354,
+					215.415156907014,
+					212.35207527334,
+					217.64753260841,
+					208.069313474541,
+					209.61901347343,
+					204.234882780165,
+					210.36446644255,
+					209.921688529277,
+					202.411151656553,
+					199.9760114282,
+					199.744334582777,
+					200.057584941847,
+					197.539355912079,
+					203.240851466378,
+					200.698358387308,
+					193.480869021951,
+					189.842389321086,
+					183.453259207981
+				],
+				"rune_growth": [
+					211.465156186509,
+					211.512689046019,
+					215.337486510936,
+					214.298405866667,
+					211.792150171915,
+					210.038872612481,
+					210.380501301167,
+					209.231509916872,
+					211.038928424557,
+					220.15757996347,
+					225.499226485698,
+					233.398300345775,
+					237.78647986849,
+					243.073833004273,
+					246.968518115882,
+					248.095342647003,
+					244.136900708682,
+					254.263458985642,
+					264.299035671873,
+					256.085621809669,
+					256.795227650285,
+					262.188147370794,
+					247.506686407233,
+					257.210647131295
+				],
+				"rune_polish": [
+					91.2352835954836,
+					95.5828972403199,
+					93.6735182884382,
+					91.9073953964978,
+					94.2811965945936,
+					89.3317632820765,
+					88.6753352035217,
+					92.0195866440382,
+					91.6628292748257,
+					92.9408450292398,
+					89.5481898790192,
+					88.3324786248869,
+					87.157819340133,
+					86.6125361970738,
+					85.5188735328215,
+					89.6960931297551,
+					88.4723683621527,
+					88.6892035389834,
+					90.2610416440037,
+					90.3469694895593,
+					93.2921890831435,
+					94.7879505861583,
+					93.6144391921889,
+					96.1285207611287
+				],
+				"rune_reforge": [
+					147.807022748971,
+					148.005191827732,
+					144.085234526088,
+					141.097040845269,
+					137.814871998651,
+					138.170045502816,
+					139.443782006204,
+					141.239895447637,
+					140.574625823331,
+					135.29202520596,
+					133.221607765004,
+					128.996093260857,
+					129.653982843136,
+					129.940487312872,
+					126.342641122368,
+					123.486935441336,
+					121.070804443504,
+					118.947502044439,
+					123.26977048073,
+					130.58235396301,
+					135.881189020938,
+					138.395968417085,
+					138.06981710951,
+					134.339221206204
+				],
+				"rune_seal": [
+					1821.54777458183,
+					1845.01270656428,
+					1801.83187909322,
+					1787.02972642688,
+					1744.80577466597,
+					1705.49571629071,
+					1653.59067557129,
+					1670.27372678731,
+					1680.22864182392,
+					1621.27564032542,
+					1672.44452869275,
+					1644.52303223544,
+					1631.10086479529,
+					1662.88784540232,
+					1645.33350117314,
+					1702.71281508285,
+					1706.23589765488,
+					1695.05145896387,
+					1674.56168685401,
+					1696.27297992611,
+					1647.52765831437,
+					1649.94144958278,
+					1592.18479134776,
+					1582.28667592808
+				],
+				"satyr_horn": [
+					25.3975793643799,
+					25.4727028754926,
+					26.4234164192045,
+					26.8331718695831,
+					26.9053811068087,
+					26.5668888825208,
+					27.3134729662539,
+					26.9444425881215,
+					27.3727955553741,
+					27.0304142563292,
+					26.1919986933736,
+					27.3228911878697,
+					26.7457124028901,
+					25.3378938261764,
+					24.1752013203176,
+					23.2779525474581,
+					23.2548241522785,
+					23.6400959576388,
+					23.6656676725159,
+					22.6911885762971,
+					22.9429304025187,
+					24.1375123112718,
+					23.1756931725321,
+					24.2804013450679
+				],
+				"spider_silk": [
+					16.6563413642012,
+					16.7244996877607,
+					16.319898692551,
+					16.929182793604,
+					16.9460228668561,
+					16.9978543613435,
+					16.4313757891046,
+					16.9419556257349,
+					16.3360946909326,
+					15.7868165724398,
+					15.9471707632364,
+					16.5132483468466,
+					15.937410296812,
+					15.5428903314466,
+					15.6064530393132,
+					15.4153280929566,
+					15.1584728481947,
+					14.9283496372483,
+					15.3111622178734,
+					14.7898291468514,
+					14.8125596234199,
+					15.3386319012646,
+					15.2238376630705,
+					15.1714902007544
+				],
+				"stone": [
+					4.74911552304463,
+					4.55320793257027,
+					4.50139179558584,
+					4.60023892362558,
+					4.60225802665526,
+					4.76960592619559,
+					4.70501944178322,
+					4.69701506014464,
+					4.90611436986147,
+					5.06965532198947,
+					4.89558221744281,
+					4.97179242458264,
+					4.9535301974182,
+					4.91169628054315,
+					4.93403444252028,
+					4.71276295428877,
+					4.51367976239737,
+					4.40689880771846,
+					4.27188111700766,
+					4.52490776896228,
+					4.33955100543113,
+					4.26843569019022,
+					4.21178464317124,
+					4.13001262386191
+				],
+				"storm_feather": [
+					46.946967529375,
+					47.0401146820352,
+					48.2915150960496,
+					45.7234261407294,
+					46.8825715596159,
+					48.339579029558,
+					47.1638230738725,
+					46.0480069974793,
+					46.4937948965097,
+					47.6705304960408,
+					49.6631822064377,
+					48.653462684985,
+					49.9341266764118,
+					52.0402955017539,
+					54.1506487428182,
+					55.2356188280321,
+					52.744825526059,
+					50.5451237856119,
+					47.7564047338224,
+					46.2800050698168,
+					43.927260423687,
+					43.2424462274048,
+					43.0519386038952,
+					44.914751579359
+				],
+				"weapon_stone": [
+					61.1540394152159,
+					62.6457345151626,
+					59.6880761029676,
+					59.3667455985983,
+					59.9016557322756,
+					57.0207014712535,
+					54.4885671203086,
+					53.1700882173887,
+					51.8124771789275,
+					54.1211250344229,
+					56.2809698514805,
+					58.557102363104,
+					58.9265843831998,
+					57.1778518514729,
+					56.0877109828987,
+					53.676425232526,
+					51.485753364332,
+					54.2171568230369,
+					54.0153698867381,
+					55.7755929722635,
+					54.2952491808487,
+					53.699384697033,
+					54.535504095171,
+					57.4102811148471
+				],
+				"weapon_stone_perfect": [
+					458.875445705832,
+					474.006755622431,
+					454.290747429109,
+					458.261508948332,
+					447.346859667103,
+					459.644333097904,
+					475.471351606904,
+					458.44836116028,
+					435.219286258455,
+					445.403186861609,
+					431.603445394836,
+					430.611599916895,
+					407.896178145362,
+					407.387396372745,
+					411.806016890682,
+					425.436786317299,
+					438.876179604285,
+					416.198421190756,
+					401.166635636841,
+					384.212752303119,
+					393.61593654278,
+					389.55088936462,
+					404.120995019204,
+					390.872972518258
+				],
+				"wolf_pelt": [
+					11.7862371132323,
+					11.8924109010152,
+					11.5295839969288,
+					11.0362881501599,
+					11.1086166894993,
+					11.5049913381915,
+					11.7139323542202,
+					11.8113560638427,
+					11.4306968181702,
+					11.4998132147154,
+					11.8147969064719,
+					12.4122470856332,
+					12.2538516774585,
+					11.714051454446,
+					11.2851195751543,
+					11.0757537219075,
+					11.0809873105872,
+					11.1625644121212,
+					10.6795950618889,
+					10.9129048940054,
+					11.0550943905136,
+					10.5635567610432,
+					10.2242657982583,
+					10.2558591446429
+				],
+				"wood": [
+					3.85981171852537,
+					3.99650294893554,
+					4.01160419670846,
+					4.04477637262327,
+					4.02131891177906,
+					3.86682946831676,
+					3.70145862141453,
+					3.59208038650556,
+					3.4869002979986,
+					3.6468730350091,
+					3.69488860362378,
+					3.86707400202332,
+					3.94928648584424,
+					4.02067345743184,
+					4.08336606779317,
+					4.18231344821771,
+					4.09359311649286,
+					3.9320617465832,
+					3.84252452512431,
+					3.78426095736015,
+					3.72389664646494,
+					3.68414019012675,
+					3.73120947346366,
+					3.64935197871882
+				]
+			},
+			"items": {
+				"gen_1172": {
+					"affixes": {
+						"dexterity": 1,
+						"health": 7,
+						"mana": 4,
+						"potion_power": 0.04
+					},
+					"base": "belt_t1",
+					"level": 10,
+					"name_stats": [
+						"dexterity",
+						"potion_power"
+					],
+					"quality": "rare",
+					"tiers": {
+						"dexterity": 43,
+						"health": 41,
+						"mana": 44,
+						"potion_power": 44
+					}
+				},
+				"gen_1247": {
+					"affixes": {
+						"cast_speed": 0.02,
+						"crit_chance": 0.01,
+						"dexterity": 1,
+						"vitality": 2
+					},
+					"base": "spellbook",
+					"level": 13,
+					"name_stats": [
+						"cast_speed",
+						"dexterity"
+					],
+					"quality": "rare",
+					"sockets": [
+						{}
+					],
+					"tiers": {
+						"cast_speed": 42,
+						"crit_chance": 39,
+						"dexterity": 41,
+						"vitality": 39
+					}
+				},
+				"gen_1248": {
+					"affixes": {
+						"crit_chance": 0.01,
+						"damage_percent": 0.02
+					},
+					"cut": 0,
+					"gem": true,
+					"kind": "onyx"
+				},
+				"gen_1249": {
+					"affixes": {
+						"crit_damage": 0.06,
+						"physical_damage": 0.04
+					},
+					"base": "iron_sword",
+					"level": 11,
+					"name_stats": [
+						"physical_damage",
+						"crit_damage"
+					],
+					"quality": "magic",
+					"tiers": {
+						"crit_damage": 42,
+						"physical_damage": 40
+					}
+				},
+				"gen_1250": {
+					"affixes": {
+						"cast_speed": 0.02,
+						"damage": 2,
+						"intelligence": 2,
+						"xp_gain": 0.02
+					},
+					"base": "ring_of_strength",
+					"level": 13,
+					"name_stats": [
+						"xp_gain",
+						"cast_speed"
+					],
+					"quality": "rare",
+					"sockets": [
+						{}
+					],
+					"tiers": {
+						"cast_speed": 45,
+						"damage": 39,
+						"intelligence": 37,
+						"xp_gain": 44
+					}
+				},
+				"gen_849": {
+					"affixes": {
+						"health": 5,
+						"health_regen": 0.3,
+						"mana_regen": 0.3,
+						"potion_power": 0.05,
+						"vitality": 2
+					},
+					"base": "belt_t1",
+					"level": 12,
+					"name_stats": [
+						"mana_regen",
+						"health_regen"
+					],
+					"quality": "rare",
+					"tiers": {
+						"health": 45,
+						"health_regen": 40,
+						"mana_regen": 43,
+						"potion_power": 42,
+						"vitality": 40
+					}
+				},
+				"gen_852": {
+					"affixes": {
+						"armor": 1,
+						"life_on_hit": 1,
+						"potion_power": 0.04,
+						"strength": 1
+					},
+					"base": "girdle_t1",
+					"level": 10,
+					"name_stats": [
+						"strength",
+						"armor"
+					],
+					"quality": "rare",
+					"tiers": {
+						"armor": 45,
+						"life_on_hit": 42,
+						"potion_power": 43,
+						"strength": 43
+					}
+				},
+				"gen_901": {
+					"affixes": {
+						"dodge_chance": 0.01,
+						"health": 6,
+						"mana": 6,
+						"mana_regen": 0.3,
+						"potion_power": 0.05,
+						"strength": 2
+					},
+					"base": "girdle_t1",
+					"level": 12,
+					"name_stats": [
+						"potion_power",
+						"dodge_chance"
+					],
+					"quality": "rare",
+					"tiers": {
+						"dodge_chance": 44,
+						"health": 43,
+						"mana": 40,
+						"mana_regen": 40,
+						"potion_power": 40,
+						"strength": 38
+					}
+				}
+			},
+			"listings": [
+				{
+					"age": 26,
+					"enchant": 0,
+					"id": "gen_849",
+					"mine": false,
+					"price": 222,
+					"seller": "Wszemir z Bagien"
+				},
+				{
+					"age": 23,
+					"enchant": 0,
+					"id": "gen_852",
+					"mine": false,
+					"price": 160,
+					"seller": "Jarosława Krucza"
+				},
+				{
+					"age": 19,
+					"enchant": 0,
+					"id": "gen_901",
+					"mine": false,
+					"price": 234,
+					"seller": "Jarosława Krucza"
+				},
+				{
+					"age": 7,
+					"enchant": 0,
+					"id": "gen_1172",
+					"mine": false,
+					"price": 138,
+					"seller": "Jarosława Krucza"
+				},
+				{
+					"age": 5,
+					"enchant": 0,
+					"id": "gen_1247",
+					"mine": false,
+					"price": 208,
+					"seller": "Jarosława Krucza"
+				},
+				{
+					"age": 4,
+					"enchant": 0,
+					"id": "gen_1248",
+					"mine": false,
+					"price": 83,
+					"seller": "Jarosława Krucza"
+				},
+				{
+					"age": 4,
+					"enchant": 0,
+					"id": "gen_1249",
+					"mine": false,
+					"price": 66,
+					"seller": "Jarosława Krucza"
+				},
+				{
+					"age": 0,
+					"enchant": 0,
+					"id": "gen_1250",
+					"mine": false,
+					"price": 188,
+					"seller": "Mścisław Wilczy"
+				}
+			],
+			"orders": [],
+			"prices": {
+				"armor_stone": 68.6233493729966,
+				"armor_stone_perfect": 421.583457564255,
+				"blessed_stone": 40.7126311925661,
+				"boar_hide": 13.0157359235714,
+				"bone_dust": 15.6420561213233,
+				"crystal_heart": 926.993244560262,
+				"deer_hide": 11.2855944438425,
+				"fish": 5.41154259670114,
+				"frog_tongue": 14.3350065844202,
+				"goat_hide": 15.7814662881103,
+				"goblin_heart": 9.65986070771219,
+				"greater_health_potion": 89.5752545374341,
+				"greater_mana_potion": 93.9060281237285,
+				"health_potion": 30.1501950467976,
+				"herb_arnica": 24.6813490057189,
+				"herb_calamus": 21.5810567341622,
+				"herb_chamomile": 16.636599409791,
+				"herb_datura": 39.3208582785381,
+				"herb_fern": 88.5054408579714,
+				"herb_wort": 11.1851926804677,
+				"hydra_scale": 60.3689283504013,
+				"iron_ore": 14.6967588906732,
+				"jewelry_stone": 65.9685338506534,
+				"jewelry_stone_perfect": 500.441189211422,
+				"kobold_fuse": 16.6692847953286,
+				"mana_potion": 28.4818597103219,
+				"meat": 6.56205467694283,
+				"mercy_stone": 201.18820708113,
+				"rune_ascend": 362.941284907566,
+				"rune_chaos": 502.097028876169,
+				"rune_erase": 183.453259207981,
+				"rune_growth": 257.210647131295,
+				"rune_polish": 96.1285207611287,
+				"rune_reforge": 134.339221206204,
+				"rune_seal": 1582.28667592808,
+				"satyr_horn": 24.2804013450679,
+				"spider_silk": 15.1714902007544,
+				"stone": 4.13001262386191,
+				"storm_feather": 44.914751579359,
+				"weapon_stone": 57.4102811148471,
+				"weapon_stone_perfect": 390.872972518258,
+				"wolf_pelt": 10.2558591446429,
+				"wood": 3.64935197871882
+			}
+		},
+		"position": [
+			1584.0,
+			997.200012207031
+		],
+		"quests": {
+			"bounties": {
+				"defs": {},
+				"done": 0,
+				"offers": [],
+				"serial": 0,
+				"time": 0
+			},
+			"events": {
+				"codex": 2,
+				"crystal_done": 3,
+				"dungeon_clear": 16
+			},
+			"progress": {
+				"goblin_purge": 50,
+				"jeweler_gem": 1,
+				"main_ancient": 1,
+				"main_bombardier": 1,
+				"main_build": 1,
+				"main_codex": 1,
+				"main_crystal": 1,
+				"main_dungeon": 1,
+				"main_eagle": 1,
+				"main_ember": 1,
+				"main_fields": 1,
+				"main_gem": 1,
+				"main_gruzlog": 1,
+				"main_herbs": 1,
+				"main_hydra": 1,
+				"main_pass": 1,
+				"main_swamp": 1,
+				"main_tree": 3,
+				"main_village": 1,
+				"main_watra": 2,
+				"main_wolves": 1,
+				"village_help": 50
+			},
+			"states": {
+				"goblin_purge": "done",
+				"jeweler_gem": "done",
+				"main_ancient": "done",
+				"main_bombardier": "done",
+				"main_build": "done",
+				"main_codex": "done",
+				"main_crystal": "done",
+				"main_dungeon": "done",
+				"main_eagle": "done",
+				"main_ember": "done",
+				"main_fields": "done",
+				"main_gem": "done",
+				"main_gruzlog": "done",
+				"main_herbs": "done",
+				"main_hydra": "done",
+				"main_pass": "done",
+				"main_swamp": "done",
+				"main_tree": "done",
+				"main_village": "done",
+				"main_watra": "done",
+				"main_wolves": "done",
+				"village_help": "done"
+			},
+			"tracked": []
+		},
+		"skarbnik": "1793727770_204984189",
+		"skills": {
+			"bonus_points": 6,
+			"gems": {},
+			"levels": {
+				"ballista": 5,
+				"battle_focus": 5,
+				"flicker": 5,
+				"mana_stream": 5,
+				"seeker": 5,
+				"whirlwind": 5
+			},
+			"nodes": {
+				"bow": [
+					"power_shot",
+					"power_charge",
+					"power_dmg",
+					"ballista",
+					"multishot",
+					"phys_b1",
+					"arrow_rain",
+					"rain_dmg",
+					"hail",
+					"seeker",
+					"rapid_volley",
+					"crit_b1",
+					"falcon",
+					"crit_b2",
+					"wind_arrow",
+					"hunter_patience",
+					"venom_arrows",
+					"venom_dmg",
+					"shadow_hunter",
+					"hunter_breath",
+					"hp_b1",
+					"snare"
+				],
+				"melee": [
+					"whirlwind",
+					"phys_1",
+					"flicker",
+					"battle_focus",
+					"smoke_burst",
+					"smoke_charge",
+					"cast_1",
+					"cast_2",
+					"mana_regen",
+					"flicker_focus",
+					"lunge",
+					"crescent",
+					"crit_1",
+					"ground_slam",
+					"crit_2",
+					"riposte",
+					"smoke_dmg",
+					"smoke_shadow",
+					"spectral_blades",
+					"warrior_blood",
+					"hp_1",
+					"war_cry"
+				],
+				"spell": [
+					"chain_lightning",
+					"frost_lance",
+					"thunder_wave",
+					"mana_stream",
+					"lance_dmg",
+					"ice_dmg",
+					"blizzard",
+					"fireball",
+					"fire_b1",
+					"meteor",
+					"blink",
+					"blink_cd",
+					"blood_sacrifice",
+					"crit_s1",
+					"crit_s2",
+					"ball_lightning",
+					"storm_call",
+					"storm_time",
+					"echo_runes",
+					"cdr_s",
+					"chain_more",
+					"rune_power",
+					"rune_stone"
+				]
+			}
+		},
+		"stats": {
+			"attributes": {
+				"dexterity": 0,
+				"intelligence": 0,
+				"strength": 27,
+				"vitality": 0
+			},
+			"gold": 156621,
+			"level": 103,
+			"unspent_points": 75,
+			"xp": 9055
+		},
+		"storage": [
+			{
+				"count": 45,
+				"id": "stone"
+			},
+			{
+				"count": 90,
+				"id": "wood"
+			},
+			{
+				"count": 5,
+				"id": "herb_wort"
+			},
+			{
+				"count": 3,
+				"id": "greater_health_potion"
+			},
+			{
+				"count": 9,
+				"id": "iron_ore"
+			},
+			{
+				"count": 28,
+				"id": "blessed_stone"
+			},
+			{
+				"count": 2,
+				"id": "rune_chaos"
+			},
+			{
+				"count": 5,
+				"id": "crystal_heart"
+			},
+			{
+				"count": 13,
+				"id": "victory_mark"
+			},
+			{
+				"count": 1,
+				"id": "gen_678"
+			},
+			{
+				"count": 1,
+				"id": "gen_682"
+			},
+			{
+				"count": 1,
+				"id": "gen_716"
+			},
+			{
+				"count": 1,
+				"id": "gen_741"
+			},
+			{
+				"count": 1,
+				"id": "gen_714"
+			},
+			{
+				"count": 1,
+				"id": "gen_735"
+			},
+			{
+				"count": 1,
+				"id": "gen_732"
+			},
+			{
+				"count": 1,
+				"id": "gen_740"
+			},
+			{
+				"count": 1,
+				"id": "gen_737"
+			},
+			{
+				"count": 1,
+				"id": "idol_horde_rare"
+			},
+			{
+				"count": 1,
+				"id": "idol_uroczysko_legendary"
+			},
+			{
+				"count": 1,
+				"id": "gen_784"
+			},
+			{
+				"count": 1,
+				"id": "gen_739"
+			},
+			{
+				"count": 1,
+				"id": "gen_642"
+			},
+			{
+				"count": 1,
+				"id": "gen_710"
+			},
+			{
+				"count": 1,
+				"id": "gen_669"
+			},
+			{
+				"count": 1,
+				"id": "gen_644"
+			},
+			{
+				"count": 5,
+				"id": "rune_reforge"
+			},
+			{
+				"count": 4,
+				"id": "rune_growth"
+			},
+			{
+				"count": 5,
+				"id": "rune_erase"
+			},
+			{
+				"count": 6,
+				"id": "rune_ascend"
+			},
+			{
+				"count": 13,
+				"id": "rune_polish"
+			},
+			{
+				"count": 3,
+				"id": "mercy_stone"
+			},
+			{
+				"count": 1,
+				"id": "jewelry_stone"
+			},
+			{
+				"count": 1,
+				"id": "weapon_stone"
+			},
+			{
+				"count": 1,
+				"id": "idol_shrine_common"
+			},
+			{
+				"count": 1,
+				"id": "idol_ore_common"
+			},
+			{
+				"count": 1,
+				"id": "gen_643"
+			},
+			{
+				"count": 1,
+				"id": "armor_stone_perfect"
+			},
+			{
+				"count": 1,
+				"id": "armor_stone"
+			},
+			{
+				"count": 1,
+				"id": "gen_811"
+			},
+			{
+				"count": 1,
+				"id": "gen_813"
+			},
+			{
+				"count": 1,
+				"id": "gen_812"
+			},
+			{
+				"count": 1,
+				"id": "gen_810"
+			},
+			{
+				"count": 1,
+				"id": "gen_1019"
+			},
+			{
+				"count": 1,
+				"id": "gen_1156"
+			},
+			{
+				"count": 1,
+				"id": "gen_1063"
+			},
+			{
+				"count": 1,
+				"id": "gen_1001"
+			},
+			{
+				"count": 1,
+				"id": "gen_1065"
+			},
+			{
+				"count": 1,
+				"id": "gen_1079"
+			},
+			{
+				"count": 1,
+				"id": "gen_1000"
+			},
+			{
+				"count": 1,
+				"id": "gen_1100"
+			},
+			{
+				"count": 1,
+				"id": "gen_1129"
+			},
+			{
+				"count": 1,
+				"id": "gen_1026"
+			},
+			{
+				"count": 1,
+				"id": "gen_1036"
+			},
+			{
+				"count": 1,
+				"id": "gen_1033"
+			},
+			{
+				"count": 1,
+				"id": "gen_1213"
+			},
+			{
+				"count": 1,
+				"id": "gen_1025"
+			},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{}
+		],
+		"travelers": {
+			"fame": 8,
+			"mode": "realistic",
+			"party": [],
+			"party_ticks": 0,
+			"rank": 0,
+			"roster": [
+				{
+					"deaths": 6,
+					"fame": 488,
+					"female": true,
+					"gear": "zwykły",
+					"kills": 485,
+					"level": 11,
+					"look": "soldier_b",
+					"name": "Jarosława Krucza",
+					"state": "hunt",
+					"temper": "friendly",
+					"wait": 3,
+					"weapon": "melee",
+					"xp": 23,
+					"zone": "swamp"
+				},
+				{
+					"deaths": 9,
+					"fame": 586,
+					"female": false,
+					"gear": "rzadki",
+					"kills": 612,
+					"level": 12,
+					"look": "soldier_c",
+					"name": "Mścisław Wilczy",
+					"state": "hunt",
+					"temper": "friendly",
+					"wait": 0,
+					"weapon": "melee",
+					"xp": 27,
+					"zone": "swamp"
+				},
+				{
+					"deaths": 7,
+					"fame": 528,
+					"female": false,
+					"gear": "zwykły",
+					"kills": 534,
+					"level": 12,
+					"look": "soldier_b",
+					"name": "Wszemir z Bagien",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 0,
+					"weapon": "melee",
+					"xp": 12,
+					"zone": "forest"
+				},
+				{
+					"deaths": 8,
+					"fame": 475,
+					"female": false,
+					"gear": "zwykły",
+					"kills": 485,
+					"level": 11,
+					"look": "hunter_b",
+					"name": "Unisław Rudy",
+					"state": "dead",
+					"temper": "friendly",
+					"wait": 2,
+					"weapon": "bow",
+					"xp": 29,
+					"zone": "swamp"
+				},
+				{
+					"deaths": 0,
+					"fame": 30,
+					"female": true,
+					"gear": "zwykły",
+					"kills": 99,
+					"level": 3,
+					"look": "guard",
+					"name": "Czesława z Gór",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 0,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 0,
+					"fame": 33,
+					"female": false,
+					"gear": "zwykły",
+					"kills": 99,
+					"level": 3,
+					"look": "soldier_c",
+					"name": "Sobiesław",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 3,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 1,
+					"fame": 24,
+					"female": true,
+					"gear": "zwykły",
+					"kills": 78,
+					"level": 3,
+					"look": "adventurer_a",
+					"name": "Bożena Mocna",
+					"state": "town",
+					"temper": "bandit",
+					"wait": 0,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 0,
+					"fame": 20,
+					"female": false,
+					"gear": "zwykły",
+					"kills": 100,
+					"level": 4,
+					"look": "guard",
+					"name": "Gniewko",
+					"state": "town",
+					"temper": "duelist",
+					"wait": 1,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 0,
+					"fame": 55,
+					"female": true,
+					"gear": "zwykły",
+					"kills": 175,
+					"level": 5,
+					"look": "guard",
+					"name": "Miłosława Łowczyni",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 0,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 1,
+					"fame": 35,
+					"female": false,
+					"gear": "magiczny",
+					"kills": 90,
+					"level": 5,
+					"look": "hunter_b",
+					"name": "Krzesimir Łowca",
+					"state": "town",
+					"temper": "duelist",
+					"wait": 1,
+					"weapon": "bow",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 2,
+					"fame": 48,
+					"female": true,
+					"gear": "zwykły",
+					"kills": 108,
+					"level": 6,
+					"look": "soldier_c",
+					"name": "Grzymisława z Gór",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 1,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 2,
+					"fame": 60,
+					"female": false,
+					"gear": "zwykły",
+					"kills": 54,
+					"level": 6,
+					"look": "guard",
+					"name": "Świętosław",
+					"state": "town",
+					"temper": "bandit",
+					"wait": 1,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 1,
+					"fame": 72,
+					"female": true,
+					"gear": "zwykły",
+					"kills": 176,
+					"level": 8,
+					"look": "soldier_b",
+					"name": "Dobrawa Krucza",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 2,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 2,
+					"fame": 90,
+					"female": false,
+					"gear": "zwykły",
+					"kills": 135,
+					"level": 9,
+					"look": "soldier_a",
+					"name": "Bożydar",
+					"state": "town",
+					"temper": "bandit",
+					"wait": 3,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 2,
+					"fame": 88,
+					"female": true,
+					"gear": "zwykły",
+					"kills": 374,
+					"level": 11,
+					"look": "soldier_a",
+					"name": "Grzymisława",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 3,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 0,
+					"fame": 84,
+					"female": false,
+					"gear": "magiczny",
+					"kills": 36,
+					"level": 12,
+					"look": "soldier_c",
+					"name": "Dalibor",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 1,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 0,
+					"fame": 104,
+					"female": false,
+					"gear": "magiczny",
+					"kills": 390,
+					"level": 13,
+					"look": "adventurer_b",
+					"name": "Bogumił",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 0,
+					"weapon": "spell",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 3,
+					"fame": 98,
+					"female": true,
+					"gear": "magiczny",
+					"kills": 434,
+					"level": 14,
+					"look": "soldier_b",
+					"name": "Miłosława Młoda",
+					"state": "town",
+					"temper": "duelist",
+					"wait": 3,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 2,
+					"fame": 112,
+					"female": true,
+					"gear": "magiczny",
+					"kills": 448,
+					"level": 14,
+					"look": "hunter_d",
+					"name": "Jagna",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 2,
+					"weapon": "bow",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 3,
+					"fame": 140,
+					"female": false,
+					"gear": "rzadki",
+					"kills": 238,
+					"level": 14,
+					"look": "soldier_a",
+					"name": "Stanimir",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 0,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 0,
+					"fame": 126,
+					"female": true,
+					"gear": "magiczny",
+					"kills": 224,
+					"level": 14,
+					"look": "hunter",
+					"name": "Wanda",
+					"state": "town",
+					"temper": "duelist",
+					"wait": 0,
+					"weapon": "bow",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 2,
+					"fame": 135,
+					"female": false,
+					"gear": "magiczny",
+					"kills": 150,
+					"level": 15,
+					"look": "sage",
+					"name": "Gniewko z Bagien",
+					"state": "town",
+					"temper": "bandit",
+					"wait": 0,
+					"weapon": "spell",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 5,
+					"fame": 144,
+					"female": false,
+					"gear": "magiczny",
+					"kills": 272,
+					"level": 16,
+					"look": "hunter",
+					"name": "Bogumił Mocny",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 0,
+					"weapon": "bow",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 1,
+					"fame": 187,
+					"female": false,
+					"gear": "rzadki",
+					"kills": 578,
+					"level": 17,
+					"look": "guard",
+					"name": "Gniewko Młody",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 2,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 6,
+					"fame": 180,
+					"female": true,
+					"gear": "magiczny",
+					"kills": 630,
+					"level": 18,
+					"look": "guard",
+					"name": "Zbysława Siwa",
+					"state": "town",
+					"temper": "bandit",
+					"wait": 1,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 3,
+					"fame": 198,
+					"female": false,
+					"gear": "rzadki",
+					"kills": 486,
+					"level": 18,
+					"look": "adventurer_b",
+					"name": "Unisław",
+					"state": "town",
+					"temper": "duelist",
+					"wait": 3,
+					"weapon": "spell",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 3,
+					"fame": 147,
+					"female": true,
+					"gear": "magiczny",
+					"kills": 336,
+					"level": 21,
+					"look": "hunter",
+					"name": "Dobromiła",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 2,
+					"weapon": "bow",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 6,
+					"fame": 168,
+					"female": true,
+					"gear": "rzadki",
+					"kills": 696,
+					"level": 24,
+					"look": "hunter",
+					"name": "Czesława Wilcza",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 2,
+					"weapon": "bow",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 8,
+					"fame": 224,
+					"female": true,
+					"gear": "rzadki",
+					"kills": 700,
+					"level": 28,
+					"look": "soldier_a",
+					"name": "Dobrawa",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 0,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 5,
+					"fame": 280,
+					"female": false,
+					"gear": "rzadki",
+					"kills": 1120,
+					"level": 28,
+					"look": "adventurer_b",
+					"name": "Witosław",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 1,
+					"weapon": "spell",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 1,
+					"fame": 203,
+					"female": false,
+					"gear": "rzadki",
+					"kills": 116,
+					"level": 29,
+					"look": "adventurer_a",
+					"name": "Witosław Kruk",
+					"state": "town",
+					"temper": "duelist",
+					"wait": 3,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 8,
+					"fame": 240,
+					"female": false,
+					"gear": "rzadki",
+					"kills": 270,
+					"level": 30,
+					"look": "adventurer_a",
+					"name": "Bożydar Kruk",
+					"state": "town",
+					"temper": "duelist",
+					"wait": 0,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 7,
+					"fame": 210,
+					"female": true,
+					"gear": "rzadki",
+					"kills": 690,
+					"level": 30,
+					"look": "guard",
+					"name": "Wiesława",
+					"state": "town",
+					"temper": "duelist",
+					"wait": 1,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 7,
+					"fame": 155,
+					"female": true,
+					"gear": "rzadki",
+					"kills": 0,
+					"level": 31,
+					"look": "adventurer_a",
+					"name": "Dobromiła Młoda",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 1,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 1,
+					"fame": 340,
+					"female": true,
+					"gear": "rzadki",
+					"kills": 1360,
+					"level": 34,
+					"look": "adventurer_a",
+					"name": "Świętomira",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 1,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 7,
+					"fame": 306,
+					"female": true,
+					"gear": "legendarny",
+					"kills": 170,
+					"level": 34,
+					"look": "hunter_d",
+					"name": "Zbysława",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 1,
+					"weapon": "bow",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 3,
+					"fame": 340,
+					"female": false,
+					"gear": "legendarny",
+					"kills": 1190,
+					"level": 34,
+					"look": "hunter_c",
+					"name": "Krzesimir",
+					"state": "town",
+					"temper": "duelist",
+					"wait": 1,
+					"weapon": "bow",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 6,
+					"fame": 175,
+					"female": true,
+					"gear": "legendarny",
+					"kills": 210,
+					"level": 35,
+					"look": "soldier_b",
+					"name": "Bożena",
+					"state": "town",
+					"temper": "duelist",
+					"wait": 1,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 0,
+					"fame": 429,
+					"female": false,
+					"gear": "legendarny",
+					"kills": 1131,
+					"level": 39,
+					"look": "adventurer_a",
+					"name": "Radomir Młody",
+					"state": "town",
+					"temper": "duelist",
+					"wait": 2,
+					"weapon": "melee",
+					"xp": 0,
+					"zone": "forest"
+				},
+				{
+					"deaths": 13,
+					"fame": 451,
+					"female": false,
+					"gear": "legendarny",
+					"kills": 123,
+					"level": 41,
+					"look": "hunter_d",
+					"name": "Radomir",
+					"state": "town",
+					"temper": "friendly",
+					"wait": 0,
+					"weapon": "bow",
+					"xp": 0,
+					"zone": "forest"
+				}
+			]
+		}
+	},
+	"saved_at": "2026-11-03 19:33:39",
+	"seed": 364752406,
+	"shrines": {
+		"eagle_pass": [
+			75.5,
+			94.5
+		],
+		"grave_chapel": [
+			91.0,
+			88.0
+		],
+		"old_mill": [
+			120.5,
+			86.0
+		],
+		"old_oak": [
+			112.5,
+			92.0
+		],
+		"ostoja": [
+			107.25,
+			59.8250007629395
+		],
+		"swamp_ford": [
+			93.0,
+			73.9000015258789
+		]
+	},
+	"version": 1,
+	"zone": "forest",
+	"zones": {
+		"ancient": {
+			"dead_goblins": [
+				{
+					"id": 299.0,
+					"time": 27.3746256667078
+				},
+				{
+					"id": 301.0,
+					"time": 27.3746256667078
+				},
+				{
+					"id": 300.0,
+					"time": 27.6919886667081
+				},
+				{
+					"id": 0.0,
+					"time": 249.824247666691
+				},
+				{
+					"id": 279.0,
+					"time": 80.5434820000193
+				},
+				{
+					"id": 281.0,
+					"time": 80.5434820000193
+				},
+				{
+					"id": 512.0,
+					"time": 80.6936940000192
+				},
+				{
+					"id": 511.0,
+					"time": 80.8936500000192
+				},
+				{
+					"id": 510.0,
+					"time": 80.8936500000192
+				},
+				{
+					"id": 513.0,
+					"time": 80.9931390000192
+				},
+				{
+					"id": 280.0,
+					"time": 81.1097870000191
+				},
+				{
+					"id": 324.0,
+					"time": 85.675883000017
+				},
+				{
+					"id": 325.0,
+					"time": 85.692547000017
+				},
+				{
+					"id": 323.0,
+					"time": 85.7758670000169
+				},
+				{
+					"id": 55.0,
+					"time": 0.440499999996057
+				},
+				{
+					"id": 54.0,
+					"time": 0.490491999996057
+				},
+				{
+					"id": 52.0,
+					"time": 0.557147999996057
+				},
+				{
+					"id": 53.0,
+					"time": 0.590475999996053
+				},
+				{
+					"id": 51.0,
+					"time": 0.640467999996054
+				},
+				{
+					"id": 44.0,
+					"time": 4.87728999999602
+				},
+				{
+					"id": 45.0,
+					"time": 4.87728999999602
+				},
+				{
+					"id": 42.0,
+					"time": 4.87728999999602
+				},
+				{
+					"id": 43.0,
+					"time": 5.02726599999607
+				},
+				{
+					"id": 41.0,
+					"time": 5.32721799999606
+				},
+				{
+					"id": 28.0,
+					"time": 18.3126399999961
+				},
+				{
+					"id": 29.0,
+					"time": 18.3626319999962
+				},
+				{
+					"id": 30.0,
+					"time": 18.3626319999962
+				},
+				{
+					"id": 27.0,
+					"time": 18.4126239999962
+				},
+				{
+					"id": 33.0,
+					"time": 18.5126079999962
+				},
+				{
+					"id": 34.0,
+					"time": 18.5625999999962
+				},
+				{
+					"id": 32.0,
+					"time": 18.6125919999962
+				},
+				{
+					"id": 26.0,
+					"time": 18.6625839999963
+				},
+				{
+					"id": 35.0,
+					"time": 18.7625679999963
+				},
+				{
+					"id": 24.0,
+					"time": 18.8128969999963
+				},
+				{
+					"id": 22.0,
+					"time": 18.9129009999963
+				},
+				{
+					"id": 21.0,
+					"time": 19.0628779999963
+				},
+				{
+					"id": 23.0,
+					"time": 19.0628779999963
+				},
+				{
+					"id": 25.0,
+					"time": 19.0628779999963
+				},
+				{
+					"id": 31.0,
+					"time": 20.4293259999968
+				},
+				{
+					"id": 386.0,
+					"time": 27.3115579999992
+				},
+				{
+					"id": 388.0,
+					"time": 27.3115579999992
+				},
+				{
+					"id": 389.0,
+					"time": 27.3115579999992
+				},
+				{
+					"id": 390.0,
+					"time": 27.3115579999992
+				},
+				{
+					"id": 387.0,
+					"time": 27.3115579999992
+				}
+			],
+			"stumps": []
+		},
+		"cemetery": {
+			"dead_goblins": [
+				{
+					"id": 611.0,
+					"time": 1.684175
+				},
+				{
+					"id": 612.0,
+					"time": 1.684175
+				},
+				{
+					"id": 614.0,
+					"time": 1.684175
+				},
+				{
+					"id": 610.0,
+					"time": 1.826346
+				},
+				{
+					"id": 613.0,
+					"time": 1.826346
+				},
+				{
+					"id": 594.0,
+					"time": 2.75528799999994
+				},
+				{
+					"id": 595.0,
+					"time": 2.75528799999994
+				},
+				{
+					"id": 596.0,
+					"time": 2.75528799999994
+				},
+				{
+					"id": 593.0,
+					"time": 2.90531899999993
+				},
+				{
+					"id": 638.0,
+					"time": 14.886822
+				},
+				{
+					"id": 639.0,
+					"time": 14.886822
+				},
+				{
+					"id": 641.0,
+					"time": 14.886822
+				},
+				{
+					"id": 640.0,
+					"time": 14.937183
+				},
+				{
+					"id": 637.0,
+					"time": 14.989082
+				}
+			],
+			"stumps": []
+		},
+		"fields": {
+			"dead_goblins": [
+				{
+					"id": 13.0,
+					"time": 0.262679000000023
+				},
+				{
+					"id": 15.0,
+					"time": 0.262679000000023
+				},
+				{
+					"id": 65.0,
+					"time": 0.262679000000023
+				},
+				{
+					"id": 61.0,
+					"time": 0.579295000000021
+				},
+				{
+					"id": 62.0,
+					"time": 0.579295000000021
+				},
+				{
+					"id": 63.0,
+					"time": 0.579295000000021
+				},
+				{
+					"id": 64.0,
+					"time": 0.579295000000021
+				},
+				{
+					"id": 66.0,
+					"time": 0.579295000000021
+				},
+				{
+					"id": 67.0,
+					"time": 0.579295000000021
+				},
+				{
+					"id": 18.0,
+					"time": 0.891745000000017
+				},
+				{
+					"id": 19.0,
+					"time": 0.891745000000017
+				},
+				{
+					"id": 20.0,
+					"time": 0.891745000000017
+				},
+				{
+					"id": 24.0,
+					"time": 0.891745000000017
+				},
+				{
+					"id": 25.0,
+					"time": 0.891745000000017
+				},
+				{
+					"id": 21.0,
+					"time": 1.22502500000001
+				},
+				{
+					"id": 23.0,
+					"time": 1.22502500000001
+				},
+				{
+					"id": 70.0,
+					"time": 1.52970100000001
+				},
+				{
+					"id": 71.0,
+					"time": 1.52970100000001
+				},
+				{
+					"id": 72.0,
+					"time": 1.52970100000001
+				},
+				{
+					"id": 75.0,
+					"time": 1.52970100000001
+				},
+				{
+					"id": 77.0,
+					"time": 1.52970100000001
+				},
+				{
+					"id": 78.0,
+					"time": 1.52970100000001
+				},
+				{
+					"id": 79.0,
+					"time": 1.52970100000001
+				},
+				{
+					"id": 81.0,
+					"time": 1.52970100000001
+				},
+				{
+					"id": 82.0,
+					"time": 1.52970100000001
+				},
+				{
+					"id": 84.0,
+					"time": 1.52970100000001
+				},
+				{
+					"id": 27.0,
+					"time": 1.837526
+				},
+				{
+					"id": 30.0,
+					"time": 1.837526
+				},
+				{
+					"id": 31.0,
+					"time": 1.837526
+				},
+				{
+					"id": 32.0,
+					"time": 1.837526
+				},
+				{
+					"id": 33.0,
+					"time": 1.837526
+				},
+				{
+					"id": 42.0,
+					"time": 1.837526
+				},
+				{
+					"id": 80.0,
+					"time": 1.837526
+				},
+				{
+					"id": 83.0,
+					"time": 1.837526
+				},
+				{
+					"id": 85.0,
+					"time": 1.837526
+				},
+				{
+					"id": 87.0,
+					"time": 1.837526
+				},
+				{
+					"id": 88.0,
+					"time": 1.837526
+				},
+				{
+					"id": 89.0,
+					"time": 1.837526
+				},
+				{
+					"id": 39.0,
+					"time": 0.154363000000025
+				},
+				{
+					"id": 41.0,
+					"time": 0.154363000000025
+				},
+				{
+					"id": 44.0,
+					"time": 0.154363000000025
+				},
+				{
+					"id": 46.0,
+					"time": 0.154363000000025
+				},
+				{
+					"id": 94.0,
+					"time": 0.154363000000025
+				},
+				{
+					"id": 196.0,
+					"time": 0.154363000000025
+				},
+				{
+					"id": 200.0,
+					"time": 0.154363000000025
+				},
+				{
+					"id": 40.0,
+					"time": 0.466813000000024
+				},
+				{
+					"id": 198.0,
+					"time": 0.466813000000024
+				},
+				{
+					"id": 34.0,
+					"time": 0.791761000000017
+				},
+				{
+					"id": 35.0,
+					"time": 0.791761000000017
+				},
+				{
+					"id": 36.0,
+					"time": 0.791761000000017
+				},
+				{
+					"id": 37.0,
+					"time": 0.791761000000017
+				},
+				{
+					"id": 50.0,
+					"time": 1.10421100000001
+				},
+				{
+					"id": 51.0,
+					"time": 1.10421100000001
+				},
+				{
+					"id": 52.0,
+					"time": 1.10421100000001
+				},
+				{
+					"id": 96.0,
+					"time": 1.10421100000001
+				},
+				{
+					"id": 22.0,
+					"time": 1.74170800000001
+				},
+				{
+					"id": 68.0,
+					"time": 1.74170800000001
+				},
+				{
+					"id": 69.0,
+					"time": 1.74170800000001
+				},
+				{
+					"id": 26.0,
+					"time": 0.0543790000000254
+				},
+				{
+					"id": 28.0,
+					"time": 0.0543790000000254
+				},
+				{
+					"id": 74.0,
+					"time": 0.0543790000000254
+				},
+				{
+					"id": 76.0,
+					"time": 0.0543790000000254
+				},
+				{
+					"id": 38.0,
+					"time": 0.358497000000023
+				},
+				{
+					"id": 86.0,
+					"time": 0.358497000000023
+				},
+				{
+					"id": 195.0,
+					"time": 0.358497000000023
+				},
+				{
+					"id": 43.0,
+					"time": 0.683445000000018
+				},
+				{
+					"id": 14.0,
+					"time": 1.00839300000002
+				},
+				{
+					"id": 16.0,
+					"time": 1.00839300000002
+				},
+				{
+					"id": 49.0,
+					"time": 1.00839300000002
+				},
+				{
+					"id": 90.0,
+					"time": 1.00839300000002
+				},
+				{
+					"id": 91.0,
+					"time": 1.00839300000002
+				},
+				{
+					"id": 92.0,
+					"time": 1.00839300000002
+				},
+				{
+					"id": 93.0,
+					"time": 1.00839300000002
+				},
+				{
+					"id": 95.0,
+					"time": 1.00839300000002
+				},
+				{
+					"id": 97.0,
+					"time": 1.00839300000002
+				},
+				{
+					"id": 98.0,
+					"time": 1.00839300000002
+				},
+				{
+					"id": 99.0,
+					"time": 1.00839300000002
+				},
+				{
+					"id": 100.0,
+					"time": 1.00839300000002
+				},
+				{
+					"id": 199.0,
+					"time": 1.950008
+				},
+				{
+					"id": 29.0,
+					"time": 0.26977799999785
+				},
+				{
+					"id": 73.0,
+					"time": 0.579083999997745
+				},
+				{
+					"id": 197.0,
+					"time": 0.905149999997619
+				},
+				{
+					"id": 45.0,
+					"time": 1.97055399999723
+				},
+				{
+					"id": 201.0,
+					"time": 276.40188200001
+				}
+			],
+			"stumps": [
+				[
+					1641.67517089844,
+					170.182525634766,
+					101.875492417372
+				]
+			]
+		},
+		"forest": {
+			"dead_goblins": [],
+			"settlement": {
+				"projects": {
+					"infirmary": [
+						"built",
+						0.0
+					]
+				}
+			},
+			"stumps": []
+		},
+		"mountains": {
+			"dead_goblins": [
+				{
+					"id": 36.0,
+					"time": 88.9164190000252
+				},
+				{
+					"id": 283.0,
+					"time": 112.182534000014
+				},
+				{
+					"id": 35.0,
+					"time": 55.1475033333463
+				},
+				{
+					"id": 287.0,
+					"time": 0.583006333330929
+				},
+				{
+					"id": 377.0,
+					"time": 0.583006333330929
+				},
+				{
+					"id": 523.0,
+					"time": 1.01176133333085
+				},
+				{
+					"id": 311.0,
+					"time": 1.54494833333066
+				},
+				{
+					"id": 289.0,
+					"time": 1.65024133333063
+				},
+				{
+					"id": 340.0,
+					"time": 1.7004943333306
+				},
+				{
+					"id": 312.0,
+					"time": 1.7004943333306
+				},
+				{
+					"id": 316.0,
+					"time": 1.9234283333305
+				},
+				{
+					"id": 341.0,
+					"time": 1.9234283333305
+				},
+				{
+					"id": 338.0,
+					"time": 2.12947033333043
+				},
+				{
+					"id": 314.0,
+					"time": 2.23371533333041
+				},
+				{
+					"id": 315.0,
+					"time": 2.2878733333304
+				},
+				{
+					"id": 285.0,
+					"time": 2.61282133333041
+				},
+				{
+					"id": 339.0,
+					"time": 2.6628133333304
+				},
+				{
+					"id": 34.0,
+					"time": 64.7124853333431
+				},
+				{
+					"id": 33.0,
+					"time": 64.7624773333431
+				},
+				{
+					"id": 308.0,
+					"time": 5.94443633333023
+				},
+				{
+					"id": 310.0,
+					"time": 6.12026333333013
+				},
+				{
+					"id": 284.0,
+					"time": 6.96211533332982
+				},
+				{
+					"id": 295.0,
+					"time": 7.17034333332972
+				},
+				{
+					"id": 309.0,
+					"time": 7.49386433332962
+				},
+				{
+					"id": 294.0,
+					"time": 7.65128633332952
+				},
+				{
+					"id": 335.0,
+					"time": 8.02842333332942
+				},
+				{
+					"id": 292.0,
+					"time": 8.13369733332932
+				},
+				{
+					"id": 336.0,
+					"time": 8.56141933332922
+				},
+				{
+					"id": 290.0,
+					"time": 8.72025133332922
+				},
+				{
+					"id": 286.0,
+					"time": 9.09873733332912
+				},
+				{
+					"id": 337.0,
+					"time": 9.20466633332912
+				},
+				{
+					"id": 293.0,
+					"time": 9.25212533332902
+				},
+				{
+					"id": 288.0,
+					"time": 9.62802233332902
+				},
+				{
+					"id": 291.0,
+					"time": 9.67940333332902
+				},
+				{
+					"id": 334.0,
+					"time": 9.73545733332903
+				},
+				{
+					"id": 510.0,
+					"time": 20.3017913333309
+				},
+				{
+					"id": 515.0,
+					"time": 20.3517833333309
+				},
+				{
+					"id": 516.0,
+					"time": 20.4059413333309
+				},
+				{
+					"id": 512.0,
+					"time": 20.510091333331
+				},
+				{
+					"id": 514.0,
+					"time": 20.9391893333311
+				},
+				{
+					"id": 513.0,
+					"time": 21.3682873333313
+				},
+				{
+					"id": 511.0,
+					"time": 22.4347833333316
+				}
+			],
+			"layout": 3.0,
+			"stumps": []
+		},
+		"swamp": {
+			"dead_goblins": [
+				{
+					"id": 27.0,
+					"time": 200.331281333383
+				},
+				{
+					"id": 315.0,
+					"time": 252.872452333356
+				}
+			],
+			"stumps": [
+				[
+					2280.0,
+					1004.79998779297,
+					210.012747370283
+				]
+			]
+		}
+	}
+}
