@@ -115,6 +115,13 @@ const SOUNDS := {
 	"weles_venom": [["weles_venom"], -5.0, 0.1, 0.1],
 	"weles_hiss": [["weles_hiss"], -4.0, 0.08, 0.3],
 	"weles_death": [["weles_death"], 0.0, 0.03, 1.0],
+	# Marzanna - bogini szczytowa Mapy Nawii
+	"marzanna_wail": [["marzanna_wail"], -3.0, 0.04, 1.0],
+	"marzanna_nova": [["marzanna_nova"], -3.0, 0.06, 0.1],
+	"marzanna_lance": [["marzanna_lance"], -5.0, 0.08, 0.1],
+	"marzanna_blizzard": [["marzanna_blizzard"], -4.0, 0.06, 0.3],
+	"marzanna_mist": [["marzanna_mist"], -5.0, 0.06, 0.2],
+	"marzanna_death": [["marzanna_death"], 0.0, 0.03, 1.0],
 	"telegraph": [["impactBell_heavy_000"], -10.0, 0.05, 0.3],
 	"death": [["jingles_PIZZI01"], -6.0, 0.0, 1.0],
 	# świat
