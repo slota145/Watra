@@ -326,12 +326,6 @@ static func roll_elite_traits(rng: RandomNumberGenerator) -> Array[String]:
 	return result
 
 
-## Kamienie zaklinające ze skarbca strażnika (rzadko i po jednym - ich głównym źródłem jest Kryształ Watry):
-## szansa na kamień każdego rodzaju (plus szansa z poziomu, Levels.stone_chances) i szansa na doskonały.
-const VAULT_STONE_CHANCE := 0.15
-const VAULT_STONE_LEVEL := 1.5
-const VAULT_STONE_PERFECT := 2.0
-
 ## Poziom potworów na stopniach 1-7 (stopień wybiera gracz, najwyżej poziom Watry); strażnik ma o 2 więcej.
 const TIER_LEVELS: Array[int] = [5, 11, 17, 23, 29, 35, 41]
 const BOSS_BONUS := 2

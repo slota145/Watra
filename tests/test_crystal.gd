@@ -126,6 +126,9 @@ func _check_rewards() -> void:
 	var low: Array = Crystal.reward(1, 1.0)
 	var high: Array = Crystal.reward(7, 1.0)
 	var ids := high.map(func(e: Array) -> String: return e[0])
+	check("fale rosną ze stopniem lochu", Crystal.wave_count(1, 7) > Crystal.wave_count(1, 1) and Crystal.wave_count(4, 1) > Crystal.wave_count(1, 1),
+			"stopień 1: %d-%d, stopień 7: %d-%d" % [Crystal.wave_count(1, 1), Crystal.wave_count(4, 1), Crystal.wave_count(1, 7), Crystal.wave_count(4, 7)])
+	check("Horda mnoży fale", Crystal.wave_count(2, 3, 1.6) > Crystal.wave_count(2, 3))
 	check("stopień 1: bez kamieni miłosierdzia", not low.any(func(e: Array) -> bool: return e[0] == "mercy_stone"))
 	check("stopień 7: uświęcone i miłosierdzia", ids.has("blessed_stone") and ids.has("mercy_stone"))
 	var blessed_low: int = low.filter(func(e: Array) -> bool: return e[0] == "blessed_stone")[0][1]

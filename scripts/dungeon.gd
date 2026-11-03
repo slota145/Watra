@@ -1433,11 +1433,7 @@ func _on_boss_died(_boss_node: Goblin = null) -> void:
 	if treasure > 1.0:
 		for i in 2:
 			_drop(at, Loot.drop_at_level(loot_level, 0.5, Loot.RARE), 1)
-	var chances := Levels.stone_chances(loot_level)
-	# kamienie zaklinające rzadko i po jednym - głównym źródłem jest Kryształ Watry
-	for category in ["weapon", "armor", "jewelry"]:
-		if _rng.randf() < Dungeons.VAULT_STONE_CHANCE + chances[1] * Dungeons.VAULT_STONE_LEVEL:
-			_drop(at, Enchanting.stone_id(category, _rng.randf() < chances[1] * Dungeons.VAULT_STONE_PERFECT), maxi(1, floori(treasure)))
+	# kamieni zaklinających tu nie ma - jedynym źródłem w lochach jest Kryształ Watry
 	_drop(at, "blessed_stone", roundi(_rng.randi_range(1, 3) * treasure))
 	if int(config.get("tier", 1)) >= Essences.HEART_MIN_TIER and _rng.randf() < Essences.HEART_VAULT_CHANCE * treasure:
 		_drop(at, Essences.HEART, 1)

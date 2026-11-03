@@ -829,6 +829,14 @@ odpowiedniej sekcji.
     do plecaka (`{"talisman": nr}` w `InventoryWindow._drop_on_bag`), PPM - wyjmij; pod siatką suma premii i efektów.
   - Zrzuty: `SCRIPT=tools/dungeon_shots.gd tools/screenshot.sh /tmp/m catacombs 7 3 1.0 mechaniki` (`_zertwa.png`
     i `_zertwa_open.png`). Testy: `tests/test_dungeon.gd` (`_check_zertwa`), `tests/test_talismans.gd`.
+- [x] **Mechaniki w lochach, etap 6 - Kryształ Watry jedynym źródłem kamieni zaklinania** (listopad 2026). Ustalenia
+  z autorem: obrona przed falami zostaje (warianty „crystal” i „miners”), fale liczniejsze na wyższych stopniach,
+  kowadło na później.
+  - `WatraCrystal.wave_count(fala, stopień, mnożnik)`: (5 + 3 x (fala - 1)) x (1 + `WAVE_TIER_BONUS` 0,25 x (stopień - 1))
+    x modyfikator liczby potworów; stopień 1: fale 5-14 (razem 38), stopień 7: 13-35 (razem 95).
+  - Skarbiec strażnika (`Dungeon._on_boss_died`) nie daje już kamieni zaklinających (usunięte `Dungeons.VAULT_STONE_*`),
+    tylko kamienie uświęcone; Kryształ (waga 7, ~20% lochów) zostaje jedynym źródłem w lochach, rynek i zadanie główne
+    jako drogie wyjście awaryjne. `tests/balance_sim.gd` liczy kamienie tylko z Kryształu, test w `tests/test_crystal.gd`.
 - [x] **Mechaniki w lochach, etap 5 - Skarbnik i przegląd tierów T1** (listopad 2026): nagroda z ryzykiem jak Ultimatum
   w PoE. Ustalenia z autorem w opisie punktu w CLAUDE.md (historia: „Skarbnik”).
   - **Przegląd tierów T1** (krok 1, `tests/tier_sim.gd` - wojownik na 40. poziomie, 11 przedmiotów): T1 to przedmioty

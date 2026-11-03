@@ -287,8 +287,8 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
 
 ### Watra i Ostoja
 
-- [ ] **Kryształ Watry do przerobienia** (autor, listopad 2026): obecne zdarzenie (co czwarty loch, obrona przed
-  falami) ma się zmienić; wzmiankę usunięto z opisu w oknie lochów. Jak ma działać - dopytać autora.
+- [ ] **Kryształ Watry** (autor, listopad 2026): na razie zostaje obrona przed falami (etap 6 - fale rosną ze stopniem
+  lochu); nowy sposób działania do ustalenia z autorem później.
 - [ ] Pomysły do Kryształu Watry: komnata z kowadłem w lochu (jednorazowo wyższa szansa zaklinania), kolejne
   warianty zdarzenia.
 - [ ] **Mechaniki w lochach - powód, żeby robić lochy** (plan z autorem, listopad 2026; najpierw mechaniki, potem
@@ -303,9 +303,8 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   - **Krąg Żertwy** (nie „Ołtarz Welesa” - ta nazwa jest już zajęta przez esencje) - zabici wrogowie w kręgu dają
     daninę, za nią wybór nagrody - łup: **talizmany**;
   - **Skarbnik** - nagroda z ryzykiem (jak Ultimatum w PoE): zrobiony (etap 5), szczegóły w `docs/historia.md`;
-  - **Kryształ Watry** (do przerobienia) - jedyne źródło **kamieni zaklinania**: zabrać je ze skarbca strażnika
-    (`Dungeon` - zostają kamienie błogosławione), rynek i nagroda zadania głównego zostają jako drogie wyjście
-    awaryjne; Kryształ musi wypadać często;
+  - **Kryształ Watry** - jedyne źródło **kamieni zaklinania** w lochach (etap 6; skarbiec daje już tylko kamienie
+    uświęcone), rynek i nagroda zadania głównego zostają jako drogie wyjście awaryjne; Kryształ wypada często;
   - pomysły na później: **Kurhan** (wysadzanie kurhanów prochem, artefakty wymieniane u handlarza w Ostoi), **Mgła
     Nawii** (loch coraz trudniejszy i hojniejszy z każdą minutą, wyjście w dowolnej chwili), **Łowy** (chwytanie
     rzadkich bestii do zagrody w Ostoi - składniki rzemiosła).
@@ -323,7 +322,8 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   `skarbnik_offer.gd`, stałe `SKA_*` w `Dungeons`) - oferta, Wzmocnij / Przelosuj z falami, księga ofert przeciw
   wczytywaniu zapisu, sufit tierów; przy okazji przegląd tierów T1 (`tests/tier_sim.gd`, nowe `Loot.TIER_VALUES`).
   Do ustalenia po ograniu: liczby fal i wrogów, szansa na Kości, czy Skarbnik ma mieć własną grafikę.
-  Dalej: przeróbka Kryształu.
+  Etap 6 zrobiony, czeka na ocenę autora (szukaj „Mechaniki w lochach, etap 6”): obrona Kryształu zostaje, fale rosną
+  ze stopniem lochu (`WatraCrystal.wave_count`), skarbiec strażnika bez kamieni zaklinających.
 - [ ] **Bożki** (jak skaraby w PoE): wypadają z małą szansą z każdego potwora (gracz nie musi grindować jednego
   miejsca), wkładane w sloty Watry przed wejściem, zmieniają loch (więcej danej mechaniki, silniejsze potwory i więcej
   łupu, więcej łupu danego rodzaju); mają rzadkości. Same są traktowane jak mechanika - z własnymi węzłami w drzewku
