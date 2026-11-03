@@ -633,6 +633,31 @@ const DATA := {
 		"description": "Złoty i ciepły w dłoni. Zebrane razem gwarantują zaklęcie: 100 szt. na III, 200 na IV, 300 na V.",
 		"icon": preload("res://assets/items/blessed_stone.png"), "price": 40, "sell_price": 2, "enchant_aid": "blessed",
 	},
+	"rune_polish": {
+		"name": "Runa Szlifu",
+		"description": "Srebrzysta runa z Uroczyska. W warsztacie kowala przerzuci wartość wybranej premii (ten sam tier).",
+		"icon": preload("res://assets/items/rune_polish.png"), "price": 160, "sell_price": 20,
+	},
+	"rune_reforge": {
+		"name": "Runa Przekucia",
+		"description": "Brązowa runa z Uroczyska. W warsztacie kowala wylosuje wybraną premię od nowa (nowy tier i wartość).",
+		"icon": preload("res://assets/items/rune_reforge.png"), "price": 280, "sell_price": 35,
+	},
+	"rune_erase": {
+		"name": "Runa Zatarcia",
+		"description": "Mroczny kryształ z Uroczyska. W warsztacie kowala zatrze wybraną premię przedmiotu.",
+		"icon": preload("res://assets/items/rune_erase.png"), "price": 400, "sell_price": 50,
+	},
+	"rune_growth": {
+		"name": "Runa Przydania",
+		"description": "Zielony kryształ z Uroczyska. W warsztacie kowala doda przedmiotowi nową losową premię, jeśli ma wolne miejsce.",
+		"icon": preload("res://assets/items/rune_growth.png"), "price": 420, "sell_price": 50,
+	},
+	"rune_ascend": {
+		"name": "Runa Wyniesienia",
+		"description": "Złota runa z Uroczyska. W warsztacie kowala podniesie rzadkość przedmiotu (zwykły -> magiczny -> rzadki).",
+		"icon": preload("res://assets/items/rune_ascend.png"), "price": 700, "sell_price": 80,
+	},
 	"rune_chaos": {
 		"name": "Runa Zmiany",
 		"description": "Wirujący kamień z runą przemiany, z lochów Watry. W warsztacie kowala przelosuje wszystkie premie przedmiotu.",

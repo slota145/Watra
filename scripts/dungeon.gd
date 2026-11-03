@@ -61,6 +61,7 @@ var mechanics: Array[String] = []
 var chests: Array[DungeonChest] = []
 var shrines: Array[DungeonShrine] = []
 var elites: Array[DungeonElite] = []
+var uroczyska: Array[Uroczysko] = []
 ## Ołtarz Welesa (Essences): ukryta komnata poza listą komnat - bez potworów i pochodni (pusta - brak ołtarza).
 var altar_room := Rect2i()
 ## Rodzaj wystroju każdej komnaty (DungeonDecor): Rect2i -> nazwa (np. "crypt", "forge", "start").
@@ -874,6 +875,14 @@ func _pick_mechanics() -> void:
 func _build_mechanics() -> void:
 	if mechanics.has("crystal"):
 		_build_crystal()
+	if mechanics.has("uroczysko"):
+		# największa z kilku wolnych komnat - krąg potrzebuje miejsca
+		var best := Rect2i()
+		for room in _mechanic_rooms(3):
+			if room.get_area() > best.get_area():
+				best = room
+		if best.get_area() > 0:
+			_add_uroczysko(best)
 	if mechanics.has("chests"):
 		var kinds := {}
 		for kind: String in Dungeons.CHEST_KINDS:
@@ -959,7 +968,7 @@ func _mechanic_spot(room: Rect2i) -> Vector2:
 			var d := at.distance_to(spot)
 			if d < 70.0:
 				score += 70.0 - d
-		for other: Node2D in chests + shrines:
+		for other: Node2D in chests + shrines + uroczyska:
 			if other.position.distance_to(spot) < 120.0:
 				score += 500.0
 		if score < best_score:
@@ -982,6 +991,18 @@ func _add_chest(kind: String, traits: Array[String], room: Rect2i) -> DungeonChe
 	_glow(chest.position + Vector2(0, -8), Dungeons.CHEST_KINDS[kind]["glow"], Vector2(110, 80))
 	w._map_markers.append({"position": chest.position, "color": Color(1.0, 0.85, 0.35), "size": 2.0})
 	return chest
+
+
+## Uroczysko (menhir otwierający krąg upiorów) na środku komnaty.
+func _add_uroczysko(room: Rect2i) -> Uroczysko:
+	var stone := Uroczysko.create(self)
+	var center := Vector2(room.get_center()) * CELL + Vector2(0, CELL / 2.0)
+	stone.position = _free_spot(center, Vector2(room.get_center()) * CELL)
+	uroczyska.append(stone)
+	w.entities.add_child(stone)
+	stone.glow = _glow(stone.position + Vector2(0, -20), Color(Uroczysko.COLOR, 0.45), Vector2(140, 110))
+	w._map_markers.append({"position": stone.position, "color": Uroczysko.COLOR, "size": 2.5})
+	return stone
 
 
 func _add_shrine(gift: String, room: Rect2i) -> DungeonShrine:
@@ -1365,7 +1386,7 @@ func _on_boss_died(_boss_node: Goblin = null) -> void:
 	if int(config.get("tier", 1)) >= Essences.HEART_MIN_TIER and _rng.randf() < Essences.HEART_VAULT_CHANCE * treasure:
 		_drop(at, Essences.HEART, 1)
 	if _rng.randf() < ItemCraft.RUNE_VAULT_CHANCE * treasure:
-		_drop(at, "rune_seal" if int(config.get("tier", 1)) >= 4 and _rng.randf() < 0.35 else "rune_chaos", 1)
+		_drop(at, ItemCraft.roll_rune(int(config.get("tier", 1)), _rng), 1)
 	if _rng.randf() < Gems.RADIUS_VAULT_CHANCE * treasure:
 		_drop(at, Gems.roll_radius(int(config.get("tier", 1))), 1)
 	var bag := Bags.roll_vault(loot_level, treasure)

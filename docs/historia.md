@@ -756,6 +756,34 @@ odpowiedniej sekcji.
   - Zrzuty: `SCRIPT=tools/dungeon_shots.gd tools/screenshot.sh /tmp/m catacombs 7 3 2.0 mechaniki` (też elity).
     Test: `tests/test_dungeon.gd` (`_check_elites`: liczba i cechy, aura i jej koniec, Osłaniający, tarcza,
     rozszczepienie, łup).
+- [x] **Mechaniki w lochach, etap 3 - Uroczysko i runy** (listopad 2026): mechanika `"uroczysko"` (waga 5, duża) -
+  jak Breach w PoE. Ustalenia z autorem: krąg rośnie z zabójstwami (bez nich się kurczy), upiory tylko w kręgu (zwykłe
+  potwory bez zmian), duchy z obecnych grafik (bez kosztu PixelLab), łup - runy, a warsztat kowala działa już tylko
+  na runach (koniec działań za trofea).
+  - Szanse z piątą mechaniką: skrzynie ~33% lochów, kapliczka ~28%, elity ~26%, Kryształ ~20% (waga podniesiona z 5
+    na 6, żeby nie spadł), Uroczysko ~18%.
+  - `scripts/uroczysko.gd` (`Uroczysko`, dziedziczy po `Harvestable`, `Uroczysko.create`): menhir `assets/ancient/menhir_1.png`
+    (klatka 0 - zgaszona spirala, 1 - świecąca) na środku największej z 3 wolnych komnat (`Dungeon._add_uroczysko`,
+    `Dungeon.uroczyska`), poświata i kropka na mapie. F (0,8 s) otwiera krąg: promień `URO_START` 110, najwyżej
+    `URO_MAX` 430; po `URO_GRACE` 4 s kurczy się `URO_SHRINK` 7 px/s, coraz szybciej (x2 po `URO_SPEEDUP` 35 s);
+    każdy zabity upiór dodaje `URO_GROW` 8 px (mniej przy dużym kręgu). Przy `URO_END` 36 krąg gaśnie.
+  - Upiory (`Uroczysko.haunt`): potwory klimatu lochu (`Dungeon._spawn`, bez nieruchomych) co `URO_SPAWN_EVERY` 0,22 s
+    w wolnym miejscu kręgu, tylu naraz, ile `URO_ALIVE` 5 + promień / 16; zdrowie x0,6, obrażenia x0,8, doświadczenie x0,6,
+    mniej łupu; wygląd `shaders/ghost.gdshader` (sinozielona zjawa z migotaniem, obrysem i błyskiem trafienia).
+    Co 0,1 s przytrzymywane w kręgu (`_keep_inside`); po zgaśnięciu znikają bez łupu (`_vanish`). Co 25 zabitych
+    Upiorny Pan (fioletowy, x1,4, zdrowie x6, zawsze runa); zwykły upiór upuszcza runę z szansą 2%.
+  - Krąg: `shaders/uroczysko.gdshader` na duszku w warstwie podłóg (mgła z szumu, świecący brzeg o stałej grubości,
+    iskry; położenie z wierzchołków, bo UV w trybie zgodności dawało przesunięty krąg). Napis nad kamieniem liczy upiory.
+  - Nagroda po zgaśnięciu: `Uroczysko.reward_runes` = 1 + zabici / 14, najwyżej 10.
+  - **Runy zamiast warsztatu za trofea** (`ItemCraft.ACTIONS` - pole "rune", `ItemCraft.RUNES` z wagami i stopniem
+    lochu, `ItemCraft.roll_rune`): Runa Szlifu (przerzut wartości), Przekucia, Zatarcia (usunięcie), Przydania (dodanie),
+    Wyniesienia (rzadkość, od 2. stopnia), Zmiany, Pieczęci (od 4. stopnia, z Sercem Kryształu). Każde działanie: jedna
+    runa i złoto jak dawniej (legendy 3x złota). Trofea zostają w bestiariuszu, kuźni i na rynku.
+    Ikony nowych run to przebarwienia zapasowych ikon z `pixellab_src/runes/runes.png` (`tools/rune_art.py`).
+    Runy wypadają też ze skarbca, z Kryształu, ze skrzyń wydarzeń (`roll_rune`), są na rynku i za Znaki Zwycięstwa
+    (Szlifu, Przekucia, Wyniesienia).
+  - Zrzuty: `SCRIPT=tools/dungeon_shots.gd tools/screenshot.sh /tmp/m catacombs 7 3 1.0 mechaniki` (`_uroczysko.png`
+    i `_uroczysko_open.png`). Testy: `tests/test_dungeon.gd` (`_check_uroczysko`), `tests/test_workshop.gd`.
 
 ## Zielarstwo (Pomysły i rzeczy do zrobienia)
 - [x] **Zioła i mikstury zielarki** (`scripts/herbs.gd`, roślina `scripts/herb.gd`, grafiki z PixelLab przez `tools/herb_art.py`):

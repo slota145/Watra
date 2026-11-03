@@ -157,11 +157,11 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
   world bossy `world_boss.gd` (Żmij, Wij).
 - **Przedmioty:** łup z losowymi premiami (`loot.gd`, nazwy składane przy pokazywaniu - `Loot.compose_name`), legendy
   (`legends.gd`, `legendary_effects.gd`), zaklinanie u kowala (`enchanting.gd`), kamienie szlachetne i gniazda (`gems.gd`,
-  jubiler Dobromir), esencje legend (`essences.gd`), rzemiosło premii (`item_craft.gd`), torby (`bags.gd`), pas,
+  jubiler Dobromir), esencje legend (`essences.gd`), rzemiosło premii runami (`item_craft.gd`, `ItemCraft.RUNES`), torby (`bags.gd`), pas,
   przedmioty niezidentyfikowane (`unidentified.gd`), encyklopedia (`codex.gd`, klawisz L).
 - **Watra i Ostoja:** Watra z ofiarami, żarem i Darami (`boons.gd`, `ui/watra_window.gd`), budowy osady (`settlement.gd`),
   lochy Watry (`dungeon.gd`, `dungeons.gd`) z mechanikami (`Dungeons.MECHANICS`: skrzynie `dungeon_chest.gd`, kapliczki
-  `dungeon_shrine.gd`, Kryształ Watry `watra_crystal.gd`, elity `dungeon_elite.gd`) i Ołtarzem Welesa, zielarstwo (`herbs.gd`).
+  `dungeon_shrine.gd`, Kryształ Watry `watra_crystal.gd`, elity `dungeon_elite.gd`, Uroczysko `uroczysko.gd`) i Ołtarzem Welesa, zielarstwo (`herbs.gd`).
 - **Świat jak w MMO** (po zbudowaniu gildii): podróżnicy (`travelers.gd`, `traveler.gd`), drużyny i prośby o pomoc,
   tryby świata i rywale (`world_modes.gd`, `rival.gd`), rynek (`market.gd`), zlecenia (`bounties.gd`), zadania główne
   (`main_quests.gd`), wydarzenia w świecie (`world_events.gd`, `event_site.gd`).
@@ -250,10 +250,10 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   własny, pełny przydział punktów; działa tylko zakładka wybrana). Szczegóły (jak się przełącza, czy przełączanie
   coś kosztuje, co z paskami szybkiego wyboru) dopytać autora.
 - [ ] **Modyfikacja premii tylko runami** (decyzja autora, listopad 2026): wszystkie sposoby zmiany premii
-  (afiksów) przedmiotów mają działać przez runy - przedmioty-waluty jak orby w Path of Exile. Kilka już jest
-  (Runa Zmiany, Runa Pieczęci - `item_craft.gd`, `items.gd`); pozostałe działania warsztatu kowala (przerzut
-  wartości, przekucie, usunięcie i dodanie premii, ulepszenie rzadkości) zamienić na runy. Zestaw run,
-  skąd wypadają i co z trofeami potworów - dopytać autora.
+  (afiksów) przedmiotów mają działać przez runy - przedmioty-waluty jak orby w Path of Exile. Zrobione razem
+  z Uroczyskiem (szukaj „Mechaniki w lochach, etap 3”): każde działanie warsztatu kowala zużywa swoją runę
+  (`ItemCraft.ACTIONS`, `ItemCraft.RUNES`), trofea już tam nie idą. Do ustalenia: kolejne runy (np. jak orby
+  wyższego poziomu), czy runy mają wypadać też poza lochami, ewentualne grafiki run z PixelLab zamiast przebarwień.
 - [ ] **Animacje postaci z bronią** (listopad 2026): broń nie leży stabilnie w dłoni, za mało animacji ataków.
   Ustalenia z autorem: porządnie animowany tylko **Wojciech** (reszta może zostać NPC), styl **zamaszysty jak w BDO**,
   nowe pozy ciała (etap 4) na później. Etap 1 zrobiony (szczegóły w `docs/historia.md`, szukaj „Etap 1 animacji”):
@@ -301,7 +301,9 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   (`dungeon_chest.gd`), kapliczki (`dungeon_shrine.gd`), Kryształ w puli, mniej kamieni zaklinania ze skarbca.
   Etap 2 zrobiony, czeka na ocenę autora (szukaj „Mechaniki w lochach, etap 2”): elitarne potwory z cechami
   (`dungeon_elite.gd`, `Dungeons.ELITE_TRAITS` - aury, obrona, żywioły, przywołanie).
-  Dalej: Uroczysko, Krąg Żertwy, Skarbnik, przeróbka Kryształu.
+  Etap 3 zrobiony, czeka na ocenę autora (szukaj „Mechaniki w lochach, etap 3”): Uroczysko (`uroczysko.gd`, stałe
+  `URO_*` w `Dungeons`) - krąg upiorów rosnący z zabójstwami, nagroda - runy.
+  Dalej: Krąg Żertwy, Skarbnik, przeróbka Kryształu.
 - [ ] **Bożki** (jak skaraby w PoE): wypadają z małą szansą z każdego potwora (gracz nie musi grindować jednego
   miejsca), wkładane w sloty Watry przed wejściem, zmieniają loch (więcej danej mechaniki, silniejsze potwory i więcej
   łupu, więcej łupu danego rodzaju); mają rzadkości. Same są traktowane jak mechanika - z własnymi węzłami w drzewku

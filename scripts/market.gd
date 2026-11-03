@@ -37,6 +37,7 @@ const COMMODITIES := {
 	"jewelry_stone_perfect": 450, "blessed_stone": 40, "mercy_stone": 180, "crystal_heart": 900,
 	"spider_silk": 18, "bone_dust": 16, "hydra_scale": 60, "storm_feather": 45,
 	"goblin_heart": 10, "kobold_fuse": 14, "frog_tongue": 16, "satyr_horn": 24, "rune_chaos": 500, "rune_seal": 2000,
+	"rune_polish": 90, "rune_reforge": 150, "rune_erase": 220, "rune_growth": 230, "rune_ascend": 380,
 }
 ## Kategorie towarów do listy w oknie rynku.
 const CATEGORIES := {
@@ -45,7 +46,7 @@ const CATEGORIES := {
 	"Zioła i mikstury": ["herb_wort", "herb_chamomile", "herb_calamus", "herb_arnica", "herb_fern", "herb_datura",
 			"health_potion", "mana_potion", "greater_health_potion", "greater_mana_potion"],
 	"Kamienie": ["weapon_stone", "armor_stone", "jewelry_stone", "weapon_stone_perfect", "armor_stone_perfect",
-			"jewelry_stone_perfect", "blessed_stone", "mercy_stone", "crystal_heart", "rune_chaos", "rune_seal"],
+			"jewelry_stone_perfect", "blessed_stone", "mercy_stone", "crystal_heart", "rune_polish", "rune_reforge", "rune_erase", "rune_growth", "rune_ascend", "rune_chaos", "rune_seal"],
 }
 const HISTORY := 24
 ## Najwyżej tyle świeżych ofert jednego towaru naraz i szansa, że inni podróżnicy wykupią świeżą ofertę w jednej chwili rynku.
