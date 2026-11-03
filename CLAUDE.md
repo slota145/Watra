@@ -55,7 +55,7 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
     i `decor_<klimat>.gd`, okno `scripts/ui/dungeon_window.gd`,
   - `herbs.gd`: zioła i mikstury zielarki, `herb.gd`: zioło do zerwania (sadzone w każdej krainie przez `World._place_herbs`),
   - `scripts/ui/`: okna interfejsu (`ui_style.gd` to wspólny styl).
-- Sterowanie: WASD, spacja (zryw), F (interakcja), paski szybkiego wyboru na dole ekranu: umiejętności pod LPM, PPM, Q, E, R, Z, X
+- Sterowanie: WASD, spacja (zryw), F (interakcja), B (portal do miasta w lochu), paski szybkiego wyboru na dole ekranu: umiejętności pod LPM, PPM, Q, E, R, Z, X
   (osobny układ dla każdej broni) i przedmioty pod 1-0 (`scripts/ui/action_bars.gd`, `scripts/ui/hotbar_slot.gd`).
   Pod paskami zdrowia i many ikony efektów (`scripts/ui/status_row.gd`). Tryb deweloperski: Ctrl+Shift+C, potem F1 złoto,
   F2 awans, F3 kamienie, F4 drewno i kamień, F5 wydarzenie w świecie w tej krainie.
@@ -168,7 +168,7 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
 - **Watra i Ostoja:** Watra z ofiarami, żarem i Darami (`boons.gd`, `ui/watra_window.gd`), budowy osady (`settlement.gd`),
   lochy Watry (`dungeon.gd`, `dungeons.gd`) z mechanikami (`Dungeons.MECHANICS`: skrzynie `dungeon_chest.gd`, kapliczki
   `dungeon_shrine.gd`, Kryształ Watry `watra_crystal.gd`, elity `dungeon_elite.gd`, Uroczysko `uroczysko.gd`, Krąg Żertwy
-  `zertwa.gd`, Skarbnik `skarbnik.gd`) i Ołtarzem Welesa, bożki zmieniające loch (`idols.gd`), zielarstwo (`herbs.gd`).
+  `zertwa.gd`, Skarbnik `skarbnik.gd`) i Ołtarzem Welesa, bożki zmieniające loch (`idols.gd`), portal do miasta (klawisz B, `town_portal.gd`, `Dungeon.portal_state`), zielarstwo (`herbs.gd`).
 - **Świat jak w MMO** (po zbudowaniu gildii): podróżnicy (`travelers.gd`, `traveler.gd`), drużyny i prośby o pomoc,
   tryby świata i rywale (`world_modes.gd`, `rival.gd`), rynek (`market.gd`), zlecenia (`bounties.gd`), zadania główne
   (`main_quests.gd`), wydarzenia w świecie (`world_events.gd`, `event_site.gd`).
@@ -222,8 +222,6 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
   `godot --headless --path . -s res://tests/endgame_probe.gd -- <zapis.json> <stopień> <sekundy> [full|whirl|flicker|idle] [poziom] [poziom ekwipunku]`. Do ustalenia po ograniu: liczby (`Levels.ENDGAME_*`,
   `LEECH_CAP`), czy umiejętności łuku i księgi też trzeba sprawdzić tym pomiarem.
 - [ ] **Za mała gęstość potworów w Uroczyskach** i ogólnie za mało potworów (autor, 3.11.2026) - w lochach też.
-- [ ] **Portal do miasta** (autor, 3.11.2026): przycisk (np. B) przenosi z lochu do Ostoi, a portalem w Ostoi
-  wraca się do tego samego lochu (jak portal w PoE).
 
 
 ## Pomysły i rzeczy do zrobienia

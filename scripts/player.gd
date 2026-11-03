@@ -348,6 +348,13 @@ var free_sockets := 0
 ## w zapisie gry (w trakcie fal oferta jest tylko w księdze, jako zagrożona).
 var skarbnik_offer := {}
 var skarbnik_uid := ""
+## Otwarty portal do miasta (TownPortal): {"config": ustawienia wyprawy, "state": stan lochu (Dungeon.portal_state)};
+## puste - brak. W Ostoi stoi wtedy portal z powrotem do tego lochu; zapisuje się z grą.
+var town_portal := {}
+## Otwieranie portalu klawiszem B: czas od początku (ujemny - nic się nie otwiera) i rosnący płomień.
+const PORTAL_CAST_TIME := 1.2
+var _portal_cast := -1.0
+var _portal_node: TownPortal
 
 ## Plecak bez toreb i miejsca na torby (sakwy, plecaki) pod ekwipunkiem.
 const BASE_INVENTORY := 20
@@ -441,6 +448,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			_press_slot(i)
 			return
 	if is_dead:
+		return
+	if event.is_action_pressed("town_portal"):
+		_start_portal()
 		return
 	if event.is_action_pressed("interact"):
 		_interact()
@@ -640,7 +650,54 @@ func give_starting_items() -> void:
 		inventory.add_item(id, Hotbar.STARTING_POTIONS)
 
 
+## Klawisz B: w lochu przez PORTAL_CAST_TIME rośnie niebieski płomień - trafienie przerywa otwieranie, a gotowy
+## portal zabiera postać do Ostoi (World.open_town_portal). W arenie boga i poza lochem nie działa.
+func _start_portal() -> void:
+	if _portal_cast >= 0.0:
+		return
+	var world := get_tree().get_first_node_in_group("world")
+	if world == null or world.zone != Zones.DUNGEON:
+		_hint(tr("Portal do miasta otworzysz tylko w lochu"))
+		return
+	if world._dungeon == null or world._dungeon.pinnacle != "":
+		_hint(tr("Z areny boga nie ma ucieczki portalem"))
+		return
+	_portal_cast = 0.0
+	_portal_node = TownPortal.new()
+	_portal_node.opening = 0.0
+	_portal_node.position = global_position
+	get_parent().add_child(_portal_node)
+	Sfx.play("magic", -2.0, 0.8)
+
+
+func _update_portal(delta: float) -> void:
+	if _portal_cast < 0.0:
+		return
+	if is_dead or not is_instance_valid(_portal_node):
+		cancel_portal()
+		return
+	_portal_cast += delta
+	_portal_node.opening = _portal_cast / PORTAL_CAST_TIME
+	if _portal_cast >= PORTAL_CAST_TIME:
+		# gotowy płomień stoi pod postacią - sam zabierze ją do Ostoi (TownPortal._process)
+		_portal_node.global_position = global_position
+		_portal_cast = -1.0
+		_portal_node = null
+
+
+## Przerywa otwieranie portalu (trafienie, śmierć).
+func cancel_portal() -> void:
+	if _portal_cast < 0.0:
+		return
+	_portal_cast = -1.0
+	if is_instance_valid(_portal_node):
+		_portal_node.queue_free()
+		_hint(tr("Portal przerwany"))
+	_portal_node = null
+
+
 func _physics_process(delta: float) -> void:
+	_update_portal(delta)
 	_main_quest_check -= delta
 	if _main_quest_check <= 0.0:
 		_main_quest_check = 0.5
@@ -852,6 +909,7 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 		return
 	health = maxi(health - amount, 0)
 	health_changed.emit(health, stats.max_health())
+	cancel_portal()
 	DamageNumber.spawn(get_parent(), body_center(), amount, HURT_COLOR)
 	_knockback = (global_position - from_position).normalized() * 120.0
 	_invulnerable_timer = hurt_invulnerability()
@@ -1284,6 +1342,7 @@ func get_save_data() -> Dictionary:
 		"generated_items": Loot.export_used(_owned_ids()),
 		"hero": hero,
 		"skarbnik": skarbnik_uid,
+		"town_portal": town_portal.duplicate(true),
 	}
 
 
@@ -1361,6 +1420,7 @@ func load_save_data(data: Dictionary) -> void:
 	skarbnik_offer = SkarbnikOffer.restore(str(data.get("skarbnik", "")))
 	skarbnik_uid = str(skarbnik_offer.get("uid", ""))
 	free_sockets = int(data.get("free_sockets", 0))
+	town_portal = (data.get("town_portal", {}) as Dictionary).duplicate(true)
 	if data.has("storage"):
 		storage.load_save_data(data["storage"])
 	boons.load_save_data(data.get("boons", {}))

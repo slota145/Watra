@@ -9,6 +9,7 @@ const CONTROLS := [
 	["1 - 0", "pasek przedmiotów (na start mikstury życia i many)"],
 	["Spacja", "zryw (chwilowa nietykalność)"],
 	["F", "rozmowa, handel, ścinanie drzew, rozbijanie głazów"],
+	["B", "portal do miasta (w lochu): do Ostoi i z powrotem do tego samego lochu"],
 	["I", "ekwipunek i torby"],
 	["C", "postać i atrybuty"],
 	["K", "umiejętności"],

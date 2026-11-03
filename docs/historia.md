@@ -189,6 +189,16 @@ odpowiedniej sekcji.
   ~8 ms zamiast ~6, w walce ~14 ms. `tests/balance_sim.gd` w końcówce tylko wypisuje etapy (bez widełek ciosów
   i przeżycia - symulacja nie liczy umiejętności, uniku ani leczenia) i sprawdza gracza z ekwipunkiem z 40. poziomu
   (rzadkim) - przy 90. poziomie przeżywa 1,4 ciosu.
+- [x] **Portal do miasta** (zgłoszenie autora z 3.11.2026, jak portal w PoE): klawisz B (akcja `town_portal`) w lochu -
+  przez 1,2 s rośnie niebieski płomień (`TownPortal`, `scripts/town_portal.gd`; trafienie przerywa -
+  `Player.cancel_portal`), gotowy zabiera do Ostoi (`World.open_town_portal`). W Ostoi obok Watry
+  (`World.town_portal_spot`, przybycie "town_portal") stoi portal do lochu (`World.return_through_portal`): loch
+  generuje się od nowa z tego samego ziarna, a `Dungeon.restore_portal` przywraca stan z `Dungeon.portal_state` -
+  pokonane potwory (numery miejsc), zużyte skrzynie / kapliczki / Uroczyska / Kręgi Żertwy / Skarbniki / Kryształ
+  (znikają; trwające fale przepadają), otwarty skarbiec z płomieniami wyjścia, zużyty ołtarz, łup na ziemi (z
+  wylosowanymi przedmiotami); postać staje przy płomieniu portalu do Ostoi w miejscu otwarcia (można przechodzić
+  dowolnie wiele razy). Portal jest w zapisie gracza (`Player.town_portal`), gaśnie po wyjściu płomieniami Watry
+  i przy nowej wyprawie. Nie działa w arenach bogów. Test `tests/test_town_portal.gd`.
 
 ## Gobliński Las i Prastary Las (`scripts/world.gd`, `scripts/ancient_forest.gd`) (Do poprawy)
 - [x] Gobliński Las: więcej grupek goblinów w lesie i większe siedlisko wilków - około 450 potworów (było około 340);

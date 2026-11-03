@@ -567,6 +567,15 @@ func _ready() -> void:
 	if save.has("arrive"):
 		player.global_position = _arrival_point(str(save["arrive"]))
 		player.camera.reset_smoothing()
+	# portal do miasta: w lochu - stan z chwili wyjścia i płomień w tym miejscu, w Ostoi - płomień z powrotem
+	if _dungeon != null and _dungeon_config.has("portal"):
+		_dungeon.restore_portal(_dungeon_config["portal"])
+		player.camera.reset_smoothing()
+	elif zone == "forest" and not player.town_portal.is_empty():
+		var portal := TownPortal.new()
+		portal.kind = "dungeon"
+		portal.position = town_portal_spot()
+		entities.add_child(portal)
 	if _dungeon != null:
 		hud.show_banner(Dungeons.title(_dungeon_config), Color(1.0, 0.75, 0.45))
 	if zone == "forest":
@@ -605,6 +614,7 @@ func _generate_forest() -> void:
 	_register_shrine("ostoja", _settlement.spawn_point - Vector2(0, 20))
 	# powrót z lochu: przed Watrą
 	_arrivals["watra"] = _settlement.watra_arrival()
+	_arrivals["town_portal"] = town_portal_spot() + Vector2(0, 34)
 	if not shrines.has("ostoja"):
 		var pos := (_settlement.spawn_point - Vector2(0, 20)) / TILE
 		shrines["ostoja"] = [pos.x, pos.y]
@@ -660,10 +670,13 @@ func get_save_data() -> Dictionary:
 	return data
 
 
-## Wejście w płomienie Watry: przejście do lochu o danych ustawieniach (Dungeons.config).
+## Wejście w płomienie Watry: przejście do lochu o danych ustawieniach (Dungeons.config). Nowa wyprawa gasi
+## stary portal do miasta; "portal" w ustawieniach - powrót portalem (stan lochu, Dungeon.restore_portal).
 func enter_dungeon(settings: Dictionary) -> void:
 	if _traveling:
 		return
+	if not settings.has("portal"):
+		player.town_portal = {}
 	_traveling = true
 	var data := get_save_data()
 	data["zone"] = Zones.DUNGEON
@@ -671,6 +684,35 @@ func enter_dungeon(settings: Dictionary) -> void:
 	data["dungeon"] = settings
 	Sfx.play("fireball_launch")
 	Game.travel(data)
+
+
+## Portal do miasta (TownPortal, klawisz B): zapamiętuje loch i jego stan, a postać trafia do Ostoi obok portalu
+## z powrotem. Wyprawa trwa - loch wygeneruje się z tego samego ziarna i wróci do stanu z chwili wyjścia.
+func open_town_portal(at: Vector2) -> void:
+	if _traveling or _dungeon == null or _dungeon.pinnacle != "":
+		return
+	var settings := _dungeon_config.duplicate(true)
+	settings.erase("portal")
+	player.town_portal = {"config": settings, "state": _dungeon.portal_state(at)}
+	_travel("forest", "town_portal")
+
+
+## Wejście w portal w Ostoi: powrót do lochu z portalu do miasta.
+func return_through_portal() -> void:
+	if _traveling or player.town_portal.is_empty():
+		return
+	var settings: Dictionary = (player.town_portal["config"] as Dictionary).duplicate(true)
+	settings["portal"] = player.town_portal["state"]
+	player.town_portal = {}
+	enter_dungeon(settings)
+
+
+## Miejsce portalu do lochu w Ostoi (obok Watry).
+func town_portal_spot() -> Vector2:
+	return _settlement.watra_arrival() + TOWN_PORTAL_OFFSET
+
+
+const TOWN_PORTAL_OFFSET := Vector2(-64, 78)
 
 
 ## Stan bieżącej krainy: pokonane potwory, ścięte drzewa / rozbite głazy, budowy w osadzie.
