@@ -3,7 +3,9 @@ extends SceneTree
 ## statystyki gracza i potworów, a potem bot walczy przez S sekund (wskakuje w najbliższą gromadę, używa
 ## umiejętności z paska) i mierzy: zadane obrażenia na sekundę, zabójstwa, ilu wrogów trafia naraz,
 ## otrzymane obrażenia na sekundę i ile razy zszedłby poniżej 25% zdrowia (zdrowie jest wtedy uzupełniane).
-## Użycie: -s tests/endgame_probe.gd -- <zapis.json> <stopień> <sekundy> [tryb] [poziom postaci]
+## Użycie: -s tests/endgame_probe.gd -- <zapis.json> <stopień> <sekundy> [tryb] [poziom postaci] [poziom ekwipunku]
+## Poziom ekwipunku (np. 90): ekwipunek z zapisu zastąpiony rzadkimi przedmiotami tego poziomu (bez zaklęć) -
+## porównanie z graczem, który zmienia ekwipunek na bieżąco.
 ## Tryby: whirl (sam Młynek), flicker (samo Mgnienie), full (cały pasek miecza + Dymne Wybuchy pod E), idle (stoi).
 
 var _world: Node
@@ -60,6 +62,18 @@ func _load_classes() -> void:
 	Sk = load("res://scripts/skills.gd")
 	Lv = load("res://scripts/levels.gd")
 	_boss = load("res://scripts/boss.gd")
+
+
+## Linie przedmiotów dla postaci z siłą (wojownik z buławą).
+const GEAR_LINES := {"weapon": "mace", "helmet": "helm", "chest": "plate", "gloves": "gauntlets", "boots": "greaves",
+		"belt": "girdle", "ring_1": "signet", "ring_2": "signet", "earring_1": "fang", "earring_2": "fang", "necklace": "amulet"}
+
+
+func _regear(pl, item_level: int) -> void:
+	var loot = load("res://scripts/loot.gd")
+	for slot: String in GEAR_LINES:
+		var id: String = loot.generate(loot.base_for(GEAR_LINES[slot], item_level), "rare", item_level)
+		pl.equipment.equip_to(slot, id)
 
 
 func _avg_hit(pl, mult: float, tags: Array) -> float:
@@ -121,6 +135,13 @@ func _nearest(pl) -> Node2D:
 ## Gromada: co 0,5 s dociąga żywych wrogów, aż w promieniu 90 px stoi PACK wrogów (jak zebrana grupa w lochu).
 const PACK := 8
 var _pack_timer := 0.0
+var _arena := Vector2.ZERO
+var _frame_us := 0
+var _frame_sum := 0.0
+var _frame_max := 0.0
+var _frames := 0
+var _probe_t0 := 0
+var _probe_us := 0.0
 
 
 func _keep_pack(pl) -> void:
@@ -128,6 +149,18 @@ func _keep_pack(pl) -> void:
 	if _pack_timer > 0.0:
 		return
 	_pack_timer = 0.5
+	# walka w środku największej komnaty - gdy postać odskoczy (Mgnienie, zryw), wraca na środek
+	if _arena == Vector2.ZERO:
+		var best: Rect2i = _world._dungeon.rooms[0]
+		for room: Rect2i in _world._dungeon.rooms:
+			if room.get_area() > best.get_area():
+				best = room
+		_arena = (Vector2(best.position) + Vector2(best.size) / 2.0) * 64.0
+		pl.global_position = _arena
+		pl.reset_physics_interpolation()
+	if pl.global_position.distance_to(_arena) > 120.0:
+		pl.global_position = _arena
+		pl.reset_physics_interpolation()
 	var near := 0
 	var far: Array = []
 	for e in get_nodes_in_group("enemies"):
@@ -139,7 +172,7 @@ func _keep_pack(pl) -> void:
 			far.append(e)
 	far.shuffle()
 	for e in far.slice(0, maxi(PACK - near, 0)):
-		e.global_position = pl.global_position + Vector2.from_angle(randf() * TAU) * randf_range(50.0, 80.0)
+		e.global_position = _arena + Vector2.from_angle(randf() * TAU) * randf_range(50.0, 80.0)
 		e.reset_physics_interpolation()
 		e.home = e.global_position
 		e.leash_radius = 100000.0
@@ -162,6 +195,8 @@ func _process(delta: float) -> bool:
 	_frame += 1
 	if _frame == 5:
 		_load_classes()
+		if _args.size() > 5 and int(_args[5]) > 0:
+			_regear(pl, int(_args[5]))
 		_report_static(pl)
 		pl.health = pl.stats.max_health()
 		pl.mana = pl.stats.max_mana()
@@ -170,6 +205,14 @@ func _process(delta: float) -> bool:
 	if _frame < 5:
 		return false
 	_time += delta
+	var now := Time.get_ticks_usec()
+	if _frame_us > 0:
+		var ms := (now - _frame_us) / 1000.0
+		_frame_sum += ms
+		_frame_max = maxf(_frame_max, ms)
+		_frames += 1
+	_frame_us = now
+	_probe_t0 = Time.get_ticks_usec()
 	# obrażenia zadane: spadek zdrowia wrogów od poprzedniej klatki
 	var hit_now := 0
 	var alive := {}
@@ -224,6 +267,7 @@ func _process(delta: float) -> bool:
 			_engaged += delta
 		pl.aim_override = to if to != Vector2.ZERO else Vector2.RIGHT
 		_bot(pl, delta, to.length())
+	_probe_us += Time.get_ticks_usec() - _probe_t0
 	if _time >= _seconds:
 		_finish(pl)
 	return false
@@ -268,4 +312,5 @@ func _finish(pl) -> void:
 			_mode, t, _engaged, _dealt / t, _kills, _kills / t, float(_hit_enemies) / maxi(_hits_frames, 1), float(_crowd) / maxi(_crowd_frames, 1)])
 	print("  otrzymane/s %.0f  leczenie/s %.0f  zdrowie %d  -> bez leczenia pada po %.1f s, zejść poniżej 25%%: %d" % [
 			_taken / t, _healed / t, pl.stats.max_health(), pl.stats.max_health() / maxf(_taken / t, 0.01), _low])
+	print("  klatka średnio %.1f ms, najdłuższa %.1f ms (z tego pomiar %.1f ms), wrogów w lochu %d" % [_frame_sum / maxi(_frames, 1), _frame_max, _probe_us / 1000.0 / maxi(_frames, 1), get_nodes_in_group("enemies").size()])
 	quit()

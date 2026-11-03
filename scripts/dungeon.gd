@@ -171,7 +171,7 @@ func generate(world, settings: Dictionary) -> void:
 		_build_props()
 	_build_entrance()
 	if pinnacle == "":
-		_populate(Dungeons.mult(settings, "count") * (1.0 + Dungeons.TIER_COUNT_BONUS * (Dungeons.config_tier(settings) - 1)))
+		_populate(Dungeons.mult(settings, "count") * Dungeons.count_multiplier(int(settings.get("tier", 1))))
 	_build_vault()
 	_apply_idols()
 	_build_mechanics()

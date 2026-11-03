@@ -176,6 +176,19 @@ odpowiedniej sekcji.
   umiejętnościami), pancerz z `armor_scale` i gracz z ekwipunkiem z 40. poziomu (`STALE_LEVEL`) - przy 90. poziomie
   ma przeżywać mniej niż 6 ciosów (5,2). Pomiar po zmianach (stopień 17): potwór 2330 zdrowia, cios po redukcji 173,
   stojąc w gromadzie pada po 3-4 s, w walce otrzymuje 40-140/s przy leczeniu 40-85/s (bez mikstur pada po 10-35 s).
+- [x] **Końcówka gry trudniejsza, etap 2** (autor: „dalej czyszczę lochy najwyższego stopnia takim ekwipunkiem - mam
+  się odbić od ściany”, więcej paczek w najwyższych stopniach i płynne przejście): obrażenia potworów +16% na poziom
+  ponad 41 (`Levels.ENDGAME_DAMAGE`, było 2,5%), zdrowie +7% (`ENDGAME_HEALTH`); liczba potworów w lochu rośnie płynnie
+  z prawdziwym stopniem (`Dungeons.count_multiplier`: 1 + 0,06 (s-1) + 0,008 (s-1)², stopień 7 - 1,65x, 12 - 2,6x,
+  17 - 4x; dawniej +7% na stopień do 7., wyżej bez zmian), stopień 17 ma ~655 potworów zamiast 231.
+  `tests/endgame_probe.gd`: walka na środku największej komnaty (postać wraca po odskoku - koniec zacinania się bota),
+  szósty argument - ekwipunek zastąpiony rzadkimi przedmiotami danego poziomu, czas klatki. Pomiar (gromada 8 wrogów,
+  postać na poziomie potworów): ekwipunek autora - stopień 8 i 10 bez kłopotu, 12 traci zdrowie (~-60/s), 14 (~-100/s),
+  17 - otrzymuje 425-540/s przy leczeniu ~85/s, pada co ~3 s; rzadki ekwipunek tego poziomu - 12 i 14 bez kłopotu,
+  17 - otrzymuje ~210/s i tyle samo leczy, zabija 3x szybciej. Czas klatki w stopniu 17 (chmura, bez ekranu): w spoczynku
+  ~8 ms zamiast ~6, w walce ~14 ms. `tests/balance_sim.gd` w końcówce tylko wypisuje etapy (bez widełek ciosów
+  i przeżycia - symulacja nie liczy umiejętności, uniku ani leczenia) i sprawdza gracza z ekwipunkiem z 40. poziomu
+  (rzadkim) - przy 90. poziomie przeżywa 1,4 ciosu.
 
 ## Gobliński Las i Prastary Las (`scripts/world.gd`, `scripts/ancient_forest.gd`) (Do poprawy)
 - [x] Gobliński Las: więcej grupek goblinów w lesie i większe siedlisko wilków - około 450 potworów (było około 340);

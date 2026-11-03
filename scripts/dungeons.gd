@@ -332,8 +332,10 @@ const TIER_LEVELS: Array[int] = [5, 11, 17, 23, 29, 35, 41, 45, 50, 55, 60, 65, 
 ## Stopnie dostępne w zwykłym oknie lochów (wyższe są na Mapie Nawii).
 const BASE_TIERS := 7
 const BOSS_BONUS := 2
-## O ile więcej potworów na każdym kolejnym stopniu (stopień 7: +42%; wyżej już nie rośnie - patrz power_tier).
-const TIER_COUNT_BONUS := 0.07
+## Liczba potworów rośnie płynnie z prawdziwym stopniem (także na Mapie Nawii): 1 + LINEAR * (stopień - 1)
+## + SQUARE * (stopień - 1)^2 - stopień 7 około 1,65 raza, 12 - 2,6, najwyższy (17) 4 razy tyle co stopień 1.
+const TIER_COUNT_LINEAR := 0.06
+const TIER_COUNT_SQUARE := 0.008
 
 ## Modyfikatory za żar (dostępny żar = zebrany minus wydany - wydawanie nie obniża poziomu Watry).
 ## "unlock" - od którego poziomu Watry; reszta to mnożniki dla potworów (Goblin.dungeon_mods) i skarbca.
@@ -413,6 +415,12 @@ static func tier_level(tier: int) -> int:
 ## stopnie 8-17 liczą się jak 7 - trudność i łup rosną tam z poziomem potworów, a nie z liczbą wrogów naraz.
 static func power_tier(tier: int) -> int:
 	return clampi(tier, 1, BASE_TIERS)
+
+
+## Mnożnik liczby potworów w lochu danego stopnia (bez modyfikatorów i bożków).
+static func count_multiplier(tier: int) -> float:
+	var t := clampi(tier, 1, TIER_LEVELS.size()) - 1
+	return 1.0 + TIER_COUNT_LINEAR * t + TIER_COUNT_SQUARE * t * t
 
 
 ## power_tier dla ustawień wyprawy (config).

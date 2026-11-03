@@ -67,11 +67,11 @@ const ITEM_LEVEL_SPREAD := Vector2i(-1, 2)
 ## ma tam więcej zdrowia z przedmiotów i potrzebuje coraz więcej doświadczenia na poziom (tests/balance_sim.gd).
 ## Krainy (do 42. poziomu) zostają bez zmian.
 const ENDGAME_LEVEL := 41
-const ENDGAME_DAMAGE := 0.025
+const ENDGAME_DAMAGE := 0.16
 const ENDGAME_XP := 0.016
-## Zdrowie w końcówce: +2,5% na poziom ponad ENDGAME_LEVEL (przy 90. poziomie około 2,2 razy więcej) - obrażenia gracza
+## Zdrowie w końcówce: +7% na poziom ponad ENDGAME_LEVEL (przy 90. poziomie około 4,4 raza więcej) - obrażenia gracza
 ## rosną tam głównie z atrybutów, drzewek i umiejętności, a nie z poziomu łupu (pomiar: tests/endgame_probe.gd).
-const ENDGAME_HEALTH := 0.025
+const ENDGAME_HEALTH := 0.07
 ## Ostrzejsze zasady walki w końcówce (endgame_share) wchodzą stopniowo od ENDGAME_LEVEL i działają w pełni
 ## od ENDGAME_FULL poziomu potworów (krótsza nietykalność gracza, odporność potworów na przerwanie zamachu i odrzut).
 const ENDGAME_FULL := 65
