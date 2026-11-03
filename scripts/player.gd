@@ -342,6 +342,10 @@ var market := Market.new()
 var events := WorldEvents.new()
 ## Darmowe gniazda u jubilera (pierwsze - nagroda za zadanie "Pierwszy klejnot").
 var free_sockets := 0
+## Oferta Skarbnika czekająca na następnego Skarbnika (po wygranych falach - SkarbnikOffer) i jej identyfikator
+## w zapisie gry (w trakcie fal oferta jest tylko w księdze, jako zagrożona).
+var skarbnik_offer := {}
+var skarbnik_uid := ""
 
 ## Plecak bez toreb i miejsca na torby (sakwy, plecaki) pod ekwipunkiem.
 const BASE_INVENTORY := 20
@@ -1257,6 +1261,7 @@ func get_save_data() -> Dictionary:
 		"free_sockets": free_sockets,
 		"generated_items": Loot.export_used(_owned_ids()),
 		"hero": hero,
+		"skarbnik": skarbnik_uid,
 	}
 
 
@@ -1330,6 +1335,9 @@ func load_save_data(data: Dictionary) -> void:
 	if data.has("quests"):
 		quests.load_save_data(data["quests"])
 	Gems.unlocked = quests.state_of(Gems.QUEST) == Quests.STATE_DONE
+	# oferta Skarbnika z księgi (zagrożona - gracz wyszedł albo wczytał grę w trakcie fal - przepada)
+	skarbnik_offer = SkarbnikOffer.restore(str(data.get("skarbnik", "")))
+	skarbnik_uid = str(skarbnik_offer.get("uid", ""))
 	free_sockets = int(data.get("free_sockets", 0))
 	if data.has("storage"):
 		storage.load_save_data(data["storage"])

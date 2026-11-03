@@ -64,6 +64,8 @@ var elites: Array[DungeonElite] = []
 var uroczyska: Array[Uroczysko] = []
 ## Kręgi Żertwy (pnie ofiarne, mechanika "zertwa").
 var zertwy: Array[Zertwa] = []
+## Skarbnicy (mechanika "skarbnik").
+var skarbniki: Array[Skarbnik] = []
 ## Ołtarz Welesa (Essences): ukryta komnata poza listą komnat - bez potworów i pochodni (pusta - brak ołtarza).
 var altar_room := Rect2i()
 ## Rodzaj wystroju każdej komnaty (DungeonDecor): Rect2i -> nazwa (np. "crypt", "forge", "start").
@@ -896,6 +898,15 @@ func _build_mechanics() -> void:
 				best = room
 		if best.get_area() > 0:
 			_add_zertwa(best)
+	if mechanics.has("skarbnik"):
+		# komnaty bez Uroczyska i Kręgu Żertwy (fale potrzebują miejsca); więcej Skarbników - premie mechanik
+		var taken: Array[Rect2i] = []
+		for other: Node2D in uroczyska + zertwy:
+			taken.append(_room_of(other.position))
+		var count := int(config.get("mechanic_bonus", {}).get("skarbnik_count", Dungeons.SKA_COUNT))
+		var spare := _mechanic_rooms(rooms.size()).filter(func(room: Rect2i) -> bool: return not taken.has(room))
+		for room: Rect2i in spare.slice(0, count):
+			_add_skarbnik(room)
 	if mechanics.has("chests"):
 		var kinds := {}
 		for kind: String in Dungeons.CHEST_KINDS:
@@ -981,7 +992,7 @@ func _mechanic_spot(room: Rect2i) -> Vector2:
 			var d := at.distance_to(spot)
 			if d < 70.0:
 				score += 70.0 - d
-		for other: Node2D in chests + shrines + uroczyska + zertwy:
+		for other: Node2D in chests + shrines + uroczyska + zertwy + skarbniki:
 			if other.position.distance_to(spot) < 120.0:
 				score += 500.0
 		if score < best_score:
@@ -1028,6 +1039,17 @@ func _add_zertwa(room: Rect2i) -> Zertwa:
 	altar.glow = _glow(altar.position + Vector2(0, -16), Color(Zertwa.COLOR, 0.45), Vector2(140, 110))
 	w._map_markers.append({"position": altar.position, "color": Zertwa.COLOR, "size": 2.5})
 	return altar
+
+
+## Skarbnik (duch górnika przy kupce skarbów) w komnacie.
+func _add_skarbnik(room: Rect2i) -> Skarbnik:
+	var spirit := Skarbnik.create(self)
+	spirit.position = _mechanic_spot(room)
+	skarbniki.append(spirit)
+	w.entities.add_child(spirit)
+	spirit.glow = _glow(spirit.position + Vector2(0, -16), Color(Skarbnik.COLOR, 0.45), Vector2(130, 100))
+	w._map_markers.append({"position": spirit.position, "color": Skarbnik.COLOR, "size": 2.5})
+	return spirit
 
 
 ## Komnata, w której leży punkt (pusty prostokąt - w korytarzu).

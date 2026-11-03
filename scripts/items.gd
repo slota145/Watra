@@ -678,6 +678,11 @@ const DATA := {
 		"description": "Bijące żarem jądro Kryształu Watry (lochy od 3. stopnia). Kowal Bronisław wykuwa nim gniazdo na esencję legendy.",
 		"icon": preload("res://assets/items/crystal_heart.png"), "sell_price": 40,
 	},
+	"skarbnik_bones": {
+		"name": "Kości Skarbnika",
+		"description": "Dwie kościane kostki ducha starego górnika, z fal Skarbnika w lochach Watry. Za jedną Skarbnik przelosuje swoją ofertę (rodzaje premii, kamieni i run).",
+		"icon": preload("res://assets/items/skarbnik_bones.png"), "sell_price": 60,
+	},
 	"mercy_stone": {
 		"name": "Kamień miłosierdzia",
 		"description": "Lazurowa kula. Zebrane razem chronią przed utratą poziomu przy nieudanym zaklęciu: 10 szt. przy III, 20 przy IV, 30 przy V.",

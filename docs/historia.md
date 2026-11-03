@@ -829,6 +829,51 @@ odpowiedniej sekcji.
     do plecaka (`{"talisman": nr}` w `InventoryWindow._drop_on_bag`), PPM - wyjmij; pod siatką suma premii i efektów.
   - Zrzuty: `SCRIPT=tools/dungeon_shots.gd tools/screenshot.sh /tmp/m catacombs 7 3 1.0 mechaniki` (`_zertwa.png`
     i `_zertwa_open.png`). Testy: `tests/test_dungeon.gd` (`_check_zertwa`), `tests/test_talismans.gd`.
+- [x] **Mechaniki w lochach, etap 5 - Skarbnik i przegląd tierów T1** (listopad 2026): nagroda z ryzykiem jak Ultimatum
+  w PoE. Ustalenia z autorem w opisie punktu w CLAUDE.md (historia: „Skarbnik”).
+  - **Przegląd tierów T1** (krok 1, `tests/tier_sim.gd` - wojownik na 40. poziomie, 11 przedmiotów): T1 to przedmioty
+    90.-100. poziomu, a najwyższy poziom przedmiotu w grze to ~43 (najlepszy możliwy dziś tier: T13). Przed zmianą pełne
+    T1 dawało 55x obrażeń i 22x przeżywalności typowej postaci. Zmiany `Loot.TIER_VALUES` (zgoda autora): zdrowie
+    200 -> 120, szansa na cios krytyczny 12% -> 7%, siła krytyka 60% -> 45%, szybkość ruchu 16% -> 20% (na tle PoE,
+    Diablo 4 i Last Epoch: T1 życia to ~10% puli postaci, buty 20-35% ruchu, kryt prawie nigdy wprost). Zwykłe łupy
+    prawie bez zmian (zdrowie z typowej premii 25 -> 20). Po zmianie: pełne T1 38x obrażeń, pełny sufit Skarbnika
+    (T8) 11x obrażeń i 6,5x przeżywalności, najlepsze dziś (T13) 5x.
+  - **Sufit Skarbnika** (`SkarbnikOffer.ceiling_tier`): wzmacnianie podnosi tiery najwyżej do `Loot.top_tier(poziom) -
+    SKA_CEILING_EXTRA` (5) - przy poziomie 43 to T8; T1 dopiero dla przedmiotów 80.+ poziomu (przyszłe krainy).
+  - Mechanika `"skarbnik"` (waga 5, duża); Kryształ Watry podniesiony z 6 na 7, żeby dalej był w ~20% lochów. Liczba
+    Skarbników w lochu: `SKA_COUNT` (1), drzewko Watry i przedmioty w Watrze podniosą ją przez
+    `config["mechanic_bonus"]["skarbnik_count"]`. Skarbnik staje w wolnej komnacie bez Uroczyska i Kręgu Żertwy
+    (`Dungeon._add_skarbnik`).
+  - `scripts/skarbnik_offer.gd` (`SkarbnikOffer`): oferta jako słownik do JSON (uid, poziom przedmiotów = poziom lochu
+    + 2, stopień, liczba wzmocnień, nagrody). 3 nagrody (40% szans na 4), pierwsza zawsze przedmiot (rzadki z linii
+    łupu); dalej runy (2-4), kamienie zaklinania (`SKA_STONES`: broni/zbroi/biżuterii 3-6, uświęcone 20-40,
+    miłosierdzia 3-6) i kamień szlachetny (po zadaniu jubilera). Wzmocnienie (`strengthen`, najwyżej `SKA_MAX_STEPS`
+    = 6): tiery premii +4 do sufitu (rodzaje bez zmian), runy i kamienie +50% sztuk bazy za wzmocnienie, szlif +1;
+    6. wzmocnienie - wszystkie premie na sufit i przemiana w losową legendę tego samego miejsca (broń - ten sam rodzaj
+    broni; `legend_bases`). Przelosowanie (`reroll`): nowe rodzaje premii z tymi samymi tierami, inny kamień
+    szlachetny, inna runa, inny kamień zaklinania (ta sama część zakresu sztuk).
+  - **Księga ofert** (zabezpieczenie przed wczytywaniem): plik `user://skarbnik.json` (`SkarbnikOffer.ledger_path`,
+    testy - `user://test_skarbnik.json`). Zapis gry trzyma tylko identyfikator (`Player.skarbnik_uid`, klucz
+    „skarbnik”), oferta jest w księdze. Wzmocnij / Przelosuj - oferta od razu w księdze jako zagrożona; wygrana -
+    zabezpieczona i czeka u gracza (`Player.skarbnik_offer`) na następnego Skarbnika (także w kolejnym lochu); wzięta
+    albo stracona - znika z księgi, więc starszy zapis jej nie przywróci. Wczytanie zapisu z zagrożoną ofertą (wyjście
+    z lochu, wyłączenie gry w trakcie fal) - przepada (`SkarbnikOffer.restore`).
+  - `scripts/skarbnik.gd` (`Skarbnik`, dziedziczy po `Harvestable`): krasnoludzki górnik z Kryształu Watry
+    (`assets/crystal/miner_down.png`) jako złocista zjawa (`shaders/ghost.gdshader`, kolor `GHOST`) przy kupce skarbów
+    (`assets/dungeons/mine/treasure.png`) - 0 generacji PixelLab. F - okno oferty. Fale: `SKA_WAVES` = 1, 2, 2, 3, 3, 4
+    fal na kolejnych wzmocnieniach (przelosowanie - jak przy obecnym wzmocnieniu, bez wzrostu siły); w fali
+    `SKA_WAVE_KILLS` wrogów (60-340), żywych naraz `SKA_ALIVE` (30-150), poziom potworów + 2 za wzmocnienie; wrogowie
+    wychodzą z 3 bram 220-420 px od Skarbnika (nowe bramy co falę), od 4. wzmocnienia część dostaje cechy elit
+    (`SKA_ELITE_CHANCE` 3% za wzmocnienie od 4.). Wrogowie fal: 60% doświadczenia, 25% szansy na przedmiot, bez serc.
+    Kości Skarbnika (`skarbnik_bones`, ikona `tools/skarbnik_art.py`): pewna sztuka po wygranych falach i 0,4% z każdego
+    wroga fal. Śmierć gracza w falach - oferta przepada, wrogowie fal się rozwiewają (`Skarbnik.lose`).
+  - **Sufit wrogów żywych naraz** (`tests/bench_skarbnik.gd`, z oknem: scena `mgnienie` albo `miecz`, liczba żywych,
+    sekundy; w chmurze obraz rysuje procesor, więc liczą się proporcje): Mgnienie - 60 żywych 43 ms/klatkę, 100 - 68 ms,
+    150 - 83 ms, 200 - 153 ms, 300 - 224 ms; miecz - 150: 61 ms, 300: 134 ms. Dla porównania największa gromada Turni
+    i Cmentarza z Mgnieniem (`bench_village`): 122 ms. Sufit 150 (przy 200 Mgnienie kosztuje więcej niż dziś w krainach).
+  - Okno `scripts/ui/skarbnik_window.gd` (`SkarbnikWindow`): nagrody obok siebie (ikona, liczba sztuk, opis, „Weź”),
+    pod nimi Wzmocnij (przed ostatnim - „Przemień w legendy”, w dymku fale i poziom potworów), Przelosuj (za Kości),
+    Później. Testy: `tests/test_skarbnik.gd`.
 
 ## Zielarstwo (Pomysły i rzeczy do zrobienia)
 - [x] **Zioła i mikstury zielarki** (`scripts/herbs.gd`, roślina `scripts/herb.gd`, grafiki z PixelLab przez `tools/herb_art.py`):

@@ -9,7 +9,7 @@ const STR := 20
 const VIT := 19
 const BASES := {"weapon": "sword", "helmet": "helm", "chest": "plate", "gloves": "gauntlets", "boots": "greaves",
 		"earring_1": "stud", "earring_2": "stud", "ring_1": "signet", "ring_2": "signet", "necklace": "amulet", "belt": "girdle"}
-## Proponowane wartości T1 (nadpisują Loot.TIER_VALUES, gdy uruchomiono z argumentem "propozycja").
+## Wartości T1 do porównania (nadpisują Loot.TIER_VALUES z argumentem "propozycja"; obecne wartości to propozycja z listopada 2026).
 const PROPOSAL := {"health": [5.0, 120.0], "crit_chance": [0.01, 0.07], "move_speed": [0.02, 0.20], "crit_damage": [0.05, 0.45]}
 const PRIORITY := ["damage", "physical_damage", "damage_percent", "crit_chance", "crit_damage", "attack_speed",
 		"health", "move_speed", "strength", "armor", "vitality", "life_on_hit", "area", "dodge_chance",
@@ -36,6 +36,7 @@ func _init() -> void:
 			" | ilvl 43: best ", Loot.best_tier(43), " top ", Loot.top_tier(43))
 	_report("Typowy rzadki (5 premii, losowe tiery ilvl 40, srednia 300 prob)", -1, 5, 300)
 	_report("Najlepszy dzis (6 premii, tier %d)" % Loot.top_tier(43), Loot.top_tier(43), 6, 1)
+	_report("Sufit Skarbnika (6 premii, tier %d)" % SkarbnikOffer.ceiling_tier(43), SkarbnikOffer.ceiling_tier(43), 6, 1)
 	_report("Pelne T1 (6 premii)", 1, 6, 1)
 	_report("Pelne T1 (8 premii, legendy)", 1, 8, 1)
 	quit()
