@@ -15,8 +15,9 @@ extends Boss
 ## Na arenie z Pomrokiem (Dungeon.pomrok) legendy i pas wypadają częściej (Pinnacles.POMROK_DROP).
 ## Animacja (assets/pinnacles/<bóg>.png, tools/pinnacle_art.py): klatki 0-8 spoczynek, 9-17 atak - zamach w czasie
 ## zapowiedzi, uderzenie po niej.
-## Efekty bogów z kreatora efektów PixelLab (pixellab_src/vfx/ids.json): Weles ma własne (bagienna zieleń i złoto -
-## FX_WELES_*, dźwięki weles_* z tools/sfx_synth.py), Marzanna i Czarnobóg na razie pożyczone.
+## Efekty bogów z kreatora efektów PixelLab (pixellab_src/vfx/ids.json) i dźwięki z tools/sfx_synth.py: Weles -
+## bagienna zieleń i złoto (FX_WELES_*, weles_*), Marzanna - lód, biel i błękit (FX_MARZANNA_*, marzanna_*),
+## Czarnobóg na razie pożyczone.
 
 @export var kind := "weles"
 @export var strike_damage := 80
@@ -50,9 +51,6 @@ const SPIKE_STEP := 46.0
 const SPIKE_DELAY := 0.08
 const STEP_RADIUS := 95.0
 
-const FX_LANCE := preload("res://assets/effects/frost_lance.png")
-const FX_SHATTER := preload("res://assets/effects/ice_shatter.png")
-const FX_BLIZZARD := preload("res://assets/effects/blizzard.png")
 const FX_MIST := preload("res://assets/effects/wij_mist.png")
 const FX_SPIKE := preload("res://assets/effects/mortan_spike.png")
 const FX_BLINK := preload("res://assets/effects/mortan_blink.png")
@@ -63,6 +61,18 @@ const FX_WELES_SERPENT := preload("res://assets/effects/weles_serpent.png")
 const FX_WELES_ENGAGE := preload("res://assets/effects/weles_engage.png")
 const FX_WELES_PHASE := preload("res://assets/effects/weles_phase.png")
 const FX_WELES_DEATH := preload("res://assets/effects/weles_death.png")
+const FX_MARZANNA_NOVA := preload("res://assets/effects/marzanna_nova.png")
+const FX_MARZANNA_LANCE := preload("res://assets/effects/marzanna_lance.png")
+const FX_MARZANNA_BLIZZARD := preload("res://assets/effects/marzanna_blizzard.png")
+const FX_MARZANNA_MIST := preload("res://assets/effects/marzanna_mist.png")
+const FX_MARZANNA_ENGAGE := preload("res://assets/effects/marzanna_engage.png")
+const FX_MARZANNA_PHASE := preload("res://assets/effects/marzanna_phase.png")
+const FX_MARZANNA_DEATH := preload("res://assets/effects/marzanna_death.png")
+## Promień kręgu lodowych kolców w marzanna_nova, lot włóczni w marzanna_lance i promień zamieci w marzanna_blizzard
+## przy skali 1 (piksele klatki).
+const MARZANNA_NOVA_ART_RADIUS := 70.0
+const MARZANNA_LANCE_ART_LENGTH := 300.0
+const MARZANNA_BLIZZARD_ART_RADIUS := 70.0
 ## Promień kręgu cierni w weles_roots przy skali 1 (piksele klatki).
 const WELES_ROOTS_ART_RADIUS := 80.0
 
@@ -109,7 +119,7 @@ func take_damage(amount: int, from_position: Vector2, knockback := 0.0) -> void:
 			phase = i + 2
 			attack_interval *= 0.75
 			speed *= 1.1
-			Sfx.play_at("weles_roar" if kind == "weles" else ("ghost_wail" if kind == "marzanna" else "bies_roar"), global_position)
+			Sfx.play_at("weles_roar" if kind == "weles" else ("marzanna_wail" if kind == "marzanna" else "bies_roar"), global_position)
 			_shake_camera(9.0)
 			_fx_phase()
 			var hud := get_tree().get_first_node_in_group("hud")
@@ -206,8 +216,10 @@ func _choose_marzanna(distance: float) -> bool:
 		var circle := _show_telegraph(Telegraph.Shape.CIRCLE, _spots[0], 0.0, 1.2)
 		circle.radius = BLIZZARD_RADIUS
 		circle.modulate = Color(0.7, 0.9, 1.0)
-		SkillEffects.sheet_once(get_parent(), FX_BLIZZARD, 12, 12.0, _spots[0], Vector2(72, 77), 0.0, 1.0,
-				BLIZZARD_RADIUS / 60.0)
+		# zamieć trwa całą zapowiedź (1,2 s), a lodowe kolce wyrastają na jej końcu
+		SkillEffects.sheet_once(get_parent(), FX_MARZANNA_BLIZZARD, 16, 10.0, _spots[0], Vector2(93, 87), 0.0, 1.0,
+				BLIZZARD_RADIUS / MARZANNA_BLIZZARD_ART_RADIUS)
+		Sfx.play_at("marzanna_blizzard", _spots[0])
 	else:
 		return false
 	return true
@@ -300,21 +312,20 @@ func _update_attack(_delta: float) -> void:
 					_hurt_player(area_damage, 220.0)
 					_player.apply_slow(0.3, 2.5)
 				_remove_telegraph()
-				for i in 10:
-					var at := global_position + Vector2.from_angle(TAU * i / 10.0) * NOVA_RADIUS * 0.7
-					SkillEffects.sheet_once(get_parent(), FX_SHATTER, 8, 16.0, at, Vector2(27, 19), 0.0, 1.0, 1.6)
-				Sfx.play_at("hit_ice", global_position)
+				SkillEffects.sheet_once(get_parent(), FX_MARZANNA_NOVA, 14, 12.0, global_position, Vector2(95, 81), 0.0, 1.0,
+						NOVA_RADIUS * 0.8 / MARZANNA_NOVA_ART_RADIUS)
+				Sfx.play_at("marzanna_nova", global_position)
 				_shake_camera(6.0)
 				# od fazy 2 Marzanna znika we mgle i staje gdzie indziej
 				if phase >= 2:
 					_set_stage("act", 0.5)
-					SkillEffects.sheet_once(get_parent(), FX_MIST, 14, 16.0, global_position, Vector2(73, 124), 0.0, 1.0, 1.1)
+					_marzanna_mist()
 					return
 				_set_stage("recover", 0.7)
 		["nova", "act"]:
 			if _stage_timer <= 0.0:
 				_teleport(_blink_spot())
-				SkillEffects.sheet_once(get_parent(), FX_MIST, 14, 16.0, global_position, Vector2(73, 124), 0.0, 1.0, 1.1)
+				_marzanna_mist()
 				_set_stage("recover", 0.6)
 		["lances", "telegraph"]:
 			if _stage_timer <= 0.0:
@@ -323,10 +334,9 @@ func _update_attack(_delta: float) -> void:
 					if _player_alive() and _on_line(_player.global_position, global_position, dir, LANCE_LENGTH, LANCE_WIDTH):
 						_hurt_player(strike_damage, 140.0)
 						_player.apply_slow(0.5, 2.0)
-					for k in 4:
-						SkillEffects.sheet_once(get_parent(), FX_LANCE, 6, 16.0, global_position + dir * (40.0 + k * 75.0) + Vector2(0, -12),
-								Vector2(35, 8), dir.angle(), 1.6, 1.4)
-				Sfx.play_at("hit_ice", global_position)
+					SkillEffects.sheet_once(get_parent(), FX_MARZANNA_LANCE, 10, 12.0, global_position + Vector2(0, -12),
+							Vector2(74, 29), dir.angle(), 1.0, LANCE_LENGTH / MARZANNA_LANCE_ART_LENGTH)
+				Sfx.play_at("marzanna_lance", global_position)
 				_set_stage("recover", 0.6)
 		["blizzard", "telegraph"]:
 			if _stage_timer <= 0.0:
@@ -334,10 +344,6 @@ func _update_attack(_delta: float) -> void:
 					_hurt_player(special_damage, 60.0)
 					_player.apply_slow(0.25, 3.5)
 				_remove_telegraph()
-				for i in 6:
-					var at := _spots[0] + Vector2.from_angle(randf() * TAU) * randf() * BLIZZARD_RADIUS * 0.8
-					SkillEffects.sheet_once(get_parent(), FX_SHATTER, 8, 16.0, at, Vector2(27, 19), 0.0, 1.0, 1.2)
-				Sfx.play_at("hit_ice", _spots[0])
 				_set_stage("recover", 0.6)
 		["cleave", "telegraph"]:
 			if _stage_timer <= 0.0:
@@ -473,27 +479,46 @@ func _fx_engage() -> void:
 					fx_scale() * 1.1)
 			Sfx.play_at("weles_roar", global_position)
 		"marzanna":
-			SkillEffects.sheet_once(get_parent(), FX_MIST, 14, 16.0, global_position, Vector2(73, 124), 0.0, 1.0, 1.2)
+			SkillEffects.sheet_once(get_parent(), FX_MARZANNA_ENGAGE, 16, 14.0, global_position, Vector2(77, 167), 0.0, 1.0,
+					fx_scale() * 1.1)
+			Sfx.play_at("marzanna_wail", global_position)
 		_:
 			SkillEffects.sheet_once(get_parent(), FX_SMOKE, 10, 14.0, global_position, Vector2(29, 40), 0.0, 1.0, 3.0)
 	super()
 
 
-## Zmiana fazy: Weles - zielono-złoty wybuch mocy z monetami, reszta bogów - wspólny wybuch bossów.
+## Zmiana fazy: Weles - zielono-złoty wybuch mocy z monetami, Marzanna - mroźny błysk, reszta - wspólny wybuch bossów.
 func _fx_phase() -> void:
-	if kind != "weles":
-		super()
-		return
-	SkillEffects.sheet_once(get_parent(), FX_WELES_PHASE, 14, 12.0, global_position, Vector2(78, 53), 0.0, 1.0, fx_scale() * 1.2)
+	match kind:
+		"weles":
+			SkillEffects.sheet_once(get_parent(), FX_WELES_PHASE, 14, 12.0, global_position, Vector2(78, 53), 0.0, 1.0,
+					fx_scale() * 1.2)
+		"marzanna":
+			SkillEffects.sheet_once(get_parent(), FX_MARZANNA_PHASE, 16, 12.0, global_position, Vector2(76, 78), 0.0, 1.0,
+					fx_scale() * 1.2)
+		_:
+			super()
 
 
-## Śmierć: Weles - bagienny wybuch, więdnące pnącza i sypiące się złoto, reszta bogów - wspólna śmierć bossów.
+## Śmierć: Weles - bagienny wybuch i sypiące się złoto, Marzanna - wybuch lodu i śnieg, reszta - wspólna śmierć bossów.
 func _fx_death() -> void:
-	if kind != "weles":
-		super()
-		return
-	SkillEffects.sheet_once(get_parent(), FX_WELES_DEATH, 22, 14.0, global_position, Vector2(70, 76), 0.0, 1.0, fx_scale() * 1.3)
-	Sfx.play_at("weles_death", global_position)
+	match kind:
+		"weles":
+			SkillEffects.sheet_once(get_parent(), FX_WELES_DEATH, 22, 14.0, global_position, Vector2(70, 76), 0.0, 1.0,
+					fx_scale() * 1.3)
+			Sfx.play_at("weles_death", global_position)
+		"marzanna":
+			SkillEffects.sheet_once(get_parent(), FX_MARZANNA_DEATH, 16, 14.0, global_position, Vector2(93, 90), 0.0, 1.0,
+					fx_scale() * 1.3)
+			Sfx.play_at("marzanna_death", global_position)
+		_:
+			super()
+
+
+## Marzanna znika albo pojawia się w lodowej mgle.
+func _marzanna_mist() -> void:
+	SkillEffects.sheet_once(get_parent(), FX_MARZANNA_MIST, 12, 12.0, global_position, Vector2(60, 54), 0.0, 1.0, fx_scale() * 1.1)
+	Sfx.play_at("marzanna_mist", global_position)
 
 
 func _cancel_attack() -> void:

@@ -911,6 +911,15 @@ odpowiedniej sekcji.
   (`WELES`): `weles_roar` (ryk niedźwiedzia przechodzący w wężowy syk - pojawienie się i fazy), `weles_roots`,
   `weles_venom`, `weles_hiss` (Wężowy Zryw), `weles_death` (ryk, syk i brzęk monet). Cień Welesa u Władcy Hordy
   używa tych samych efektów.
+- [x] **Efekty i dźwięki bossów szczytowych, etap 2 - Marzanna** (listopad 2026; lód, biel i błękit). Efekty
+  (`assets/effects/marzanna_*.png`, stałe `FX_MARZANNA_*` w `pinnacle_boss.gd`): `marzanna_nova` (Mroźny Wybuch - krąg
+  8 kęp lodowych kolców i błysk), `marzanna_lance` (lecąca lodowa włócznia z rozpryskiem, jedna na linię, obrót
+  i skala z `LANCE_LENGTH`), `marzanna_blizzard` (zamieć przez całą zapowiedź, puszczana z 10 kl./s, żeby kolce wyrosły
+  na jej końcu), `marzanna_mist` (lodowa mgła zniknięcia i pojawienia się - `_marzanna_mist`), `marzanna_engage` (słup
+  mroźnego światła, szron, kolce), `marzanna_phase` (zbieranie mrozu, błysk, pierścień odłamków), `marzanna_death`
+  (wybuch lodu, mgła, śnieg). Dźwięki (`MARZANNA` w `tools/sfx_synth.py`, pomocnicy `icy_wind`, `ice_crack`):
+  `marzanna_wail` (dwugłosowe zawodzenie nad wiatrem - pojawienie się i fazy), `marzanna_nova`, `marzanna_lance`,
+  `marzanna_blizzard` (narastające wycie z trzaskiem lodu na końcu), `marzanna_mist`, `marzanna_death`.
 - [x] **Mapa Nawii, etap 4 - bossowie szczytowi** (listopad 2026). Ustalenia z autorem: trzech słowiańskich bogów
   (Władca Hordy i obce bogi później), dostęp za fragmenty kluczy z węzłów, nagrody: punkty Watry, własne legendy, dużo
   łupu i serca boga jako waluta; grafiki PixelLab 160 px z 2 animacjami; do tego dwa pasy w stylu Mageblooda

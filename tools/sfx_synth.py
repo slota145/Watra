@@ -19,7 +19,8 @@
   whirlpool - Topielcze Uroczysko,
 - treant_groan / tree_rumble / roots_burst / leshy_whisper / spider_hiss / spider_death / queen_screech /
   cocoon_burst / bear_roar / werewolf_howl / bies_roar / shroom_chime - Prastary Las,
-- weles_roar / weles_roots / weles_venom / weles_hiss / weles_death - Weles, bóg szczytowy Mapy Nawii.
+- weles_roar / weles_roots / weles_venom / weles_hiss / weles_death - Weles, bóg szczytowy Mapy Nawii,
+- marzanna_wail / marzanna_nova / marzanna_lance / marzanna_blizzard / marzanna_mist / marzanna_death - Marzanna.
 Wymaga numpy i scipy.
 Zapisuje do assets/sfx (wymaga ffmpeg w PATH).
 
@@ -1164,6 +1165,107 @@ WELES = ((weles_roar, "weles_roar"), (weles_roots, "weles_roots"), (weles_venom,
          (weles_hiss, "weles_hiss"), (weles_death, "weles_death"))
 
 
+def icy_wind(dur, seed, lo=300, hi=3000, gust=0.7):
+    """Mroźny wiatr: szum w paśmie z falującą głośnością i świstem."""
+    rng = np.random.default_rng(seed)
+    n = int(RATE * dur)
+    t = np.arange(n) / RATE
+    swell = 0.6 + 0.4 * np.sin(2 * np.pi * gust * t + rng.random() * 6) * np.sin(2 * np.pi * 0.31 * t + 1.0)
+    whistle = np.sin(2 * np.pi * np.cumsum(900 + 250 * np.sin(2 * np.pi * 0.5 * t)) / RATE) * 0.12
+    return (band(rng.standard_normal(n), lo, hi) + whistle) * swell
+
+
+def ice_crack(n, seed, decay=10.0, amp=1.5):
+    """Pękający lód: ostry trzask z krótkimi, szklistymi dzwonieniami."""
+    rng = np.random.default_rng(seed)
+    t = np.arange(n) / RATE
+    crack = band(rng.standard_normal(n), 1500, 9000) * np.exp(-t * decay * 2) * amp
+    tink = np.zeros(n)
+    for k in range(6):
+        at = rng.random() * 0.15
+        tt = np.maximum(t - at, 0)
+        tink += chime([2500 + rng.random() * 3000], tt, 18.0) * (t > at) * 0.4
+    return crack + tink
+
+
+def marzanna_wail(_variant):
+    """Marzanna: upiorne, kobiece zawodzenie (dwa głosy na samogłosce "u-a") nad mroźnym wiatrem."""
+    dur = 2.4
+    n = int(RATE * dur)
+    t = np.arange(n) / RATE
+    voice = np.zeros(n)
+    for f0, amp in ((440.0, 0.5), (466.0, 0.35)):
+        f = f0 * (1 + 0.012 * np.sin(2 * np.pi * 5.5 * t)) * (1 + 0.12 * np.sin(np.pi * t / dur) - 0.18 * (t / dur) ** 2)
+        ph = np.cumsum(f) / RATE
+        voice += (np.sin(2 * np.pi * ph) + 0.3 * np.sin(4 * np.pi * ph) + 0.12 * np.sin(6 * np.pi * ph)) * amp
+    env = np.minimum(t / 0.35, 1) * np.minimum((dur - t) / 0.8, 1)
+    wind = icy_wind(dur, 1401) * 0.5 * np.minimum(t / 0.2, 1) * np.minimum((dur - t) / 0.5, 1)
+    return reverb(voice * env * 0.6 + wind, 2.0, 0.5, 1402)
+
+
+def marzanna_nova(_variant):
+    """Mroźny Wybuch: głuche tąpnięcie, pękający lód dookoła i szklisty pogłos."""
+    n = int(RATE * 1.3)
+    t = np.arange(n) / RATE
+    thud = np.sin(2 * np.pi * (70 * np.exp(-t * 3)) * t) * np.exp(-t * 7) * 1.2
+    x = thud + ice_crack(n, 1410, 6.0, 1.8)
+    x += band(np.random.default_rng(1411).standard_normal(n), 2000, 8000) * np.exp(-t * 3) * 0.3
+    return reverb(np.tanh(x), 1.2, 0.35, 1412)
+
+
+def marzanna_lance(_variant):
+    """Lodowe Włócznie: szybki, świszczący lot i brzęk pękającego lodu na końcu."""
+    rng = np.random.default_rng(1420)
+    n = int(RATE * 1.0)
+    t = np.arange(n) / RATE
+    f = 2500 + 3500 * np.minimum(t / 0.45, 1)
+    whoosh = band(rng.standard_normal(n), 1500, 7000) * np.sin(np.pi * np.minimum(t / 0.5, 1)) * 0.9
+    sing = np.sin(2 * np.pi * np.cumsum(f) / RATE) * np.sin(np.pi * np.minimum(t / 0.5, 1)) * 0.15
+    hit = np.zeros(n)
+    start = int(RATE * 0.45)
+    hit[start:] = ice_crack(n - start, 1421, 12.0, 1.2)
+    return room(np.tanh(whoosh + sing + hit), 1422, 0.4, 0.2)
+
+
+def marzanna_blizzard(_variant):
+    """Zamieć: narastające wycie śnieżycy, które kończy się trzaskiem lodu."""
+    dur = 1.7
+    n = int(RATE * dur)
+    t = np.arange(n) / RATE
+    wind = icy_wind(dur, 1430, 400, 5000, 1.6) * np.minimum(t / 1.1, 1) ** 1.5 * np.minimum((dur - t) / 0.4, 1)
+    hit = np.zeros(n)
+    start = int(RATE * 1.15)
+    hit[start:] = ice_crack(n - start, 1431, 8.0, 1.6)
+    return reverb(np.tanh(wind * 1.4 + hit), 1.0, 0.3, 1432)
+
+
+def marzanna_mist(_variant):
+    """Marzanna znika we mgle: zimny podmuch z cichym, opadającym dzwonieniem."""
+    rng = np.random.default_rng(1440)
+    n = int(RATE * 1.1)
+    t = np.arange(n) / RATE
+    puff = band(rng.standard_normal(n), 300, 4000) * np.minimum(t / 0.05, 1) * np.exp(-t * 4) * 1.2
+    bells = chime([1760.0, 1318.5, 987.8], t, 4.0, shimmer=1.0) * 0.5
+    return reverb(puff + bells, 1.4, 0.45, 1441)
+
+
+def marzanna_death(_variant):
+    """Marzanna ginie: zawodzenie opadające w ciszę, pękający w drobny mak lód i cichnący wiatr."""
+    dur = 3.2
+    n = int(RATE * dur)
+    t = np.arange(n) / RATE
+    f = 520 * (1 - 0.55 * np.minimum(t / 2.0, 1) ** 1.3) * (1 + 0.015 * np.sin(2 * np.pi * 6 * t))
+    ph = np.cumsum(f) / RATE
+    voice = (np.sin(2 * np.pi * ph) + 0.3 * np.sin(4 * np.pi * ph)) * np.minimum(t / 0.1, 1) * np.exp(-t * 1.1) * 0.6
+    x = voice + ice_crack(n, 1450, 3.0, 1.8) + ice_crack(n, 1451, 2.0, 0.6) * 0.7
+    x += icy_wind(dur, 1452) * 0.4 * np.exp(-t * 0.8)
+    return reverb(np.tanh(x), 2.0, 0.45, 1453)
+
+
+MARZANNA = ((marzanna_wail, "marzanna_wail"), (marzanna_nova, "marzanna_nova"), (marzanna_lance, "marzanna_lance"),
+            (marzanna_blizzard, "marzanna_blizzard"), (marzanna_mist, "marzanna_mist"), (marzanna_death, "marzanna_death"))
+
+
 def save_set(fn, name, count):
     for v in range(count):
         save(np.repeat(fn(v).reshape(-1, 1), 2, axis=1), f"{name}_{v + 1}")
@@ -1195,7 +1297,7 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     only = set(sys.argv[1:])
     if only:
-        for fn, name in LEGENDARY + WELES + ((chain_cast, "chain_cast"),):
+        for fn, name in LEGENDARY + WELES + MARZANNA + ((chain_cast, "chain_cast"),):
             if name in only:
                 save(np.repeat(fn(0).reshape(-1, 1), 2, axis=1), name)
         if "chain_zap" in only:
@@ -1219,7 +1321,7 @@ def main():
     save(np.repeat(chain_cast(0).reshape(-1, 1), 2, axis=1), "chain_cast")
     for fn, name in ((frog_attack, "frog_attack"), (frog_death, "frog_death"), (spit, "spit"), (spit_hit, "spit_hit"),
                      (frog_boss_roar, "frog_boss_roar"), (tongue_lash, "tongue_lash"), (boss_splash, "boss_splash"),
-                     (big_slash, "big_slash"), (seeker_whistle, "seeker_whistle"), (thunder, "thunder")) + LEGENDARY + WELES:
+                     (big_slash, "big_slash"), (seeker_whistle, "seeker_whistle"), (thunder, "thunder")) + LEGENDARY + WELES + MARZANNA:
         save(np.repeat(fn(0).reshape(-1, 1), 2, axis=1), name)
 
 

@@ -2199,5 +2199,110 @@
       76
     ],
     "columns": 7
+  },
+  "marzanna_nova": {
+    "effect": "3142b75a-e964-4c4f-8a21-1516895ddae1",
+    "name": "Marzanna - Mroźny Wybuch",
+    "frame": [
+      190,
+      175
+    ],
+    "frames": 14,
+    "fps": 12,
+    "anchor": [
+      95,
+      81
+    ],
+    "columns": 5
+  },
+  "marzanna_lance": {
+    "effect": "94250f23-7e47-4bd5-b9ea-749ec4d18078",
+    "name": "Marzanna - Lodowa Włócznia",
+    "frame": [
+      403,
+      87
+    ],
+    "frames": 10,
+    "fps": 12,
+    "anchor": [
+      74,
+      29
+    ],
+    "columns": 2
+  },
+  "marzanna_blizzard": {
+    "effect": "c7828560-1f87-43c3-8b92-1f8e1c902320",
+    "name": "Marzanna - Zamieć",
+    "frame": [
+      187,
+      174
+    ],
+    "frames": 16,
+    "fps": 10,
+    "anchor": [
+      93,
+      87
+    ],
+    "columns": 5
+  },
+  "marzanna_mist": {
+    "effect": "1988682c-b58f-4e3e-8ee4-9bdf2d9c84d7",
+    "name": "Marzanna - mgła zniknięcia",
+    "frame": [
+      113,
+      107
+    ],
+    "frames": 12,
+    "fps": 12,
+    "anchor": [
+      60,
+      54
+    ],
+    "columns": 6
+  },
+  "marzanna_engage": {
+    "effect": "7ae57e7f-ac54-476d-b3ed-a54101608e0f",
+    "name": "Marzanna - pojawienie się",
+    "frame": [
+      145,
+      242
+    ],
+    "frames": 16,
+    "fps": 14,
+    "anchor": [
+      77,
+      167
+    ],
+    "columns": 7
+  },
+  "marzanna_phase": {
+    "effect": "a16f1c8e-3307-48d8-b99e-8f8cb738d07d",
+    "name": "Marzanna - zmiana fazy",
+    "frame": [
+      140,
+      174
+    ],
+    "frames": 16,
+    "fps": 12,
+    "anchor": [
+      76,
+      78
+    ],
+    "columns": 7
+  },
+  "marzanna_death": {
+    "effect": "97452a2b-e28b-45ca-82fb-998ad3047b0a",
+    "name": "Marzanna - śmierć",
+    "frame": [
+      174,
+      195
+    ],
+    "frames": 16,
+    "fps": 14,
+    "anchor": [
+      93,
+      90
+    ],
+    "columns": 5
   }
 }
