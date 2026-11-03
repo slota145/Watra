@@ -116,6 +116,8 @@ var ember := 0
 var ember_spent := 0
 ## Oczyszczone węzły Mapy Nawii (NawiaMap) - kolejne odsłaniają sąsiednie, każdy daje punkt Watry.
 var nawia_cleared: Array[int] = []
+## Krainy z włączonym Błogosławieństwem Watry (przełącznik przy kapliczce; NawiaMap.blessing_level).
+var nawia_blessed: Array[String] = []
 
 
 func _process(delta: float) -> void:
@@ -275,6 +277,15 @@ func clear_nawia_node(id: int) -> bool:
 	return true
 
 
+## Włącza / wyłącza Błogosławieństwo Watry krainy (działa od następnego wejścia do niej).
+func set_blessing(zone: String, on: bool) -> void:
+	if on and not nawia_blessed.has(zone):
+		nawia_blessed.append(zone)
+	elif not on:
+		nawia_blessed.erase(zone)
+	changed.emit()
+
+
 ## Punkty Watry z Mapy Nawii (do przyszłego drzewka Watry).
 func watra_points() -> int:
 	return NawiaMap.points(nawia_cleared)
@@ -286,7 +297,7 @@ func get_save_data() -> Dictionary:
 	for group: String in active:
 		timed[group] = [active[group]["id"], active[group]["left"]]
 	return {"active": timed, "bestiary": bestiary.duplicate(), "ember": ember, "ember_spent": ember_spent,
-			"nawia": nawia_cleared.duplicate()}
+			"nawia": nawia_cleared.duplicate(), "blessed": nawia_blessed.duplicate()}
 
 
 func load_save_data(data: Dictionary) -> void:
@@ -302,6 +313,10 @@ func load_save_data(data: Dictionary) -> void:
 	for id in data.get("nawia", []):
 		if not nawia_cleared.has(int(id)):
 			nawia_cleared.append(int(id))
+	nawia_blessed.clear()
+	for zone in data.get("blessed", []):
+		if Levels.ZONES.has(str(zone)) and not nawia_blessed.has(str(zone)):
+			nawia_blessed.append(str(zone))
 	bestiary.clear()
 	var saved: Dictionary = data.get("bestiary", {})
 	for kind: String in saved:

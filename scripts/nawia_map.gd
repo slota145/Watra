@@ -6,6 +6,8 @@ class_name NawiaMap
 ## strażnika lochu z węzła (Dungeon._on_boss_died) oczyszcza węzeł i odsłania sąsiednie. Każdy nowy oczyszczony węzeł
 ## daje punkt Watry (do przyszłego drzewka Watry). Układ losuje się z ziarna zapisu (ta sama mapa w jednym zapisie),
 ## postęp (oczyszczone węzły) trzyma Boons.nawia_cleared. Okno: scripts/ui/nawia_window.gd.
+## Błogosławieństwo Watry: oczyszczone węzły obszaru pozwalają przy kapliczce krainy podnieść jej potwory do poziomu
+## najtrudniejszego oczyszczonego węzła (blessing_*), z premią do łupu i doświadczenia rosnącą z liczbą węzłów.
 
 ## Obszary mapy (krainy świata) w kolejności wokół koła, od góry zgodnie ze wskazówkami zegara.
 const AREAS: Array[String] = ["cemetery", "ancient", "mountains", "swamp", "fields", "forest"]
@@ -30,6 +32,10 @@ const LINK_CROSS := 0.3
 const UNLOCK_LEVEL := 40
 ## Punkty Watry za każdy nowy oczyszczony węzeł.
 const POINTS_PER_NODE := 1
+## Błogosławieństwo Watry: premia do łupu i doświadczenia za każdy oczyszczony węzeł obszaru (15 węzłów - +30%)
+## i rozrzut poziomów krainy wokół poziomu węzła: [przy wejściu, w najdalszym zakątku, bossowie].
+const BLESS_BONUS_PER_NODE := 0.02
+const BLESS_SPREAD: Array[int] = [-4, 0, 2]
 
 static var _cache_seed := 0
 static var _cache: Array[Dictionary] = []
@@ -177,3 +183,22 @@ static func area_cleared(list: Array[Dictionary], cleared: Array, area: String) 
 ## Czy gracz może już korzystać z mapy (poziom postaci).
 static func unlocked(player_level: int) -> bool:
 	return player_level >= UNLOCK_LEVEL
+
+
+## Poziom Błogosławieństwa Watry krainy: poziom najtrudniejszego oczyszczonego węzła jej obszaru (0 - brak).
+static func blessing_level(list: Array[Dictionary], cleared: Array, area: String) -> int:
+	var best := 0
+	for node in list:
+		if node["area"] == area and cleared.has(node["id"]):
+			best = maxi(best, Dungeons.tier_level(int(node["tier"])))
+	return best
+
+
+## Premia błogosławieństwa do łupu i doświadczenia (ułamek, np. 0.1 = +10%).
+static func blessing_bonus(list: Array[Dictionary], cleared: Array, area: String) -> float:
+	return area_progress(list, cleared, area).x * BLESS_BONUS_PER_NODE
+
+
+## Poziomy krainy z błogosławieństwem: [przy wejściu, w najdalszym zakątku, bossowie] (jak Levels.ZONES).
+static func blessing_range(level: int) -> Array:
+	return [level + BLESS_SPREAD[0], level + BLESS_SPREAD[1], level + BLESS_SPREAD[2]]

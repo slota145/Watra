@@ -1044,6 +1044,9 @@ func _interact() -> void:
 			nearest = npc
 	if nearest != null:
 		nearest.interact(self)
+	elif _blessing_shrine() != "":
+		var world := get_tree().get_first_node_in_group("world")
+		world.hud.blessing_window.open(_blessing_shrine())
 	elif _harvest_target == null:
 		# świeże wyszukanie - gracz mógł podejść przed kolejnym skanem
 		_harvest_scan = 0.0
@@ -1220,6 +1223,16 @@ func _scan_harvestables(delta: float) -> void:
 	if _harvest_prompt.visible:
 		_harvest_prompt.text = "[F] " + _nearest_harvestable.action_name
 		_harvest_prompt.global_position = _nearest_harvestable.global_position + Vector2(-30, -_nearest_harvestable.bar_height - 10.0)
+	elif not npc_near and _blessing_shrine() != "":
+		_harvest_prompt.visible = true
+		_harvest_prompt.text = "[F] " + Lang.t("Watra")
+		_harvest_prompt.global_position = global_position + Vector2(-30, -34)
+
+
+## Kapliczka obok z Błogosławieństwem Watry do przełączenia (World.blessing_shrine_near) albo "".
+func _blessing_shrine() -> String:
+	var world := get_tree().get_first_node_in_group("world")
+	return world.blessing_shrine_near(global_position) if world != null and world.has_method("blessing_shrine_near") else ""
 
 
 func _make_harvest_prompt() -> Label:

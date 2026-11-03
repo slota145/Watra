@@ -57,6 +57,7 @@ var event_result: EventResult
 var talisman_window: TalismanWindow
 var talisman_offer: TalismanOffer
 var skarbnik_window: SkarbnikWindow
+var blessing_window: BlessingWindow
 var event_site: EventSite:
 	set(value):
 		event_site = value
@@ -198,6 +199,9 @@ func _ready() -> void:
 	skarbnik_window = SkarbnikWindow.new()
 	skarbnik_window.name = "SkarbnikWindow"
 	add_child(skarbnik_window)
+	blessing_window = BlessingWindow.new()
+	blessing_window.name = "BlessingWindow"
+	add_child(blessing_window)
 	action_bars = ActionBars.new()
 	action_bars.name = "ActionBars"
 	add_child(action_bars)
@@ -285,6 +289,7 @@ func connect_player(player: Player) -> void:
 	dungeon_window.setup(player)
 	watra_window.dungeon_requested.connect(dungeon_window.open)
 	nawia_window.setup(player)
+	blessing_window.setup(player)
 	watra_window.nawia_requested.connect(nawia_window.open)
 	nawia_window.node_requested.connect(dungeon_window.open_node)
 	watra_window.essence_requested.connect(essence_window.open.bind("watra"))
@@ -358,7 +363,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_window(codex_window, "ui_book")
 	elif event.is_action_pressed("ui_cancel"):
 		# Esc najpierw zamyka otwarte okna, a dopiero potem otwiera menu pauzy
-		var windows: Array[Control] = [character_window, inventory_window, big_map, shop_window, skill_window, enchant_window, crafting_window, build_window, board_window, sage_window, forge_window, watra_window, dungeon_window, nawia_window, help_window, quest_journal, npc_dialog, storage_window, codex_window, jeweler_window, essence_window, market_window, travelers_window, workshop_window, talisman_window, talisman_offer, skarbnik_window]
+		var windows: Array[Control] = [character_window, inventory_window, big_map, shop_window, skill_window, enchant_window, crafting_window, build_window, board_window, sage_window, forge_window, watra_window, dungeon_window, nawia_window, help_window, quest_journal, npc_dialog, storage_window, codex_window, jeweler_window, essence_window, market_window, travelers_window, workshop_window, talisman_window, talisman_offer, skarbnik_window, blessing_window]
 		if windows.any(func(w: Control) -> bool: return w.visible):
 			Sfx.play("ui_close")
 			for w in windows:

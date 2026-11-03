@@ -70,15 +70,26 @@ const ENDGAME_XP := 0.016
 
 ## Poziom stosowany, gdy potwór nie dostał go od świata (np. przywołany przez bossa) - ustawia świat.
 static var zone_default := 1
+## Błogosławieństwo Watry bieżącej krainy (ustawia świat przy wejściu): kraina i jej poziomy jak w ZONES
+## (NawiaMap.blessing_range). Puste - kraina ma zwykłe poziomy.
+static var blessed_zone := ""
+static var blessed_range: Array = []
+
+
+## Poziomy krainy [przy wejściu, w najdalszym zakątku, bossowie] - z Błogosławieństwem Watry, jeśli działa.
+static func zone_range(zone: String) -> Array:
+	if zone == blessed_zone and not blessed_range.is_empty():
+		return blessed_range
+	return ZONES.get(zone, [1, 1, 1])
 
 
 static func level_at(zone: String, distance_fraction: float) -> int:
-	var range: Array = ZONES.get(zone, [1, 1, 1])
+	var range: Array = zone_range(zone)
 	return roundi(lerpf(range[0], range[1], clampf(distance_fraction, 0.0, 1.0)))
 
 
 static func boss_level(zone: String) -> int:
-	return ZONES.get(zone, [1, 1, 1])[2]
+	return zone_range(zone)[2]
 
 
 ## Wzorzec krainy sceny: [zdrowie, obrażenia, xp, złoto] zwykłego potwora, z którym porównujemy scenę.
