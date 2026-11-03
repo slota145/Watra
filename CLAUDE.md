@@ -344,8 +344,15 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     otwiera się mapa z wyższymi stopniami;
   - **bossowie szczytowi**: słowiańscy bogowie (np. Weles, Marzanna, Czarnobóg), obce bogi (grecki, nordycki,
     egipski - patrz „Obce mitologie”) i Władca Hordy jako ostateczny boss;
-  - do ustalenia: układ i wielkość mapy, ile stopni ponad dzisiejsze 7, poziomy potworów powyżej 41 (Levels, łup do
-    poziomu 100), jak dokładnie oczyszczenie zmienia krainy, punkty do drzewka Watry, nagrody za bossów szczytowych.
+  - **ustalone (listopad 2026)**: mapa **duża, 80+ węzłów** jak pełny atlas PoE, 6 obszarów (po jednym na krainę
+    świata), węzeł przejdziony po pokonaniu strażnika, wtedy odsłania sąsiednie (mgła); **10 nowych stopni 8-17,
+    poziomy potworów 45-90 co 5** (bossowie szczytowi ~92-95, pełny zakres łupu); oczyszczony obszar daje w swojej
+    krainie **premię** (łup, doświadczenie, kraina bez spaczenia na mapie świata), **miejsce na obóz** i **wariant
+    endgame krainy** (potwory na poziomie mapy - stare krainy znów do farmienia); **1 punkt drzewka Watry za każdy
+    nowy węzeł** (bossowie szczytowi więcej; punkty zbierane, zanim drzewko powstanie);
+  - kolejność: 1) okno mapy, węzły, odsłanianie, stopnie 8-17 z balansem (`tests/balance_sim.gd`), 2) oczyszczanie
+    krain, 3) drzewko Watry (razem z węzłami bożków), 4) bossowie szczytowi po jednym;
+  - do ustalenia: nagrody za bossów szczytowych, wygląd okna mapy (grafika z PixelLab czy rysowana w kodzie).
 - [ ] **Obce mitologie jako odległe królestwa** (luźny pomysł autora): świat zostaje słowiański, a królestwa grecki,
   nordycki, egipski tylko w końcówce gry (np. wrota w atlasie, najeźdźcy przez płomienie Watry), każde jako mały
   obszar z bossem szczytowym - obcym bogiem; tłumaczy hydrę i satyry. Na pinnacle nadają się też słowiańscy bogowie.
