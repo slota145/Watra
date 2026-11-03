@@ -12,16 +12,20 @@ signal gold_changed(gold: int)
 const ATTRIBUTES := {
 	"vitality": {"name": "Witalność", "description": "Za punkt: +5 do maks. zdrowia"},
 	"strength": {"name": "Siła", "description": "Za punkt: +1 do obrażeń broni białej\ni 0,5% mniej otrzymywanych obrażeń (maks. 25%)"},
-	"dexterity": {"name": "Zręczność", "description": "Za punkt: +2% szybkości ataku i umiejętności\ni +1 do obrażeń z łuków"},
-	"intelligence": {"name": "Inteligencja", "description": "Za punkt: +5 do maks. many\ni +1 do obrażeń magicznych"},
+	"dexterity": {"name": "Zręczność", "description": "Za punkt: +1% szybkości ataku i umiejętności\ni +1 do obrażeń z łuków"},
+	"intelligence": {"name": "Inteligencja", "description": "Za punkt: +5 do maks. many, +1% szybkości\nrzucania czarów i +1 do obrażeń magicznych"},
 }
 const HEALTH_PER_VITALITY := 5
 ## Każdy poziom powyżej pierwszego dodaje tyle maksymalnego zdrowia.
 const HEALTH_PER_LEVEL := 8
 const MANA_PER_INTELLIGENCE := 5
-const ATTACK_SPEED_PER_DEXTERITY := 0.02
+const ATTACK_SPEED_PER_DEXTERITY := 0.01
 ## Szybkość rzucania czarów rośnie z inteligencją tak jak szybkość ataku ze zręcznością.
-const CAST_SPEED_PER_INTELLIGENCE := 0.02
+const CAST_SPEED_PER_INTELLIGENCE := 0.01
+## Malejące zyski z szybkości ataku i rzucania (speed_gain): do SPEED_SOFT premia liczy się w całości, powyżej
+## coraz słabiej i nigdy nie przekracza SPEED_CAP (+150%), żeby nie dało się uzyskać absurdalnej szybkości.
+const SPEED_SOFT := 0.6
+const SPEED_CAP := 1.5
 ## Który atrybut zwiększa obrażenia danego rodzaju broni (o 1 za punkt).
 const DAMAGE_ATTRIBUTE := {"melee": "strength", "bow": "dexterity", "spell": "intelligence"}
 const DAMAGE_PER_ATTRIBUTE := 1
@@ -93,12 +97,21 @@ func damage_max() -> int:
 
 ## Mnożnik szybkości ataku (1.0 = bazowa), bez prędkości samej broni.
 func attack_speed() -> float:
-	return 1.0 + attribute("dexterity") * ATTACK_SPEED_PER_DEXTERITY + _bonus("attack_speed")
+	return 1.0 + speed_gain(attribute("dexterity") * ATTACK_SPEED_PER_DEXTERITY + _bonus("attack_speed"))
 
 
 ## Mnożnik szybkości rzucania czarów (1.0 = bazowa).
 func cast_speed() -> float:
-	return 1.0 + attribute("intelligence") * CAST_SPEED_PER_INTELLIGENCE + _bonus("cast_speed")
+	return 1.0 + speed_gain(attribute("intelligence") * CAST_SPEED_PER_INTELLIGENCE + _bonus("cast_speed"))
+
+
+## Premia do szybkości po malejących zyskach: do SPEED_SOFT bez zmian, dalej łagodnie do sufitu SPEED_CAP
+## (krzywa bez załamania - pierwszy punkt ponad próg wciąż liczy się prawie w całości). Spowolnienia (ujemne) bez zmian.
+static func speed_gain(raw: float) -> float:
+	if raw <= SPEED_SOFT:
+		return raw
+	var room := SPEED_CAP - SPEED_SOFT
+	return SPEED_SOFT + room * (1.0 - exp(-(raw - SPEED_SOFT) / room))
 
 
 ## Szybkość umiejętności z danymi rodzajami (Skills.tags): atak - szybkość ataku, czar - rzucania,

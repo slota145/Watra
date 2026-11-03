@@ -2329,15 +2329,24 @@ func _cast_seeker(level: int) -> void:
 
 
 ## Szybka salwa: seria strzał w stronę kursora, jedna po drugiej.
+## Szybka Salwa: strzały jedna po drugiej, co VOLLEY_INTERVAL s (krócej z szybkością, ale nie krócej niż
+## VOLLEY_MIN_INTERVAL - inaczej strzały lecą jedna w drugiej i wyglądają jak jedna).
 func _cast_volley(level: int) -> void:
 	var count := Skills.volley_arrows(level)
 	var tween := create_tween()
+	var interval := maxf(VOLLEY_INTERVAL / _skill_speed(), VOLLEY_MIN_INTERVAL)
 	for i in count:
-		tween.tween_callback(_volley_arrow)
-		tween.tween_interval(0.07 / _skill_speed())
+		tween.tween_callback(_volley_arrow.bind(i))
+		tween.tween_interval(interval)
 
 
-func _volley_arrow() -> void:
+const VOLLEY_INTERVAL := 0.07
+const VOLLEY_MIN_INTERVAL := 0.05
+## Kolejne strzały Salwy wylatują na zmianę trochę z lewej i z prawej (piksele w poprzek lotu).
+const VOLLEY_SPREAD := 5.0
+
+
+func _volley_arrow(index := 0) -> void:
 	if is_dead or stats.weapon_type() != "bow":
 		return
 	var weapon := equipment.weapon()
@@ -2347,6 +2356,8 @@ func _volley_arrow() -> void:
 	_attack_length = RANGED_POSE_TIME
 	_attack_timer = _attack_length
 	var arrow := _make_projectile(weapon, dir)
+	var side := 0.0 if index == 0 else (VOLLEY_SPREAD if index % 2 == 1 else -VOLLEY_SPREAD) * (1.0 + 0.3 * ((index - 1) / 2 % 2))
+	arrow.position += dir.orthogonal() * side
 	arrow.damage_min = maxi(1, roundi(arrow.damage_min * Skills.VOLLEY_DAMAGE))
 	arrow.damage_max = maxi(1, roundi(arrow.damage_max * Skills.VOLLEY_DAMAGE))
 	arrow.speed *= 1.25

@@ -54,4 +54,8 @@ func _run() -> void:
 	_check(is_equal_approx(stats.gold_multiplier(), 1.25) and is_equal_approx(stats.xp_multiplier(), 1.1), "złoto i exp")
 	_check(is_equal_approx(stats.damage_multiplier(), 1.15) and stats.life_on_hit() == 4, "obrażenia % i zdrowie za trafienie")
 	_check(is_equal_approx(stats.health_regen(), 1.5) and is_equal_approx(stats.mana_regen(), 0.5), "regeneracja")
+	var gain := func(raw: float) -> float: return stats.speed_gain(raw)
+	_check(is_equal_approx(gain.call(0.4), 0.4) and gain.call(1.0) > 0.85 and gain.call(1.0) < 1.0
+			and gain.call(5.0) < stats.SPEED_CAP and gain.call(5.0) > 1.45 and is_equal_approx(gain.call(-0.2), -0.2),
+			"malejące zyski szybkości: +100%% -> +%d%%, +500%% -> +%d%%" % [roundi(gain.call(1.0) * 100), roundi(gain.call(5.0) * 100)])
 	quit()

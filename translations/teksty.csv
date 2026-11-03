@@ -193,11 +193,11 @@ Cleansed nodes of the region: %d / %d","blessing_window.gd"
 "Za punkt: +1 do obrażeń broni białej
 i 0,5% mniej otrzymywanych obrażeń (maks. 25%)","Per point: +1 melee weapon damage
 and 0.5% less damage taken (max 25%)","character_stats.gd"
-"Za punkt: +2% szybkości ataku i umiejętności
-i +1 do obrażeń z łuków","Per point: +2% attack and skill speed
+"Za punkt: +1% szybkości ataku i umiejętności
+i +1 do obrażeń z łuków","Per point: +1% attack and skill speed
 and +1 bow damage","character_stats.gd"
-"Za punkt: +5 do maks. many
-i +1 do obrażeń magicznych","Per point: +5 max mana
+"Za punkt: +5 do maks. many, +1% szybkości
+rzucania czarów i +1 do obrażeń magicznych","Per point: +5 max mana, +1% cast speed
 and +1 spell damage","character_stats.gd"
 "Za punkt: +5 do maks. zdrowia","Per point: +5 max health","character_stats.gd"
 "Inteligencja","Intelligence","character_stats.gd, items.gd"
@@ -3213,6 +3213,12 @@ Kill enemies inside the circle to offer tribute","zertwa.gd"
 "Stary Dąb","Old Oak","zones.gd"
 "Wietrzne Turnie","Windy Crags","zones.gd"
 "cały świat (wydarzenie)","the whole world (event)","zones.gd"
+"Za punkt: +2% szybkości ataku i umiejętności
+i +1 do obrażeń z łuków","Per point: +2% attack and skill speed
+and +1 bow damage","(nieużywany)"
+"Za punkt: +5 do maks. many
+i +1 do obrażeń magicznych","Per point: +5 max mana
+and +1 spell damage","(nieużywany)"
 "Brakuje złota albo materiałów.","Not enough gold or materials.","(nieużywany)"
 "Koszt: złoto i trofea potworów z krainy pasującej do poziomu przedmiotu. Legendy - 3 razy drożej. Runy wypadają w lochach.","Cost: gold and monster trophies from the land matching the item level. Legendaries - 3 times more. Runes drop in dungeons.","(nieużywany)"
 "Wybierz postać","Choose a hero","(nieużywany)"
