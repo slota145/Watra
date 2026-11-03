@@ -18,7 +18,8 @@
 - drowner_emerge / drowner_groan / wisp_charge / wisp_burst / rusalka_song / rusalka_death / wodnik_laugh /
   whirlpool - Topielcze Uroczysko,
 - treant_groan / tree_rumble / roots_burst / leshy_whisper / spider_hiss / spider_death / queen_screech /
-  cocoon_burst / bear_roar / werewolf_howl / bies_roar / shroom_chime - Prastary Las.
+  cocoon_burst / bear_roar / werewolf_howl / bies_roar / shroom_chime - Prastary Las,
+- weles_roar / weles_roots / weles_venom / weles_hiss / weles_death - Weles, bóg szczytowy Mapy Nawii.
 Wymaga numpy i scipy.
 Zapisuje do assets/sfx (wymaga ffmpeg w PATH).
 
@@ -1078,6 +1079,91 @@ def shroom_chime(_variant):
     return reverb(x * np.minimum(t / 0.01, 1) * 0.5, 1.2, 0.5, 1210)
 
 
+def snake_hiss(dur, seed, lo=2500, hi=9000):
+    """Wężowy syk: szum w wysokim paśmie, szybko narasta i powoli gaśnie."""
+    rng = np.random.default_rng(seed)
+    n = int(RATE * dur)
+    t = np.arange(n) / RATE
+    env = np.minimum(t / 0.05, 1) * np.minimum((dur - t) / (dur * 0.6), 1)
+    return band(rng.standard_normal(n), lo, hi) * env * (1 + 0.25 * np.sin(2 * np.pi * 9 * t))
+
+
+def weles_roar(_variant):
+    """Weles (niedźwiedź-wąż): głęboki, chrapliwy ryk przechodzący w długi, wężowy syk, z pomrukiem ziemi."""
+    roar = growl(68, 1.6, 1300, rough=1.0, lo=40, hi=1300, fall=0.35)
+    roar2 = growl(101, 1.6, 1301, rough=0.6, lo=70, hi=2200, fall=0.45) * 0.6
+    n = int(RATE * 2.4)
+    x = np.zeros(n)
+    x[:len(roar)] += roar + roar2
+    hiss = snake_hiss(1.4, 1302)
+    start = int(RATE * 1.0)
+    x[start:start + len(hiss)] += hiss * 0.9
+    t = np.arange(n) / RATE
+    rumble = band(np.random.default_rng(1303).standard_normal(n), 25, 120) * np.exp(-t * 1.2) * 1.5
+    return reverb(np.tanh((x + rumble) * 1.2), 1.4, 0.35, 1304)
+
+
+def weles_roots(_variant):
+    """Korzenie Nawii: głuche tąpnięcie spod ziemi, trzask grubych korzeni i chrzęst bagiennej ziemi."""
+    rng = np.random.default_rng(1310)
+    n = int(RATE * 1.2)
+    t = np.arange(n) / RATE
+    thud = np.sin(2 * np.pi * (55 * np.exp(-t * 2)) * t) * np.exp(-t * 6) * 1.6
+    crack = band(rng.standard_normal(n), 300, 4000) * np.exp(-t * 9) * 1.4
+    splinter = band((rng.random(n) < 0.006) * rng.standard_normal(n), 1200, 6000) * 3.5 * np.exp(-t * 3)
+    mud = band(rng.standard_normal(n), 80, 500) * np.exp(-t * 4) * (1 + np.sin(2 * np.pi * 13 * t)) * 0.8
+    return room(np.tanh(thud + crack + splinter + mud), 1311, 0.7, 0.25)
+
+
+def weles_venom(_variant):
+    """Jad Welesa: gęsty, mokry plusk i bulgoczący syk trucizny."""
+    rng = np.random.default_rng(1320)
+    n = int(RATE * 1.0)
+    t = np.arange(n) / RATE
+    splat = band(rng.standard_normal(n), 150, 1800) * np.exp(-t * 14) * 2.0
+    x = splat
+    for k in range(9):
+        at = 0.08 + k * 0.08 + rng.random() * 0.04
+        f = 220 + rng.random() * 380
+        tt = np.maximum(t - at, 0)
+        x = x + np.sin(2 * np.pi * f * (1 + 2.5 * tt) * tt) * np.exp(-tt * 40) * (t > at) * 0.5
+    sizzle = band(rng.standard_normal(n), 3000, 9000) * np.minimum(t / 0.1, 1) * np.exp(-t * 3) * 0.4
+    return room(np.tanh(x + sizzle), 1321, 0.3, 0.15)
+
+
+def weles_hiss(_variant):
+    """Wężowy Zryw: ostry syk z szumem pędu."""
+    rng = np.random.default_rng(1330)
+    dur = 0.9
+    n = int(RATE * dur)
+    t = np.arange(n) / RATE
+    rush = band(rng.standard_normal(n), 200, 1500) * np.sin(np.pi * t / dur) * 0.8
+    return room(np.tanh(snake_hiss(dur, 1331, 3000, 10000) * 1.4 + rush), 1332, 0.3, 0.15)
+
+
+def weles_death(_variant):
+    """Weles ginie: opadający ryk, gasnący syk, tąpnięcie i sypiące się złoto."""
+    rng = np.random.default_rng(1340)
+    roar = growl(80, 2.0, 1341, rough=0.9, lo=40, hi=1500, fall=0.6)
+    n = int(RATE * 3.2)
+    t = np.arange(n) / RATE
+    x = np.zeros(n)
+    x[:len(roar)] += roar
+    hiss = snake_hiss(1.6, 1342)
+    x[int(RATE * 1.2):int(RATE * 1.2) + len(hiss)] += hiss * 0.5
+    x += np.sin(2 * np.pi * (45 * np.exp(-t * 1.5)) * t) * np.exp(-t * 3) * 1.2
+    coins = np.zeros(n)
+    for k in range(18):
+        at = 0.5 + rng.random() * 2.0
+        tt = np.maximum(t - at, 0)
+        coins += chime([2400 + rng.random() * 1800], tt, 30.0) * (t > at) * (0.25 + rng.random() * 0.25)
+    return reverb(np.tanh(x * 1.1) + coins, 1.6, 0.4, 1343)
+
+
+WELES = ((weles_roar, "weles_roar"), (weles_roots, "weles_roots"), (weles_venom, "weles_venom"),
+         (weles_hiss, "weles_hiss"), (weles_death, "weles_death"))
+
+
 def save_set(fn, name, count):
     for v in range(count):
         save(np.repeat(fn(v).reshape(-1, 1), 2, axis=1), f"{name}_{v + 1}")
@@ -1109,7 +1195,7 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     only = set(sys.argv[1:])
     if only:
-        for fn, name in LEGENDARY + ((chain_cast, "chain_cast"),):
+        for fn, name in LEGENDARY + WELES + ((chain_cast, "chain_cast"),):
             if name in only:
                 save(np.repeat(fn(0).reshape(-1, 1), 2, axis=1), name)
         if "chain_zap" in only:
@@ -1133,7 +1219,7 @@ def main():
     save(np.repeat(chain_cast(0).reshape(-1, 1), 2, axis=1), "chain_cast")
     for fn, name in ((frog_attack, "frog_attack"), (frog_death, "frog_death"), (spit, "spit"), (spit_hit, "spit_hit"),
                      (frog_boss_roar, "frog_boss_roar"), (tongue_lash, "tongue_lash"), (boss_splash, "boss_splash"),
-                     (big_slash, "big_slash"), (seeker_whistle, "seeker_whistle"), (thunder, "thunder")) + LEGENDARY:
+                     (big_slash, "big_slash"), (seeker_whistle, "seeker_whistle"), (thunder, "thunder")) + LEGENDARY + WELES:
         save(np.repeat(fn(0).reshape(-1, 1), 2, axis=1), name)
 
 

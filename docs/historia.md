@@ -900,6 +900,17 @@ odpowiedniej sekcji.
     koszt: 15 (postać) + 8 (animacje) + 10 (ikony) = 33 generacje. W paczce ikon został niewykorzystany odłamek
     z okiem (`props/pomrok_shard.png`) - np. na ikonę Pomroku.
   - Test: `tests/test_horde_lord.gd`. Do ustalenia po ograniu: siła Władcy i cieni, liczebność fal, liczby Pomroku.
+- [x] **Efekty i dźwięki bossów szczytowych, etap 1 - Weles** (listopad 2026). Ustalenia z autorem: każdy bóg ma
+  własny zestaw z kreatora efektów PixelLab (Weles - bagienna zieleń i złoto, Marzanna - lód, biel i błękit,
+  Czarnobóg - czerń i fiolet), najpierw Weles na próbę, potem reszta bogów, Władca Hordy i efekty 9 legend.
+  Efekty Welesa (`pixellab_src/vfx/ids.json`, `assets/effects/weles_*.png`, stałe `FX_WELES_*` w `pinnacle_boss.gd`):
+  `weles_roots` (krąg cierni ze złotymi pęknięciami - jeden efekt zamiast 12 korzeni Leszego, skala z promienia),
+  `weles_venom` (plusk jadu ze złotymi iskrami, zamiast `BossFx.acid`), `weles_serpent` (uderzenie na końcu Wężowego
+  Zrywu), `weles_engage` (szczelina Nawii, słup światła, pnącza), `weles_phase` (zielono-złoty wybuch z monetami,
+  `_fx_phase`), `weles_death` (bagienny wybuch, pnącza, sypiące się złoto, `_fx_death`). Dźwięki z `tools/sfx_synth.py`
+  (`WELES`): `weles_roar` (ryk niedźwiedzia przechodzący w wężowy syk - pojawienie się i fazy), `weles_roots`,
+  `weles_venom`, `weles_hiss` (Wężowy Zryw), `weles_death` (ryk, syk i brzęk monet). Cień Welesa u Władcy Hordy
+  używa tych samych efektów.
 - [x] **Mapa Nawii, etap 4 - bossowie szczytowi** (listopad 2026). Ustalenia z autorem: trzech słowiańskich bogów
   (Władca Hordy i obce bogi później), dostęp za fragmenty kluczy z węzłów, nagrody: punkty Watry, własne legendy, dużo
   łupu i serca boga jako waluta; grafiki PixelLab 160 px z 2 animacjami; do tego dwa pasy w stylu Mageblooda

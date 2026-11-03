@@ -109,6 +109,12 @@ const SOUNDS := {
 	"werewolf_howl": [["werewolf_howl"], -4.0, 0.06, 1.0],
 	"bies_roar": [["bies_roar"], -1.0, 0.04, 1.0],
 	"shroom_chime": [["shroom_chime"], -12.0, 0.1, 0.15],
+	# Weles - bóg szczytowy Mapy Nawii
+	"weles_roar": [["weles_roar"], -2.0, 0.04, 1.0],
+	"weles_roots": [["weles_roots"], -3.0, 0.06, 0.1],
+	"weles_venom": [["weles_venom"], -5.0, 0.1, 0.1],
+	"weles_hiss": [["weles_hiss"], -4.0, 0.08, 0.3],
+	"weles_death": [["weles_death"], 0.0, 0.03, 1.0],
 	"telegraph": [["impactBell_heavy_000"], -10.0, 0.05, 0.3],
 	"death": [["jingles_PIZZI01"], -6.0, 0.0, 1.0],
 	# świat

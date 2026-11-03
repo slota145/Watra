@@ -15,6 +15,8 @@ extends Boss
 ## Na arenie z Pomrokiem (Dungeon.pomrok) legendy i pas wypadają częściej (Pinnacles.POMROK_DROP).
 ## Animacja (assets/pinnacles/<bóg>.png, tools/pinnacle_art.py): klatki 0-8 spoczynek, 9-17 atak - zamach w czasie
 ## zapowiedzi, uderzenie po niej.
+## Efekty bogów z kreatora efektów PixelLab (pixellab_src/vfx/ids.json): Weles ma własne (bagienna zieleń i złoto -
+## FX_WELES_*, dźwięki weles_* z tools/sfx_synth.py), Marzanna i Czarnobóg na razie pożyczone.
 
 @export var kind := "weles"
 @export var strike_damage := 80
@@ -48,7 +50,6 @@ const SPIKE_STEP := 46.0
 const SPIKE_DELAY := 0.08
 const STEP_RADIUS := 95.0
 
-const FX_ROOTS := preload("res://assets/effects/leshy_roots.png")
 const FX_LANCE := preload("res://assets/effects/frost_lance.png")
 const FX_SHATTER := preload("res://assets/effects/ice_shatter.png")
 const FX_BLIZZARD := preload("res://assets/effects/blizzard.png")
@@ -56,6 +57,14 @@ const FX_MIST := preload("res://assets/effects/wij_mist.png")
 const FX_SPIKE := preload("res://assets/effects/mortan_spike.png")
 const FX_BLINK := preload("res://assets/effects/mortan_blink.png")
 const FX_SMOKE := preload("res://assets/effects/smoke_burst.png")
+const FX_WELES_ROOTS := preload("res://assets/effects/weles_roots.png")
+const FX_WELES_VENOM := preload("res://assets/effects/weles_venom.png")
+const FX_WELES_SERPENT := preload("res://assets/effects/weles_serpent.png")
+const FX_WELES_ENGAGE := preload("res://assets/effects/weles_engage.png")
+const FX_WELES_PHASE := preload("res://assets/effects/weles_phase.png")
+const FX_WELES_DEATH := preload("res://assets/effects/weles_death.png")
+## Promień kręgu cierni w weles_roots przy skali 1 (piksele klatki).
+const WELES_ROOTS_ART_RADIUS := 80.0
 
 var phase := 1
 ## Cień boga przyzwany przez Władcę Hordy (make_shade).
@@ -100,7 +109,7 @@ func take_damage(amount: int, from_position: Vector2, knockback := 0.0) -> void:
 			phase = i + 2
 			attack_interval *= 0.75
 			speed *= 1.1
-			Sfx.play_at("bear_roar" if kind == "weles" else ("ghost_wail" if kind == "marzanna" else "bies_roar"), global_position)
+			Sfx.play_at("weles_roar" if kind == "weles" else ("ghost_wail" if kind == "marzanna" else "bies_roar"), global_position)
 			_shake_camera(9.0)
 			_fx_phase()
 			var hud := get_tree().get_first_node_in_group("hud")
@@ -249,28 +258,28 @@ func _update_attack(_delta: float) -> void:
 					_player.apply_slow(0.4, 2.0)
 				_remove_telegraph()
 				var radius := _roots_radius()
-				for i in 12:
-					var at := global_position + Vector2.from_angle(TAU * i / 12.0 + randf() * 0.3) * Vector2(radius * 0.8, radius * 0.55)
-					SkillEffects.sheet_once(get_parent(), FX_ROOTS, 10, 16.0, at, Vector2(24, 39), 0.0, 1.0, 1.5, 0.0, i % 2 == 0)
+				SkillEffects.sheet_once(get_parent(), FX_WELES_ROOTS, 16, 12.0, global_position, Vector2(94, 101), 0.0, 1.0,
+						radius / WELES_ROOTS_ART_RADIUS)
 				_ground_crack(global_position, radius * 0.7)
-				Sfx.play_at("roots_burst", global_position)
+				Sfx.play_at("weles_roots", global_position)
 				_shake_camera(6.0)
 				_set_stage("recover", 0.7)
 		["venom", "telegraph"]:
 			if _stage_timer <= 0.0:
 				_snap()
 				for spot: Vector2 in _spots:
-					BossFx.acid(get_parent(), spot, VENOM_RADIUS)
+					SkillEffects.sheet_once(get_parent(), FX_WELES_VENOM, 20, 14.0, spot, Vector2(46, 43), 0.0, 1.0,
+							VENOM_RADIUS / 38.0)
 					_poison_patch(spot)
 					if _player_alive() and _player.global_position.distance_to(spot) <= VENOM_RADIUS:
 						_hurt_player(strike_damage, 80.0)
 						_player.apply_poison(strike_damage * 0.1, 4.0)
-				Sfx.play_at("spit_hit", _spots[0])
+				Sfx.play_at("weles_venom", _spots[0])
 				_set_stage("recover", 0.6)
 		["serpent", "telegraph"]:
 			if _stage_timer <= 0.0:
 				_snap()
-				Sfx.play_at("wing_gust", global_position)
+				Sfx.play_at("weles_hiss", global_position)
 				_set_stage("act", SERPENT_TIME)
 		["serpent", "act"]:
 			var t := clampf(1.0 - _stage_timer / SERPENT_TIME, 0.0, 1.0)
@@ -281,6 +290,7 @@ func _update_attack(_delta: float) -> void:
 				_hurt_player(special_damage, 300.0)
 			if _stage_timer <= 0.0:
 				_remove_telegraph()
+				SkillEffects.sheet_once(get_parent(), FX_WELES_SERPENT, 12, 14.0, global_position, Vector2(85, 35), 0.0, 1.0, 1.3)
 				_debris(global_position, 8, 140.0, Color(0.3, 0.35, 0.2))
 				_set_stage("recover", 0.8)
 		["nova", "telegraph"]:
@@ -459,14 +469,31 @@ func _teleport(at: Vector2) -> void:
 func _fx_engage() -> void:
 	match kind:
 		"weles":
-			for i in 8:
-				SkillEffects.sheet_once(get_parent(), FX_ROOTS, 10, 16.0, global_position + Vector2.from_angle(TAU * i / 8.0) * 60.0,
-						Vector2(24, 39), 0.0, 1.0, 1.4)
+			SkillEffects.sheet_once(get_parent(), FX_WELES_ENGAGE, 22, 14.0, global_position, Vector2(63, 134), 0.0, 1.0,
+					fx_scale() * 1.1)
+			Sfx.play_at("weles_roar", global_position)
 		"marzanna":
 			SkillEffects.sheet_once(get_parent(), FX_MIST, 14, 16.0, global_position, Vector2(73, 124), 0.0, 1.0, 1.2)
 		_:
 			SkillEffects.sheet_once(get_parent(), FX_SMOKE, 10, 14.0, global_position, Vector2(29, 40), 0.0, 1.0, 3.0)
 	super()
+
+
+## Zmiana fazy: Weles - zielono-złoty wybuch mocy z monetami, reszta bogów - wspólny wybuch bossów.
+func _fx_phase() -> void:
+	if kind != "weles":
+		super()
+		return
+	SkillEffects.sheet_once(get_parent(), FX_WELES_PHASE, 14, 12.0, global_position, Vector2(78, 53), 0.0, 1.0, fx_scale() * 1.2)
+
+
+## Śmierć: Weles - bagienny wybuch, więdnące pnącza i sypiące się złoto, reszta bogów - wspólna śmierć bossów.
+func _fx_death() -> void:
+	if kind != "weles":
+		super()
+		return
+	SkillEffects.sheet_once(get_parent(), FX_WELES_DEATH, 22, 14.0, global_position, Vector2(70, 76), 0.0, 1.0, fx_scale() * 1.3)
+	Sfx.play_at("weles_death", global_position)
 
 
 func _cancel_attack() -> void:

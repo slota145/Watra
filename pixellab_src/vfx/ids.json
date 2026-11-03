@@ -2109,5 +2109,95 @@
       36,
       74
     ]
+  },
+  "weles_roots": {
+    "effect": "17d677c3-5e6d-4a1e-a983-fa81f40c9322",
+    "name": "Weles - Korzenie Nawii",
+    "frame": [
+      191,
+      182
+    ],
+    "frames": 16,
+    "fps": 12,
+    "anchor": [
+      94,
+      101
+    ],
+    "columns": 5
+  },
+  "weles_venom": {
+    "effect": "4e0b19f7-e8ca-4517-8549-c99bb45ae668",
+    "name": "Weles - Jad Welesa",
+    "frame": [
+      91,
+      87
+    ],
+    "frames": 20,
+    "fps": 14,
+    "anchor": [
+      46,
+      43
+    ],
+    "columns": 10
+  },
+  "weles_serpent": {
+    "effect": "93d230de-2e0d-44fb-8ced-6492d47127e3",
+    "name": "Weles - Wężowy Zryw, uderzenie",
+    "frame": [
+      170,
+      70
+    ],
+    "frames": 12,
+    "fps": 14,
+    "anchor": [
+      85,
+      35
+    ],
+    "columns": 6
+  },
+  "weles_engage": {
+    "effect": "13687d94-2b2a-4122-8411-b91b37d3ddd4",
+    "name": "Weles - pojawienie się",
+    "frame": [
+      126,
+      174
+    ],
+    "frames": 22,
+    "fps": 14,
+    "anchor": [
+      63,
+      134
+    ],
+    "columns": 8
+  },
+  "weles_phase": {
+    "effect": "5b2545de-8c2a-44d2-b8ef-3d54fdfd3936",
+    "name": "Weles - zmiana fazy",
+    "frame": [
+      158,
+      106
+    ],
+    "frames": 14,
+    "fps": 12,
+    "anchor": [
+      78,
+      53
+    ],
+    "columns": 6
+  },
+  "weles_death": {
+    "effect": "c0e668c2-bc80-492c-a00a-55e369b636f9",
+    "name": "Weles - śmierć",
+    "frame": [
+      141,
+      146
+    ],
+    "frames": 22,
+    "fps": 14,
+    "anchor": [
+      70,
+      76
+    ],
+    "columns": 7
   }
 }
