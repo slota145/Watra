@@ -155,7 +155,7 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
   i żywiołu z nagrań CC0 w `sfx_src/hits`, wybór w `Player.hit_enemy`).
 - **Bossowie:** `boss.gd` (wejście do walki, fazy, śmierć, aura wściekłości), zapowiedzi ataków `telegraph.gd`,
   world bossy `world_boss.gd` (Żmij, Wij).
-- **Przedmioty:** łup z losowymi premiami (`loot.gd`, nazwy składane przy pokazywaniu - `Loot.compose_name`), legendy
+- **Przedmioty:** łup z losowymi premiami (`loot.gd`, okno tierów z pasmem szczęścia - `Loot.roll_tier`, nazwy składane przy pokazywaniu - `Loot.compose_name`), legendy
   (`legends.gd`, `legendary_effects.gd`), zaklinanie u kowala (`enchanting.gd`), kamienie szlachetne i gniazda (`gems.gd`,
   jubiler Dobromir), esencje legend (`essences.gd`), rzemiosło premii runami (`item_craft.gd`, `ItemCraft.RUNES`), torby (`bags.gd`), pas,
   przedmioty niezidentyfikowane (`unidentified.gd`), encyklopedia (`codex.gd`, klawisz L).
@@ -282,14 +282,6 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   - cofanie wydanych punktów umiejętności za złoto (zastępuje ujście złota, które dziś dają poziomy umiejętności);
   - do zrobienia przy tym: wzory umiejętności rozciągnięte z 5 na 20 poziomów, przeliczenie starych zapisów (poziomy
     kupione złotem i punkty w drzewkach na punkty umiejętności), sprawdzić gospodarkę złota.
-- [ ] **Szersze okno tierów premii** (pomysł autora, listopad 2026; `Loot.best_tier`, `worst_tier`, `roll_tier`,
-  `TIER_WINDOW`). Dziś przedmiot losuje premie z okna 10 tierów (z 45) zależnego tylko od poziomu przedmiotu, a tier 1
-  dopiero na poziomie 100. Plan: okno poszerzone w górę - kilka tierów lepszych niż dziś z małą szansą, malejącą
-  z odległością od zwykłego okna (najwyższy tier NIE może wypaść na najsłabszych przedmiotach); najwyższe tiery
-  osiągalne wcześniej, około 60. poziomu przedmiotu (z małą szansą, rosnącą z poziomem), żeby gracz nie czuł, że bez
-  100. poziomu marnuje czas. W PoE: każdy tier ma minimalny poziom przedmiotu (najlepsze ok. 75-86 przy maks. 86),
-  poziom przedmiotu bierze się z poziomu obszaru, nie postaci, a wysoki przedmiot dalej może trafić słabe tiery.
-  Do ustalenia z autorem: o ile tierów poszerzyć okno, od którego poziomu tier 1 i z jaką szansą.
 
 ### Watra i Ostoja
 

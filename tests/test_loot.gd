@@ -14,7 +14,17 @@ func _run() -> void:
 	var loot: GDScript = load("res://scripts/loot.gd")
 	var items: GDScript = load("res://scripts/items.gd")
 	_check(loot.best_tier(1) == 45 and loot.worst_tier(1) == 45, "poziom 1: tylko tier 45")
-	_check(loot.best_tier(100) == 1 and loot.worst_tier(100) == 10, "poziom 100: tiery 1-10")
+	_check(loot.best_tier(100) == 1 and loot.worst_tier(100) == 10 and loot.best_tier(90) == 1, "poziom 90 i 100: tiery 1-10")
+	_check(loot.top_tier(60) == 1 and loot.top_tier(20) > 25 and loot.top_tier(1) >= 40, "pasmo szczęścia: tier 1 od poziomu 60, nisko tylko kilka tierów wyżej")
+	# szansa ponad oknem (rzadki, 5 premii): na poziomie 20 około 10%, tier 1 na poziomie 60 bardzo rzadko
+	var above := 0
+	var top := 0
+	for i in 40000:
+		if loot.roll_tier(20, "rare") < loot.best_tier(20):
+			above += 1
+		if loot.roll_tier(60, "rare") == 1:
+			top += 1
+	_check(above > 3200 and above < 4800 and top > 10 and top < 130, "szansa ponad oknem %.1f%%, tier 1 na poziomie 60: %d na 40000" % [above / 400.0, top])
 	print("  okna: ", [1, 10, 25, 50, 75, 100].map(func(l): return [l, loot.best_tier(l), loot.worst_tier(l)]))
 	for stat in ["health", "armor", "attack_speed"]:
 		print("  ", stat, " T45 ", loot.tier_range(stat, 45), " T20 ", loot.tier_range(stat, 20), " T1 ", loot.tier_range(stat, 1))
@@ -32,12 +42,12 @@ func _run() -> void:
 				var t: int = item["tiers"][stat]
 				tier_sum += t
 				n += 1
-				if t < loot.best_tier(60) or t > loot.worst_tier(60):
+				if t < loot.top_tier(60) or t > loot.worst_tier(60):
 					bad_tier = true
 		var span: Array = loot.AFFIX_COUNTS[quality]
 		var keys := counts.keys()
 		_check(keys.min() >= span[0] and keys.max() <= span[1], "%s: liczba premii %s w %s" % [quality, str(counts), str(span)])
-		_check(not bad_tier, "%s: tiery w oknie poziomu 60" % quality)
+		_check(not bad_tier, "%s: tiery w oknie poziomu 60 (z pasmem szczęścia)" % quality)
 		print("  %s: średni tier %.2f" % [quality, tier_sum / maxf(n, 1)])
 	# baza rośnie z poziomem
 	var low: String = loot.generate("iron_sword", "common", 1)
