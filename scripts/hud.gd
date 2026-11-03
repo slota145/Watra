@@ -52,6 +52,9 @@ var party_offer: PartyOffer
 ## Wydarzenia w świecie: panel trwającego wydarzenia, wynik z rankingiem i miejsce wydarzenia w tej krainie (EventSite).
 var event_tracker: EventTracker
 var event_result: EventResult
+## Talizmany: siatka (obok ekwipunku) i wybór nagrody Kręgu Żertwy w lochu.
+var talisman_window: TalismanWindow
+var talisman_offer: TalismanOffer
 var event_site: EventSite:
 	set(value):
 		event_site = value
@@ -180,6 +183,12 @@ func _ready() -> void:
 	event_result = EventResult.new()
 	event_result.name = "EventResult"
 	add_child(event_result)
+	talisman_window = TalismanWindow.new()
+	talisman_window.name = "TalismanWindow"
+	add_child(talisman_window)
+	talisman_offer = TalismanOffer.new()
+	talisman_offer.name = "TalismanOffer"
+	add_child(talisman_offer)
 	action_bars = ActionBars.new()
 	action_bars.name = "ActionBars"
 	add_child(action_bars)
@@ -220,6 +229,11 @@ func connect_player(player: Player) -> void:
 	inventory_window.enchant_window = enchant_window
 	crafting_window.setup(player)
 	inventory_window.crafting_requested.connect(_open_crafting)
+	talisman_window.setup(player)
+	inventory_window.talismans_requested.connect(_open_talismans)
+	inventory_window.visibility_changed.connect(func() -> void:
+		if not inventory_window.visible:
+			talisman_window.visible = false)
 	player.item_picked.connect(loot_feed.show_item)
 	quest_tracker.setup(player)
 	# dymek z opisem i porównaniem łupu leżącego na ziemi - na wierzchu HUD (nad oknami się chowa)
@@ -332,7 +346,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_window(codex_window, "ui_book")
 	elif event.is_action_pressed("ui_cancel"):
 		# Esc najpierw zamyka otwarte okna, a dopiero potem otwiera menu pauzy
-		var windows: Array[Control] = [character_window, inventory_window, big_map, shop_window, skill_window, enchant_window, crafting_window, build_window, board_window, sage_window, forge_window, watra_window, dungeon_window, help_window, quest_journal, npc_dialog, storage_window, codex_window, jeweler_window, essence_window, market_window, travelers_window, workshop_window]
+		var windows: Array[Control] = [character_window, inventory_window, big_map, shop_window, skill_window, enchant_window, crafting_window, build_window, board_window, sage_window, forge_window, watra_window, dungeon_window, help_window, quest_journal, npc_dialog, storage_window, codex_window, jeweler_window, essence_window, market_window, travelers_window, workshop_window, talisman_window, talisman_offer]
 		if windows.any(func(w: Control) -> bool: return w.visible):
 			Sfx.play("ui_close")
 			for w in windows:
@@ -363,6 +377,17 @@ func _open_enchanting() -> void:
 	var x := maxf(4.0, inventory_window.position.x - enchant_window.size.x - 4.0)
 	var y := minf(inventory_window.position.y, get_viewport().get_visible_rect().size.y - enchant_window.size.y - 4.0)
 	enchant_window.position = Vector2(x, y).floor()
+
+
+## Okno talizmanów obok otwartego ekwipunku (po lewej, na wysokości jego dołu).
+func _open_talismans() -> void:
+	talisman_window.toggle()
+	Sfx.play("ui_open" if talisman_window.visible else "ui_close")
+	if not talisman_window.visible:
+		return
+	var x := maxf(4.0, inventory_window.position.x - talisman_window.size.x - 4.0)
+	var y := maxf(4.0, inventory_window.position.y + inventory_window.size.y - talisman_window.size.y)
+	talisman_window.position = Vector2(x, y).floor()
 
 
 ## Okno rzemiosła obok otwartego ekwipunku (zamiast zaklinania - zajmują to samo miejsce).

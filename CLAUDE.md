@@ -158,10 +158,12 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
 - **Przedmioty:** łup z losowymi premiami (`loot.gd`, okno tierów z pasmem szczęścia - `Loot.roll_tier`, nazwy składane przy pokazywaniu - `Loot.compose_name`), legendy
   (`legends.gd`, `legendary_effects.gd`), zaklinanie u kowala (`enchanting.gd`), kamienie szlachetne i gniazda (`gems.gd`,
   jubiler Dobromir), esencje legend (`essences.gd`), rzemiosło premii runami (`item_craft.gd`, `ItemCraft.RUNES`), torby (`bags.gd`), pas,
-  przedmioty niezidentyfikowane (`unidentified.gd`), encyklopedia (`codex.gd`, klawisz L).
+  przedmioty niezidentyfikowane (`unidentified.gd`), encyklopedia (`codex.gd`, klawisz L), talizmany w siatce 4x3
+  (`talismans.gd`, `Equipment.talismans`, okno `ui/talisman_window.gd`, wybór nagrody `ui/talisman_offer.gd`).
 - **Watra i Ostoja:** Watra z ofiarami, żarem i Darami (`boons.gd`, `ui/watra_window.gd`), budowy osady (`settlement.gd`),
   lochy Watry (`dungeon.gd`, `dungeons.gd`) z mechanikami (`Dungeons.MECHANICS`: skrzynie `dungeon_chest.gd`, kapliczki
-  `dungeon_shrine.gd`, Kryształ Watry `watra_crystal.gd`, elity `dungeon_elite.gd`, Uroczysko `uroczysko.gd`) i Ołtarzem Welesa, zielarstwo (`herbs.gd`).
+  `dungeon_shrine.gd`, Kryształ Watry `watra_crystal.gd`, elity `dungeon_elite.gd`, Uroczysko `uroczysko.gd`, Krąg Żertwy
+  `zertwa.gd`) i Ołtarzem Welesa, zielarstwo (`herbs.gd`).
 - **Świat jak w MMO** (po zbudowaniu gildii): podróżnicy (`travelers.gd`, `traveler.gd`), drużyny i prośby o pomoc,
   tryby świata i rywale (`world_modes.gd`, `rival.gd`), rynek (`market.gd`), zlecenia (`bounties.gd`), zadania główne
   (`main_quests.gd`), wydarzenia w świecie (`world_events.gd`, `event_site.gd`).
@@ -315,14 +317,17 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   (`dungeon_elite.gd`, `Dungeons.ELITE_TRAITS` - aury, obrona, żywioły, przywołanie).
   Etap 3 zrobiony, czeka na ocenę autora (szukaj „Mechaniki w lochach, etap 3”): Uroczysko (`uroczysko.gd`, stałe
   `URO_*` w `Dungeons`) - krąg upiorów rosnący z zabójstwami, nagroda - runy.
-  Dalej: Krąg Żertwy, Skarbnik, przeróbka Kryształu.
+  Etap 4 zrobiony, czeka na ocenę autora (szukaj „Mechaniki w lochach, etap 4”): Krąg Żertwy (`zertwa.gd`, stałe
+  `ZER_*` w `Dungeons`) - danina za wrogów zabitych w kręgu, nagroda - wybór 1 z 3 talizmanów.
+  Dalej: Skarbnik, przeróbka Kryształu.
 - [ ] **Bożki** (jak skaraby w PoE): wypadają z małą szansą z każdego potwora (gracz nie musi grindować jednego
   miejsca), wkładane w sloty Watry przed wejściem, zmieniają loch (więcej danej mechaniki, silniejsze potwory i więcej
   łupu, więcej łupu danego rodzaju); mają rzadkości. Same są traktowane jak mechanika - z własnymi węzłami w drzewku
   Watry (częściej wypadają, rzadsze odmiany, dodatkowy slot).
-- [ ] **Talizmany** (jak idole w Last Epoch): nowy rodzaj przedmiotu z Kręgu Żertwy, wkładany w specjalne sloty
-  postaci (siatka slotów, talizmany różnych rozmiarów - do ustalenia); zwykłe mają premie do statystyk, rzadsze -
-  unikalne efekty (np. warunkowe: szał po serii zabójstw, ognista tarcza przy niskim zdrowiu).
+- [ ] **Talizmany** (jak idole w Last Epoch): zrobione razem z Kręgiem Żertwy (szukaj „Mechaniki w lochach, etap 4”) -
+  siatka 4x3, kształty 1x1, 1x2, 2x1, 2x2, magiczne z premiami, rzadkie z efektem legendy. Do ustalenia: rosnąca
+  siatka (poziom, drzewko Watry), własne efekty talizmanów zamiast efektów legend (np. ognista tarcza przy niskim
+  zdrowiu), grafiki z PixelLab zamiast rysowanych w kodzie, rzemiosło talizmanów runami.
 - [ ] **Atlas** (po mechanikach): mapa węzłów-lochów, ukończenie odblokowuje sąsiednie i daje punkty do drzewka
   wzmacniającego mechaniki; razem z podziałem lochów na zwykłe i endgame'owe (punkt niżej).
 - [ ] **Obce mitologie jako odległe królestwa** (luźny pomysł autora): świat zostaje słowiański, a królestwa grecki,

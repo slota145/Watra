@@ -817,6 +817,8 @@ static func _retranslate(id: String, item: Dictionary) -> void:
 		Gems.register(recipe, id)
 	elif recipe.has("essence"):
 		Essences.register(recipe, id)
+	elif recipe.has("talisman"):
+		Talismans.register(recipe, id)
 	elif recipe.has("base"):
 		Loot.register(recipe, id)
 	else:
@@ -977,6 +979,10 @@ static func describe(id: String, enchant := 0, against := {}) -> String:
 			lines.append(Lang.t("Poziom przedmiotu: %d") % item["item_level"])
 	if item.has("gem"):
 		lines.append(Lang.t("%s - Kamień szlachetny") % Lang.t(RARITY_NAMES.get(item.get("rarity", "magic"), "")))
+	if item.has("talisman"):
+		var size: Vector2i = Talismans.size_of(id)
+		lines.append(Lang.t("%s - Talizman %dx%d") % [Lang.t(RARITY_NAMES.get(item.get("rarity", "magic"), "")), size.x, size.y])
+		lines.append(Lang.t("Poziom przedmiotu: %d") % item.get("item_level", 1))
 	var bonus := Enchanting.bonus(enchant)
 	if item.has("weapon"):
 		var weapon: Dictionary = item["weapon"]

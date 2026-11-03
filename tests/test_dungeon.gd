@@ -1,7 +1,7 @@
 extends SceneTree
 ## Lochy w płomieniach Watry: każdy klimat (kafelki dla wszystkich komórek, komnaty połączone, gracz na podłodze,
 ## potwory klimatu na poziomie stopnia, strażnik, co najmniej jedna mechanika), mechaniki (losowanie, skrzynie,
-## kapliczki, elity, Uroczysko), modyfikatory, otwarcie skarbca po pokonaniu strażnika,
+## kapliczki, elity, Uroczysko, Krąg Żertwy), modyfikatory, otwarcie skarbca po pokonaniu strażnika,
 ## zapis gry z lochu (wraca do Ostoi), żar do wydania, a na koniec pełna droga: okno lochów przy Watrze ->
 ## wejście w płomienie (żar wydany, modyfikatory działają) -> płomienie w lochu -> powrót przed Watrę.
 
@@ -28,7 +28,7 @@ func _load_next() -> void:
 	var mods: Array = ["horde", "fury"] if _index == 0 else []
 	var config: Dictionary = _Dungeons.config(CLIMATES[_index], 2 + _index, mods, 1000 + _index * 77)
 	if _index == 0:
-		config["mechanics"] = ["chests", "shrine", "crystal", "elites", "uroczysko"]
+		config["mechanics"] = ["chests", "shrine", "crystal", "elites", "uroczysko", "zertwa"]
 	root.get_node("Game")._pending_load = {"seed": 12345, "zone": "dungeon", "dungeon": config, "arrive": "start", "player": {}}
 	_world = load("res://scenes/world.tscn").instantiate()
 	root.add_child(_world)
@@ -130,7 +130,7 @@ func _check_dungeon() -> void:
 ## Mechaniki lochu: losowanie (zawsze co najmniej jedna, proste częściej), skrzynie (zwykła, strzeżona) i kapliczka.
 func _check_mechanics() -> void:
 	var d = _world._dungeon
-	check("mechaniki z ustawień wyprawy", d.mechanics.size() == 5 and d.uroczyska.size() == 1 and d.crystal != null and d.chests.size() >= 2 and d.shrines.size() >= 1,
+	check("mechaniki z ustawień wyprawy", d.mechanics.size() == 6 and d.uroczyska.size() == 1 and d.zertwy.size() == 1 and d.crystal != null and d.chests.size() >= 2 and d.shrines.size() >= 1,
 			"%s, %d skrzyń, %d kapliczek" % [d.mechanics, d.chests.size(), d.shrines.size()])
 	var in_rooms := true
 	for node: Node2D in d.chests + d.shrines:
@@ -198,6 +198,7 @@ func _check_mechanics() -> void:
 	var icons: Array = load("res://scripts/status_effects.gd").list(player).filter(func(e: Dictionary) -> bool: return e["left"] > 0.0 and e["total"] == 60.0)
 	check("ikona daru kapliczki pod paskami", icons.size() == 1)
 	_check_uroczysko(d)
+	_check_zertwa(d)
 	_check_elites(d)
 
 
@@ -252,6 +253,59 @@ func _check_uroczysko(d) -> void:
 	check("runy: proste częściej, Pieczęć dopiero od 4. stopnia", rolled.get("rune_polish", 0) > rolled.get("rune_chaos", 0)
 			and not rolled.has("rune_seal") and not rolled.has("rune_ascend") and R.roll_rune(9) != "", str(rolled))
 	# siatka „kto jest blisko” (Goblin.near) jest liczona raz na klatkę - test elit dodaje potwory w tej samej klatce
+	load("res://scripts/goblin.gd")._near_frame = -1
+
+
+## Krąg Żertwy: dotknięcie zapala krąg, fale nadciągają spoza kręgu, danina tylko za zabitych w kręgu (elity więcej),
+## po progu - Wybraniec, odbiór nagrody i wybór 1 z 3 talizmanów (trafia do plecaka).
+func _check_zertwa(d) -> void:
+	var altar = d.zertwy[0] if d.zertwy.size() > 0 else null
+	check("Krąg Żertwy w lochu (inna komnata niż Uroczysko)", altar != null and altar.state == "idle" and altar.can_harvest()
+			and d._room_of(altar.position) != d._room_of(d.uroczyska[0].position))
+	if altar == null:
+		return
+	altar.harvest(altar.global_position)
+	check("dotknięcie zapala krąg", altar.state == "open" and not altar.can_harvest() and altar._ring != null)
+	for i in 40:
+		altar._spawn_timer = 0.0
+		altar._process(0.0)
+	var marked: bool = altar.wave.all(func(e: Array) -> bool: return e[0].has_meta("zertwa") and e[0].state != load("res://scripts/goblin.gd").State.DEAD)
+	check("fale potworów wokół kręgu", altar.wave.size() == _Dungeons.ZER_ALIVE and marked, "%d w fali" % altar.wave.size())
+	var inside = altar.wave[0][0]
+	inside.global_position = altar.global_position + Vector2(20, 0)
+	inside.take_damage(99999999, altar.global_position)
+	check("zabity w kręgu - danina", altar.tribute == _Dungeons.ZER_TRIBUTE, str(altar.tribute))
+	var outside = altar.wave[1][0]
+	outside.global_position = altar.global_position + Vector2(_Dungeons.ZER_RADIUS + 300.0, 0)
+	outside.take_damage(99999999, altar.global_position)
+	check("zabity poza kręgiem - bez daniny", altar.tribute == _Dungeons.ZER_TRIBUTE)
+	check("elita daje więcej daniny", altar.tribute_of(d.elites[0].goblin) == _Dungeons.ZER_ELITE_TRIBUTE
+			and altar.tribute_of(altar.wave[2][0]) == _Dungeons.ZER_TRIBUTE)
+	altar.add_tribute(_Dungeons.ZER_GOAL - altar.tribute)
+	check("po progu daniny - nagroda do odebrania", altar.state == "ready" and altar.can_harvest() and altar.overflow() == 0.0)
+	altar.wave.clear()
+	altar._spawn_timer = 0.0
+	altar._process(0.0)
+	check("Wybraniec po każdych %d daniny" % _Dungeons.ZER_CHOSEN_EVERY, altar.wave.size() == 1
+			and altar.wave[0][0].has_meta("zertwa_chosen") and altar.wave[0][0].scale.x > 1.0)
+	altar.add_tribute(9999)
+	check("nadwyżka daniny do pełna", altar.tribute == altar.max_tribute() and is_equal_approx(altar.overflow(), 1.0))
+	var before: int = altar.wave.size()
+	altar._spawn_timer = 0.0
+	altar._process(0.0)
+	check("syci bogowie - fale ustają", altar.wave.size() == before)
+	altar.harvest(altar.global_position)
+	var T = load("res://scripts/talismans.gd")
+	check("odbiór: oferta 3 talizmanów w oknie", altar.state == "reward" and altar.offer.size() == _Dungeons.ZER_OFFER
+			and altar.offer.all(func(id: String) -> bool: return T.is_talisman(id)) and _world.hud.talisman_offer.visible)
+	var player = _world.player
+	var chosen: String = altar.offer[1]
+	altar.choose(chosen)
+	check("wybrany talizman w plecaku, pień gaśnie", altar.state == "closed" and not altar.can_harvest()
+			and player.inventory.count_of(chosen) == 1)
+	altar.choose(altar.offer[0])
+	check("drugi wybór niemożliwy", player.inventory.count_of(altar.offer[0]) == 0)
+	_world.hud.talisman_offer.visible = false
 	load("res://scripts/goblin.gd")._near_frame = -1
 
 

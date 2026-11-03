@@ -991,6 +991,37 @@ func unequip(slot: String, index := -1) -> void:
 		inventory.add_item(removed["id"], 1, removed["enchant"])
 
 
+## Wkłada talizman z kratki plecaka do siatki talizmanów (`cell` - lewy górny róg; Vector2i(-1, -1) - pierwsze
+## wolne miejsce). Zwraca, czy się udało.
+func place_talisman(index: int, cell := Vector2i(-1, -1)) -> bool:
+	var id: String = inventory.slots[index].get("id", "") if index >= 0 and index < inventory.slots.size() else ""
+	if not Talismans.is_talisman(id):
+		return false
+	if cell.x < 0:
+		cell = equipment.free_talisman_cell(id)
+	if cell.x < 0 or not equipment.can_place_talisman(id, cell):
+		DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -10), tr("Talizman się nie mieści!"), Color(1, 0.4, 0.4), 8)
+		return false
+	inventory.take_one(index)
+	equipment.place_talisman(id, cell)
+	return true
+
+
+## Wyjmuje talizman z siatki do plecaka (`index` - kratka plecaka; zajęta albo -1 = pierwsza wolna).
+func remove_talisman(talisman: int, index := -1) -> bool:
+	if talisman < 0 or talisman >= equipment.talismans.size():
+		return false
+	var id: String = equipment.talismans[talisman]["id"]
+	var free := index >= 0 and index < inventory.slots.size() and inventory.slots[index].is_empty()
+	if not free and not inventory.can_add(id, 1):
+		DamageNumber.spawn_text(get_parent(), body_center() + Vector2(0, -10), tr("Ekwipunek pełny!"), Color(1, 0.4, 0.4), 8)
+		return false
+	equipment.remove_talisman(talisman)
+	if not (free and inventory.put(index, id)):
+		inventory.add_item(id, 1)
+	return true
+
+
 ## Przerywa zamach (np. przy zmianie broni).
 func _cancel_attack() -> void:
 	_attack_timer = 0.0
@@ -1237,6 +1268,8 @@ func _owned_ids() -> Array:
 			ids.append(slot["id"])
 	for slot in Equipment.SLOTS:
 		ids.append(equipment.get_item(slot))
+	for entry: Dictionary in equipment.talismans:
+		ids.append(entry["id"])
 	return ids
 
 
