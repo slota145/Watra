@@ -23,13 +23,20 @@ func _ready() -> void:
 	var panel := PanelContainer.new()
 	panel.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.BG, UiStyle.BORDER, 10))
 	center.add_child(panel)
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 5)
-	panel.add_child(box)
-
+	var outer := VBoxContainer.new()
+	outer.add_theme_constant_override("separation", 5)
+	panel.add_child(outer)
 	var title := UiStyle.title(Lang.t("Ustawienia"))
 	title.add_theme_font_size_override("font_size", 14)
-	box.add_child(title)
+	outer.add_child(title)
+	# ustawienia przewijane, gdy nie mieszczą się na ekranie (tytuł i „Wróć” zawsze widać)
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	outer.add_child(scroll)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 5)
+	scroll.add_child(box)
+	_fit_scroll.call_deferred(scroll, box)
 	box.add_child(_header(Lang.t("Dźwięk")))
 	box.add_child(_slider_row(Lang.t("Ogólna"), Sfx.master_volume, Sfx.set_master_volume))
 	box.add_child(_slider_row(Lang.t("Muzyka"), Sfx.music_volume, Sfx.set_music_volume))
@@ -56,10 +63,26 @@ func _ready() -> void:
 	var unidentified := _check_row(Lang.t("Łup niezidentyfikowany (stosy, PPM identyfikuje)"), Game.unidentified_loot, Game.set_unidentified_loot)
 	unidentified.tooltip_text = Lang.t("Magiczna i rzadka broń, zbroja i biżuteria wypada zawinięta w płótno: układa się w stosy\n(rodzaj, rzadkość i poziom), a PPM w plecaku ją identyfikuje (Shift+PPM - cały stos).")
 	box.add_child(unidentified)
-	box.add_child(HSeparator.new())
+	box.add_child(_choice_row(Lang.t("Sprzedaj od razu"), [Lang.t("nic"), Lang.t("zwykłe"), Lang.t("zwykłe i magiczne"),
+			Lang.t("zwykłe, magiczne i rzadkie")], Game.loot_filter_quality,
+			func(index: int) -> void: Game.set_loot_filter(index, Game.loot_filter_tier),
+			Lang.t("Przedmioty tych jakości z łupu od razu zamieniają się w złoto (cena skupu). Legendy, talizmany, kamienie i runy zostają.")))
+	var tier_names: Array = [Lang.t("wyłączone")]
+	for tier: int in TIER_FILTER:
+		tier_names.append(Lang.t("słabsza niż T%d") % tier)
+	box.add_child(_choice_row(Lang.t("Najlepsza premia"), tier_names, maxi(TIER_FILTER.find(Game.loot_filter_tier) + 1, 0),
+			func(index: int) -> void: Game.set_loot_filter(Game.loot_filter_quality, 0 if index == 0 else TIER_FILTER[index - 1]),
+			Lang.t("Przedmiot, którego najlepsza premia ma słabszy tier (T1 - najlepszy), od razu zamienia się w złoto.")))
+	outer.add_child(HSeparator.new())
 	var back := UiStyle.menu_button(Lang.t("Wróć"), close)
-	box.add_child(back)
+	outer.add_child(back)
 	back.grab_focus()
+
+
+## Wysokość przewijanej części: cała treść, ale nie więcej, niż zmieści się na ekranie.
+func _fit_scroll(scroll: ScrollContainer, box: Control) -> void:
+	var room := get_viewport_rect().size.y - 110.0
+	scroll.custom_minimum_size = Vector2(box.get_combined_minimum_size().x + 8.0, clampf(box.get_combined_minimum_size().y, 80.0, room))
 
 
 func close() -> void:
@@ -125,6 +148,31 @@ func _ui_scale_row() -> HBoxContainer:
 	row.add_child(value)
 	slider.value_changed.connect(func(v: float) -> void: value.text = "%d%%" % roundi(v * 100.0))
 	slider.drag_ended.connect(func(_changed: bool) -> void: Game.set_ui_scale(slider.value))
+	return row
+
+
+## Progi filtra tierów w ustawieniach (Loot.filter_tier).
+const TIER_FILTER: Array[int] = [40, 35, 30, 25, 20, 15, 10, 5]
+
+
+## Wiersz z wyborem z listy: podpis, opcje, wybrana, wywołanie z indeksem wybranej opcji, podpowiedź.
+func _choice_row(text: String, options: Array, selected: int, on_select: Callable, hint: String) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	row.tooltip_text = hint
+	var label := UiStyle.label(text, 8, UiStyle.TEXT_COLOR)
+	label.custom_minimum_size.x = 84
+	label.mouse_filter = Control.MOUSE_FILTER_PASS
+	row.add_child(label)
+	var pick := OptionButton.new()
+	pick.focus_mode = Control.FOCUS_NONE
+	pick.tooltip_text = hint
+	pick.add_theme_font_size_override("font_size", 8)
+	for option: String in options:
+		pick.add_item(option)
+	pick.selected = selected
+	pick.item_selected.connect(on_select)
+	row.add_child(pick)
 	return row
 
 

@@ -17,6 +17,10 @@ var _texture: Texture2D
 var _player: Player
 var _markers: Array[Dictionary] = []
 var _shrines := {}
+## Legenda pod mapą - budowana od nowa przy każdym otwarciu z potworów bieżącej krainy (_fill_legend).
+var _legend: HFlowContainer
+## Najwięcej grup potworów w legendzie (najliczniejsze).
+const LEGEND_GROUPS := 9
 
 
 func _ready() -> void:
@@ -49,20 +53,10 @@ func _ready() -> void:
 	_view.teleport_requested.connect(_on_teleport)
 	box.add_child(_view)
 
-	var legend := HBoxContainer.new()
-	legend.alignment = BoxContainer.ALIGNMENT_CENTER
-	legend.add_theme_constant_override("separation", 10)
-	for entry: Array in [
-		["Ty", MapView.PLAYER_COLOR],
-		[Lang.t("Gobliny"), MapView.GOBLIN_COLOR],
-		[Lang.t("Wilki"), Wolf.WOLF_COLOR],
-		[Lang.t("Zwierzyna"), Animal.ANIMAL_COLOR],
-		[Lang.t("Żaboludzie"), Frogman.FROG_COLOR],
-		[Lang.t("Boss"), Color("c040ff")],
-		[Lang.t("Ogniska"), Color("ff9a3c")],
-	]:
-		legend.add_child(UiStyle.label("■ " + entry[0], 8, entry[1]))
-	box.add_child(legend)
+	_legend = HFlowContainer.new()
+	_legend.alignment = FlowContainer.ALIGNMENT_CENTER
+	_legend.add_theme_constant_override("h_separation", 10)
+	box.add_child(_legend)
 	var hint := UiStyle.label(Lang.t("Kapliczka - kliknij, by się do niej przenieść"), 7, Color(0.6, 0.9, 1.0))
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(hint)
@@ -95,6 +89,33 @@ func refresh() -> void:
 	_title.text = Lang.t("Mapa - %s") % (Zones.zone_name(_zone) if _view.mode == "zone" else Lang.t("Świat"))
 	for i in _tabs.size():
 		_tabs[i].set_pressed_no_signal(["zone", "world"][i] == _view.mode)
+	_fill_legend()
+
+
+## Legenda: gracz i potwory bieżącej krainy wg koloru kropki na mapie (najliczniejsze grupy, z nazwami z encyklopedii).
+func _fill_legend() -> void:
+	if _legend == null:
+		return
+	for child in _legend.get_children():
+		child.queue_free()
+	_legend.add_child(UiStyle.label("■ " + Lang.t("Ty"), 8, MapView.PLAYER_COLOR))
+	var groups := {}
+	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
+		var key := enemy.map_color.to_html(false)
+		if not groups.has(key):
+			groups[key] = {"color": enemy.map_color, "count": 0, "names": {}}
+		var group: Dictionary = groups[key]
+		group["count"] += 1
+		var id := Codex.monster_id(enemy)
+		group["names"][id] = int(group["names"].get(id, 0)) + 1
+	var order := groups.values()
+	order.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["count"] > b["count"])
+	for group: Dictionary in order.slice(0, LEGEND_GROUPS):
+		var ids: Array = group["names"].keys()
+		ids.sort_custom(func(a: String, b: String) -> bool: return group["names"][a] > group["names"][b])
+		var names: Array = ids.slice(0, 2).map(func(id: String) -> String: return Codex.monster_name(id))
+		var text := ", ".join(names) + (", …" if ids.size() > 2 else "")
+		_legend.add_child(UiStyle.label("■ " + text, 8, group["color"]))
 
 
 ## Przełącza zakładkę: "zone" (bieżąca kraina) albo "world" (wszystkie krainy).

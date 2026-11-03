@@ -44,6 +44,7 @@ func _ready() -> void:
 	_load_button = UiStyle.menu_button(Lang.t("Wczytaj grę"), _on_load)
 	box.add_child(_load_button)
 	box.add_child(UiStyle.menu_button(Lang.t("Ustawienia"), _on_settings))
+	box.add_child(UiStyle.menu_button(Lang.t("Zgłoś uwagę"), _on_feedback))
 	box.add_child(UiStyle.menu_button(Lang.t("Menu główne"), Game.go_to_menu))
 	box.add_child(UiStyle.menu_button(Lang.t("Wyjdź z gry"), Game.quit_game))
 
@@ -99,6 +100,12 @@ func _on_settings() -> void:
 	var settings := SettingsWindow.new()
 	settings.closed.connect(func() -> void: _resume_button.grab_focus())
 	add_child(settings)
+
+
+func _on_feedback() -> void:
+	var window := FeedbackWindow.new()
+	window.closed.connect(func() -> void: _resume_button.grab_focus())
+	add_child(window)
 
 
 func _on_load() -> void:
