@@ -1531,7 +1531,7 @@ func _start_attack() -> void:
 	_attack_angle = aim.angle()
 	_attack_kind = weapon.get("type", "melee")
 	_attack_multiplier = 1.0
-	var speed: float = stats.attack_speed() * weapon.get("speed", 1.0)
+	var speed: float = stats.skill_speed(basic_tags())
 	_hit_this_swing.clear()
 
 	pivot.rotation = _attack_angle
@@ -1847,7 +1847,7 @@ func _cast(id: String, charge := 0.0, combo := false) -> void:
 		fireball.speed = 210.0
 		fireball.explosion_radius = Skills.fireball_radius(level) * Skills.fireball_charge_radius(charge) * stats.area_multiplier()
 		fireball.size = lerpf(0.8, 1.7, charge)
-		multiplier *= stats.kind_multiplier(["spell"])
+		multiplier *= stats.kind_multiplier(Skills.tags("fireball"))
 		fireball.explosion_min = roundi(stats.damage_min() * multiplier)
 		fireball.explosion_max = roundi(stats.damage_max() * multiplier)
 		fireball.turret_damage = legendary.fire_turret_damage(multiplier)
@@ -1891,7 +1891,7 @@ func _update_whirl(delta: float) -> void:
 	for enemy: Goblin in Goblin.near(get_tree(), body_center(), radius * 1.5 + 40.0):
 		var dist := enemy.hurt_center().distance_to(body_center())
 		if dist <= radius + enemy.hurt_radius:
-			hit_enemy(enemy, _skill_damage(multiplier), global_position, -CYCLONE_PULL if cyclone else 70.0)
+			hit_enemy(enemy, _skill_damage(multiplier, Skills.tags("whirlwind")), global_position, -CYCLONE_PULL if cyclone else 70.0)
 		elif cyclone and dist <= radius * 1.5 + enemy.hurt_radius and enemy.state != Goblin.State.DEAD:
 			enemy._knockback = (global_position - enemy.global_position).normalized() * CYCLONE_PULL
 
@@ -1982,7 +1982,7 @@ func _hit_enemies_in_arc(half_arc: float) -> void:
 		_hit_this_swing[enemy] = true
 		SkillEffects.sheet_once(get_parent(), SWORD_HIT_FX, 5, 16.0, enemy.hurt_center(), Vector2(14, 14), to_enemy.angle(),
 				1.0, 1.0, 0.0, _swing_sign < 0.0)
-		var dmg := _skill_damage(_attack_multiplier)
+		var dmg := _skill_damage(_attack_multiplier, basic_tags())
 		hit_enemy(enemy, dmg, global_position, attack_knockback * (1.6 if _attack_multiplier > 1.0 else 1.0))
 
 
@@ -2143,7 +2143,7 @@ func heal(amount: float) -> void:
 		health_changed.emit(health, stats.max_health())
 
 
-## Szybkość umiejętności: ataki przyspiesza szybkość ataku, czary - szybkość rzucania (Skills.tags).
+## Szybkość umiejętności: ataki przyspiesza szybkość ataku, czary - szybkość rzucania (Skills.tags), obie razy prędkość broni.
 func _skill_speed(tags: Array = ["attack"]) -> float:
 	return stats.skill_speed(tags)
 
@@ -2169,9 +2169,9 @@ func roll_damage(multiplier: float) -> int:
 	return roundi(_skill_damage(multiplier, []) * legendary.damage_multiplier() * stats.damage_multiplier())
 
 
-## Rodzaj zwykłego ataku bronią: magiczny pocisk księgi to czar, reszta - atak.
+## Tagi zwykłego ataku bronią (Skills.BASIC_TAGS): magiczny pocisk księgi to czar, reszta - atak.
 func basic_tags() -> Array:
-	return ["spell"] if stats.weapon_type() == "spell" else ["attack"]
+	return Skills.basic_tags(stats.weapon_type())
 
 
 ## Każde trafienie wroga przez gracza (broń, umiejętności, pociski) przechodzi tędy,
@@ -2255,7 +2255,7 @@ func _update_lunge(delta: float) -> void:
 			continue
 		if enemy.hurt_center().distance_to(tip) <= enemy.hurt_radius + 14.0:
 			_lunge_hit[enemy] = true
-			hit_enemy(enemy, _skill_damage(_lunge_damage), global_position, 180.0)
+			hit_enemy(enemy, _skill_damage(_lunge_damage, Skills.tags("lunge")), global_position, 180.0)
 			SkillEffects.sheet_once(get_parent(), LUNGE_HIT_FX, 5, 18.0, enemy.hurt_center(), Vector2(14, 11), _lunge_dir.angle())
 	var blocked := get_slide_collision_count() > 0 and _lunge_time < Skills.LUNGE_DISTANCE / _lunge_speed - 0.05
 	if _lunge_time <= 0.0 or blocked:
@@ -2310,7 +2310,7 @@ func _cast_seeker(level: int) -> void:
 	arrow.velocity = dir * SeekerArrow.SPEED
 	arrow.hits_left = Skills.seeker_hits(level) + roundi(skills.tree_bonus("bow", "seeker_hits"))
 	arrow.split = roundi(equipment.effect_power("seeker_split"))
-	var kind := stats.kind_multiplier(["attack"])
+	var kind := stats.kind_multiplier(Skills.tags("seeker"))
 	arrow.damage_min = maxi(1, roundi(stats.damage_min() * Skills.SEEKER_DAMAGE * kind))
 	arrow.damage_max = maxi(1, roundi(stats.damage_max() * Skills.SEEKER_DAMAGE * kind))
 	get_parent().add_child(arrow)
@@ -2427,7 +2427,7 @@ func _zap(from: Vector2, target: Goblin, multiplier: float) -> void:
 	SpellSkills.zap_flash(get_parent(), to)
 	ShockFx.apply(target, to, target.hurt_radius + 6.0)
 	Sfx.play("chain_zap")
-	hit_enemy(target, _skill_damage(multiplier, ["spell"]), from, 40.0, "lightning")
+	hit_enemy(target, _skill_damage(multiplier, Skills.tags("chain_lightning")), from, 40.0, "lightning")
 
 
 ## Fala piorunów: szeroki stożek błyskawic przed postacią.
@@ -2448,7 +2448,7 @@ func _cast_wave(level: int) -> void:
 		if to_enemy.length() > enemy.hurt_radius and absf(angle_difference(dir.angle(), to_enemy.angle())) > half:
 			continue
 		SpellSkills.zap_flash(get_parent(), enemy.hurt_center())
-		hit_enemy(enemy, _skill_damage(Skills.WAVE_DAMAGE, ["spell"]), global_position, 140.0, "lightning")
+		hit_enemy(enemy, _skill_damage(Skills.WAVE_DAMAGE, Skills.tags("thunder_wave")), global_position, 140.0, "lightning")
 	Sfx.play("thunder")
 	_shake = maxf(_shake, 4.0)
 

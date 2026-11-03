@@ -7,8 +7,8 @@ class_name Skills
 ## Umiejętności odblokowuje się i ulepsza za złoto (koszty rosną z poziomem). Broń, która ma drzewko (SkillTree,
 ## miecz, łuk i księga magii), odblokowuje je węzłem za punkt umiejętności, a złoto kupuje kolejne poziomy.
 ## Umiejętności drzewka (type "skill") mają własną obsługę (SwordSkills - miecz, BowSkills - łuk, SpellSkills - księga) i własne combo (COMBOS).
-## Każda umiejętność to atak, czar albo jedno i drugie (TAGS): ataki wzmacniają szybkość ataku i obrażenia fizyczne,
-## czary - szybkość rzucania i obrażenia magiczne.
+## Każda umiejętność ma tagi (TAGS): rodzaj, forma, obrażenia i atrybut - ataki przyspiesza szybkość ataku,
+## czary - szybkość rzucania, a atrybuty z tagów dodają procent obrażeń.
 
 const MAX_LEVEL := 5
 const WEAPON_TYPES: Array[String] = ["melee", "bow", "spell"]
@@ -419,30 +419,120 @@ static func weapon_name(weapon_type: String) -> String:
 	return Lang.t(str(WEAPON_NAMES.get(weapon_type, "")))
 
 
-## Ataki i czary (zwykły atak bronią: atak, a magiczny pocisk księgi - czar).
+## Tagi umiejętności w czterech grupach (TAG_GROUPS): rodzaj (atak, czar, okrzyk, aura), forma (cios, pocisk, obszar,
+## przywołanie, ruch), obrażenia (fizyczne, ogień, lód, piorun, trucizna, tajemne, w czasie) i atrybut (siła,
+## zręczność, inteligencja). Rodzaj wybiera szybkość (atak - ataku, czar - rzucania) i premię do obrażeń
+## fizycznych / magicznych, atrybut - które atrybuty postaci dodają umiejętności procent obrażeń (CharacterStats.attribute_damage).
+## Zwykły atak bronią ma tagi z BASIC_TAGS.
 const TAGS := {
-	"lunge": ["attack"], "crescent": ["attack"], "whirlwind": ["attack"], "flicker": ["attack"], "smoke_burst": ["attack", "spell"],
-	"rend": ["attack"], "ground_slam": ["attack"], "riposte": ["attack"], "war_cry": ["cry"], "spectral_blades": ["spell"],
-	"seeker": ["attack"], "rapid_volley": ["attack"], "multishot": ["attack"], "power_shot": ["attack"], "arrow_rain": ["attack"],
-	"vault": ["attack"], "snare": ["attack"], "falcon": ["attack"], "venom_arrows": ["attack"], "wind_arrow": ["attack", "spell"],
-	"ballista": ["attack"], "frost_lance": ["spell"], "blizzard": ["spell"], "storm_call": ["spell"], "ball_lightning": ["spell"],
-	"meteor": ["spell"], "blink": ["spell"], "mana_shield": ["spell"], "rune_stone": ["spell"],
-	"chain_lightning": ["spell"], "thunder_wave": ["spell"], "fireball": ["spell"],
+	"lunge": ["attack", "hit", "movement", "physical", "str"],
+	"crescent": ["attack", "hit", "area", "physical", "str"],
+	"whirlwind": ["attack", "hit", "area", "physical", "str"],
+	"flicker": ["attack", "hit", "movement", "physical", "str", "dex"],
+	"rend": ["attack", "hit", "area", "physical", "dot", "str"],
+	"ground_slam": ["attack", "area", "physical", "str"],
+	"riposte": ["attack", "hit", "area", "physical", "str"],
+	"war_cry": ["cry", "area", "str"],
+	"spectral_blades": ["spell", "area", "arcane", "str", "int"],
+	"smoke_burst": ["attack", "spell", "area", "fire", "str", "int"],
+	"seeker": ["attack", "projectile", "physical", "dex"],
+	"rapid_volley": ["attack", "projectile", "physical", "dex"],
+	"multishot": ["attack", "projectile", "physical", "dex"],
+	"power_shot": ["attack", "projectile", "physical", "fire", "dex"],
+	"arrow_rain": ["attack", "projectile", "area", "physical", "dex"],
+	"vault": ["attack", "projectile", "movement", "physical", "dex"],
+	"snare": ["attack", "area", "physical", "dex"],
+	"falcon": ["attack", "summon", "physical", "dex"],
+	"venom_arrows": ["attack", "projectile", "poison", "dot", "dex"],
+	"wind_arrow": ["attack", "spell", "area", "physical", "dex", "int"],
+	"ballista": ["attack", "summon", "projectile", "physical", "dex"],
+	"fireball": ["spell", "projectile", "area", "fire", "int"],
+	"meteor": ["spell", "area", "fire", "dot", "int"],
+	"frost_lance": ["spell", "projectile", "ice", "int"],
+	"blizzard": ["spell", "area", "ice", "int"],
+	"chain_lightning": ["spell", "projectile", "lightning", "int"],
+	"thunder_wave": ["spell", "area", "lightning", "int"],
+	"storm_call": ["spell", "area", "lightning", "int"],
+	"ball_lightning": ["spell", "projectile", "area", "lightning", "int"],
+	"blink": ["spell", "movement", "int"],
+	"mana_shield": ["spell", "int"],
+	"rune_stone": ["spell", "summon", "int"],
 }
+## Tagi zwykłego ataku bronią danego rodzaju (magiczny pocisk księgi to czar z obrażeniami tajemnymi).
+const BASIC_TAGS := {
+	"melee": ["attack", "hit", "physical", "str"],
+	"bow": ["attack", "projectile", "physical", "dex"],
+	"spell": ["spell", "projectile", "arcane", "int"],
+}
+## Kolejność grup w opisie i nazwy tagów (ikony: assets/ui/tags/<tag>.png - tools/tag_icons.py).
+const TAG_GROUPS := [
+	["attack", "spell", "cry", "aura"],
+	["hit", "projectile", "area", "summon", "movement"],
+	["physical", "fire", "ice", "lightning", "poison", "arcane", "dot"],
+	["str", "dex", "int"],
+]
+const TAG_NAMES := {
+	"attack": "atak", "spell": "czar", "cry": "okrzyk", "aura": "aura",
+	"hit": "cios", "projectile": "pocisk", "area": "obszar", "summon": "przywołanie", "movement": "ruch",
+	"physical": "fizyczne", "fire": "ogień", "ice": "lód", "lightning": "piorun", "poison": "trucizna",
+	"arcane": "tajemne", "dot": "w czasie",
+	"str": "siła", "dex": "zręczność", "int": "inteligencja",
+}
+## Kolory napisów tagów w opisie (BBCode).
+const TAG_COLORS := {
+	"physical": "#d8cbb0", "fire": "#ff8a3d", "ice": "#8fd8ff", "lightning": "#ffe45c", "poison": "#8fdc5a",
+	"arcane": "#c79bff", "dot": "#e07070", "str": "#ff7a6a", "dex": "#7fe08a", "int": "#7fb2ff",
+}
+## Tag atrybutu -> atrybut postaci (CharacterStats.attributes).
+const ATTRIBUTE_TAGS := {"str": "strength", "dex": "dexterity", "int": "intelligence"}
 
 
 static func tags(id: String) -> Array:
 	return TAGS.get(id, [])
 
 
+static func basic_tags(weapon_type: String) -> Array:
+	return BASIC_TAGS.get(weapon_type, BASIC_TAGS["melee"])
+
+
+static func tag_name(tag: String) -> String:
+	return Lang.t(str(TAG_NAMES.get(tag, tag)))
+
+
+static func tag_icon_path(tag: String) -> String:
+	return "res://assets/ui/tags/%s.png" % tag
+
+
+## Tagi w kolejności grup jako zwykły tekst („Atak, cios, fizyczne, siła”).
 static func tags_text(id: String) -> String:
 	var names: Array[String] = []
-	for tag: String in tags(id):
-		names.append(Lang.t({"attack": "atak", "spell": "czar", "cry": "okrzyk"}[tag]))
+	for tag: String in sorted_tags(tags(id)):
+		names.append(tag_name(tag))
 	if names.is_empty():
 		return ""
 	var text := Lang.join(names)
 	return text.left(1).to_upper() + text.substr(1)
+
+
+## Tagi w kolejności grup (TAG_GROUPS).
+static func sorted_tags(list: Array) -> Array[String]:
+	var out: Array[String] = []
+	for group: Array in TAG_GROUPS:
+		for tag: String in group:
+			if tag in list:
+				out.append(tag)
+	return out
+
+
+## Linia tagów z ikonkami i kolorami do dymków (RichTooltip) i opisów w BBCode.
+static func tags_bbcode(list: Array) -> String:
+	var parts: Array[String] = []
+	for tag: String in sorted_tags(list):
+		var text := tag_name(tag)
+		if TAG_COLORS.has(tag):
+			text = "[color=%s]%s[/color]" % [TAG_COLORS[tag], text]
+		parts.append("[img=8x8]%s[/img]%s" % [tag_icon_path(tag), text])
+	return "  ".join(parts)
 
 
 ## Combo umiejętności drzewka: po jakich umiejętnościach (użytych w oknie COMBO_WINDOW) zachowują się inaczej;

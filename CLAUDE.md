@@ -151,7 +151,8 @@ Zanim wydasz generacje (autor ma ograniczony limit miesięczny):
 Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `docs/historia.md` - szukaj w nim grepem.
 
 - **Walka i postać:** drzewka broni - miecz, łuk, księga magii (`skill_tree.gd`, `sword_skills.gd`, `bow_skills.gd`,
-  `spell_skills.gd`, okno K), combo (`Skills.COMBOS`), paski szybkiego wyboru (`hotbar.gd`), ikony efektów (`status_effects.gd`);
+  `spell_skills.gd`, okno K), tagi umiejętności (`Skills.TAGS`) i atrybuty dające % obrażeń umiejętnościom z ich tagiem
+  (`CharacterStats.attribute_damage`), combo (`Skills.COMBOS`), paski szybkiego wyboru (`hotbar.gd`), ikony efektów (`status_effects.gd`);
   zryw, Mgnienie i teleport przeskakują przeszkody, zatrzymuje je tylko granica (`BOUNDS_LAYER`, `Player.free_landing`).
 - **Efekty:** animacje z kreatora efektów PixelLab (`pixellab_src/vfx/ids.json`, `tools/vfx_art.py`; pomocnicy `SkillEffects`,
   `FxLoop`, `BossFx`, `LegendVfx`, `WorldVfx`, `MonsterFx`, `MiscVfx`).
@@ -214,6 +215,15 @@ Konkretne poprawki istniejących krain i postaci, zgłoszone przez autora po gra
 
 ### Zgłoszenia z listopada 2026
 
+- [ ] **Gra za łatwa w końcówce** (autor, 3.11.2026): początek gry jest w porządku, ale autor przeszedł wszystkie
+  mapy endgame'owe (Nawia) bez zmiany broni i ekwipunku (ekwipunek z ~20. poziomu) i ani razu nie był blisko śmierci.
+  Do sprawdzenia: przyrost statystyk potworów na poziom (`Levels`, `ENDGAME_*`), czy `tests/balance_sim.gd` mierzy
+  właściwą rzecz (liczy gracza z ekwipunkiem z danego poziomu, a nie gracza, który ekwipunku nie zmienia), groźniejsze
+  ataki potworów (więcej obrażeń od gromady, a nie od pojedynczego ciosu).
+- [ ] **Za mała gęstość potworów w Uroczyskach** i ogólnie za mało potworów (autor, 3.11.2026) - w lochach też.
+- [ ] **Portal do miasta** (autor, 3.11.2026): przycisk (np. B) przenosi z lochu do Ostoi, a portalem w Ostoi
+  wraca się do tego samego lochu (jak portal w PoE).
+
 
 ## Pomysły i rzeczy do zrobienia
 
@@ -227,16 +237,15 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   1. prędkość ataku - zrobione (szukaj „Malejące zyski szybkości” w `docs/historia.md`): malejące zyski i sufit
      +150% (`CharacterStats.speed_gain`), 1% za punkt zręczności / inteligencji, Salwa i Mgnienie z najkrótszym
      odstępem (umiejętności liczą tylko szybkość postaci, bez szybkości broni - do przemyślenia przy statystykach);
-  2. **tagi umiejętności** (dziś `Skills.TAGS` ma tylko atak / czar / okrzyk): rodzaj (atak, czar, okrzyk, **aura** -
-     pod aury rezerwujące manę), forma (cios, pocisk, obszar, przywołanie, ruch), obrażenia (fizyczne, ogień, lód,
-     piorun, trucizna, obrażenia w czasie); ikonki w opisie umiejętności (okno K, paski), premie działają według tagów;
+  2. tagi umiejętności - zrobione razem z 2b (szukaj „Tagi umiejętności i atrybuty” w `docs/historia.md`):
+     `Skills.TAGS` w 4 grupach (rodzaj, forma, obrażenia z „tajemnymi”, atrybut), ikonki z `tools/tag_icons.py`
+     w oknie K i na paskach;
   3. **nowe premie (afiksy)** na tagach: obrażenia żywiołów, pocisków / ciosów / obszarowe, w czasie, szanse na
      podpalenie / zamrożenie / porażenie, obszar, przebicie odporności;
-  2b. **statystyki jak w Last Epoch** (decyzja autora, listopad 2026; razem z tagami): atrybut to jeden z tagów
-     umiejętności i daje +% obrażeń umiejętnościom z tym tagiem, a do tego premię obronną - siła: redukcja obrażeń,
-     zręczność: unik (zamiast szybkości ataku, malejące zyski), inteligencja: mana, witalność: zdrowie; szybkość ataku
-     tylko z broni, przedmiotów i drzewek. Dopytać: limit i wartość uniku, czy procenty zastępują płaskie +1 obrażeń
-     za punkt, darmowy reset atrybutów w starych zapisach;
+  2b. statystyki jak w Last Epoch - zrobione: +1% obrażeń za punkt atrybutu z tagu (zamiast płaskiego +1), siła -
+     redukcja, zręczność - unik 0,4% za punkt (malejące zyski, do 35%), inteligencja - mana, witalność - zdrowie;
+     szybkość tylko z broni, przedmiotów i drzewek, umiejętności liczą prędkość broni; darmowy reset w starych zapisach.
+     Czeka na ocenę autora;
   4. **gniazda i kamienie wsparcia** (jak w PoE): gniazda tylko w umiejętnościach aktywnych, bazowo umiejętność nie ma
      żadnego, gniazda dorabia się po jednym rzadkimi przedmiotami (do 4-5), kamienie wsparcia (większy obszar, więcej
      pocisków itp.) pasują tylko do umiejętności z danym tagiem; łup z nowej mechaniki lochów - autor skłania się ku

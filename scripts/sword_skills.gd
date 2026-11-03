@@ -16,7 +16,7 @@ extends Node
 ## (combo przyspiesza ataki), Dym i Cień (chmura po Dymnych Wybuchach: unik i darmowe Mgnienie), Krwawy Szał
 ## (krwawienie leczy). Chwilowe premie trafiają do CharacterStats.temp_bonus i na listę efektów (statuses).
 
-const SMOKE_TAGS := ["attack", "spell"]
+var _smoke_tags: Array = Skills.tags("smoke_burst")
 const SMOKE_COLOR := Color(0.78, 0.78, 0.82)
 ## Odstęp między rzędami wybuchów (s) i promień cięcia po skoku Mgnienia.
 const SMOKE_RING_DELAY := 0.12
@@ -321,7 +321,7 @@ func _jump(reach: float, level: int, spinning: bool) -> bool:
 		var center := enemy.hurt_center()
 		var on_path := Geometry2D.get_closest_point_to_segment(center, path_from, path_to).distance_to(center) <= FLICKER_PATH_WIDTH + enemy.hurt_radius
 		if on_path or center.distance_to(best.hurt_center()) <= FLICKER_HIT_RADIUS + enemy.hurt_radius:
-			_player.hit_enemy(enemy, _player._skill_damage(multiplier), _player.global_position, 90.0)
+			_player.hit_enemy(enemy, _player._skill_damage(multiplier, Skills.tags("flicker")), _player.global_position, 90.0)
 	return true
 
 
@@ -371,7 +371,7 @@ func _press_smoke() -> void:
 
 ## Czas ładowania jednego rzędu: szybszy z szybkością ataku i rzucania oraz z węzłem drzewka.
 func _smoke_row_time() -> float:
-	return Skills.SMOKE_CHARGE_TIME / (_player.stats.skill_speed(SMOKE_TAGS) * (1.0 + _player.skills.tree_bonus("melee", "smoke_charge")))
+	return Skills.SMOKE_CHARGE_TIME / (_player.stats.skill_speed(_smoke_tags) * (1.0 + _player.skills.tree_bonus("melee", "smoke_charge")))
 
 
 func _process_smoke(delta: float) -> void:
@@ -438,7 +438,7 @@ func _burst(at: Vector2, dir: Vector2, radius: float, multiplier: float) -> void
 	Sfx.play_at("explosion", at, -12.0)
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
 		if enemy.hurt_center().distance_to(at + Vector2(0, -6)) <= radius + enemy.hurt_radius:
-			_player.hit_enemy(enemy, _player._skill_damage(multiplier, SMOKE_TAGS), at, 110.0)
+			_player.hit_enemy(enemy, _player._skill_damage(multiplier, _smoke_tags), at, 110.0)
 
 
 # ---------------------------------------------------------------- Rozpłatanie i krwawienie
@@ -463,7 +463,7 @@ func _rend() -> void:
 			continue
 		if to_enemy.length() > enemy.hurt_radius and absf(angle_difference(aim.angle(), to_enemy.angle())) > half:
 			continue
-		_player.hit_enemy(enemy, _player._skill_damage(Skills.rend_damage(level)), _player.global_position, 80.0)
+		_player.hit_enemy(enemy, _player._skill_damage(Skills.rend_damage(level), Skills.tags("rend")), _player.global_position, 80.0)
 		bleed_enemy(enemy, bleed)
 
 
@@ -472,7 +472,7 @@ func _rend() -> void:
 func bleed_enemy(enemy: Goblin, multiplier: float) -> void:
 	if not is_instance_valid(enemy) or enemy.state == Goblin.State.DEAD:
 		return
-	var total := _player._skill_damage(multiplier * (1.0 + _player.skills.tree_bonus("melee", "bleed_damage")))
+	var total := _player._skill_damage(multiplier * (1.0 + _player.skills.tree_bonus("melee", "bleed_damage")), Skills.tags("rend"))
 	var per_tick := maxi(1, roundi(float(total) / Skills.BLEED_TICKS))
 	var frenzy := _player.skills.has_keystone("melee", "blood_frenzy")
 	SkillEffects.sheet_once(_player.get_parent(), REND_WOUND_FX, 9, 15.0, enemy.hurt_center(), REND_WOUND_ANCHOR)

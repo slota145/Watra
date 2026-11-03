@@ -962,6 +962,30 @@ odpowiedniej sekcji.
   na zmianę z lewej i z prawej (`VOLLEY_SPREAD`), żeby nie chowały się jedna za drugą. Mgnienie: skoki nie częściej
   niż co `Skills.FLICKER_MIN_INTERVAL` (0,16 s), w Młynku co `WHIRL_FLICKER_MIN_INTERVAL` (0,07 s), a smuga i cięcie
   przyspieszają z szybkością ataku (najwyżej 2x). Test: `test_stats`.
+- [x] **Tagi umiejętności i atrybuty jak w Last Epoch** (listopad 2026, kroki 2 i 2b „Dopieszczenia walki”).
+  - Tagi (`Skills.TAGS`, grupy `TAG_GROUPS`, nazwy `TAG_NAMES`, kolory `TAG_COLORS`): rodzaj (atak, czar, okrzyk,
+    aura - na razie bez umiejętności), forma (cios, pocisk, obszar, przywołanie, ruch), obrażenia (fizyczne, ogień, lód,
+    piorun, trucizna, tajemne, w czasie) i atrybut (siła, zręczność, inteligencja). Zwykły atak bronią: `BASIC_TAGS`
+    (magiczny pocisk księgi - czar, pocisk, tajemne). Widmowe Ostrza są tajemne, Mgnienie ma siłę i zręczność, Dymne
+    Wybuchy i Widmowe Ostrza siłę i inteligencję, Strzała Wichru zręczność i inteligencję.
+  - Ikonki tagów rysowane w kodzie: `tools/tag_icons.py` -> `assets/ui/tags/<tag>.png` (16 px x4). Linia tagów
+    `Skills.tags_bbcode` w opisie węzła w oknie K (panel szczegółów to teraz `RichTextLabel`) i w dymkach drzewka
+    i pasków (`RichTooltip.build` - dymek BBCode dla kontrolek z własnym skryptem: `SkillTreeView`, `HotbarSlot`).
+    `RichTooltip` liczy szerokość obrazka `[img]` (wcześniej liczył ścieżkę pliku jak tekst).
+  - Atrybuty (`CharacterStats`): +1% obrażeń za punkt atrybutu z tagu umiejętności (`attribute_damage`,
+    `DAMAGE_PER_ATTRIBUTE`) zamiast płaskiego +1 obrażeń; bez tagu atrybutu (efekty legend, ogólne `["attack"]`)
+    liczy się główny atrybut broni (`DAMAGE_ATTRIBUTE`). Premia dodaje się do premii fizycznych / magicznych
+    w `kind_multiplier`. Kieł Gruzłoga (`might`) dokłada część pozostałych atrybutów. Siła: dalej 0,5% redukcji
+    (maks. 25%). Zręczność: unik 0,4% za punkt (`dexterity_dodge`, w całości do 15%, dalej łagodnie do 35%, razem
+    z przedmiotami najwyżej 50%) zamiast szybkości ataku. Inteligencja: +5 many (bez szybkości rzucania).
+    Witalność: +5 zdrowia.
+  - Szybkość ataku i rzucania tylko z przedmiotów, drzewek i premii; `skill_speed` mnoży ją przez prędkość
+    broni (`weapon_speed`) - sztylet przyspiesza też umiejętności, topór je spowalnia.
+  - Stare zapisy (`ATTRIBUTE_RULES` = 2 w zapisie): przy wczytaniu wszystkie punkty atrybutów wracają do rozdania,
+    okno postaci mówi o tym przy punktach (`attributes_reset`). Okno postaci pokazuje premię z każdego atrybutu.
+  - `tools/texts.py` widzi też wieloliniowe stałe `*_NAMES`. Symulacje (`balance_sim`, `tier_sim`) liczą siłę
+    procentowo: na początku i w środku gry zwykły potwór pada od ok. 4-4,5 ciosu zamiast 3,5, przy poz. 90 od 3,1.
+    Test: `test_attributes`.
 - [x] **Mapa Nawii, etap 4 - bossowie szczytowi** (listopad 2026). Ustalenia z autorem: trzech słowiańskich bogów
   (Władca Hordy i obce bogi później), dostęp za fragmenty kluczy z węzłów, nagrody: punkty Watry, własne legendy, dużo
   łupu i serca boga jako waluta; grafiki PixelLab 160 px z 2 animacjami; do tego dwa pasy w stylu Mageblooda

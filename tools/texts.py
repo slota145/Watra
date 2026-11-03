@@ -7,7 +7,7 @@ Napis trafia do pliku, gdy:
 - stoi w Lang.t(...), Lang.n(...) albo tr(...),
 - ma polską literę albo kilka słów (po usunięciu znaczników BBCode i %s / %d),
 - jest kluczem albo wartością w słowniku i zaczyna się wielką literą ("boss": "Wodnik"), stoi pod kluczem "name"
-  ("name": "przyjazny") albo w słowniku stałej o nazwie kończącej się na _NAMES (WEAPON_NAMES),
+  ("name": "przyjazny") albo w słowniku stałej o nazwie kończącej się na _NAMES (WEAPON_NAMES, także w kilku liniach),
 - jest elementem listy w stałej (const) i zaczyna się wielką literą ([["goblin", "Gobliny", 40]]),
 - w scenie jest tekstem kontrolki (text, tooltip_text, placeholder_text, title) albo nazwą bossa (boss_name).
 Pomija: komunikaty print/push_error/assert, ścieżki plików, napisy z translations/pomijane.txt (jeden na linię).
@@ -114,12 +114,15 @@ def scan_script(path, found):
     if buffer:
         logical.append(buffer)
     in_const = False
+    # stała *_NAMES w kilku liniach - wartości jej słownika to nazwy pokazywane graczowi
+    in_names = False
     depth = 0
     for line in logical:
         if line.startswith("const "):
             in_const, depth = True, 0
+            in_names = NAMES_CONST.search(line) is not None
         elif depth <= 0:
-            in_const = False
+            in_const = in_names = False
         if line.strip().startswith("#") or LOG_CALL.search(line):
             continue
         for text, before, after in literals(line):
@@ -128,7 +131,8 @@ def scan_script(path, found):
             key = after.lstrip().startswith(":") and text[:1].isupper() and bool(wordy(text)) and "://" not in text
             # element listy w stałej, z wielkiej litery ([["goblin", "Gobliny", ...]], ["all", "Wszystko"])
             listed = in_const and text[:1].isupper() and bool(wordy(text)) and re.search(r"[\[,]\s*$", last) is not None
-            if key or listed or wanted(text, last):
+            named = in_names and DICT_VALUE.search(last) is not None and bool(wordy(text))
+            if key or listed or named or wanted(text, last):
                 found.setdefault(text, set()).add(os.path.basename(path))
         depth += _brackets(line)
 

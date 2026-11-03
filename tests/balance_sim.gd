@@ -135,7 +135,8 @@ func _run() -> void:
 			armor += piece.get("armor", 0.0)
 			health += piece.get("health", 0.0)
 		var strength := player_level - 1
-		var hit: float = (weapon["weapon_damage"] + enchant + strength + weapon.get("damage", 0.0)) \
+		# siła: +1% obrażeń umiejętności z tagiem siły za punkt (CharacterStats.DAMAGE_PER_ATTRIBUTE)
+		var hit: float = (weapon["weapon_damage"] + enchant + weapon.get("damage", 0.0)) * (1.0 + strength * 0.01) \
 				* (1.0 + weapon.get("damage_percent", 0.0)) * (1.0 + weapon.get("crit_chance", 0.0) * 0.5)
 		var hp: float = 100.0 + 8.0 * (player_level - 1) + health
 		var reduction := (50.0 / (50.0 + armor)) * (1.0 - minf(strength * 0.005, 0.25))

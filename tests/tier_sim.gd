@@ -85,7 +85,7 @@ func _simulate(tier: int, count: int) -> Dictionary:
 	var crit := minf(float(total.get("crit_chance", 0)), 0.75)
 	var crit_mult := 1.5 + float(total.get("crit_damage", 0))
 	var aspd := 1.0 + float(total.get("attack_speed", 0))
-	var hit: float = (weapon["damage"][0] + weapon["damage"][1]) / 2.0 + strength + float(total.get("damage", 0))
+	var hit: float = ((weapon["damage"][0] + weapon["damage"][1]) / 2.0 + float(total.get("damage", 0))) * (1.0 + strength * 0.01)
 	var dps: float = hit * (1.0 + float(total.get("damage_percent", 0))) * (1.0 + float(total.get("physical_damage", 0))) \
 			* aspd * weapon["speed"] * (1.0 + crit * (crit_mult - 1.0))
 	return {"zdrowie": hp, "pancerz": armor, "redukcja": dr, "unik": dodge, "kryt": crit, "mn_kryt": crit_mult,

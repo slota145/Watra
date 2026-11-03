@@ -190,20 +190,21 @@ Cleansed nodes of the region: %d / %d","blessing_window.gd"
 "Za mało surowców","Not enough materials","build_window.gd"
 "Zbudowano","Built","build_window.gd"
 "Zbuduj","Build","build_window.gd"
-"Za punkt: +1 do obrażeń broni białej
-i 0,5% mniej otrzymywanych obrażeń (maks. 25%)","Per point: +1 melee weapon damage
+"Za punkt: +1% obrażeń umiejętności z tagiem inteligencji
+i +5 do maks. many","Per point: +1% damage for skills with the intelligence tag
+and +5 max mana","character_stats.gd"
+"Za punkt: +1% obrażeń umiejętności z tagiem siły
+i 0,5% mniej otrzymywanych obrażeń (maks. 25%)","Per point: +1% damage for skills with the strength tag
 and 0.5% less damage taken (max 25%)","character_stats.gd"
-"Za punkt: +1% szybkości ataku i umiejętności
-i +1 do obrażeń z łuków","Per point: +1% attack and skill speed
-and +1 bow damage","character_stats.gd"
-"Za punkt: +5 do maks. many, +1% szybkości
-rzucania czarów i +1 do obrażeń magicznych","Per point: +5 max mana, +1% cast speed
-and +1 spell damage","character_stats.gd"
+"Za punkt: +1% obrażeń umiejętności z tagiem zręczności
+i 0,4% szansy na unik (coraz mniej przy wysokich wartościach)","Per point: +1% damage for skills with the dexterity tag
+and 0.4% dodge chance (less at high values)","character_stats.gd"
 "Za punkt: +5 do maks. zdrowia","Per point: +5 max health","character_stats.gd"
 "Inteligencja","Intelligence","character_stats.gd, items.gd"
 "Siła","Strength","character_stats.gd, items.gd"
 "Witalność","Vitality","character_stats.gd, items.gd"
 "Zręczność","Dexterity","character_stats.gd, items.gd"
+"Atrybuty działają teraz inaczej - punkty wróciły do rozdania.","Attributes work differently now - your points have been refunded.","character_window.gd"
 "Broń: %s
 Zdrowie: %d
 Mana: %d
@@ -232,6 +233,7 @@ Gold: %d","character_window.gd"
 "Skrócenie odnowienia: %d%%","Cooldown reduction: %d%%","character_window.gd"
 "Szansa na unik: %d%%","Dodge chance: %d%%","character_window.gd"
 "Szybkość rzucania czarów: %d%%","Cast speed: %d%%","character_window.gd"
+"Umiejętności z tagiem „%s”: +%d%% obrażeń","Skills tagged ""%s"": +%d%% damage","character_window.gd"
 "Więcej doświadczenia: +%d%%","More experience: +%d%%","character_window.gd"
 "Więcej złota: +%d%%","More gold: +%d%%","character_window.gd"
 "Zdrowie za trafienie: %d","Health on hit: %d","character_window.gd"
@@ -2616,6 +2618,25 @@ Basic attack with the equipped weapon toward the cursor. Drag onto the skill bar
 "Zasięg %d, odnowienie %s s","Range %d, cooldown %s s","skills.gd"
 "Zastawiasz sidła pod kursorem. Wróg, który na nie wejdzie, zostaje unieruchomiony razem z tymi obok, a każde trafienie unieruchomionego wroga jest krytyczne.","You set a snare at the cursor. An enemy that steps on it is rooted along with those nearby, and every hit on a rooted enemy is critical.","skills.gd"
 "Zasłona %s s, kontra %d%% obrażeń, odnowienie %s s","Guard %s s, counter %d%% damage, cooldown %s s","skills.gd"
+"atak","attack","skills.gd"
+"aura","aura","skills.gd"
+"cios","strike","skills.gd"
+"czar","spell","skills.gd"
+"fizyczne","physical","skills.gd"
+"inteligencja","intelligence","skills.gd"
+"lód","cold","skills.gd"
+"obszar","area","skills.gd"
+"ogień","fire","skills.gd"
+"okrzyk","warcry","skills.gd"
+"piorun","lightning","skills.gd"
+"pocisk","projectile","skills.gd"
+"przywołanie","summon","skills.gd"
+"ruch","movement","skills.gd"
+"siła","strength","skills.gd"
+"tajemne","arcane","skills.gd"
+"trucizna","poison","skills.gd"
+"w czasie","over time","skills.gd"
+"zręczność","dexterity","skills.gd"
 "Łańcuch błyskawic","Chain Lightning","skills.gd"
 "Łuk","Bow","skills.gd"
 "Śnieżyca pod kursorem przez kilka sekund rani i spowalnia wrogów. Combo: zaraz po Włóczni Marzanny od razu zamraża wrogów w kręgu.","A blizzard under the cursor hurts and slows enemies for a few seconds. Combo: right after Marzanna's Spear it instantly freezes enemies in the circle.","skills.gd"
@@ -3213,6 +3234,15 @@ Kill enemies inside the circle to offer tribute","zertwa.gd"
 "Stary Dąb","Old Oak","zones.gd"
 "Wietrzne Turnie","Windy Crags","zones.gd"
 "cały świat (wydarzenie)","the whole world (event)","zones.gd"
+"Za punkt: +1 do obrażeń broni białej
+i 0,5% mniej otrzymywanych obrażeń (maks. 25%)","Per point: +1 melee weapon damage
+and 0.5% less damage taken (max 25%)","(nieużywany)"
+"Za punkt: +1% szybkości ataku i umiejętności
+i +1 do obrażeń z łuków","Per point: +1% attack and skill speed
+and +1 bow damage","(nieużywany)"
+"Za punkt: +5 do maks. many, +1% szybkości
+rzucania czarów i +1 do obrażeń magicznych","Per point: +5 max mana, +1% cast speed
+and +1 spell damage","(nieużywany)"
 "Za punkt: +2% szybkości ataku i umiejętności
 i +1 do obrażeń z łuków","Per point: +2% attack and skill speed
 and +1 bow damage","(nieużywany)"
