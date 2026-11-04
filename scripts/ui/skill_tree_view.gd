@@ -18,14 +18,14 @@ signal gem_dropped(message: String)
 
 ## Ile pikseli interfejsu na jednostkę pozycji węzła, zakres przybliżenia i przybliżenie na start.
 const UNIT := 15.0
-const ZOOM_RANGE := Vector2(0.25, 1.6)
+const ZOOM_RANGE := Vector2(0.2, 1.6)
 const START_ZOOM := 0.8
 ## Od jakiego przybliżenia widać podpisy skupisk.
 const LABEL_ZOOM := 0.7
 ## Promienie węzłów wg rodzaju (węzły znaczące - "notable", drobne - "small").
 const RADIUS := {"start": 9.0, "skill": 9.0, "notable": 6.5, "small": 3.0, "keystone": 10.0, "socket": 7.5}
 ## Promień tła stron drzewka (w jednostkach pozycji węzłów).
-const REGION_REACH := 30.0
+const REGION_REACH := 34.0
 const SOCKET_LEGEND_ICON := preload("res://assets/ui/socket_legend.png")
 const LEGEND_RING := Color(1.0, 0.55, 0.2)
 const GOLD := Color(1.0, 0.82, 0.35)
@@ -83,6 +83,9 @@ const ICONS := {
 	"lightning_resistance": preload("res://assets/ui/tags/lightning.png"), "nawia_resistance": preload("res://assets/ui/tags/arcane.png"),
 	"all_resistances": preload("res://assets/ui/tags/arcane.png"), "shock_chance": preload("res://assets/ui/tags/lightning.png"),
 	"resistance_penetration": preload("res://assets/skills/node_pierce.png"),
+	"aura_reservation": preload("res://assets/skills/aura_mana_spring.png"),
+	"fire_max_resistance": preload("res://assets/ui/tags/fire.png"), "cold_max_resistance": preload("res://assets/ui/tags/ice.png"),
+	"lightning_max_resistance": preload("res://assets/ui/tags/lightning.png"), "nawia_max_resistance": preload("res://assets/ui/tags/arcane.png"),
 }
 const KEYSTONE_ICONS := {"cyclone_eye": preload("res://assets/skills/ks_cyclone_eye.png"),
 		"blade_dance": preload("res://assets/skills/ks_blade_dance.png"), "smoke_shadow": preload("res://assets/skills/ks_smoke_shadow.png"),

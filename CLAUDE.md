@@ -154,11 +154,11 @@ Zanim wydasz generacje (autor ma ograniczony limit miesięczny):
 Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `docs/historia.md` - szukaj w nim grepem.
 
 - **Żywioły:** rodzaje obrażeń zadawanych graczowi (fizyczne, ogień, lód, pioruny, Nawia - `scripts/elements.gd`),
-  odporności gracza z przedmiotów (`CharacterStats.resistance`, sufit 75%), kara odporności na Mapie Nawii (`Elements.penalty`),
+  odporności gracza z przedmiotów i drzewka (`CharacterStats.resistance`, sufit 75%, z węzłów maksymalnej odporności do 85%), kara odporności na Mapie Nawii (`Elements.penalty`),
   żywioł ataku potwora wg sceny (`Elements.MONSTERS`, `Goblin.element`), odporności i wrażliwości potworów
   (`Elements.MONSTER_RESIST`, `Goblin.resistances`), premie obrażeń żywiołów i przebicie odporności, żywioły
   w modyfikatorach lochów, bożkach i elitach (`Elements.apply_dungeon`, `Elements.added`).
-- **Walka i postać:** wspólne drzewko umiejętności wszystkich broni z pustymi miejscami na przyszłe umiejętności i aury
+- **Walka i postać:** wspólne drzewko umiejętności wszystkich broni ze strefami pośrednimi i dwiema autostradami dookoła
   (`skill_tree.gd`, `skill_tree_data.gd`, `sword_skills.gd`, `bow_skills.gd`, `spell_skills.gd`, okno K), punkty umiejętności z paska umiejętności i poziomy 1-20 (`SkillBook.skill_xp`,
   `Skills.LEVEL_POINTS`), tagi umiejętności (`Skills.TAGS`) i atrybuty dające % obrażeń umiejętnościom z ich tagiem
   (`CharacterStats.attribute_damage`), kamienie wsparcia w gniazdach umiejętności (`supports.gd`, znacznik umiejętności
@@ -322,20 +322,11 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
 - [ ] **Aury rezerwujące manę**: zrobione, czekają na ocenę autora (szukaj „Aury rezerwujące manę - krok 3”
   w `docs/historia.md`). Do ustalenia po ograniu: liczby (`scripts/aura_data.gd`), gniazda na kamienie wsparcia
   dla aur, animacje ataków aur żywiołów z kreatora efektów PixelLab.
-- [ ] **Bogatsze strefy pośrednie i „autostrady” we wspólnym drzewku** (pomysł autora, listopad 2026): strefy
-  siła/zręczność, zręczność/inteligencja i siła/inteligencja wyglądają biednie. Plan: drobne węzły z premiami pasującymi
-  do strefy (krwawienie, pioruny, ogień i aury, +atrybuty) i po 2-3 węzły znaczące na strefę, później więcej umiejętności
-  łączonych. Do tego 2 „autostrady” - pierścienie tanich węzłów (+atrybut) po zewnętrznej krawędzi, łączące końce stron,
-  z wejściami z dala od węzłów kluczowych. Zamiast pustych miejsc („soon”, przez które drzewko przechodzi za darmo)
-  prawdziwe drobne węzły; puste miejsca tylko pod przyszłe umiejętności łączone. Do dopytania: ile węzłów na strefę,
-  jakie premie, gdzie wejścia na autostrady, jeden pierścień czy dwa.
-  **Odporności w drzewku** (ustalenia z autorem): dziś są tylko 4 węzły znaczące po +15% (Ognioodporny, Zimna krew,
-  Uziemienie, Hart ducha) i 3 drobne +6% wszystkich przy środku, a sufit 75% jest stały (`Elements.MAX_RESISTANCE`).
-  Plan jak w PoE: główne źródło odporności zostaje na przedmiotach; odporność na wszystkie żywioły dostępna dla każdego
-  (drobne węzły przy środku i na autostradach); pojedyncze żywioły tematycznie (ogień - siła, lód - inteligencja, pioruny -
-  strefa zręczność/inteligencja, Nawia - siła) w małych skupiskach; maksymalna odporność bardzo rzadko - po jednym drogim
-  węźle znaczącym na żywioł (+1-2%) na końcu skupiska, do tego legendy albo talizmany; sufit liczony z premii zamiast
-  stałego, z górnym limitem (np. 85%).
+- [ ] **Bogatsze strefy pośrednie, autostrady i odporności we wspólnym drzewku** (pomysł autora, listopad 2026): zrobione,
+  czeka na ocenę autora (szukaj „Bogatsze strefy pośrednie” w `docs/historia.md`): po 2 nowe skupiska w każdej strefie,
+  skupiska odporności, autostrada wewnętrzna i zewnętrzna (`RINGS` w `tools/shared_tree_draft.py`), maksymalna odporność
+  z węzłów (+2%, limit 85% - `CharacterStats.max_resistance`). Do zrobienia później: więcej umiejętności łączonych
+  w strefach, maksymalna odporność także z legend albo talizmanów.
 - [ ] **Przebudowa rozwoju postaci**: zastąpiona planem wspólnego drzewka (`docs/plan_drzewek.md`). Osobne punkty
   statystyk (2 za awans) i umiejętności (pasek) już są - punkt niżej.
 - [ ] **Punkty umiejętności z osobnego paska doświadczenia** (pomysł autora, listopad 2026; jak w BDO): zrobione,

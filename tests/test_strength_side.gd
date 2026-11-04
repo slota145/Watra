@@ -90,7 +90,7 @@ func _process(_d: float) -> bool:
 			var max_hp: int = p.stats.max_health()
 			p.health = max_hp
 			check("Pełnia Sił przy pełnym zdrowiu +10%", is_equal_approx(ss.health_damage_factor(), 1.1), "%.3f" % ss.health_damage_factor())
-			p.health = roundi(max_hp * 0.5)
+			p.health = floori(max_hp * 0.5)
 			check("pół zdrowia: Gniew rannego +10%", is_equal_approx(ss.health_damage_factor(), 1.1), "%.3f" % ss.health_damage_factor())
 			p.health = roundi(max_hp * 0.2)
 			check("Ostatni Bastion poniżej 30% zdrowia", ss.bastion_active() and ss.health_damage_factor() > 1.6

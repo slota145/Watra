@@ -139,6 +139,8 @@ const STAT_NAMES := {
 	"fire_resistance": "Odporność na ogień", "cold_resistance": "Odporność na lód",
 	"lightning_resistance": "Odporność na pioruny", "all_resistances": "Odporność na żywioły",
 	"nawia_resistance": "Odporność na Nawię",
+	"fire_max_resistance": "Maksymalna odporność na ogień", "cold_max_resistance": "Maksymalna odporność na lód",
+	"lightning_max_resistance": "Maksymalna odporność na pioruny", "nawia_max_resistance": "Maksymalna odporność na Nawię",
 	"fire_damage": "Obrażenia od ognia", "cold_damage": "Obrażenia od lodu", "lightning_damage": "Obrażenia od piorunów",
 	"elemental_damage": "Obrażenia od żywiołów", "resistance_penetration": "Przebicie odporności",
 	"projectile_damage": "Obrażenia pocisków", "hit_damage": "Obrażenia ciosów", "area_damage": "Obrażenia obszarowe",
@@ -150,6 +152,7 @@ const PERCENT_STATS: Array[String] = ["potion_power", "attack_speed", "move_spee
 		"cast_speed", "physical_damage", "spell_damage",
 		"dodge_chance", "cooldown_reduction", "gold_find", "xp_gain", "area",
 		"fire_resistance", "cold_resistance", "lightning_resistance", "all_resistances", "nawia_resistance",
+		"fire_max_resistance", "cold_max_resistance", "lightning_max_resistance", "nawia_max_resistance",
 		"fire_damage", "cold_damage", "lightning_damage", "elemental_damage", "resistance_penetration",
 		"projectile_damage", "hit_damage", "area_damage", "dot_damage", "ignite_chance", "freeze_chance", "shock_chance"]
 ## Statystyki z częścią ułamkową (regeneracja na sekundę) - pokazywane z jednym miejscem po przecinku.

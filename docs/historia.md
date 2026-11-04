@@ -965,6 +965,28 @@ odpowiedniej sekcji.
   ogników (`tools/loyal_seeker_icon.py`). Stare zapisy - `SkillBook.FORMER_SOON`. Test `tests/test_summons.gd`.
   Do ustalenia po ograniu: liczby (`SummonData`), czy kamienie wsparcia mają podnosić rezerwację (dziś nie), czy
   przywołańcy mają dostawać ciosy obszarowe potworów, własne grafiki z PixelLab (widmowy wilk, ognik).
+- [x] **Bogatsze strefy pośrednie, autostrady i odporności we wspólnym drzewku** (pomysł autora, listopad 2026).
+  Autor wybrał: +2 skupiska na strefę, autostrada wewnętrzna i zewnętrzna, na autostradach atrybuty i co kilka węzłów
+  odporność albo zdrowie, maksymalna odporność +2% na węzeł z limitem 85%. Drzewko ma teraz 373 węzły (było 235),
+  stare zapisy się nie zmieniają (tylko dochodzą węzły i połączenia, istniejące stoją w tych samych miejscach).
+  - **Nowe skupiska stref** (`tools/shared_tree_draft.py`): siła/zręczność - Łowy (krwawienie, szybkość, krytyki,
+    gniazdo) i Twarda skóra (pancerz, unik, regeneracja); zręczność/inteligencja - Wichura (pociski, szybkość, unik,
+    gniazdo) i Gromochron (odporność na pioruny); siła/inteligencja - Kuźnia Swaroga (ogień, odporność na ogień)
+    i Pieczęcie (rezerwacja aur, żywioły, zdrowie i mana, gniazdo). Skupiska odporności na stronach: Szron
+    (inteligencja, lód) i Kurhan (siła, Nawia). Węzły znaczące tylko z premiami, które gra już znała.
+  - **Maksymalna odporność**: premie `<żywioł>_max_resistance` (`CharacterStats.max_resistance`, sufit
+    `Elements.MAX_RESISTANCE` 75% + premie, najwyżej `Elements.HARD_MAX_RESISTANCE` 85%); węzły Serce kuźni, Serce zimy,
+    Serce burzy, Próg zaświatów (+2% każdy) na końcu skupisk odporności. Okno postaci pokazuje sufit, gdy jest wyższy niż 75%.
+  - **Autostrady** (`RINGS` w szkicu): wewnętrzna (promień 14, stacje Burza i pociski, Aury, Krwawienie - przecina
+    ścieżki stron w ich drobnych węzłach, więc działa jak skrót między stronami) i zewnętrzna (promień 31, stacje: nowe
+    skupiska stref i odporności). Węzły `ring_<pierścień>_<stacja>_<n>`: +5 do atrybutu strony (w strefach +3/+3), co
+    4. węzeł na zmianę +5% odporności na żywioły i +3% zdrowia. Łuk omija węzły skupisk (odsunięcie) i przechodzi przez
+    drobne węzły ścieżek (skrzyżowanie) - `RING_CLEAR`. Wejścia tylko przez stacje (bez węzłów kluczowych).
+  - Okno K: tło stron sięga dalej (`SkillTreeView.REGION_REACH` 34), można bardziej oddalić (najmniejsze przybliżenie 0,2).
+  - **Wydajność**: `SkillBook.tree_bonus` zapamiętuje premie (`_bonus_cache`, czyszczone sygnałem `changed`) - przy
+    kilkuset wybranych węzłach liczenie od nowa przy każdym zapytaniu statystyk wyraźnie spowalniało klatki.
+  Testy: `test_elements` (sufit odporności, węzły i autostrady), liczby w `test_skill_tree` i `test_tree_sockets`.
+  Do ustalenia po ograniu: liczby premii, czy autostrady nie są za tanim skrótem, podpisy stron nachodzące na węzły.
 
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)

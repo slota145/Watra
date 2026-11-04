@@ -83,6 +83,13 @@ SMALL_STATS = {
 	"+4 siły, +4 inteligencji": {"strength": 4, "intelligence": 4},
 	"+4% obrażeń ciosów": {"hit_damage": 0.04}, "+4% obrażeń pocisków": {"projectile_damage": 0.04},
 	"+4% obrażeń od ognia": {"fire_damage": 0.04}, "+6% odporności na żywioły": {"all_resistances": 0.06},
+	# odporności w skupiskach stref i stron (skupiska odporności) i autostrady (RINGS)
+	"+8% odporności na ogień": {"fire_resistance": 0.08}, "+8% odporności na lód": {"cold_resistance": 0.08},
+	"+8% odporności na pioruny": {"lightning_resistance": 0.08}, "+8% odporności na Nawię": {"nawia_resistance": 0.08},
+	"+5 siły": {"strength": 5}, "+5 zręczności": {"dexterity": 5}, "+5 inteligencji": {"intelligence": 5},
+	"+3 siły, +3 zręczności": {"strength": 3, "dexterity": 3}, "+3 zręczności, +3 inteligencji": {"dexterity": 3, "intelligence": 3},
+	"+3 siły, +3 inteligencji": {"strength": 3, "intelligence": 3},
+	"+5% odporności na żywioły": {"all_resistances": 0.05}, "+3% zdrowia": {"health_percent": 0.03},
 }
 
 
@@ -383,6 +390,64 @@ CLUSTERS = [
 		K("iron_will", "Żelazna Wola", "obrażenia czarów rosną z siły zamiast z inteligencji", new=True, soon=False,
 			game="Obrażenia czarów rosną z siły zamiast z inteligencji (inteligencja dalej daje manę)."),
 	]),
+	# ======================= bogatsze strefy (po 2 nowe skupiska) i skupiska odporności - stacje zewnętrznej autostrady
+	("sz_lowy", "sz", "Łowy", (252, 18.0), [
+		N("hunt_bleed", "Zapach krwi", "+20% obrażeń krwawienia, +6% obrażeń w czasie", {"bleed_damage": 0.2, "dot_damage": 0.06}, new=True),
+		P("+4 siły, +4 zręczności"),
+		N("hunt_chase", "Pogoń", "+5% szybkości ataku, +4% szybkości ruchu", {"attack_speed": 0.05, "move_speed": 0.04}, new=True),
+		P("+4% obrażeń ciosów"),
+		N("hunt_crit", "Cios łowcy", "+6% szansy na cios krytyczny, +15% obrażeń krytycznych", {"crit_chance": 0.06, "crit_damage": 0.15}, new=True),
+		G(),
+	]),
+	("sz_skora", "sz", "Twarda skóra", (288, 18.0), [
+		N("tough_hide", "Garbowana skóra", "+12% pancerza, +4% zdrowia", {"armor_percent": 0.12, "health_percent": 0.04}, new=True),
+		P("+4 siły, +4 zręczności"),
+		N("watchful", "Czujność", "+3% uniku, +6% pancerza", {"dodge_chance": 0.03, "armor_percent": 0.06}, new=True),
+		P("+6% odporności na żywioły"),
+		N("wolf_blood", "Wilcza krew", "+2 regeneracji zdrowia/s, +3 zdrowia za trafienie", {"health_regen": 2.0, "life_on_hit": 3.0}, new=True),
+		P("+4% zdrowia"),
+	]),
+	("zi_wichura", "zi", "Wichura", (44, 17.5), [
+		N("gale", "Wicher", "+12% obrażeń pocisków", {"projectile_damage": 0.12}, new=True),
+		P("+4 zręczności, +4 inteligencji"),
+		N("quick_hands", "Szybkie dłonie", "+5% szybkości rzucania, +5% szybkości ataku", {"cast_speed": 0.05, "attack_speed": 0.05}, new=True),
+		P("+4% obrażeń pocisków"),
+		N("wind_dance", "Taniec wiatru", "+3% uniku, +4% szybkości ruchu", {"dodge_chance": 0.03, "move_speed": 0.04}, new=True),
+		G(),
+	]),
+	("zi_grom", "zi", "Gromochron", (6, 19.0), [
+		P("+8% odporności na pioruny"),
+		N("storm_ward", "Piorunochron", "+15% odporności na pioruny, +10% obrażeń od piorunów",
+			{"lightning_resistance": 0.15, "lightning_damage": 0.1}, new=True),
+		P("+8% odporności na pioruny"),
+		N("sparking", "Iskrzenie", "+6% szansy na porażenie, +8% obrażeń od piorunów", {"shock_chance": 0.06, "lightning_damage": 0.08}, new=True),
+		N("lightning_max", "Serce burzy", "+2% maksymalnej odporności na pioruny", {"lightning_max_resistance": 0.02}, new=True),
+	]),
+	("si_kuznia", "si", "Kuźnia Swaroga", (128, 18.0), [
+		P("+8% odporności na ogień"),
+		N("forge_heat", "Żar kuźni", "+12% obrażeń od ognia, +8% szansy na podpalenie", {"fire_damage": 0.12, "ignite_chance": 0.08}, new=True),
+		P("+8% odporności na ogień"),
+		N("tempering", "Hartowanie", "+15% odporności na ogień, +8% pancerza", {"fire_resistance": 0.15, "armor_percent": 0.08}, new=True),
+		N("fire_max", "Serce kuźni", "+2% maksymalnej odporności na ogień", {"fire_max_resistance": 0.02}, new=True),
+	]),
+	("si_pieczecie", "si", "Pieczęcie", (168, 18.0), [
+		N("shared_song", "Wspólna pieśń", "aury rezerwują 6% many mniej, +5% many", {"aura_reservation": -0.06, "mana_percent": 0.05}, new=True),
+		P("+4 siły, +4 inteligencji"),
+		N("elem_seal", "Pieczęć żywiołów", "+10% obrażeń od żywiołów", {"elemental_damage": 0.1}, new=True),
+		P("+4% obrażeń od ognia"),
+		N("body_spirit", "Ciało i duch", "+5% zdrowia, +5% many", {"health_percent": 0.05, "mana_percent": 0.05}, new=True),
+		G(),
+	]),
+	("i_szron", "int", "Szron", (80, 21.5), [
+		P("+8% odporności na lód"),
+		N("ice_skin", "Lodowa skóra", "+15% odporności na lód, +8% obrażeń od lodu", {"cold_resistance": 0.15, "cold_damage": 0.08}, new=True),
+		N("cold_max", "Serce zimy", "+2% maksymalnej odporności na lód", {"cold_max_resistance": 0.02}, new=True),
+	]),
+	("s_kurhan", "str", "Kurhan", (200, 21.5), [
+		P("+8% odporności na Nawię"),
+		N("barrow_ward", "Strażnik kurhanu", "+15% odporności na Nawię, +4% zdrowia", {"nawia_resistance": 0.15, "health_percent": 0.04}, new=True),
+		N("nawia_max", "Próg zaświatów", "+2% maksymalnej odporności na Nawię", {"nawia_max_resistance": 0.02}, new=True),
+	]),
 ]
 
 # Ścieżki małych węzłów: (od, do, ile węzłów, motyw). "od"/"do" to "start" albo "<skupisko>" (wejście skupiska)
@@ -422,7 +487,28 @@ PATHS = [
 	("d_grad", "zi_uniki", 1, "zi"), ("i_runy", "zi_uniki", 2, "zi"),
 	("s_krzepa", "si_aury", 2, "si"), ("i_ogien", "si_aury", 1, "si"), ("si_aury", "si_ostrza", 1, "si"),
 	("s_dym", "si_ostrza", 1, "si"), ("i_wola", "si_ostrza", 1, "si"),
+	# nowe skupiska stref i odporności - wejścia z ich stref (autostrady łączą je dookoła - RINGS)
+	("sz_krew", "sz_lowy", 1, "sz"), ("sz_ciosy", "sz_skora", 1, "sz"),
+	("zi_burza", "zi_wichura", 1, "zi"), ("zi_uniki", "zi_grom", 1, "zi"),
+	("si_aury", "si_kuznia", 1, "si"), ("si_ostrza", "si_pieczecie", 1, "si"),
+	("i_lod", "i_szron", 2, "int"), ("s_okrzyki", "s_kurhan", 1, "str"),
 ]
+
+# Autostrady (pomysł autora): pierścienie tanich węzłów dookoła drzewka. (nazwa, promień, stacje) - stacje to skupiska
+# w kolejności rosnącego kąta, pierścień jest zamknięty. Między kolejnymi stacjami węzły idą łukiem: od najbliższego
+# węzła jednej stacji do najbliższego węzła drugiej, wybrzuszone do promienia pierścienia. Premie: +5 do atrybutu
+# strony, przez którą przechodzi łuk (w strefach +3/+3), co RING_EVERY węzeł na zmianę odporność na żywioły i zdrowie.
+# Stacje to skupiska bez węzłów kluczowych (wejścia z dala od nich).
+RINGS = [
+	("in", 14.0, ["zi_burza", "si_aury", "sz_krew"]),
+	("out", 31.0, ["zi_grom", "zi_wichura", "i_szron", "si_kuznia", "si_pieczecie", "s_kurhan", "sz_lowy", "sz_skora"]),
+]
+RING_STEP = 2.3  # odstęp węzłów na łuku
+RING_CLEAR = 1.2  # najmniejsza odległość węzła łuku od innych węzłów (bliżej - skrzyżowanie albo odsunięcie)
+RING_EVERY = 4
+RING_ATTR = {"str": "+5 siły", "dex": "+5 zręczności", "int": "+5 inteligencji", "sz": "+3 siły, +3 zręczności",
+		"zi": "+3 zręczności, +3 inteligencji", "si": "+3 siły, +3 inteligencji"}
+RING_EXTRA = ["+5% odporności na żywioły", "+3% zdrowia"]
 
 
 SPREAD = 1.4  # rozsunięcie skupisk od startu
@@ -525,6 +611,50 @@ def build():
 			links.append((prev, nid))
 			prev = nid
 		links.append((prev, nb))
+	extra = 0
+	for name, radius, stations in RINGS:
+		for i, a in enumerate(stations):
+			b = stations[(i + 1) % len(stations)]
+			na, nb = resolve(a, b)
+			(ax, ay), (bx, by) = nodes[na]["pos"], nodes[nb]["pos"]
+			a0 = math.atan2(ay, ax)
+			a1 = math.atan2(by, bx)
+			while a1 <= a0:
+				a1 += 2 * math.pi
+			r0, r1 = math.hypot(ax, ay), math.hypot(bx, by)
+			count = max(1, round((a1 - a0) * radius / RING_STEP) - 1)
+			prev = na
+			for k in range(count):
+				t = (k + 1) / (count + 1)
+				base = r0 + (r1 - r0) * t
+				r = base + (radius - base) * math.sin(math.pi * t) ** 0.5
+				ang = a0 + (a1 - a0) * t
+				pos = (math.cos(ang) * r, math.sin(ang) * r)
+				# łuk przecina ścieżkę - przechodzi przez jej drobny węzeł (skrzyżowanie) zamiast stawiać obok
+				near = min(nodes, key=lambda e: math.dist(nodes[e]["pos"], pos))
+				if math.dist(nodes[near]["pos"], pos) < RING_CLEAR and nodes[near]["kind"] == "small" and near not in (na, nb):
+					if near != prev:
+						links.append((prev, near))
+					prev = near
+					continue
+				if math.dist(nodes[near]["pos"], pos) < RING_CLEAR:
+					# za blisko węzła skupiska - łuk odsuwa się od niego (na zewnątrz albo do środka)
+					for shift in (0.6, -0.6, 1.2, -1.2, 1.8, -1.8, 2.4, -2.4):
+						cand = (math.cos(ang) * (r + shift), math.sin(ang) * (r + shift))
+						if min(math.dist(nodes[e]["pos"], cand) for e in nodes) >= RING_CLEAR:
+							pos = cand
+							break
+					else:
+						continue
+				region = min(REGIONS, key=lambda key: abs((math.degrees(ang) - REGIONS[key]["angle"] + 180) % 360 - 180))
+				extra += 1
+				desc = RING_EXTRA[(extra // RING_EVERY) % 2] if extra % RING_EVERY == 0 else RING_ATTR[region]
+				nid = f"ring_{name}_{a}_{k}"
+				nodes[nid] = {"kind": "small", "name": "", "desc": desc, "stats": SMALL_STATS[desc],
+						"pos": pos, "region": region, "cluster": "autostrada"}
+				links.append((prev, nid))
+				prev = nid
+			links.append((prev, nb))
 	return nodes, links, clusters
 
 

@@ -5,7 +5,7 @@ Opis układu i decyzje: `docs/drzewko_wspolne.md`. Liczby w premiach to propozyc
 
 Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]** węzeł znaczący, [d] drobny, [G] gniazdo; ✦ - nowe, ⌛ - na razie puste miejsce w grze (przyjdzie w kolejnych krokach).
 
-## Siła (miecz) (65 węzłów ze ścieżkami)
+## Siła (miecz) (86 węzłów ze ścieżkami)
 
 ### Brama Siły (1)
 
@@ -86,9 +86,15 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - **[Z]** Czwarte ostrze - +1 Widmowe Ostrze
 - **[K]** Dym i Cień - po Dymnych Wybuchach chmura na 5 s: +30% uniku, Mgnienie bez many
 
-Ścieżki: 13 drobnych węzłów (+4% zdrowia, +8 siły).
+### Kurhan (3)
 
-## Zręczność (łuk) (53 węzłów ze ścieżkami)
+- [d] +8% odporności na Nawię
+- **[Z]** Strażnik kurhanu ✦ - +15% odporności na Nawię, +4% zdrowia
+- **[Z]** Próg zaświatów ✦ - +2% maksymalnej odporności na Nawię
+
+Ścieżki: 14 drobnych węzłów (+4% zdrowia, +8 siły).
+
+## Zręczność (łuk) (70 węzłów ze ścieżkami)
 
 ### Brama Zręczności (1)
 
@@ -159,7 +165,7 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 
 Ścieżki: 10 drobnych węzłów (+8 zręczności).
 
-## Inteligencja (księga) (60 węzłów ze ścieżkami)
+## Inteligencja (księga) (81 węzłów ze ścieżkami)
 
 ### Brama Inteligencji (1)
 
@@ -236,9 +242,15 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - **[Z]** Żelazny umysł - +10% many, +1 regeneracji many/s
 - **[K]** Krwawa Ofiara ✦ - aury rezerwują zdrowie zamiast many
 
-Ścieżki: 12 drobnych węzłów (+4% many, +8 inteligencji).
+### Szron (3)
 
-## Strefa siła / zręczność (16 węzłów ze ścieżkami)
+- [d] +8% odporności na lód
+- **[Z]** Lodowa skóra ✦ - +15% odporności na lód, +8% obrażeń od lodu
+- **[Z]** Serce zimy ✦ - +2% maksymalnej odporności na lód
+
+Ścieżki: 14 drobnych węzłów (+4% many, +8 inteligencji).
+
+## Strefa siła / zręczność (43 węzłów ze ścieżkami)
 
 ### Krwawienie (5)
 
@@ -256,9 +268,27 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - **[Z]** Krew za krew - +3 zdrowia za trafienie
 - [G] Gniazdo - kamień szlachetny (działa o połowę mocniej)
 
-Ścieżki: 6 drobnych węzłów (+4 siły, +4 zręczności, +4% obrażeń ciosów).
+### Łowy (6)
 
-## Strefa zręczność / inteligencja (17 węzłów ze ścieżkami)
+- **[Z]** Zapach krwi ✦ - +20% obrażeń krwawienia, +6% obrażeń w czasie
+- [d] +4 siły, +4 zręczności
+- **[Z]** Pogoń ✦ - +5% szybkości ataku, +4% szybkości ruchu
+- [d] +4% obrażeń ciosów
+- **[Z]** Cios łowcy ✦ - +6% szansy na cios krytyczny, +15% obrażeń krytycznych
+- [G] Gniazdo - kamień szlachetny (działa o połowę mocniej)
+
+### Twarda skóra (6)
+
+- **[Z]** Garbowana skóra ✦ - +12% pancerza, +4% zdrowia
+- [d] +4 siły, +4 zręczności
+- **[Z]** Czujność ✦ - +3% uniku, +6% pancerza
+- [d] +6% odporności na żywioły
+- **[Z]** Wilcza krew ✦ - +2 regeneracji zdrowia/s, +3 zdrowia za trafienie
+- [d] +4% zdrowia
+
+Ścieżki: 8 drobnych węzłów (+4 siły, +4 zręczności, +4% obrażeń ciosów).
+
+## Strefa zręczność / inteligencja (43 węzłów ze ścieżkami)
 
 ### Burza i pociski (5)
 
@@ -276,9 +306,26 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - [G] Gniazdo - kamień szlachetny (działa o połowę mocniej)
 - **[K]** Myśliwy z Cienia - po umiejętności ruchu (każdej, nie tylko Odskoku) wrogowie tracą cię z oczu na 2 s, pierwsze trafienie podwójne
 
-Ścieżki: 7 drobnych węzłów (+4 zręczności, +4 inteligencji, +4% obrażeń pocisków).
+### Wichura (6)
 
-## Strefa siła / inteligencja (17 węzłów ze ścieżkami)
+- **[Z]** Wicher ✦ - +12% obrażeń pocisków
+- [d] +4 zręczności, +4 inteligencji
+- **[Z]** Szybkie dłonie ✦ - +5% szybkości rzucania, +5% szybkości ataku
+- [d] +4% obrażeń pocisków
+- **[Z]** Taniec wiatru ✦ - +3% uniku, +4% szybkości ruchu
+- [G] Gniazdo - kamień szlachetny (działa o połowę mocniej)
+
+### Gromochron (5)
+
+- [d] +8% odporności na pioruny
+- **[Z]** Piorunochron ✦ - +15% odporności na pioruny, +10% obrażeń od piorunów
+- [d] +8% odporności na pioruny
+- **[Z]** Iskrzenie ✦ - +6% szansy na porażenie, +8% obrażeń od piorunów
+- **[Z]** Serce burzy ✦ - +2% maksymalnej odporności na pioruny
+
+Ścieżki: 9 drobnych węzłów (+4 zręczności, +4 inteligencji, +4% obrażeń pocisków).
+
+## Strefa siła / inteligencja (43 węzłów ze ścieżkami)
 
 ### Aury (6)
 
@@ -297,7 +344,24 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - [G] Gniazdo - kamień szlachetny (działa o połowę mocniej)
 - **[K]** Żelazna Wola ✦ - obrażenia czarów rosną z siły zamiast z inteligencji
 
-Ścieżki: 6 drobnych węzłów (+4 siły, +4 inteligencji, +4% obrażeń od ognia).
+### Kuźnia Swaroga (5)
+
+- [d] +8% odporności na ogień
+- **[Z]** Żar kuźni ✦ - +12% obrażeń od ognia, +8% szansy na podpalenie
+- [d] +8% odporności na ogień
+- **[Z]** Hartowanie ✦ - +15% odporności na ogień, +8% pancerza
+- **[Z]** Serce kuźni ✦ - +2% maksymalnej odporności na ogień
+
+### Pieczęcie (6)
+
+- **[Z]** Wspólna pieśń ✦ - aury rezerwują 6% many mniej, +5% many
+- [d] +4 siły, +4 inteligencji
+- **[Z]** Pieczęć żywiołów ✦ - +10% obrażeń od żywiołów
+- [d] +4% obrażeń od ognia
+- **[Z]** Ciało i duch ✦ - +5% zdrowia, +5% many
+- [G] Gniazdo - kamień szlachetny (działa o połowę mocniej)
+
+Ścieżki: 8 drobnych węzłów (+4 siły, +4 inteligencji, +4% obrażeń od ognia).
 
 ## Pierścień wokół startu
 
@@ -311,8 +375,8 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 | umiejętność | 45 |
 | aura | 10 |
 | węzeł kluczowy | 18 |
-| węzeł znaczący | 81 |
-| drobny | 68 |
-| gniazdo | 9 |
+| węzeł znaczący | 103 |
+| drobny | 181 |
+| gniazdo | 12 |
 | gniazdo legendarne | 3 |
-| **razem** | **235** |
+| **razem** | **373** |
