@@ -467,6 +467,9 @@ func _process_attack(delta: float) -> void:
 	_strike_anim = 0.2
 	_cooldown = attack_cooldown
 	state = State.CHASE
+	# Postrach (aura gracza): wrogowie blisko gracza atakują wolniej
+	if _player_alive():
+		_cooldown *= _player.auras.dread_cooldown(global_position)
 	if _player_alive() and global_position.distance_to(_player.global_position) <= attack_range + 6.0:
 		_player.take_damage(damage, global_position, element)
 

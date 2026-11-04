@@ -63,7 +63,9 @@ Włączone działają bez końca i rezerwują część many (patrz punkt w CLAUD
 | Aura Strachu | wrogowie wokół zadają mniej obrażeń | propozycja |
 | Aura Pośpiechu | +szybkość ruchu i ataku | propozycja |
 
-Do ustalenia: ile % many rezerwuje każda aura, ikona na pasku i pod paskami zdrowia i many.
+**Zrobione** (krok 3, szukaj „Aury rezerwujące manę - krok 3” w `docs/historia.md`): wszystkie 10 aur z drzewka
+(propozycje też weszły: Gniew Peruna, Postrach, Wiatr Strzyboga), rezerwacja jak w PoE (30% / 20% / 15% / 25% / 35%,
+Mroźny Oddech 0% - rani gracza), ikony i kręgi rysowane w kodzie. Własne animacje ataków aur żywiołów - później.
 
 ## 3. Combo
 
@@ -118,7 +120,7 @@ Wspólne okno: drzewko umiejętności i drzewko lochów mogą używać tego same
    (szukaj „Wspólne drzewko umiejętności, krok 2” w `docs/historia.md`): nowe umiejętności, aury, nowe węzły kluczowe
    i węzły znaczące bez premii w grze są pustymi miejscami (`"soon"` w `tools/shared_tree_draft.py`) - kolejne kroki
    dają im działanie (usuń `new=True` / dopisz `stats`, uruchom `python tools/shared_tree_draft.py`).
-3. Aury i rezerwacja many.
+3. Aury i rezerwacja many. **Zrobione** (szukaj „Aury rezerwujące manę - krok 3” w `docs/historia.md`).
 4. Nowe combo; Półksiężyc, Szybka Salwa i Fala piorunów jako zwykłe umiejętności.
 5. Nowe węzły kluczowe i nowe umiejętności.
 6. Nowe drzewko lochów (od nowa, zwrot punktów Watry).
@@ -129,5 +131,5 @@ Wspólne okno: drzewko umiejętności i drzewko lochów mogą używać tego same
 - rozkład węzłów ustalony 4.11.2026 (obecne umiejętności + 5 nowych na stronę, 5 węzłów kluczowych na stronę + 1 na strefę,
   wszystkie 7 propozycji węzłów kluczowych wchodzi, regeneracje jako skupiska i 2 aury) - szczegóły w `docs/drzewko_wspolne.md`;
 - czy wybór przebudzenia jest jednorazowy, czy można go zmienić (i za ile);
-- liczby rezerwacji aur;
+- liczby rezerwacji i siły aur po ograniu (`scripts/aura_data.gd`);
 - które pomysły z tabel aur i combo (propozycje) wchodzą, a które odpadają.

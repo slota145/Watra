@@ -54,9 +54,9 @@ static func default_skills(weapon_type: String) -> Array[String]:
 	return bar
 
 
-## Czy umiejętność można położyć na pasku (atak, aktywna, uderzenie, umiejętność drzewka - nie combo i nie regeneracje).
+## Czy umiejętność można położyć na pasku (atak, aktywna, uderzenie, umiejętność drzewka, aura - nie combo).
 static func can_slot_skill(id: String) -> bool:
-	return id == ATTACK or Skills.get_data(id).get("type", "") in ["active", "strike", "skill"]
+	return id == ATTACK or Skills.get_data(id).get("type", "") in ["active", "strike", "skill", "aura"]
 
 
 ## Czy wpis slotu to przedmiot (a nie umiejętność).
@@ -65,13 +65,13 @@ static func is_item(id: String) -> bool:
 
 
 ## Czy wpis może leżeć w slocie `index` (wspólna numeracja) przy broni `weapon_type`: przedmiot do użycia - wszędzie,
-## umiejętność - na pasku umiejętności tylko tej broni, na pasku 1-0 każda.
+## umiejętność - na pasku umiejętności tylko tej broni (aura - każdej), na pasku 1-0 każda.
 static func fits(id: String, index: int, weapon_type: String) -> bool:
 	if id == "" or is_item(id):
 		return true
 	if not can_slot_skill(id):
 		return false
-	return id == ATTACK or index >= SKILL_KEYS.size() or Skills.get_data(id).get("weapon", "") == weapon_type
+	return id == ATTACK or index >= SKILL_KEYS.size() or Skills.works_with(id, weapon_type)
 
 
 static func slot_count() -> int:

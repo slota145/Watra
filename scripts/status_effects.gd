@@ -4,7 +4,7 @@ class_name StatusEffects
 ## "total" (pełny czas, do mrugania i paska), "kind" (good - premia, bad - osłabienie, cooldown - efekt się odnawia),
 ## "stacks" (opcjonalnie, ile ładunków).
 ## Źródła: premie z osady, Dary Watry i dary kapliczek w lochach (Boons), poziom Watry, legendarne przedmioty (LegendaryEffects.statuses)
-## oraz osłabienia od potworów (trucizna, spowolnienie, oszołomienie).
+## oraz osłabienia od potworów (trucizna, spowolnienie, oszołomienie), umiejętności i włączone aury (Auras.statuses).
 
 const WATRA_ICON := preload("res://assets/ui/status_watra.png")
 const POISON_ICON := preload("res://assets/items/spider_venom.png")
@@ -59,6 +59,7 @@ static func list(player: Player) -> Array[Dictionary]:
 	result.append_array(player.sword_skills.statuses())
 	result.append_array(player.bow_skills.statuses())
 	result.append_array(player.spell_skills.statuses())
+	result.append_array(player.auras.statuses())
 	return result
 
 

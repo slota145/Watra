@@ -12,6 +12,8 @@ extends Node
 ## (Equipment.effect_power); wyjęcie esencji kosztuje złoto (Essences.save_gold), inaczej esencja przepada.
 ## Zapisy sprzed wspólnego drzewka (osobne drzewka broni) dostają zwrot wszystkich punktów (tree_reset).
 ## Gniazda umiejętności aktywnych (Supports): liczba gniazd i kamienie wsparcia w nich (supports), dorabiane krzesiwami.
+## Aury (Auras): włączone aury (auras) i ich premie do statystyk (aura_bonus) oraz rezerwacja many albo zdrowia
+## (reserved_mana / reserved_health - CharacterStats odejmuje ją od maksimum).
 
 signal changed
 ## Kamienie wsparcia awansowały (nazwy z nowym poziomem) - HUD pokazuje napis.
@@ -41,9 +43,18 @@ var migrated_gold := -1
 ## informację), a kamienie z gniazd czekają w reset_gems, aż gracz odłoży je do plecaka (Player).
 var tree_reset := false
 var reset_gems: Array = []
+## Włączone aury (id umiejętności w kolejności włączania).
+var auras: Array[String] = []
+## Premie włączonych aur (statystyka -> wartość), liczone od nowa przy każdej zmianie (_refresh_auras).
+var _aura_stats := {}
 ## Węzły osiągalne od startu (reachable) i stan wybranych węzłów, z którego je policzono.
 var _reach := {}
 var _reach_key := -1
+
+## Węzły, które do kroku 3 drzewka były pustymi miejscami (drzewko przechodziło przez nie za darmo). W zapisie,
+## w którym wybrane węzły łączą się ze startem tylko przez nie, dostają się za darmo (repair_paths).
+const FORMER_SOON: Array[String] = ["dread", "vigor", "strzybog_wind", "frost_breath", "perun_wrath", "life_spring",
+		"swarog_ember", "marzanna_frost", "perun_sparks", "mana_spring", "focused_will", "thrifty_auras", "blood_offering"]
 
 ## Wersja drzewka w zapisie (2 - wspólne drzewko; bez niej - osobne drzewka broni).
 const TREE_VERSION := 2
@@ -85,6 +96,7 @@ func upgrade(id: String) -> bool:
 	if price < 0 or points_left() < price or not can_learn(id):
 		return false
 	levels[id] = level_of(id) + 1
+	_refresh_auras()
 	changed.emit()
 	return true
 
@@ -116,6 +128,7 @@ func downgrade(id: String, stats: CharacterStats) -> bool:
 	levels[id] = level_of(id) - 1
 	if levels[id] <= 0:
 		levels.erase(id)
+	_refresh_auras()
 	changed.emit()
 	return true
 
@@ -296,6 +309,7 @@ func refund(id: String, stats: CharacterStats = null) -> bool:
 	if stats != null:
 		stats.add_gold(-refund_gold())
 	nodes.erase(id)
+	_refresh_auras()
 	changed.emit()
 	return true
 
@@ -308,6 +322,7 @@ func reset_tree() -> Array:
 	levels.clear()
 	var gems: Array = tree_gems.values()
 	tree_gems.clear()
+	_refresh_auras()
 	changed.emit()
 	return gems
 
@@ -439,6 +454,119 @@ func tree_bonus(stat: String) -> float:
 	return total
 
 
+# ---------------------------------------------------------------- aury (Auras)
+## Premia `stat` z włączonych aur (CharacterStats._bonus).
+func aura_bonus(stat: String) -> float:
+	return float(_aura_stats.get(stat, 0.0))
+
+
+## Ułamek pełnej many (albo zdrowia - Krwawa Ofiara) rezerwowany przez aurę, z węzłami Skupiona wola i Oszczędne aury.
+func aura_reserve(id: String) -> float:
+	return float(AuraData.RESERVE.get(id, 0.0)) * maxf(1.0 + tree_bonus("aura_reservation"), 0.0)
+
+
+## Łączna rezerwacja włączonych aur (ułamek), `extra` - z dodatkową aurą (sprawdzanie przed włączeniem).
+func reserved_total(extra := "") -> float:
+	var total := 0.0
+	for id: String in auras:
+		total += aura_reserve(id)
+	if extra != "" and not auras.has(extra):
+		total += aura_reserve(extra)
+	return total
+
+
+## Ułamek pełnej many zarezerwowany przez aury (0 z Krwawą Ofiarą - wtedy rezerwują zdrowie).
+func reserved_mana() -> float:
+	return 0.0 if has_keystone("blood_offering") else minf(reserved_total(), 1.0)
+
+
+## Ułamek pełnego zdrowia zarezerwowany przez aury (tylko z Krwawą Ofiarą).
+func reserved_health() -> float:
+	return minf(reserved_total(), AuraData.MAX_HEALTH_RESERVE) if has_keystone("blood_offering") else 0.0
+
+
+## Dlaczego aury nie da się teraz włączyć ("" - da się): za mało wolnej many / zdrowia na rezerwację.
+func aura_block_reason(id: String, stats: CharacterStats, mana: float, health: int) -> String:
+	var cost := aura_reserve(id)
+	if cost <= 0.0:
+		return ""
+	if has_keystone("blood_offering"):
+		if reserved_total(id) > AuraData.MAX_HEALTH_RESERVE:
+			return Lang.t("Aury nie mogą zarezerwować więcej niż %d%% zdrowia") % roundi(AuraData.MAX_HEALTH_RESERVE * 100)
+		if health <= roundi(stats.full_max_health() * cost):
+			return Lang.t("Za mało zdrowia na tę aurę")
+		return ""
+	if reserved_total(id) > 1.0 + 0.0001:
+		return Lang.t("Za mało wolnej many - wyłącz inną aurę")
+	if mana < stats.full_max_mana() * cost:
+		return Lang.t("Za mało many na tę aurę")
+	return ""
+
+
+## Włącza albo wyłącza aurę (bez sprawdzania - Auras.toggle sprawdza aura_block_reason).
+func set_aura(id: String, on: bool) -> void:
+	if on and not auras.has(id) and AuraData.is_aura(id):
+		auras.append(id)
+	elif not on:
+		auras.erase(id)
+	_refresh_auras()
+	changed.emit()
+
+
+## Aury bez wybranego węzła wyłączają się; premie liczą się od nowa (poziomy aur).
+func _refresh_auras() -> void:
+	for id: String in auras.duplicate():
+		if level_of(id) <= 0:
+			auras.erase(id)
+	_aura_stats = {}
+	for id: String in auras:
+		var bonus := AuraData.stats_of(id, level_of(id))
+		for stat: String in bonus:
+			_aura_stats[stat] = float(_aura_stats.get(stat, 0.0)) + float(bonus[stat])
+
+
+## Zapis, w którym wybrane węzły łączyły się ze startem przez dawne puste miejsca (FORMER_SOON): te węzły dostaje
+## się za darmo (+1 punkt umiejętności za każdy), żeby reszta drzewka została osiągalna. Zwraca dodane węzły.
+func repair_paths() -> Array[String]:
+	var added: Array[String] = []
+	while true:
+		var reached := reachable()
+		var lost := ""
+		for id: String in nodes:
+			if not reached.has(id):
+				lost = id
+				break
+		if lost == "":
+			break
+		# szukanie wstecz od odciętego węzła przez dawne i obecne puste miejsca do osiągalnej części drzewka
+		var previous := {lost: ""}
+		var queue: Array[String] = [lost]
+		var hit := ""
+		while not queue.is_empty() and hit == "":
+			var at: String = queue.pop_front()
+			for next: String in SkillTree.neighbors(at):
+				if previous.has(next):
+					continue
+				if reached.has(next):
+					previous[next] = at
+					hit = next
+					break
+				if (next in FORMER_SOON and not nodes.has(next)) or SkillTree.is_soon(next):
+					previous[next] = at
+					queue.append(next)
+		if hit == "":
+			nodes.erase(lost)  # nie da się połączyć - węzeł przepada, punkt wraca
+			continue
+		var at: String = previous[hit]
+		while at != lost and at != "":
+			if at in FORMER_SOON and not nodes.has(at):
+				nodes[at] = true
+				bonus_points += 1
+				added.append(at)
+			at = previous[at]
+	return added
+
+
 # ---------------------------------------------------------------- gniazda umiejętności (kamienie wsparcia)
 func sockets_of(skill: String) -> int:
 	return int(supports.get(skill, {}).get("sockets", 0))
@@ -562,7 +690,7 @@ func has_keystone(id: String) -> bool:
 
 func get_save_data() -> Dictionary:
 	return {"tree": TREE_VERSION, "levels": levels.duplicate(), "nodes": nodes.keys(), "gems": tree_gems.duplicate(true),
-			"bonus_points": bonus_points, "supports": supports.duplicate(true), "skill_xp": skill_xp}
+			"bonus_points": bonus_points, "supports": supports.duplicate(true), "skill_xp": skill_xp, "auras": auras.duplicate()}
 
 
 ## Zapis sprzed wspólnego drzewka (bez "tree") miał osobne drzewka broni: węzły i poziomy umiejętności przepadają,
@@ -626,6 +754,12 @@ func load_save_data(data: Dictionary) -> void:
 		for id in data.get("nodes", []):
 			if SkillTree.has_node(str(id)) and str(id) != "start" and not SkillTree.is_soon(str(id)):
 				nodes[str(id)] = true
+		repair_paths()
+	auras.clear()
+	for id in data.get("auras", []):
+		if AuraData.is_aura(str(id)) and not auras.has(str(id)):
+			auras.append(str(id))
+	_refresh_auras()
 	changed.emit()
 
 
