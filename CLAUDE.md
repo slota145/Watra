@@ -187,7 +187,9 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
   (`main_quests.gd`), wydarzenia w świecie (`world_events.gd`, `event_site.gd`).
 - **Interfejs:** okna przesuwane za tło i skalowane Ctrl + kółkiem (`ui/window_drag.gd`, ustawienie w `Game.window_layouts`),
   skalowanie interfejsu w ustawieniach (`Game.ui_scale` - obraz rośnie, kamera gracza oddala się o tyle samo).
-- **Testy u znajomych:** ekran dla testerów (`ui/tester_window.gd`) i zgłoszenia na GitHub (`ui/feedback_window.gd`).
+- **Testy u znajomych:** ekran dla testerów (`ui/tester_window.gd`), zgłoszenia na GitHub (`ui/feedback_window.gd`), numer wersji
+  (`application/config/version` w `project.godot`, róg menu), ustawienia eksportu „Windows - testy” (`export_presets.cfg`),
+  okno „Twórcy” (`ui/credits_window.gd` - autorzy, źródła dźwięków CC0, licencja Godota; nowe źródło grafik lub dźwięków dopisz tam).
 - **Tłumaczenia:** `lang.gd`, `translations/teksty.csv` (pl/en), słowniczek `translations/slowniczek.md`.
 
 ## Oszczędzanie tokenów

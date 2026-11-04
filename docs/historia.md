@@ -1643,6 +1643,12 @@ odpowiedniej sekcji.
   (`strip_edges`), a znacznik `Items.ICON_MARK` był znakiem sterującym `\u001e`; teraz znak z prywatnego zakresu
   Unicode (`\ue000`), sprawdza to `test_loot`.
 
+- [x] **Przed wysłaniem testerom** (4.11.2026): numer wersji 0.1.0 (`project.godot`, róg menu głównego, zgłoszenia),
+  ustawienia eksportu „Windows - testy” (`export_presets.cfg` - jeden `.exe`, bez `tests/`, wynik w `build/`), okno
+  **Twórcy** (`scripts/ui/credits_window.gd`, przycisk w menu): Krzysztof Słota, Claude (Anthropic), PixelLab, muzyka
+  i odgłosy z kodu, dźwięki CC0 (Kenney, qubodup, Ben Jaszczak i Brian Nelson, lentikula), Godot (MIT) z pełnymi
+  licencjami silnika (`Engine.get_license_text`, `get_copyright_info`, `get_license_info`), inspiracje, testerzy.
+
 ## Zielarstwo (Pomysły i rzeczy do zrobienia)
 - [x] **Zioła i mikstury zielarki** (`scripts/herbs.gd`, roślina `scripts/herb.gd`, grafiki z PixelLab przez `tools/herb_art.py`):
   w każdej krainie rośnie jej zioło (dziurawiec, rumianek, tatarak, arnika, kwiat paproci - rzadki, bieluń), zrywane klawiszem F
