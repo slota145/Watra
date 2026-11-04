@@ -26,9 +26,8 @@ PixelLab i obejście blokady pobierania są w `CLAUDE.md` („PixelLab w chmurze
   „cozy fantasy RPG style”.
 - Słowiańskie detale: drewno, strzechy, palisady, rzeźbione słupy i kamienie z runami (np. krąg wokół Watry).
 - Ogień i złoto to akcenty Ostoi i Watry (interfejs ma złote tytuły i obwódki - `UiStyle`).
-- *Propozycje do potwierdzenia przez autora:* unikać wyglądu typowo zachodniego średniowiecza (ceglane zamki,
-  płytowe zbroje rycerskie); Nawię i Hordę trzymać w chłodniejszych, mroczniejszych barwach jako przeciwwagę dla
-  ciepła Ostoi.
+- Bez wyglądu typowo zachodniego średniowiecza (ceglane zamki, płytowe zbroje rycerskie) - ustalone z autorem 4.11.2026.
+- Nawia i Horda w chłodniejszych, mroczniejszych barwach jako przeciwwaga dla ciepła Ostoi - ustalone z autorem 4.11.2026.
 - Do ustalenia z autorem: stała paleta kolorów i jednolity kontur (dziś każda paczka PixelLab ma ustawienia
   „domyślne”, a spójność trzyma podobny opis i przebarwienia w narzędziach).
 
