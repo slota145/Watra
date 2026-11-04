@@ -983,6 +983,8 @@ odpowiedniej sekcji.
     4. węzeł na zmianę +5% odporności na żywioły i +3% zdrowia. Łuk omija węzły skupisk (odsunięcie) i przechodzi przez
     drobne węzły ścieżek (skrzyżowanie) - `RING_CLEAR`. Wejścia tylko przez stacje (bez węzłów kluczowych).
   - Okno K: tło stron sięga dalej (`SkillTreeView.REGION_REACH` 34), można bardziej oddalić (najmniejsze przybliżenie 0,2).
+  - **Wydajność**: `SkillBook.tree_bonus` zapamiętuje premie (`_bonus_cache`, czyszczone sygnałem `changed`) - przy
+    kilkuset wybranych węzłach liczenie od nowa przy każdym zapytaniu statystyk wyraźnie spowalniało klatki.
   Testy: `test_elements` (sufit odporności, węzły i autostrady), liczby w `test_skill_tree` i `test_tree_sockets`.
   Do ustalenia po ograniu: liczby premii, czy autostrady nie są za tanim skrótem, podpisy stron nachodzące na węzły.
 

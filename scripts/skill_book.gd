@@ -49,6 +49,8 @@ var auras: Array[String] = []
 var summons: Array[String] = []
 ## Premie włączonych aur (statystyka -> wartość), liczone od nowa przy każdej zmianie (_refresh_auras).
 var _aura_stats := {}
+## Zapamiętane premie z drzewka (tree_bonus), czyszczone przy każdej zmianie (changed).
+var _bonus_cache := {}
 ## Węzły osiągalne od startu (reachable) i stan wybranych węzłów, z którego je policzono.
 var _reach := {}
 var _reach_key := -1
@@ -68,6 +70,14 @@ const FORMER_SOON: Array[String] = ["dread", "vigor", "strzybog_wind", "frost_br
 		"thrown_knives", "open_wounds", "momentum", "thunder_arrow", "lightness", "enchanted_blade", "iron_will",
 		# krok 5 - przywołania
 		"wolf_pack", "pack_leader", "wisps", "loyal_wisps", "loyal_seeker"]
+
+func _init() -> void:
+	changed.connect(_forget_bonuses)
+
+
+func _forget_bonuses() -> void:
+	_bonus_cache.clear()
+
 
 ## Wersja drzewka w zapisie (2 - wspólne drzewko; bez niej - osobne drzewka broni).
 const TREE_VERSION := 2
@@ -444,7 +454,17 @@ func radius_factor(id: String) -> float:
 
 
 ## Suma premii danego rodzaju z wybranych węzłów drzewka (statystyki postaci i premie umiejętności) - z każdą bronią.
+## Wynik zapamiętany do najbliższej zmiany drzewka (sygnał changed) - statystyki pytają o premie wiele razy na klatkę,
+## a przy kilkuset wybranych węzłach liczenie od nowa spowalniało grę.
 func tree_bonus(stat: String) -> float:
+	if _bonus_cache.has(stat):
+		return _bonus_cache[stat]
+	var total := _count_tree_bonus(stat)
+	_bonus_cache[stat] = total
+	return total
+
+
+func _count_tree_bonus(stat: String) -> float:
 	var total := 0.0
 	var radius := _radius_gems()
 	for id: String in nodes:
@@ -565,6 +585,7 @@ func _refresh_auras() -> void:
 ## Zapis, w którym wybrane węzły łączyły się ze startem przez dawne puste miejsca (FORMER_SOON): te węzły dostaje
 ## się za darmo (+1 punkt umiejętności za każdy), żeby reszta drzewka została osiągalna. Zwraca dodane węzły.
 func repair_paths() -> Array[String]:
+	_forget_bonuses()
 	var added: Array[String] = []
 	while true:
 		var reached := reachable()
@@ -601,6 +622,7 @@ func repair_paths() -> Array[String]:
 				bonus_points += 1
 				added.append(at)
 			at = previous[at]
+	_forget_bonuses()
 	return added
 
 
