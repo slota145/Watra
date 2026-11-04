@@ -253,6 +253,18 @@ odpowiedniej sekcji.
   autora - otrzymuje 738/s przy leczeniu 68/s (pada co ~2 s); rzadki z 90. poziomu bez odporności 392/227; ten sam
   z odpornościami na sufit 95/95 (bez utraty zdrowia). Etap 2 (odporności i wrażliwości potworów, przebicie
   odporności) i 3 (żywioły w modyfikatorach lochów, bożkach, elitach) - do zrobienia.
+- [x] **Żywioły, etap 2**: odporności i wrażliwości potworów na obrażenia gracza (`Elements.MONSTER_RESIST` wg sceny ->
+  `Goblin.resistances`; najwyżej +50%, bez pełnej odporności; grupy: nieumarli +30% lód / +40% Nawia / -25% ogień,
+  zgnili +40% Nawia / -30% ogień, drzewa -40% ogień / +20% lód, pająki +30% Nawia / -25% ogień, wodni +30% lód / -30%
+  pioruny, ptakoludzie +30% pioruny / -20% lód, koboldy +20% ogień / -20% lód, ogniki i bies +50% ogień / -30% lód,
+  bogowie i bossowie świata wg swojego żywiołu). Żywioł trafienia gracza wg odgłosu (`Elements.SOUND_ELEMENTS`:
+  fire / ice / lightning; Dymne Wybuchy - ogień), mnożnik `Elements.hit_multiplier` w `Player.hit_enemy`. Nowe premie:
+  obrażenia od ognia / lodu / piorunów (3-40%, broń, rękawice, pierścienie - dla umiejętności z tagiem żywiołu,
+  `CharacterStats.kind_multiplier` przez `Elements.TAG_DAMAGE`), od żywiołów (2-25%, naszyjnik, talizmany), przebicie
+  odporności (1-15%, broń, pierścienie, naszyjnik - `CharacterStats.penetration`). Encyklopedia (L) pokazuje żywioł
+  ataku potwora i jego odporności (zielone - wrażliwość). Test `tests/test_elements.gd`. Pomiar (stopień 17, rzadki
+  ekwipunek 90. poziomu z odpornościami na sufit, zabójstwa/s): księga (pioruny i lód) - Zatopione podziemia 3,7,
+  Katakumby 2,6, Pajęcze korzenie 4,7; łuk 3,1-3,2; miecz 5,7-6,9 (obrażenia fizyczne - bez zmian).
 
 ## Gobliński Las i Prastary Las (`scripts/world.gd`, `scripts/ancient_forest.gd`) (Do poprawy)
 - [x] Gobliński Las: więcej grupek goblinów w lesie i większe siedlisko wilków - około 450 potworów (było około 340);

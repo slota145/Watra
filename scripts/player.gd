@@ -2254,6 +2254,10 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 	if enemy.state == Goblin.State.DEAD:
 		return
 	amount = roundi(amount * legendary.damage_multiplier() * stats.damage_multiplier() * boons.damage_multiplier(enemy))
+	# żywioł trafienia (wg odgłosu): odporność albo wrażliwość potwora, zmniejszona przebiciem odporności
+	var element: String = Elements.SOUND_ELEMENTS.get(sound, Elements.PHYSICAL)
+	if element != Elements.PHYSICAL:
+		amount = maxi(1, roundi(amount * Elements.hit_multiplier(float(enemy.resistances.get(element, 0.0)), stats.penetration())))
 	amount += legendary.execute_bonus(enemy)
 	var bow := stats.weapon_type() == "bow"
 	if bow:

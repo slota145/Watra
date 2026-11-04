@@ -277,6 +277,16 @@ func monster_text(id: String) -> String:
 	else:
 		lines.append("[color=#ffd773]%s[/color] %s" % [tr("Kraina:"), tr("zwierzyna w wielu krainach")])
 	lines.append("[color=#ffd773]%s[/color] %d" % [tr("Pokonano:"), _player.codex.kills_of(id)])
+	# żywioł ataku i odporności / wrażliwości (Elements)
+	lines.append("[color=#ffd773]%s[/color] %s" % [tr("Atak:"), Elements.name_of(Elements.of_monster(id))])
+	var resist := Elements.monster_resistances(id)
+	if not resist.is_empty():
+		var parts: Array[String] = []
+		for element: String in Elements.RESISTED:
+			if resist.has(element):
+				var value: float = resist[element]
+				parts.append("[color=#%s]%s %+d%%[/color]" % [("9fdc7a" if value < 0.0 else "e0a070"), Elements.name_of(element), roundi(value * 100.0)])
+		lines.append("[color=#ffd773]%s[/color] %s" % [tr("Odporności:"), ", ".join(parts)])
 	var kind: String = info.get("kind", "")
 	if Boons.BESTIARY.has(kind):
 		var entry: Dictionary = Boons.BESTIARY[kind]

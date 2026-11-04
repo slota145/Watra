@@ -153,7 +153,20 @@ func kind_multiplier(tags: Array) -> float:
 		total += _bonus("physical_damage")
 	if "spell" in tags:
 		total += _bonus("spell_damage")
+	# żywioły (Elements.TAG_DAMAGE): premia do swojego żywiołu i "obrażenia od żywiołów" (raz, choćby tagów było kilka)
+	var elemental := false
+	for tag: String in Elements.TAG_DAMAGE:
+		if tag in tags:
+			total += _bonus(Elements.TAG_DAMAGE[tag])
+			elemental = true
+	if elemental:
+		total += _bonus("elemental_damage")
 	return total
+
+
+## Przebicie odporności potworów (ułamek odejmowany od ich odporności na żywioły).
+func penetration() -> float:
+	return _bonus("resistance_penetration")
 
 
 func move_speed() -> float:

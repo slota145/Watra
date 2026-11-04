@@ -438,7 +438,7 @@ func _burst(at: Vector2, dir: Vector2, radius: float, multiplier: float) -> void
 	Sfx.play_at("explosion", at, -12.0)
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
 		if enemy.hurt_center().distance_to(at + Vector2(0, -6)) <= radius + enemy.hurt_radius:
-			_player.hit_enemy(enemy, _player._skill_damage(multiplier, _smoke_tags), at, 110.0)
+			_player.hit_enemy(enemy, _player._skill_damage(multiplier, _smoke_tags), at, 110.0, "fire")
 
 
 # ---------------------------------------------------------------- Rozpłatanie i krwawienie
