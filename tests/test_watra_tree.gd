@@ -187,15 +187,17 @@ func _check_effects() -> void:
 
 func _check_boons() -> void:
 	var boons = load("res://scripts/boons.gd").new()
+	var per: int = load("res://scripts/nawia_map.gd").POINTS_PER_NODE
+	var points := 5 * per
 	for i in 5:
 		boons.nawia_cleared.append(i)
-	check("5 punktów w każdej zakładce", boons.tree_free(0) == 5 and boons.tree_free(2) == 5)
+	check("punkty z 5 węzłów w każdej zakładce", boons.tree_free(0) == points and boons.tree_free(2) == points)
 	var near := _route("crystal_a_n")
 	check("wybór obok Watry", boons.tree_allocate(near[0]) and boons.tree_allocate(near[1]))
 	check("bez wyboru za daleko", not boons.tree_allocate(near[3]))
 	boons.set_tree_tab(1)
-	check("druga zakładka ma pełną pulę", boons.tree_free() == 5 and boons.tree_nodes().is_empty())
-	for id in _route("idols_a_n").slice(0, 5):
+	check("druga zakładka ma pełną pulę", boons.tree_free() == points and boons.tree_nodes().is_empty())
+	for id in _route("idols_d_n").slice(0, points):
 		boons.tree_allocate(id)
 	check("brak punktów blokuje wybór", boons.tree_free() == 0 and not boons.tree_allocate("inner_0"))
 	boons.watra_tab_names[1] = "Bożki"
@@ -203,7 +205,7 @@ func _check_boons() -> void:
 	var copy = load("res://scripts/boons.gd").new()
 	copy.load_save_data(JSON.parse_string(JSON.stringify(data)))
 	check("zapis zakładek", copy.watra_tab == 1 and copy.tree_nodes(0) == near.slice(0, 2)
-			and copy.tree_nodes(1).size() == 5 and copy.tree_tab_name(1) == "Bożki" and copy.tree_tab_name(2) == "Zakładka 3"
+			and copy.tree_nodes(1).size() == points and copy.tree_tab_name(1) == "Bożki" and copy.tree_tab_name(2) == "Zakładka 3"
 			and not copy.tree_refunded)
 	check("premie z zapisu (działająca zakładka)", _T.effects_from_save(data) == _T.effects(copy.tree_nodes(1))
 			and not _T.effects_from_save(data).is_empty())
@@ -214,7 +216,7 @@ func _check_boons() -> void:
 	var old := {"nawia": [1, 2, 3], "watra_tabs": [["chests_root", "chests_a1"], [], ["idols_root"]], "watra_tab": 2}
 	copy.load_save_data(old)
 	check("zwrot punktów ze starego drzewka", copy.tree_refunded and copy.tree_nodes(0).is_empty() and copy.tree_nodes(2).is_empty()
-			and copy.tree_free(0) == 3 and copy.watra_tab == 2)
+			and copy.tree_free(0) == 3 * per and copy.watra_tab == 2)
 	check("stary zapis bez premii drzewka", _T.effects_from_save(old).is_empty())
 	copy.load_save_data({})
 	check("nowa gra bez komunikatu o zwrocie", not copy.tree_refunded)
@@ -238,12 +240,13 @@ func _process(_d: float) -> bool:
 		var window = hud.watra_tree_window
 		check("okno drzewka w HUD", window != null)
 		window.open()
-		check("okno otwarte, 10 wolnych punktów", window.visible and boons.tree_free() == 10)
+		var total: int = 10 * load("res://scripts/nawia_map.gd").POINTS_PER_NODE
+		check("okno otwarte, punkty z 10 węzłów", window.visible and boons.tree_free() == total)
 		var route := _route("idols_a_n")
 		for id in route:
 			window.select(id)
 			window._on_allocate()
-		check("wybrano drogę do Nowego Ołtarza", boons.tree_nodes().size() == route.size() and boons.tree_free() == 10 - route.size(),
+		check("wybrano drogę do Nowego Ołtarza", boons.tree_nodes().size() == route.size() and boons.tree_free() == total - route.size(),
 				str(route))
 		var visible_pickers: int = hud.dungeon_window._idol_pickers.filter(func(p: Control) -> bool: return p.visible).size()
 		hud.dungeon_window.open()
@@ -261,7 +264,7 @@ func _process(_d: float) -> bool:
 		window._on_refund()
 		check("początku drogi nie cofa", boons.tree_nodes().has(route[0]))
 		window._on_tab(2)
-		check("zmiana zakładki poza lochem", boons.watra_tab == 2 and boons.tree_free() == 10)
+		check("zmiana zakładki poza lochem", boons.watra_tab == 2 and boons.tree_free() == total)
 		window._on_tab(0)
 		var gold: int = player.stats.gold
 		window._on_reset()

@@ -33,7 +33,7 @@ const LORD := "horde"
 ## Ile serc każdego boga kosztuje wejście na arenę Władcy.
 const LORD_COST := 1
 ## Punkty Watry za pierwsze pokonanie Władcy.
-const LORD_POINTS := 5
+const LORD_POINTS := 10
 ## Pomrok - stopnie trudności aren po pokonaniu Władcy (Boons.pomrok_unlocked): na każdy stopień poziom potworów
 ## +POMROK_LEVEL, zdrowie +POMROK_HEALTH, obrażenia +POMROK_DAMAGE, skarbiec +POMROK_LOOT, szansa na legendy
 ## i pas boga +POMROK_DROP.
@@ -57,7 +57,7 @@ const BELT_COST := 10
 const FRAGMENT_BASE := 0.1
 const FRAGMENT_PER_TIER := 0.04
 ## Punkty Watry za pierwsze pokonanie każdego boga.
-const FIRST_KILL_POINTS := 3
+const FIRST_KILL_POINTS := 5
 ## Stopień lochu areny (poziom potworów bierze się z GODS "level").
 const ARENA_TIER := 17
 

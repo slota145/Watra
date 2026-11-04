@@ -1514,8 +1514,12 @@ odpowiedniej sekcji.
     Zrzut: `SCRIPT=tools/watra_tree_shot.gd tools/screenshot.sh /tmp/watra`.
   - Testy: `tests/test_watra_tree.gd` (układ, rozrzut skupisk, droga przez cudze skupiska, premie, zwrot punktów, okno),
     nowy `tests/test_watra_mechanics.gd` (każdy węzeł zmieniający mechanikę w prawdziwym lochu), `tests/test_mist.gd`.
-  - Do ustalenia po ograniu: liczby (premie małych węzłów, `MECH_*`, ceny węzłów kluczowych), czy punktów Watry nie
-    jest za mało na tak duże drzewko (dziś ok. 104 z całej mapy i bossów), czy skupiska mają mieć ikony z PixelLab.
+  - Do ustalenia po ograniu: liczby (premie małych węzłów, `MECH_*`, ceny węzłów kluczowych), czy skupiska mają mieć
+    ikony z PixelLab.
+  - **Więcej punktów Watry** (prośba autora po scaleniu): `NawiaMap.POINTS_PER_NODE` 1 -> 2, pierwsze pokonanie boga
+    `Pinnacles.FIRST_KILL_POINTS` 3 -> 5, Władcy `LORD_POINTS` 5 -> 10. Razem ok. 205 punktów (było ok. 104) na ~500
+    węzłów, czyli ok. 40% drzewka w jednej zakładce. Stare zapisy dostają nowe punkty od razu (liczone z oczyszczonych
+    węzłów). Komunikat po oczyszczeniu węzła pokazuje liczbę punktów.
 - [x] **Mapa Nawii, etap 3 - drzewko Watry** (listopad 2026). Ustalenia z autorem: siatka jak drzewko atlasu w PoE,
   więcej węzłów niż punktów z całej mapy (trzeba wybierać), wzmacnia mechaniki lochów, bożki, łup i Błogosławieństwo
   Watry; **3 zakładki** z osobnymi, pełnymi pulami punktów (3 wyspecjalizowane ustawienia), działa wybrana, zmiana za

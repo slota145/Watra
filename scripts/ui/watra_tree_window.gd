@@ -43,7 +43,7 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 4)
 	row.add_child(box)
 	box.add_child(UiStyle.title(Lang.t("Drzewko Watry")))
-	box.add_child(_wrapped(Lang.t("Punkt Watry za każdy oczyszczony węzeł Nawii. Każda zakładka ma własną, pełną pulę - działa wybrana."), UiStyle.DIM_COLOR))
+	box.add_child(_wrapped(Lang.t("Punkty Watry za oczyszczone węzły Nawii i bogów. Każda zakładka ma własną, pełną pulę - działa wybrana."), UiStyle.DIM_COLOR))
 	var tabs := HBoxContainer.new()
 	tabs.alignment = BoxContainer.ALIGNMENT_CENTER
 	tabs.add_theme_constant_override("separation", 2)

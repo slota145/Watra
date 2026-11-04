@@ -1659,9 +1659,9 @@ func _on_boss_died(_boss_node: Goblin = null) -> void:
 	Sfx.play("quest_ready")
 	_add_portal(Vector2(boss_room.get_center()) * CELL + Vector2(0, CELL * 1.2), Lang.t("Płomienie Watry - powrót do Ostoi"))
 	_drop_fragment(at)
-	# węzeł Mapy Nawii oczyszczony - odsłania sąsiednie i daje punkt Watry
+	# węzeł Mapy Nawii oczyszczony - odsłania sąsiednie i daje punkty Watry (NawiaMap.POINTS_PER_NODE)
 	if config.has("nawia_node") and w.player.boons.clear_nawia_node(int(config["nawia_node"])):
-		w.hud.show_banner(Lang.t("Węzeł Nawii oczyszczony! Zdobywasz punkt Watry\nPłomienie Watry zabiorą cię do Ostoi"),
+		w.hud.show_banner(Lang.t("Węzeł Nawii oczyszczony! Punkty Watry: +%d\nPłomienie Watry zabiorą cię do Ostoi") % NawiaMap.POINTS_PER_NODE,
 				Color(0.75, 0.65, 1.0))
 		return
 	w.hud.show_banner(Lang.t("Strażnik pokonany! Skarbiec otwarty\nPłomienie Watry zabiorą cię do Ostoi"), Color(1.0, 0.8, 0.4))
