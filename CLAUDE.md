@@ -263,7 +263,9 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
      za 1/2/4/8, 5. Wielkim Krzesiwem), bez zwykłego ataku, bez rynku; okno K, tryb deweloperski F6.
      Etap 2: **Mgła Nawii** (`scripts/nawia_mist.gd`, stałe `MIST_*` w `Dungeons`) - mechanika lochów, jedyne źródło
      kamieni i krzesiw (Wielkie Krzesiwo od gęstości 8 i ze skarbców bogów); zwykła gałąź mechaniki w drzewku Watry
-     już jest. Do ustalenia po ograniu: liczby Mgły, własne węzły Mgły w drzewku Watry (etap 3), bożek Mgły.
+     już jest. Etap 3 zrobiony (szukaj „Kamienie wsparcia, etap 3”): własne węzły Mgły w drzewku Watry
+     (`WatraTree.EXTENSIONS`, `Dungeons.mist_rules`) i Bożek Mgły. Liczby Mgły autor po ograniu zostawił bez zmian.
+     Czeka na ocenę autora.
 - [ ] Nowe bronie: kosa, kostur (nekromanta), młoty, chainblade'y, sztylety, włócznie, rapier, hydrosfera.
   Każda broń to nowy rodzaj z własnym drzewkiem, a nie tylko nowy przedmiot, więc wymaga szczegółów od autora.
   Ustalenia z rozmowy z autorem (pomysły, nie decyzje):
@@ -375,7 +377,7 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   Etap 7 zrobiony, czeka na ocenę autora: Mgła Nawii (`nawia_mist.gd`) - Mglisty Słup, gęstość co minutę do 10,
   Skrzynia Mgły; Kryształ Watry dostał wagę 7,8 (był 7), żeby po dojściu Mgły trafiał się tak samo często.
 - [ ] **Bożki** (jak skaraby w PoE): zrobione, czekają na ocenę autora (szczegóły w `docs/historia.md`, szukaj „Bożki”):
-  `scripts/idols.gd`, 27 rodzajów (3 rzadkości, 2 prastare), sloty w oknie lochów (2, więcej z poziomem Watry), zużywają
+  `scripts/idols.gd`, 33 rodzaje (3 rzadkości, 2 prastare), sloty w oknie lochów (2, więcej z poziomem Watry), zużywają
   się przy wejściu, bożki potworów i łupu mogą być w kilku slotach. Węzły bożków w drzewku Watry zrobione (gałąź „Bożki”).
   Do ustalenia po ograniu: szansa wypadania, siła rodzajów,
   czy ikony mają być z PixelLab (paczka 16 obiektów - 10 generacji).
@@ -411,7 +413,7 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     oczyszczonego węzła, łup i doświadczenie +2% za węzeł (`NawiaMap.blessing_*`, `Boons.nawia_blessed`,
     `ui/blessing_window.gd`, `Levels.zone_range`); miejsce na obóz odłożone do punktu o obozach;
   - etap 3 zrobiony, czeka na ocenę autora (szukaj „Mapa Nawii, etap 3”): **drzewko Watry** (`scripts/watra_tree.gd`,
-    okno `ui/watra_tree_window.gd`) - 144 węzły w 13 gałęziach (mechaniki z Mgłą Nawii, bożki, łup, skarbiec, Błogosławieństwo),
+    okno `ui/watra_tree_window.gd`) - 152 węzły w 13 gałęziach (mechaniki z Mgłą Nawii, bożki, łup, skarbiec, Błogosławieństwo),
     3 zakładki z osobnymi pulami punktów, cofanie za złoto; premie idą do lochu w `config["tree"]`;
   - etap 4 zrobiony, czeka na ocenę autora (szukaj „Mapa Nawii, etap 4”): **bossowie szczytowi** Weles, Marzanna,
     Czarnobóg (`scripts/pinnacles.gd`, `scripts/pinnacle_boss.gd`) - areny za 4 fragmenty kluczy z węzłów, serca

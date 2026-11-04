@@ -333,6 +333,18 @@ odpowiedniej sekcji.
   środka; węzły Wieczna Mgła i Gęsta Mgła), opis legendarnego bożka (sam bożek Mgły - do zrobienia z ikonami).
   Kryształ Watry waga 7 -> 7,8, żeby nadal był w co piątym lochu. Test: `tests/test_mist.gd`.
   Do ustalenia po ograniu: tempo gęstnienia, siła na stopień, liczby puli i poziomy kamieni, bożek Mgły.
+- [x] **Kamienie wsparcia, etap 3: węzły Mgły i Bożek Mgły** (ustalenia z autorem: tempo, siła na stopień i pula
+  Mgły zostają bez zmian; węzły wszystkich czterech rodzajów; ikona bożka rysowana w kodzie). Drzewko Watry:
+  przedłużenia gałęzi za węzłem końcowym ścieżki (`WatraTree.EXTENSIONS`, odstęp `EXT_STEP`, id `<gałąź>_<a|b>_x<n>`) -
+  dziś tylko Mgła, 8 węzłów (152 węzły w drzewku). Za Wieczną Mgłą: Leniwa Mgła (+5 s na stopień), Pamięć Mgły (+5%
+  puli zostaje po śmierci), Leniwa Mgła, Zimna Pamięć (znaczący: +20% puli po śmierci, +5 s) - razem 75 s na stopień
+  i 75% puli po śmierci. Za Gęstą Mgłą: 2x Kamienie z Mgły (+15% kamieni wsparcia i krzesiw), Żyła Krzesiw
+  (znaczący: Wielkie Krzesiwa od gęstości 6 zamiast 8, +2 do poziomu kamieni i sufitu poziomu, +10% kamieni), Bezdenna
+  Mgła (kluczowy: gęstość do 15). Premie `mist_*` czyta `Dungeons.mist_rules(config["tree"])` (sufity
+  `MIST_KEEP_CAP` 0,9 i `MIST_GREAT_MIN` 3), `NawiaMist.rules` ustawiane przy dotknięciu Słupa; ekran mgły przy
+  gęstości ponad 10 już nie gęstnieje. Okno drzewka: tło pod przedłużeniem, nazwa gałęzi za najdalszym węzłem
+  (`WatraTree.branch_reach`), widok szerszy (360 px) i przesunięty w prawo. Bożek Mgły (`Idols.KINDS["mist"]`, waga
+  0,8, siny kamień w `tools/idol_art.py`). Testy: `tests/test_mist.gd`, `tests/test_watra_tree.gd`.
 
 ## Gobliński Las i Prastary Las (`scripts/world.gd`, `scripts/ancient_forest.gd`) (Do poprawy)
 - [x] Gobliński Las: więcej grupek goblinów w lesie i większe siedlisko wilków - około 450 potworów (było około 340);

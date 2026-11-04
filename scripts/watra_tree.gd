@@ -99,6 +99,27 @@ const BRANCHES := {
 		"b_end": {"name": "Hojna Watra", "effects": {"bless_gold": 0.15, "bless_flat": 0.04}},
 	},
 }
+## Przedłużenia gałęzi za węzłem końcowym ścieżki ("a" - za kluczowym, "b" - za znaczącym): węzły kolejno dalej
+## od Watry. Mgła Nawii: za Wieczną Mgłą wolniejsze gęstnienie i mniejsza strata po śmierci, za Gęstą Mgłą więcej
+## kamieni wsparcia i krzesiw, a na końcu węzeł kluczowy z wyższym sufitem gęstości (klucze mist_* czyta Dungeons.mist_rules).
+const EXTENSIONS := {
+	"mist": {
+		"a": [
+			{"name": "Leniwa Mgła", "effects": {"mist_step": 5.0}},
+			{"name": "Pamięć Mgły", "effects": {"mist_keep": 0.05}},
+			{"name": "Leniwa Mgła", "effects": {"mist_step": 5.0}},
+			{"name": "Zimna Pamięć", "effects": {"mist_keep": 0.2, "mist_step": 5.0}, "kind": "notable"},
+		],
+		"b": [
+			{"name": "Kamienie z Mgły", "effects": {"mist_supports": 0.15}},
+			{"name": "Kamienie z Mgły", "effects": {"mist_supports": 0.15}},
+			{"name": "Żyła Krzesiw", "effects": {"mist_great": 2.0, "mist_level": 2.0, "mist_supports": 0.1}, "kind": "notable"},
+			{"name": "Bezdenna Mgła", "effects": {"mist_max": 5.0}, "kind": "keystone"},
+		],
+	},
+}
+## Odstęp kolejnych węzłów przedłużenia wzdłuż promienia.
+const EXT_STEP := 1.0
 ## Położenie węzłów gałęzi: [wzdłuż promienia, w bok] w jednostkach drzewka (WatraTreeWindow rysuje je w pikselach).
 const ROOT_POS := Vector2(2.65, 0.0)
 const PATH_POS: Array[Vector2] = [Vector2(3.85, 0.5), Vector2(5.05, 0.7), Vector2(6.25, 0.75), Vector2(7.45, 0.7)]
@@ -118,9 +139,15 @@ const EFFECT_TEXTS := {
 	"bless_flat": "Błogosławieństwo Watry: +%d%% łupu i doświadczenia",
 	"bless_node": "Błogosławieństwo Watry: +%s%% łupu i doświadczenia za każdy oczyszczony węzeł obszaru",
 	"bless_gold": "Błogosławieństwo Watry: +%d%% złota",
+	"mist_step": "Mgła Nawii: każdy stopień gęstnieje o %d s dłużej",
+	"mist_keep": "Mgła Nawii: po śmierci zostaje +%d%% puli",
+	"mist_supports": "Mgła Nawii: +%d%% kamieni wsparcia i krzesiw",
+	"mist_great": "Mgła Nawii: Wielkie Krzesiwa od gęstości niższej o %d",
+	"mist_level": "Mgła Nawii: +%d do poziomu kamieni wsparcia",
+	"mist_max": "Mgła Nawii: gęstość rośnie o %d stopni dalej",
 }
 const PERCENT_KEYS: Array[String] = ["extra2", "extra3", "idol_drop", "idol_rarity", "idol_ancient", "loot", "gold", "xp",
-		"gems", "legend", "treasure", "quality", "bless_flat", "bless_gold"]
+		"gems", "legend", "treasure", "quality", "bless_flat", "bless_gold", "mist_keep", "mist_supports"]
 
 static var _nodes := {}
 
@@ -157,6 +184,14 @@ static func _build() -> Dictionary:
 			var end: Dictionary = plan[side + "_end"]
 			_add(result, end_id, branch, end, _place(Vector2(END_POS.x, END_POS.y * sign), angle), previous,
 					end.get("kind", "notable"))
+			var extension: Array = EXTENSIONS.get(branch, {}).get(side, [])
+			previous = end_id
+			for step in extension.size():
+				var id := "%s_%s_x%d" % [branch, side, step + 1]
+				var data: Dictionary = extension[step]
+				_add(result, id, branch, data, _place(Vector2(END_POS.x + EXT_STEP * (step + 1), END_POS.y * sign), angle),
+						previous, data.get("kind", "small"))
+				previous = id
 	return result
 
 
@@ -183,6 +218,15 @@ static func _add(result: Dictionary, id: String, branch: String, data: Dictionar
 	result[id] = {"pos": pos, "links": [link] as Array[String], "kind": kind,
 			"branch": branch, "name": data["name"], "arg": data.get("arg", ""), "effects": data["effects"]}
 	(result[link]["links"] as Array[String]).append(id)
+
+
+## Jak daleko od Watry sięga gałąź (najdalszy węzeł) - okno odsuwa za niego nazwę gałęzi.
+static func branch_reach(branch: String) -> float:
+	var reach := 0.0
+	for id: String in nodes():
+		if nodes()[id]["branch"] == branch:
+			reach = maxf(reach, (nodes()[id]["pos"] as Vector2).length())
+	return reach
 
 
 static func has_node(id: String) -> bool:

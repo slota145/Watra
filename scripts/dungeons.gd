@@ -235,6 +235,9 @@ const MIST_DEATH_KEEP := 0.5
 const MIST_LEVEL_TIER := 0.7
 const MIST_LEVEL_DENSITY := 0.6
 const MIST_LEVEL_MAX := 16
+## Najwięcej puli, jaka może zostać po śmierci (drzewko Watry), i najniższa gęstość Wielkich Krzesiw.
+const MIST_KEEP_CAP := 0.9
+const MIST_GREAT_MIN := 3
 
 ## Krąg Żertwy (scripts/zertwa.gd) - jak Ritual w PoE: pień ofiarny dotknięty (F) otwiera krąg o promieniu ZER_RADIUS;
 ## spoza kręgu nadciągają fale potworów klimatu (ZER_ALIVE naraz, co ZER_SPAWN_EVERY s, ZER_SPAWN_GAP px za brzegiem).
@@ -503,10 +506,25 @@ static func mist_wraiths(density: int, tier: int) -> int:
 	return mini(MIST_WRAITHS_MAX, roundi((MIST_WRAITHS + MIST_WRAITHS_PER * density) * uro_density(tier)))
 
 
-## Mgła Nawii: poziom kamienia wsparcia ze Skrzyni Mgły (stopień lochu 1-17, gęstość 1-10).
-static func mist_support_level(tier: int, density: int, rng: RandomNumberGenerator) -> int:
-	var base := roundi(tier * MIST_LEVEL_TIER + density * MIST_LEVEL_DENSITY)
-	return clampi(base + rng.randi_range(-1, 1), 1, MIST_LEVEL_MAX)
+## Mgła Nawii: poziom kamienia wsparcia ze Skrzyni Mgły (stopień lochu 1-17, gęstość 1-15); `bonus` z drzewka
+## Watry podnosi też sufit.
+static func mist_support_level(tier: int, density: int, rng: RandomNumberGenerator, bonus := 0) -> int:
+	var base := roundi(tier * MIST_LEVEL_TIER + density * MIST_LEVEL_DENSITY) + bonus
+	return clampi(base + rng.randi_range(-1, 1), 1, mini(MIST_LEVEL_MAX + bonus, Supports.MAX_LEVEL))
+
+
+## Mgła Nawii z premiami drzewka Watry (config["tree"], klucze mist_* z WatraTree.EXTENSIONS): "step" - sekundy na
+## stopień, "max" - najwyższa gęstość, "keep" - część puli po śmierci, "rate" - mnożnik szans na kamienie
+## i krzesiwa, "great_from" - gęstość Wielkich Krzesiw, "level" - premia do poziomu kamieni.
+static func mist_rules(tree: Dictionary) -> Dictionary:
+	return {
+		"step": MIST_STEP + float(tree.get("mist_step", 0.0)),
+		"max": MIST_MAX + roundi(float(tree.get("mist_max", 0.0))),
+		"keep": minf(MIST_DEATH_KEEP + float(tree.get("mist_keep", 0.0)), MIST_KEEP_CAP),
+		"rate": 1.0 + float(tree.get("mist_supports", 0.0)),
+		"great_from": maxi(MIST_GREAT_FROM - roundi(float(tree.get("mist_great", 0.0))), MIST_GREAT_MIN),
+		"level": roundi(float(tree.get("mist_level", 0.0))),
+	}
 
 
 ## Mnożnik liczby potworów w lochu danego stopnia (bez modyfikatorów i bożków).
