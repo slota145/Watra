@@ -8,9 +8,13 @@ extends Node2D
 ## - obrona (Tarczowy - odnawiana tarcza, Uzdrawiający - leczy siebie i sąsiadów, Kolczasty - odbija obrażenia),
 ## - żywioły (Wybuchowy - wybuch po śmierci, Płonący - płonący ślad, Mroźny - spowalniające fale, Burzowy - pioruny),
 ## - przywołanie (Przywołujący - przyzywa pomocników, Rozszczepialny - po śmierci dzieli się na mniejsze).
+## Drzewko Watry: `idol` - elita upuszcza bożka („Bożkowe Piętno”), Czempion (make_champion) - wszystkie grupy cech,
+## CHAMPION_HEALTH razy więcej zdrowia i pewna legenda, "elite_loot" (Dungeon.tree_value) - dodatkowy łup z każdej elity.
 ## Węzeł jest dzieckiem potwora (Goblin.elite); budowany w kodzie (DungeonElite.promote), bez sceny.
 
 const SCALE := 1.25
+const CHAMPION_HEALTH := 2.0
+const CHAMPION_SCALE := 1.15
 ## Żywioł cech elit i dodatkowa odporność elity na ten żywioł (Elements, etap 3).
 const TRAIT_ELEMENTS := {"frost": Elements.COLD, "burning": Elements.FIRE, "volatile": Elements.FIRE, "storm": Elements.LIGHTNING}
 const TRAIT_RESISTANCE := 0.5
@@ -58,6 +62,9 @@ var dungeon: Node
 var traits: Array[String] = []
 ## Rodzaj potwora (klucz z Dungeons.CLIMATES "monsters") - odpryski Rozszczepialnego są tego samego rodzaju.
 var kind := ""
+## Drzewko Watry: elita upuszcza bożka; Czempion - pewna legenda.
+var idol := false
+var champion := false
 var shield := 0
 var max_shield := 0
 var _shield_back_at := 0
@@ -84,6 +91,18 @@ static func promote(target: Goblin, trait_ids: Array[String], owner_dungeon: Nod
 	target.add_child(elite)
 	target.move_child(elite, 0)  # poświata pod obrazkiem potwora
 	return elite
+
+
+## Czempion (drzewko Watry): więcej zdrowia, większy, napis „Czempion”, pewna legenda po śmierci.
+func make_champion() -> void:
+	champion = true
+	goblin.max_health = roundi(goblin.max_health * CHAMPION_HEALTH)
+	goblin.health = goblin.max_health
+	goblin.scale *= CHAMPION_SCALE
+	goblin.hurt_radius *= CHAMPION_SCALE
+	goblin.hurt_height *= CHAMPION_SCALE
+	if _label != null:
+		_label.text = label_text()
 
 
 func _apply_stats() -> void:
@@ -170,7 +189,7 @@ func label_text() -> String:
 	var names: Array[String] = []
 	for id in traits:
 		names.append(Lang.t(Dungeons.ELITE_TRAITS[id]["name"]))
-	return " · ".join(names)
+	return (Lang.t("Czempion") + "\n" if champion else "") + " · ".join(names)
 
 
 ## Górna krawędź obrazka potwora (w układzie potwora).
@@ -311,8 +330,17 @@ func on_died(rewarded: bool) -> void:
 	if traits.has("splitting"):
 		_split.call_deferred(at)
 	if rewarded:
-		for id in roll_loot(goblin.level, traits.size()):
-			goblin._spawn_pickup(id, 1)
+		var rolls: float = 1.0 + (dungeon.tree_value("elite_loot") if dungeon != null and dungeon.has_method("tree_value") else 0.0)
+		while rolls > 0.0:
+			if rolls >= 1.0 or randf() < rolls:
+				for id in roll_loot(goblin.level, traits.size()):
+					goblin._spawn_pickup(id, 1)
+			rolls -= 1.0
+		if champion:
+			goblin._spawn_pickup(Loot.world_legend(goblin.level), 1)
+		if idol:
+			var tree: Dictionary = dungeon.config.get("tree", {}) if dungeon != null else {}
+			goblin._spawn_pickup(Idols.roll(null, float(tree.get("idol_rarity", 0.0)), float(tree.get("idol_ancient", 0.0))), 1)
 
 
 ## Dodatkowy łup elity: 1 + liczba cech przedmiotów (pierwszy co najmniej magiczny), szansa na legendę.

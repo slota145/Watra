@@ -124,9 +124,10 @@ static func summary_text(talismans: Array[Dictionary]) -> String:
 		var data := Items.get_data(entry["id"])
 		for stat: String in data.get("stats", {}):
 			totals[stat] = float(totals.get(stat, 0.0)) + float(data["stats"][stat])
-		if data.has("effect"):
-			effects.append(Items.effect_text(data["effect"]["kind"], "%d%%" % roundi(float(data["effect"]["chance"]) * 100.0)
-					if not data["effect"]["kind"] in Items.COUNT_EFFECTS else str(roundi(data["effect"]["chance"]))))
+		for key in ["effect", "effect2"]:
+			if data.has(key):
+				effects.append(Items.effect_text(data[key]["kind"], "%d%%" % roundi(float(data[key]["chance"]) * 100.0)
+						if not data[key]["kind"] in Items.COUNT_EFFECTS else str(roundi(data[key]["chance"]))))
 	var lines: Array[String] = []
 	for stat: String in Talismans.POOL:
 		if totals.has(stat):

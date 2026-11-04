@@ -5,6 +5,8 @@ extends Harvestable
 ## (kamienie szlachetne i biżuteria), skarbnica (dużo złota, czasem rzadki przedmiot albo legenda). Cechy
 ## (Dungeons.CHEST_TRAITS): strzeżona - po otwarciu wyskakują strażnicy, a skrzynia otwiera się dopiero po ich
 ## pokonaniu; obfita - więcej łupu; cenna - lepsze rzadkości. Otwiera się klawiszem F (chwila majstrowania przy zamku).
+## Drzewko Watry: nowe rodzaje skrzyń („Skrzynie Bogów” - bożki, runy, talizmany; "special" w CHEST_KINDS) i mimik -
+## skrzynia ożywa jako elitarny potwór (MIMIC_*), a po jego pokonaniu sypie potrójny łup.
 ## Budowana w kodzie (DungeonChest.create), bez sceny.
 
 const TEXTURE := preload("res://assets/village/chest.png")
@@ -21,6 +23,10 @@ const GUARD_LEVEL := 1
 const GOLD_PILE := Vector2i(25, 40)
 const GOLD_RARE_CHANCE := 0.25
 const GOLD_LEGEND_CHANCE := 0.03
+## Mimik: o ile wyższy poziom, ile cech elity, ile razy więcej zdrowia.
+const MIMIC_LEVEL := 2
+const MIMIC_TRAITS := 2
+const MIMIC_HEALTH := 2.0
 
 var dungeon: Node
 var kind := "common"
@@ -94,9 +100,37 @@ func harvest(_from: Vector2) -> void:
 	if state != "closed":
 		return
 	set_progress(0.0)
-	if traits.has("guarded"):
+	if traits.has("mimic"):
+		_wake_mimic()
+	elif traits.has("guarded"):
 		_release_guards()
 	else:
+		open()
+
+
+## Mimik: skrzynia ożywa jako elitarny potwór; otworzy się po jego pokonaniu (razem ze strażnikami strzeżonej).
+func _wake_mimic() -> void:
+	state = "guarded"
+	var spawn: Dictionary = dungeon._spawn(dungeon._pick(dungeon.climate["monsters"]), global_position + Vector2(0, 14),
+			global_position, dungeon.level + MIMIC_LEVEL)
+	var goblin: Goblin = dungeon.w._live_goblins.get(spawn["id"])
+	if goblin != null:
+		var elite := DungeonElite.promote(goblin, Dungeons.roll_elite_traits(RandomNumberGenerator.new(), MIMIC_TRAITS), dungeon, spawn["type"])
+		dungeon.elites.append(elite)
+		goblin.max_health = roundi(goblin.max_health * MIMIC_HEALTH)
+		goblin.health = goblin.max_health
+		goblin.state = Goblin.State.CHASE
+		goblin.sitting = false
+		_guards.append(goblin)
+	if traits.has("guarded"):
+		_release_guards()
+	sprite.visible = false
+	_label.text = Lang.t("Mimik! Pokonaj go, a skrzynia się otworzy")
+	MiscVfx.puff(get_parent(), global_position + Vector2(0, -10), Color(0.9, 0.6, 0.3), 1.0)
+	Sfx.play("telegraph", -2.0)
+	dungeon.w.hud.show_banner(Lang.t("To mimik! Pokonaj go, żeby zdobyć skarb"), Color(1.0, 0.55, 0.35))
+	set_process(true)
+	if _guards.is_empty():
 		open()
 
 
@@ -137,16 +171,17 @@ func open() -> void:
 	if state == "open":
 		return
 	state = "open"
+	sprite.visible = true
 	sprite.modulate = Dungeons.CHEST_KINDS[kind]["tint"].darkened(0.45)
 	_label.visible = false
 	Sfx.play("pickup_rare" if kind != "common" else "coins")
 	MiscVfx.spark(get_parent(), global_position + Vector2(0, -16), Dungeons.CHEST_KINDS[kind]["glow"], 0.8)
-	for entry: Array in roll_contents(kind, traits, dungeon.level):
+	for entry: Array in roll_contents(kind, traits, dungeon.level, Dungeons.config_tier(dungeon.config)):
 		dungeon._drop(global_position + Vector2(0, 20), entry[0], entry[1])
 
 
-## Zawartość skrzyni: lista [id, ilość]. `level` - poziom potworów lochu.
-static func roll_contents(chest_kind: String, chest_traits: Array, level: int) -> Array:
+## Zawartość skrzyni: lista [id, ilość]. `level` - poziom potworów lochu, `tier` - stopień (runy).
+static func roll_contents(chest_kind: String, chest_traits: Array, level: int, tier := 1) -> Array:
 	var amount := 1.0
 	for id: String in chest_traits:
 		amount *= float(Dungeons.CHEST_TRAITS[id]["loot"])
@@ -176,6 +211,15 @@ static func roll_contents(chest_kind: String, chest_traits: Array, level: int) -
 				result.append([Loot.drop_at_level(level, 0.0, Loot.RARE), 1])
 			if randf() < GOLD_LEGEND_CHANCE * (2.0 if precious else 1.0) * amount:
 				result.append([Loot.legendary_at_level(Dungeons.VAULT_LEGENDS.pick_random(), level), 1])
+		"idols":
+			for i in roundi(randi_range(2, 3) * amount):
+				result.append([Idols.roll(null, 0.3 if precious else 0.0), 1])
+		"runes":
+			for i in roundi(randi_range(3, 6) * amount):
+				result.append([ItemCraft.roll_rune(tier), 1])
+		"talismans":
+			for i in roundi(randi_range(1, 2) * amount):
+				result.append([Talismans.roll(Levels.item_level(level), "rare" if precious or randf() < 0.3 else "magic"), 1])
 	return result
 
 

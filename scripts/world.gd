@@ -753,6 +753,9 @@ func village_built(project: String) -> bool:
 
 func _apply_save(save: Dictionary) -> void:
 	player.load_save_data(save.get("player", {}))
+	# dary kapliczek „do końca lochu” (drzewko Watry) gasną poza lochem
+	if zone != "dungeon":
+		player.boons.end_dungeon_gifts()
 	# starsze zapisy: zadania główne, których warunki już spełniono, zaliczają się same (po wczytaniu całego świata)
 	player.quests.catch_up_main.call_deferred(player)
 	hud.set_kills(int(save.get("kills", 0)))

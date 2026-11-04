@@ -6,6 +6,8 @@ extends Harvestable
 ## czeka na odebranie nagrody: F otwiera wybór 1 z 3 talizmanów (Talismans.roll_offer, okno TalismanOffer). Kto
 ## zamiast odebrać walczy dalej (do ZER_GOAL * ZER_OVERFLOW daniny), dostaje lepszą ofertę (więcej rzadkich
 ## i wielkich talizmanów). Okno zamknięte bez wyboru otwiera się znów przy pniu.
+## Drzewko Watry (Dungeon.tree_value): "zer_offer" - więcej talizmanów do wyboru, "zer_elite" - elity i Wybrańcy dają
+## podwójną daninę, "zer_dual" - szansa na rzadki talizman z dwoma efektami.
 ## Budowane w kodzie (Zertwa.create), bez sceny.
 
 const TEXTURE := preload("res://assets/ancient/altar_stump.png")
@@ -242,7 +244,10 @@ func _on_goblin_died(goblin: Goblin) -> void:
 		return
 	if goblin.global_position.distance_to(global_position) > Dungeons.ZER_RADIUS + 6.0:
 		return
-	add_tribute(tribute_of(goblin), goblin.global_position)
+	var amount := tribute_of(goblin)
+	if amount > Dungeons.ZER_TRIBUTE and dungeon != null and dungeon.tree_value("zer_elite") > 0.0:
+		amount *= 2
+	add_tribute(amount, goblin.global_position)
 
 
 func add_tribute(amount: int, at := Vector2.INF) -> void:
@@ -273,8 +278,9 @@ func claim() -> void:
 	_close_ring()
 	var tier := Dungeons.config_tier(dungeon.config) if dungeon != null else 1
 	var item_level: int = clampi((dungeon.level if dungeon != null else 1) + tier * Dungeons.ZER_LEVEL_PER_TIER, 1, Loot.MAX_ITEM_LEVEL)
-	var choices: int = Dungeons.ZER_OFFER + (dungeon.power_extra("zertwa", 1) if dungeon != null else 0)
-	offer = Talismans.roll_offer(item_level, overflow(), choices, _rng)
+	var choices: int = Dungeons.ZER_OFFER + (dungeon.power_extra("zertwa", 1) + roundi(dungeon.tree_value("zer_offer"))
+			if dungeon != null else 0)
+	offer = Talismans.roll_offer(item_level, overflow(), choices, _rng, dungeon.tree_value("zer_dual") if dungeon != null else 0.0)
 	MiscVfx.spark(get_parent(), global_position + Vector2(0, -40), COLOR, 1.4)
 	_update_label()
 	_show_offer()

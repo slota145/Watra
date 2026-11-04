@@ -52,16 +52,18 @@ func _check_data() -> void:
 	check("gęstsza Mgła - większa pula", dense["items"] > pool["items"] and dense["supports"] > pool["supports"]
 			and dense["great"] > 0.0)
 	# węzły Mgły w drzewku Watry
-	var chosen: Array = ["mist_root", "mist_a1", "mist_a2", "mist_a3", "mist_a4", "mist_a_end", "mist_a_x1", "mist_a_x2",
-			"mist_a_x3", "mist_a_x4", "mist_b1", "mist_b2", "mist_b3", "mist_b4", "mist_b_end", "mist_b_x1", "mist_b_x2",
-			"mist_b_x3", "mist_b_x4"]
-	var rules: Dictionary = _D.mist_rules(load("res://scripts/watra_tree.gd").effects(chosen))
+	# wszystkie węzły Mgły (bez Rwącej Mgły - ta tylko przyspiesza gęstnienie)
+	var T = load("res://scripts/watra_tree.gd")
+	var chosen: Array = T.nodes().keys().filter(func(id: String) -> bool: return id.begins_with("mist_") and id != "mist_a_n")
+	var rules: Dictionary = _D.mist_rules(T.effects(chosen))
 	var plain: Dictionary = _D.mist_rules({})
 	check("bez drzewka zasady jak dotąd", plain["step"] == _D.MIST_STEP and plain["max"] == _D.MIST_MAX
 			and plain["keep"] == _D.MIST_DEATH_KEEP and plain["great_from"] == _D.MIST_GREAT_FROM and plain["level"] == 0)
-	check("drzewko: wolniej, gęściej, mniej straty po śmierci", rules["step"] == _D.MIST_STEP + 15.0 and rules["max"] == 15
-			and is_equal_approx(rules["keep"], 0.75) and rules["great_from"] == 6 and rules["level"] == 2
-			and is_equal_approx(rules["rate"], 1.4), str(rules))
+	check("drzewko: wolniej, gęściej, mniej straty po śmierci", rules["step"] == _D.MIST_STEP + 5.0 and rules["max"] == 15
+			and is_equal_approx(rules["keep"], 0.82) and rules["great_from"] == 6 and rules["level"] == 3
+			and is_equal_approx(rules["rate"], 1.6), str(rules))
+	var fast: Dictionary = _D.mist_rules(T.effects(["mist_a_n"]))
+	check("Rwąca Mgła: dwa razy szybciej", is_equal_approx(fast["step"], _D.MIST_STEP * 0.5), str(fast["step"]))
 	var rich := {"items": 0.0, "gold": 0.0, "supports": 0.0, "flints": 0.0, "great": 0.0}
 	for i in 100:
 		_M.add_kill(rich, 7, 40, rules)
