@@ -11,6 +11,9 @@ extends Node2D
 ## Węzeł jest dzieckiem potwora (Goblin.elite); budowany w kodzie (DungeonElite.promote), bez sceny.
 
 const SCALE := 1.25
+## Żywioł cech elit i dodatkowa odporność elity na ten żywioł (Elements, etap 3).
+const TRAIT_ELEMENTS := {"frost": Elements.COLD, "burning": Elements.FIRE, "volatile": Elements.FIRE, "storm": Elements.LIGHTNING}
+const TRAIT_RESISTANCE := 0.5
 const TICK := 0.25
 const AURA_RADIUS := 120.0
 ## Aura trwa tyle po ostatnim odświeżeniu (elita odświeża ją co AURA_EVERY).
@@ -100,6 +103,14 @@ func _apply_stats() -> void:
 	goblin.hurt_height *= SCALE
 	goblin.map_color = LABEL_COLOR
 	goblin.add_to_group("elites")
+	# elity żywiołów (Elements, etap 3): biją swoim żywiołem i są na niego odporne
+	var resist: Dictionary = goblin.resistances.duplicate()
+	for t: String in traits:
+		if TRAIT_ELEMENTS.has(t):
+			var element: String = TRAIT_ELEMENTS[t]
+			goblin.element = element
+			resist[element] = maxf(float(resist.get(element, 0.0)), 0.0) + TRAIT_RESISTANCE
+	goblin.resistances = resist
 	if traits.has("shielded"):
 		max_shield = roundi(goblin.max_health * float(Dungeons.ELITE_TRAITS["shielded"]["power"]))
 		shield = max_shield

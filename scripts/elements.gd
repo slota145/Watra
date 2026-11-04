@@ -87,6 +87,33 @@ static func hit_multiplier(resist: float, penetration: float) -> float:
 
 ## Kara do odporności w bieżącym miejscu (ustawia świat przy wejściu: 0 w krainach i zwykłych lochach).
 static var penalty := 0.0
+## Żywioły z modyfikatorów lochu i bożków (etap 3, ustawia Dungeon.generate z Dungeons.added; poza lochem puste / 0):
+## added - każdy cios potwora zadaje dodatkowo taką część obrażeń jako dany żywioł {żywioł: ułamek},
+## curse - dodatkowe obniżenie odporności gracza na żywioły (bez Nawii), monster_bonus - dodatkowa odporność potworów
+## na żywioły i Nawię.
+static var added := {}
+static var curse := 0.0
+static var monster_bonus := 0.0
+## Klucze premii lochu (Dungeons.added): dodatkowe obrażenia od żywiołu, klątwa odporności, osłona potworów.
+const ADDED_KEYS := {"added_fire": FIRE, "added_cold": COLD, "added_lightning": LIGHTNING, "added_nawia": NAWIA}
+
+
+## Ustawia żywioły lochu z ustawień wyprawy (Dungeons.added - modyfikatory za żar, bożki, drzewko Watry).
+static func apply_dungeon(config: Dictionary) -> void:
+	added = {}
+	for key: String in ADDED_KEYS:
+		var value := Dungeons.added(config, key)
+		if value > 0.0:
+			added[ADDED_KEYS[key]] = value
+	curse = Dungeons.added(config, "elemental_curse")
+	monster_bonus = Dungeons.added(config, "monster_resistance")
+
+
+## Poza lochem - bez żywiołów lochu.
+static func clear_dungeon() -> void:
+	added = {}
+	curse = 0.0
+	monster_bonus = 0.0
 
 
 ## Kara do odporności w lochu danego stopnia (0 poniżej Mapy Nawii, liniowo do NAWIA_PENALTY.y).

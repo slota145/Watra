@@ -480,6 +480,7 @@ func _ready() -> void:
 	Goblin.dungeon_mods = {}
 	Goblin.pathing = null
 	Elements.penalty = 0.0
+	Elements.clear_dungeon()
 	_apply_blessing(save)
 	seed(_rng.seed)
 	_noise.seed = _rng.randi()

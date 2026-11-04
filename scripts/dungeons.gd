@@ -354,8 +354,19 @@ const MODIFIERS := {
 			"health": 1.25, "damage": 1.25, "xp": 1.5},
 	"treasure": {"name": "Pełny skarbiec", "description": "Skarbiec strażnika: dwa razy więcej łupu, w tym rzadkie przedmioty",
 			"cost": 80, "unlock": 4, "treasure": 2.0},
+	# żywioły (Elements, etap 3): "add" - premie dodawane jak z bożków (Dungeons.added)
+	"scorch": {"name": "Pożoga", "description": "Potwory zadają dodatkowo 30% obrażeń od ognia; +30% złota i przedmiotów",
+			"cost": 45, "unlock": 3, "gold": 1.3, "loot": 1.3, "add": {"added_fire": 0.3}},
+	"frost": {"name": "Mróz", "description": "Potwory zadają dodatkowo 30% obrażeń od lodu; +40% doświadczenia",
+			"cost": 45, "unlock": 3, "xp": 1.4, "add": {"added_cold": 0.3}},
+	"storm": {"name": "Burza", "description": "Potwory zadają dodatkowo 30% obrażeń od piorunów; łup z lochu częściej lepszej rzadkości",
+			"cost": 45, "unlock": 4, "add": {"added_lightning": 0.3, "quality": 0.15}},
+	"curse": {"name": "Klątwa żywiołów", "description": "Odporności na żywioły -25%; łup z lochu +2 poziomu przedmiotu",
+			"cost": 60, "unlock": 5, "add": {"elemental_curse": 0.25, "item_level": 2}},
+	"warded": {"name": "Osłona żywiołów", "description": "Potwory +30% odporności na żywioły i Nawię; +50% doświadczenia",
+			"cost": 50, "unlock": 5, "xp": 1.5, "add": {"monster_resistance": 0.3}},
 }
-const MODIFIER_ORDER: Array[String] = ["horde", "wealth", "fury", "treasure"]
+const MODIFIER_ORDER: Array[String] = ["horde", "wealth", "fury", "treasure", "scorch", "frost", "storm", "curse", "warded"]
 ## Legendarne przedmioty ze skarbca strażnika (tylko z lochów) i szansa na jeden z nich (Pełny skarbiec ją podwaja).
 const VAULT_LEGENDS: Array[String] = ["legend_endless_amulet", "legend_swarog_bow", "legend_engineer_gloves", "legend_tracker_talisman",
 		"legend_marzanna_book", "legend_perun_crown", "legend_mokosh_belt", "legend_bogatyr_girdle"]
@@ -471,7 +482,10 @@ static func mult(config_data: Dictionary, key: String) -> float:
 
 ## Premia dodawana z bożków i drzewka Watry (item_level, quality, vault_runes; 0 - bez zmian).
 static func added(config_data: Dictionary, key: String) -> float:
-	return Idols.added(config_data.get("idols", []), key) + WatraTree.added(config_data.get("tree", {}), key)
+	var total := Idols.added(config_data.get("idols", []), key) + WatraTree.added(config_data.get("tree", {}), key)
+	for id: String in config_data.get("mods", []):
+		total += float(MODIFIERS.get(id, {}).get("add", {}).get(key, 0.0))
+	return total
 
 
 ## Premie mechanik wyprawy (dla roll_mechanics): z config["mechanic_bonus"] (testy), z drzewka Watry (config["tree"])
