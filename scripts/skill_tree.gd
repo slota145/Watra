@@ -53,9 +53,12 @@ const TREE_STATS := {
 	# strefy pośrednie (krok 5): Otwarte rany, Impet, Zwiewność
 	"open_wounds": "Szansa na krwawienie od ciosów i pocisków", "impetus": "Obrażenia trafienia po umiejętności ruchu",
 	"lightness": "Szybkość po uniku",
+	# przywołania (krok 5): Przewodnik stada, Wierne ogniki, Wierny tropiciel
+	"wolf_count": "Wilki Watahy", "wisp_count": "Błędne Ogniki", "minion_damage": "Obrażenia przywołań",
+	"loyal_seeker": "Strzała tropiąca jako przywołanie",
 }
 const COUNT_STATS := ["blade_count", "multishot_arrows", "seeker_hits", "arrow_pierce", "chain_targets", "lance_pierce",
-		"row_shot", "silent_steps", "full_mind"]
+		"row_shot", "silent_steps", "full_mind", "wolf_count", "wisp_count", "loyal_seeker"]
 
 ## Kolor obwódki umiejętności wg broni (w oknie drzewka).
 const WEAPON_COLORS := {"melee": Color8(225, 85, 70), "bow": Color8(90, 200, 100), "spell": Color8(90, 140, 240),

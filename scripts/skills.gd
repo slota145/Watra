@@ -296,6 +296,17 @@ const DATA := {
 		"icon": preload("res://assets/skills/aura_frost_breath.png"),
 		"description": "Aura: lodowy wir wokół ciebie co chwilę rani wrogów i wzmacnia obrażenia od lodu, ale rani też ciebie (odporność na lód pomaga; wir nie zabija). Nie rezerwuje many. Klawisz włącza i wyłącza aurę - włączona działa bez końca i rezerwuje część many.",
 	},
+	# przywołania (Summons, SummonData): klawisz przywołuje albo odsyła, przywołańcy zostają i rezerwują manę
+	"wolf_pack": {
+		"name": "Wataha", "weapon": "bow", "type": "summon",
+		"icon": preload("res://assets/skills/wolf_pack.png"),
+		"description": "Przywołujesz widmowe wilki, które biegną do wrogów w pobliżu, gryzą ich i czasem powalają. Potwory mogą je zranić i zabić - zabity wilk wraca po chwili. Wilki zostają przy tobie, dopóki ich nie odeślesz (ten sam klawisz), i rezerwują część many. Z poziomem rosną ich obrażenia, zdrowie i liczba, a rezerwacja maleje.",
+	},
+	"wisps": {
+		"name": "Błędne Ogniki", "weapon": "spell", "type": "summon",
+		"icon": preload("res://assets/skills/wisps.png"),
+		"description": "Przywołujesz błędne ogniki, które krążą przy tobie i strzelają ognistymi pociskami do wrogów. Potwory mogą je zranić i zgasić - zgaszony ognik wraca po chwili. Ogniki zostają przy tobie, dopóki ich nie odeślesz (ten sam klawisz), i rezerwują część many. Z poziomem rosną ich obrażenia, zdrowie i liczba, a rezerwacja maleje.",
+	},
 }
 
 ## Parametry aktywnych umiejętności niezależne od poziomu.
@@ -675,6 +686,9 @@ const TAGS := {
 	"perun_sparks": ["aura", "lightning", "dex", "int"],
 	"perun_wrath": ["aura", "spell", "lightning", "int"],
 	"frost_breath": ["aura", "spell", "area", "ice", "dot", "int"],
+	# przywołania (Summons): wilki gryzą (atak), ogniki strzelają ogniem (czar)
+	"wolf_pack": ["attack", "summon", "physical", "dex"],
+	"wisps": ["spell", "summon", "projectile", "fire", "int"],
 }
 ## Tagi zwykłego ataku bronią danego rodzaju (magiczny pocisk księgi to czar z obrażeniami tajemnymi).
 const BASIC_TAGS := {
@@ -834,7 +848,7 @@ static func works_with(id: String, weapon_type: String) -> bool:
 ## Umiejętności danego rodzaju broni w kolejności: aktywna, uderzenie, umiejętności drzewka.
 static func for_weapon(weapon_type: String) -> Array[String]:
 	var result: Array[String] = []
-	for kind in ["active", "strike", "skill"]:
+	for kind in ["active", "strike", "skill", "summon"]:
 		for id: String in DATA:
 			if DATA[id]["weapon"] == weapon_type and DATA[id]["type"] == kind:
 				result.append(id)
@@ -1156,6 +1170,8 @@ static func mana_cost(id: String) -> float:
 static func mana_cost_text(id: String) -> String:
 	if AuraData.is_aura(id):
 		return AuraData.cost_text(id)
+	if SummonData.is_summon(id) and id != "seeker":
+		return SummonData.cost_text(id, 1)
 	match id:
 		"whirlwind":
 			return Lang.t("%d many/s") % WHIRLWIND_MANA_PER_SECOND
@@ -1200,6 +1216,8 @@ static func effect_text(id: String, level: int) -> String:
 		return "-"
 	if AuraData.is_aura(id):
 		return AuraData.effect_text(id, level)
+	if SummonData.is_summon(id) and id != "seeker":
+		return SummonData.effect_text(id, level)
 	match id:
 		"whirlwind":
 			return Lang.t("%d%% obrażeń co %s s, zasięg %d") % [roundi(whirlwind_damage(level) * 100), _decimal(WHIRLWIND_TICK, 2), whirlwind_radius(level)]

@@ -128,9 +128,9 @@ static func fits(kind: String, skill: String) -> bool:
 	return false
 
 
-## Czy umiejętność może mieć gniazda (aktywne umiejętności, bez regeneracji).
+## Czy umiejętność może mieć gniazda (aktywne umiejętności i przywołania, bez regeneracji).
 static func has_sockets(skill: String) -> bool:
-	return Skills.DATA.has(skill) and Skills.get_data(skill)["type"] in ["active", "strike", "skill"]
+	return Skills.DATA.has(skill) and Skills.get_data(skill)["type"] in ["active", "strike", "skill", "summon"]
 
 
 ## Doświadczenie potrzebne na kolejny poziom kamienia (0 - poziom maksymalny).

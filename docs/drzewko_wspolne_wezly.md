@@ -108,7 +108,7 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 
 - **[U]** Strzała tropiąca (łuk) - strzała sama szuka wrogów
 - **[U]** Szybka salwa (łuk) - seria strzał - teraz zwykła umiejętność, po Strzale tropiącej mocniejsza (combo)
-- **[Z]** Wierny tropiciel ✦ ⌛ - Strzała tropiąca krąży przy tobie jak przywołanie i sama strzela, ale rezerwuje 15% many
+- **[Z]** Wierny tropiciel ✦ - Strzała tropiąca krąży przy tobie jak przywołanie i sama strzela, ale rezerwuje 15% many
 - **[U]** Strzała Żmija ✦ (łuk; atak, pocisk, fizyczne, trucizna) - jadowa strzała przeskakuje między 4 wrogami, każdy skok +10% obrażeń, trafieni zatruci
 - **[Z]** Ostrzejszy trop - +1 trafienie Strzały tropiącej
 - **[K]** Oko Sokoła - trafienia z daleka (ponad 150) zawsze krytyczne, z bliska (do 70) -30% obrażeń
@@ -128,8 +128,8 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - **[Z]** Szpony - +20% obrażeń Sokoła
 - **[U]** Balista (łuk) - stawiana balista
 - **[Z]** Mocna balista - +25% czasu i +15% obrażeń Balisty
-- **[U]** Wataha ✦ ⌛ (łuk; przywołanie, fizyczne) - przywołuje 2 wilki na 15 s; wilki gryzą i powalają wrogów
-- **[Z]** Przewodnik stada ✦ ⌛ - +1 wilk, +15% obrażeń przywołań
+- **[U]** Wataha ✦ (łuk; przywołanie, fizyczne) - przywołuje 2 widmowe wilki na stałe (rezerwują manę); wilki gryzą i powalają wrogów
+- **[Z]** Przewodnik stada ✦ - +1 wilk, +15% obrażeń przywołań
 
 ### Pułapki i jad (6)
 
@@ -217,8 +217,8 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 
 - **[U]** Krok przez Mgłę (księga) - teleport
 - **[Z]** Szybki krok - -25% odnowienia Kroku przez Mgłę
-- **[U]** Błędne Ogniki ✦ ⌛ (księga; czar, przywołanie, ogień) - przywołuje 3 ogniki krążące przy tobie i strzelające do wrogów (zalążek nekromancji)
-- **[Z]** Wierne ogniki ✦ ⌛ - +1 ognik, +15% obrażeń przywołań
+- **[U]** Błędne Ogniki ✦ (księga; czar, przywołanie, ogień) - przywołuje 3 ogniki na stałe (rezerwują manę), krążą przy tobie i strzelają ogniem (zalążek nekromancji)
+- **[Z]** Wierne ogniki ✦ - +1 ognik, +15% obrażeń przywołań
 - [G] Gniazdo - kamień szlachetny (działa o połowę mocniej)
 
 ### Żywioły (5)

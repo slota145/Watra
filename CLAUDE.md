@@ -164,7 +164,8 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
   (`CharacterStats.attribute_damage`), kamienie wsparcia w gniazdach umiejętności (`supports.gd`, znacznik umiejętności
   w `Skills.tags` - `Skills.skill_of`), combo (`Skills.COMBOS`, kilku poprzedników - `Player.combo_after`), paski szybkiego wyboru (`hotbar.gd`), ikony efektów (`status_effects.gd`);
   zryw, Mgnienie i teleport przeskakują przeszkody, zatrzymuje je tylko granica (`BOUNDS_LAYER`, `Player.free_landing`);
-  aury rezerwujące manę z każdą bronią (`aura_data.gd` - liczby, `auras.gd` - działanie, `SkillBook.auras`).
+  aury rezerwujące manę z każdą bronią (`aura_data.gd` - liczby, `auras.gd` - działanie, `SkillBook.auras`),
+  stali przywołańcy rezerwujący manę - Wataha, Błędne Ogniki, Wierny tropiciel (`summon_data.gd`, `summons.gd`, `SkillBook.summons`).
 - **Efekty:** animacje z kreatora efektów PixelLab (`pixellab_src/vfx/ids.json`, `tools/vfx_art.py`; pomocnicy `SkillEffects`,
   `FxLoop`, `BossFx`, `LegendVfx`, `WorldVfx`, `MonsterFx`, `MiscVfx`).
 - **Dźwięki:** `sfx.gd` (`Sfx.SOUNDS`), generatory `tools/sfx_synth.py` i `tools/hit_sfx.py` (trafienia według broni
@@ -300,8 +301,9 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   zręczności”, „…, strona inteligencji” i „…, strefy pośrednie”) - Wilczy Kieł, Ryk Tura, Skok Niedźwiedzia, Ostatni
   Bastion, Strzała Żmija, Rozszczepiona Strzała, Kolczatka, Łowca w Cieniu, Szał Bitewny, Ściana Ognia, Lodowy Pancerz,
   Mistrz Żywiołów, umiejętności z dwiema broniami (Ciśnięte Noże, Strzała Gromu, Zaklęte Ostrze - `scripts/zone_skills.gd`),
-  Żelazna Wola i węzły znaczące; ikony z PixelLab (`tools/tree_step5_icons.py`, ikony przywołań już są w `assets/skills/`).
-  Na koniec osobno przywołania (Wataha, Błędne Ogniki, Wierny tropiciel).
+  Żelazna Wola i węzły znaczące; ikony z PixelLab (`tools/tree_step5_icons.py`). Przywołania (Wataha, Błędne Ogniki,
+  Wierny tropiciel, Przewodnik stada, Wierne ogniki) też zrobione, czekają na ocenę autora (szukaj „…, przywołania”) -
+  krok 5 skończony, w drzewku nie ma już pustych miejsc. Dalej krok 6 (nowe drzewko lochów).
 - [ ] **Modyfikacja premii tylko runami** (decyzja autora, listopad 2026): wszystkie sposoby zmiany premii
   (afiksów) przedmiotów mają działać przez runy - przedmioty-waluty jak orby w Path of Exile. Zrobione razem
   z Uroczyskiem (szukaj „Mechaniki w lochach, etap 3”): każde działanie warsztatu kowala zużywa swoją runę

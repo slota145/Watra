@@ -146,7 +146,8 @@ func _check_tree(p) -> void:
 		for step: String in Tree.path_to(id):
 			p.skills.take(step)
 	var lacking := wanted.filter(func(id: String) -> bool: return not p.skills.has_node_id(id))
-	check("cała strona miecza do wybrania", lacking.is_empty() and soon > 0, str(lacking))
+	check("cała strona miecza do wybrania", lacking.is_empty(), str(lacking))
+	check("bez pustych miejsc (krok 5 skończony)", soon == 0, str(soon))
 	p.mana = p.stats.max_mana()
 
 

@@ -179,9 +179,10 @@ func _check_points(p) -> void:
 	p.stats.level = 20
 	book.character_level = 20
 	book.skill_xp = 19 * 2000
-	check("droga przez puste miejsca", _take_path(book, "cyclone_eye") and _take_path(book, "smoke_burst")
+	# puste miejsca (soon) już nie zostały - po kroku 5 (przywołania) droga wiedzie przez zwykłe węzły
+	check("droga przez drzewko", _take_path(book, "cyclone_eye") and _take_path(book, "smoke_burst")
 			and _take_path(book, "whirl_dmg") and book.has_node_id("flicker") and _take_path(book, "seeker_hits")
-			and not book.has_node_id("loyal_seeker"), str(book.nodes.keys()))
+			and book.has_node_id("loyal_seeker"), str(book.nodes.keys()))
 	var spent: int = book.points_spent()
 	check("drzewko za punkty z paska", spent == book.nodes.size() and book.points_left() == 31 - spent, "%d" % spent)
 	check("punkty za poziom postaci", book.level_points() == 10)

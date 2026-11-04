@@ -45,6 +45,8 @@ var tree_reset := false
 var reset_gems: Array = []
 ## Włączone aury (id umiejętności w kolejności włączania).
 var auras: Array[String] = []
+## Przywołania rezerwujące manę (Summons; id umiejętności, "seeker" - Wierny tropiciel) w kolejności przywołania.
+var summons: Array[String] = []
 ## Premie włączonych aur (statystyka -> wartość), liczone od nowa przy każdej zmianie (_refresh_auras).
 var _aura_stats := {}
 ## Węzły osiągalne od startu (reachable) i stan wybranych węzłów, z którego je policzono.
@@ -63,7 +65,9 @@ const FORMER_SOON: Array[String] = ["dread", "vigor", "strzybog_wind", "frost_br
 		# krok 5 - strona inteligencji
 		"fire_wall", "ice_armor", "mana_flow", "full_mind", "elem_master",
 		# krok 5 - strefy pośrednie
-		"thrown_knives", "open_wounds", "momentum", "thunder_arrow", "lightness", "enchanted_blade", "iron_will"]
+		"thrown_knives", "open_wounds", "momentum", "thunder_arrow", "lightness", "enchanted_blade", "iron_will",
+		# krok 5 - przywołania
+		"wolf_pack", "pack_leader", "wisps", "loyal_wisps", "loyal_seeker"]
 
 ## Wersja drzewka w zapisie (2 - wspólne drzewko; bez niej - osobne drzewka broni).
 const TREE_VERSION := 2
@@ -465,17 +469,20 @@ func aura_bonus(stat: String) -> float:
 	return float(_aura_stats.get(stat, 0.0))
 
 
-## Ułamek pełnej many (albo zdrowia - Krwawa Ofiara) rezerwowany przez aurę, z węzłami Skupiona wola i Oszczędne aury.
+## Ułamek pełnej many (albo zdrowia - Krwawa Ofiara) rezerwowany przez aurę albo przywołanie (SummonData - maleje
+## z poziomem), z węzłami Skupiona wola i Oszczędne aury.
 func aura_reserve(id: String) -> float:
-	return float(AuraData.RESERVE.get(id, 0.0)) * maxf(1.0 + tree_bonus("aura_reservation"), 0.0)
+	var base := SummonData.reserve(id, level_of(id)) if SummonData.is_summon(id) else float(AuraData.RESERVE.get(id, 0.0))
+	return base * maxf(1.0 + tree_bonus("aura_reservation"), 0.0)
 
 
-## Łączna rezerwacja włączonych aur (ułamek), `extra` - z dodatkową aurą (sprawdzanie przed włączeniem).
+## Łączna rezerwacja włączonych aur i przywołań (ułamek), `extra` - z dodatkową aurą albo przywołaniem
+## (sprawdzanie przed włączeniem).
 func reserved_total(extra := "") -> float:
 	var total := 0.0
-	for id: String in auras:
+	for id: String in auras + summons:
 		total += aura_reserve(id)
-	if extra != "" and not auras.has(extra):
+	if extra != "" and not auras.has(extra) and not summons.has(extra):
 		total += aura_reserve(extra)
 	return total
 
@@ -502,7 +509,7 @@ func aura_block_reason(id: String, stats: CharacterStats, mana: float, health: i
 			return Lang.t("Za mało zdrowia na tę aurę")
 		return ""
 	if reserved_total(id) > 1.0 + 0.0001:
-		return Lang.t("Za mało wolnej many - wyłącz inną aurę")
+		return Lang.t("Za mało wolnej many - wyłącz inną aurę albo przywołanie")
 	if mana < stats.full_max_mana() * cost:
 		return Lang.t("Za mało many na tę aurę")
 	return ""
@@ -518,11 +525,36 @@ func set_aura(id: String, on: bool) -> void:
 	changed.emit()
 
 
-## Aury bez wybranego węzła wyłączają się; premie liczą się od nowa (poziomy aur).
+# ---------------------------------------------------------------- przywołania (Summons)
+## Przywołuje albo odsyła (bez sprawdzania - Summons.toggle sprawdza aura_block_reason).
+func set_summon(id: String, on: bool) -> void:
+	if on and not summons.has(id) and can_summon(id):
+		summons.append(id)
+	elif not on:
+		summons.erase(id)
+	changed.emit()
+
+
+## Czy przywołanie jest w drzewku (Wierny tropiciel - Strzała tropiąca i jego węzeł).
+func can_summon(id: String) -> bool:
+	if not SummonData.is_summon(id) or level_of(id) <= 0:
+		return false
+	return id != "seeker" or has_node_id("loyal_seeker")
+
+
+## Ilu przywołańców daje przywołanie (poziom i węzły Przewodnik stada / Wierne ogniki).
+func summon_count(id: String) -> int:
+	return SummonData.count(id, level_of(id), roundi(tree_bonus(SummonData.COUNT_STAT.get(id, ""))))
+
+
+## Aury i przywołania bez wybranego węzła wyłączają się; premie aur liczą się od nowa (poziomy aur).
 func _refresh_auras() -> void:
 	for id: String in auras.duplicate():
 		if level_of(id) <= 0:
 			auras.erase(id)
+	for id: String in summons.duplicate():
+		if not can_summon(id):
+			summons.erase(id)
 	_aura_stats = {}
 	for id: String in auras:
 		var bonus := AuraData.stats_of(id, level_of(id))
@@ -695,7 +727,8 @@ func has_keystone(id: String) -> bool:
 
 func get_save_data() -> Dictionary:
 	return {"tree": TREE_VERSION, "levels": levels.duplicate(), "nodes": nodes.keys(), "gems": tree_gems.duplicate(true),
-			"bonus_points": bonus_points, "supports": supports.duplicate(true), "skill_xp": skill_xp, "auras": auras.duplicate()}
+			"bonus_points": bonus_points, "supports": supports.duplicate(true), "skill_xp": skill_xp, "auras": auras.duplicate(),
+			"summons": summons.duplicate()}
 
 
 ## Zapis sprzed wspólnego drzewka (bez "tree") miał osobne drzewka broni: węzły i poziomy umiejętności przepadają,
@@ -764,6 +797,10 @@ func load_save_data(data: Dictionary) -> void:
 	for id in data.get("auras", []):
 		if AuraData.is_aura(str(id)) and not auras.has(str(id)):
 			auras.append(str(id))
+	summons.clear()
+	for id in data.get("summons", []):
+		if SummonData.is_summon(str(id)) and not summons.has(str(id)):
+			summons.append(str(id))
 	_refresh_auras()
 	changed.emit()
 

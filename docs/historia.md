@@ -933,6 +933,38 @@ odpowiedniej sekcji.
   o ćwiartki), `flame_wave` (ognisty sierp), `thunder_arrow` (strzała-błyskawica). Stare zapisy - `SkillBook.FORMER_SOON`.
   Test `tests/test_zone_skills.gd`. Do ustalenia po ograniu: liczby (`KNIVES_*`, `THUNDER_*`, `BLADE_*`, szanse
   i siła węzłów w szkicu drzewka), czy noże z mieczem mają trafiać w powrocie z pełną siłą.
+- [x] **Krok 5 wspólnego drzewka, przywołania** (`docs/plan_drzewek.md`, listopad 2026). Autor wybrał: przywołańcy
+  **stali i rezerwują manę** (jak aury), **mają zdrowie i gonią wrogów** (potwory mogą ich zabić), z poziomem rośnie
+  **wszystko** (obrażenia, zdrowie, liczba, mniejsza rezerwacja), grafiki **przebarwione z obecnych** (0 generacji).
+  Ostatnie puste miejsca drzewka (`"soon"`) zniknęły. Dane i liczby w `scripts/summon_data.gd` (`SummonData` - bez
+  dźwięków, jak `AuraData`), działanie w `scripts/summons.gd` (`Player.summons`, dziecko gracza). Klawisz paska
+  przywołuje albo odsyła (`Summons.toggle`, rodzaj `"summon"` w `Skills.DATA`), przywołane trzyma `SkillBook.summons`
+  (zapis gry, pole `"summons"`); rezerwację liczy `SkillBook.aura_reserve` razem z aurami (`reserved_total`, Skupiona
+  wola, Oszczędne aury i Krwawa Ofiara też działają). Przywołanie działa tylko ze swoją bronią - po zmianie broni odchodzi.
+  Liczba pilnowana co klatkę (`Summons._keep`): zabity wraca po `RESPAWN` (6 s), po zmianie krainy - od razu.
+  - **Wataha** (łuk): wilki (`_Wolf`, `assets/forest/wolf.png` w widmowym błękicie - modulate) biegną do wroga najbliżej
+    siebie w `WOLF_SEEK_RANGE` od gracza, gryzą co `WOLF_BITE_INTERVAL` s (`SummonData.damage` 55% + 10% za poziom mocy),
+    z szansą `WOLF_STUN_CHANCE` powalają (`Goblin.stun`); bez wroga idą za graczem; 2 wilki, +1 na poziomach 10 i 20;
+    rezerwacja 25% (-0,4% za poziom);
+  - **Błędne Ogniki** (księga): ogniki (`_Wisp`, `assets/summons/wisp_fire.png` - turkusowy ognik z Cmentarza
+    przebarwiony przez `tools/minion_art.py`) krążą wokół gracza i co `WISP_INTERVAL` s strzelają pociskiem `"fire"`
+    (35% + 6% za poziom mocy, kamień Rozszczep - więcej pocisków); 3 ogniki, +1 na poziomach 10 i 20; rezerwacja 22%;
+  - **Wierny tropiciel** (węzeł, id przywołania `"seeker"`): z tym węzłem klawisz Strzały tropiącej przywołuje widmową
+    strzałę (`_Seeker`, rysowana w kodzie), która krąży przy graczu i co `SEEKER_INTERVAL` s wypuszcza Strzałę tropiącą
+    (`Player.seeker_arrow` - wydzielone z `_cast_seeker`, z Szeregiem, Łukiem Hydry i Rozszczepem); stałe 15% many, bez zdrowia;
+  - węzły **Przewodnik stada** i **Wierne ogniki**: +1 przywołaniec (`wolf_count`, `wisp_count`) i +15% obrażeń
+    przywołań (`minion_damage`) - `SkillBook.summon_count`, `Summons.damage_of`.
+  Zdrowie przywołańca: `health_share` maksymalnego zdrowia postaci (wilk 40% + 3% za poziom mocy, ognik 25% + 2%), kamień
+  Watażka (`duration`) dokłada tyle procent zdrowia; cios potwora rani o `TAKEN` (60%). Trafiony przez wilka albo ognik
+  wróg bierze go za cel (`Goblin.objective`, gdy gracz jest dalej niż 60 i wróg nie ma innego celu); przy odejściu
+  przywołańca cel wraca na gracza. Obrażenia przez `Player._skill_damage` z tagami umiejętności - kamienie wsparcia
+  w gniazdach przywołań (`Supports.has_sockets` przyjmuje rodzaj `"summon"`) i atrybuty działają. Wygląd: kłąb
+  `MiscVfx.puff` w kolorze przywołania przy pojawieniu i odejściu, iskry ugryzienia `MiscVfx.spark`, pasek zdrowia nad
+  rannym, na pasku przywołanie świeci ramką w kolorze (`ActionBars._summon_of`), ikona z liczbą przywołańców pod
+  paskami zdrowia i many (`Summons.statuses`). Ikona węzła Wierny tropiciel złożona z ikon Strzały tropiącej i Wiernych
+  ogników (`tools/loyal_seeker_icon.py`). Stare zapisy - `SkillBook.FORMER_SOON`. Test `tests/test_summons.gd`.
+  Do ustalenia po ograniu: liczby (`SummonData`), czy kamienie wsparcia mają podnosić rezerwację (dziś nie), czy
+  przywołańcy mają dostawać ciosy obszarowe potworów, własne grafiki z PixelLab (widmowy wilk, ognik).
 
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)
