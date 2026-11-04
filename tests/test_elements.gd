@@ -52,6 +52,16 @@ func _initialize() -> void:
 	check("obrażenia w czasie dla tagu dot", is_equal_approx(stats.kind_multiplier(["attack", "dot"]) - stats.kind_multiplier(["attack"]), 0.3))
 	check("szansa na stan ma sufit", is_equal_approx(stats.ailment_chance("ignite"), 0.5) and is_zero_approx(stats.ailment_chance("shock")))
 	check("każdy żywioł ma stan", el.AILMENTS.size() == 3)
+	# maksymalna odporność (rzadkie węzły drzewka): sufit rośnie z premią, ale najwyżej do 85%
+	stats.set_temp("t", {"fire_resistance": 1.0, "fire_max_resistance": 0.02, "cold_resistance": 1.0, "cold_max_resistance": 0.5})
+	check("+2% maksymalnej odporności", is_equal_approx(stats.resistance("fire"), 0.77), "%.2f" % stats.resistance("fire"))
+	check("sufit najwyżej 85%", is_equal_approx(stats.resistance("cold"), 0.85))
+	check("inne żywioły bez zmian", is_equal_approx(stats.max_resistance("lightning"), 0.75))
+	var tree = load("res://scripts/skill_tree.gd")
+	check("węzły maksymalnej odporności w drzewku", ["fire_max", "cold_max", "lightning_max", "nawia_max"].all(
+			func(id: String) -> bool: return tree.has_node(id) and not tree.is_soon(id)))
+	var rings: Array = tree.nodes().keys().filter(func(id: String) -> bool: return id.begins_with("ring_"))
+	check("autostrady w drzewku", rings.size() > 60, str(rings.size()))
 	stats.free()
 	print("WYNIK: ", "OK" if _fails == 0 else "%d bledow" % _fails)
 	quit()

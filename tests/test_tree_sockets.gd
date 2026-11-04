@@ -43,7 +43,7 @@ func _process(_d: float) -> bool:
 	var legend: Array = sockets.filter(func(id: String) -> bool: return Tree.nodes()[id].get("legendary", false))
 	var by_keystone: bool = legend.all(func(id: String) -> bool: return Tree.neighbors(id).any(
 			func(link: String) -> bool: return Tree.nodes()[link]["kind"] == "keystone"))
-	check("9 gniazd i 3 legendarne za węzłami kluczowymi", sockets.size() == 12 and legend.size() == 3 and by_keystone, str(sockets))
+	check("12 gniazd i 3 legendarne za węzłami kluczowymi", sockets.size() == 15 and legend.size() == 3 and by_keystone, str(sockets))
 	book.character_level = 60
 	# punkty umiejętności daje pasek umiejętności, nie poziom postaci
 	book.bonus_points += 60

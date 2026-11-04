@@ -17,8 +17,10 @@ const ELEMENTAL: Array[String] = [FIRE, COLD, LIGHTNING]
 const NAMES := {PHYSICAL: "Fizyczne", FIRE: "Ogień", COLD: "Lód", LIGHTNING: "Pioruny", NAWIA: "Nawia"}
 const COLORS := {PHYSICAL: Color(1.0, 0.35, 0.3), FIRE: Color(1.0, 0.55, 0.2), COLD: Color(0.55, 0.85, 1.0),
 		LIGHTNING: Color(1.0, 0.95, 0.45), NAWIA: Color(0.65, 0.95, 0.45)}
-## Najwyższa i najniższa odporność.
+## Najwyższa (bez premii) i najniższa odporność. Premie "<żywioł>_max_resistance" (rzadkie węzły drzewka, np. Serce
+## kuźni) podnoszą sufit, ale najwyżej do HARD_MAX_RESISTANCE (CharacterStats.max_resistance).
 const MAX_RESISTANCE := 0.75
+const HARD_MAX_RESISTANCE := 0.85
 const MIN_RESISTANCE := -1.0
 ## Ile ochrony pancerza działa na żywioły i Nawię (fizyczne - całość).
 const ARMOR_SHARE := 0.5

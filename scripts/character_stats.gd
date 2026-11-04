@@ -285,9 +285,14 @@ func taken_multiplier(element := Elements.PHYSICAL) -> float:
 
 
 ## Odporność na żywioł albo Nawię: premie z przedmiotów (żywioły także "all_resistances") minus kara w lochach Nawii,
-## w granicach Elements.MIN_RESISTANCE - MAX_RESISTANCE.
+## w granicach Elements.MIN_RESISTANCE - max_resistance.
 func resistance(element: String) -> float:
-	return clampf(raw_resistance(element), Elements.MIN_RESISTANCE, Elements.MAX_RESISTANCE)
+	return clampf(raw_resistance(element), Elements.MIN_RESISTANCE, max_resistance(element))
+
+
+## Sufit odporności: Elements.MAX_RESISTANCE plus premie "<żywioł>_max_resistance", najwyżej HARD_MAX_RESISTANCE.
+func max_resistance(element: String) -> float:
+	return minf(Elements.MAX_RESISTANCE + _bonus(element + "_max_resistance"), Elements.HARD_MAX_RESISTANCE)
 
 
 ## Odporność przed przycięciem do sufitu (do okna postaci - ile ponad sufit).

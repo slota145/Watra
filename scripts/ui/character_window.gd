@@ -216,7 +216,11 @@ func _refresh() -> void:
 	for element: String in Elements.RESISTED:
 		var value := s.resistance(element)
 		negative = negative or value < 0.0
-		lines.append("  %s: %d%%" % [Elements.name_of(element), roundi(value * 100.0)])
+		var cap := s.max_resistance(element)
+		if cap > Elements.MAX_RESISTANCE + 0.001:
+			lines.append(tr("  %s: %d%% (sufit %d%%)") % [Elements.name_of(element), roundi(value * 100.0), roundi(cap * 100.0)])
+		else:
+			lines.append("  %s: %d%%" % [Elements.name_of(element), roundi(value * 100.0)])
 	if Elements.penalty > 0.0:
 		lines.append(tr("Kara Mapy Nawii: -%d%%") % roundi(Elements.penalty * 100.0))
 	_resist_label.text = "\n".join(lines)

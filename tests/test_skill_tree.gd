@@ -110,7 +110,7 @@ func _check_data() -> void:
 				reached[other] = true
 				queue.append(other)
 	check("drzewko: połączenia i osiągalność", broken.is_empty() and reached.size() == nodes.size(), "%s %d/%d" % [broken, reached.size(), nodes.size()])
-	check("wspólne drzewko: 235 węzłów", nodes.size() == 235, "%d" % nodes.size())
+	check("wspólne drzewko: 373 węzły", nodes.size() == 373, "%d" % nodes.size())
 	var missing := []
 	for skill: String in Skills.DATA:
 		var node: String = Tree.node_for_skill(skill)
