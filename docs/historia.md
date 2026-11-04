@@ -265,6 +265,19 @@ odpowiedniej sekcji.
   ataku potwora i jego odporności (zielone - wrażliwość). Test `tests/test_elements.gd`. Pomiar (stopień 17, rzadki
   ekwipunek 90. poziomu z odpornościami na sufit, zabójstwa/s): księga (pioruny i lód) - Zatopione podziemia 3,7,
   Katakumby 2,6, Pajęcze korzenie 4,7; łuk 3,1-3,2; miecz 5,7-6,9 (obrażenia fizyczne - bez zmian).
+- [x] **Żywioły, etap 3**: żywioły w mechanikach lochów. Premie lochu (`Dungeons.added` - bożki, drzewko Watry i teraz
+  także modyfikatory za żar z kluczem "add"): `added_fire` / `added_cold` / `added_lightning` / `added_nawia` - każdy
+  cios potwora zadaje dodatkowo taką część obrażeń jako żywioł (`Elements.added`, liczone w `Player.take_damage`, każda
+  część osłabiana swoją odpornością), `elemental_curse` - niższe odporności gracza na żywioły (`Elements.curse`),
+  `monster_resistance` - potwory odporniejsze na żywioły i Nawię (`Elements.monster_bonus`); ustawia
+  `Elements.apply_dungeon` w `Dungeon.generate`. Nowe modyfikatory za żar (`Dungeons.MODIFIERS`): Pożoga (+30% ognia,
+  +30% złota i przedmiotów), Mróz (+30% lodu, +40% doświadczenia), Burza (+30% piorunów, lepsza rzadkość łupu), Klątwa
+  żywiołów (-25% odporności, łup +2 poziomu), Osłona żywiołów (potwory +30% odporności, +50% doświadczenia) - okno
+  lochów ma modyfikatory w dwóch kolumnach i przewijaną treść. Nowe bożki ryzyka (`Idols.KINDS`, ikony z
+  `tools/idol_art.py`): Pożogi, Szronu, Gromu (+20/30/40% obrażeń żywiołu za łup / doświadczenie / rzadkość) i Klątwy
+  (-15/20/30% odporności za poziom łupu). Elity Mroźny / Płonący / Wybuchowy / Burzowy biją swoim żywiołem i mają +50%
+  odporności na niego (`DungeonElite.TRAIT_ELEMENTS`). Pomiar (Zatopione podziemia, stopień 17, rzadki ekwipunek
+  z odpornościami na sufit, miecz): bez modyfikatorów otrzymuje 104/s, z Pożogą 136/s, z Pożogą, Mrozem i Burzą 207/s.
 
 ## Gobliński Las i Prastary Las (`scripts/world.gd`, `scripts/ancient_forest.gd`) (Do poprawy)
 - [x] Gobliński Las: więcej grupek goblinów w lesie i większe siedlisko wilków - około 450 potworów (było około 340);

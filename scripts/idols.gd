@@ -91,6 +91,19 @@ const KINDS := {
 	"packs": {"group": "monsters", "name": "Bożek Gromad", "weight": 1.0,
 			"description": "Ściąga do lochu dodatkowe gromady potworów.",
 			"add": {"packs": [3, 5, 5], "pack_elites": [0, 0, 1]}},
+	# żywioły (Elements, etap 3) - ryzyko za łup
+	"blaze": {"group": "risk", "name": "Bożek Pożogi", "weight": 0.7,
+			"description": "Każdy cios potworów parzy ogniem, ale łupu jest więcej.",
+			"add": {"added_fire": [0.2, 0.3, 0.4]}, "mult": {"loot": [1.2, 1.3, 1.4]}},
+	"rime": {"group": "risk", "name": "Bożek Szronu", "weight": 0.7,
+			"description": "Każdy cios potworów mrozi, ale doświadczenia jest więcej.",
+			"add": {"added_cold": [0.2, 0.3, 0.4]}, "mult": {"xp": [1.25, 1.4, 1.6]}},
+	"thunder": {"group": "risk", "name": "Bożek Gromu", "weight": 0.7,
+			"description": "Każdy cios potworów razi piorunem, ale łup bywa rzadszy i cenniejszy.",
+			"add": {"added_lightning": [0.2, 0.3, 0.4], "quality": [0.1, 0.15, 0.2]}},
+	"bane": {"group": "risk", "name": "Bożek Klątwy", "weight": 0.6,
+			"description": "Odbiera odporność na żywioły, ale łup z lochu ma wyższy poziom.",
+			"add": {"elemental_curse": [0.15, 0.2, 0.3], "item_level": [1, 2, 3]}},
 	"nawia": {"group": "monsters", "name": "Bożek Nawii", "weight": 0.8,
 			"description": "Polegli nie zaznają spokoju - wstają jako upiory.",
 			"add": {"nawia": [0.1, 0.2, 0.3]}},
@@ -127,7 +140,7 @@ const KINDS := {
 }
 const KIND_ORDER: Array[String] = ["chests", "shrine", "crystal", "elites", "uroczysko", "zertwa", "skarbnik",
 		"horde", "fury", "packs", "nawia", "gold", "items", "runes", "gems", "cutter", "legends", "herbs", "wood", "stone",
-		"ore", "pride", "gloom", "guardian", "echo", "ember", "hosts", "lords"]
+		"ore", "pride", "gloom", "blaze", "rime", "thunder", "bane", "guardian", "echo", "ember", "hosts", "lords"]
 ## Grupy w kolejności pokazywania i ich nazwy.
 const GROUP_NAMES := {"mechanic": "Bożek mechaniki", "monsters": "Bożek potworów", "loot": "Bożek łupu",
 		"risk": "Bożek ryzyka", "special": "Bożek przemiany", "ancient": "Bożek prastary"}
@@ -160,10 +173,17 @@ const EFFECT_TEXTS := {
 	"ember_cost": "Modyfikatory za żar: -%d%% kosztu",
 	"all_elite": "Wszystkie potwory to elity",
 	"lords": "W każdej komnacie boss krainy",
+	"added_fire": "Potwory zadają dodatkowo %d%% obrażeń od ognia",
+	"added_cold": "Potwory zadają dodatkowo %d%% obrażeń od lodu",
+	"added_lightning": "Potwory zadają dodatkowo %d%% obrażeń od piorunów",
+	"added_nawia": "Potwory zadają dodatkowo %d%% obrażeń od Nawii",
+	"elemental_curse": "Odporności na żywioły: -%d%%",
+	"monster_resistance": "Potwory: +%d%% odporności na żywioły",
 }
 ## Klucze bez liczby w opisie, procentowe dodawane i mnożniki pokazywane jako ubytek ("-N%").
 const FLAG_KEYS: Array[String] = ["pack_elites", "all_elite", "lords"]
-const PERCENT_ADDS: Array[String] = ["quality", "nawia", "herbs", "res_wood", "res_stone", "res_ore", "gem_cut"]
+const PERCENT_ADDS: Array[String] = ["quality", "nawia", "herbs", "res_wood", "res_stone", "res_ore", "gem_cut",
+		"added_fire", "added_cold", "added_lightning", "added_nawia", "elemental_curse", "monster_resistance"]
 const REDUCING_MULTS: Array[String] = ["ember_cost"]
 ## Opisy wzmocnionej mechaniki (legendarny bożek mechaniki).
 const POWER_TEXTS := {

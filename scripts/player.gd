@@ -900,7 +900,11 @@ func take_damage(amount: int, from_position: Vector2, element := Elements.PHYSIC
 	# Riposta: zasłona przyjmuje cios i odpowiada kontrą
 	if sword_skills.try_parry(from_position):
 		return
+	# żywioły lochu (Elements.added): cios niesie też dodatkowe obrażenia od żywiołów, każde osłabia jego odporność
+	var raw := amount
 	amount = stats.reduce_damage(amount, element)
+	for extra: String in Elements.added:
+		amount += roundi(raw * float(Elements.added[extra]) * stats.taken_multiplier(extra))
 	# Tarcza Many: część ciosu (albo cały) zabiera mana
 	amount = spell_skills.absorb(amount)
 	if amount <= 0:
@@ -2257,7 +2261,7 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 	# żywioł trafienia (wg odgłosu): odporność albo wrażliwość potwora, zmniejszona przebiciem odporności
 	var element: String = Elements.SOUND_ELEMENTS.get(sound, Elements.PHYSICAL)
 	if element != Elements.PHYSICAL:
-		amount = maxi(1, roundi(amount * Elements.hit_multiplier(float(enemy.resistances.get(element, 0.0)), stats.penetration())))
+		amount = maxi(1, roundi(amount * Elements.hit_multiplier(float(enemy.resistances.get(element, 0.0)) + Elements.monster_bonus, stats.penetration())))
 	amount += legendary.execute_bonus(enemy)
 	var bow := stats.weapon_type() == "bow"
 	if bow:

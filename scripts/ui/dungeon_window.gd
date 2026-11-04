@@ -30,17 +30,29 @@ var _climate_row: HBoxContainer
 var _tier_arrows: Array[Button] = []
 ## Węzeł Mapy Nawii, do którego prowadzi wyprawa (-1 - zwykły loch).
 var _nawia_node := -1
+## Przewijana środkowa część okna i jej treść (_fit_scroll).
+var _scroll: ScrollContainer
+var _content: VBoxContainer
 
 
 func _ready() -> void:
 	visible = false
 	theme = UiStyle.make_theme()
 	add_theme_stylebox_override("panel", UiStyle.panel(Color(0.12, 0.07, 0.05, 0.98), Color(0.85, 0.45, 0.18), 6))
+	var outer := VBoxContainer.new()
+	outer.add_theme_constant_override("separation", 4)
+	add_child(outer)
+	_title = UiStyle.title(Lang.t("Lochy w płomieniach Watry"))
+	outer.add_child(_title)
+	# treść przewijana, gdy okno nie mieści się na ekranie - tytuł i przyciski wejścia zawsze widać
+	_scroll = ScrollContainer.new()
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	outer.add_child(_scroll)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
-	add_child(box)
-	_title = UiStyle.title(Lang.t("Lochy w płomieniach Watry"))
-	box.add_child(_title)
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_scroll.add_child(box)
+	_content = box
 	box.add_child(_wrapped(Lang.t("Wkrocz w płomienie i zejdź do lochu. W najdalszej komnacie czeka strażnik ze skarbcem; płomienie wyprowadzą cię z powrotem do Ostoi."), UiStyle.DIM_COLOR))
 
 	var climates := HBoxContainer.new()
@@ -74,14 +86,22 @@ func _ready() -> void:
 
 	box.add_child(HSeparator.new())
 	box.add_child(_header(Lang.t("Ofiara z żaru (modyfikatory)")))
+	# modyfikatory w dwóch kolumnach (opisy zawijane) - lista mieści się w oknie także po dodaniu żywiołów
+	var mods_grid := GridContainer.new()
+	mods_grid.columns = 2
+	mods_grid.add_theme_constant_override("h_separation", 8)
+	mods_grid.add_theme_constant_override("v_separation", 0)
+	box.add_child(mods_grid)
 	for id in Dungeons.MODIFIER_ORDER:
 		var check := CheckBox.new()
 		check.focus_mode = Control.FOCUS_NONE
+		check.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		check.custom_minimum_size.x = 210
 		check.add_theme_font_size_override("font_size", 7)
 		check.add_theme_icon_override("unchecked", _empty_box(Color(0.85, 0.7, 0.55)))
 		check.add_theme_icon_override("unchecked_disabled", _empty_box(Color(0.45, 0.4, 0.38)))
 		check.toggled.connect(_toggle_mod.bind(id))
-		box.add_child(check)
+		mods_grid.add_child(check)
 		_mod_boxes[id] = check
 
 	box.add_child(HSeparator.new())
@@ -116,7 +136,7 @@ func _ready() -> void:
 	bottom.add_child(_button(Lang.t("Wróć"), func() -> void:
 		visible = false
 		Sfx.play("ui_close")))
-	box.add_child(bottom)
+	outer.add_child(bottom)
 
 
 func setup(player: Player) -> void:
@@ -156,6 +176,9 @@ func _set_node_mode(on: bool) -> void:
 
 
 func _center() -> void:
+	# przewijana część: cała treść, ale nie wyżej, niż zmieści się na ekranie nad paskiem ikon (z tytułem i przyciskami)
+	var content := _content.get_combined_minimum_size()
+	_scroll.custom_minimum_size = Vector2(content.x + 8.0, minf(content.y, get_viewport_rect().size.y - 110.0))
 	reset_size()
 	position = ((get_viewport_rect().size - size) / 2.0).floor().max(Vector2.ZERO)
 	Sfx.play("ui_open")

@@ -209,17 +209,14 @@ func taken_multiplier(element := Elements.PHYSICAL) -> float:
 ## Odporność na żywioł albo Nawię: premie z przedmiotów (żywioły także "all_resistances") minus kara w lochach Nawii,
 ## w granicach Elements.MIN_RESISTANCE - MAX_RESISTANCE.
 func resistance(element: String) -> float:
-	var total := _bonus(element + "_resistance") - Elements.penalty
-	if element in Elements.ELEMENTAL:
-		total += _bonus("all_resistances")
-	return clampf(total, Elements.MIN_RESISTANCE, Elements.MAX_RESISTANCE)
+	return clampf(raw_resistance(element), Elements.MIN_RESISTANCE, Elements.MAX_RESISTANCE)
 
 
 ## Odporność przed przycięciem do sufitu (do okna postaci - ile ponad sufit).
 func raw_resistance(element: String) -> float:
 	var total := _bonus(element + "_resistance") - Elements.penalty
 	if element in Elements.ELEMENTAL:
-		total += _bonus("all_resistances")
+		total += _bonus("all_resistances") - Elements.curse
 	return total
 
 

@@ -153,8 +153,8 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
 - **Żywioły:** rodzaje obrażeń zadawanych graczowi (fizyczne, ogień, lód, pioruny, Nawia - `scripts/elements.gd`),
   odporności gracza z przedmiotów (`CharacterStats.resistance`, sufit 75%), kara odporności na Mapie Nawii (`Elements.penalty`),
   żywioł ataku potwora wg sceny (`Elements.MONSTERS`, `Goblin.element`), odporności i wrażliwości potworów
-  (`Elements.MONSTER_RESIST`, `Goblin.resistances`), premie obrażeń żywiołów i przebicie odporności. Etap 3 (żywioły
-  w modyfikatorach lochów, bożkach i elitach) - do zrobienia.
+  (`Elements.MONSTER_RESIST`, `Goblin.resistances`), premie obrażeń żywiołów i przebicie odporności, żywioły
+  w modyfikatorach lochów, bożkach i elitach (`Elements.apply_dungeon`, `Elements.added`).
 - **Walka i postać:** drzewka broni - miecz, łuk, księga magii (`skill_tree.gd`, `sword_skills.gd`, `bow_skills.gd`,
   `spell_skills.gd`, okno K), tagi umiejętności (`Skills.TAGS`) i atrybuty dające % obrażeń umiejętnościom z ich tagiem
   (`CharacterStats.attribute_damage`), combo (`Skills.COMBOS`), paski szybkiego wyboru (`hotbar.gd`), ikony efektów (`status_effects.gd`);
