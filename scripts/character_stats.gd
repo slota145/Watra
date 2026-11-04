@@ -32,6 +32,9 @@ const SPEED_CAP := 1.5
 const DAMAGE_ATTRIBUTE := {"melee": "strength", "bow": "dexterity", "spell": "intelligence"}
 ## Każdy punkt atrybutu z tagu umiejętności (Skills.TAGS: siła, zręczność, inteligencja) daje tyle obrażeń (+1%).
 const DAMAGE_PER_ATTRIBUTE := 0.01
+## Premie do obrażeń umiejętności z tagiem formy (Skills.TAGS) i najwyższa szansa na stan od żywiołu.
+const FORM_DAMAGE := {"projectile": "projectile_damage", "hit": "hit_damage", "area": "area_damage", "dot": "dot_damage"}
+const MAX_AILMENT_CHANCE := 0.5
 ## Mnożnik wszystkich obrażeń według rodzaju broni: łuk i księga trzymają wrogów na dystansie (bezpieczniej), ale bez
 ## tego zabijały o połowę wolniej niż miecz (tests/endgame_probe.gd, tryby bow_kite / spell_kite, listopad 2026).
 const WEAPON_DAMAGE := {"melee": 1.0, "bow": 1.25, "spell": 1.25}
@@ -161,7 +164,21 @@ func kind_multiplier(tags: Array) -> float:
 			elemental = true
 	if elemental:
 		total += _bonus("elemental_damage")
+	# forma umiejętności (krok 3 dopieszczenia walki): pociski, ciosy, obszar, obrażenia w czasie
+	for tag: String in FORM_DAMAGE:
+		if tag in tags:
+			total += _bonus(FORM_DAMAGE[tag])
 	return total
+
+
+## Szansa na stan od żywiołu (Elements.AILMENTS: ignite / freeze / shock), najwyżej MAX_AILMENT_CHANCE.
+func ailment_chance(ailment: String) -> float:
+	return minf(_bonus(ailment + "_chance"), MAX_AILMENT_CHANCE)
+
+
+## Premia do obrażeń w czasie (także podpalenia).
+func dot_bonus() -> float:
+	return _bonus("dot_damage")
 
 
 ## Przebicie odporności potworów (ułamek odejmowany od ich odporności na żywioły).

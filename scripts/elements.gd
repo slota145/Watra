@@ -71,6 +71,18 @@ const MONSTER_RESIST := {
 const SOUND_ELEMENTS := {"fire": FIRE, "ice": COLD, "lightning": LIGHTNING}
 ## Premia do obrażeń umiejętności z tagiem żywiołu (Skills.TAGS) - "elemental_damage" działa na wszystkie trzy.
 const TAG_DAMAGE := {"fire": "fire_damage", "ice": "cold_damage", "lightning": "lightning_damage"}
+## Stany od żywiołów (krok 3 dopieszczenia walki): szansa z premii "<stan>_chance" przy trafieniu swoim żywiołem.
+## Podpalenie - IGNITE_DAMAGE obrażeń trafienia w ciągu IGNITE_TIME s (premia "obrażenia w czasie" je zwiększa),
+## zamrożenie - wróg stoi FREEZE_TIME s (bossowie krócej, Goblin.stun), porażenie - wróg dostaje od gracza o SHOCK_BONUS
+## więcej obrażeń przez SHOCK_TIME s. Stan, który już trwa, nie odpala się drugi raz.
+const AILMENTS := {FIRE: "ignite", COLD: "freeze", LIGHTNING: "shock"}
+const AILMENT_NAMES := {"ignite": "Podpalenie", "freeze": "Zamrożenie", "shock": "Porażenie"}
+const IGNITE_DAMAGE := 0.8
+const IGNITE_TIME := 3.0
+const IGNITE_TICK := 0.5
+const FREEZE_TIME := 0.8
+const SHOCK_BONUS := 0.2
+const SHOCK_TIME := 4.0
 ## Najwyższa odporność potwora po przebiciu (ułamek) - pełnej odporności nie ma nigdy.
 const MAX_MONSTER_RESISTANCE := 0.9
 

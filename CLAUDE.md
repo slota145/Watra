@@ -247,8 +247,9 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   2. tagi umiejętności - zrobione razem z 2b (szukaj „Tagi umiejętności i atrybuty” w `docs/historia.md`):
      `Skills.TAGS` w 4 grupach (rodzaj, forma, obrażenia z „tajemnymi”, atrybut), ikonki z `tools/tag_icons.py`
      w oknie K i na paskach;
-  3. **nowe premie (afiksy)** na tagach: obrażenia żywiołów, pocisków / ciosów / obszarowe, w czasie, szanse na
-     podpalenie / zamrożenie / porażenie, obszar, przebicie odporności;
+  3. nowe premie na tagach - zrobione (szukaj „Krok 3 dopieszczenia walki” i „Żywioły, etap 2” w `docs/historia.md`):
+     obrażenia żywiołów, pocisków / ciosów / obszarowe, w czasie, szanse na podpalenie / zamrożenie / porażenie,
+     przebicie odporności. Czeka na ocenę autora;
   2b. statystyki jak w Last Epoch - zrobione: +1% obrażeń za punkt atrybutu z tagu (zamiast płaskiego +1), siła -
      redukcja, zręczność - unik 0,4% za punkt (malejące zyski, do 35%), inteligencja - mana, witalność - zdrowie;
      szybkość tylko z broni, przedmiotów i drzewek, umiejętności liczą prędkość broni; darmowy reset w starych zapisach.
