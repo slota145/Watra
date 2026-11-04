@@ -1449,6 +1449,51 @@ odpowiedniej sekcji.
     `Player._update_eternal_herbs`); **Pas Łowcy Dusz** (Czarnobóg, `soul_hunter`) - zabita elita oddaje cechy na 20 s
     (`Boons.souls`, `Boons.SOUL_STATS` - każda cecha elity to premia gracza; ikony pod paskami).
   - Encyklopedia: bogowie jako bossowie „świata”. Test: `tests/test_pinnacles.gd`.
+- [x] **Nowe drzewko lochów - drzewko Watry od nowa** (krok 6 z `docs/plan_drzewek.md`, listopad 2026). Ustalenia
+  z autorem: skupiska węzłów każdej mechaniki **porozrzucane po całym drzewku** (gracz szuka najlepszej drogi przez cudze
+  skupiska, nie idzie jedną gałęzią), między nimi ścieżki małych neutralnych węzłów, dużo węzłów (~500), węzły zmieniające
+  mechaniki, szansa na podwójną mechanikę, węzły kluczowe z ceną, zwrot punktów Watry, 3 zakładki zostają.
+  - `scripts/watra_tree.gd` (`WatraTree.VERSION` = 2): 505 węzłów. 12 tematów (`SECTORS` - 8 mechanik i Splot mechanik,
+    Łup i skarbiec, Bożki, Błogosławieństwo Watry), każdy ma 4 skupiska (`CLUSTER_GROUPS` "a"-"d": 6 małych węzłów
+    w kółku, węzeł znaczący w środku) w 3 pierścieniach (`CLUSTER_RINGS`, rozrzut `CLUSTER_SPREAD` / `CLUSTER_STEP` -
+    skupiska jednego tematu co ok. 90 stopni), za skupiskiem "d" węzeł kluczowy. Watrę otacza pierścień Iskier
+    (`INNER_*`), skupiska łączą ścieżki neutralnych węzłów (`_path`, `PATH_EFFECTS` - łup, doświadczenie, liczba
+    potworów "count", złoto, rzadkość, skarbiec). Droga do dalekiego skupiska to ok. 15-25 punktów.
+  - Mechaniki: "a" - waga (`MECH_WEIGHT_A`) i węzeł „podwójna mechanika” (`dup:<mechanika>`, `MECH_DUP` 30% -
+    `Dungeon.dup_extra`: drugie Uroczysko / Krąg Żertwy / Skarbnik, więcej skrzyń, kapliczek, elit); "b"-"d" - moc
+    (`MECH_POWER`) i węzły zmieniające (`MECHANIC_NOTABLES`, czytane przez `Dungeon.tree_value`):
+    - Skrzynie: mimik (`chest_mimic` - skrzynia ożywa jako elita, potrójny łup, `DungeonChest._wake_mimic`), Skrzynie
+      Bogów (`chest_special` - rodzaje "idols", "runes", "talismans" w `Dungeons.CHEST_KINDS`), częstsze cechy;
+    - Kapliczki: dar do końca lochu (`shrine_long`, `Boons.end_dungeon_gifts` przy wczytaniu świata poza lochem), dary
+      naraz (`shrine_stack` - grupy "shrine_2"…), silniejsze dary (`shrine_power` - "power" w `Boons.active`);
+      `Boons.grant(id, time, power, stack, dungeon_only)`;
+    - Elity: Bożkowe Piętno (+1 cecha, pewny bożek), Czempion (wszystkie grupy cech, 2x zdrowie, pewna legenda -
+      `DungeonElite.make_champion`), więcej łupu z elit; `Dungeons.roll_elite_traits(rng, extra)`;
+    - Kryształ Watry: dodatkowa fala (`WatraCrystal.waves`, nagroda +25%), więcej kamieni zaklinania, leczenie gracza
+      w pobliżu (`HEAL_*`), zdrowie kryształu i górników;
+    - Uroczysko: elitarne zjawy z runą, Strażnik Kręgu (krąg nie maleje przy menhirze - `HOLD_RADIUS`), Upiorny Książę
+      (gasnący krąg wypuszcza Księcia i trwa do jego śmierci, 3 runy - `PRINCE_*`);
+    - Krąg Żertwy: 4 talizmany do wyboru, podwójna danina z elit, talizman z dwoma efektami (`Talismans.roll(…, dual)`,
+      "effect2" w przedmiocie - działa w `Equipment._effect_power`, opis w `Items` i oknie talizmanów);
+    - Skarbnik: darmowe przelosowanie (`Skarbnik.free_rerolls`), kolejny Skarbnik po wygranej (`Dungeon.add_extra_skarbnik`),
+      częstsze Kości;
+    - Mgła Nawii: Rwąca Mgła (`mist_fast` - dwa razy szybciej, `Dungeons.mist_rules`), Żyła Krzesiw, Zimna Pamięć,
+      Kamienie z Mgły, Bezdenna Mgła (dawne przedłużenie gałęzi Mgły).
+  - Węzły kluczowe: mechanika w każdym lochu i **żadnej innej losowej** (`forced:` + `only:` - `Dungeons.roll_mechanics`),
+    +25% mocy; ogólne z ceną: Wielki Splot (zawsze 2. mechanika, -25% mocy wszystkich - `all_power`), Skarb Strażnika
+    (skarbiec x2, +2 runy, -20% łupu z potworów), Prastary Panteon (rzadsze, ale lepsze bożki), Żywy Płomień
+    (Błogosławieństwo +25%, -10% łupu w lochach). Nowe premie: `extra4` (czwarta mechanika), `idol_keep` (bożek może się
+    nie zużyć - `DungeonWindow`), ujemne premie w opisach (`NEGATIVE_TEXTS`).
+  - Zwrot punktów: zapis bez `"watra_tree"` w `Boons` (wersja starsza niż `WatraTree.VERSION`) - wszystkie zakładki
+    czyszczone, `Boons.tree_refunded` pokazuje komunikat w oknie drzewka; `WatraTree.effects_from_save` nie daje premii
+    ze starego zapisu.
+  - Okno (`scripts/ui/watra_tree_window.gd`): całe drzewko na start (przybliżenie 0,5), tło skupisk w kolorze tematu,
+    nazwy przy węzłach kluczowych; temat węzła pod myszą (albo zaznaczonego) podświetla wszystkie swoje skupiska.
+    Zrzut: `SCRIPT=tools/watra_tree_shot.gd tools/screenshot.sh /tmp/watra`.
+  - Testy: `tests/test_watra_tree.gd` (układ, rozrzut skupisk, droga przez cudze skupiska, premie, zwrot punktów, okno),
+    nowy `tests/test_watra_mechanics.gd` (każdy węzeł zmieniający mechanikę w prawdziwym lochu), `tests/test_mist.gd`.
+  - Do ustalenia po ograniu: liczby (premie małych węzłów, `MECH_*`, ceny węzłów kluczowych), czy punktów Watry nie
+    jest za mało na tak duże drzewko (dziś ok. 104 z całej mapy i bossów), czy skupiska mają mieć ikony z PixelLab.
 - [x] **Mapa Nawii, etap 3 - drzewko Watry** (listopad 2026). Ustalenia z autorem: siatka jak drzewko atlasu w PoE,
   więcej węzłów niż punktów z całej mapy (trzeba wybierać), wzmacnia mechaniki lochów, bożki, łup i Błogosławieństwo
   Watry; **3 zakładki** z osobnymi, pełnymi pulami punktów (3 wyspecjalizowane ustawienia), działa wybrana, zmiana za

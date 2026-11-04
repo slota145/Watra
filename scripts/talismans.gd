@@ -63,8 +63,9 @@ static func size_of(id: String) -> Vector2i:
 
 
 ## Nowy talizman: `quality` - "magic" albo "rare" (rzadki ma efekt warunkowy - "" losuje), `shape` - kształt
-## ("" - losowy wg wag); poziom przedmiotu wyznacza okno tierów premii.
-static func roll(item_level: int, quality := "magic", shape := "", rng: RandomNumberGenerator = null) -> String:
+## ("" - losowy wg wag); poziom przedmiotu wyznacza okno tierów premii. `dual` - rzadki ma drugi, inny efekt
+## ("effect2"; drzewko Watry, „Dwoisty Talizman”).
+static func roll(item_level: int, quality := "magic", shape := "", rng: RandomNumberGenerator = null, dual := false) -> String:
 	if rng == null:
 		rng = RandomNumberGenerator.new()
 		rng.randomize()
@@ -97,6 +98,11 @@ static func roll(item_level: int, quality := "magic", shape := "", rng: RandomNu
 		var kind: String = kinds[rng.randi() % kinds.size()]
 		var span: Array = EFFECTS[kind]
 		recipe["effect"] = {"kind": kind, "value": snappedf(rng.randf_range(span[0], span[1]) * power, 0.001)}
+		if dual:
+			kinds.erase(kind)
+			var second: String = kinds[rng.randi() % kinds.size()]
+			var range2: Array = EFFECTS[second]
+			recipe["effect2"] = {"kind": second, "value": snappedf(rng.randf_range(range2[0], range2[1]) * power, 0.001)}
 	return register(recipe)
 
 
@@ -148,6 +154,10 @@ static func register(recipe: Dictionary, id := "") -> String:
 	if not effect.is_empty() and EFFECTS.has(effect.get("kind", "")):
 		effect["value"] = float(effect["value"])
 		item["effect"] = {"kind": effect["kind"], "chance": effect["value"], "per_level": 0.0}
+	var effect2: Dictionary = recipe.get("effect2", {})
+	if item.has("effect") and not effect2.is_empty() and EFFECTS.has(effect2.get("kind", "")):
+		effect2["value"] = float(effect2["value"])
+		item["effect2"] = {"kind": effect2["kind"], "chance": effect2["value"], "per_level": 0.0}
 	Items.generated[id] = item
 	return id
 
@@ -167,7 +177,8 @@ static func icon_of(shape: String, quality: String) -> Texture2D:
 
 ## Oferta Kręgu Żertwy: `count` różnych talizmanów; `bonus` 0..1 (danina ponad próg) podnosi szansę na rzadkie
 ## i większe kształty. Pierwszy talizman w ofercie zawsze jest co najmniej podłużny albo szeroki.
-static func roll_offer(item_level: int, bonus: float, count := 3, rng: RandomNumberGenerator = null) -> Array[String]:
+## `dual` - szansa, że rzadki talizman ma dwa efekty (drzewko Watry).
+static func roll_offer(item_level: int, bonus: float, count := 3, rng: RandomNumberGenerator = null, dual := 0.0) -> Array[String]:
 	if rng == null:
 		rng = RandomNumberGenerator.new()
 		rng.randomize()
@@ -181,5 +192,5 @@ static func roll_offer(item_level: int, bonus: float, count := 3, rng: RandomNum
 			shape = "large"
 		elif i == 0:
 			shape = ["long", "wide"][rng.randi() % 2]
-		result.append(roll(item_level, quality, shape, rng))
+		result.append(roll(item_level, quality, shape, rng, quality == "rare" and dual > 0.0 and rng.randf() < dual))
 	return result

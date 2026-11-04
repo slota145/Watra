@@ -130,7 +130,9 @@ Wspólne okno: drzewko umiejętności i drzewko lochów mogą używać tego same
    zręczności i inteligencji, strefy pośrednie i przywołania (szukaj „Krok 5 wspólnego drzewka, strona siły”, „…, strona
    zręczności”, „…, strona inteligencji”, „…, strefy pośrednie” i „…, przywołania” w `docs/historia.md`) - w drzewku
    nie ma już pustych miejsc.
-6. Nowe drzewko lochów (od nowa, zwrot punktów Watry).
+6. Nowe drzewko lochów (od nowa, zwrot punktów Watry). **Zrobione** (szukaj „Nowe drzewko lochów” w `docs/historia.md`):
+   ok. 500 węzłów, 4 skupiska na mechanikę porozrzucane po drzewku, ścieżki neutralnych węzłów, węzły zmieniające
+   mechaniki (wszystkie pomysły z tabeli w punkcie 4), podwójne mechaniki, węzły kluczowe z ceną.
 7. Przebudzenia do wyboru (bez klas).
 
 ## Do dopytania przy kolejnych krokach

@@ -7,6 +7,8 @@ extends Harvestable
 ## od razu i trafia do księgi jako zagrożona (SkarbnikOffer.persist), a z kilku stron (bramy) nadciągają fale potworów
 ## klimatu lochu. Po ostatniej fali oferta jest zabezpieczona i czeka u następnego Skarbnika (Skarbnik znika, zostają
 ## Kości Skarbnika). Śmierć gracza albo wyjście z lochu w trakcie fal - oferta przepada.
+## Drzewko Watry (Dungeon.tree_value): "ska_reroll" - darmowe przelosowania w lochu (bez Kości), "ska_again" - po
+## wygranych falach szansa na kolejnego Skarbnika w wolnej komnacie, "ska_bones" - Kości wypadają częściej.
 ## Budowane w kodzie (Skarbnik.create), bez sceny.
 
 const TEXTURE := preload("res://assets/crystal/miner_down.png")
@@ -154,10 +156,22 @@ func strengthen() -> void:
 	_start_waves(count, int(offer["step"]))
 
 
-## Przelosuj: za Kości Skarbnika - nowe rodzaje premii, kamieni i run; fale bez wzrostu siły.
+## Darmowe przelosowania z drzewka Watry, które zostały w tym lochu (wspólne dla wszystkich Skarbników lochu).
+func free_rerolls() -> int:
+	if dungeon == null:
+		return 0
+	return int(dungeon.get_meta("ska_free_rerolls", roundi(dungeon.tree_value("ska_reroll"))))
+
+
+## Przelosuj: za Kości Skarbnika (albo darmowe przelosowanie z drzewka Watry) - nowe rodzaje premii, kamieni i run;
+## fale bez wzrostu siły.
 func reroll() -> bool:
 	var player := _player()
-	if state != "idle" or player == null or not player.inventory.remove_item(Dungeons.SKA_BONES, 1):
+	if state != "idle" or player == null:
+		return false
+	if free_rerolls() > 0:
+		dungeon.set_meta("ska_free_rerolls", free_rerolls() - 1)
+	elif not player.inventory.remove_item(Dungeons.SKA_BONES, 1):
 		return false
 	var count := SkarbnikOffer.waves_for(current_offer(), true)
 	SkarbnikOffer.reroll(offer, _rng)
@@ -299,7 +313,7 @@ func _on_goblin_died(goblin: Goblin) -> void:
 	if state != "waves" or not goblin.has_meta("skarbnik"):
 		return
 	kills += 1
-	if _rng.randf() < Dungeons.SKA_BONES_CHANCE:
+	if _rng.randf() < Dungeons.SKA_BONES_CHANCE * (1.0 + dungeon.tree_value("ska_bones")):
 		dungeon._drop(goblin.global_position, Dungeons.SKA_BONES, 1)
 	_update_label()
 
@@ -313,6 +327,10 @@ func _win() -> void:
 		player.skarbnik_offer = offer
 	if dungeon != null:
 		dungeon._drop(global_position + Vector2(0, 18), Dungeons.SKA_BONES, 1)
+		# drzewko Watry („Chciwość Skarbnika”): kolejny Skarbnik w wolnej komnacie
+		if dungeon.tree_value("ska_again") > 0.0 and _rng.randf() < dungeon.tree_value("ska_again"):
+			if dungeon.add_extra_skarbnik() != null:
+				dungeon.w.hud.show_banner.call_deferred(Lang.t("W lochu czeka kolejny Skarbnik!"), COLOR)
 	Sfx.play("quest_ready")
 	_vanish(Lang.t("Fale odparte!\nOferta czeka u następnego Skarbnika"))
 

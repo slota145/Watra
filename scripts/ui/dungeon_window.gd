@@ -341,9 +341,14 @@ func _on_enter() -> void:
 		return
 	if not _player.boons.spend_ember(cost):
 		return
-	for id in idols:
-		_player.inventory.remove_item(id, 1)
+	# drzewko Watry („Wieczny Bożek”): bożek może się nie zużyć - zostaje w slocie na następną wyprawę
+	var keep := WatraTree.value(_player.boons.tree_effects(), "idol_keep")
 	for i in _idols.size():
+		if _idols[i] == "":
+			continue
+		if keep > 0.0 and randf() < keep:
+			continue
+		_player.inventory.remove_item(_idols[i], 1)
 		_idols[i] = ""
 	visible = false
 	var settings := Dungeons.config(_climate, _tier, _mods, randi(), idols)

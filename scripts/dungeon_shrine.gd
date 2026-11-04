@@ -3,10 +3,14 @@ extends Harvestable
 ## Kapliczka w lochu (mechanika "shrine", Dungeons.SHRINES): omszały kamień z runą bóstwa. Krótka modlitwa
 ## (klawisz F) daje krótki, bardzo mocny dar (Boons, grupa "shrine", 60 s) - np. Moc Peruna (+50% obrażeń)
 ## albo Hojność Dadźboga (dwa razy więcej łupu). Każda kapliczka działa raz; dar z nowej zastępuje poprzedni.
+## Drzewko Watry (Dungeon.tree_value): "shrine_long" - dar do końca lochu (LONG_TIME, gaśnie po wyjściu - Boons.end_dungeon_gifts),
+## "shrine_stack" - nowy dar nie zabiera poprzedniego, "shrine_power" - dary silniejsze.
 ## Budowana w kodzie (DungeonShrine.create), bez sceny.
 
 const TEXTURE := preload("res://assets/ancient/v2_shrine.png")
 const PRAY_TIME := 0.8
+## Dar „do końca lochu” (drzewko Watry) - tyle sekund, ale gaśnie razem z wyjściem z lochu.
+const LONG_TIME := 7200.0
 const SCALE := 1.5
 ## Kolor runy i poświaty wg daru.
 const COLORS := {"shrine_might": Color(1.0, 0.45, 0.3), "shrine_ward": Color(0.45, 1.0, 0.5), "shrine_haste": Color(0.75, 1.0, 1.0),
@@ -74,7 +78,9 @@ func harvest(_from: Vector2) -> void:
 	used = true
 	set_progress(0.0)
 	var player: Player = dungeon.w.player
-	player.boons.grant(gift)
+	var long_gift: bool = dungeon.tree_value("shrine_long") > 0.0
+	player.boons.grant(gift, LONG_TIME if long_gift else -1.0, 1.0 + dungeon.tree_value("shrine_power"),
+			dungeon.tree_value("shrine_stack") > 0.0, long_gift)
 	sprite.modulate = Color(0.55, 0.55, 0.6)
 	_label.visible = false
 	if glow != null:

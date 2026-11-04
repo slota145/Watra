@@ -8,6 +8,9 @@ extends Harvestable
 ## krąg i zbiera więcej run. Gdy krąg zmaleje do URO_END, gaśnie: upiory rozwiewają się, a menhir sypie runy
 ## (ItemCraft.RUNES) - tym więcej, im więcej upiorów padło. Co URO_LORD_EVERY zabitych z kręgu wychodzi Upiorny Pan
 ## (większy i mocniejszy, zawsze zostawia runę); zwykły upiór czasem upuszcza runę sam.
+## Drzewko Watry (Dungeon.tree_value) zmienia krąg: "uro_elites" - część upiorów to elity z cechami (każda upuszcza
+## runę), "uro_hold" - krąg nie maleje, gdy gracz stoi przy menhirze, "uro_prince" - zamiast zgasnąć, krąg wypuszcza
+## Upiornego Księcia (PRINCE_*) i trwa do jego śmierci.
 ## Budowane w kodzie (Uroczysko.create), bez sceny.
 
 const TEXTURE := preload("res://assets/ancient/menhir_1.png")
@@ -19,6 +22,13 @@ const SHADER := preload("res://shaders/ghost.gdshader")
 const RING_SHADER := preload("res://shaders/uroczysko.gdshader")
 ## Co tyle sekund upiory są przytrzymywane w kręgu (i liczone na nowo).
 const KEEP_EVERY := 0.1
+## Drzewko Watry („Strażnik Kręgu”): krąg nie maleje, gdy gracz jest tak blisko menhiru.
+const HOLD_RADIUS := 60.0
+## Drzewko Watry („Upiorny Książę”): krąg na czas walki z Księciem, jego zdrowie (razy Upiorny Pan), wielkość i runy.
+const PRINCE_RADIUS := 90.0
+const PRINCE_HEALTH := 3.0
+const PRINCE_SCALE := 1.25
+const PRINCE_RUNES := 3
 
 var dungeon: Node
 ## "idle" - czeka na dotknięcie, "open" - krąg otwarty, "closed" - po wszystkim.
@@ -34,6 +44,9 @@ var _elapsed := 0.0
 var _spawn_timer := 0.0
 var _keep_timer := 0.0
 var _lords_due := 0
+## Upiorny Książę (drzewko Watry) - null, póki nie wyszedł; `_prince_done` - już był.
+var _prince: Goblin
+var _prince_done := false
 var _ring: Sprite2D
 var _ring_mat: ShaderMaterial
 var _label: Label
@@ -148,11 +161,14 @@ func _process(delta: float) -> void:
 	if state != "open":
 		return
 	_elapsed += delta
-	if _elapsed > Dungeons.URO_GRACE:
+	if _prince != null and not is_instance_valid(_prince):
+		_prince = null
+	if _elapsed > Dungeons.URO_GRACE and _prince == null and not _holding():
 		radius -= Dungeons.URO_SHRINK * (1.0 + (_elapsed - Dungeons.URO_GRACE) / Dungeons.URO_SPEEDUP) * delta
 	if radius <= Dungeons.URO_END:
-		close()
-		return
+		if not _summon_prince():
+			close()
+			return
 	_resize_ring()
 	_keep_timer -= delta
 	if _keep_timer <= 0.0:
@@ -171,6 +187,35 @@ func _process(delta: float) -> void:
 				var at := _ghost_spot()
 				for i in mini(missing, _rng.randi_range(Dungeons.URO_PACK.x, Dungeons.URO_PACK.y)):
 					_spawn_ghost(false, at)
+
+
+## Drzewko Watry („Strażnik Kręgu”): gracz stoi przy menhirze, więc krąg nie maleje.
+func _holding() -> bool:
+	if dungeon == null or dungeon.tree_value("uro_hold") <= 0.0:
+		return false
+	var player: Node2D = dungeon.w.player
+	return player != null and player.global_position.distance_to(global_position) <= HOLD_RADIUS
+
+
+## Drzewko Watry („Upiorny Książę”): gasnący krąg wypuszcza Księcia i trwa do jego śmierci; false - bez Księcia.
+func _summon_prince() -> bool:
+	if _prince_done or dungeon == null or dungeon.tree_value("uro_prince") <= 0.0:
+		return false
+	_prince_done = true
+	radius = PRINCE_RADIUS
+	_resize_ring()
+	var prince := _spawn_ghost(true, global_position)
+	if prince == null:
+		return false
+	_prince = prince
+	prince.max_health = roundi(prince.max_health * PRINCE_HEALTH)
+	prince.health = prince.max_health
+	prince.scale = Vector2.ONE * 1.4 * PRINCE_SCALE
+	prince.hurt_radius *= PRINCE_SCALE
+	prince.hurt_height *= PRINCE_SCALE
+	MiscVfx.summon(get_parent(), prince.global_position, 1.0)
+	dungeon.w.hud.show_banner(Lang.t("Upiorny Książę!\nKrąg trwa, póki on żyje"), LORD_COLOR)
+	return true
 
 
 ## Ilu upiorów naraz chce krąg (więcej przy większym kręgu i na wyższym stopniu lochu).
@@ -220,6 +265,9 @@ func _spawn_ghost(lord: bool, near := Vector2.INF) -> Goblin:
 		_vanish(ghost, spawn["id"])
 		return null
 	haunt(ghost, lord)
+	# drzewko Watry („Zimne Runy”): elitarna zjawa z cechami
+	if not lord and dungeon.tree_value("uro_elites") > 0.0 and _rng.randf() < dungeon.tree_value("uro_elites"):
+		DungeonElite.promote(ghost, Dungeons.roll_elite_traits(_rng), dungeon, kind)
 	ghosts.append([ghost, spawn["id"]])
 	ghost.died.connect(_on_ghost_died.bind(lord))
 	MiscVfx.puff(get_parent(), ghost.global_position + Vector2(0, -6), COLOR, 0.8)
@@ -268,9 +316,14 @@ func _on_ghost_died(ghost: Goblin, lord: bool) -> void:
 	if kills % Dungeons.URO_LORD_EVERY == 0:
 		_lords_due += 1
 	var tier := Dungeons.config_tier(dungeon.config)
-	if lord or _rng.randf() < Dungeons.URO_GHOST_RUNE:
+	if lord or ghost.elite != null or _rng.randf() < Dungeons.URO_GHOST_RUNE:
 		dungeon._drop(ghost.global_position, ItemCraft.roll_rune(tier, _rng), 1)
 	_update_label()
+	if ghost == _prince:
+		_prince = null
+		for i in PRINCE_RUNES:
+			dungeon._drop(ghost.global_position, ItemCraft.roll_rune(tier, _rng), 1)
+		close()
 
 
 ## Krąg gaśnie: upiory się rozwiewają, menhir sypie runy.

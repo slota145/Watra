@@ -8,7 +8,7 @@ extends PanelContainer
 
 const FIRE := Color(1.0, 0.6, 0.25)
 const GOLD := Color(1.0, 0.82, 0.35)
-const VIEW_SIZE := Vector2(360, 270)
+const VIEW_SIZE := Vector2(400, 300)
 const SIDE := 140.0
 ## Wysokość pola z opisem węzła (dłuższy opis się przewija).
 const INFO_HEIGHT := 70.0
@@ -104,7 +104,8 @@ func setup(player: Player) -> void:
 
 func open() -> void:
 	visible = true
-	_status.text = ""
+	_status.text = Lang.t("Nowe drzewko lochów: wszystkie punkty Watry wróciły do rozdania.") \
+			if _player != null and _player.boons.tree_refunded else ""
 	_confirm_reset = false
 	_refresh()
 	reset_size()
@@ -195,6 +196,7 @@ func _on_tab_named(text: String) -> void:
 
 func _on_allocate() -> void:
 	if _player.boons.tree_allocate(selected):
+		_player.boons.tree_refunded = false
 		_status.text = Lang.t("Wybrano: %s") % WatraTree.node_name(selected)
 		Sfx.play("magic")
 
@@ -242,20 +244,22 @@ func _button(text: String, on_pressed: Callable) -> Button:
 	return button
 
 
-## Rysunek drzewka: Watra w środku, 12 gałęzi z nazwami, połączenia i węzły (małe koła, znaczące - większe, kluczowe -
-## romby). Wybrane mają złotą obwódkę i złote połączenia, możliwe do wybrania teraz - pulsującą jasną.
+## Rysunek drzewka: Watra w środku, skupiska na tle w kolorze tematu (nazwy przy węzłach kluczowych; temat węzła pod
+## myszą albo zaznaczonego - wszystkie jego skupiska podświetlone i podpisane), ścieżki neutralnych węzłów, połączenia
+## i węzły (małe koła, znaczące - większe, kluczowe - romby). Wybrane mają złotą obwódkę i złote połączenia, możliwe do
+## wybrania teraz - pulsującą jasną.
 class WatraTreeView extends Control:
 	const UNIT := 12.0
 	## Szerokość nazwy gałęzi przed złamaniem linii.
 	const LABEL_WIDTH := 52.0
-	const ZOOM_RANGE := Vector2(0.8, 2.2)
+	const ZOOM_RANGE := Vector2(0.3, 2.2)
 	const RADIUS := {"start": 6.0, "small": 3.2, "notable": 4.6, "keystone": 5.6}
 	const LINK := Color(0.4, 0.3, 0.25)
 	var window: WatraTreeWindow
 	var _hover := ""
-	## Drzewko lekko w prawo, żeby przedłużenie gałęzi Mgły (z lewej) mieściło się w widoku.
-	var _offset := Vector2(20, 0)
-	var _zoom := 1.0
+	var _offset := Vector2.ZERO
+	## Na start widać całe drzewko (promień ok. 21 jednostek); kółko przybliża.
+	var _zoom := 0.5
 	var _press := Vector2.ZERO
 	var _dragged := false
 
@@ -264,7 +268,20 @@ class WatraTreeView extends Control:
 		clip_contents = true
 
 	func _point(id: String) -> Vector2:
-		return size / 2.0 + _offset + (WatraTree.nodes()[id]["pos"] as Vector2) * UNIT * _zoom
+		return _point_at(WatraTree.nodes()[id]["pos"])
+
+	func _point_at(pos: Vector2) -> Vector2:
+		return size / 2.0 + _offset + pos * UNIT * _zoom
+
+	## Napis odsunięty od punktu `at` w stronę `direction` (łamany co LABEL_WIDTH).
+	func _label(font: Font, at: Vector2, direction: Vector2, text: String, color: Color) -> void:
+		var lines := _wrap(font, text)
+		var top := at.y - 7.0 * lines.size() * (0.5 - 0.5 * direction.y) + 5.0
+		for line in lines:
+			var width := font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, 6).x
+			draw_string(font, Vector2(at.x - width * (0.5 - 0.5 * direction.x), top), line, HORIZONTAL_ALIGNMENT_LEFT,
+					-1, 6, Color(color, 0.85))
+			top += 7.0
 
 	func _node_at(at: Vector2) -> String:
 		var best := ""
@@ -316,25 +333,28 @@ class WatraTreeView extends Control:
 		var chosen := window.chosen()
 		var font := get_theme_default_font()
 		var center := _point(WatraTree.START)
-		draw_circle(center, 9.0 * UNIT * _zoom, Color(0.12, 0.06, 0.03))
-		# tło pod przedłużeniami gałęzi (węzły dalej niż koło drzewka)
-		for id: String in nodes:
-			if (nodes[id]["pos"] as Vector2).length() > 8.9:
-				draw_circle(_point(id), 1.0 * UNIT * _zoom, Color(0.12, 0.06, 0.03))
-		# nazwy gałęzi za końcami ścieżek, odsunięte na zewnątrz (z prawej od punktu, z lewej przed nim)
-		var sector := TAU / WatraTree.BRANCH_ORDER.size()
-		for i in WatraTree.BRANCH_ORDER.size():
-			var branch := WatraTree.BRANCH_ORDER[i]
-			var direction := Vector2.from_angle(-PI / 2.0 + i * sector)
-			var reach := maxf(WatraTree.branch_reach(branch) - WatraTree.END_POS.length(), 0.0)
-			var at := center + direction * ((8.6 + reach) * UNIT * _zoom + 4.0)
-			var lines := _wrap(font, WatraTree.branch_name(branch))
-			var top := at.y - 7.0 * lines.size() * (0.5 - 0.5 * direction.y) + 5.0
-			for line in lines:
-				var width := font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, 6).x
-				draw_string(font, Vector2(at.x - width * (0.5 - 0.5 * direction.x), top), line, HORIZONTAL_ALIGNMENT_LEFT,
-						-1, 6, Color(WatraTree.BRANCH_COLORS[branch], 0.85))
-				top += 7.0
+		draw_circle(center, 21.5 * UNIT * _zoom, Color(0.12, 0.06, 0.03))
+		# tło skupisk w kolorze tematu; nazwa tematu przy skupisku (po przybliżeniu) i za węzłem kluczowym
+		for cluster: Dictionary in WatraTree.clusters():
+			var color: Color = WatraTree.BRANCH_COLORS[cluster["branch"]]
+			var at := _point_at(cluster["center"])
+			draw_circle(at, (WatraTree.CLUSTER_RADIUS + 0.55) * UNIT * _zoom, Color(color, 0.1))
+		# temat węzła pod myszą (albo zaznaczonego): wszystkie jego skupiska podświetlone i podpisane - łatwiej zaplanować drogę
+		var focus := _hover if _hover != "" else window.selected
+		var branch: String = nodes[focus]["branch"] if nodes.has(focus) else ""
+		if WatraTree.SECTORS.has(branch):
+			var color: Color = WatraTree.BRANCH_COLORS[branch]
+			for cluster: Dictionary in WatraTree.clusters():
+				if cluster["branch"] == branch:
+					var at := _point_at(cluster["center"])
+					var radius := (WatraTree.CLUSTER_RADIUS + 0.6) * UNIT * _zoom
+					draw_circle(at, radius, Color(color, 0.12))
+					draw_arc(at, radius, 0.0, TAU, 32, Color(color, 0.9), 1.5)
+					_label(font, at + Vector2(0, radius + 2.0), Vector2.DOWN, WatraTree.branch_name(branch), color)
+		for sector in WatraTree.SECTORS:
+			var keystone: Vector2 = nodes[sector + "_k"]["pos"]
+			_label(font, _point_at(keystone) + keystone.normalized() * (RADIUS["keystone"] * _zoom + 4.0), keystone.normalized(),
+					WatraTree.branch_name(sector), WatraTree.BRANCH_COLORS[sector])
 		# połączenia
 		for id: String in nodes:
 			for other: String in nodes[id]["links"]:

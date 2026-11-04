@@ -82,9 +82,13 @@ func open(spirit: Skarbnik) -> void:
 	var player: Node = spirit._player()
 	if player != null:
 		bones = player.inventory.count_of(Dungeons.SKA_BONES)
-	_reroll.disabled = bones <= 0
+	var free: int = spirit.free_rerolls()
+	_reroll.disabled = bones <= 0 and free <= 0
 	_reroll.tooltip_text = Lang.t("Koszt: 1 Kości Skarbnika (masz: %d). Fale: %d, bez wzrostu siły.\nNowe rodzaje premii (te same tiery), kamieni i run.") \
 			% [bones, SkarbnikOffer.waves_for(offer, true)]
+	if free > 0:
+		_reroll.tooltip_text = Lang.t("Darmowe przelosowanie z drzewka Watry (zostało: %d). Fale: %d, bez wzrostu siły.") \
+				% [free, SkarbnikOffer.waves_for(offer, true)]
 	visible = true
 	reset_size()
 	var screen := get_viewport_rect().size
