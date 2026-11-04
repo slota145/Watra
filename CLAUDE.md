@@ -294,7 +294,10 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   zwrot wszystkich punktów, dodatkowo 1 punkt umiejętności co 2 poziomy postaci. Krok 3 (aury i rezerwacja many) zrobiony,
   czeka na ocenę autora (szukaj „Aury rezerwujące manę - krok 3”). Krok 4 (nowe combo; Półksiężyc, Szybka salwa
   i Fala piorunów jako zwykłe umiejętności) zrobiony, czeka na ocenę autora (szukaj „Nowe combo - krok 4”).
-  Dalej krok 5 (nowe węzły kluczowe i nowe umiejętności).
+  Krok 5 (nowe węzły kluczowe i nowe umiejętności) idzie strona po stronie: strona siły zrobiona, czeka na ocenę autora
+  (szukaj „Krok 5 wspólnego drzewka, strona siły”) - Wilczy Kieł, Ryk Tura, Skok Niedźwiedzia, Ostatni Bastion
+  i 5 węzłów znaczących; ikony tymczasowe (`tools/strength_icons.py`). Dalej zręczność, inteligencja, strefy,
+  na koniec osobno przywołania (Wataha, Błędne Ogniki, Wierny tropiciel).
 - [ ] **Modyfikacja premii tylko runami** (decyzja autora, listopad 2026): wszystkie sposoby zmiany premii
   (afiksów) przedmiotów mają działać przez runy - przedmioty-waluty jak orby w Path of Exile. Zrobione razem
   z Uroczyskiem (szukaj „Mechaniki w lochach, etap 3”): każde działanie warsztatu kowala zużywa swoją runę

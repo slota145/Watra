@@ -51,10 +51,13 @@ var _aura_stats := {}
 var _reach := {}
 var _reach_key := -1
 
-## Węzły, które do kroku 3 drzewka były pustymi miejscami (drzewko przechodziło przez nie za darmo). W zapisie,
+## Węzły, które były pustymi miejscami (do kroku 3 - aury, do kroku 5 - nowe węzły strony siły; drzewko przechodziło
+## przez nie za darmo). W zapisie,
 ## w którym wybrane węzły łączą się ze startem tylko przez nie, dostają się za darmo (repair_paths).
 const FORMER_SOON: Array[String] = ["dread", "vigor", "strzybog_wind", "frost_breath", "perun_wrath", "life_spring",
-		"swarog_ember", "marzanna_frost", "perun_sparks", "mana_spring", "focused_will", "thrifty_auras", "blood_offering"]
+		"swarog_ember", "marzanna_frost", "perun_sparks", "mana_spring", "focused_will", "thrifty_auras", "blood_offering",
+		# krok 5 - strona siły
+		"whirl_pull", "wolf_fang", "bull_roar", "loud_voice", "full_strength", "wounded_wrath", "last_bastion", "bear_leap", "tremor"]
 
 ## Wersja drzewka w zapisie (2 - wspólne drzewko; bez niej - osobne drzewka broni).
 const TREE_VERSION := 2

@@ -2689,5 +2689,49 @@
       41,
       40
     ]
+  },
+  "bull_roar": {
+    "effect": "306f05bb-a192-491c-99b6-41c6ad348937",
+    "name": "Ryk Tura",
+    "frame": [
+      170,
+      80
+    ],
+    "frames": 10,
+    "fps": 14,
+    "columns": 5,
+    "anchor": [
+      85,
+      40
+    ]
+  },
+  "wolf_fang": {
+    "effect": "3d318a02-7475-4b8e-8100-51227c90398f",
+    "name": "Wilczy Kieł - pchnięcie",
+    "frame": [
+      67,
+      23
+    ],
+    "frames": 7,
+    "fps": 16,
+    "anchor": [
+      6,
+      12
+    ]
+  },
+  "bear_leap": {
+    "effect": "06ff4aa6-1c22-41b8-948f-cd9fa7c8b928",
+    "name": "Skok Niedźwiedzia - lądowanie",
+    "frame": [
+      99,
+      56
+    ],
+    "frames": 12,
+    "fps": 12,
+    "columns": 6,
+    "anchor": [
+      49,
+      30
+    ]
   }
 }

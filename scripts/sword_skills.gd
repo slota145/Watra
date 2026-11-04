@@ -12,6 +12,11 @@ extends Node
 ## - Riposta: krótka zasłona; cios w tym czasie nie rani, a postać kontratakuje wszystkich wokół (potem darmowa Szarża).
 ## - Zew Peruna: okrzyk - premia do obrażeń, strach wrogów wokół i 3 kolejne ciosy krytyczne.
 ## - Widmowe Ostrza (czar): krążące miecze raniące wrogów (po Młynku od razu wylatują we wrogów).
+## - Wilczy Kieł: seria pchnięć w jednego wroga (najbliższego kursora), ostatnie mocniejsze i ogłusza.
+## - Ryk Tura: okrzyk - wrogowie wokół rzucają się na postać, premia do pancerza.
+## - Skok Niedźwiedzia: skok pod kursor ponad przeszkodami (Player.start_leap), lądowanie rani i odrzuca.
+## Węzły Pełnia Sił i Gniew rannego oraz kluczowy Ostatni Bastion zmieniają obrażenia wg zdrowia
+## (health_damage_factor, bastion_taken), Wstrząs ogłusza trafionych umiejętnościami obszarowymi miecza (tremor).
 ## Węzły kluczowe: Oko Cyklonu (Młynek wciąga i rozkręca się - `Player.whirl_spin_up`), Taniec Ostrzy
 ## (combo przyspiesza ataki), Dym i Cień (chmura po Dymnych Wybuchach: unik i darmowe Mgnienie), Krwawy Szał
 ## (krwawienie leczy). Chwilowe premie trafiają do CharacterStats.temp_bonus i na listę efektów (statuses).
@@ -87,9 +92,28 @@ const CLOUD_RADIUS := 70.0
 const SWIRL_SIZE := 0.4
 const CLOUD_DODGE := 0.3
 const FRENZY_LEECH := 0.3
+## Ostatni Bastion: poniżej tej części zdrowia premia do obrażeń i mniej otrzymanych obrażeń.
+const BASTION_HEALTH := 0.3
+const BASTION_DAMAGE := 0.5
+const BASTION_TAKEN := 0.5
+## Efekty z kreatora efektów PixelLab (tools/vfx_art.py): pchnięcie Wilczego Kła (stalowa smuga rysowana w prawo
+## z iskrą na końcu, długość w klatce FANG_FX_LENGTH), fala Ryku Tura (pomarańczowy pierścień z pyłem, promień
+## w klatce ROAR_FX_RADIUS) i lądowanie Skoku Niedźwiedzia (pęknięcia, pył i odłamki, promień LEAP_FX_RADIUS).
+const FANG_FX := preload("res://assets/effects/wolf_fang.png")
+const FANG_FX_ANCHOR := Vector2(6, 12)
+const FANG_FX_LENGTH := 56.0
+const ROAR_FX := preload("res://assets/effects/bull_roar.png")
+const ROAR_FX_ANCHOR := Vector2(85, 40)
+const ROAR_FX_RADIUS := 81.0
+const ROAR_FX_ALPHA := 0.7
+const LEAP_FX := preload("res://assets/effects/bear_leap.png")
+const LEAP_FX_ANCHOR := Vector2(49, 30)
+const LEAP_FX_RADIUS := 46.0
+const ROAR_COLOR := Color(0.95, 0.55, 0.3)
 const ICONS := {
 	"war_cry": preload("res://assets/skills/war_cry.png"), "blade_dance": preload("res://assets/skills/ks_blade_dance.png"),
 	"smoke_shadow": preload("res://assets/skills/ks_smoke_shadow.png"), "riposte": preload("res://assets/skills/riposte.png"),
+	"bull_roar": preload("res://assets/skills/bull_roar.png"), "last_bastion": preload("res://assets/skills/ks_last_bastion.png"),
 }
 
 var _player: Player
@@ -127,6 +151,10 @@ var _flicker_marks: Array = []
 ## Kolce z pęknięć ostatniego Rozłupania Ziemi i ile jeszcze czekają (Szarża po Rozłupaniu - wybuchają).
 var _spikes: Array[Vector2] = []
 var _spikes_time := 0.0
+## Ryk Tura: ile jeszcze trwa premia do pancerza.
+var _roar_time := 0.0
+## Wstrząs: wróg -> czas (ms), od którego może być znów ogłuszony.
+var _tremor_ready := {}
 
 
 func _init(player: Player) -> void:
@@ -164,6 +192,12 @@ func press(id: String) -> void:
 					_war_cry()
 				"spectral_blades":
 					_spectral_blades()
+				"wolf_fang":
+					_wolf_fang()
+				"bull_roar":
+					_bull_roar()
+				"bear_leap":
+					_bear_leap()
 
 
 ## Czy Młynek ma teraz pokazywać szybszy wir (seria skoków wirującego Mgnienia trwa).
@@ -668,10 +702,10 @@ func try_parry(from: Vector2) -> bool:
 # ---------------------------------------------------------------- Zew Peruna
 func _war_cry() -> void:
 	var level := _player.skills.level_of("war_cry")
-	_start_cooldown("war_cry", Skills.CRY_COOLDOWN)
-	# Donośny Głos (kamień wsparcia): dłuższy zew i większy obszar strachu
+	_start_cooldown("war_cry", Skills.CRY_COOLDOWN * cry_cooldown_factor())
+	# Donośny Głos (kamień wsparcia): dłuższy zew i większy obszar strachu; węzeł Donośny głos - zasięg okrzyków
 	var tags := Skills.tags("war_cry")
-	var radius := Skills.CRY_RADIUS * _player.stats.area_multiplier(tags)
+	var radius := Skills.CRY_RADIUS * _player.stats.area_multiplier(tags) * cry_radius_factor()
 	_cry_total = Skills.CRY_TIME * (1.0 + _player.support("war_cry", "duration"))
 	_cry_time = _cry_total
 	_forced_crits = Skills.CRY_CRITS
@@ -701,6 +735,196 @@ func take_forced_crit() -> bool:
 		return false
 	_forced_crits -= 1
 	return true
+
+
+## Węzeł Donośny głos: zasięg i odnowienie okrzyków (Zew Peruna, Ryk Tura).
+func cry_radius_factor() -> float:
+	return 1.0 + _player.skills.tree_bonus("cry_radius")
+
+
+func cry_cooldown_factor() -> float:
+	return maxf(1.0 + _player.skills.tree_bonus("cry_cooldown"), 0.2)
+
+
+# ---------------------------------------------------------------- Wilczy Kieł
+## Wróg najbliższy kursora w zasięgu pchnięć (od tułowia; preferowany ten na linii celowania).
+func _fang_target(aim: Vector2) -> Goblin:
+	var origin := _player.body_center()
+	var best: Goblin = null
+	var best_score := INF
+	for enemy: Goblin in Goblin.near(_player.get_tree(), origin, Skills.FANG_REACH + 40.0):
+		if enemy.state == Goblin.State.DEAD:
+			continue
+		var to_enemy := enemy.hurt_center() - origin
+		var dist := to_enemy.length()
+		if dist > Skills.FANG_REACH + enemy.hurt_radius:
+			continue
+		var score := dist + absf(angle_difference(aim.angle(), to_enemy.angle())) * 40.0
+		if score < best_score:
+			best_score = score
+			best = enemy
+	return best
+
+
+func _wolf_fang() -> void:
+	var level := _player.skills.level_of("wolf_fang")
+	var tags := Skills.tags("wolf_fang")
+	_start_cooldown("wolf_fang", Skills.FANG_COOLDOWN)
+	var aim := _player._aim_direction()
+	var target := _fang_target(aim)
+	if target != null:
+		aim = (target.hurt_center() - _player.body_center()).normalized()
+	_player._ranged_pose(aim)
+	_player.note_skill("wolf_fang")
+	var interval := Skills.FANG_INTERVAL / _player._skill_speed(tags)
+	var target_ref: WeakRef = weakref(target) if target != null else null
+	for i in Skills.FANG_THRUSTS:
+		var last := i == Skills.FANG_THRUSTS - 1
+		_player.get_tree().create_timer(interval * i, false).timeout.connect(func() -> void:
+			if not is_instance_valid(_player) or _player.is_dead:
+				return
+			var enemy: Goblin = target_ref.get_ref() if target_ref != null else null
+			var dir := aim
+			if enemy != null and enemy.state != Goblin.State.DEAD:
+				dir = (enemy.hurt_center() - _player.body_center()).normalized()
+			_player.play_thrust(dir)
+			Sfx.play("swing", -2.0, 1.3 + 0.1 * i)
+			# smuga pchnięcia od tułowia do celu (lekko rozrzucona w pionie, ostatnia dłuższa)
+			var start := _player.body_center() + dir.orthogonal() * randf_range(-3.0, 3.0)
+			var reach := Skills.FANG_REACH
+			if enemy != null and enemy.state != Goblin.State.DEAD:
+				reach = start.distance_to(enemy.hurt_center()) + 6.0
+			SkillEffects.sheet_once(_player.get_parent(), FANG_FX, 7, 30.0, start, FANG_FX_ANCHOR, dir.angle(),
+					reach * (1.25 if last else 1.0) / FANG_FX_LENGTH, 1.3 if last else 1.0)
+			if enemy == null or enemy.state == Goblin.State.DEAD:
+				return
+			var at := enemy.hurt_center()
+			var multiplier := Skills.fang_damage(level) * (Skills.FANG_FINAL if last else 1.0)
+			_player.hit_enemy(enemy, _player._skill_damage(multiplier, tags), _player.global_position, 140.0 if last else 20.0, "", tags)
+			if last:
+				_player.add_shake(3.0)
+				Sfx.play_at("hit_heavy", at, 0.0)
+				SkillEffects.sheet_once(_player.get_parent(), REND_WOUND_FX, 9, 15.0, at, REND_WOUND_ANCHOR, 0.0, 1.0, 1.2)
+				if enemy.state != Goblin.State.DEAD:
+					enemy.stun(Skills.FANG_FINAL_STUN))
+
+
+# ---------------------------------------------------------------- Ryk Tura
+func _bull_roar() -> void:
+	var level := _player.skills.level_of("bull_roar")
+	var tags := Skills.tags("bull_roar")
+	_start_cooldown("bull_roar", Skills.ROAR_COOLDOWN * cry_cooldown_factor())
+	var radius := Skills.ROAR_RADIUS * _player.stats.area_multiplier(tags) * cry_radius_factor()
+	_roar_time = Skills.ROAR_TIME * (1.0 + _player.support("bull_roar", "duration"))
+	_player.note_skill("bull_roar")
+	_player.play_skill_anim("chop", 0.4)
+	var origin := _player.global_position
+	# fala jest duża (cały zasięg okrzyku) - półprzezroczysta, żeby nie zasłaniała walki
+	SkillEffects.sheet_once(_player.get_parent(), ROAR_FX, 10, 16.0, origin, ROAR_FX_ANCHOR, 0.0, 1.0,
+			radius / ROAR_FX_RADIUS).modulate.a = ROAR_FX_ALPHA
+	DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -14), Lang.t("Ryk Tura!"), ROAR_COLOR, 9)
+	Sfx.play("explosion", -6.0, 0.55)
+	_player.add_shake(4.0)
+	# wrogowie wokół rzucają się na postać: koniec strachu, budzą się i gonią
+	for enemy: Goblin in Goblin.near(_player.get_tree(), origin, radius + 40.0):
+		if enemy.state == Goblin.State.DEAD or enemy.global_position.distance_to(origin) > radius:
+			continue
+		enemy._fear_time = 0.0
+		enemy.aggro()
+	_update_temp_bonus()
+
+
+# ---------------------------------------------------------------- Skok Niedźwiedzia
+func _bear_leap() -> void:
+	_start_cooldown("bear_leap", Skills.LEAP_COOLDOWN)
+	var from := _player.global_position
+	# cel jak u czarów (SpellSkills._cursor): kursor albo tułów + aim_override (testy, celowanie padem)
+	var aim := _player.get_global_mouse_position() if _player.aim_override == Vector2.ZERO else _player.body_center() + _player.aim_override
+	var target := from + (aim - from).limit_length(Skills.LEAP_RANGE)
+	# skok przenosi nad przeszkodami - zatrzymuje go tylko granica mapy i ściany podziemi (jak Krok przez Mgłę)
+	var ray := PhysicsRayQueryParameters2D.create(from, target, Player.JUMP_MASK)
+	var hit := _player.get_world_2d().direct_space_state.intersect_ray(ray)
+	if not hit.is_empty():
+		target = hit["position"] - (target - from).normalized() * 10.0
+	_player._face_direction(target - from)
+	_player.note_skill("bear_leap")
+	_player.play_skill_anim("dash", Skills.LEAP_TIME)
+	Sfx.play("dash", 0.0, 0.8)
+	SkillEffects.ground_crack(_dust_parent(), from, 14.0, 0.8)
+	_player.start_leap(target, Skills.LEAP_TIME, _leap_landed)
+
+
+func _dust_parent() -> Node:
+	var layer := _player.get_tree().get_first_node_in_group("floor_layer")
+	return layer if layer != null else _player.get_parent()
+
+
+## Lądowanie Skoku Niedźwiedzia: rani i odrzuca wszystkich wokół.
+func _leap_landed() -> void:
+	if not is_instance_valid(_player) or _player.is_dead:
+		return
+	var level := maxi(_player.skills.level_of("bear_leap"), 1)
+	var tags := Skills.tags("bear_leap")
+	var radius := Skills.LEAP_RADIUS * _player.stats.area_multiplier(tags)
+	var origin := _player.global_position
+	_player.play_skill_anim("chop", 0.3, 4)
+	_player.add_shake(6.0)
+	Sfx.play("explosion", -3.0, 0.6)
+	SkillEffects.ground_crack(_dust_parent(), origin, radius * 0.8, 1.6)
+	SkillEffects.sheet_once(_player.get_parent(), LEAP_FX, 12, 16.0, origin, LEAP_FX_ANCHOR, 0.0, 1.0, radius / LEAP_FX_RADIUS)
+	for enemy: Goblin in Goblin.near(_player.get_tree(), origin, radius + 40.0):
+		if enemy.global_position.distance_to(origin) <= radius + enemy.hurt_radius:
+			_player.hit_enemy(enemy, _player._skill_damage(Skills.leap_damage(level), tags), origin, Skills.LEAP_KNOCKBACK, "", tags)
+
+
+# ---------------------------------------------------------------- zdrowie a obrażenia (Pełnia Sił, Gniew rannego, Ostatni Bastion)
+func _health_share() -> float:
+	return clampf(float(_player.health) / maxf(float(_player.stats.max_health()), 1.0), 0.0, 1.0)
+
+
+func bastion_active() -> bool:
+	return _player.skills.has_keystone("last_bastion") and not _player.is_dead and _health_share() < BASTION_HEALTH
+
+
+## Mnożnik zadawanych obrażeń wg zdrowia: Pełnia Sił (+1% za każde 5% ponad połowę), Gniew rannego (+1% za każde
+## 5% brakującego zdrowia) i Ostatni Bastion (poniżej 30% zdrowia).
+func health_damage_factor() -> float:
+	var share := _health_share()
+	var bonus := 0.0
+	var full := _player.skills.tree_bonus("full_strength")
+	if full > 0.0:
+		bonus += minf(floorf(maxf(share - 0.5, 0.0) / 0.05) * 0.01, full)
+	var wrath := _player.skills.tree_bonus("wounded_wrath")
+	if wrath > 0.0:
+		bonus += minf(floorf((1.0 - share) / 0.05 + 0.001) * 0.01, wrath)
+	if bastion_active():
+		bonus += BASTION_DAMAGE
+	return 1.0 + bonus
+
+
+## Jaka część ciosu dociera do postaci (Ostatni Bastion: poniżej 30% zdrowia połowa).
+func bastion_taken() -> float:
+	return BASTION_TAKEN if bastion_active() else 1.0
+
+
+## Wstrząs (węzeł): trafienie umiejętnością obszarową miecza ogłusza na chwilę (każdego wroga najwyżej raz na
+## Skills.TREMOR_INTERVAL s, żeby Młynek nie trzymał wrogów w ogłuszeniu bez końca).
+func tremor(enemy: Goblin, tags: Array) -> void:
+	if not "area" in tags or enemy.state == Goblin.State.DEAD:
+		return
+	var skill := Skills.skill_of(tags)
+	if skill == "" or Skills.get_data(skill).get("weapon", "") != "melee":
+		return
+	var stun := _player.skills.tree_bonus("tremor_stun")
+	if stun <= 0.0:
+		return
+	var now := Time.get_ticks_msec()
+	if int(_tremor_ready.get(enemy, 0)) > now:
+		return
+	if _tremor_ready.size() > 200:
+		_tremor_ready.clear()
+	_tremor_ready[enemy] = now + roundi(Skills.TREMOR_INTERVAL * 1000.0)
+	enemy.stun(stun)
 
 
 # ---------------------------------------------------------------- Widmowe Ostrza
@@ -791,7 +1015,7 @@ func _in_cloud() -> bool:
 
 
 func _process_timed(delta: float) -> void:
-	var before := [_cry_time > 0.0, _dance_stacks, _in_cloud()]
+	var before := [_cry_time > 0.0, _dance_stacks, _in_cloud(), _roar_time > 0.0]
 	if _parry_time > 0.0:
 		_parry_time -= delta
 		if _parry_time <= 0.0 and _parry_ring != null:
@@ -810,7 +1034,8 @@ func _process_timed(delta: float) -> void:
 			var fade := _cloud_node.create_tween()
 			fade.tween_property(_cloud_node, "modulate:a", 0.0, 0.8)
 			fade.tween_callback(_cloud_node.queue_free)
-	if before != [_cry_time > 0.0, _dance_stacks, _in_cloud()]:
+	_roar_time = maxf(_roar_time - delta, 0.0)
+	if before != [_cry_time > 0.0, _dance_stacks, _in_cloud(), _roar_time > 0.0]:
 		_update_temp_bonus()
 
 
@@ -823,6 +1048,8 @@ func _update_temp_bonus() -> void:
 		bonus["attack_speed"] = DANCE_STEP * _dance_stacks
 	if _in_cloud():
 		bonus["dodge_chance"] = CLOUD_DODGE
+	if _roar_time > 0.0:
+		bonus["armor_percent"] = Skills.roar_armor(_player.skills.level_of("bull_roar"))
 	_player.stats.set_temp("sword", bonus)
 
 
@@ -839,6 +1066,13 @@ func statuses() -> Array[Dictionary]:
 	if _in_cloud():
 		result.append({"name": Lang.t("Dym i Cień"), "kind": "good", "left": _cloud_time, "total": CLOUD_TIME, "icon": ICONS["smoke_shadow"],
 				"description": Lang.t("+%d%% szansy na unik, Mgnienie nie zużywa many") % roundi(CLOUD_DODGE * 100.0)})
+	if _roar_time > 0.0:
+		result.append({"name": Lang.t("Ryk Tura"), "kind": "good", "left": _roar_time, "total": Skills.ROAR_TIME, "icon": ICONS["bull_roar"],
+				"description": Lang.t("+%d%% pancerza") % roundi(Skills.roar_armor(_player.skills.level_of("bull_roar")) * 100.0)})
+	if bastion_active():
+		result.append({"name": Lang.t("Ostatni Bastion"), "kind": "good", "left": -1.0, "icon": ICONS["last_bastion"],
+				"description": Lang.t("+%d%% zadawanych obrażeń, o %d%% mniej otrzymanych") % [roundi(BASTION_DAMAGE * 100.0),
+					roundi((1.0 - BASTION_TAKEN) * 100.0)]})
 	if _parry_time > 0.0:
 		result.append({"name": Lang.t("Riposta"), "kind": "good", "left": _parry_time, "total": Skills.RIPOSTE_TIME, "icon": ICONS["riposte"],
 				"description": Lang.t("Zasłona: następny cios nie zrani, a ty kontratakujesz")})

@@ -41,6 +41,10 @@ const TREE_STATS := {
 	"storm_time": "Czas Burzy Peruna", "orb_damage": "Obrażenia Kuli Piorunów", "lance_damage": "Obrażenia Włóczni Marzanny",
 	"chill_time": "Czas spowolnienia", "lance_pierce": "Włócznia przebija wrogów", "blizzard_damage": "Obrażenia Zamieci",
 	"blizzard_time": "Czas Zamieci", "aura_reservation": "Rezerwacja many przez aury",
+	"cry_radius": "Zasięg okrzyków", "cry_cooldown": "Odnowienie okrzyków",
+	# premie z opisem w węźle (SkillTreeData "description"): Wciągający wir, Pełnia Sił, Gniew rannego, Wstrząs
+	"whirl_pull": "Młynek przyciąga wrogów", "full_strength": "Obrażenia przy pełnym zdrowiu",
+	"wounded_wrath": "Obrażenia przy niskim zdrowiu", "tremor_stun": "Ogłuszenie umiejętności obszarowych miecza",
 }
 const COUNT_STATS := ["blade_count", "multishot_arrows", "seeker_hits", "arrow_pierce", "chain_targets", "lance_pierce"]
 

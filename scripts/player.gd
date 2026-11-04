@@ -94,6 +94,9 @@ const MIN_FORESHORTEN := 0.45
 const CYCLONE_SPIN_UP := 0.25
 const CYCLONE_SPIN_MAX := 1.0
 const CYCLONE_PULL := 90.0
+## Wciągający wir (węzeł drzewka): Młynek przyciąga wrogów do tylu promieni od postaci, z taką siłą.
+const WHIRL_PULL_REACH := 1.35
+const WHIRL_PULL := 55.0
 ## Wir Młynka z kreatora efektów PixelLab (tools/vfx_art.py): zapętlone klatki wokół tułowia, górna połowa za postacią,
 ## dolna przed nią. W trakcie wirującego Mgnienia szybszy wir (więcej ostrzy, rozmycie, iskry). Promień ostrzy w klatce
 ## to WHIRL_FX_RADIUS - grafika skaluje się do zasięgu Młynka.
@@ -214,6 +217,10 @@ var _dash_cooldown_timer := 0.0
 var _was_jumping := false
 var _dash_dir := Vector2.ZERO
 var _ghost_timer := 0.0
+## Skok Niedźwiedzia (SwordSkills.bear_leap): ile lotu zostało, prędkość lotu i co zrobić po wylądowaniu.
+var _leap_time := 0.0
+var _leap_velocity := Vector2.ZERO
+var _leap_landed := Callable()
 
 ## Przycisk ataku wciśnięty poza oknami interfejsu.
 var _attack_held := false
@@ -823,7 +830,17 @@ func _physics_process(delta: float) -> void:
 
 	if _lunge_fx != null and _lunge_fx.visible and _lunge_time <= 0.0:
 		_lunge_fx.visible = false
-	if _lunge_time > 0.0:
+	if _leap_time > 0.0:
+		_leap_time -= delta
+		_move_velocity = _leap_velocity
+		_ghost_timer -= delta
+		if _ghost_timer <= 0.0:
+			_spawn_ghost()
+			_ghost_timer = GHOST_INTERVAL
+		if _leap_time <= 0.0:
+			_leap_time = 0.0
+			_move_velocity = Vector2.ZERO
+	elif _lunge_time > 0.0:
 		_update_lunge(delta)
 	elif is_dashing():
 		_dash_timer -= delta
@@ -846,7 +863,7 @@ func _physics_process(delta: float) -> void:
 
 	# zryw i odskok przeskakują przeszkody (płoty, klify, drzewa) - zatrzymuje je tylko granica mapy i ściany
 	# podziemi; po wylądowaniu w przeszkodzie postać przesuwa się na wolne miejsce na linii skoku
-	var jumping := is_dashing()
+	var jumping := is_dashing() or is_leaping()
 	collision_mask = JUMP_MASK if jumping else SOLID_MASK
 	# odrzut dokładamy osobno, żeby nie kumulował się w prędkości ruchu
 	velocity = _move_velocity + _knockback
@@ -855,6 +872,10 @@ func _physics_process(delta: float) -> void:
 	if _was_jumping and not jumping:
 		collision_mask = SOLID_MASK
 		global_position = free_landing(global_position, _dash_from)
+		if _leap_landed.is_valid():
+			var landed := _leap_landed
+			_leap_landed = Callable()
+			landed.call()
 	_was_jumping = jumping
 	_knockback = _knockback.move_toward(Vector2.ZERO, 900.0 * delta)
 
@@ -874,6 +895,21 @@ func _physics_process(delta: float) -> void:
 
 func is_dashing() -> bool:
 	return _dash_timer > 0.0
+
+
+## Skok Niedźwiedzia: postać leci do `target` przez `time` s ponad przeszkodami (jak zryw - zatrzymuje ją tylko
+## granica), w locie jest nietykalna; po wylądowaniu na wolnym miejscu woła `landed`.
+func start_leap(target: Vector2, time: float, landed: Callable) -> void:
+	_cancel_attack()
+	_dash_from = global_position
+	_leap_time = time
+	_leap_velocity = (target - global_position) / time
+	_leap_landed = landed
+	_ghost_timer = 0.0
+
+
+func is_leaping() -> bool:
+	return _leap_time > 0.0
 
 
 ## Wolne miejsce do wylądowania po skoku przez przeszkody: sam punkt `at`, a gdy stoi w przeszkodzie albo w głębokiej
@@ -916,7 +952,7 @@ func is_attacking() -> bool:
 
 
 func can_attack() -> bool:
-	return not is_attacking() and not is_dashing() and not _whirling and _harvest_target == null and not is_charging_fireball() and _lunge_time <= 0.0 and _attack_cooldown_timer == 0.0
+	return not is_attacking() and not is_dashing() and not _whirling and _harvest_target == null and not is_charging_fireball() and _lunge_time <= 0.0 and _leap_time <= 0.0 and _attack_cooldown_timer == 0.0
 
 
 func is_whirling() -> bool:
@@ -971,7 +1007,7 @@ func set_camera_limits(rect: Rect2i) -> void:
 ## `element` - rodzaj obrażeń (Elements): fizyczne osłabia pancerz, żywioły i Nawię - odporności.
 func take_damage(amount: int, from_position: Vector2, element := Elements.PHYSICAL) -> void:
 	# podczas zrywu i tuż po trafieniu gracz jest nietykalny
-	if is_dead or is_dashing() or _lunge_time > 0.0 or _invulnerable_timer > 0.0:
+	if is_dead or is_dashing() or _lunge_time > 0.0 or _leap_time > 0.0 or _invulnerable_timer > 0.0:
 		return
 	# unik z przedmiotów: cios chybia, a chwilowa nietykalność jak po trafieniu chroni przed resztą zamachu
 	if randf() < stats.dodge_chance():
@@ -988,6 +1024,9 @@ func take_damage(amount: int, from_position: Vector2, element := Elements.PHYSIC
 	amount = stats.reduce_damage(amount, element)
 	for extra: String in Elements.added:
 		amount += roundi(raw * float(Elements.added[extra]) * stats.taken_multiplier(extra))
+	# Ostatni Bastion (węzeł kluczowy): przy niskim zdrowiu o połowę mniej obrażeń
+	if amount > 0:
+		amount = maxi(1, roundi(amount * sword_skills.bastion_taken()))
 	# Tarcza Many: część ciosu (albo cały) zabiera mana
 	amount = spell_skills.absorb(amount)
 	if amount <= 0:
@@ -2088,13 +2127,16 @@ func _update_whirl(delta: float) -> void:
 	var radius := whirl_radius()
 	var multiplier := Skills.whirlwind_damage(level) * (1.0 + skills.tree_bonus("whirl_damage")) * whirl_spin_up()
 	# Oko Cyklonu wciąga trafionych (ujemny odrzut) i sięga połowę dalej po wrogów do wciągnięcia
+	# Wciągający wir (węzeł) przyciąga słabiej i z bliższa
 	var cyclone := skills.has_keystone("cyclone_eye")
+	var pull_reach := 1.5 if cyclone else WHIRL_PULL_REACH if skills.tree_bonus("whirl_pull") > 0.0 else 0.0
+	var pull := CYCLONE_PULL if cyclone else WHIRL_PULL
 	for enemy: Goblin in Goblin.near(get_tree(), body_center(), radius * 1.5 + 40.0):
 		var dist := enemy.hurt_center().distance_to(body_center())
 		if dist <= radius + enemy.hurt_radius:
 			hit_enemy(enemy, _skill_damage(multiplier, Skills.tags("whirlwind")), global_position, -CYCLONE_PULL if cyclone else 70.0, "", Skills.tags("whirlwind"))
-		elif cyclone and dist <= radius * 1.5 + enemy.hurt_radius and enemy.state != Goblin.State.DEAD:
-			enemy._knockback = (global_position - enemy.global_position).normalized() * CYCLONE_PULL
+		elif pull_reach > 0.0 and dist <= radius * pull_reach + enemy.hurt_radius and enemy.state != Goblin.State.DEAD:
+			enemy._knockback = (global_position - enemy.global_position).normalized() * pull
 
 
 func _stop_whirl() -> void:
@@ -2205,7 +2247,7 @@ func _process_strikes() -> void:
 
 
 func _strike_blocked() -> bool:
-	return is_dashing() or _lunge_time > 0.0 or _whirling or is_charging_fireball() or _harvest_target != null
+	return is_dashing() or _lunge_time > 0.0 or _leap_time > 0.0 or _whirling or is_charging_fireball() or _harvest_target != null
 
 
 func _use_strike() -> void:
@@ -2389,7 +2431,8 @@ func basic_tags() -> Array:
 func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: float, sound := "", tags: Array = []) -> void:
 	if enemy.state == Goblin.State.DEAD:
 		return
-	amount = roundi(amount * legendary.damage_multiplier() * stats.damage_multiplier() * boons.damage_multiplier(enemy))
+	amount = roundi(amount * legendary.damage_multiplier() * stats.damage_multiplier() * boons.damage_multiplier(enemy) \
+			* sword_skills.health_damage_factor())
 	# żywioł trafienia (wg odgłosu): odporność albo wrażliwość potwora, zmniejszona przebiciem odporności
 	var element: String = Elements.SOUND_ELEMENTS.get(sound, Elements.PHYSICAL)
 	if element != Elements.PHYSICAL:
@@ -2406,6 +2449,7 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 	Goblin.hit_sound = "hit_" + (sound if sound != "" else HIT_SOUNDS.get(stats.weapon_type(), "blade"))
 	enemy.take_damage(amount, from_position, knockback)
 	Goblin.hit_sound = "hit"
+	sword_skills.tremor(enemy, tags)
 	DamageNumber.critical = false
 	_apply_ailment(enemy, element, amount, tags)
 	# żywioły dodane przez kamienie wsparcia (Żarowe / Mroźne / Burzowe Ostrze) i aury żywiołów też mogą wywołać swój stan
@@ -2746,6 +2790,8 @@ func _die() -> void:
 		bow_skills.cancel()
 		spell_skills.cancel()
 	_lunge_time = 0.0
+	_leap_time = 0.0
+	_leap_landed = Callable()
 	_stop_whirl()
 	if is_charging_fireball():
 		_stop_fireball_charge()
