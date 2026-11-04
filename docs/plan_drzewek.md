@@ -110,7 +110,9 @@ Wspólne okno: drzewko umiejętności i drzewko lochów mogą używać tego same
 
 ## 5. Kolejność (propozycja, każdy krok osobny PR)
 
-1. Lista węzłów i układ wspólnego drzewka (dane bez kodu, do akceptacji autora).
+1. Lista węzłów i układ wspólnego drzewka (dane bez kodu, do akceptacji autora) - szkic gotowy, czeka na autora:
+   `docs/drzewko_wspolne.md` (układ, decyzje), rysunek `docs/drzewko_wspolne.png`, lista `docs/drzewko_wspolne_wezly.md`,
+   dane w `tools/shared_tree_draft.py`.
 2. Wspólne drzewko z obecnymi umiejętnościami zamiast 3 drzewek; stare zapisy - zwrot punktów.
 3. Aury i rezerwacja many.
 4. Nowe combo; Półksiężyc, Szybka Salwa i Fala piorunów jako zwykłe umiejętności.
@@ -120,7 +122,8 @@ Wspólne okno: drzewko umiejętności i drzewko lochów mogą używać tego same
 
 ## Do dopytania przy kolejnych krokach
 
-- dokładny rozkład 200-250 węzłów (ile umiejętności, skupisk, węzłów kluczowych na stronę);
+- rozkład węzłów ustalony 4.11.2026 (obecne umiejętności + 5 nowych na stronę, 5 węzłów kluczowych na stronę + 1 na strefę,
+  wszystkie 7 propozycji węzłów kluczowych wchodzi, regeneracje jako skupiska i 2 aury) - szczegóły w `docs/drzewko_wspolne.md`;
 - czy wybór przebudzenia jest jednorazowy, czy można go zmienić (i za ile);
 - liczby rezerwacji aur;
-- które pomysły z tabel (propozycje) wchodzą, a które odpadają.
+- które pomysły z tabel aur i combo (propozycje) wchodzą, a które odpadają.
