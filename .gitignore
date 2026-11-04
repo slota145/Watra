@@ -8,3 +8,6 @@ __pycache__/
 
 # Tłumaczenia - Godot tworzy je z translations/teksty.csv przy imporcie
 translations/*.translation
+
+# Gotowe wersje gry do wysłania testerom (Project - Export)
+build/

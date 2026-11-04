@@ -64,7 +64,6 @@ func _process(_d: float) -> bool:
 			check("noże z miecza lecą", _count(_zone()._Knife) == S.KNIVES_COUNT, str(_count(_zone()._Knife)))
 		50:
 			check("noże z miecza ranią", _hurt(), "%d -> %d" % [_hp, _now()])
-			check("noże z miecza wracają", _count(_zone()._Knife) == 0, str(_count(_zone()._Knife)))
 			# Ciśnięte Noże z łukiem - zwykłe pociski z nożem
 			p.equipment.equip("short_bow")
 			_aim_at_enemy(p)
@@ -74,6 +73,8 @@ func _process(_d: float) -> bool:
 			check("noże z łuku to pociski", knives.size() == S.KNIVES_COUNT and knives[0].max_range == S.KNIVES_BOW_RANGE, str(knives.size()))
 		75:
 			check("noże z łuku ranią", _hurt(), "%d -> %d" % [_hp, _now()])
+			# noże z miecza: 130 px tam i z powrotem przy 300 px/s to ok. 52 klatki - w 50. bywały jeszcze w locie
+			check("noże z miecza wracają", _count(_zone()._Knife) == 0, str(_count(_zone()._Knife)))
 			# Strzała Gromu z łuku: przeskok na drugiego wroga
 			_aim_at_enemy(p)
 			var other := _second_enemy()
