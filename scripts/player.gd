@@ -299,6 +299,8 @@ var spell_skills: SpellSkills
 var zone_skills: ZoneSkills
 ## Aury rezerwujące manę (włączane klawiszem paska, działają z każdą bronią).
 var auras: Auras
+## Przywołania rezerwujące manę (Wataha, Błędne Ogniki, Wierny tropiciel - Summons).
+var summons: Summons
 ## Krew za Manę (dawna Ofiara Krwi): ułamek zdrowia do zapłacenia za umiejętności (koszty są ułamkowe, zdrowie - całkowite).
 var _blood_cost := 0.0
 var _whirling := false
@@ -416,6 +418,8 @@ func _ready() -> void:
 	add_child(zone_skills)
 	auras = Auras.new(self)
 	add_child(auras)
+	summons = Summons.new(self)
+	add_child(summons)
 	stats.skill_book = skills
 	equipment.skill_book = skills
 	skills.character_level = stats.level
@@ -509,9 +513,17 @@ func _press_slot(index: int) -> void:
 			"aura":
 				if not is_dead:
 					auras.toggle(id)
+			"summon":
+				if not is_dead:
+					summons.toggle(id)
 			"active":
 				_skill_held = true
 			"strike":
+				# Wierny tropiciel (węzeł): klawisz Strzały tropiącej przywołuje albo odsyła widmową strzałę
+				if id == "seeker" and skills.has_node_id("loyal_seeker"):
+					if not is_dead:
+						summons.toggle(id)
+					return
 				_strike_request = true
 				_held_ids[id] = true
 			"skill":
@@ -2643,8 +2655,15 @@ func _cast_seeker(level: int) -> void:
 	_attack_kind = weapon["type"]
 	_attack_length = RANGED_POSE_TIME
 	_attack_timer = _attack_length
+	seeker_arrow(level, position + dir * 6.0, dir)
+	Sfx.play("seeker")
+
+
+## Strzała tropiąca z punktu `at` w kierunku `dir` z dodatkowymi (Szereg, Łuk Hydry, Rozszczep) - też dla Wiernego
+## tropiciela (Summons). Zwraca pierwszą strzałę.
+func seeker_arrow(level: int, at: Vector2, dir: Vector2) -> SeekerArrow:
 	var arrow := SeekerArrow.new()
-	arrow.position = position + dir * 6.0
+	arrow.position = at
 	arrow.velocity = dir * SeekerArrow.SPEED
 	arrow.hits_left = Skills.seeker_hits(level) + roundi(skills.tree_bonus("seeker_hits"))
 	arrow.split = roundi(equipment.effect_power("seeker_split"))
@@ -2654,7 +2673,6 @@ func _cast_seeker(level: int) -> void:
 	arrow.hits_left += support_count("seeker", "pierce")
 	arrow.tags = Skills.tags("seeker")
 	get_parent().add_child(arrow)
-	Sfx.play("seeker")
 	# Łuk Hydry i Rozszczep: dodatkowe strzały tropiące rozchodzą się wachlarzem
 	var extra := legendary.extra_seekers() + support_count("seeker", "projectiles")
 	# Szereg: strzały tropiące lecące równolegle obok pierwszej
@@ -2679,6 +2697,7 @@ func _cast_seeker(level: int) -> void:
 		more.damage_max = arrow.damage_max
 		more.tags = arrow.tags
 		get_parent().add_child(more)
+	return arrow
 
 
 ## Szybka salwa: strzały w stronę kursora jedna po drugiej, co VOLLEY_INTERVAL s (krócej z szybkością, ale nie

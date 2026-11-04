@@ -46,6 +46,8 @@ const ICONS := {
 	"mana_flow": preload("res://assets/skills/node_mana_flow.png"), "full_mind": preload("res://assets/skills/node_full_mind.png"),
 	"open_wounds": preload("res://assets/skills/node_open_wounds.png"), "impetus": preload("res://assets/skills/node_momentum.png"),
 	"lightness": preload("res://assets/skills/node_lightness.png"),
+	"wolf_count": preload("res://assets/skills/node_pack_leader.png"), "wisp_count": preload("res://assets/skills/node_loyal_wisps.png"),
+	"loyal_seeker": preload("res://assets/skills/node_loyal_seeker.png"), "minion_damage": preload("res://assets/skills/node_pack_leader.png"),
 	"tremor_stun": preload("res://assets/skills/ground_slam.png"),
 	"lunge_cooldown": preload("res://assets/skills/lunge.png"), "riposte_damage": preload("res://assets/skills/riposte.png"),
 	"blade_count": preload("res://assets/skills/spectral_blades.png"), "life_on_hit": preload("res://assets/skills/node_physical.png"),
@@ -381,6 +383,10 @@ func describe(id: String) -> String:
 			var weapon: String = Skills.get_data(skill)["weapon"]
 			if AuraData.is_aura(skill):
 				lines.append(tr("Aura - działa z każdą bronią. Połóż ją na pasku i naciśnij klawisz, żeby włączyć albo wyłączyć."))
+			elif SummonData.is_summon(skill) and _player != null and not Skills.works_with(skill, _player.stats.weapon_type()):
+				lines.append("[color=#ff9a7a]%s[/color]" % (tr("Przywołanie - działa tylko z bronią: %s.") % Skills.weapon_name(weapon)))
+			elif SummonData.is_summon(skill):
+				lines.append(tr("Przywołanie - połóż je na pasku i naciśnij klawisz, żeby przywołać albo odesłać."))
 			elif _player != null and not Skills.works_with(skill, _player.stats.weapon_type()):
 				lines.append("[color=#ff9a7a]%s[/color]" % (tr("Działa tylko z bronią: %s.") % Skills.weapon_name(weapon)))
 		"passive":

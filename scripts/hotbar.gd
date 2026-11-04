@@ -55,7 +55,7 @@ static func default_skills(weapon_type: String) -> Array[String]:
 
 ## Czy umiejętność można położyć na pasku (atak, aktywna, uderzenie, umiejętność drzewka, aura).
 static func can_slot_skill(id: String) -> bool:
-	return id == ATTACK or Skills.get_data(id).get("type", "") in ["active", "strike", "skill", "aura"]
+	return id == ATTACK or Skills.get_data(id).get("type", "") in ["active", "strike", "skill", "aura", "summon"]
 
 
 ## Czy wpis slotu to przedmiot (a nie umiejętność).

@@ -194,7 +194,9 @@ CLUSTERS = [
 	("d_trop", "dex", "Tropiciel", (312, 7.5), [
 		S("seeker", "Strzała tropiąca", "bow", "strzała sama szuka wrogów"),
 		S("rapid_volley", "Szybka salwa", "bow", "seria strzał - teraz zwykła umiejętność, po Strzale tropiącej mocniejsza (combo)"),
-		N("loyal_seeker", "Wierny tropiciel", "Strzała tropiąca krąży przy tobie jak przywołanie i sama strzela, ale rezerwuje 15% many", new=True),
+		N("loyal_seeker", "Wierny tropiciel", "Strzała tropiąca krąży przy tobie jak przywołanie i sama strzela, ale rezerwuje 15% many",
+			{"loyal_seeker": 1.0}, new=True,
+			game="Klawisz Strzały tropiącej przywołuje widmową strzałę, która krąży przy tobie i sama strzela strzałami tropiącymi do wrogów. Rezerwuje 15% many."),
 		S("viper_arrow", "Strzała Żmija", "bow", "jadowa strzała przeskakuje między 4 wrogami, każdy skok +10% obrażeń, trafieni zatruci", new=True,
 			tags="atak, pocisk, fizyczne, trucizna", soon=False),
 		N("seeker_hits", "Ostrzejszy trop", "+1 trafienie Strzały tropiącej", {"seeker_hits": 1.0}),
@@ -216,9 +218,9 @@ CLUSTERS = [
 		N("falcon_power", "Szpony", "+20% obrażeń Sokoła", {"falcon_damage": 0.2}),
 		S("ballista", "Balista", "bow", "stawiana balista"),
 		N("ballista_power", "Mocna balista", "+25% czasu i +15% obrażeń Balisty", {"ballista_time": 0.25, "ballista_damage": 0.15}),
-		S("wolf_pack", "Wataha", "bow", "przywołuje 2 wilki na 15 s; wilki gryzą i powalają wrogów", new=True,
-			tags="przywołanie, fizyczne"),
-		N("pack_leader", "Przewodnik stada", "+1 wilk, +15% obrażeń przywołań", new=True),
+		S("wolf_pack", "Wataha", "bow", "przywołuje 2 widmowe wilki na stałe (rezerwują manę); wilki gryzą i powalają wrogów", new=True,
+			tags="przywołanie, fizyczne", soon=False),
+		N("pack_leader", "Przewodnik stada", "+1 wilk, +15% obrażeń przywołań", {"wolf_count": 1.0, "minion_damage": 0.15}, new=True),
 	]),
 	("d_pulapki", "dex", "Pułapki i jad", (348, 17.5), [
 		S("snare", "Sidła", "bow", "pułapki unieruchamiające"),
@@ -304,9 +306,9 @@ CLUSTERS = [
 	("i_mgla", "int", "Mgła", (115, 17.5), [
 		S("blink", "Krok przez Mgłę", "spell", "teleport"),
 		N("blink_cd", "Szybki krok", "-25% odnowienia Kroku przez Mgłę", {"blink_cooldown": -0.25}),
-		S("wisps", "Błędne Ogniki", "spell", "przywołuje 3 ogniki krążące przy tobie i strzelające do wrogów (zalążek nekromancji)", new=True,
-			tags="czar, przywołanie, ogień"),
-		N("loyal_wisps", "Wierne ogniki", "+1 ognik, +15% obrażeń przywołań", new=True),
+		S("wisps", "Błędne Ogniki", "spell", "przywołuje 3 ogniki na stałe (rezerwują manę), krążą przy tobie i strzelają ogniem (zalążek nekromancji)", new=True,
+			tags="czar, przywołanie, ogień", soon=False),
+		N("loyal_wisps", "Wierne ogniki", "+1 ognik, +15% obrażeń przywołań", {"wisp_count": 1.0, "minion_damage": 0.15}, new=True),
 		G(),
 	]),
 	("i_zywioly", "int", "Żywioły", (65, 17.5), [

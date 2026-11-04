@@ -61,6 +61,7 @@ static func list(player: Player) -> Array[Dictionary]:
 	result.append_array(player.spell_skills.statuses())
 	result.append_array(player.zone_skills.statuses())
 	result.append_array(player.auras.statuses())
+	result.append_array(player.summons.statuses())
 	return result
 
 

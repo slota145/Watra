@@ -113,11 +113,24 @@ func _skill_tooltip(id: String, key: String, weapon_type: String) -> String:
 		return tr("%s [%s] - działa z bronią: %s") % [Skills.name_of(id), key, Skills.weapon_name(data["weapon"]).to_lower()]
 	if _player.skills.level_of(id) <= 0:
 		return tr("%s [%s] - nieodblokowana (K)") % [Skills.name_of(id), key]
-	var text := "%s [%s]  •  %s\n%s\n%s" % [Skills.name_of(id), key, Skills.mana_cost_text(id), Skills.tags_bbcode(Skills.tags(id, weapon_type)),
+	var summon := _summon_of(id)
+	var cost := SummonData.cost_text(summon, _player.skills.level_of(summon)) if summon != "" else Skills.mana_cost_text(id)
+	var text := "%s [%s]  •  %s\n%s\n%s" % [Skills.name_of(id), key, cost, Skills.tags_bbcode(Skills.tags(id, weapon_type)),
 			Skills.description_of(id)]
+	if summon != "":
+		if summon == "seeker":
+			text += "\n" + SkillTree.node_description("loyal_seeker")
+		text += "\n" + (tr("Przywołane - naciśnij, żeby odesłać") if _player.summons.is_on(summon) else tr("Naciśnij, żeby przywołać"))
 	if AuraData.is_aura(id):
 		text += "\n" + (tr("Włączona - naciśnij, żeby wyłączyć") if _player.auras.is_on(id) else tr("Wyłączona - naciśnij, żeby włączyć"))
 	return text
+
+
+## Przywołanie pod tym slotem ("" - żadne): Wataha, Błędne Ogniki albo Strzała tropiąca z Wiernym tropicielem.
+func _summon_of(id: String) -> String:
+	if id == "seeker":
+		return id if _player.skills.has_node_id("loyal_seeker") else ""
+	return id if SummonData.is_summon(id) else ""
 
 
 func _process(_delta: float) -> void:
@@ -127,8 +140,12 @@ func _process(_delta: float) -> void:
 	for i in _slots.size():
 		var slot := _slots[i]
 		var id := _entry(i)
-		# włączona aura świeci ramką w swoim kolorze
-		slot.set_aura(AuraData.COLORS[id] if AuraData.is_aura(id) and _player.auras.is_on(id) else Color.TRANSPARENT)
+		# włączona aura i przywołanie świecą ramką w swoim kolorze
+		var summon := _summon_of(id)
+		if summon != "":
+			slot.set_aura(SummonData.COLORS[summon] if _player.summons.is_on(summon) else Color.TRANSPARENT)
+		else:
+			slot.set_aura(AuraData.COLORS[id] if AuraData.is_aura(id) and _player.auras.is_on(id) else Color.TRANSPARENT)
 		if id == "" or id == Hotbar.ATTACK or Hotbar.is_item(id):
 			slot.set_cooldown(0.0, 0.0)
 			slot.set_highlight(false)
@@ -139,7 +156,7 @@ func _process(_delta: float) -> void:
 			slot.set_highlight(false)
 			slot.icon.modulate = LOCKED
 			continue
-		if AuraData.is_aura(id):
+		if AuraData.is_aura(id) or summon != "":
 			slot.set_cooldown(0.0, 0.0)
 			slot.set_highlight(false)
 			slot.icon.modulate = LOCKED if _player.skills.level_of(id) <= 0 else Color.WHITE
