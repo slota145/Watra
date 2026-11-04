@@ -797,6 +797,37 @@ odpowiedniej sekcji.
   (+1 punkt za każdy), gdy inne wybrane węzły łączą się przez nie ze startem (`SkillBook.repair_paths`). Test `tests/test_auras.gd`.
   Do ustalenia po ograniu: liczby rezerwacji i siły, czy aury mają mieć gniazda na kamienie wsparcia, animacje ataków
   aur żywiołów z kreatora efektów PixelLab.
+- [x] **Nowe combo - krok 4 wspólnego drzewka** (`docs/plan_drzewek.md`, listopad 2026). Autor wybrał wszystkie 10 combo
+  z tabeli w planie. `Skills.COMBOS` pozwala mieć kilku poprzedników z różnym combo - `Player.combo_after(id)` mówi, po
+  której umiejętności combo zadziała (`combo_with` to skrót „czy w ogóle”). Liczby w `Skills` (stałe pod `COMBOS`):
+  - **Mgnienie -> Riposta**: Mgnienie pamięta 4 ostatnio trafione cele (`SwordSkills._flicker_marks`,
+    `Skills.FLICKER_MARKS`); Riposta zaraz po nim (`_marked_ripostes`) - na każdym wybucha kontra Riposty (pełne
+    obrażenia kontry razy premia combo, ogłuszenie 0,5 s, promień jak kontra), co 0,08 s; zasłona działa jak zwykle;
+  - **Rozpłatanie -> Widmowe Ostrza**: ostrza od razu wylatują (każde do innego wroga), a w celu robią Rozpłatanie
+    (`SpectralBlades.on_hit`, `SwordSkills._blade_rend`: cios i krwawienie Rozpłatania w promieniu 0,6 jego zasięgu);
+  - **Widmowe Ostrza -> Młynek**: burza ostrzy (`SwordSkills.blade_storm`) - 2x więcej ostrzy, 2,2x szybciej,
+    orbita 1,6x, trafienia co 0,27 s, przez 3 s (`BLADE_STORM_*`, `SpectralBlades.spin_speed`, `hit_interval`);
+  - **Rozłupanie Ziemi -> Szarża**: Rozłupanie zapamiętuje miejsca kolców na 3 s (`_spikes`, `SPIKE_TIME`); Szarża zaraz
+    potem (`SwordSkills.explode_spikes`) wysadza je jeden po drugim (promień 26, 100% obrażeń Rozłupania, każdy wróg raz);
+    Szarża kosztuje wtedy manę jak zwykle (darmowa jest tylko po Ripoście);
+  - **Sidła -> Deszcz Strzał**: `_Rain.focus` - strzały spadają też na unieruchomionych wrogów do 2,5 promienia deszczu
+    od środka (`RAIN_FOCUS_REACH`, `BowSkills.is_snared`);
+  - **Odskok -> Grot Swaroga**: napinanie zaczyna się od pełnego napięcia (`BowSkills._start_power`); wybuch ognia
+    zostaje tylko po Strzale tropiącej;
+  - **Sokół -> Strzała Wichru**: drugi podmuch z miejsca sokoła w stronę kursora (`_wind_gust` z `from`);
+  - **Zamieć -> Kula ognia**: `Projectile.exploded` (nowy sygnał), `Player._fireball_shatter`, `SpellSkills.fire_shatter` -
+    spowolnieni lodem wrogowie w wybuchu (do 1,5 promienia) pękają: lód i ogień po 50% obrażeń kuli w promieniu 30 wokół
+    każdego (każdy wróg raz);
+  - **Kamień Runiczny -> Łańcuch błyskawic**: po pierwszym celu błyskawica przeskakuje przez kamień (`SpellSkills.rune_at`,
+    `Player._rune_zap`), dalej jest 1,5x mocniejsza i ma 2 przeskoki więcej (`RUNE_CHAIN_*`);
+  - **Krok przez Mgłę -> Spadająca Gwiazda**: gwiazda spada tam, skąd zniknęła postać (`SpellSkills._blink_from`).
+  **Półksiężyc, Szybka salwa i Fala piorunów** są zwykłymi umiejętnościami drzewka (type `"skill"`, bez `"requires"`):
+  własny slot na pasku, odnowienie 2 / 2 / 1,5 s (`CRESCENT_COOLDOWN`, `VOLLEY_COOLDOWN`, `WAVE_COOLDOWN`), manę i combo
+  liczy `Player.use_followup`. Zaraz po swoim uderzeniu (Szarża, Strzała tropiąca, Łańcuch błyskawic) są darmowe i zadają
+  1,5x obrażeń (`FOLLOWUP_COMBO_DAMAGE`, razy premia combo z drzewka). Zniknęły typ `"combo"`, okno dodatkowego ciosu
+  (`_combo_window`) i `SkillBook.combo_for`; atak po uderzeniu to zwykły atak. Stare zapisy: umiejętności zostają, ale
+  trzeba je położyć na pasek z okna K. Test `tests/test_combos.gd`.
+  Do ustalenia po ograniu: liczby combo, odnowienia trzech dawnych ciosów.
 
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)

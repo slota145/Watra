@@ -161,7 +161,7 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
   (`skill_tree.gd`, `skill_tree_data.gd`, `sword_skills.gd`, `bow_skills.gd`, `spell_skills.gd`, okno K), punkty umiejętności z paska umiejętności i poziomy 1-20 (`SkillBook.skill_xp`,
   `Skills.LEVEL_POINTS`), tagi umiejętności (`Skills.TAGS`) i atrybuty dające % obrażeń umiejętnościom z ich tagiem
   (`CharacterStats.attribute_damage`), kamienie wsparcia w gniazdach umiejętności (`supports.gd`, znacznik umiejętności
-  w `Skills.tags` - `Skills.skill_of`), combo (`Skills.COMBOS`), paski szybkiego wyboru (`hotbar.gd`), ikony efektów (`status_effects.gd`);
+  w `Skills.tags` - `Skills.skill_of`), combo (`Skills.COMBOS`, kilku poprzedników - `Player.combo_after`), paski szybkiego wyboru (`hotbar.gd`), ikony efektów (`status_effects.gd`);
   zryw, Mgnienie i teleport przeskakują przeszkody, zatrzymuje je tylko granica (`BOUNDS_LAYER`, `Player.free_landing`);
   aury rezerwujące manę z każdą bronią (`aura_data.gd` - liczby, `auras.gd` - działanie, `SkillBook.auras`).
 - **Efekty:** animacje z kreatora efektów PixelLab (`pixellab_src/vfx/ids.json`, `tools/vfx_art.py`; pomocnicy `SkillEffects`,
@@ -292,7 +292,9 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   Krok 2 zrobiony, czeka na ocenę autora (szukaj „Wspólne drzewko umiejętności, krok 2” w `docs/historia.md`): drzewko
   w grze z obecnymi umiejętnościami, nowe umiejętności i nowe węzły kluczowe to puste miejsca; stare zapisy -
   zwrot wszystkich punktów, dodatkowo 1 punkt umiejętności co 2 poziomy postaci. Krok 3 (aury i rezerwacja many) zrobiony,
-  czeka na ocenę autora (szukaj „Aury rezerwujące manę - krok 3”). Dalej krok 4 (nowe combo).
+  czeka na ocenę autora (szukaj „Aury rezerwujące manę - krok 3”). Krok 4 (nowe combo; Półksiężyc, Szybka salwa
+  i Fala piorunów jako zwykłe umiejętności) zrobiony, czeka na ocenę autora (szukaj „Nowe combo - krok 4”).
+  Dalej krok 5 (nowe węzły kluczowe i nowe umiejętności).
 - [ ] **Modyfikacja premii tylko runami** (decyzja autora, listopad 2026): wszystkie sposoby zmiany premii
   (afiksów) przedmiotów mają działać przez runy - przedmioty-waluty jak orby w Path of Exile. Zrobione razem
   z Uroczyskiem (szukaj „Mechaniki w lochach, etap 3”): każde działanie warsztatu kowala zużywa swoją runę

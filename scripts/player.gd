@@ -226,12 +226,12 @@ var _swing_sign := 1.0
 var _attack_multiplier := 1.0
 ## Umiejętność, której cięciem jest obecny zamach (Półksiężyc); "" - zwykły atak (basic_tags).
 var _attack_skill := ""
-## Uderzenia (slot z uderzeniem) i dodatkowe ciosy (atak zaraz po uderzeniu).
+## Uderzenia (slot z uderzeniem).
 var _strike_request := false
-var _combo_request := false
 var _strike_cooldown := 0.0
 var _strike_cooldown_total := 0.0
-var _combo_window := 0.0
+## Kula ognia rzucona zaraz po Zamieci: spowolnieni lodem wrogowie w wybuchu pękają (combo).
+var _fireball_shatter := false
 ## Szarża: ile jeszcze trwa, kierunek, prędkość, mnożnik obrażeń i kogo już trafiła.
 var _lunge_time := 0.0
 var _lunge_dir := Vector2.RIGHT
@@ -477,7 +477,7 @@ func _input(event: InputEvent) -> void:
 			_update_held_slots()
 
 
-## Wciśnięty slot paska (wspólna numeracja): przedmiot (np. mikstura), atak (albo dodatkowy cios zaraz po uderzeniu),
+## Wciśnięty slot paska (wspólna numeracja): przedmiot (np. mikstura), atak,
 ## umiejętność aktywna (trzymana - młynek, ładowanie kuli ognia) albo uderzenie (jedno na wciśnięcie).
 ## Umiejętność innej broni (z paska 1-0) czeka, aż ją założysz.
 func _press_slot(index: int) -> void:
@@ -491,10 +491,7 @@ func _press_slot(index: int) -> void:
 		_hint(tr("%s działa z bronią: %s") % [Skills.name_of(id), Skills.weapon_name(Skills.get_data(id)["weapon"]).to_lower()])
 		return
 	if id == Hotbar.ATTACK:
-		if combo_ready():
-			_combo_request = true
-		else:
-			_attack_held = true
+		_attack_held = true
 	elif id != "":
 		match Skills.get_data(id)["type"]:
 			"aura":
@@ -591,10 +588,16 @@ func note_skill(id: String) -> void:
 
 ## Czy umiejętność użyta teraz zadziała jako combo (po pasującej umiejętności w oknie combo).
 func combo_with(id: String) -> bool:
+	return combo_after(id) != ""
+
+
+## Po której umiejętności `id` użyta teraz zadziała jako combo ("" - bez combo). Umiejętności z kilkoma
+## poprzednikami w Skills.COMBOS mają po każdym inne combo (np. Szarża po Ripoście i po Rozłupaniu Ziemi).
+func combo_after(id: String) -> String:
 	if _chain_time <= 0.0 or _chain_skill == "" or not Skills.COMBOS.has(id):
-		return false
+		return ""
 	var after: Array = Skills.COMBOS[id]
-	return (_chain_skill != id and "any" in after) or _chain_skill in after
+	return _chain_skill if (_chain_skill != id and "any" in after) or _chain_skill in after else ""
 
 
 ## Mnożnik obrażeń ciosów combo (węzły drzewka).
@@ -805,7 +808,6 @@ func _physics_process(delta: float) -> void:
 	_attack_cooldown_timer = maxf(_attack_cooldown_timer - delta, 0.0)
 	_skill_cooldown_timer = maxf(_skill_cooldown_timer - delta, 0.0)
 	_strike_cooldown = maxf(_strike_cooldown - delta, 0.0)
-	_combo_window = maxf(_combo_window - delta, 0.0)
 	_chain_time = maxf(_chain_time - delta, 0.0)
 	_hint_cooldown = maxf(_hint_cooldown - delta, 0.0)
 	_update_invulnerability(delta)
@@ -1815,9 +1817,13 @@ func _process_skill(delta: float) -> void:
 			if not skill_ready() or is_attacking():
 				return
 			if spend_mana(skill_mana("fireball")):
-				# Kula ognia zaraz po Kroku przez Mgłę: od razu w pełni naładowana
-				if combo_with("fireball"):
+				# Kula ognia zaraz po Kroku przez Mgłę: od razu w pełni naładowana;
+				# zaraz po Zamieci spowolnieni lodem wrogowie w wybuchu pękają
+				var after := combo_after("fireball")
+				_fireball_shatter = after == "blizzard"
+				if after != "":
 					combo_used()
+				if after == "blink":
 					_cast("fireball", 1.0)
 				else:
 					_start_fireball_charge()
@@ -2010,12 +2016,15 @@ func _cast(id: String, charge := 0.0, combo := false) -> void:
 	else:
 		_skill_cooldown_timer = _cooldown(Skills.FIREBALL_COOLDOWN, Skills.tags(id))
 		_skill_cooldown_total = _skill_cooldown_timer
-		_launch_fireballs(dir, level, charge)
-		support_echo(id, _launch_fireballs.bind(dir, level, charge))
+		var shatter := _fireball_shatter
+		_fireball_shatter = false
+		_launch_fireballs(dir, level, charge, shatter)
+		support_echo(id, _launch_fireballs.bind(dir, level, charge, shatter))
 
 
 ## Kula ognia (z dodatkowymi kulami Rozszczepu) - bez odnowienia i many (powtarza ją też Echo Rusałki).
-func _launch_fireballs(dir: Vector2, level: int, charge: float) -> void:
+## `shatter` - combo po Zamieci: w wybuchu pękają spowolnieni lodem wrogowie (SpellSkills.fire_shatter).
+func _launch_fireballs(dir: Vector2, level: int, charge: float, shatter := false) -> void:
 	var weapon := equipment.weapon()
 	if weapon.is_empty() or not weapon.has("projectile"):
 		return
@@ -2034,6 +2043,10 @@ func _launch_fireballs(dir: Vector2, level: int, charge: float) -> void:
 		fireball.explosion_min = roundi(stats.damage_min() * multiplier)
 		fireball.explosion_max = roundi(stats.damage_max() * multiplier)
 		fireball.turret_damage = legendary.fire_turret_damage(multiplier)
+		if shatter:
+			# procent obrażeń broni (bez mnożnika rodzaju - doliczy go SpellSkills przy trafieniu)
+			var blast := multiplier / maxf(stats.kind_multiplier(Skills.tags("fireball")), 0.01)
+			fireball.exploded.connect(func(at: Vector2, radius: float) -> void: spell_skills.fire_shatter(at, radius, blast))
 		get_parent().add_child(fireball)
 	Sfx.play("fireball_launch", lerpf(-4.0, 2.0, charge), lerpf(1.15, 0.85, charge))
 
@@ -2043,10 +2056,15 @@ func _start_whirl() -> void:
 	_whirling = true
 	_whirl_tick = 0.0
 	_whirl_time = 0.0
+	# Młynek zaraz po Widmowych Ostrzach: wokół postaci krąży burza ostrzy
+	var storm := combo_after("whirlwind") == "spectral_blades" and skills.level_of("spectral_blades") > 0
 	note_skill("whirlwind")
 	var radius := whirl_radius()
 	sword.visible = sword.texture != null
 	sword.rotation = 0.0
+	if storm:
+		combo_used()
+		sword_skills.blade_storm()
 	sword.flip_v = false
 	sword.position = Vector2(WHIRL_HAND_REACH, 0.0)
 	_whirl_fx_time = 0.0
@@ -2171,14 +2189,9 @@ func _hit_enemies_in_arc(half_arc: float) -> void:
 				swing_tags if _attack_skill != "" else [])
 
 
-# ---------------------------------------------------------------- uderzenia i dodatkowe ciosy
+# ---------------------------------------------------------------- uderzenia i ciosy po uderzeniu
 func strike_ready() -> bool:
 	return _strike_cooldown <= 0.0
-
-
-## Czy trwa okno na dodatkowy cios (atak zaraz po uderzeniu).
-func combo_ready() -> bool:
-	return _combo_window > 0.0 and skills.combo_for(stats.weapon_type()) != ""
 
 
 func _process_strikes() -> void:
@@ -2189,9 +2202,6 @@ func _process_strikes() -> void:
 	if _strike_request:
 		_strike_request = false
 		_use_strike()
-	if _combo_request:
-		_combo_request = false
-		_use_combo()
 
 
 func _strike_blocked() -> bool:
@@ -2206,56 +2216,64 @@ func _use_strike() -> void:
 	if _strike_blocked() or not strike_ready():
 		return
 	var cost: float = skill_mana(id, {"lunge": Skills.LUNGE_MANA, "seeker": Skills.SEEKER_MANA, "chain_lightning": Skills.CHAIN_MANA}[id])
-	# Szarża zaraz po udanej Ripoście: za darmo i bez odnowienia
-	var free := combo_with(id)
+	# Szarża zaraz po udanej Ripoście: za darmo i bez odnowienia; zaraz po Rozłupaniu Ziemi kolce wybuchają
+	var after := combo_after(id)
+	var free := id == "lunge" and after == "riposte"
 	if free:
 		cost = 0.0
-		combo_used()
 	if not spend_mana(cost):
 		_hint(tr("Za mało many"))
 		return
+	if after != "":
+		combo_used()
 	var level := skills.level_of(id)
 	match id:
 		"lunge":
 			_strike_cooldown = 0.0 if free else _cooldown(Skills.LUNGE_COOLDOWN, Skills.tags(id)) * (1.0 + skills.tree_bonus("lunge_cooldown"))
 			_strike_cooldown_total = _strike_cooldown
+			if after == "ground_slam":
+				sword_skills.explode_spikes()
 			_start_lunge(level)
 		"seeker":
 			_strike_cooldown = _cooldown(Skills.SEEKER_COOLDOWN, Skills.tags(id))
 			_strike_cooldown_total = _strike_cooldown
 			_cast_seeker(level)
-			_combo_window = combo_window()
 			note_skill(id)
 		"chain_lightning":
-			# bez odnowienia: tylko czas rzucania, krótszy z szybkością rzucania
+			# bez odnowienia: tylko czas rzucania, krótszy z szybkością rzucania;
+			# zaraz po Kamieniu Runicznym błyskawica przeskakuje też przez kamień i rośnie w siłę
+			var rune := spell_skills.rune_at() if after == "rune_stone" else Vector2.INF
 			_strike_cooldown = Skills.CHAIN_CAST_TIME / _skill_speed(Skills.tags(id))
 			_strike_cooldown_total = _strike_cooldown
-			_cast_chain(level)
-			support_echo(id, _cast_chain.bind(level))
-			_combo_window = combo_window()
+			_cast_chain(level, rune)
+			support_echo(id, _cast_chain.bind(level, rune))
 			note_skill(id)
 
 
-func _use_combo() -> void:
-	var id := skills.combo_for(stats.weapon_type())
-	if id == "" or _combo_window <= 0.0 or _strike_blocked():
-		return
-	var cost: float = skill_mana(id, {"crescent": Skills.CRESCENT_MANA, "rapid_volley": Skills.VOLLEY_MANA, "thunder_wave": Skills.WAVE_MANA}[id])
-	if not spend_mana(cost):
+## Półksiężyc, Szybka salwa i Fala piorunów (umiejętności drzewka; odnowienie liczą Sword/Bow/SpellSkills).
+## Zaraz po swoim uderzeniu (Skills.COMBOS) są darmowe i mocniejsze (Skills.FOLLOWUP_COMBO_DAMAGE).
+## Zwraca, czy umiejętność została użyta.
+func use_followup(id: String) -> bool:
+	if _strike_blocked():
+		return false
+	var combo := combo_with(id)
+	if not combo and not spend_mana(skill_mana(id)):
 		_hint(tr("Za mało many"))
-		return
-	_combo_window = 0.0
+		return false
+	var multiplier := Skills.FOLLOWUP_COMBO_DAMAGE * combo_damage() if combo else 1.0
+	if combo:
+		combo_used()
 	var level := skills.level_of(id)
 	note_skill(id)
-	combo_used()
 	match id:
 		"crescent":
-			_start_crescent(level)
+			_start_crescent(level, multiplier)
 		"rapid_volley":
-			_cast_volley(level)
+			_cast_volley(level, multiplier)
 		"thunder_wave":
-			_cast_wave(level)
-			support_echo(id, _cast_wave.bind(level))
+			_cast_wave(level, multiplier)
+			support_echo(id, _cast_wave.bind(level, multiplier))
+	return true
 
 
 ## Kierunek celowania dla testera-bota (tests/playtest_bot.gd) zamiast myszy; zero - mysz.
@@ -2498,12 +2516,11 @@ func _update_lunge(delta: float) -> void:
 		_move_velocity = _lunge_dir * max_speed * 0.4
 		sword.visible = false
 		_update_weapon_sprite()
-		_combo_window = combo_window()
 		note_skill("lunge")
 
 
-## Półksiężyc: potężne, bardzo szerokie cięcie zaraz po szarży.
-func _start_crescent(level: int) -> void:
+## Półksiężyc: potężne, bardzo szerokie cięcie (`multiplier` - combo po Szarży).
+func _start_crescent(level: int, multiplier := 1.0) -> void:
 	var aim := _aim_direction()
 	_attack_angle = aim.angle()
 	_attack_kind = "melee"
@@ -2513,7 +2530,7 @@ func _start_crescent(level: int) -> void:
 	_attack_cooldown_timer = 0.45 / _skill_speed(tags)
 	_attack_reach = Skills.crescent_radius(level) * stats.area_multiplier(tags)
 	_attack_arc = deg_to_rad(Skills.CRESCENT_ARC_DEGREES)
-	_attack_multiplier = Skills.CRESCENT_DAMAGE * combo_damage()
+	_attack_multiplier = Skills.CRESCENT_DAMAGE * multiplier
 	_attack_skill = "crescent"
 	_swing_sign = -_swing_sign
 	_melee_anim = "rising_cut"
@@ -2528,7 +2545,6 @@ func _start_crescent(level: int) -> void:
 	_attack_timer = _attack_length
 	SkillEffects.sheet_once(get_parent(), CRESCENT_FX, 7, 20.0, body_center(), CRESCENT_FX_ANCHOR, _attack_angle, 1.0,
 			_attack_reach / CRESCENT_FX_RADIUS, 0.0, _swing_sign < 0.0)
-	note_skill("crescent")
 	Sfx.play("big_slash")
 	_shake = maxf(_shake, 2.0)
 	_update_attack(0.0)
@@ -2568,15 +2584,14 @@ func _cast_seeker(level: int) -> void:
 		get_parent().add_child(more)
 
 
-## Szybka salwa: seria strzał w stronę kursora, jedna po drugiej.
-## Szybka Salwa: strzały jedna po drugiej, co VOLLEY_INTERVAL s (krócej z szybkością, ale nie krócej niż
-## VOLLEY_MIN_INTERVAL - inaczej strzały lecą jedna w drugiej i wyglądają jak jedna).
-func _cast_volley(level: int) -> void:
+## Szybka salwa: strzały w stronę kursora jedna po drugiej, co VOLLEY_INTERVAL s (krócej z szybkością, ale nie
+## krócej niż VOLLEY_MIN_INTERVAL - inaczej strzały lecą jedna w drugiej i wyglądają jak jedna); `multiplier` - combo.
+func _cast_volley(level: int, multiplier := 1.0) -> void:
 	var count := Skills.volley_arrows(level) + support_count("rapid_volley", "projectiles")
 	var tween := create_tween()
 	var interval := maxf(VOLLEY_INTERVAL / _skill_speed(Skills.tags("rapid_volley")), VOLLEY_MIN_INTERVAL)
 	for i in count:
-		tween.tween_callback(_volley_arrow.bind(i))
+		tween.tween_callback(_volley_arrow.bind(i, multiplier))
 		tween.tween_interval(interval)
 
 
@@ -2586,7 +2601,7 @@ const VOLLEY_MIN_INTERVAL := 0.05
 const VOLLEY_SPREAD := 5.0
 
 
-func _volley_arrow(index := 0) -> void:
+func _volley_arrow(index := 0, multiplier := 1.0) -> void:
 	if is_dead or stats.weapon_type() != "bow":
 		return
 	var weapon := equipment.weapon()
@@ -2598,8 +2613,8 @@ func _volley_arrow(index := 0) -> void:
 	var arrow := _make_projectile(weapon, dir, "rapid_volley")
 	var side := 0.0 if index == 0 else (VOLLEY_SPREAD if index % 2 == 1 else -VOLLEY_SPREAD) * (1.0 + 0.3 * ((index - 1) / 2 % 2))
 	arrow.position += dir.orthogonal() * side
-	arrow.damage_min = maxi(1, roundi(arrow.damage_min * Skills.VOLLEY_DAMAGE))
-	arrow.damage_max = maxi(1, roundi(arrow.damage_max * Skills.VOLLEY_DAMAGE))
+	arrow.damage_min = maxi(1, roundi(arrow.damage_min * Skills.VOLLEY_DAMAGE * multiplier))
+	arrow.damage_max = maxi(1, roundi(arrow.damage_max * Skills.VOLLEY_DAMAGE * multiplier))
 	arrow.speed *= 1.25
 	get_parent().add_child(arrow)
 	BowSkills.release(get_parent(), body_center() + dir * 6.0, dir.angle(), 0.55)
@@ -2607,8 +2622,9 @@ func _volley_arrow(index := 0) -> void:
 
 
 ## Łańcuch błyskawic: pierwszy cel najbliżej kursora, potem przeskok do najbliższego
-## jeszcze nietrafionego wroga - błyskawicznie, jeden po drugim.
-func _cast_chain(level: int) -> void:
+## jeszcze nietrafionego wroga - błyskawicznie, jeden po drugim. `rune` (combo po Kamieniu Runicznym; INF - bez):
+## po pierwszym celu błyskawica przeskakuje przez kamień, rośnie w siłę i ma więcej przeskoków.
+func _cast_chain(level: int, rune := Vector2.INF) -> void:
 	var dir := _aim_direction()
 	_ranged_pose(dir)
 	_attack_kind = "spell"
@@ -2635,14 +2651,18 @@ func _cast_chain(level: int) -> void:
 	# Rozszczep i Łańcuch (kamienie wsparcia): więcej przeskoków
 	var jumps := Skills.chain_targets(level) + roundi(skills.tree_bonus("chain_targets")) \
 			+ support_count("chain_lightning", "projectiles") + support_count("chain_lightning", "chain")
+	var via_rune := rune.is_finite()
+	if via_rune:
+		jumps += Skills.RUNE_CHAIN_JUMPS
 	while targets.size() < jumps:
-		var last := targets[-1]
+		# za kamieniem łańcuch szuka dalej od kamienia
+		var last_at := rune if via_rune and targets.size() == 1 else targets[-1].hurt_center()
 		var next: Goblin = null
-		var nearest := CHAIN_JUMP_RANGE
-		for enemy: Goblin in Goblin.near(get_tree(), last.hurt_center(), CHAIN_JUMP_RANGE + 40.0):
+		var nearest := CHAIN_JUMP_RANGE * (1.5 if via_rune and targets.size() == 1 else 1.0)
+		for enemy: Goblin in Goblin.near(get_tree(), last_at, nearest + 40.0):
 			if enemy in targets:
 				continue
-			var d := enemy.hurt_center().distance_to(last.hurt_center())
+			var d := enemy.hurt_center().distance_to(last_at)
 			if d < nearest:
 				nearest = d
 				next = enemy
@@ -2654,11 +2674,26 @@ func _cast_chain(level: int) -> void:
 	var tween := create_tween()
 	var from := origin
 	var multiplier := Skills.CHAIN_DAMAGE
-	for target in targets:
+	var step := 0.06 / _skill_speed(Skills.tags("chain_lightning"))
+	for i in targets.size():
+		var target := targets[i]
 		tween.tween_callback(_zap.bind(from, target, multiplier))
-		tween.tween_interval(0.06 / _skill_speed(Skills.tags("chain_lightning")))
+		tween.tween_interval(step)
 		from = target.hurt_center()
 		multiplier *= Skills.CHAIN_FALLOFF
+		if i == 0 and via_rune:
+			tween.tween_callback(_rune_zap.bind(from, rune))
+			tween.tween_interval(step)
+			from = rune
+			multiplier *= Skills.RUNE_CHAIN_BOOST
+
+
+## Przeskok łańcucha przez Kamień Runiczny (combo): błyskawica do kamienia i rozbłysk na nim.
+func _rune_zap(from: Vector2, rune: Vector2) -> void:
+	LightningArc.spawn(get_parent(), from, rune, 2.0, 0.35)
+	SpellSkills.zap_flash(get_parent(), rune)
+	MiscVfx.spark(get_parent(), rune, Color(0.6, 0.8, 1.0), 1.2)
+	Sfx.play("chain_zap", 2.0, 0.8)
 
 
 func _zap(from: Vector2, target: Goblin, multiplier: float) -> void:
@@ -2673,8 +2708,8 @@ func _zap(from: Vector2, target: Goblin, multiplier: float) -> void:
 	hit_enemy(target, _skill_damage(multiplier, Skills.tags("chain_lightning")), from, 40.0, "lightning", Skills.tags("chain_lightning"))
 
 
-## Fala piorunów: szeroki stożek błyskawic przed postacią.
-func _cast_wave(level: int) -> void:
+## Fala piorunów: szeroki stożek błyskawic przed postacią (`multiplier` - combo po Łańcuchu błyskawic).
+func _cast_wave(level: int, multiplier := 1.0) -> void:
 	var dir := _aim_direction()
 	_ranged_pose(dir)
 	_attack_kind = "spell"
@@ -2691,7 +2726,7 @@ func _cast_wave(level: int) -> void:
 		if to_enemy.length() > enemy.hurt_radius and absf(angle_difference(dir.angle(), to_enemy.angle())) > half:
 			continue
 		SpellSkills.zap_flash(get_parent(), enemy.hurt_center())
-		hit_enemy(enemy, _skill_damage(Skills.WAVE_DAMAGE, Skills.tags("thunder_wave")), global_position, 140.0, "lightning", Skills.tags("thunder_wave"))
+		hit_enemy(enemy, _skill_damage(Skills.WAVE_DAMAGE * multiplier, Skills.tags("thunder_wave")), global_position, 140.0, "lightning", Skills.tags("thunder_wave"))
 	Sfx.play("thunder")
 	_shake = maxf(_shake, 4.0)
 
@@ -2711,7 +2746,6 @@ func _die() -> void:
 		bow_skills.cancel()
 		spell_skills.cancel()
 	_lunge_time = 0.0
-	_combo_window = 0.0
 	_stop_whirl()
 	if is_charging_fireball():
 		_stop_fireball_charge()

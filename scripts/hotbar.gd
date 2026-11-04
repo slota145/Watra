@@ -6,8 +6,7 @@ extends RefCounted
 ## - Pasek przedmiotów: 10 slotów pod klawiszami 1-0, wspólny dla wszystkich broni - umiejętność innej broni czeka
 ##   tam przygaszona, aż ją założysz.
 ## Slot z przedmiotem pamięta rodzaj przedmiotu (id), a nie konkretną sztukę - gdy przedmiot się skończy, slot
-## zostaje (pokazuje 0) i sam się uzupełni po zakupie. Dodatkowe ciosy (combo) nie mają własnego slotu - wychodzą
-## z ataku użytego zaraz po uderzeniu. Sloty liczy się wspólnie (slot_count): najpierw 7 umiejętności, potem 1-0.
+## zostaje (pokazuje 0) i sam się uzupełni po zakupie. Sloty liczy się wspólnie (slot_count): najpierw 7 umiejętności, potem 1-0.
 
 signal changed
 
@@ -54,7 +53,7 @@ static func default_skills(weapon_type: String) -> Array[String]:
 	return bar
 
 
-## Czy umiejętność można położyć na pasku (atak, aktywna, uderzenie, umiejętność drzewka, aura - nie combo).
+## Czy umiejętność można położyć na pasku (atak, aktywna, uderzenie, umiejętność drzewka, aura).
 static func can_slot_skill(id: String) -> bool:
 	return id == ATTACK or Skills.get_data(id).get("type", "") in ["active", "strike", "skill", "aura"]
 

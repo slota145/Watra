@@ -4,7 +4,7 @@ extends VBoxContainer
 ## założonej broni, dolny (1-0) - wspólny. Każdy slot przyjmuje umiejętność albo przedmiot do użycia:
 ## - umiejętność: odnowienie (wskazówka zegara i sekundy), brak many (niebieskawy slot), umiejętność innej broni
 ##   (na pasku 1-0) i nieodblokowana - przygaszona; w czasie okna combo świecą sloty umiejętności, które zadziałają
-##   inaczej (atak - dodatkowy cios, Dymne Wybuchy - od razu 9 wybuchów; kurczący się pierścień pokazuje, ile okna
+##   inaczej (np. Półksiężyc po Szarży, Dymne Wybuchy - od razu 9 wybuchów; kurczący się pierścień pokazuje, ile okna
 ##   zostało), Mgnienie świeci w trakcie Młynka, włączona aura - ramka w kolorze aury,
 ## - przedmiot: liczba sztuk w plecaku; gdy się skończą, slot zostaje przygaszony z zerem; LPM na slocie go używa.
 ## Umiejętności przeciąga się z okna umiejętności (K), przedmioty z plecaka; między slotami (także między paskami) -
@@ -105,11 +105,8 @@ func _attack_icon() -> Texture2D:
 
 func _skill_tooltip(id: String, key: String, weapon_type: String) -> String:
 	if id == Hotbar.ATTACK:
-		var combo := _player.skills.combo_for(weapon_type)
 		var text := tr("%s [%s]\nZwykły atak założoną bronią w stronę kursora.") % [Hotbar.attack_name(), key]
 		text += "\n" + Skills.tags_bbcode(Skills.basic_tags(weapon_type))
-		if combo != "":
-			text += "\n" + tr("Zaraz po uderzeniu: %s (%s)") % [Skills.name_of(combo), Skills.mana_cost_text(combo)]
 		return text
 	var data := Skills.get_data(id)
 	if not Skills.works_with(id, weapon_type):
@@ -127,7 +124,6 @@ func _process(_delta: float) -> void:
 	if _player == null:
 		return
 	var weapon_type := _player.stats.weapon_type()
-	var combo := _player.combo_ready()
 	for i in _slots.size():
 		var slot := _slots[i]
 		var id := _entry(i)
@@ -135,7 +131,7 @@ func _process(_delta: float) -> void:
 		slot.set_aura(AuraData.COLORS[id] if AuraData.is_aura(id) and _player.auras.is_on(id) else Color.TRANSPARENT)
 		if id == "" or id == Hotbar.ATTACK or Hotbar.is_item(id):
 			slot.set_cooldown(0.0, 0.0)
-			slot.set_highlight(combo and id == Hotbar.ATTACK)
+			slot.set_highlight(false)
 			slot.icon.modulate = Color.WHITE
 			continue
 		if not Skills.works_with(id, weapon_type):

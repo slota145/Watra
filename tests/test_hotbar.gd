@@ -1,6 +1,6 @@
 extends SceneTree
 ## Paski szybkiego wyboru i efekty: domyślne mikstury pod 1 i 2, mikstury na start nowej postaci, klawisze 1-0,
-## układ umiejętności zależny od broni (LPM, PPM, Q...), uderzenie i atak ze slotów, combo, odnowienie,
+## układ umiejętności zależny od broni (LPM, PPM, Q...), uderzenie i atak ze slotów, Półksiężyc ze slotu, odnowienie,
 ## zapis paska, starsze zapisy bez paska, interakcja pod F, tryb deweloperski na F1-F4 i lista efektów.
 
 var _world: Node
@@ -60,7 +60,7 @@ func _process(_d: float) -> bool:
 		bar.swap_items(4, 0)
 		check("zamiana slotów przedmiotów", bar.items[0] == "guard_horn" and bar.items[4] == "health_potion")
 		bar.swap_items(4, 0)
-		# umiejętności: uderzenie ze slotu Q, atak z LPM, combo po uderzeniu
+		# umiejętności: uderzenie ze slotu Q, atak z LPM, Półksiężyc na własnym slocie
 		# umiejętności miecza odblokowują węzły drzewka (punkty z poziomów)
 		p.skills.character_level = 5
 		# punkty umiejętności daje pasek umiejętności, nie poziom postaci
@@ -85,12 +85,22 @@ func _process(_d: float) -> bool:
 		p._unhandled_input(_action("skill_e", true))
 		check("E trzyma atak", p._attack_held)
 		p._input(_action("skill_e", false))
-		p._combo_window = 1.0
-		p._unhandled_input(_action("skill_e", true))
-		p._input(_action("skill_e", false))
-		check("atak w oknie combo to dodatkowy cios", p._combo_request and not p._attack_held)
-		p._combo_request = false
-		p._combo_window = 0.0
+		# Półksiężyc to zwykła umiejętność na pasku; zaraz po Szarży - combo (darmowy i mocniejszy)
+		check("Półksiężyc na pasek", load("res://scripts/hotbar.gd").can_slot_skill("crescent"))
+		bar.set_skill("melee", 4, "crescent")
+		p.mana = 100.0
+		p.note_skill("lunge")
+		check("po Szarży Półksiężyc jako combo", p.combo_after("crescent") == "lunge")
+		p._unhandled_input(_action("skill_r", true))
+		p._input(_action("skill_r", false))
+		check("Półksiężyc ze slotu - combo bez many", p._attack_skill == "crescent" and is_equal_approx(p.mana, 100.0)
+				and p._attack_multiplier > load("res://scripts/skills.gd").CRESCENT_DAMAGE, "mana %.0f" % p.mana)
+		check("odnowienie Półksiężyca", p.cooldown_of("crescent").x > 0.0)
+		p.sword_skills._cooldowns.erase("crescent")
+		p._unhandled_input(_action("skill_r", true))
+		p._input(_action("skill_r", false))
+		check("Półksiężyc bez combo kosztuje manę", p.mana < 100.0, "%.0f" % p.mana)
+		bar.set_skill("melee", 4, "")
 		# odnowienie uderzenia widać na slocie
 		p._strike_cooldown = 1.5
 		p._strike_cooldown_total = 2.5

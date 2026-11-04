@@ -54,6 +54,8 @@ var chain := 0
 
 ## Trafienie wroga (bez wybuchu) - np. combo Grotu Swaroga dokłada wtedy wybuch ognia (BowSkills).
 signal enemy_hit(enemy: Goblin)
+## Wybuch pocisku (kula ognia): miejsce i promień - np. combo Kuli ognia po Zamieci.
+signal exploded(at: Vector2, radius: float)
 
 var _travelled := 0.0
 var _hit: Dictionary[Node, bool] = {}
@@ -193,6 +195,7 @@ func _finish() -> void:
 
 
 func _explode() -> void:
+	exploded.emit(global_position, explosion_radius)
 	if turret_damage > 0:
 		_become_turret()
 		return

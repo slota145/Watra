@@ -122,6 +122,11 @@ var _cloud_at := Vector2.ZERO
 var _cloud_time := 0.0
 var _cloud_node: FxLoop
 var _blades: SpectralBlades
+## Ostatnio trafieni przez Mgnienie wrogowie (Riposta po Mgnieniu - kontra wybucha na nich).
+var _flicker_marks: Array = []
+## Kolce z pęknięć ostatniego Rozłupania Ziemi i ile jeszcze czekają (Szarża po Rozłupaniu - wybuchają).
+var _spikes: Array[Vector2] = []
+var _spikes_time := 0.0
 
 
 func _init(player: Player) -> void:
@@ -138,6 +143,9 @@ func press(id: String) -> void:
 			_press_flicker()
 		"smoke_burst":
 			_press_smoke()
+		"crescent":
+			if _cooldowns.get(id, [0.0])[0] <= 0.0 and _player.use_followup(id):
+				_start_cooldown(id, Skills.CRESCENT_COOLDOWN)
 		_:
 			if _cooldowns.get(id, [0.0])[0] > 0.0:
 				return
@@ -295,6 +303,10 @@ func _jump(reach: float, level: int, spinning: bool) -> bool:
 	_player.reset_physics_interpolation()
 	_player._invulnerable_timer = maxf(_player._invulnerable_timer, 0.15)
 	_last_target = best
+	_flicker_marks.erase(best)
+	_flicker_marks.append(best)
+	if _flicker_marks.size() > Skills.FLICKER_MARKS:
+		_flicker_marks.pop_front()
 	var travel := spot - from
 	_player._face_direction(travel)
 	if not spinning:
@@ -498,6 +510,8 @@ func _ground_slam() -> void:
 	var combo := _player.combo_with("ground_slam")
 	if combo:
 		_player.combo_used()
+	_spikes.clear()
+	_spikes_time = Skills.SPIKE_TIME
 	_player._ranged_pose(aim)
 	_player.play_skill_anim("chop")
 	_player.note_skill("ground_slam")
@@ -517,6 +531,7 @@ func _ground_slam() -> void:
 		for ring in [[0.5, 9, 0.0, 0.0], [0.85, 14, 0.08, 0.5]]:
 			for k: int in ring[1]:
 				var spot: Vector2 = origin + Vector2.from_angle(TAU * (k + ring[3]) / ring[1]) * Skills.SLAM_RING * area * ring[0]
+				_spikes.append(spot)
 				_player.get_tree().create_timer(ring[2] + randf() * 0.04, false).timeout.connect(func() -> void:
 					if is_instance_valid(_player):
 						SkillEffects.sheet_once(_player.get_parent(), SLAM_FX, 10, 15.0, spot, SLAM_FX_ANCHOR, 0.0, 1.0, 1.0))
@@ -528,6 +543,7 @@ func _ground_slam() -> void:
 	var steps := 6
 	for i in steps:
 		var at := origin + aim * (20.0 + (Skills.SLAM_LENGTH * area - 20.0) * i / (steps - 1))
+		_spikes.append(at)
 		_player.get_tree().create_timer(i * 0.05, false).timeout.connect(func() -> void:
 			if not is_instance_valid(_player):
 				return
@@ -540,6 +556,34 @@ func _ground_slam() -> void:
 					_slam_hit(enemy, damage, stun, origin))
 
 
+## Szarża zaraz po Rozłupaniu Ziemi (combo): kolce z pęknięć wybuchają jeden po drugim; każdy wróg dostaje raz.
+func explode_spikes() -> void:
+	if _spikes_time <= 0.0 or _spikes.is_empty():
+		return
+	var tags := Skills.tags("ground_slam")
+	var area := _player.stats.area_multiplier(tags)
+	var radius := Skills.SPIKE_BLAST_RADIUS * area
+	var damage := Skills.slam_damage(_player.skills.level_of("ground_slam")) * Skills.SPIKE_BLAST_DAMAGE * _player.combo_damage()
+	var hit := {}
+	var spots := _spikes.duplicate()
+	_spikes.clear()
+	_spikes_time = 0.0
+	_player.add_shake(5.0)
+	for i in spots.size():
+		var at: Vector2 = spots[i]
+		_player.get_tree().create_timer(0.03 * i, false).timeout.connect(func() -> void:
+			if not is_instance_valid(_player):
+				return
+			MiscVfx.ring(_player.get_parent(), at, radius, Color(1.0, 0.6, 0.3))
+			SkillEffects.sheet_once(_player.get_parent(), SLAM_FX, 10, 20.0, at, SLAM_FX_ANCHOR, 0.0, 1.0, 1.3)
+			if i % 3 == 0:
+				Sfx.play_at("explosion", at, -8.0)
+			for enemy: Goblin in Goblin.near(_player.get_tree(), at, radius + 40.0):
+				if not hit.has(enemy) and enemy.global_position.distance_to(at) <= radius + enemy.hurt_radius:
+					hit[enemy] = true
+					_player.hit_enemy(enemy, _player._skill_damage(damage, tags), at, 90.0, "", tags))
+
+
 func _slam_hit(enemy: Goblin, damage: float, stun: float, from: Vector2) -> void:
 	var tags := Skills.tags("ground_slam")
 	_player.hit_enemy(enemy, _player._skill_damage(damage, tags), from, 60.0, "", tags)
@@ -550,6 +594,10 @@ func _slam_hit(enemy: Goblin, damage: float, stun: float, from: Vector2) -> void
 # ---------------------------------------------------------------- Riposta
 func _riposte() -> void:
 	_start_cooldown("riposte", Skills.RIPOSTE_COOLDOWN)
+	# zaraz po Mgnieniu: kontra wybucha na ostatnio trafionych przez Mgnienie wrogach
+	if _player.combo_after("riposte") == "flicker":
+		_player.combo_used()
+		_marked_ripostes()
 	_parry_time = Skills.RIPOSTE_TIME
 	_player._ranged_pose(_player._aim_direction())
 	Sfx.play("swing", 0.0, 0.8)
@@ -560,6 +608,33 @@ func _riposte() -> void:
 		_parry_ring.position = Player.BODY_OFFSET
 	_parry_ring.visible = true
 	_parry_ring.time = 0.0
+
+
+## Riposta po Mgnieniu (combo): na każdym z ostatnio trafionych przez Mgnienie wrogów (Skills.FLICKER_MARKS) wybucha
+## kontra Riposty, raniąc i ogłuszając wszystkich wokół niego.
+func _marked_ripostes() -> void:
+	var marks := _flicker_marks.filter(func(e) -> bool: return is_instance_valid(e) and (e as Goblin).state != Goblin.State.DEAD)
+	_flicker_marks.clear()
+	var tags := Skills.tags("riposte")
+	var radius := Skills.RIPOSTE_RADIUS * _player.stats.area_multiplier(tags)
+	var damage := Skills.riposte_damage(_player.skills.level_of("riposte")) * (1.0 + _player.skills.tree_bonus("riposte_damage")) \
+			* _player.combo_damage()
+	for i in marks.size():
+		# słaba referencja - wróg może zginąć, zanim kontra wybuchnie
+		var mark: WeakRef = weakref(marks[i])
+		_player.get_tree().create_timer(0.08 * i, false).timeout.connect(func() -> void:
+			var target: Goblin = mark.get_ref()
+			if not is_instance_valid(_player) or target == null:
+				return
+			var at := target.hurt_center()
+			SkillEffects.sheet_once(_player.get_parent(), RIPOSTE_COUNTER_FX, 6, 18.0, at, RIPOSTE_COUNTER_ANCHOR, 0.0, 1.0,
+					radius / RIPOSTE_FX_RADIUS)
+			Sfx.play_at("hit_heavy", at, 0.0)
+			for enemy: Goblin in Goblin.near(_player.get_tree(), at, radius + 40.0):
+				if enemy.hurt_center().distance_to(at) <= radius + enemy.hurt_radius:
+					_player.hit_enemy(enemy, _player._skill_damage(damage, tags), at, 120.0, "", tags)
+					if enemy.state != Goblin.State.DEAD:
+						enemy.stun(0.5))
 
 
 ## Wołane przez gracza przy otrzymaniu ciosu: w czasie zasłony cios nie rani, a postać kontratakuje.
@@ -632,7 +707,9 @@ func take_forced_crit() -> bool:
 func _spectral_blades() -> void:
 	var level := _player.skills.level_of("spectral_blades")
 	_start_cooldown("spectral_blades", Skills.BLADES_COOLDOWN)
-	var combo := _player.combo_with("spectral_blades")
+	# zaraz po Młynku ostrza od razu wylatują; zaraz po Rozpłataniu wylatują i rozpłatują swoje cele
+	var after := _player.combo_after("spectral_blades")
+	var combo := after != ""
 	if combo:
 		_player.combo_used()
 	_player.note_skill("spectral_blades")
@@ -644,10 +721,45 @@ func _spectral_blades() -> void:
 	_blades.damage = Skills.blades_damage(level) * (_player.combo_damage() if combo else 1.0)
 	_blades.time_left = Skills.BLADES_TIME
 	_blades.orbit = Skills.BLADES_ORBIT * _player.stats.area_multiplier(Skills.tags("spectral_blades"))
+	if after == "rend":
+		_blades.on_hit = _blade_rend
 	_player.get_parent().add_child(_blades)
 	Sfx.play("magic", 0.0, 1.3)
 	if combo:
 		_blades.launch()
+
+
+## Widmowe ostrze po Rozpłataniu (combo) dotarło do celu: Rozpłatanie wokół niego - cios i krwawienie.
+func _blade_rend(target: Goblin) -> void:
+	if not is_instance_valid(_player) or not is_instance_valid(target):
+		return
+	var level := maxi(_player.skills.level_of("rend"), 1)
+	var tags := Skills.tags("rend")
+	var at := target.hurt_center()
+	var reach := Skills.REND_REACH * 0.6 * _player.stats.area_multiplier(tags)
+	SkillEffects.sheet_once(_player.get_parent(), REND_FX, 7, 18.0, at, REND_FX_ANCHOR, randf() * TAU, 1.0, reach / REND_FX_RADIUS)
+	for enemy: Goblin in Goblin.near(_player.get_tree(), at, reach + 40.0):
+		if enemy.hurt_center().distance_to(at) <= reach + enemy.hurt_radius:
+			_player.hit_enemy(enemy, _player._skill_damage(Skills.rend_damage(level) * _player.combo_damage(), tags), at, 60.0, "", tags)
+			bleed_enemy(enemy, Skills.rend_bleed(level) * _player.combo_damage())
+
+
+## Młynek zaraz po Widmowych Ostrzach (combo): na chwilę wokół postaci krąży burza widmowych ostrzy - więcej
+## ostrzy, szybciej i szerzej niż zwykłe Widmowe Ostrza (zastępuje je).
+func blade_storm() -> void:
+	var level := _player.skills.level_of("spectral_blades")
+	if is_instance_valid(_blades):
+		_blades.queue_free()
+	_blades = SpectralBlades.new()
+	_blades.player = _player
+	_blades.count = (Skills.BLADES_COUNT + roundi(_player.skills.tree_bonus("blade_count"))) * Skills.BLADE_STORM_COUNT
+	_blades.damage = Skills.blades_damage(level) * _player.combo_damage()
+	_blades.time_left = Skills.BLADE_STORM_TIME
+	_blades.orbit = Skills.BLADES_ORBIT * Skills.BLADE_STORM_ORBIT * _player.stats.area_multiplier(Skills.tags("spectral_blades"))
+	_blades.spin_speed = SpectralBlades.SPIN_SPEED * Skills.BLADE_STORM_SPIN
+	_blades.hit_interval = SpectralBlades.HIT_INTERVAL * 0.6
+	_player.get_parent().add_child(_blades)
+	Sfx.play("magic", 2.0, 1.5)
 
 
 # ---------------------------------------------------------------- premie czasowe i węzły kluczowe
@@ -688,6 +800,7 @@ func _process_timed(delta: float) -> void:
 	if _cry_fx != null:
 		_cry_fx.visible = _cry_time > 0.0
 		_cry_fx.frame = int((_cry_total - _cry_time) * PERUN_BUFF_FPS) % PERUN_BUFF_FRAMES
+	_spikes_time = maxf(_spikes_time - delta, 0.0)
 	_dance_time = maxf(_dance_time - delta, 0.0)
 	if _dance_time <= 0.0:
 		_dance_stacks = 0

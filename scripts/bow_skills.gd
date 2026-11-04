@@ -97,6 +97,11 @@ func press(id: String) -> void:
 		return
 	if _cooldowns.get(id, [0.0])[0] > 0.0 or _power_charge >= 0.0 or _player.is_dashing():
 		return
+	# Szybka salwa: manę (albo combo po Strzale tropiącej) liczy Player.use_followup
+	if id == "rapid_volley":
+		if _player.use_followup(id):
+			_start_cooldown(id, Skills.VOLLEY_COOLDOWN)
+		return
 	if not _player.spend_mana(_player.skill_mana(id)):
 		_player._hint(Lang.t("Za mało many"))
 		return
@@ -185,6 +190,12 @@ func _start_power() -> void:
 		_player.add_child(_power_glow)
 	_power_glow.visible = true
 	Sfx.play("swing", -4.0, 0.6)
+	# zaraz po Odskoku grot jest od razu w pełni napięty (combo)
+	if _player.combo_after("power_shot") == "vault":
+		_player.combo_used()
+		_power_charge = 1.0
+		MiscVfx.spark(_player.get_parent(), _player.body_center() + _player._aim_direction() * 12.0, FIRE_COLOR, 1.0)
+		Sfx.play("fireball_full", -6.0, 1.3)
 
 
 func _process_power(delta: float) -> void:
@@ -224,7 +235,8 @@ func power_charge() -> float:
 func _fire_power(charge: float) -> void:
 	var level := _level("power_shot")
 	var dir := _player._aim_direction()
-	var combo := _player.combo_with("power_shot")
+	# zaraz po Strzale tropiącej grot wybucha ogniem przy każdym trafieniu (combo po Odskoku liczy _start_power)
+	var combo := _player.combo_after("power_shot") == "seeker"
 	if combo:
 		_player.combo_used()
 	_player.note_skill("power_shot")
@@ -271,8 +283,10 @@ func _fire_blast(at: Vector2, multiplier: float) -> void:
 func _arrow_rain() -> void:
 	var level := _level("arrow_rain")
 	_start_cooldown("arrow_rain", Skills.RAIN_COOLDOWN)
-	var combo := _player.combo_with("arrow_rain")
-	if combo:
+	# zaraz po Salwie pada dwa razy gęściej; zaraz po Sidłach strzały spadają też na unieruchomionych wrogów
+	var after := _player.combo_after("arrow_rain")
+	var combo := after == "multishot"
+	if after != "":
 		_player.combo_used()
 	_player.note_skill("arrow_rain")
 	var at := _aim_point(Skills.RAIN_RANGE)
@@ -286,6 +300,7 @@ func _arrow_rain() -> void:
 	rain.damage = Skills.rain_damage(level) * (1.0 + _bonus("rain_damage")) * (HAIL_DAMAGE if hail else 1.0) \
 			* (_player.combo_damage() if combo else 1.0)
 	rain.time_left = Skills.RAIN_TIME
+	rain.focus = after == "snare"
 	_player.get_parent().add_child(rain)
 	Sfx.play("bow", 0.0, 0.7)
 
@@ -431,22 +446,32 @@ func _process_poison(delta: float) -> void:
 # ---------------------------------------------------------------- Strzała Wichru
 func _wind_arrow() -> void:
 	_start_cooldown("wind_arrow", Skills.WIND_COOLDOWN)
-	var combo := _player.combo_with("wind_arrow")
-	if combo:
+	# zaraz po Odskoku stożek jest dwa razy szerszy; zaraz po Sokole ptak też rzuca podmuch ze swojego miejsca
+	var after := _player.combo_after("wind_arrow")
+	var combo := after == "vault"
+	if after != "":
 		_player.combo_used()
 	_player.note_skill("wind_arrow")
 	var dir := _player._aim_direction()
 	_player._ranged_pose(dir)
 	_wind_gust(dir, combo)
 	_player.support_echo("wind_arrow", func() -> void: _wind_gust(_player._aim_direction(), combo))
+	if after == "falcon" and is_instance_valid(_falcon):
+		var from := _falcon.global_position
+		_wind_gust((_cursor() - from).normalized(), false, from)
 
 
-## Podmuch Strzały Wichru (bez many i odnowienia - powtarza go też Echo Rusałki).
-func _wind_gust(dir: Vector2, combo: bool) -> void:
-	_player._ranged_pose(dir)
+## Podmuch Strzały Wichru (bez many i odnowienia - powtarza go też Echo Rusałki). `from` - skąd wieje
+## (INF - od postaci; combo po Sokole - z miejsca sokoła).
+func _wind_gust(dir: Vector2, combo: bool, from := Vector2.INF) -> void:
+	var from_player := not from.is_finite()
+	if from_player:
+		_player._ranged_pose(dir)
+	if dir == Vector2.ZERO:
+		dir = Vector2.RIGHT
 	var tags := Skills.tags("wind_arrow")
 	var reach := Skills.WIND_RANGE * _player.stats.area_multiplier(tags)
-	var origin := _player.body_center()
+	var origin := _player.body_center() if from_player else from
 	var half := deg_to_rad(Skills.WIND_HALF_ANGLE) * (2.0 if combo else 1.0)
 	# podmuch narysowany na stożek 2x28 stopni; w combo (dwa razy szerszy) - trzy podmuchy wachlarzem
 	var gusts := [0.0] if not combo else [-half / 2.0, 0.0, half / 2.0]
@@ -461,7 +486,7 @@ func _wind_gust(dir: Vector2, combo: bool) -> void:
 			continue
 		if to_enemy.length() > enemy.hurt_radius and absf(angle_difference(dir.angle(), to_enemy.angle())) > half:
 			continue
-		_player.hit_enemy(enemy, _player._skill_damage(multiplier, tags), _player.global_position, Skills.WIND_KNOCKBACK, "", tags)
+		_player.hit_enemy(enemy, _player._skill_damage(multiplier, tags), origin, Skills.WIND_KNOCKBACK, "", tags)
 		MiscVfx.spark(_player.get_parent(), enemy.hurt_center(), WIND_COLOR, 0.5)
 
 
@@ -583,6 +608,8 @@ class _Rain:
 	var tick := 0.25
 	var damage := 0.4
 	var time_left := 2.0
+	## Combo po Sidłach: strzały spadają też na unieruchomionych wrogów do Skills.RAIN_FOCUS_REACH promieni od środka.
+	var focus := false
 	var _next := 0.0
 	var _fade := 0.3
 	## spadające strzały: [punkt na ziemi, postęp 0..1]
@@ -623,8 +650,15 @@ class _Rain:
 			_drops.append([at, 0.0])
 		if not is_instance_valid(player) or player.is_dead:
 			return
+		var focus_reach := radius * Skills.RAIN_FOCUS_REACH
 		for enemy: Goblin in player.get_tree().get_nodes_in_group("enemies"):
-			if enemy.global_position.distance_to(global_position) <= radius + enemy.hurt_radius:
+			var distance := enemy.global_position.distance_to(global_position)
+			var inside := distance <= radius + enemy.hurt_radius
+			# unieruchomiony wróg poza kręgiem - strzała spada prosto na niego
+			if not inside and focus and distance <= focus_reach and BowSkills.is_snared(enemy):
+				inside = true
+				_drops.append([(enemy.global_position - global_position) / Vector2(1.0, 0.6), 0.0])
+			if inside:
 				player.hit_enemy(enemy, player._skill_damage(damage, Skills.tags("arrow_rain")), enemy.global_position + Vector2(0, -20), 10.0,
 						"", Skills.tags("arrow_rain"))
 		Sfx.play_at("hit", global_position, -14.0)
