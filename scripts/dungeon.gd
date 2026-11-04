@@ -66,6 +66,8 @@ var uroczyska: Array[Uroczysko] = []
 var zertwy: Array[Zertwa] = []
 ## Skarbnicy (mechanika "skarbnik").
 var skarbniki: Array[Skarbnik] = []
+## Mgliste Słupy (mechanika "mist", NawiaMist).
+var mists: Array[NawiaMist] = []
 ## Ołtarz Welesa (Essences): ukryta komnata poza listą komnat - bez potworów i pochodni (pusta - brak ołtarza).
 var altar_room := Rect2i()
 ## Rodzaj wystroju każdej komnaty (DungeonDecor): Rect2i -> nazwa (np. "crypt", "forge", "start").
@@ -1036,6 +1038,15 @@ func _build_mechanics() -> void:
 		var spare := _mechanic_rooms(rooms.size()).filter(func(room: Rect2i) -> bool: return not taken.has(room))
 		for room: Rect2i in spare.slice(0, count):
 			_add_skarbnik(room)
+	if mechanics.has("mist"):
+		# komnata bez Uroczyska, Kręgu Żertwy i Skarbnika - Mgła i tak zalewa cały loch
+		var taken: Array[Rect2i] = []
+		for other: Node2D in uroczyska + zertwy + skarbniki:
+			taken.append(_room_of(other.position))
+		for room in _mechanic_rooms(rooms.size()):
+			if not taken.has(room):
+				_add_mist(room)
+				break
 	if mechanics.has("chests"):
 		var kinds := {}
 		for kind: String in Dungeons.CHEST_KINDS:
@@ -1156,6 +1167,26 @@ func _add_uroczysko(room: Rect2i) -> Uroczysko:
 	stone.glow = _glow(stone.position + Vector2(0, -20), Color(Uroczysko.COLOR, 0.45), Vector2(140, 110))
 	w._map_markers.append({"position": stone.position, "color": Uroczysko.COLOR, "size": 2.5})
 	return stone
+
+
+## Mglisty Słup (Mgła Nawii) na środku komnaty.
+func _add_mist(room: Rect2i) -> NawiaMist:
+	var pillar := NawiaMist.create(self)
+	var center := Vector2(room.get_center()) * CELL + Vector2(0, CELL / 2.0)
+	pillar.position = _free_spot(center, Vector2(room.get_center()) * CELL)
+	mists.append(pillar)
+	w.entities.add_child(pillar)
+	pillar.glow = _glow(pillar.position + Vector2(0, -24), Color(NawiaMist.COLOR, 0.45), Vector2(150, 120))
+	w._map_markers.append({"position": pillar.position, "color": NawiaMist.COLOR, "size": 2.5})
+	return pillar
+
+
+## Wyjście z lochu (portal do miasta): trwająca Mgła Nawii się kończy, a Słup wysypuje Skrzynię Mgły - łup czeka
+## na ziemi, gdy gracz wróci portalem.
+func end_mists(reason := "portal") -> void:
+	for pillar in mists:
+		if is_instance_valid(pillar):
+			pillar.close(reason)
 
 
 ## Krąg Żertwy (pień ofiarny) na środku komnaty.
@@ -1610,14 +1641,14 @@ func portal_state(at: Vector2) -> Dictionary:
 	for id in w._goblin_spawns.size():
 		if not w._live_goblins.has(id):
 			dead.append(id)
-	var spent := {"chests": [], "shrines": [], "uroczyska": [], "zertwy": [], "skarbniki": []}
+	var spent := {"chests": [], "shrines": [], "uroczyska": [], "zertwy": [], "skarbniki": [], "mists": []}
 	for i in chests.size():
 		if not is_instance_valid(chests[i]) or chests[i].state != "closed":
 			spent["chests"].append(i)
 	for i in shrines.size():
 		if not is_instance_valid(shrines[i]) or shrines[i].used:
 			spent["shrines"].append(i)
-	for key: String in ["uroczyska", "zertwy", "skarbniki"]:
+	for key: String in ["uroczyska", "zertwy", "skarbniki", "mists"]:
 		var list: Array = get(key)
 		for i in list.size():
 			if not is_instance_valid(list[i]) or list[i].state != "idle":
@@ -1649,7 +1680,7 @@ func restore_portal(state: Dictionary) -> void:
 		goblin.remove_from_group("enemies")
 		goblin.queue_free()
 	var spent: Dictionary = state.get("spent", {})
-	for key: String in ["chests", "shrines", "uroczyska", "zertwy", "skarbniki"]:
+	for key: String in ["chests", "shrines", "uroczyska", "zertwy", "skarbniki", "mists"]:
 		var list: Array = get(key)
 		for value in spent.get(key, []):
 			var i := int(value)

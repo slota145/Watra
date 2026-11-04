@@ -194,6 +194,7 @@ const POWER_TEXTS := {
 	"uroczysko": "Uroczysko daje o połowę więcej run",
 	"zertwa": "Krąg Żertwy: jeden talizman więcej do wyboru",
 	"skarbnik": "Dodatkowy Skarbnik",
+	"mist": "Bogatsza Skrzynia Mgły",
 }
 
 static var _cache := {}

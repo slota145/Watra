@@ -124,11 +124,12 @@ const CLIMATE_ORDER: Array[String] = ["catacombs", "mine", "flooded", "roots", "
 const MECHANICS := {
 	"chests": {"name": "Skrzynie", "weight": 10.0, "size": "small"},
 	"shrine": {"name": "Kapliczka", "weight": 8.0, "size": "small"},
-	"crystal": {"name": "Kryształ Watry", "weight": 7.0, "size": "large", "room": true},
+	"crystal": {"name": "Kryształ Watry", "weight": 7.8, "size": "large", "room": true},
 	"elites": {"name": "Elitarne potwory", "weight": 8.0, "size": "small"},
 	"uroczysko": {"name": "Uroczysko", "weight": 5.0, "size": "large"},
 	"zertwa": {"name": "Krąg Żertwy", "weight": 5.0, "size": "large"},
 	"skarbnik": {"name": "Skarbnik", "weight": 5.0, "size": "large"},
+	"mist": {"name": "Mgła Nawii", "weight": 5.0, "size": "large"},
 }
 ## Szansa na drugą i trzecią mechanikę.
 const MECHANIC_EXTRA: Array[float] = [0.25, 0.08]
@@ -192,6 +193,48 @@ const URO_GHOST_RUNE := 0.006
 const URO_LORD_EVERY := 80
 const URO_LORD_HEALTH := 6.0
 const URO_LORD_DAMAGE := 1.4
+
+## Mgła Nawii (scripts/nawia_mist.gd) - jak Delirium w PoE: dotknięty Mglisty Słup (dobrowolnie) wypuszcza Mgłę na cały
+## loch. Co MIST_STEP s gęstość rośnie o 1 (od 1 do MIST_MAX): każdy stopień daje wszystkim potworom +MIST_POWER zdrowia
+## i obrażeń, więcej zjaw wokół gracza (MIST_WRAITHS + MIST_WRAITHS_PER za stopień, razy uro_density), a co
+## MIST_TRAIT_EVERY stopni Mgła dokłada cechę elit (ELITE_TRAITS) - przewodnik gromady zjaw z szansą MIST_ELITE_CHANCE
+## staje się elitą z tymi cechami. Każdy wróg zabity w Mgle dokłada do puli: przedmioty i złoto (+MIST_LOOT za stopień),
+## kamienie wsparcia i Krzesiwa Nawii (coraz szybciej - MIST_RATE_GROWTH za stopień ponad 1), Wielkie Krzesiwa od
+## gęstości MIST_GREAT_FROM. Mgła kończy się przy Słupie (F) albo portalem do miasta (B) - Słup wysypuje Skrzynię Mgły
+## z całą pulą; po śmierci gracza Mgła też się kończy, ale przepada połowa puli (zostaje MIST_DEATH_KEEP).
+const MIST_STEP := 60.0
+const MIST_MAX := 10
+const MIST_POWER := 0.08
+const MIST_LOOT := 0.15
+const MIST_TRAIT_EVERY := 3
+const MIST_ELITE_CHANCE := 0.25
+## Zjawy Mgły: ile naraz, sufit, co ile sekund gromada, ile w gromadzie, w jakiej odległości od gracza (px) wychodzą
+## i jak daleko od gracza znikają (zostają w tyle).
+const MIST_WRAITHS := 6
+const MIST_WRAITHS_PER := 3
+const MIST_WRAITHS_MAX := 60
+const MIST_SPAWN_EVERY := 0.6
+const MIST_PACK := Vector2i(3, 5)
+const MIST_SPAWN_RANGE := Vector2(240.0, 420.0)
+const MIST_DESPAWN := 950.0
+## Zjawy są słabsze od zwykłych potworów, ale liczne: mnożniki zdrowia, obrażeń i doświadczenia.
+const MIST_WRAITH_HEALTH := 0.7
+const MIST_WRAITH_DAMAGE := 0.8
+const MIST_WRAITH_XP := 0.6
+## Pula za każdego zabitego wroga: przedmioty, złoto (razy Levels.gold), kamienie wsparcia, krzesiwa, wielkie krzesiwa.
+const MIST_ITEMS_PER_KILL := 0.04
+const MIST_GOLD_PER_KILL := 0.5
+const MIST_SUPPORT_RATE := 0.004
+const MIST_FLINT_RATE := 0.006
+const MIST_RATE_GROWTH := 0.5
+const MIST_GREAT_FROM := 8
+const MIST_GREAT_RATE := 0.0015
+const MIST_DEATH_KEEP := 0.5
+## Poziom kamieni wsparcia ze Skrzyni Mgły: stopień lochu x MIST_LEVEL_TIER + gęstość x MIST_LEVEL_DENSITY (+-1),
+## najwyżej MIST_LEVEL_MAX (wyżej - łączenie trzech kamieni).
+const MIST_LEVEL_TIER := 0.7
+const MIST_LEVEL_DENSITY := 0.6
+const MIST_LEVEL_MAX := 16
 
 ## Krąg Żertwy (scripts/zertwa.gd) - jak Ritual w PoE: pień ofiarny dotknięty (F) otwiera krąg o promieniu ZER_RADIUS;
 ## spoza kręgu nadciągają fale potworów klimatu (ZER_ALIVE naraz, co ZER_SPAWN_EVERY s, ZER_SPAWN_GAP px za brzegiem).
@@ -438,6 +481,32 @@ static func power_tier(tier: int) -> int:
 ## Mnożnik liczby upiorów naraz w Uroczysku na danym stopniu lochu.
 static func uro_density(tier: int) -> float:
 	return pow(count_multiplier(tier), URO_DENSITY_POWER)
+
+
+## Mgła Nawii: mnożnik zdrowia i obrażeń potworów przy gęstości `density` (0 - bez Mgły).
+static func mist_power(density: int) -> float:
+	return 1.0 + MIST_POWER * density
+
+
+## Mgła Nawii: mnożnik łupu w puli przy gęstości `density`.
+static func mist_loot(density: int) -> float:
+	return 1.0 + MIST_LOOT * density
+
+
+## Mgła Nawii: mnożnik szans na kamienie wsparcia i krzesiwa przy gęstości `density` (1 przy gęstości 1).
+static func mist_rate(density: int) -> float:
+	return 1.0 + MIST_RATE_GROWTH * maxi(density - 1, 0)
+
+
+## Mgła Nawii: ile zjaw naraz przy gęstości `density` w lochu stopnia `tier`.
+static func mist_wraiths(density: int, tier: int) -> int:
+	return mini(MIST_WRAITHS_MAX, roundi((MIST_WRAITHS + MIST_WRAITHS_PER * density) * uro_density(tier)))
+
+
+## Mgła Nawii: poziom kamienia wsparcia ze Skrzyni Mgły (stopień lochu 1-17, gęstość 1-10).
+static func mist_support_level(tier: int, density: int, rng: RandomNumberGenerator) -> int:
+	var base := roundi(tier * MIST_LEVEL_TIER + density * MIST_LEVEL_DENSITY)
+	return clampi(base + rng.randi_range(-1, 1), 1, MIST_LEVEL_MAX)
 
 
 ## Mnożnik liczby potworów w lochu danego stopnia (bez modyfikatorów i bożków).

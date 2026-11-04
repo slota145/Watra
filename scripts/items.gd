@@ -698,12 +698,12 @@ const DATA := {
 	},
 	"nawia_flint": {
 		"name": "Krzesiwo Nawii",
-		"description": "Krzemień, który krzesze sine iskry Nawii. W oknie umiejętności (K) dorabia gniazdo na kamień wsparcia (1., 2., 3. i 4. gniazdo kosztuje 1, 2, 4 i 8 krzesiw).",
+		"description": "Krzemień, który krzesze sine iskry Nawii. W oknie umiejętności (K) dorabia gniazdo na kamień wsparcia (1., 2., 3. i 4. gniazdo kosztuje 1, 2, 4 i 8 krzesiw). Wypada ze Skrzyni Mgły Nawii.",
 		"icon": preload("res://assets/items/nawia_flint.png"), "sell_price": 30,
 	},
 	"great_flint": {
 		"name": "Wielkie Krzesiwo",
-		"description": "Prastary krzemień z płonącą żyłą. Tylko nim da się dorobić umiejętności piąte gniazdo na kamień wsparcia (okno K).",
+		"description": "Prastary krzemień z płonącą żyłą. Tylko nim da się dorobić umiejętności piąte gniazdo na kamień wsparcia (okno K). Wypada z gęstej Mgły Nawii (od gęstości 8) i ze skarbców bogów.",
 		"icon": preload("res://assets/items/great_flint.png"), "sell_price": 300,
 	},
 	"crystal_heart": {

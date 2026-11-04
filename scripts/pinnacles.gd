@@ -161,6 +161,9 @@ static func config(god: String, seed_value: int, tree := {}, pomrok := 0) -> Dic
 	return settings
 
 
+## Szansa na Wielkie Krzesiwo w skarbcu boga (razy mnożnik łupu Władcy i Pomroku).
+const GREAT_FLINT_CHANCE := 0.15
+
 ## Skarbiec po pokonaniu boga: [przedmiot, liczba] - przedmioty (część rzadkich), runy, kamienie, bożek, kamień
 ## szlachetny. Złoto i legendy daje sam bóg (Boss._drop_loot). Władca daje dwa razy więcej, Pomrok - o POMROK_LOOT
 ## więcej za stopień.
@@ -180,4 +183,7 @@ static func vault_rewards(level: int, rng: RandomNumberGenerator, lord := false,
 	if Gems.unlocked:
 		for i in roundi(mult):
 			rewards.append([Gems.roll("", Gems.CUTS.size() - 1), 1])
+	# Wielkie Krzesiwo (5. gniazdo umiejętności) - poza Mgłą Nawii tylko z bogów i Władcy
+	if rng.randf() < GREAT_FLINT_CHANCE * mult:
+		rewards.append([Supports.GREAT_FLINT, 1])
 	return rewards
