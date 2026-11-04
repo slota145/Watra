@@ -46,7 +46,8 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
   - `settlement.gd`: Ostoja,
   - `player.gd`, `character_stats.gd`, `items.gd`, `item_bases.gd`, `loot.gd`, `legends.gd`, `legendary_effects.gd`, `skills.gd`, `skill_effects.gd`, `levels.gd`, `quests.gd`, `bounties.gd`,
   - `hotbar.gd`: paski szybkiego wyboru (dane), `status_effects.gd`: lista efektów działających na gracza,
-  - `supports.gd`: kamienie wsparcia i gniazda umiejętności (dane; gniazda trzyma `skill_book.gd`),
+  - `supports.gd`: kamienie wsparcia i gniazda umiejętności (dane; gniazda trzyma `skill_book.gd`), źródło kamieni i krzesiw -
+    Mgła Nawii w lochach (`nawia_mist.gd`),
   - `skill_tree.gd`: drzewka umiejętności broni (dane), `sword_skills.gd`, `bow_skills.gd` i `spell_skills.gd`: umiejętności drzewek miecza, łuku i księgi,
   - `nawia_map.gd`: Mapa Nawii (endgame - węzły-lochy stopni 8-17), okno `scripts/ui/nawia_window.gd`,
     Błogosławieństwo Watry przy kapliczkach `scripts/ui/blessing_window.gd`, drzewko Watry `watra_tree.gd`
@@ -410,7 +411,7 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     oczyszczonego węzła, łup i doświadczenie +2% za węzeł (`NawiaMap.blessing_*`, `Boons.nawia_blessed`,
     `ui/blessing_window.gd`, `Levels.zone_range`); miejsce na obóz odłożone do punktu o obozach;
   - etap 3 zrobiony, czeka na ocenę autora (szukaj „Mapa Nawii, etap 3”): **drzewko Watry** (`scripts/watra_tree.gd`,
-    okno `ui/watra_tree_window.gd`) - 133 węzły w 12 gałęziach (mechaniki, bożki, łup, skarbiec, Błogosławieństwo),
+    okno `ui/watra_tree_window.gd`) - 144 węzły w 13 gałęziach (mechaniki z Mgłą Nawii, bożki, łup, skarbiec, Błogosławieństwo),
     3 zakładki z osobnymi pulami punktów, cofanie za złoto; premie idą do lochu w `config["tree"]`;
   - etap 4 zrobiony, czeka na ocenę autora (szukaj „Mapa Nawii, etap 4”): **bossowie szczytowi** Weles, Marzanna,
     Czarnobóg (`scripts/pinnacles.gd`, `scripts/pinnacle_boss.gd`) - areny za 4 fragmenty kluczy z węzłów, serca
