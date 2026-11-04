@@ -1,9 +1,11 @@
 class_name SkillBook
 extends Node
-## Umiejętności gracza: poziomy (0 = nieodblokowana) kupowane za złoto i wybrane węzły drzewek (SkillTree).
-## Umiejętność, która ma węzeł w drzewku, jest dostępna tylko z wybranym węzłem (odblokowanie = poziom 1),
-## a złoto kupuje jej kolejne poziomy. Kupione poziomy zostają zapamiętane także po zapomnieniu drzewka.
-## Punkty umiejętności: 1 za każdy poziom postaci plus SkillTree.START_POINTS, minus wybrane węzły.
+## Umiejętności gracza: poziomy (0 = nieodblokowana) i wybrane węzły drzewek (SkillTree), jedno i drugie za punkty
+## umiejętności. Umiejętność, która ma węzeł w drzewku, jest dostępna tylko z wybranym węzłem (odblokowanie = poziom 1),
+## a kolejne poziomy kosztują Skills.cost punktów (do Skills.MAX_LEVEL).
+## Punkty umiejętności daje osobny pasek doświadczenia (skill_xp - napełnia się zwykłym expem, Skills.SKILL_XP_BANDS),
+## plus SkillTree.START_POINTS i nagrody zadań głównych. Cofnięcie wydanego punktu (węzeł, poziom, całe drzewko
+## u mędrca) kosztuje złoto (refund_gold). Starsze zapisy (poziomy za złoto) przelicza migrate_old.
 ## Gniazda drzewek (węzły "socket") trzymają kamienie szlachetne (przepisy Gems): premie kamienia działają o połowę
 ## mocniej (TREE_GEM_POWER), a kamień promienia wzmacnia wybrane węzły pasywne w promieniu RADIUS_RANGE.
 ## Gniazdo legendarne przyjmuje też esencję legendy (Essences) - jej efekt działa z bronią drzewka
@@ -13,19 +15,27 @@ extends Node
 signal changed
 ## Kamienie wsparcia awansowały (nazwy z nowym poziomem) - HUD pokazuje napis.
 signal supports_leveled(names: Array)
+## Pasek doświadczenia umiejętności dał nowe punkty (ile) - HUD pokazuje napis.
+signal skill_points_gained(count: int)
 
-## id umiejętności -> poziom (kupiony; dla umiejętności drzewka - najwyższy osiągnięty)
+## id umiejętności -> kupiony poziom (umiejętność drzewka ma poziom 1 z samego węzła)
 var levels := {}
 ## rodzaj broni -> {id węzła: true} (start się nie liczy - jest wybrany zawsze)
 var nodes := {}
 ## rodzaj broni -> {id gniazda: przepis kamienia} (kamień w gnieździe nie istnieje jako przedmiot)
 var tree_gems := {}
-## Poziom postaci (do punktów) - ustawia gracz.
+## Poziom postaci (do ceny cofania punktów i wyjmowania esencji) - ustawia gracz.
 var character_level := 1
 ## Dodatkowe punkty umiejętności z zadań głównych (MainQuests - skill_points).
 var bonus_points := 0
 ## id umiejętności -> {"sockets": liczba gniazd, "gems": [przepis kamienia wsparcia albo {} - puste gniazdo]}
 var supports := {}
+## Cały exp zebrany na pasek umiejętności (rośnie bez końca, punkty liczy earned_points).
+var skill_xp := 0
+## Wczytany zapis jest sprzed paska umiejętności - gracz przelicza go (migrate_old) po wczytaniu statystyk.
+var needs_migration := false
+## Ostatnie przeliczenie starego zapisu (zwrócone złoto) - okno umiejętności pokazuje informację.
+var migrated_gold := -1
 
 ## Kamień w gnieździe drzewka działa mocniej niż w przedmiocie.
 const TREE_GEM_POWER := 1.5
@@ -40,7 +50,7 @@ func level_of(id: String) -> int:
 	return levels.get(id, 0)
 
 
-## Koszt następnego poziomu albo -1, gdy umiejętność ma już maksymalny poziom (albo nie ma jeszcze węzła).
+## Koszt następnego poziomu w punktach albo -1, gdy umiejętność ma już maksymalny poziom (albo nie ma jeszcze węzła).
 func next_cost(id: String) -> int:
 	var level := level_of(id)
 	if level == 0 and SkillTree.node_for_skill(id) != "":
@@ -57,12 +67,42 @@ func can_learn(id: String) -> bool:
 	return required == "" or level_of(required) > 0
 
 
-func upgrade(id: String, stats: CharacterStats) -> bool:
+func upgrade(id: String) -> bool:
 	var price := next_cost(id)
-	if price < 0 or stats.gold < price or not can_learn(id):
+	if price < 0 or points_left() < price or not can_learn(id):
+		return false
+	levels[id] = level_of(id) + 1
+	changed.emit()
+	return true
+
+
+## Najniższy poziom, do którego można cofnąć umiejętność (drzewka - 1, bo poziom 1 daje węzeł).
+func _min_level(id: String) -> int:
+	return 1 if SkillTree.node_for_skill(id) != "" else 0
+
+
+## Złoto za cofnięcie jednego punktu umiejętności.
+func refund_gold() -> int:
+	return Skills.REFUND_GOLD_PER_LEVEL * maxi(character_level, 1)
+
+
+## Ile złota kosztuje cofnięcie ostatniego poziomu (-1 - nie ma czego cofnąć).
+func downgrade_gold(id: String) -> int:
+	var level := level_of(id)
+	if level <= _min_level(id):
+		return -1
+	return refund_gold() * Skills.cost(id, level)
+
+
+## Cofa ostatni poziom umiejętności za złoto - punkty wracają.
+func downgrade(id: String, stats: CharacterStats) -> bool:
+	var price := downgrade_gold(id)
+	if price < 0 or stats.gold < price:
 		return false
 	stats.add_gold(-price)
-	levels[id] = level_of(id) + 1
+	levels[id] = level_of(id) - 1
+	if levels[id] <= 0:
+		levels.erase(id)
 	changed.emit()
 	return true
 
@@ -105,14 +145,65 @@ func has_node_id(weapon_type: String, id: String) -> bool:
 
 
 func points_total() -> int:
-	return character_level + SkillTree.START_POINTS + bonus_points
+	return earned_points() + SkillTree.START_POINTS + bonus_points
 
 
 func points_spent() -> int:
 	var total := 0
-	for weapon_type: String in nodes:
-		total += nodes[weapon_type].size()
+	for weapon_type: String in Skills.WEAPON_TYPES:
+		total += points_in(weapon_type)
 	return total
+
+
+## Punkty wydane na broń: węzły drzewka i poziomy jej umiejętności.
+func points_in(weapon_type: String) -> int:
+	var total: int = nodes.get(weapon_type, {}).size()
+	for id in Skills.for_weapon(weapon_type):
+		total += _level_points(id, level_of(id))
+	return total
+
+
+## Punkty za poziomy umiejętności ponad to, co daje węzeł drzewka.
+func _level_points(id: String, level: int) -> int:
+	var total := 0
+	for l in range(_min_level(id) + 1, level + 1):
+		total += Skills.cost(id, l)
+	return total
+
+
+# ---------------------------------------------------------------- pasek doświadczenia umiejętności
+## Punkty zdobyte na pasku (bez punktów startowych i z zadań).
+func earned_points() -> int:
+	var left := skill_xp
+	var points := 0
+	while true:
+		var need := Skills.skill_point_xp(points + 1)
+		if left < need:
+			return points
+		left -= need
+		points += 1
+	return points
+
+
+## [exp na pasku od ostatniego punktu, exp potrzebny na następny punkt].
+func skill_xp_progress() -> Array[int]:
+	var left := skill_xp
+	var point := 1
+	while left >= Skills.skill_point_xp(point):
+		left -= Skills.skill_point_xp(point)
+		point += 1
+	return [left, Skills.skill_point_xp(point)]
+
+
+func add_skill_xp(amount: int) -> void:
+	if amount <= 0:
+		return
+	var before := earned_points()
+	skill_xp += amount
+	var gained := earned_points() - before
+	if gained > 0:
+		skill_points_gained.emit(gained)
+		changed.emit()
 
 
 func points_left() -> int:
@@ -138,11 +229,17 @@ func take(weapon_type: String, id: String) -> bool:
 
 ## Dlaczego węzła nie da się cofnąć ("" - da się): start, niewybrany, kamień w gnieździe albo węzeł, przez który
 ## inne wybrane węzły łączą się ze startem.
-func refund_reason(weapon_type: String, id: String) -> String:
+## Z `gold` (>= 0) sprawdza też, czy starczy złota na cofnięcie (refund_gold).
+func refund_reason(weapon_type: String, id: String, gold := -1) -> String:
 	if id == "start" or not nodes.get(weapon_type, {}).has(id):
 		return Lang.t("Ten węzeł nie jest wybrany.")
 	if not gem_in(weapon_type, id).is_empty():
 		return Lang.t("Wyjmij najpierw kamień z gniazda.")
+	var skill: String = SkillTree.nodes(weapon_type)[id].get("skill", "")
+	if skill != "" and level_of(skill) > 1:
+		return Lang.t("Cofnij najpierw poziomy umiejętności.")
+	if gold >= 0 and gold < refund_gold():
+		return Lang.t("Za mało złota: cofnięcie kosztuje %d zł.") % refund_gold()
 	# przeszukanie od startu po wybranych węzłach bez cofanego - każdy musi zostać osiągalny
 	var reached := {"start": true}
 	var queue: Array[String] = ["start"]
@@ -156,19 +253,24 @@ func refund_reason(weapon_type: String, id: String) -> String:
 	return ""
 
 
-## Cofa jeden węzeł (prawy przycisk w drzewku) - punkt wraca; kupione poziomy umiejętności zostają.
-func refund(weapon_type: String, id: String) -> bool:
-	if refund_reason(weapon_type, id) != "":
+## Cofa jeden węzeł (prawy przycisk w drzewku) - punkt wraca. Ze `stats` pobiera złoto (refund_gold).
+func refund(weapon_type: String, id: String, stats: CharacterStats = null) -> bool:
+	if refund_reason(weapon_type, id, stats.gold if stats != null else -1) != "":
 		return false
+	if stats != null:
+		stats.add_gold(-refund_gold())
 	nodes[weapon_type].erase(id)
 	changed.emit()
 	return true
 
 
-## Zapomnienie drzewka (u mędrca): wszystkie węzły wracają jako punkty; kupione poziomy umiejętności zostają.
+## Zapomnienie drzewka (u mędrca): wszystkie węzły i poziomy umiejętności tej broni wracają jako punkty
+## (złoto liczy VillageServices._respec - points_in * refund_gold).
 ## Zwraca przepisy kamieni wyjętych z gniazd (wracają do plecaka - VillageServices._respec).
 func reset_tree(weapon_type: String) -> Array:
 	nodes[weapon_type] = {}
+	for id in Skills.for_weapon(weapon_type):
+		levels.erase(id)
 	var gems: Array = tree_gems.get(weapon_type, {}).values()
 	tree_gems.erase(weapon_type)
 	changed.emit()
@@ -434,7 +536,7 @@ func get_save_data() -> Dictionary:
 	for weapon_type: String in nodes:
 		taken[weapon_type] = nodes[weapon_type].keys()
 	return {"levels": levels.duplicate(), "nodes": taken, "gems": tree_gems.duplicate(true), "bonus_points": bonus_points,
-			"supports": supports.duplicate(true)}
+			"supports": supports.duplicate(true), "skill_xp": skill_xp}
 
 
 ## Starsze zapisy to sam słownik poziomów; umiejętności drzewka kupione wtedy za złoto dostają wybrane węzły
@@ -446,6 +548,9 @@ func load_save_data(data: Dictionary) -> void:
 	tree_gems.clear()
 	supports.clear()
 	bonus_points = int(data.get("bonus_points", 0))
+	skill_xp = int(data.get("skill_xp", 0))
+	needs_migration = not data.has("skill_xp")
+	migrated_gold = -1
 	var saved_supports: Dictionary = data.get("supports", {})
 	for skill: String in saved_supports:
 		if not Supports.has_sockets(skill):
@@ -501,3 +606,28 @@ func load_save_data(data: Dictionary) -> void:
 		for step in SkillTree.path_to(weapon_type, node):
 			nodes[weapon_type][step] = true
 	changed.emit()
+
+
+## Przelicza zapis sprzed paska umiejętności: złoto wydane na poziomy umiejętności wraca, węzły i poziomy wracają
+## jako punkty, a pasek dostaje cały exp zdobyty przez postać (`total_xp`). Zwraca {"gold": zwrot złota,
+## "gems": przepisy kamieni z gniazd drzewek - gracz odkłada je do plecaka}. Bez starego zapisu - {}.
+func migrate_old(total_xp: int) -> Dictionary:
+	if not needs_migration:
+		return {}
+	needs_migration = false
+	var gold := 0
+	for id: String in levels:
+		var first := 2 if SkillTree.node_for_skill(id) != "" else 1
+		for level in range(first, mini(levels[id], 5) + 1):
+			gold += Skills.old_gold_cost(id, level)
+	levels.clear()
+	var gems: Array = []
+	for weapon_type: String in tree_gems:
+		gems.append_array(tree_gems[weapon_type].values())
+	tree_gems.clear()
+	for weapon_type: String in nodes:
+		nodes[weapon_type] = {}
+	skill_xp = maxi(total_xp, 0)
+	migrated_gold = gold
+	changed.emit()
+	return {"gold": gold, "gems": gems}

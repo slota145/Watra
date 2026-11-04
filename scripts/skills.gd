@@ -4,18 +4,28 @@ class_name Skills
 ## - atak zaraz po uderzeniu (type "combo", wymaga uderzenia) - i dwie pasywne regeneracje.
 ## Aktywną umiejętność i uderzenie gracz kładzie na dowolny slot paska (Hotbar).
 ## Wszystkie działają tylko z założoną bronią swojego rodzaju.
-## Umiejętności odblokowuje się i ulepsza za złoto (koszty rosną z poziomem). Broń, która ma drzewko (SkillTree,
-## miecz, łuk i księga magii), odblokowuje je węzłem za punkt umiejętności, a złoto kupuje kolejne poziomy.
+## Umiejętności odblokowuje się i ulepsza za punkty umiejętności (LEVEL_POINTS - wyższe poziomy kosztują więcej).
+## Punkty daje osobny pasek doświadczenia umiejętności (SKILL_XP_BANDS, SkillBook.skill_xp), a nie awans postaci.
+## Broń, która ma drzewko (SkillTree, miecz, łuk i księga magii), odblokowuje umiejętność węzłem (poziom 1).
+## Cofnięcie wydanego punktu kosztuje złoto (REFUND_GOLD_PER_LEVEL).
 ## Umiejętności drzewka (type "skill") mają własną obsługę (SwordSkills - miecz, BowSkills - łuk, SpellSkills - księga) i własne combo (COMBOS).
 ## Każda umiejętność ma tagi (TAGS): rodzaj, forma, obrażenia i atrybut - ataki przyspiesza szybkość ataku,
 ## czary - szybkość rzucania, a atrybuty z tagów dodają procent obrażeń.
 
-const MAX_LEVEL := 5
+const MAX_LEVEL := 20
 const WEAPON_TYPES: Array[String] = ["melee", "bow", "spell"]
 const WEAPON_NAMES := {"melee": "Broń biała", "bow": "Łuk", "spell": "Księga magii"}
 
-const ACTIVE_COSTS: Array[int] = [150, 300, 600, 1200, 2400]
-const PASSIVE_COSTS: Array[int] = [80, 160, 320, 640, 1280]
+## Ile punktów umiejętności kosztuje poziom: [do poziomu włącznie, punkty] - 1-5 po 1, 6-10 po 2, 11-15 po 3, 16-20 po 5.
+const LEVEL_POINTS := [[5, 1], [10, 2], [15, 3], [20, 5]]
+## Pasek doświadczenia umiejętności: [do którego punktu włącznie, exp na 1 punkt]; 0 - bez końca. Napełnia się
+## zwykłym doświadczeniem (obok paska poziomu), cena punktu stała między progami.
+const SKILL_XP_BANDS := [[20, 2000], [60, 15000], [120, 60000], [0, 200000]]
+## Cofnięcie jednego punktu umiejętności (węzeł albo poziom): złoto za każdy poziom postaci.
+const REFUND_GOLD_PER_LEVEL := 8
+## Dawne ceny poziomów 1-5 w złocie - tylko do zwrotu złota przy przeliczaniu starych zapisów (SkillBook.migrate_old).
+const OLD_ACTIVE_GOLD: Array[int] = [150, 300, 600, 1200, 2400]
+const OLD_PASSIVE_GOLD: Array[int] = [80, 160, 320, 640, 1280]
 
 const ICON_HEALTH := preload("res://assets/skills/health_regen.png")
 const ICON_MANA := preload("res://assets/skills/mana_regen.png")
@@ -579,34 +589,60 @@ static func for_weapon(weapon_type: String) -> Array[String]:
 	return result
 
 
-## Koszt kupna poziomu `level` (1 = odblokowanie).
-static func cost(id: String, level: int) -> int:
-	var costs := PASSIVE_COSTS if DATA[id]["type"] in ["health_regen", "mana_regen"] else ACTIVE_COSTS
-	return costs[level - 1]
+## Koszt poziomu `level` w punktach umiejętności (1 = odblokowanie).
+static func cost(_id: String, level: int) -> int:
+	for band: Array in LEVEL_POINTS:
+		if level <= band[0]:
+			return band[1]
+	return LEVEL_POINTS[-1][1]
+
+
+## Dawna cena poziomu w złocie (zwrot przy przeliczaniu starych zapisów).
+static func old_gold_cost(id: String, level: int) -> int:
+	var costs := OLD_PASSIVE_GOLD if DATA[id]["type"] in ["health_regen", "mana_regen"] else OLD_ACTIVE_GOLD
+	return costs[clampi(level, 1, costs.size()) - 1]
+
+
+## Ile exp kosztuje punkt umiejętności numer `point` (od 1) na pasku.
+static func skill_point_xp(point: int) -> int:
+	for band: Array in SKILL_XP_BANDS:
+		if band[0] == 0 or point <= band[0]:
+			return band[1]
+	return SKILL_XP_BANDS[-1][1]
+
+
+## Siła poziomu we wzorach: 1-5 pełny przyrost, 6-20 po pół (poziom 20 działa jak dawny 12,5).
+static func power(level: int) -> float:
+	return float(level) if level <= 5 else 5.0 + (level - 5) * 0.5
+
+
+## Liczby we wzorach (skoki, przebicia, strzały): +1 za poziom do 5., potem +1 co 3 poziomy (poziom 20: +10).
+static func count(level: int) -> int:
+	return level if level <= 5 else 5 + int((level - 5) / 3.0)
 
 
 # ---------------------------------------------------------------- wartości zależne od poziomu
 ## Młynek: procent obrażeń broni za każde uderzenie (co WHIRLWIND_TICK s).
 static func whirlwind_damage(level: int) -> float:
-	return 0.35 + 0.08 * level
+	return 0.35 + 0.08 * power(level)
 
 
 static func whirlwind_radius(level: int) -> float:
-	return 40.0 + 3.0 * level
+	return 40.0 + 3.0 * power(level)
 
 
 ## Salwa: procent obrażeń broni na strzałę.
 static func multishot_damage(level: int) -> float:
-	return 0.75 + 0.12 * level
+	return 0.75 + 0.12 * power(level)
 
 
 ## Kula ognia: procent obrażeń broni w wybuchu i jego promień.
 static func fireball_damage(level: int) -> float:
-	return 1.0 + 0.2 * level
+	return 1.0 + 0.2 * power(level)
 
 
 static func fireball_radius(level: int) -> float:
-	return 28.0 + 4.0 * level
+	return 28.0 + 4.0 * power(level)
 
 
 ## Mnożniki za naładowanie (charge 0..1).
@@ -621,170 +657,170 @@ static func fireball_charge_radius(charge: float) -> float:
 ## Szarża: prędkość (px/s) i procent obrażeń broni.
 ## Mgnienie: procent obrażeń broni za cięcie po skoku; ile skoków ma wirujące Mgnienie.
 static func flicker_damage(level: int) -> float:
-	return 1.1 + 0.15 * level
+	return 1.1 + 0.15 * power(level)
 
 
 static func whirl_flicker_jumps(level: int) -> int:
-	return 3 + level
+	return 3 + count(level)
 
 
 static func rend_damage(level: int) -> float:
-	return 0.9 + 0.1 * level
+	return 0.9 + 0.1 * power(level)
 
 
 ## Rozpłatanie: łączne obrażenia krwawienia (procent obrażeń broni przez 3 s).
 static func rend_bleed(level: int) -> float:
-	return 1.0 + 0.2 * level
+	return 1.0 + 0.2 * power(level)
 
 
 static func slam_damage(level: int) -> float:
-	return 1.2 + 0.15 * level
+	return 1.2 + 0.15 * power(level)
 
 
 static func slam_stun(level: int) -> float:
-	return 0.8 + 0.1 * level
+	return 0.8 + 0.1 * power(level)
 
 
 static func riposte_damage(level: int) -> float:
-	return 2.0 + 0.3 * level
+	return 2.0 + 0.3 * power(level)
 
 
 ## Zew Peruna: premia do zadawanych obrażeń.
 static func cry_bonus(level: int) -> float:
-	return 0.1 + 0.03 * level
+	return 0.1 + 0.03 * power(level)
 
 
 ## Widmowe Ostrza: procent obrażeń broni za dotknięcie wroga.
 static func blades_damage(level: int) -> float:
-	return 0.5 + 0.08 * level
+	return 0.5 + 0.08 * power(level)
 
 
 ## Dymne Wybuchy: procent obrażeń broni wybuchu w rzędzie `ring` (0-2).
 static func smoke_damage(level: int, ring: int) -> float:
-	return (0.7 + 0.1 * level) * (1.0 + 0.2 * ring)
+	return (0.7 + 0.1 * power(level)) * (1.0 + 0.2 * ring)
 
 
 ## Grot Swaroga: procent obrażeń broni (bez napięcia; pełne - razy POWER_FULL_DAMAGE) i ilu wrogów przebija.
 static func power_damage(level: int) -> float:
-	return 1.3 + 0.2 * level
+	return 1.3 + 0.2 * power(level)
 
 
 static func power_pierce(level: int) -> int:
-	return 3 + level
+	return 3 + count(level)
 
 
 ## Deszcz Strzał: procent obrażeń broni na falę strzał (co RAIN_TICK s).
 static func rain_damage(level: int) -> float:
-	return 0.35 + 0.06 * level
+	return 0.35 + 0.06 * power(level)
 
 
 static func vault_damage(level: int) -> float:
-	return 0.8 + 0.1 * level
+	return 0.8 + 0.1 * power(level)
 
 
 ## Sidła: procent obrażeń broni przy zatrzaśnięciu i czas unieruchomienia (s).
 static func snare_damage(level: int) -> float:
-	return 1.0 + 0.15 * level
+	return 1.0 + 0.15 * power(level)
 
 
 static func snare_time(level: int) -> float:
-	return 2.0 + 0.3 * level
+	return 2.0 + 0.3 * power(level)
 
 
 ## Sokół: procent obrażeń broni za atak szponami.
 static func falcon_damage(level: int) -> float:
-	return 0.7 + 0.12 * level
+	return 0.7 + 0.12 * power(level)
 
 
 ## Jadowe Groty: obrażenia trucizny (procent trafienia, rozłożony na 3 s).
 static func venom_damage(level: int) -> float:
-	return 0.4 + 0.08 * level
+	return 0.4 + 0.08 * power(level)
 
 
 static func wind_damage(level: int) -> float:
-	return 1.1 + 0.15 * level
+	return 1.1 + 0.15 * power(level)
 
 
 static func lance_damage(level: int) -> float:
-	return 1.2 + 0.18 * level
+	return 1.2 + 0.18 * power(level)
 
 
 static func lance_pierce(level: int) -> int:
-	return 2 + level
+	return 2 + count(level)
 
 
 ## Zamieć: procent obrażeń broni co BLIZZARD_TICK s.
 static func blizzard_damage(level: int) -> float:
-	return 0.35 + 0.06 * level
+	return 0.35 + 0.06 * power(level)
 
 
 ## Burza Peruna: procent obrażeń broni za piorun.
 static func storm_damage(level: int) -> float:
-	return 0.9 + 0.12 * level
+	return 0.9 + 0.12 * power(level)
 
 
 ## Kula Piorunów: procent obrażeń broni za wyładowanie (co ORB_TICK s); wybuch - razy 3.
 static func orb_damage(level: int) -> float:
-	return 0.4 + 0.06 * level
+	return 0.4 + 0.06 * power(level)
 
 
 static func meteor_damage(level: int) -> float:
-	return 2.6 + 0.35 * level
+	return 2.6 + 0.35 * power(level)
 
 
 ## Kamień Runiczny: premia do obrażeń magicznych i szybkości rzucania w kręgu.
 static func rune_bonus(level: int) -> float:
-	return 0.15 + 0.03 * level
+	return 0.15 + 0.03 * power(level)
 
 
 ## Balista: procent obrażeń broni na bełt.
 static func ballista_damage(level: int) -> float:
-	return 0.7 + 0.12 * level
+	return 0.7 + 0.12 * power(level)
 
 
 static func lunge_speed(level: int) -> float:
-	return 380.0 + 40.0 * level
+	return minf(380.0 + 40.0 * power(level), 640.0)
 
 
 static func lunge_damage(level: int) -> float:
-	return 1.2 + 0.25 * level
+	return 1.2 + 0.25 * power(level)
 
 
 ## Półksiężyc: zasięg cięcia (zwykły atak ma około 30).
 static func crescent_radius(level: int) -> float:
-	return 44.0 + 6.0 * level
+	return 44.0 + 6.0 * power(level)
 
 
 ## Strzała tropiąca: ile razy trafia, zanim zniknie.
 static func seeker_hits(level: int) -> int:
-	return 3 + level
+	return 3 + count(level)
 
 
 ## Szybka salwa: ile strzał.
 static func volley_arrows(level: int) -> int:
-	return 2 + level
+	return 2 + count(level)
 
 
 ## Łańcuch błyskawic: ilu wrogów trafia.
 static func chain_targets(level: int) -> int:
-	return 2 + level
+	return 2 + count(level)
 
 
 ## Fala piorunów: połowa kąta stożka (stopnie) i jego zasięg.
 static func wave_half_angle(level: int) -> float:
-	return 30.0 + 6.0 * level
+	return minf(30.0 + 6.0 * power(level), 90.0)
 
 
 static func wave_radius(level: int) -> float:
-	return 120.0 + 12.0 * level
+	return 120.0 + 12.0 * power(level)
 
 
 static func health_regen(level: int, maximum := 0.0) -> float:
-	return 0.4 * level + 0.003 * level * maximum
+	return 0.4 * power(level) + 0.003 * power(level) * maximum
 
 
 static func mana_regen(level: int, maximum := 0.0) -> float:
-	return 0.5 * level + 0.004 * level * maximum
+	return 0.5 * power(level) + 0.004 * power(level) * maximum
 
 
 ## Ile many trzeba, żeby użyć umiejętności (młynek: na ułamek sekundy, jak przy starcie).

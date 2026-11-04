@@ -5,7 +5,7 @@ extends PanelContainer
 ## wymaga uderzenia) i dwie regeneracje. Odblokowanie i ulepszenia za złoto. Atak, umiejętność aktywną
 ## i uderzenie przeciąga się na pasek umiejętności na dole ekranu (Hotbar); przy nazwie widać, pod jakim są klawiszem.
 ## Broń z drzewkiem (SkillTree: miecz, łuk i księga magii) zamiast kart pokazuje sieć węzłów (SkillTreeView): punkty umiejętności,
-## szczegóły zaznaczonego węzła z przyciskami "Wybierz" (1 punkt) i "Ulepsz" (złoto, umiejętności z wybranym węzłem).
+## szczegóły zaznaczonego węzła z przyciskami "Wybierz" (1 punkt) i "Ulepsz" (punkty umiejętności, umiejętności z wybranym węzłem) i "Cofnij poziom" (złoto).
 ## Okno otwiera się na zakładce założonej broni.
 ## Umiejętność aktywna z wybranym węzłem ma gniazda na kamienie wsparcia (Supports): rząd gniazd (klik - wyjmij kamień),
 ## pasujące kamienie z plecaka (klik - osadź), dorabianie gniazda krzesiwem i łączenie 3 takich samych kamieni.
@@ -18,7 +18,7 @@ const TREE_SIZE := Vector2(400, 204)
 const DETAILS_WIDTH := 150.0
 
 var _player: Player
-## id umiejętności -> {"title": Label, "level": Label, "effect": Label, "button": Button, "card": PanelContainer}
+## id umiejętności -> {"title": Label, "level": Label, "effect": Label, "button": Button, "down": Button, "card": PanelContainer}
 var _cards := {}
 ## rodzaj broni -> nazwa na karcie zwykłego ataku (z klawiszem z paska)
 var _attack_titles := {}
@@ -28,7 +28,8 @@ var _tabs := {}
 var _tab := "melee"
 var _gold_label: Label
 var _status: Label
-## rodzaj broni -> {"view": SkillTreeView, "points": Label, "info": RichTextLabel, "take": Button, "upgrade": Button}
+## rodzaj broni -> {"view": SkillTreeView, "points": Label, "info": RichTextLabel, "take": Button, "upgrade": Button,
+## "downgrade": Button, ...}
 var _trees := {}
 
 
@@ -168,6 +169,14 @@ func _make_tree_page(weapon_type: String) -> VBoxContainer:
 	upgrade.add_theme_font_size_override("font_size", 8)
 	upgrade.pressed.connect(_upgrade_node.bind(weapon_type))
 	column.add_child(upgrade)
+	var downgrade := Button.new()
+	downgrade.focus_mode = Control.FOCUS_NONE
+	downgrade.add_theme_font_size_override("font_size", 8)
+	downgrade.pressed.connect(func() -> void:
+		var node: Dictionary = SkillTree.nodes(weapon_type).get(_trees[weapon_type]["view"].selected_id, {})
+		if node.get("kind", "") == "skill":
+			_downgrade(node["skill"]))
+	column.add_child(downgrade)
 	# gniazdo: kamienie z plecaka do osadzenia i wyjmowanie
 	var gems := GridContainer.new()
 	gems.columns = 6
@@ -213,7 +222,7 @@ func _make_tree_page(weapon_type: String) -> VBoxContainer:
 	view.selected.connect(func(_id: String) -> void: _refresh())
 	view.refund_requested.connect(func(id: String) -> void: _refund_node(weapon_type, id))
 	view.gem_dropped.connect(_show_socket_result)
-	_trees[weapon_type] = {"view": view, "points": points, "info": info, "take": take, "upgrade": upgrade,
+	_trees[weapon_type] = {"view": view, "points": points, "info": info, "take": take, "upgrade": upgrade, "downgrade": downgrade,
 			"gems": gems, "unsocket": unsocket, "destroy": destroy, "supports": support_box, "socket_row": socket_row,
 			"support_list": support_list, "add_socket": add_socket, "combine": combine}
 	return page
@@ -229,11 +238,12 @@ func _take_node(weapon_type: String) -> void:
 
 ## Cofa węzeł kliknięty prawym przyciskiem (albo mówi, czemu się nie da).
 func _refund_node(weapon_type: String, id: String) -> void:
-	var reason := _player.skills.refund_reason(weapon_type, id)
+	var reason := _player.skills.refund_reason(weapon_type, id, _player.stats.gold)
 	if reason == "":
-		_player.skills.refund(weapon_type, id)
+		var gold := _player.skills.refund_gold()
+		_player.skills.refund(weapon_type, id, _player.stats)
 		Sfx.play("ui_click")
-		_status.text = tr("Cofnięto: %s") % SkillTree.node_name(weapon_type, id)
+		_status.text = tr("Cofnięto: %s (-%d zł)") % [SkillTree.node_name(weapon_type, id), gold]
 		_status.add_theme_color_override("font_color", Color(0.6, 1, 0.55))
 	else:
 		Sfx.play("ui_error")
@@ -380,10 +390,15 @@ func _refresh_tree(weapon_type: String) -> void:
 	var parts: Dictionary = _trees[weapon_type]
 	var view: SkillTreeView = parts["view"]
 	var book := _player.skills
-	parts["points"].text = tr("Punkty umiejętności: %d   (1 za poziom postaci; zapomnieć drzewko można u mędrca)") % book.points_left()
+	var progress := book.skill_xp_progress()
+	parts["points"].text = tr("Punkty umiejętności: %d   Pasek umiejętności: %d / %d exp   (cofnięcie punktu: %d zł)") % [
+			book.points_left(), progress[0], progress[1], book.refund_gold()]
+	if book.migrated_gold >= 0:
+		parts["points"].text += "\n" + tr("Nowe zasady umiejętności: wszystkie punkty wróciły do rozdania, a złoto za kupione poziomy (%d zł) do sakwy.") % book.migrated_gold
 	view.queue_redraw()
 	var take: Button = parts["take"]
 	var upgrade: Button = parts["upgrade"]
+	var downgrade: Button = parts["downgrade"]
 	var gems: GridContainer = parts["gems"]
 	var unsocket: Button = parts["unsocket"]
 	var destroy: Button = parts["destroy"]
@@ -402,6 +417,7 @@ func _refresh_tree(weapon_type: String) -> void:
 	if id == "":
 		take.visible = false
 		upgrade.visible = false
+		downgrade.visible = false
 		parts["supports"].visible = false
 		return
 	if gems.visible:
@@ -425,6 +441,7 @@ func _refresh_tree(weapon_type: String) -> void:
 	take.text = tr("Wybierz (1 pkt)")
 	take.disabled = not book.can_take(weapon_type, id)
 	upgrade.visible = node["kind"] == "skill" and book.has_node_id(weapon_type, id)
+	downgrade.visible = false
 	if upgrade.visible:
 		var skill: String = node["skill"]
 		var level := book.level_of(skill)
@@ -432,8 +449,12 @@ func _refresh_tree(weapon_type: String) -> void:
 		text += "\n" + tr("Poz. %d/%d: %s") % [level, Skills.MAX_LEVEL, Skills.effect_text(skill, level)]
 		if cost >= 0:
 			upgrade.tooltip_text = tr("Następny poziom: %s") % Skills.effect_text(skill, level + 1)
-		upgrade.text = tr("Poziom maksymalny") if cost < 0 else tr("Ulepsz - %d zł") % cost
-		upgrade.disabled = cost < 0 or _player.stats.gold < cost
+		upgrade.text = tr("Poziom maksymalny") if cost < 0 else tr("Ulepsz - %d pkt") % cost
+		upgrade.disabled = cost < 0 or book.points_left() < cost
+		var back := book.downgrade_gold(skill)
+		downgrade.visible = back >= 0
+		downgrade.text = tr("Cofnij poziom - %d zł") % back
+		downgrade.disabled = _player.stats.gold < back
 		var key := _key_of(skill, weapon_type) if Hotbar.can_slot_skill(skill) else ""
 		if key != "":
 			text += "\n" + tr("Na pasku:") + key
@@ -481,8 +502,13 @@ func _make_card(id: String) -> PanelContainer:
 	button.add_theme_font_size_override("font_size", 8)
 	button.pressed.connect(_upgrade.bind(id))
 	content.add_child(button)
+	var down := Button.new()
+	down.focus_mode = Control.FOCUS_NONE
+	down.add_theme_font_size_override("font_size", 7)
+	down.pressed.connect(_downgrade.bind(id))
+	content.add_child(down)
 
-	_cards[id] = {"title": title, "level": level, "effect": effect, "button": button, "card": card}
+	_cards[id] = {"title": title, "level": level, "effect": effect, "button": button, "down": down, "card": card}
 	if Hotbar.can_slot_skill(id):
 		card.set_drag_forwarding(_drag_skill.bind(id, card), Callable(), Callable())
 	return card
@@ -537,14 +563,28 @@ func _upgrade(id: String) -> void:
 	if not _player.skills.can_learn(id):
 		_status.text = tr("Najpierw odblokuj: %s") % Skills.name_of(Skills.get_data(id)["requires"])
 		_status.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
-	elif _player.skills.upgrade(id, _player.stats):
+	elif _player.skills.upgrade(id):
 		var level := _player.skills.level_of(id)
 		var pattern := tr("Odblokowano: %s (poz. %d)") if level == 1 else tr("Ulepszono: %s (poz. %d)")
 		_status.text = pattern % [Skills.name_of(id), level]
 		_status.add_theme_color_override("font_color", Color(0.6, 1, 0.55))
 	else:
+		_status.text = tr("Za mało punktów umiejętności!")
+		_status.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
+
+
+## Cofa ostatni poziom umiejętności za złoto (punkty wracają).
+func _downgrade(id: String) -> void:
+	var gold := _player.skills.downgrade_gold(id)
+	if _player.skills.downgrade(id, _player.stats):
+		Sfx.play("ui_click")
+		_status.text = tr("Cofnięto poziom: %s (poz. %d, -%d zł)") % [Skills.name_of(id), _player.skills.level_of(id), gold]
+		_status.add_theme_color_override("font_color", Color(0.6, 1, 0.55))
+	else:
+		Sfx.play("ui_error")
 		_status.text = tr("Za mało złota!")
 		_status.add_theme_color_override("font_color", Color(1, 0.4, 0.4))
+	_refresh()
 
 
 func _refresh() -> void:
@@ -583,8 +623,13 @@ func _refresh() -> void:
 			button.text = tr("Wymaga: %s") % Skills.name_of(data["requires"])
 			button.disabled = true
 		else:
-			button.text = (tr("Odblokuj - %d zł") if level == 0 else tr("Ulepsz - %d zł")) % cost
-			button.disabled = gold < cost
+			button.text = (tr("Odblokuj - %d pkt") if level == 0 else tr("Ulepsz - %d pkt")) % cost
+			button.disabled = _player.skills.points_left() < cost
+		var down: Button = parts["down"]
+		var back := _player.skills.downgrade_gold(id)
+		down.visible = back >= 0
+		down.text = tr("Cofnij poziom - %d zł") % back
+		down.disabled = gold < back
 		parts["card"].tooltip_text = "%s\n%s" % [Skills.name_of(id), Skills.description_of(id)]
 		parts["card"].modulate = Color.WHITE if level > 0 else Color(0.85, 0.85, 0.85)
 	_gold_label.text = tr("%d złota") % gold

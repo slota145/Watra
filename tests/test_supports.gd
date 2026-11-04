@@ -66,6 +66,8 @@ func _process(_d: float) -> bool:
 			and Skills.tags_text("crescent").find("@") < 0)
 	# odblokowanie Półksiężyca (obszar, cios, fizyczne)
 	book.character_level = 60
+	# punkty umiejętności daje pasek umiejętności, nie poziom postaci
+	book.bonus_points += 60
 	for step in SkillTree.path_to("melee", SkillTree.node_for_skill("crescent")):
 		book.take("melee", step)
 	check("Półksiężyc odblokowany", book.level_of("crescent") > 0)

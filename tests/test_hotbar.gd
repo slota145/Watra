@@ -63,6 +63,8 @@ func _process(_d: float) -> bool:
 		# umiejętności: uderzenie ze slotu Q, atak z LPM, combo po uderzeniu
 		# umiejętności miecza odblokowują węzły drzewka (punkty z poziomów)
 		p.skills.character_level = 5
+		# punkty umiejętności daje pasek umiejętności, nie poziom postaci
+		p.skills.bonus_points += 5
 		for node in ["lunge", "crescent", "whirlwind"]:
 			p.skills.take("melee", node)
 		p.mana = 100.0

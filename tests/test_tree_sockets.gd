@@ -46,6 +46,8 @@ func _process(_d: float) -> bool:
 				func(link: String) -> bool: return Tree.nodes(weapon)[link]["kind"] == "keystone")
 		check("3 gniazda w drzewku: " + weapon, sockets.size() == 3 and by_keystone, str(sockets))
 	book.character_level = 60
+	# punkty umiejętności daje pasek umiejętności, nie poziom postaci
+	book.bonus_points += 60
 	check("broń: miecz", p.stats.weapon_type() == "melee", p.stats.weapon_type())
 	for step in Tree.path_to("melee", "socket_1"):
 		book.take("melee", step)

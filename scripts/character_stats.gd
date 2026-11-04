@@ -40,12 +40,13 @@ const SUPPORT_ELEMENTS: Array[String] = ["fire", "ice", "lightning"]
 ## Mnożnik wszystkich obrażeń według rodzaju broni: łuk i księga trzymają wrogów na dystansie (bezpieczniej), ale bez
 ## tego zabijały o połowę wolniej niż miecz (tests/endgame_probe.gd, tryby bow_kite / spell_kite, listopad 2026).
 const WEAPON_DAMAGE := {"melee": 1.0, "bow": 1.25, "spell": 1.25}
-## Wersja zasad atrybutów w zapisie: starsze zapisy (atrybuty dawały szybkość i płaskie obrażenia) dostają
-## przy wczytaniu wszystkie punkty atrybutów z powrotem do rozdania.
-const ATTRIBUTE_RULES := 2
+## Wersja zasad atrybutów w zapisie: starsze zapisy dostają przy wczytaniu wszystkie punkty atrybutów z powrotem
+## do rozdania (wersja 2 - atrybuty dawały szybkość i płaskie obrażenia; 3 - 2 punkty za poziom zamiast 1).
+const ATTRIBUTE_RULES := 3
 const REDUCTION_PER_STRENGTH := 0.005
 const MAX_STRENGTH_REDUCTION := 0.25
-const POINTS_PER_LEVEL := 1
+## Punkty statystyk za awans (punkty umiejętności daje osobny pasek - SkillBook.skill_xp).
+const POINTS_PER_LEVEL := 2
 ## Obrażenia gołymi pięściami (bez broni).
 const UNARMED_DAMAGE := [1, 3]
 ## Pancerz zmniejsza obrażenia: otrzymane = obrażenia * K / (K + pancerz).
@@ -414,6 +415,14 @@ func _weapon_damage() -> Array:
 	return equipment.weapon_damage()
 
 
+## Cały exp zdobyty przez postać (z poziomu i paska) - przy przeliczaniu starych zapisów (SkillBook.migrate_old).
+func total_xp() -> int:
+	var total := xp
+	for l in range(1, level):
+		total += int(round(xp_base * pow(l, xp_exponent)))
+	return total
+
+
 ## Ile expa potrzeba, żeby z obecnego poziomu wejść na następny.
 func xp_to_next_level() -> int:
 	return int(round(xp_base * pow(level, xp_exponent)))
@@ -424,6 +433,7 @@ func add_xp(amount: int) -> void:
 	# kamienie wsparcia w gniazdach umiejętności rosną razem z postacią (Supports.XP_SHARE)
 	if skill_book != null and amount > 0:
 		skill_book.add_support_xp(amount)
+		skill_book.add_skill_xp(amount)
 	var leveled := false
 	while xp >= xp_to_next_level():
 		xp -= xp_to_next_level()
@@ -481,11 +491,16 @@ func load_save_data(data: Dictionary) -> void:
 		attributes[id] = int(saved_attributes.get(id, 0))
 	# starszy zapis: atrybuty działały inaczej - wszystkie punkty wracają do rozdania (darmowy reset)
 	attributes_reset = false
-	if int(data.get("attribute_rules", 1)) < ATTRIBUTE_RULES:
+	var rules := int(data.get("attribute_rules", 1))
+	if rules < ATTRIBUTE_RULES:
 		for id: String in attributes:
 			unspent_points += attributes[id]
 			attributes_reset = attributes_reset or attributes[id] > 0
 			attributes[id] = 0
+		# przed wersją 3 awans dawał 1 punkt - dopisujemy brakujące
+		if rules < 3:
+			unspent_points += maxi(level - 1, 0) * (POINTS_PER_LEVEL - 1)
+			attributes_reset = attributes_reset or level > 1
 	changed.emit()
 	xp_changed.emit(xp, xp_to_next_level(), level)
 	gold_changed.emit(gold)

@@ -202,6 +202,8 @@ func _check_tree(p) -> void:
 	check("umiejętności: opisy i pasek", no_text.is_empty(), str(no_text))
 	p.stats.level = 60
 	p.skills.character_level = 60
+	# punkty umiejętności daje pasek umiejętności, nie poziom postaci
+	p.skills.bonus_points += 60
 	for i in 5:
 		for id: String in nodes:
 			p.skills.take("bow", id)
@@ -219,7 +221,7 @@ func _check_migration() -> void:
 	book.reset_tree("bow")
 	var copy = Book.new()
 	copy.load_save_data(JSON.parse_string(JSON.stringify(book.get_save_data())))
-	check("zapomniane drzewko łuku nie wraca", copy.level_of("multishot") == 0 and copy.levels.get("multishot", 0) == 2)
+	check("zapomniane drzewko łuku nie wraca", copy.level_of("multishot") == 0 and copy.levels.get("multishot", 0) == 0)
 	book.free()
 	copy.free()
 

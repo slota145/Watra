@@ -1506,8 +1506,16 @@ func load_save_data(data: Dictionary) -> void:
 		hotbar.load_save_data(data["hotbar"])
 	stats.load_save_data(data.get("stats", {}))
 	skills.character_level = stats.level
-	skills.changed.emit()
 	inventory.load_save_data(data.get("inventory", []))
+	# zapis sprzed paska umiejętności: złoto za kupione poziomy wraca, punkty z całego zdobytego expa
+	var migrated := skills.migrate_old(stats.total_xp())
+	if not migrated.is_empty():
+		stats.add_gold(int(migrated["gold"]))
+		for recipe: Dictionary in migrated["gems"]:
+			var gem_id := Essences.register(recipe.duplicate(true)) if recipe.has("essence") else Gems.register(recipe.duplicate(true))
+			if inventory.add_item(gem_id, 1) > 0:
+				storage.add_item(gem_id, 1)
+	skills.changed.emit()
 	# starsze zapisy bez encyklopedii odkrywają przynajmniej to, co gracz ma
 	codex.load_save_data(data.get("codex", {}))
 	travelers.load_save_data(data.get("travelers", {}))

@@ -276,7 +276,7 @@ func describe(id: String) -> String:
 		lines.append(tr("Kliknij, a potem \"Wybierz\" (1 punkt).") if _player.skills.can_take(weapon_type, id)
 				else tr("Wybierz najpierw sąsiedni węzeł.") if _player.skills.points_left() > 0 else tr("Brak punktów umiejętności."))
 	elif _player != null and id != "start":
-		lines.append(tr("Prawy przycisk myszy - cofnij węzeł (punkt wraca)."))
+		lines.append(tr("Prawy przycisk myszy - cofnij węzeł (punkt wraca za %d zł).") % _player.skills.refund_gold())
 	return "\n".join(lines)
 
 

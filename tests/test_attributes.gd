@@ -77,7 +77,7 @@ func _run() -> void:
 			"malejące zyski uniku: 60 pkt %d%%, 500 pkt %d%%" % [roundi(dodge60 * 100), roundi(dodge500 * 100)])
 	# stary zapis: wszystkie punkty atrybutów wracają do rozdania, nowy zostaje
 	stats.load_save_data({"level": 20, "unspent_points": 2, "attributes": {"strength": 10, "vitality": 7}})
-	_check(stats.unspent_points == 19 and stats.attributes["strength"] == 0 and stats.attributes_reset, "stary zapis - darmowy reset atrybutów")
+	_check(stats.unspent_points == 38 and stats.attributes["strength"] == 0 and stats.attributes_reset, "stary zapis - darmowy reset atrybutów, 2 punkty za poziom")
 	stats.attributes["strength"] = 5
 	stats.unspent_points = 14
 	stats.load_save_data(stats.get_save_data())
