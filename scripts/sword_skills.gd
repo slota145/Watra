@@ -110,6 +110,8 @@ var _cooldowns := {}
 var _parry_time := 0.0
 var _parry_ring: Node2D
 var _cry_time := 0.0
+## Pełny czas obecnego Zewu Peruna (dłuższy z Donośnym Głosem).
+var _cry_total := Skills.CRY_TIME
 ## Trzaskające wyładowania wokół postaci w czasie premii Zewu Peruna.
 var _cry_fx: Sprite2D
 var _forced_crits := 0
@@ -139,7 +141,7 @@ func press(id: String) -> void:
 		_:
 			if _cooldowns.get(id, [0.0])[0] > 0.0:
 				return
-			var cost := Skills.mana_cost(id)
+			var cost := _player.skill_mana(id)
 			if not _player.spend_mana(cost):
 				_player._hint(Lang.t("Za mało many"))
 				return
@@ -230,7 +232,7 @@ func _process_flicker(delta: float) -> void:
 	var endless := whirling and _endless_whirl() and _player.is_skill_held("flicker")
 	if whirling and (_whirl_jumps_left > 0 or endless):
 		if _whirl_jump_timer <= 0.0:
-			_whirl_jump_timer = maxf(Skills.WHIRL_FLICKER_INTERVAL / _player._skill_speed(), Skills.WHIRL_FLICKER_MIN_INTERVAL)
+			_whirl_jump_timer = maxf(Skills.WHIRL_FLICKER_INTERVAL / _player._skill_speed(Skills.tags("flicker")), Skills.WHIRL_FLICKER_MIN_INTERVAL)
 			if _jump(Skills.FLICKER_RANGE * 1.2, level, true):
 				_whirl_jumps_left -= 1
 				_player.note_skill("flicker")
@@ -243,7 +245,7 @@ func _process_flicker(delta: float) -> void:
 		return
 	if _player.is_dashing() or _player.is_charging_fireball() or _player.is_chopping():
 		return
-	var cost := Skills.FLICKER_MANA * (1.0 + _player.skills.tree_bonus("melee", "flicker_mana"))
+	var cost := _player.skill_mana("flicker", Skills.FLICKER_MANA * (1.0 + _player.skills.tree_bonus("melee", "flicker_mana")))
 	if _in_cloud():
 		cost = 0.0
 	if _player.mana < cost:
@@ -256,7 +258,7 @@ func _process_flicker(delta: float) -> void:
 		return
 	_player.spend_mana(cost)
 	_player.note_skill("flicker")
-	_flicker_timer = maxf(Skills.FLICKER_INTERVAL / _player._skill_speed(), Skills.FLICKER_MIN_INTERVAL)
+	_flicker_timer = maxf(Skills.FLICKER_INTERVAL / _player._skill_speed(Skills.tags("flicker")), Skills.FLICKER_MIN_INTERVAL)
 
 
 ## Skok na wylot przez najbliższego widocznego wroga (innego niż poprzedni, jeśli jest wybór): postać ląduje za nim
@@ -300,7 +302,7 @@ func _jump(reach: float, level: int, spinning: bool) -> bool:
 	var trail_from := from + Player.BODY_OFFSET
 	var trail := _player.body_center() - trail_from
 	# efekty przyspieszają z szybkością ataku (najwyżej 2x), żeby przy szybkich skokach nie nakładały się w bałagan
-	var fps := 16.0 * clampf(_player._skill_speed(), 1.0, 2.0)
+	var fps := 16.0 * clampf(_player._skill_speed(Skills.tags("flicker")), 1.0, 2.0)
 	if spinning:
 		_spin_fx_time = SPIN_FX_TIME
 		SkillEffects.sheet_once(_player.get_parent(), FLICKER_SPIN_TRAIL, 7, fps, trail_from, FLICKER_SPIN_TRAIL_ANCHOR,
@@ -321,7 +323,7 @@ func _jump(reach: float, level: int, spinning: bool) -> bool:
 		var center := enemy.hurt_center()
 		var on_path := Geometry2D.get_closest_point_to_segment(center, path_from, path_to).distance_to(center) <= FLICKER_PATH_WIDTH + enemy.hurt_radius
 		if on_path or center.distance_to(best.hurt_center()) <= FLICKER_HIT_RADIUS + enemy.hurt_radius:
-			_player.hit_enemy(enemy, _player._skill_damage(multiplier, Skills.tags("flicker")), _player.global_position, 90.0)
+			_player.hit_enemy(enemy, _player._skill_damage(multiplier, Skills.tags("flicker")), _player.global_position, 90.0, "", Skills.tags("flicker"))
 	return true
 
 
@@ -353,7 +355,7 @@ func _landing_spot(target: Goblin) -> Vector2:
 func _press_smoke() -> void:
 	if _smoke_charge >= 0.0:
 		return
-	if not _player.spend_mana(Skills.SMOKE_MANA):
+	if not _player.spend_mana(_player.skill_mana("smoke_burst", Skills.SMOKE_MANA)):
 		_player._hint(Lang.t("Za mało many"))
 		return
 	if _player.combo_with("smoke_burst"):
@@ -416,13 +418,14 @@ func _fire_smoke(rows: int, combo: bool) -> void:
 		_start_cloud(origin + aim * Skills.SMOKE_DISTANCE[rows - 1] * 0.6)
 	if combo:
 		MiscVfx.spark(_player.get_parent(), _player.body_center(), Color(1.0, 0.9, 0.6), 1.4)
+	_player.support_echo("smoke_burst", _fire_smoke.bind(rows, combo))
 	for ring in rows:
 		var spread := deg_to_rad(Skills.SMOKE_SPREAD_DEGREES[ring])
 		for k in 3:
 			var at := origin + aim.rotated((k - 1) * spread) * Skills.SMOKE_DISTANCE[ring]
 			var timer := _player.get_tree().create_timer(ring * SMOKE_RING_DELAY + k * 0.02, false)
 			var bonus := (1.0 + _player.skills.tree_bonus("melee", "smoke_damage")) * (_player.combo_damage() if combo else 1.0)
-			timer.timeout.connect(_burst.bind(at, aim.rotated((k - 1) * spread + SMOKE_FX_ZIGZAG * (1.0 if ring % 2 == 0 else -1.0)), Skills.SMOKE_RADIUS[ring] * _player.stats.area_multiplier(),
+			timer.timeout.connect(_burst.bind(at, aim.rotated((k - 1) * spread + SMOKE_FX_ZIGZAG * (1.0 if ring % 2 == 0 else -1.0)), Skills.SMOKE_RADIUS[ring] * _player.stats.area_multiplier(_smoke_tags),
 					Skills.smoke_damage(level, ring) * bonus))
 
 
@@ -438,7 +441,7 @@ func _burst(at: Vector2, dir: Vector2, radius: float, multiplier: float) -> void
 	Sfx.play_at("explosion", at, -12.0)
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
 		if enemy.hurt_center().distance_to(at + Vector2(0, -6)) <= radius + enemy.hurt_radius:
-			_player.hit_enemy(enemy, _player._skill_damage(multiplier, _smoke_tags), at, 110.0, "fire")
+			_player.hit_enemy(enemy, _player._skill_damage(multiplier, _smoke_tags), at, 110.0, "fire", _smoke_tags)
 
 
 # ---------------------------------------------------------------- Rozpłatanie i krwawienie
@@ -453,17 +456,19 @@ func _rend() -> void:
 	_player.note_skill("rend")
 	var origin := _player.body_center()
 	var half := deg_to_rad(Skills.REND_ARC_DEGREES) / 2.0
+	var tags := Skills.tags("rend")
+	var reach := Skills.REND_REACH * _player.stats.area_multiplier(tags)
 	SkillEffects.sheet_once(_player.get_parent(), REND_FX, 7, 18.0, origin, REND_FX_ANCHOR, aim.angle(), 1.0,
-			Skills.REND_REACH / REND_FX_RADIUS)
+			reach / REND_FX_RADIUS)
 	Sfx.play("big_slash", 0.0, 1.1)
 	var bleed := Skills.rend_bleed(level) * (2.0 if combo else 1.0) * (_player.combo_damage() if combo else 1.0)
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
 		var to_enemy := enemy.hurt_center() - origin
-		if to_enemy.length() > Skills.REND_REACH + enemy.hurt_radius:
+		if to_enemy.length() > reach + enemy.hurt_radius:
 			continue
 		if to_enemy.length() > enemy.hurt_radius and absf(angle_difference(aim.angle(), to_enemy.angle())) > half:
 			continue
-		_player.hit_enemy(enemy, _player._skill_damage(Skills.rend_damage(level), Skills.tags("rend")), _player.global_position, 80.0)
+		_player.hit_enemy(enemy, _player._skill_damage(Skills.rend_damage(level), tags), _player.global_position, 80.0, "", tags)
 		bleed_enemy(enemy, bleed)
 
 
@@ -499,43 +504,45 @@ func _ground_slam() -> void:
 	_player.add_shake(4.0)
 	Sfx.play("explosion", -4.0, 0.7)
 	var origin := _player.global_position
+	var area := _player.stats.area_multiplier(Skills.tags("ground_slam"))
 	var damage := Skills.slam_damage(level) * (_player.combo_damage() if combo else 1.0)
 	var stun := Skills.slam_stun(level) * (1.0 + _player.skills.tree_bonus("melee", "slam_stun"))
 	var layer := _player.get_tree().get_first_node_in_group("floor_layer")
 	var parent: Node = layer if layer != null else _player.get_parent()
 	var hit := {}
 	if combo:
-		MiscVfx.ring(_player.get_parent(), origin, Skills.SLAM_RING, Color(0.75, 0.6, 0.4))
-		SkillEffects.ground_crack(parent, origin, Skills.SLAM_RING * 0.7, 2.0)
+		MiscVfx.ring(_player.get_parent(), origin, Skills.SLAM_RING * area, Color(0.75, 0.6, 0.4))
+		SkillEffects.ground_crack(parent, origin, Skills.SLAM_RING * area * 0.7, 2.0)
 		# [promień jako część kręgu, liczba erupcji, opóźnienie, przesunięcie kąta w ułamku odstępu]
 		for ring in [[0.5, 9, 0.0, 0.0], [0.85, 14, 0.08, 0.5]]:
 			for k: int in ring[1]:
-				var spot: Vector2 = origin + Vector2.from_angle(TAU * (k + ring[3]) / ring[1]) * Skills.SLAM_RING * ring[0]
+				var spot: Vector2 = origin + Vector2.from_angle(TAU * (k + ring[3]) / ring[1]) * Skills.SLAM_RING * area * ring[0]
 				_player.get_tree().create_timer(ring[2] + randf() * 0.04, false).timeout.connect(func() -> void:
 					if is_instance_valid(_player):
 						SkillEffects.sheet_once(_player.get_parent(), SLAM_FX, 10, 15.0, spot, SLAM_FX_ANCHOR, 0.0, 1.0, 1.0))
 		for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
-			if enemy.global_position.distance_to(origin) <= Skills.SLAM_RING + enemy.hurt_radius:
+			if enemy.global_position.distance_to(origin) <= Skills.SLAM_RING * area + enemy.hurt_radius:
 				_slam_hit(enemy, damage, stun, origin)
 		return
 	# fala pęknięć biegnie przed postacią
 	var steps := 6
 	for i in steps:
-		var at := origin + aim * (20.0 + (Skills.SLAM_LENGTH - 20.0) * i / (steps - 1))
+		var at := origin + aim * (20.0 + (Skills.SLAM_LENGTH * area - 20.0) * i / (steps - 1))
 		_player.get_tree().create_timer(i * 0.05, false).timeout.connect(func() -> void:
 			if not is_instance_valid(_player):
 				return
-			SkillEffects.ground_crack(parent, at, Skills.SLAM_WIDTH, 1.6)
+			SkillEffects.ground_crack(parent, at, Skills.SLAM_WIDTH * area, 1.6)
 			SkillEffects.sheet_once(_player.get_parent(), SLAM_FX, 10, 15.0, at, SLAM_FX_ANCHOR, 0.0, 1.0,
 					lerpf(0.75, 1.2, float(i) / (steps - 1)))
 			for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
-				if not hit.has(enemy) and enemy.global_position.distance_to(at) <= Skills.SLAM_WIDTH + enemy.hurt_radius:
+				if not hit.has(enemy) and enemy.global_position.distance_to(at) <= Skills.SLAM_WIDTH * area + enemy.hurt_radius:
 					hit[enemy] = true
 					_slam_hit(enemy, damage, stun, origin))
 
 
 func _slam_hit(enemy: Goblin, damage: float, stun: float, from: Vector2) -> void:
-	_player.hit_enemy(enemy, _player._skill_damage(damage), from, 60.0)
+	var tags := Skills.tags("ground_slam")
+	_player.hit_enemy(enemy, _player._skill_damage(damage, tags), from, 60.0, "", tags)
 	if enemy.state != Goblin.State.DEAD:
 		enemy.stun(stun)
 
@@ -567,13 +574,15 @@ func try_parry(from: Vector2) -> bool:
 	var origin := _player.body_center()
 	_player._invulnerable_timer = maxf(_player._invulnerable_timer, 0.4)
 	_player._face_direction(from - _player.global_position)
+	var tags := Skills.tags("riposte")
+	var radius := Skills.RIPOSTE_RADIUS * _player.stats.area_multiplier(tags)
 	SkillEffects.sheet_once(_player.get_parent(), RIPOSTE_COUNTER_FX, 6, 18.0, origin, RIPOSTE_COUNTER_ANCHOR, 0.0, 1.0,
-			Skills.RIPOSTE_RADIUS / RIPOSTE_FX_RADIUS)
+			radius / RIPOSTE_FX_RADIUS)
 	DamageNumber.spawn_text(_player.get_parent(), origin + Vector2(0, -14), Lang.t("Riposta!"), Color(1.0, 0.9, 0.5), 9)
 	Sfx.play("hit_heavy", 2.0, 1.2)
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
-		if enemy.hurt_center().distance_to(origin) <= Skills.RIPOSTE_RADIUS + enemy.hurt_radius:
-			_player.hit_enemy(enemy, _player._skill_damage(damage), _player.global_position, 160.0)
+		if enemy.hurt_center().distance_to(origin) <= radius + enemy.hurt_radius:
+			_player.hit_enemy(enemy, _player._skill_damage(damage, tags), _player.global_position, 160.0, "", tags)
 			if enemy.state != Goblin.State.DEAD:
 				enemy.stun(0.5)
 	# po udanej Ripoście Szarża jest darmowa (Skills.COMBOS)
@@ -585,12 +594,16 @@ func try_parry(from: Vector2) -> bool:
 func _war_cry() -> void:
 	var level := _player.skills.level_of("war_cry")
 	_start_cooldown("war_cry", Skills.CRY_COOLDOWN)
-	_cry_time = Skills.CRY_TIME
+	# Donośny Głos (kamień wsparcia): dłuższy zew i większy obszar strachu
+	var tags := Skills.tags("war_cry")
+	var radius := Skills.CRY_RADIUS * _player.stats.area_multiplier(tags)
+	_cry_total = Skills.CRY_TIME * (1.0 + _player.support("war_cry", "duration"))
+	_cry_time = _cry_total
 	_forced_crits = Skills.CRY_CRITS
 	_player.note_skill("war_cry")
 	var origin := _player.global_position
 	SkillEffects.sheet_once(_player.get_parent(), PERUN_FX, 10, 20.0, origin, PERUN_FX_ANCHOR, 0.0, 1.0,
-			Skills.CRY_RADIUS / PERUN_FX_RADIUS)
+			radius / PERUN_FX_RADIUS)
 	if _cry_fx == null:
 		_cry_fx = Sprite2D.new()
 		_cry_fx.texture = PERUN_BUFF_FX
@@ -602,8 +615,8 @@ func _war_cry() -> void:
 	Sfx.play("thunder", -2.0)
 	_player.add_shake(3.0)
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
-		if enemy.global_position.distance_to(origin) <= Skills.CRY_RADIUS:
-			enemy.fear(Skills.CRY_FEAR, origin)
+		if enemy.global_position.distance_to(origin) <= radius:
+			enemy.fear(Skills.CRY_FEAR * (1.0 + _player.support("war_cry", "duration")), origin)
 	_update_temp_bonus()
 
 
@@ -630,6 +643,7 @@ func _spectral_blades() -> void:
 	_blades.count = Skills.BLADES_COUNT + roundi(_player.skills.tree_bonus("melee", "blade_count"))
 	_blades.damage = Skills.blades_damage(level) * (_player.combo_damage() if combo else 1.0)
 	_blades.time_left = Skills.BLADES_TIME
+	_blades.orbit = Skills.BLADES_ORBIT * _player.stats.area_multiplier(Skills.tags("spectral_blades"))
 	_player.get_parent().add_child(_blades)
 	Sfx.play("magic", 0.0, 1.3)
 	if combo:
@@ -673,7 +687,7 @@ func _process_timed(delta: float) -> void:
 	_cry_time = maxf(_cry_time - delta, 0.0)
 	if _cry_fx != null:
 		_cry_fx.visible = _cry_time > 0.0
-		_cry_fx.frame = int((Skills.CRY_TIME - _cry_time) * PERUN_BUFF_FPS) % PERUN_BUFF_FRAMES
+		_cry_fx.frame = int((_cry_total - _cry_time) * PERUN_BUFF_FPS) % PERUN_BUFF_FRAMES
 	_dance_time = maxf(_dance_time - delta, 0.0)
 	if _dance_time <= 0.0:
 		_dance_stacks = 0
@@ -703,7 +717,7 @@ func _update_temp_bonus() -> void:
 func statuses() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	if _cry_time > 0.0:
-		result.append({"name": Lang.t("Zew Peruna"), "kind": "good", "left": _cry_time, "total": Skills.CRY_TIME, "icon": ICONS["war_cry"],
+		result.append({"name": Lang.t("Zew Peruna"), "kind": "good", "left": _cry_time, "total": _cry_total, "icon": ICONS["war_cry"],
 				"stacks": _forced_crits, "description": Lang.t("+%d%% zadawanych obrażeń; ciosy krytyczne w zapasie: %d") % [
 					roundi(_player.stats.temp_bonus.get("damage_percent", 0.0) * 100.0), _forced_crits]})
 	if _dance_stacks > 0:

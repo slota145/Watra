@@ -79,7 +79,12 @@ const DATA := {
 const ORDER: Array[String] = ["area", "split", "pierce", "chain", "fire_edge", "frost_edge", "storm_edge", "ember", "rime",
 		"discharge", "venom", "brutal", "fury", "echo", "momentum", "warlord", "herald"]
 ## Umiejętności, na które kamień nie działa, choć mają jego tag (nie da się go tam włożyć).
-const EXCEPT := {}
+const EXCEPT := {
+	"split": ["arrow_rain", "venom_arrows"],
+	"pierce": ["arrow_rain", "venom_arrows", "fireball", "chain_lightning", "ball_lightning"],
+	"chain": ["arrow_rain", "venom_arrows", "fireball", "ball_lightning", "seeker"],
+	"echo": ["spectral_blades", "storm_call", "blink", "mana_shield", "rune_stone"],
+}
 ## Opisy premii: wzór z jedną liczbą (procent albo liczba całkowita).
 const STAT_TEXTS := {
 	"area": "+%d%% obszaru", "more": "%+d%% obrażeń", "speed": "%+d%% szybkości umiejętności",

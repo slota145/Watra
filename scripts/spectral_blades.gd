@@ -22,6 +22,8 @@ var count := 3
 ## Procent obrażeń broni za dotknięcie (wylot: razy Skills.BLADES_LAUNCH).
 var damage := 0.5
 var time_left := 8.0
+## Promień krążenia ostrzy (większy z premią obszaru - kamień wsparcia Rozległość).
+var orbit := Skills.BLADES_ORBIT
 var _angle := 0.0
 var _time := 0.0
 ## wróg -> sekundy do kolejnego trafienia tym samym wrogiem
@@ -46,7 +48,7 @@ func _burst(at: Vector2, size: float) -> void:
 func blade_positions() -> Array[Vector2]:
 	var result: Array[Vector2] = []
 	for i in count:
-		result.append(Vector2.from_angle(_angle + TAU * i / count) * Skills.BLADES_ORBIT)
+		result.append(Vector2.from_angle(_angle + TAU * i / count) * orbit)
 	return result
 
 
@@ -99,7 +101,7 @@ func _process(delta: float) -> void:
 				continue
 			if enemy.hurt_center().distance_to(at) <= HIT_RADIUS + enemy.hurt_radius:
 				_recent[enemy] = HIT_INTERVAL
-				player.hit_enemy(enemy, player._skill_damage(damage, _tags), at, 30.0, "blade")
+				player.hit_enemy(enemy, player._skill_damage(damage, _tags), at, 30.0, "blade", _tags)
 				_burst(enemy.hurt_center(), 0.6)
 
 
@@ -113,7 +115,7 @@ func _process_flying(delta: float) -> void:
 		var at: Vector2 = blade[0]
 		var to := target.hurt_center() - at
 		if to.length() <= LAUNCH_SPEED * delta + 4.0:
-			player.hit_enemy(target, player._skill_damage(damage * Skills.BLADES_LAUNCH, _tags), at, 120.0, "blade")
+			player.hit_enemy(target, player._skill_damage(damage * Skills.BLADES_LAUNCH, _tags), at, 120.0, "blade", _tags)
 			_burst(target.hurt_center(), 1.3)
 			_flying.remove_at(i)
 			continue

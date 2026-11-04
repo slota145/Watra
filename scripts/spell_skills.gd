@@ -66,6 +66,8 @@ var _shield_time := 0.0
 var _shield_full := 0.0
 var _shield_ring: Node2D
 var _rune: _Rune
+## Pełny czas obecnego Kamienia Runicznego (dłuższy z kamieniem Watażka).
+var _rune_total := Skills.RUNE_TIME
 var _last_element := ""
 var _harmony_time := 0.0
 var _echoing := false
@@ -85,7 +87,7 @@ func press(id: String) -> void:
 		return
 	if _cooldowns.get(id, [0.0])[0] > 0.0 or _player.is_dashing():
 		return
-	if not _player.spend_mana(Skills.mana_cost(id)):
+	if not _player.spend_mana(_player.skill_mana(id)):
 		_player._hint(Lang.t("Za mało many") if not blood_magic() else Lang.t("Za mało zdrowia"))
 		return
 	var combo := _player.combo_with(id)
@@ -97,11 +99,13 @@ func press(id: String) -> void:
 			_start_cooldown(id, Skills.LANCE_COOLDOWN)
 			_frost_lance(combo)
 			_echo(_frost_lance.bind(combo))
+			_player.support_echo(id, _frost_lance.bind(combo))
 		"blizzard":
 			_start_cooldown(id, Skills.BLIZZARD_COOLDOWN)
 			var at := _aim_point(Skills.BLIZZARD_RANGE)
 			_blizzard(at, combo)
 			_echo(_blizzard.bind(at, combo))
+			_player.support_echo(id, _blizzard.bind(at, combo))
 		"storm_call":
 			_start_cooldown(id, Skills.STORM_COOLDOWN)
 			_storm_call(combo)
@@ -109,11 +113,13 @@ func press(id: String) -> void:
 			_start_cooldown(id, Skills.ORB_COOLDOWN)
 			_ball_lightning(combo)
 			_echo(_ball_lightning.bind(combo))
+			_player.support_echo(id, _ball_lightning.bind(combo))
 		"meteor":
 			_start_cooldown(id, Skills.METEOR_COOLDOWN)
 			var at := _aim_point(Skills.METEOR_RANGE)
 			_meteor(at, combo)
 			_echo(_meteor.bind(at, combo))
+			_player.support_echo(id, _meteor.bind(at, combo))
 		"blink":
 			_start_cooldown(id, Skills.BLINK_COOLDOWN * (1.0 + _bonus("blink_cooldown")))
 			_blink()
@@ -165,8 +171,9 @@ func _aim_point(reach: float) -> Vector2:
 	return origin + (_cursor() - origin).limit_length(reach)
 
 
-func _damage(multiplier: float) -> int:
-	return _player._skill_damage(multiplier, ["spell"])
+## `id` - umiejętność (jej tagi i kamienie wsparcia); "" - sam czar.
+func _damage(multiplier: float, id := "") -> int:
+	return _player._skill_damage(multiplier, Skills.tags(id) if id != "" else ["spell"])
 
 
 func _enemies() -> Array[Node]:
@@ -315,23 +322,25 @@ func _chill(enemy: Goblin) -> void:
 func _frost_lance(combo: bool) -> void:
 	var dir := _player._aim_direction()
 	var multiplier := Skills.lance_damage(_level("frost_lance")) * (1.0 + _bonus("lance_damage")) * (_player.combo_damage() if combo else 1.0)
-	var lance := _player._make_projectile(_player.equipment.weapon(), dir)
-	lance.texture = LANCE_TEXTURE
-	lance.magic = false
-	lance.fx_kind = "ice"
-	lance.speed = Skills.LANCE_SPEED
-	lance.size = 0.9
-	lance.pierce = Skills.lance_pierce(_level("frost_lance")) + roundi(_bonus("lance_pierce"))
-	lance.damage_min = maxi(1, roundi(lance.damage_min * multiplier))
-	lance.damage_max = maxi(1, roundi(lance.damage_max * multiplier))
-	lance.max_range *= 1.2
-	var shattered := [not combo]
-	lance.enemy_hit.connect(func(enemy: Goblin) -> void:
-		_chill(enemy)
-		if not shattered[0]:
-			shattered[0] = true
-			_shatter(enemy, lance.global_position, multiplier))
-	_player.get_parent().add_child(lance)
+	# Rozszczep (kamień wsparcia): dodatkowe włócznie wachlarzem
+	for shot: Vector2 in Player.split_directions(dir, _player.support_count("frost_lance", "projectiles")):
+		var lance := _player._make_projectile(_player.equipment.weapon(), shot, "frost_lance")
+		lance.texture = LANCE_TEXTURE
+		lance.magic = false
+		lance.fx_kind = "ice"
+		lance.speed = Skills.LANCE_SPEED
+		lance.size = 0.9
+		lance.pierce = Skills.lance_pierce(_level("frost_lance")) + roundi(_bonus("lance_pierce")) + _player.support_count("frost_lance", "pierce")
+		lance.damage_min = maxi(1, roundi(lance.damage_min * multiplier))
+		lance.damage_max = maxi(1, roundi(lance.damage_max * multiplier))
+		lance.max_range *= 1.2
+		var shattered := [not combo]
+		lance.enemy_hit.connect(func(enemy: Goblin) -> void:
+			_chill(enemy)
+			if not shattered[0]:
+				shattered[0] = true
+				_shatter(enemy, lance.global_position, multiplier))
+		_player.get_parent().add_child(lance)
 	Sfx.play("magic", 0.0, 0.7)
 
 
@@ -343,7 +352,7 @@ func _shatter(enemy: Goblin, at: Vector2, multiplier: float) -> void:
 	Sfx.play_at("hit", at, -4.0)
 	for i in Skills.LANCE_SHARDS:
 		var dir := Vector2.from_angle(TAU * i / Skills.LANCE_SHARDS + randf_range(-0.2, 0.2))
-		var shard := _player._make_projectile(_player.equipment.weapon(), dir)
+		var shard := _player._make_projectile(_player.equipment.weapon(), dir, "frost_lance")
 		shard.position = at
 		shard.texture = LANCE_TEXTURE
 		shard.magic = false
@@ -352,6 +361,7 @@ func _shatter(enemy: Goblin, at: Vector2, multiplier: float) -> void:
 		shard.speed = 260.0
 		shard.max_range = 90.0
 		shard.pierce = 0
+		shard.chain = 0
 		shard.damage_min = maxi(1, roundi(shard.damage_min * multiplier * Skills.LANCE_SHARD_DAMAGE))
 		shard.damage_max = maxi(1, roundi(shard.damage_max * multiplier * Skills.LANCE_SHARD_DAMAGE))
 		if is_instance_valid(enemy):
@@ -365,7 +375,7 @@ func _blizzard(at: Vector2, combo: bool) -> void:
 	var storm := _Blizzard.new()
 	storm.skills = self
 	storm.position = at
-	storm.radius = Skills.BLIZZARD_RADIUS * _player.stats.area_multiplier()
+	storm.radius = Skills.BLIZZARD_RADIUS * _player.stats.area_multiplier(Skills.tags("blizzard"))
 	storm.time_left = Skills.BLIZZARD_TIME * (1.0 + _bonus("blizzard_time"))
 	storm.damage = Skills.blizzard_damage(_level("blizzard")) * (1.0 + _bonus("blizzard_damage")) * (_player.combo_damage() if combo else 1.0)
 	var legend := _player.equipment.effect_power("blizzard_freeze")
@@ -397,10 +407,12 @@ func _process_storm(delta: float) -> void:
 	_storm_next -= delta
 	if _storm_next > 0.0:
 		return
-	_storm_next = Skills.STORM_INTERVAL / _player._skill_speed(["spell"])
+	var tags := Skills.tags("storm_call")
+	_storm_next = Skills.STORM_INTERVAL / _player._skill_speed(tags)
+	var reach := Skills.STORM_RANGE * _player.stats.area_multiplier(tags)
 	var near: Array[Goblin] = []
 	for enemy: Goblin in _enemies():
-		if enemy.state != Goblin.State.DEAD and enemy.global_position.distance_to(_player.global_position) <= Skills.STORM_RANGE:
+		if enemy.state != Goblin.State.DEAD and enemy.global_position.distance_to(_player.global_position) <= reach:
 			near.append(enemy)
 	if near.is_empty():
 		return
@@ -408,7 +420,7 @@ func _process_storm(delta: float) -> void:
 	var multiplier := Skills.storm_damage(_level("storm_call")) * (_player.combo_damage() if _storm_chain else 1.0)
 	SkillEffects.sheet_once(_player.get_parent(), STORM_FX, 7, 20.0, target.hurt_center(), Vector2(25, 141))
 	Sfx.play_at("zap", target.global_position, -2.0)
-	_player.hit_enemy(target, _damage(multiplier), target.global_position + Vector2(0, -20), 30.0, "lightning")
+	_player.hit_enemy(target, _damage(multiplier, "storm_call"), target.global_position + Vector2(0, -20), 30.0, "lightning", tags)
 	if not _storm_chain:
 		return
 	var hit := [target]
@@ -428,19 +440,23 @@ func _process_storm(delta: float) -> void:
 		hit.append(next)
 		lightning(_player.get_parent(), from, next.hurt_center())
 		zap_flash(_player.get_parent(), next.hurt_center())
-		_player.hit_enemy(next, _damage(multiplier * STORM_JUMP_DAMAGE), from, 20.0, "lightning")
+		_player.hit_enemy(next, _damage(multiplier * STORM_JUMP_DAMAGE, "storm_call"), from, 20.0, "lightning", tags)
 		from = next.hurt_center()
 
 
 # ---------------------------------------------------------------- Kula Piorunów
 func _ball_lightning(combo: bool) -> void:
-	var orb := _Orb.new()
-	orb.skills = self
-	orb.position = _player.global_position + _player._aim_direction() * 8.0
-	orb.direction = _player._aim_direction()
-	orb.damage = Skills.orb_damage(_level("ball_lightning")) * (1.0 + _bonus("orb_damage")) * (_player.combo_damage() if combo else 1.0)
-	orb.blast = combo
-	_player.get_parent().add_child(orb)
+	var area := _player.stats.area_multiplier(Skills.tags("ball_lightning"))
+	# Rozszczep (kamień wsparcia): dodatkowe kule wachlarzem
+	for shot: Vector2 in Player.split_directions(_player._aim_direction(), _player.support_count("ball_lightning", "projectiles")):
+		var orb := _Orb.new()
+		orb.skills = self
+		orb.position = _player.global_position + shot * 8.0
+		orb.direction = shot
+		orb.damage = Skills.orb_damage(_level("ball_lightning")) * (1.0 + _bonus("orb_damage")) * (_player.combo_damage() if combo else 1.0)
+		orb.blast = combo
+		orb.area = area
+		_player.get_parent().add_child(orb)
 	Sfx.play("zap", 0.0, 0.7)
 
 
@@ -449,7 +465,7 @@ func _meteor(at: Vector2, combo: bool) -> void:
 	var star := _Meteor.new()
 	star.skills = self
 	star.position = at
-	star.radius = Skills.METEOR_RADIUS * (1.0 + _bonus("meteor_radius")) * _player.stats.area_multiplier()
+	star.radius = Skills.METEOR_RADIUS * (1.0 + _bonus("meteor_radius")) * _player.stats.area_multiplier(Skills.tags("meteor"))
 	star.damage = Skills.meteor_damage(_level("meteor")) * (2.0 * _player.combo_damage() if combo else 1.0)
 	_player.get_parent().add_child(star)
 	Sfx.play("fireball_launch", 0.0, 0.6)
@@ -466,6 +482,7 @@ func meteor_impact(at: Vector2, radius: float, multiplier: float) -> void:
 	blast.explosion_radius = radius
 	blast.explosion_min = maxi(1, roundi(_player.stats.damage_min() * multiplier * kind))
 	blast.explosion_max = maxi(1, roundi(_player.stats.damage_max() * multiplier * kind))
+	blast.tags = Skills.tags("meteor")
 	blast.position = at
 	_player.get_parent().add_child(blast)
 	blast._explode()
@@ -533,7 +550,9 @@ func _rune_stone() -> void:
 		_rune.leave()
 	_rune = _Rune.new()
 	_rune.position = _aim_point(Skills.RUNE_PLACE)
-	_rune.time_left = Skills.RUNE_TIME
+	# Watażka (kamień wsparcia przywołań): dłużej
+	_rune_total = Skills.RUNE_TIME * (1.0 + _player.support("rune_stone", "duration"))
+	_rune.time_left = _rune_total
 	_player.get_parent().add_child(_rune)
 	Sfx.play("anvil", -6.0, 0.8)
 
@@ -552,7 +571,7 @@ func statuses() -> Array[Dictionary]:
 		result.append({"name": Lang.t("Tarcza Many"), "kind": "good", "left": _shield_time, "total": Skills.SHIELD_TIME, "icon": ICONS["mana_shield"],
 				"description": Lang.t("Całe ciosy zabiera mana") if _shield_full > 0.0 else Lang.t("Część ciosów zabiera mana zamiast zdrowia")})
 	if in_rune() and _player.stats.weapon_type() == "spell":
-		result.append({"name": Lang.t("Kamień Runiczny"), "kind": "good", "left": _rune.time_left, "total": Skills.RUNE_TIME, "icon": ICONS["rune_stone"],
+		result.append({"name": Lang.t("Kamień Runiczny"), "kind": "good", "left": _rune.time_left, "total": _rune_total, "icon": ICONS["rune_stone"],
 				"description": Lang.t("+%d%% obrażeń magicznych i szybkości rzucania") % roundi(_temp.get("cast_speed", 0.0) * 100.0)})
 	if _harmony_time > 0.0 and _player.stats.weapon_type() == "spell":
 		result.append({"name": Lang.t("Harmonia Żywiołów"), "kind": "good", "left": _harmony_time, "total": HARMONY_TIME, "icon": ICONS["harmony"],
@@ -605,7 +624,8 @@ class _Blizzard:
 		_next = Skills.BLIZZARD_TICK
 		for enemy: Goblin in skills._enemies():
 			if _inside(enemy):
-				skills._player.hit_enemy(enemy, skills._damage(damage), enemy.global_position + Vector2(0, -20), 0.0, "ice")
+				skills._player.hit_enemy(enemy, skills._damage(damage, "blizzard"), enemy.global_position + Vector2(0, -20), 0.0, "ice",
+						Skills.tags("blizzard"))
 				skills._chill(enemy)
 
 
@@ -618,6 +638,8 @@ class _Orb:
 	var direction := Vector2.RIGHT
 	var damage := 0.4
 	var blast := false
+	## Mnożnik obszaru (kamień wsparcia Rozległość) - zasięg wyładowań i wybuchu.
+	var area := 1.0
 	var _travelled := 0.0
 	var _next := 0.1
 	var _sprite: FxLoop
@@ -649,21 +671,22 @@ class _Orb:
 		for enemy: Goblin in skills._enemies():
 			if count >= 4:
 				break
-			if enemy.state != Goblin.State.DEAD and enemy.hurt_center().distance_to(center) <= Skills.ORB_RADIUS + enemy.hurt_radius:
+			if enemy.state != Goblin.State.DEAD and enemy.hurt_center().distance_to(center) <= Skills.ORB_RADIUS * area + enemy.hurt_radius:
 				count += 1
 				SpellSkills.lightning(get_parent(), center, enemy.hurt_center())
-				skills._player.hit_enemy(enemy, skills._damage(damage), center, 20.0, "lightning")
+				skills._player.hit_enemy(enemy, skills._damage(damage, "ball_lightning"), center, 20.0, "lightning", Skills.tags("ball_lightning"))
 		if count > 0:
 			Sfx.play_at("zap", global_position, -8.0)
 
 	func _explode() -> void:
 		var center := global_position + Vector2(0, -HEIGHT)
 		SkillEffects.sheet_once(get_parent(), SpellSkills.ORB_BLAST_FX, 7, 18.0, center, Vector2(73, 50), 0.0, 1.0,
-				Skills.ORB_BLAST / SpellSkills.ORB_BLAST_RADIUS)
+				Skills.ORB_BLAST * area / SpellSkills.ORB_BLAST_RADIUS)
 		Sfx.play_at("thunder", global_position, -4.0)
 		for enemy: Goblin in skills._enemies():
-			if enemy.state != Goblin.State.DEAD and enemy.global_position.distance_to(global_position) <= Skills.ORB_BLAST + enemy.hurt_radius:
-				skills._player.hit_enemy(enemy, skills._damage(damage * 3.0), global_position, 120.0, "lightning")
+			if enemy.state != Goblin.State.DEAD and enemy.global_position.distance_to(global_position) <= Skills.ORB_BLAST * area + enemy.hurt_radius:
+				skills._player.hit_enemy(enemy, skills._damage(damage * 3.0, "ball_lightning"), global_position, 120.0, "lightning",
+						Skills.tags("ball_lightning"))
 
 
 ## Spadająca Gwiazda: cień na ziemi rośnie, gwiazda spada z nieba i wybucha (SpellSkills.meteor_impact).
