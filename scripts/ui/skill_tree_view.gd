@@ -39,6 +39,9 @@ const ICONS := {
 	"whirl_damage": preload("res://assets/skills/whirlwind.png"), "flicker_damage": preload("res://assets/skills/flicker.png"),
 	"combo_damage": preload("res://assets/skills/node_combo.png"), "bleed_damage": preload("res://assets/skills/rend.png"),
 	"cry_power": preload("res://assets/skills/war_cry.png"), "slam_stun": preload("res://assets/skills/ground_slam.png"),
+	"cry_radius": preload("res://assets/skills/war_cry.png"), "whirl_pull": preload("res://assets/skills/whirlwind.png"),
+	"full_strength": preload("res://assets/skills/health_regen.png"), "wounded_wrath": preload("res://assets/skills/rend.png"),
+	"tremor_stun": preload("res://assets/skills/ground_slam.png"),
 	"lunge_cooldown": preload("res://assets/skills/lunge.png"), "riposte_damage": preload("res://assets/skills/riposte.png"),
 	"blade_count": preload("res://assets/skills/spectral_blades.png"), "life_on_hit": preload("res://assets/skills/node_physical.png"),
 	"move_speed": preload("res://assets/skills/node_attack_speed.png"), "crit_damage": preload("res://assets/skills/node_crit.png"),
@@ -80,7 +83,8 @@ const KEYSTONE_ICONS := {"cyclone_eye": preload("res://assets/skills/ks_cyclone_
 		"falcon_eye": preload("res://assets/skills/ks_falcon_eye.png"), "hail": preload("res://assets/skills/ks_hail.png"),
 		"shadow_hunter": preload("res://assets/skills/ks_shadow_hunter.png"), "running_fire": preload("res://assets/skills/ks_running_fire.png"),
 		"harmony": preload("res://assets/skills/ks_harmony.png"), "blood_sacrifice": preload("res://assets/skills/ks_blood_sacrifice.png"),
-		"full_power": preload("res://assets/skills/ks_full_power.png"), "echo_runes": preload("res://assets/skills/ks_echo_runes.png")}
+		"full_power": preload("res://assets/skills/ks_full_power.png"), "echo_runes": preload("res://assets/skills/ks_echo_runes.png"),
+		"last_bastion": preload("res://assets/skills/ks_last_bastion.png")}
 ## Ikony pustych miejsc: aura i umiejętność wg tagów (tag "aura" albo forma), węzeł - wg rodzaju.
 const SOON_ICONS := {"aura": preload("res://assets/ui/tags/aura.png"), "skill": preload("res://assets/ui/tags/attack.png"),
 		"keystone": preload("res://assets/ui/tags/arcane.png"), "passive": preload("res://assets/ui/tags/arcane.png")}
@@ -373,7 +377,10 @@ func describe(id: String) -> String:
 			elif _player != null and _player.stats.weapon_type() != weapon:
 				lines.append("[color=#ff9a7a]%s[/color]" % (tr("Działa tylko z bronią: %s.") % Skills.weapon_name(weapon)))
 		"passive":
-			if node.has("name"):
+			# węzeł znaczący z opisem (premia zmienia działanie, a nie liczbę) - opis zamiast listy premii
+			if node.has("description"):
+				lines.append(SkillTree.node_description(id))
+			elif node.has("name"):
 				lines.append(SkillTree.stats_text(node.get("stats", {})))
 			else:
 				lines.push_front(tr("Drobny węzeł"))

@@ -70,6 +70,21 @@ const DATA := {
 		"icon": preload("res://assets/skills/lunge.png"),
 		"description": "Błyskawiczne pchnięcie mieczem w stronę kursora, raniące wszystkich na drodze. Combo: zaraz po udanej Ripoście nic nie kosztuje i nie ma odnowienia, a zaraz po Rozłupaniu Ziemi kolce z pęknięć wybuchają.",
 	},
+	"wolf_fang": {
+		"name": "Wilczy Kieł", "weapon": "melee", "type": "skill",
+		"icon": preload("res://assets/skills/wolf_fang.png"),
+		"description": "Seria 4 błyskawicznych pchnięć w jednego wroga - najbliższego kursora. Ostatnie rozdziera ranę: zadaje dwa i pół raza więcej obrażeń i ogłusza. Najlepsze na bossów i silne potwory.",
+	},
+	"bull_roar": {
+		"name": "Ryk Tura", "weapon": "melee", "type": "skill",
+		"icon": preload("res://assets/skills/bull_roar.png"),
+		"description": "Okrzyk: wrogowie wokół rzucają się na ciebie (nawet ci, którzy uciekali albo spali), a twój pancerz rośnie na kilka sekund.",
+	},
+	"bear_leap": {
+		"name": "Skok Niedźwiedzia", "weapon": "melee", "type": "skill",
+		"icon": preload("res://assets/skills/bear_leap.png"),
+		"description": "Skaczesz w miejsce pod kursorem, ponad przeszkodami. Lądowanie rani i odrzuca wszystkich wokół. W locie nic cię nie zrani.",
+	},
 	"crescent": {
 		"name": "Półksiężyc", "weapon": "melee", "type": "skill",
 		"icon": preload("res://assets/skills/crescent.png"),
@@ -314,6 +329,29 @@ const CRY_TIME := 6.0
 const CRY_RADIUS := 110.0
 const CRY_FEAR := 1.6
 const CRY_CRITS := 3
+## Wilczy Kieł: mana, odnowienie, ile pchnięć i co ile s, zasięg (od tułowia do wroga), mnożnik obrażeń
+## i ogłuszenie ostatniego pchnięcia.
+const FANG_MANA := 10.0
+const FANG_COOLDOWN := 3.0
+const FANG_THRUSTS := 4
+const FANG_INTERVAL := 0.09
+const FANG_REACH := 48.0
+const FANG_FINAL := 2.5
+const FANG_FINAL_STUN := 0.5
+## Ryk Tura: mana, odnowienie, czas premii pancerza, zasięg.
+const ROAR_MANA := 12.0
+const ROAR_COOLDOWN := 12.0
+const ROAR_TIME := 6.0
+const ROAR_RADIUS := 150.0
+## Skok Niedźwiedzia: mana, odnowienie, największa odległość skoku, czas lotu, promień i odrzut przy lądowaniu.
+const LEAP_MANA := 14.0
+const LEAP_COOLDOWN := 5.0
+const LEAP_RANGE := 170.0
+const LEAP_TIME := 0.42
+const LEAP_RADIUS := 52.0
+const LEAP_KNOCKBACK := 240.0
+## Wstrząs (węzeł drzewka): ten sam wróg ogłuszony najwyżej raz na tyle sekund.
+const TREMOR_INTERVAL := 1.5
 ## Widmowe Ostrza: mana, odnowienie, liczba ostrzy, czas krążenia, promień orbity, mnożnik obrażeń wylotu.
 const BLADES_MANA := 18.0
 const BLADES_COOLDOWN := 8.0
@@ -470,6 +508,9 @@ const TAGS := {
 	"ground_slam": ["attack", "area", "physical", "str"],
 	"riposte": ["attack", "hit", "area", "physical", "str"],
 	"war_cry": ["cry", "area", "str"],
+	"wolf_fang": ["attack", "hit", "physical", "str"],
+	"bull_roar": ["cry", "area", "str"],
+	"bear_leap": ["attack", "area", "movement", "physical", "str"],
 	"spectral_blades": ["spell", "area", "arcane", "str", "int"],
 	"smoke_burst": ["attack", "spell", "area", "fire", "str", "int"],
 	"seeker": ["attack", "projectile", "physical", "dex"],
@@ -758,6 +799,21 @@ static func cry_bonus(level: int) -> float:
 	return 0.1 + 0.03 * power(level)
 
 
+## Wilczy Kieł: procent obrażeń broni za pchnięcie (ostatnie - razy FANG_FINAL).
+static func fang_damage(level: int) -> float:
+	return 0.8 + 0.12 * power(level)
+
+
+## Ryk Tura: premia do pancerza (ułamek).
+static func roar_armor(level: int) -> float:
+	return 0.3 + 0.04 * power(level)
+
+
+## Skok Niedźwiedzia: procent obrażeń broni przy lądowaniu.
+static func leap_damage(level: int) -> float:
+	return 1.4 + 0.2 * power(level)
+
+
 ## Widmowe Ostrza: procent obrażeń broni za dotknięcie wroga.
 static func blades_damage(level: int) -> float:
 	return 0.5 + 0.08 * power(level)
@@ -888,6 +944,7 @@ static func mana_cost(id: String) -> float:
 	return {"whirlwind": WHIRLWIND_MANA_PER_SECOND * 0.3, "multishot": MULTISHOT_MANA, "fireball": FIREBALL_MANA,
 			"flicker": FLICKER_MANA, "smoke_burst": SMOKE_MANA, "rend": REND_MANA, "ground_slam": SLAM_MANA,
 			"riposte": RIPOSTE_MANA, "war_cry": CRY_MANA, "spectral_blades": BLADES_MANA,
+			"wolf_fang": FANG_MANA, "bull_roar": ROAR_MANA, "bear_leap": LEAP_MANA,
 			"lunge": LUNGE_MANA, "crescent": CRESCENT_MANA, "seeker": SEEKER_MANA, "rapid_volley": VOLLEY_MANA,
 			"chain_lightning": CHAIN_MANA, "thunder_wave": WAVE_MANA, "power_shot": POWER_MANA, "arrow_rain": RAIN_MANA,
 			"vault": VAULT_MANA, "snare": SNARE_MANA, "falcon": FALCON_MANA, "venom_arrows": VENOM_MANA, "wind_arrow": WIND_MANA,
@@ -977,6 +1034,15 @@ static func effect_text(id: String, level: int) -> String:
 		"war_cry":
 			return Lang.t("+%d%% obrażeń przez %s s, strach %s s, odnowienie %s s") % [roundi(cry_bonus(level) * 100),
 					_decimal(CRY_TIME, 0), _decimal(CRY_FEAR, 1), _decimal(CRY_COOLDOWN, 0)]
+		"wolf_fang":
+			return Lang.t("%d pchnięcia po %d%% obrażeń, ostatnie %d%% i ogłuszenie, odnowienie %s s") % [FANG_THRUSTS,
+					roundi(fang_damage(level) * 100), roundi(fang_damage(level) * FANG_FINAL * 100), _decimal(FANG_COOLDOWN, 0)]
+		"bull_roar":
+			return Lang.t("+%d%% pancerza przez %s s, zasięg %d, odnowienie %s s") % [roundi(roar_armor(level) * 100),
+					_decimal(ROAR_TIME, 0), ROAR_RADIUS, _decimal(ROAR_COOLDOWN, 0)]
+		"bear_leap":
+			return Lang.t("Skok do %d, lądowanie %d%% obrażeń w promieniu %d, odnowienie %s s") % [LEAP_RANGE,
+					roundi(leap_damage(level) * 100), LEAP_RADIUS, _decimal(LEAP_COOLDOWN, 0)]
 		"spectral_blades":
 			return Lang.n(BLADES_COUNT, "%d ostrze po %d%% obrażeń przez %s s (wylot: %d%%)", "%d ostrza po %d%% obrażeń przez %s s (wylot: %d%%)", "%d ostrzy po %d%% obrażeń przez %s s (wylot: %d%%)") % [BLADES_COUNT, roundi(blades_damage(level) * 100),
 					_decimal(BLADES_TIME, 0), roundi(blades_damage(level) * BLADES_LAUNCH * 100)]

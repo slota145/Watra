@@ -35,9 +35,11 @@ REGIONS = {
 }
 
 
-def S(id, name, weapon, desc, new=False, tags=""):
-	"""Umiejętność. Obecna: id to klucz w Skills.DATA. Nowa (new=True): puste miejsce na później (soon)."""
-	return {"id": id, "kind": "skill", "name": name, "weapon": weapon, "desc": desc, "new": new, "tags": tags, "soon": new}
+def S(id, name, weapon, desc, new=False, tags="", soon=None):
+	"""Umiejętność. Obecna: id to klucz w Skills.DATA. Nowa (new=True): puste miejsce na później (soon),
+	chyba że soon=False (nowa umiejętność, która już działa - jest w Skills.DATA)."""
+	return {"id": id, "kind": "skill", "name": name, "weapon": weapon, "desc": desc, "new": new, "tags": tags,
+			"soon": new if soon is None else soon}
 
 
 def A(id, name, desc, new=True):
@@ -52,9 +54,11 @@ def K(id, name, desc, new=False, game=None, stats=None, soon=None):
 			"stats": stats or {}}
 
 
-def N(id, name, desc, stats=None, new=False):
-	"""Węzeł znaczący. Bez `stats` (premia, której gra jeszcze nie zna) - puste miejsce na później."""
-	return {"id": id, "kind": "notable", "name": name, "desc": desc, "new": new, "soon": stats is None, "stats": stats or {}}
+def N(id, name, desc, stats=None, new=False, game=None):
+	"""Węzeł znaczący. Bez `stats` (premia, której gra jeszcze nie zna) - puste miejsce na później.
+	`game` - opis w grze zamiast listy premii (dla premii, które zmieniają działanie, a nie liczbę)."""
+	return {"id": id, "kind": "notable", "name": name, "desc": desc, "new": new, "soon": stats is None, "stats": stats or {},
+			"game": game}
 
 
 def P(desc):
@@ -99,7 +103,8 @@ CLUSTERS = [
 		P("+6% obrażeń fizycznych"),
 		N("flicker_dmg", "Cięcie z cienia", "+20% obrażeń Mgnienia, -25% many za skok",
 			{"flicker_damage": 0.2, "flicker_mana": -0.25}),
-		N("whirl_pull", "Wciągający wir", "Młynek lekko przyciąga wrogów z bliska", new=True),
+		N("whirl_pull", "Wciągający wir", "Młynek lekko przyciąga wrogów z bliska", {"whirl_pull": 1.0}, new=True,
+			game="Młynek przyciąga wrogów stojących tuż za jego zasięgiem."),
 		K("cyclone_eye", "Oko Cyklonu", "Młynek wciąga wrogów i rozkręca się do +100% obrażeń, zużywa 2x więcej many",
 			game="Młynek wciąga wrogów do środka i rozkręca się: każda sekunda kręcenia to +25% jego obrażeń (najwyżej +100%). Młynek zużywa dwa razy więcej many."),
 	], [L()]),
@@ -118,8 +123,8 @@ CLUSTERS = [
 		S("riposte", "Riposta", "melee", "zasłona i kontra wszystkich wokół; po niej Szarża za darmo"),
 		N("crit_1", "Oko kata", "+4% szansy na cios krytyczny", {"crit_chance": 0.04}),
 		N("riposte_power", "Mistrz szermierki", "+50% obrażeń kontry Riposty", {"riposte_damage": 0.5}),
-		S("wolf_fang", "Wilczy Kieł", "melee", "seria 4 szybkich pchnięć w jednego wroga (na bossów); ostatnie przebija pancerz", new=True,
-			tags="atak, cios, fizyczne"),
+		S("wolf_fang", "Wilczy Kieł", "melee", "seria 4 szybkich pchnięć w jednego wroga (na bossów); ostatnie rozdziera i ogłusza", new=True,
+			tags="atak, cios, fizyczne", soon=False),
 		N("crit_2", "Cios w serce", "+30% obrażeń krytycznych", {"crit_damage": 0.3}),
 		P("+8 siły"),
 	]),
@@ -127,8 +132,9 @@ CLUSTERS = [
 		S("war_cry", "Zew Peruna", "melee", "okrzyk: strach i pewne krytyki"),
 		N("cry_power", "Głos burzy", "+10% premii Zewu Peruna", {"cry_power": 0.1}),
 		S("bull_roar", "Ryk Tura", "melee", "okrzyk: wrogowie wokół rzucają się na ciebie, +30% pancerza na 6 s", new=True,
-			tags="okrzyk, obszar"),
-		N("loud_voice", "Donośny głos", "+40% zasięgu okrzyków, -20% ich odnowienia", new=True),
+			tags="okrzyk, obszar", soon=False),
+		N("loud_voice", "Donośny głos", "+40% zasięgu okrzyków, -20% ich odnowienia", {"cry_radius": 0.4, "cry_cooldown": -0.2},
+			new=True),
 		A("dread", "Postrach", "aura: wrogowie wokół zadają 10% mniej obrażeń i wolniej atakują"),
 		P("+8 siły"),
 	]),
@@ -137,7 +143,8 @@ CLUSTERS = [
 		N("regen_1", "Szybkie gojenie", "+2 regeneracji zdrowia/s", {"health_regen": 2.0}),
 		A("vigor", "Krzepa", "aura: +12% maksymalnego zdrowia"),
 		N("hp_2", "Niezłomny", "+60 zdrowia", {"health": 60.0}),
-		N("full_strength", "Pełnia Sił", "+1% obrażeń za każde 5% zdrowia ponad połowę (najwyżej +10%)", new=True),
+		N("full_strength", "Pełnia Sił", "+1% obrażeń za każde 5% zdrowia ponad połowę (najwyżej +10%)", {"full_strength": 0.1},
+			new=True, game="+1% zadawanych obrażeń za każde 5% zdrowia ponad połowę (najwyżej +10% przy pełnym zdrowiu)."),
 		K("blood_sacrifice", "Krew za Manę", "umiejętności kosztują zdrowie zamiast many (nie mogą zabić), +25% zdrowia - dawna Ofiara Krwi z księgi, teraz z każdą bronią",
 			game="Umiejętności kosztują zdrowie zamiast many (nie mogą cię zabić), a maksymalne zdrowie rośnie o 25%. Działa z każdą bronią.",
 			stats={"health_percent": 0.25}),
@@ -146,15 +153,18 @@ CLUSTERS = [
 		N("armor_1", "Kolczuga pod skórą", "+10 pancerza", {"armor": 10.0}),
 		N("armor_2", "Pancerna postawa", "+12% pancerza", {"armor_percent": 0.12}),
 		N("nawia_res", "Hart ducha", "+15% odporności na Nawię", {"nawia_resistance": 0.15}, new=True),
-		N("wounded_wrath", "Gniew rannego", "+1% obrażeń za każde 5% brakującego zdrowia", new=True),
+		N("wounded_wrath", "Gniew rannego", "+1% obrażeń za każde 5% brakującego zdrowia", {"wounded_wrath": 0.2}, new=True,
+			game="+1% zadawanych obrażeń za każde 5% brakującego zdrowia (najwyżej +20%)."),
 		G(),
-		K("last_bastion", "Ostatni Bastion", "poniżej 30% zdrowia +50% obrażeń i +50% redukcji obrażeń", new=True),
+		K("last_bastion", "Ostatni Bastion", "poniżej 30% zdrowia +50% obrażeń i +50% redukcji obrażeń", new=True, soon=False,
+			game="Gdy masz mniej niż 30% zdrowia, zadajesz o 50% więcej obrażeń i otrzymujesz o połowę mniej."),
 	]),
 	("s_ziemia", "str", "Ziemia", (233, 17.5), [
 		S("bear_leap", "Skok Niedźwiedzia", "melee", "skok na wskazane miejsce, lądowanie rani i odrzuca wrogów wokół", new=True,
-			tags="atak, obszar, ruch, fizyczne"),
+			tags="atak, obszar, ruch, fizyczne", soon=False),
 		N("area_1", "Ciężka ręka", "+12% obrażeń obszarowych", {"area_damage": 0.12}),
-		N("tremor", "Wstrząs", "umiejętności obszarowe miecza ogłuszają na 0,3 s", new=True),
+		N("tremor", "Wstrząs", "umiejętności obszarowe miecza ogłuszają na 0,3 s", {"tremor_stun": 0.3}, new=True,
+			game="Umiejętności obszarowe miecza ogłuszają trafionych na 0,3 s (każdego wroga najwyżej raz na 1,5 s)."),
 		P("+8 siły"),
 		G(),
 	]),
@@ -732,6 +742,8 @@ def write_gd(nodes, links, clusters):
 			d["kind"] = "passive"
 			if k == "notable":
 				d.update(notable=True, name=n["name"])
+				if n.get("game") and not n.get("soon"):
+					d["description"] = n["game"]
 			if n.get("soon"):
 				d.update(soon=True, description=cap(n["desc"]))
 			else:

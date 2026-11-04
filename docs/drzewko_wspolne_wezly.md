@@ -18,7 +18,7 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - **[Z]** Wirujące ostrze - +20% obrażeń Młynka
 - [d] +6% obrażeń fizycznych
 - **[Z]** Cięcie z cienia - +20% obrażeń Mgnienia, -25% many za skok
-- **[Z]** Wciągający wir ✦ ⌛ - Młynek lekko przyciąga wrogów z bliska
+- **[Z]** Wciągający wir ✦ - Młynek lekko przyciąga wrogów z bliska
 - **[K]** Oko Cyklonu - Młynek wciąga wrogów i rozkręca się do +100% obrażeń, zużywa 2x więcej many
 - [G] Gniazdo legendarne - kamień szlachetny albo esencja legendy
 
@@ -38,7 +38,7 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - **[U]** Riposta (miecz) - zasłona i kontra wszystkich wokół; po niej Szarża za darmo
 - **[Z]** Oko kata - +4% szansy na cios krytyczny
 - **[Z]** Mistrz szermierki - +50% obrażeń kontry Riposty
-- **[U]** Wilczy Kieł ✦ ⌛ (miecz; atak, cios, fizyczne) - seria 4 szybkich pchnięć w jednego wroga (na bossów); ostatnie przebija pancerz
+- **[U]** Wilczy Kieł ✦ (miecz; atak, cios, fizyczne) - seria 4 szybkich pchnięć w jednego wroga (na bossów); ostatnie rozdziera i ogłusza
 - **[Z]** Cios w serce - +30% obrażeń krytycznych
 - [d] +8 siły
 
@@ -46,8 +46,8 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 
 - **[U]** Zew Peruna (miecz) - okrzyk: strach i pewne krytyki
 - **[Z]** Głos burzy - +10% premii Zewu Peruna
-- **[U]** Ryk Tura ✦ ⌛ (miecz; okrzyk, obszar) - okrzyk: wrogowie wokół rzucają się na ciebie, +30% pancerza na 6 s
-- **[Z]** Donośny głos ✦ ⌛ - +40% zasięgu okrzyków, -20% ich odnowienia
+- **[U]** Ryk Tura ✦ (miecz; okrzyk, obszar) - okrzyk: wrogowie wokół rzucają się na ciebie, +30% pancerza na 6 s
+- **[Z]** Donośny głos ✦ - +40% zasięgu okrzyków, -20% ich odnowienia
 - **[A]** Postrach ✦ (każda broń; aura) - aura: wrogowie wokół zadają 10% mniej obrażeń i wolniej atakują
 - [d] +8 siły
 
@@ -57,7 +57,7 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - **[Z]** Szybkie gojenie - +2 regeneracji zdrowia/s
 - **[A]** Krzepa ✦ (każda broń; aura) - aura: +12% maksymalnego zdrowia
 - **[Z]** Niezłomny - +60 zdrowia
-- **[Z]** Pełnia Sił ✦ ⌛ - +1% obrażeń za każde 5% zdrowia ponad połowę (najwyżej +10%)
+- **[Z]** Pełnia Sił ✦ - +1% obrażeń za każde 5% zdrowia ponad połowę (najwyżej +10%)
 - **[K]** Krew za Manę - umiejętności kosztują zdrowie zamiast many (nie mogą zabić), +25% zdrowia - dawna Ofiara Krwi z księgi, teraz z każdą bronią
 
 ### Bastion (6)
@@ -65,15 +65,15 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - **[Z]** Kolczuga pod skórą - +10 pancerza
 - **[Z]** Pancerna postawa - +12% pancerza
 - **[Z]** Hart ducha ✦ - +15% odporności na Nawię
-- **[Z]** Gniew rannego ✦ ⌛ - +1% obrażeń za każde 5% brakującego zdrowia
+- **[Z]** Gniew rannego ✦ - +1% obrażeń za każde 5% brakującego zdrowia
 - [G] Gniazdo - kamień szlachetny (działa o połowę mocniej)
-- **[K]** Ostatni Bastion ✦ ⌛ - poniżej 30% zdrowia +50% obrażeń i +50% redukcji obrażeń
+- **[K]** Ostatni Bastion ✦ - poniżej 30% zdrowia +50% obrażeń i +50% redukcji obrażeń
 
 ### Ziemia (5)
 
-- **[U]** Skok Niedźwiedzia ✦ ⌛ (miecz; atak, obszar, ruch, fizyczne) - skok na wskazane miejsce, lądowanie rani i odrzuca wrogów wokół
+- **[U]** Skok Niedźwiedzia ✦ (miecz; atak, obszar, ruch, fizyczne) - skok na wskazane miejsce, lądowanie rani i odrzuca wrogów wokół
 - **[Z]** Ciężka ręka - +12% obrażeń obszarowych
-- **[Z]** Wstrząs ✦ ⌛ - umiejętności obszarowe miecza ogłuszają na 0,3 s
+- **[Z]** Wstrząs ✦ - umiejętności obszarowe miecza ogłuszają na 0,3 s
 - [d] +8 siły
 - [G] Gniazdo - kamień szlachetny (działa o połowę mocniej)
 

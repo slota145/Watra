@@ -52,9 +52,9 @@ static func spark(parent: Node, at: Vector2, color: Color, amount := 8) -> void:
 ## punkt zaczepienia `anchor` (piksel klatki) staje w `at`, efekt obrócony o `angle` (rysowany w prawo, +x);
 ## `stretch` rozciąga go wzdłuż kierunku, `size` powiększa całość. W lewo efekt odbija się w pionie, żeby nie stał
 ## do góry nogami. `lean` (rad) koryguje rysunek pochylony pod górę: obraca go w dół (po odbiciu - w drugą stronę).
-## `mirror` odbija efekt w pionie (np. zamach w drugą stronę).
+## `mirror` odbija efekt w pionie (np. zamach w drugą stronę). Zwraca węzeł efektu (np. do przezroczystości).
 static func sheet_once(parent: Node, texture: Texture2D, frames: int, fps: float, at: Vector2, anchor: Vector2,
-		angle := 0.0, stretch := 1.0, size := 1.0, lean := 0.0, mirror := false) -> void:
+		angle := 0.0, stretch := 1.0, size := 1.0, lean := 0.0, mirror := false) -> Sprite2D:
 	var flipped := (absf(wrapf(angle, -PI, PI)) > PI / 2.0) != mirror
 	var fx := Sprite2D.new()
 	fx.texture = texture
@@ -70,6 +70,7 @@ static func sheet_once(parent: Node, texture: Texture2D, frames: int, fps: float
 	tween.tween_property(fx, "frame", frames - 1, (frames - 1) / fps).from(0)
 	tween.tween_interval(1.0 / fps)
 	tween.tween_callback(fx.queue_free)
+	return fx
 
 
 ## Zapętlony efekt z arkusza klatek (jeden rząd): AnimatedSprite2D gra sam, bez skryptu, a punkt zaczepienia

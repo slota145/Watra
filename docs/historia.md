@@ -828,6 +828,31 @@ odpowiedniej sekcji.
   (`_combo_window`) i `SkillBook.combo_for`; atak po uderzeniu to zwykły atak. Stare zapisy: umiejętności zostają, ale
   trzeba je położyć na pasek z okna K. Test `tests/test_combos.gd`.
   Do ustalenia po ograniu: liczby combo, odnowienia trzech dawnych ciosów.
+- [x] **Krok 5 wspólnego drzewka, strona siły** (`docs/plan_drzewek.md`, listopad 2026). Autor wybrał: najpierw strona
+  siły, cała naraz; efekty z kreatora efektów PixelLab; przywołania (Wataha, Błędne Ogniki, Wierny tropiciel) na koniec,
+  osobno. Wszystkie puste miejsca strony siły działają (`soon=False` / `stats` w `tools/shared_tree_draft.py`):
+  - **Wilczy Kieł** (`SwordSkills._wolf_fang`): 4 pchnięcia co `FANG_INTERVAL` (szybsze z szybkością ataku) w wroga
+    najbliższego kursora w zasięgu `FANG_REACH` (`_fang_target`), ostatnie x`FANG_FINAL` i ogłuszenie `FANG_FINAL_STUN`;
+    „przebija pancerz” z planu zmienione na „rozdziera i ogłusza” (potwory nie mają pancerza). Obrażenia `Skills.fang_damage`;
+  - **Ryk Tura** (`_bull_roar`): w zasięgu `ROAR_RADIUS` wrogowie tracą strach (`_fear_time`) i gonią postać (`aggro`),
+    premia `armor_percent` `Skills.roar_armor` przez `ROAR_TIME` (`set_temp("sword")`, ikona w efektach);
+  - **Skok Niedźwiedzia** (`_bear_leap`, `Player.start_leap` / `is_leaping`): lot pod kursor do `LEAP_RANGE` przez
+    `LEAP_TIME`, ponad przeszkodami jak zryw (`JUMP_MASK`, `free_landing`), w locie nietykalność; po wylądowaniu
+    `_leap_landed` - obrażenia `Skills.leap_damage` i odrzut `LEAP_KNOCKBACK` w promieniu `LEAP_RADIUS`;
+  - węzły: **Wciągający wir** (`whirl_pull` - Młynek przyciąga do `Player.WHIRL_PULL_REACH` promienia z siłą `WHIRL_PULL`),
+    **Donośny głos** (`cry_radius` +40%, `cry_cooldown` -20% - Zew Peruna i Ryk Tura, `SwordSkills.cry_radius_factor`),
+    **Pełnia Sił** (`full_strength`: +1% za każde 5% zdrowia ponad połowę, do +10%), **Gniew rannego** (`wounded_wrath`:
+    +1% za każde 5% brakującego, do +20%) - oba w `SwordSkills.health_damage_factor`, mnożnik w `Player.hit_enemy`;
+    **Wstrząs** (`tremor_stun` 0,3 s: trafienie umiejętnością obszarową miecza ogłusza, każdego wroga najwyżej raz na
+    `Skills.TREMOR_INTERVAL` - `SwordSkills.tremor`); węzły z opisem zamiast liczby mają w danych `description`
+    (`N(..., game=...)`), okno pokazuje opis;
+  - **Ostatni Bastion** (węzeł kluczowy): poniżej `BASTION_HEALTH` (30%) zdrowia +50% obrażeń i połowa otrzymanych
+    (`bastion_active`, `bastion_taken` w `Player.take_damage`), ikona w efektach.
+  Efekty z kreatora (`pixellab_src/vfx/ids.json`): `wolf_fang` (smuga pchnięcia), `bull_roar` (fala z pyłem, rysowana
+  w 70% przezroczystości), `bear_leap` (pęknięcia, pył, odłamki). Ikony tymczasowe - przebarwienia (`tools/strength_icons.py`),
+  docelowo paczka ikon z PixelLab. `SkillBook.FORMER_SOON` - nowe węzły przechodzą stare zapisy za darmo jak w kroku 3.
+  `SkillEffects.sheet_once` zwraca węzeł efektu. Test `tests/test_strength_side.gd`.
+  Do ustalenia po ograniu: liczby (stałe `FANG_*`, `ROAR_*`, `LEAP_*`, `BASTION_*`), czy Wstrząs ma działać z Młynkiem.
 
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)
