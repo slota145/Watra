@@ -170,7 +170,7 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - **[U]** Spadająca Gwiazda (księga) - meteoryt z podpaleniem
 - **[Z]** Żar - +20% obrażeń Kuli ognia
 - **[Z]** Tlący się ogień - +25% obrażeń podpalenia
-- **[U]** Ściana Ognia ✦ ⌛ (księga; czar, obszar, ogień, w czasie) - ściana płomieni w poprzek drogi; pociski przez nią lecące dostają obrażenia od ognia
+- **[U]** Ściana Ognia ✦ (księga; czar, obszar, ogień, w czasie) - ściana płomieni w poprzek drogi pod kursorem pali wrogów; pociski przez nią lecące dostają obrażenia od ognia
 - **[Z]** Wielki wybuch - +25% wybuchu Spadającej Gwiazdy
 - **[Z]** Szybkie słowa - +25% szybkości ładowania Kuli ognia
 
@@ -180,7 +180,7 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - **[Z]** Przeszywający lód - Włócznia przebija 1 wroga
 - **[U]** Zamieć (księga) - śnieżyca na obszar
 - **[Z]** Długa zima - +25% czasu Zamieci i spowolnienia
-- **[U]** Lodowy Pancerz ✦ ⌛ (księga; czar, lód) - na 8 s: +redukcja obrażeń, wrogowie bijący cię z bliska zamarzają
+- **[U]** Lodowy Pancerz ✦ (księga; czar, obszar, lód) - na 8 s tarcza z lodu przyjmuje ciosy; gdy pęknie, wybucha i zamraża wrogów wokół
 - **[Z]** Zimna krew ✦ - +15% odporności na lód
 - **[A]** Mroźny Oddech ✦ (każda broń; aura) - aura (jak Righteous Fire): lodowy wir rani co sekundę wrogów wokół i ciebie; więcej obrażeń lodu
 - **[Z]** Mroźne serce - +15% obrażeń od lodu
@@ -209,8 +209,8 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - **[U]** Tarcza Many (księga) - część ciosów przyjmuje mana
 - **[Z]** Głęboki oddech - +10% many
 - **[Z]** Źródło mocy - +2 regeneracji many/s
-- **[Z]** Przelana moc ✦ ⌛ - 8% otrzymanych obrażeń zabiera manę zamiast zdrowia
-- **[Z]** Pełnia umysłu ✦ ⌛ - +1% obrażeń za każde 5% many ponad połowę (najwyżej +10%)
+- **[Z]** Przelana moc ✦ - 8% otrzymanych obrażeń zabiera manę zamiast zdrowia
+- **[Z]** Pełnia umysłu ✦ - +1% obrażeń za każde 5% many ponad połowę (najwyżej +10%)
 - **[K]** Pełnia Mocy - ponad 90% many czary +40% obrażeń, wszystkie umiejętności +20% many
 
 ### Mgła (5)
@@ -227,7 +227,7 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - **[K]** Harmonia Żywiołów - czar innego żywiołu niż poprzedni daje na 4 s +30% obrażeń magicznych
 - **[Z]** Przebicie - +8% przebicia odporności
 - [G] Gniazdo - kamień szlachetny (działa o połowę mocniej)
-- **[K]** Mistrz Żywiołów ✦ ⌛ - zadajesz tylko żywioł, który ostatnio cię trafił (zmienia go w ten żywioł), ale +40% obrażeń
+- **[K]** Mistrz Żywiołów ✦ - zadajesz tylko żywioł, który ostatnio cię trafił (zmienia go w ten żywioł), ale +40% obrażeń
 
 ### Wola (rezerwacja) (4)
 

@@ -48,9 +48,11 @@ const TREE_STATS := {
 	# strona zręczności (krok 5): Szereg, Ciche kroki, Oddech w biegu
 	"row_shot": "Strzały umiejętności łuku lecące równolegle", "silent_steps": "Potwory zauważają cię z bliższa",
 	"running_breath": "Regeneracja zdrowia w biegu",
+	# strona inteligencji (krok 5): Przelana moc, Pełnia umysłu
+	"mana_flow": "Obrażenia przyjmowane przez manę", "full_mind": "Obrażenia przy wysokiej manie",
 }
 const COUNT_STATS := ["blade_count", "multishot_arrows", "seeker_hits", "arrow_pierce", "chain_targets", "lance_pierce",
-		"row_shot", "silent_steps"]
+		"row_shot", "silent_steps", "full_mind"]
 
 ## Kolor obwódki umiejętności wg broni (w oknie drzewka).
 const WEAPON_COLORS := {"melee": Color8(225, 85, 70), "bow": Color8(90, 200, 100), "spell": Color8(90, 140, 240),

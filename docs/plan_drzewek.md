@@ -126,8 +126,8 @@ Wspólne okno: drzewko umiejętności i drzewko lochów mogą używać tego same
 3. Aury i rezerwacja many. **Zrobione** (szukaj „Aury rezerwujące manę - krok 3” w `docs/historia.md`).
 4. Nowe combo; Półksiężyc, Szybka Salwa i Fala piorunów jako zwykłe umiejętności. **Zrobione** - weszło wszystkie
    10 combo z tabeli niżej (szukaj „Nowe combo - krok 4” w `docs/historia.md`).
-5. Nowe węzły kluczowe i nowe umiejętności - strona po stronie (osobne PR). **Strony siły i zręczności zrobione**
-   (szukaj „Krok 5 wspólnego drzewka, strona siły” i „…, strona zręczności” w `docs/historia.md`). Dalej inteligencja, strefy, a na koniec
+5. Nowe węzły kluczowe i nowe umiejętności - strona po stronie (osobne PR). **Strony siły, zręczności i inteligencji zrobione**
+   (szukaj „Krok 5 wspólnego drzewka, strona siły”, „…, strona zręczności” i „…, strona inteligencji” w `docs/historia.md`). Dalej strefy, a na koniec
    osobno przywołania (Wataha, Błędne Ogniki, Wierny tropiciel).
 6. Nowe drzewko lochów (od nowa, zwrot punktów Watry).
 7. Przebudzenia do wyboru (bez klas).

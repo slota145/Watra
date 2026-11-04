@@ -2789,5 +2789,64 @@
       20,
       17
     ]
+  },
+  "fire_wall": {
+    "effect": "6212fb10-608e-4f42-b2ae-bc50822d0c2b",
+    "name": "Ściana Ognia - płomień",
+    "frame": [
+      31,
+      36
+    ],
+    "frames": 8,
+    "fps": 12,
+    "anchor": [
+      16,
+      30
+    ],
+    "loop": true
+  },
+  "ice_armor": {
+    "effect": "428d982a-4d4d-42e2-aafa-9a31fbba7af7",
+    "name": "Lodowy Pancerz - skorupa",
+    "frame": [
+      58,
+      58
+    ],
+    "frames": 16,
+    "fps": 12,
+    "anchor": [
+      29,
+      29
+    ],
+    "loop": true
+  },
+  "ice_armor_burst": {
+    "effect": "892d63b0-678c-4341-8cad-88a3a755119b",
+    "name": "Lodowy Pancerz - pęknięcie",
+    "frame": [
+      126,
+      164
+    ],
+    "frames": 14,
+    "fps": 12,
+    "anchor": [
+      67,
+      59
+    ],
+    "columns": 7
+  },
+  "elem_shift": {
+    "effect": "d56e5cd9-87bb-4ae2-bff0-42398d346218",
+    "name": "Mistrz Żywiołów - zmiana żywiołu (biały, barwiony w grze)",
+    "frame": [
+      43,
+      43
+    ],
+    "frames": 12,
+    "fps": 12,
+    "anchor": [
+      21,
+      21
+    ]
   }
 }

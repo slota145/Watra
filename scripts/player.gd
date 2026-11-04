@@ -1041,8 +1041,12 @@ func take_damage(amount: int, from_position: Vector2, element := Elements.PHYSIC
 	# Ostatni Bastion (węzeł kluczowy): przy niskim zdrowiu o połowę mniej obrażeń
 	if amount > 0:
 		amount = maxi(1, roundi(amount * sword_skills.bastion_taken()))
-	# Tarcza Many: część ciosu (albo cały) zabiera mana
+	# Mistrz Żywiołów: żywioł ciosu zmienia żywioł twoich trafień
+	spell_skills.on_hurt(element)
+	# Lodowy Pancerz przyjmuje cios pierwszy, potem Tarcza Many (część ciosu albo cały zabiera mana) i Przelana moc
+	amount = spell_skills.absorb_ice(amount)
 	amount = spell_skills.absorb(amount)
+	amount = spell_skills.mana_flow(amount)
 	if amount <= 0:
 		DamageNumber.spawn_text(get_parent(), body_center(), tr("Tarcza"), Color(0.6, 0.8, 1.0), 9)
 		_invulnerable_timer = hurt_invulnerability()
@@ -2448,8 +2452,10 @@ func basic_tags() -> Array:
 func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: float, sound := "", tags: Array = []) -> void:
 	if enemy.state == Goblin.State.DEAD:
 		return
+	# Mistrz Żywiołów (węzeł kluczowy): trafienie przyjmuje żywioł ostatniego ciosu, który dostała postać
+	sound = spell_skills.master_sound(sound)
 	amount = roundi(amount * legendary.damage_multiplier() * stats.damage_multiplier() * boons.damage_multiplier(enemy) \
-			* sword_skills.health_damage_factor())
+			* sword_skills.health_damage_factor() * spell_skills.master_factor())
 	# żywioł trafienia (wg odgłosu): odporność albo wrażliwość potwora, zmniejszona przebiciem odporności
 	var element: String = Elements.SOUND_ELEMENTS.get(sound, Elements.PHYSICAL)
 	if element != Elements.PHYSICAL:
