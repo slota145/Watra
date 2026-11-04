@@ -282,23 +282,12 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   - **kosa** (w stylu Sorceress z BDO) i **włócznia** - raczej jako odnogi (specjalizacje) istniejących drzewek
     z kilkoma własnymi umiejętnościami, jak wniebowstąpienia w PoE, niż osobne bronie;
   - **przełączania broni NIE będzie** - autor chce, żeby gracz przywiązał się do jednego stylu gry.
-- [ ] **Drzewka klas i przebudzenia** (plan autora, inspirowany przebudzeniem z Black Desert; szczegóły do ustalenia):
-  - drzewka broni stają się drzewkami klas: wojownik (miecz), łucznik (łuk), mag (księga); do ustalenia, czy klasa
-    to wybór broni (bohaterowie Mira, Bogdan, Jaga, Wojciech zostają tylko wyglądem), czy wybór bohatera;
-  - **nekromancja w podstawowym drzewku maga** - przywołańcy jako kolejna gałąź magii (obok ognia, lodu, piorunów);
-  - **przebudzenie** dokłada klasie to, czego jej brakuje: wojownik - magia cieni w stylu Sorceress z BDO (kosa),
-    łucznik - chainblade'y (szybkie, zwinne, walka wręcz), mag - broń do walki wręcz („bojowy mag”: glewia albo
-    runiczny rapier);
-  - pomysły na wykonanie: przebudzenie przez zadanie główne u żercy Wszebora przy Watrze (rytuał, poziom około
-    30-35); broń przebudzenia jako jedna ulepszana broń (kowal / Watra, zaklinanie) zamiast linii łupu; przy
-    umiejętnościach przebudzenia broń w ręku zmienia się sama (gracz niczego nie przełącza); combo między
-    umiejętnościami podstawowymi i przebudzenia (np. Mgnienie, a zaraz po nim cień kosą);
-  - proponowana kolejność: efekty łuku i księgi -> nekromancja w drzewku maga -> przebudzenia (jedna klasa naraz).
-- [ ] **Wspólne drzewko z trzema zakładkami** (pomysł autora, listopad 2026): drzewka miecza, łuku i księgi połączyć
-  w jedno drzewko z 3 zakładkami. Punkty są wspólne dla każdej zakładki osobno: gdy w jednej zakładce wydano np.
-  50 punktów, po przełączeniu na drugą można te same 50 punktów wydać tam na coś innego (każda zakładka ma
-  własny, pełny przydział punktów; działa tylko zakładka wybrana). Szczegóły (jak się przełącza, czy przełączanie
-  coś kosztuje, co z paskami szybkiego wyboru) dopytać autora.
+- [ ] **Wspólne drzewko umiejętności, aury, combo i przebudzenia** (burza mózgów z autorem, listopad 2026) - pełny
+  plan w `docs/plan_drzewek.md`. Ustalone: jedno wspólne drzewko 200-250 węzłów (strony siła / zręczność /
+  inteligencja, strefy pośrednie, skupiska tematyczne, wyróżnione umiejętności aktywne), umiejętności nadal wymagają
+  swojej broni, klas nie ma - gracz wybiera konkretne przebudzenie (pomysły: magia cieni z kosą, chainblade'y,
+  bojowy mag z glewią / runicznym rapierem; przebudzenie przez zadanie u żercy Wszebora, jedna ulepszana broń
+  przebudzenia, broń w ręku zmienia się sama), nekromancja jako gałąź magii, nowe combo, drzewko lochów od nowa.
 - [ ] **Modyfikacja premii tylko runami** (decyzja autora, listopad 2026): wszystkie sposoby zmiany premii
   (afiksów) przedmiotów mają działać przez runy - przedmioty-waluty jak orby w Path of Exile. Zrobione razem
   z Uroczyskiem (szukaj „Mechaniki w lochach, etap 3”): każde działanie warsztatu kowala zużywa swoją runę
@@ -314,11 +303,10 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   (`Player.SKILL_MOVES`, chwyt ze znaczników stanu „Znacznik” w PixelLab). Etap 4 zrobiony (szukaj „Etap 4 animacji”):
   oddech w spoczynku, chód po 8 klatek, zryw i upadek przy śmierci. Punkt do zamknięcia po ograniu przez autora.
 - [ ] **Aury rezerwujące manę** (pomysł autora, listopad 2026; jak aury w Path of Exile): umiejętności-aury, które
-  po włączeniu działają bez końca, dopóki gracz ich nie wyłączy, a w zamian rezerwują część many (np. jakiś %
-  maksymalnej many jest niedostępny, póki aura działa). Do ustalenia z autorem: jakie aury (premie dla gracza,
-  osłabianie wrogów wokół), ile procent many, w których drzewkach, ikona na pasku i pod paskami zdrowia i many.
-- [ ] **Przebudowa rozwoju postaci** (do ustalenia z autorem): po dodaniu nekromancji do drzewka księgi - nowe węzły
-  także w drzewkach miecza i łuku; może oddzielić umiejętności od drzewka (inny sposób odblokowania). Osobne punkty
+  po włączeniu działają bez końca i rezerwują część many. Lista aur w `docs/plan_drzewek.md` (regeneracja many
+  i życia, aury żywiołów z własnymi animacjami ataków, max zdrowia, Mroźny Oddech jak Righteous Fire). Do ustalenia:
+  ile procent many, ikona na pasku i pod paskami zdrowia i many.
+- [ ] **Przebudowa rozwoju postaci**: zastąpiona planem wspólnego drzewka (`docs/plan_drzewek.md`). Osobne punkty
   statystyk (2 za awans) i umiejętności (pasek) już są - punkt niżej.
 - [ ] **Punkty umiejętności z osobnego paska doświadczenia** (pomysł autora, listopad 2026; jak w BDO): zrobione,
   czeka na ocenę autora (szukaj „Pasek umiejętności” w `docs/historia.md`): pasek `SkillBook.skill_xp` z progami
@@ -414,6 +402,8 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   - etap 5 zrobiony, czeka na ocenę autora (szukaj „Mapa Nawii, etap 5”): **Władca Hordy** (`scripts/horde_lord.gd`) -
     wejście za serce każdego boga, 4 fazy z cieniami bogów i falami Hordy, legendy Władcy, Pas Zimowego Oddechu
     (Marzanna), tytuł „Pogromca Hordy”, posąg w Ostoi i stopnie **Pomroku** I-X dla wszystkich aren;
+  - **drzewko Watry do zrobienia od nowa** (decyzja autora, listopad 2026): skupiska węzłów dla każdej mechaniki
+    połączone neutralnymi węzłami, węzły zmieniające mechaniki - plan w `docs/plan_drzewek.md`;
   - do zrobienia: obce bogi; do ustalenia po ograniu: siła bogów i Władcy, szanse na fragmenty i pasy, liczby
     Pomroku, liczby w drzewku Watry, ewentualne ikony węzłów drzewka z PixelLab.
 - [ ] **Obce mitologie jako odległe królestwa** (luźny pomysł autora): świat zostaje słowiański, a królestwa grecki,
