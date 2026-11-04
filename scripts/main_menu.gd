@@ -79,7 +79,7 @@ func _ready() -> void:
 	var side := PanelContainer.new()
 	side.add_theme_stylebox_override("panel", UiStyle.panel(Color(0.06, 0.05, 0.08, 0.72), Color(0.42, 0.3, 0.16), 8))
 	side.set_anchors_preset(Control.PRESET_CENTER_LEFT)
-	side.position = Vector2(22, -46)
+	side.position = Vector2(22, -76)
 	add_child(side)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 6)
@@ -107,6 +107,7 @@ func _ready() -> void:
 	box.add_child(load_game)
 	box.add_child(UiStyle.menu_button(Lang.t("Ustawienia"), _show_settings))
 	box.add_child(UiStyle.menu_button(Lang.t("Dla testerów"), _show_tester))
+	box.add_child(UiStyle.menu_button(Lang.t("Twórcy"), func() -> void: add_child(CreditsWindow.new())))
 	box.add_child(UiStyle.menu_button(Lang.t("Wyjdź z gry"), Game.quit_game))
 
 	(continue_button if not continue_button.disabled else new_game).grab_focus()
