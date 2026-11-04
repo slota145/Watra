@@ -294,10 +294,11 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   zwrot wszystkich punktów, dodatkowo 1 punkt umiejętności co 2 poziomy postaci. Krok 3 (aury i rezerwacja many) zrobiony,
   czeka na ocenę autora (szukaj „Aury rezerwujące manę - krok 3”). Krok 4 (nowe combo; Półksiężyc, Szybka salwa
   i Fala piorunów jako zwykłe umiejętności) zrobiony, czeka na ocenę autora (szukaj „Nowe combo - krok 4”).
-  Krok 5 (nowe węzły kluczowe i nowe umiejętności) idzie strona po stronie: strony siły i zręczności zrobione, czekają
-  na ocenę autora (szukaj „Krok 5 wspólnego drzewka, strona siły” i „…, strona zręczności”) - Wilczy Kieł, Ryk Tura,
-  Skok Niedźwiedzia, Ostatni Bastion, Strzała Żmija, Rozszczepiona Strzała, Kolczatka, Łowca w Cieniu, Szał Bitewny
-  i węzły znaczące; ikony z PixelLab (`tools/tree_step5_icons.py`). Dalej inteligencja, strefy,
+  Krok 5 (nowe węzły kluczowe i nowe umiejętności) idzie strona po stronie: strony siły, zręczności i inteligencji
+  zrobione, czekają na ocenę autora (szukaj „Krok 5 wspólnego drzewka, strona siły”, „…, strona zręczności”
+  i „…, strona inteligencji”) - Wilczy Kieł, Ryk Tura, Skok Niedźwiedzia, Ostatni Bastion, Strzała Żmija, Rozszczepiona
+  Strzała, Kolczatka, Łowca w Cieniu, Szał Bitewny, Ściana Ognia, Lodowy Pancerz, Mistrz Żywiołów i węzły znaczące;
+  ikony z PixelLab (`tools/tree_step5_icons.py`, ikony stref i przywołań już są w `assets/skills/`). Dalej strefy,
   na koniec osobno przywołania (Wataha, Błędne Ogniki, Wierny tropiciel).
 - [ ] **Modyfikacja premii tylko runami** (decyzja autora, listopad 2026): wszystkie sposoby zmiany premii
   (afiksów) przedmiotów mają działać przez runy - przedmioty-waluty jak orby w Path of Exile. Zrobione razem

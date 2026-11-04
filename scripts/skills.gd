@@ -190,6 +190,16 @@ const DATA := {
 		"icon": preload("res://assets/skills/mana_shield.png"),
 		"description": "Na kilka sekund część obrażeń zamiast zdrowia zabiera mana. Combo: zaraz po Kroku przez Mgłę tarcza przez pierwsze 2 s przyjmuje całe ciosy.",
 	},
+	"fire_wall": {
+		"name": "Ściana Ognia", "weapon": "spell", "type": "skill",
+		"icon": preload("res://assets/skills/fire_wall.png"),
+		"description": "Stawiasz pod kursorem ścianę płomieni w poprzek drogi. Wrogowie w ogniu płoną, a twoje pociski przelatujące przez ścianę zadają dodatkowe obrażenia od ognia.",
+	},
+	"ice_armor": {
+		"name": "Lodowy Pancerz", "weapon": "spell", "type": "skill",
+		"icon": preload("res://assets/skills/ice_armor.png"),
+		"description": "Okrywasz się tarczą z lodu, która przez 8 s przyjmuje ciosy zamiast zdrowia. Gdy pęknie, wybucha lodem i zamraża wrogów wokół.",
+	},
 	"rune_stone": {
 		"name": "Kamień Runiczny", "weapon": "spell", "type": "skill",
 		"icon": preload("res://assets/skills/rune_stone.png"),
@@ -501,6 +511,26 @@ const SHIELD_TIME := 6.0
 const SHIELD_SHARE := 0.5
 const SHIELD_MANA_PER_DAMAGE := 1.0
 const SHIELD_FULL_TIME := 2.0
+## Ściana Ognia: mana, odnowienie, zasięg postawienia, długość i grubość ściany, czas, co ile s rani, podpalenie
+## (część obrażeń rany przez BURN_TIME s), premia pocisku przelatującego przez ścianę (część jego obrażeń jako ogień),
+## ile ścian naraz.
+const WALL_MANA := 18.0
+const WALL_COOLDOWN := 5.0
+const WALL_RANGE := 200.0
+const WALL_LENGTH := 110.0
+const WALL_THICKNESS := 14.0
+const WALL_TIME := 4.0
+const WALL_TICK := 0.5
+const WALL_BURN := 0.5
+const WALL_IGNITE := 0.4
+const WALL_MAX := 2
+## Lodowy Pancerz: mana, odnowienie, czas, wytrzymałość tarczy (część maksymalnego zdrowia), promień wybuchu,
+## zamrożenie wrogów (s) przy pęknięciu.
+const ICE_ARMOR_MANA := 20.0
+const ICE_ARMOR_COOLDOWN := 14.0
+const ICE_ARMOR_TIME := 8.0
+const ICE_ARMOR_RADIUS := 70.0
+const ICE_ARMOR_FREEZE := 1.5
 ## Kamień Runiczny: mana, odnowienie, czas, promień kręgu, zasięg postawienia.
 const RUNE_MANA := 20.0
 const RUNE_COOLDOWN := 14.0
@@ -577,6 +607,8 @@ const TAGS := {
 	"ball_lightning": ["spell", "projectile", "area", "lightning", "int"],
 	"blink": ["spell", "movement", "int"],
 	"mana_shield": ["spell", "int"],
+	"fire_wall": ["spell", "area", "fire", "dot", "int"],
+	"ice_armor": ["spell", "area", "ice", "int"],
 	"rune_stone": ["spell", "summon", "int"],
 	# aury (Auras): rodzaj "aura", pioruny i lód aur bojowych to czary
 	"dread": ["aura", "area", "str"],
@@ -722,7 +754,7 @@ const RUNE_CHAIN_JUMPS := 2
 const SHATTER_BLAST_RADIUS := 30.0
 const SHATTER_BLAST_DAMAGE := 0.5
 ## Żywioły czarów (węzeł kluczowy Harmonia Żywiołów, SpellSkills).
-const ELEMENTS := {"fireball": "fire", "meteor": "fire", "frost_lance": "ice", "blizzard": "ice",
+const ELEMENTS := {"fireball": "fire", "meteor": "fire", "fire_wall": "fire", "ice_armor": "ice", "frost_lance": "ice", "blizzard": "ice",
 		"chain_lightning": "lightning", "thunder_wave": "lightning", "storm_call": "lightning", "ball_lightning": "lightning"}
 
 
@@ -931,6 +963,20 @@ static func orb_damage(level: int) -> float:
 	return 0.4 + 0.06 * power(level)
 
 
+## Ściana Ognia: procent obrażeń broni co WALL_TICK s wrogom w płomieniach.
+static func wall_damage(level: int) -> float:
+	return 0.35 + 0.06 * power(level)
+
+
+## Lodowy Pancerz: wytrzymałość tarczy (część maksymalnego zdrowia) i procent obrażeń broni wybuchu przy pęknięciu.
+static func ice_armor_share(level: int) -> float:
+	return minf(0.2 + 0.03 * power(level), 0.6)
+
+
+static func ice_armor_damage(level: int) -> float:
+	return 1.5 + 0.2 * power(level)
+
+
 static func meteor_damage(level: int) -> float:
 	return 2.6 + 0.35 * power(level)
 
@@ -1012,7 +1058,8 @@ static func mana_cost(id: String) -> float:
 			"vault": VAULT_MANA, "snare": SNARE_MANA, "falcon": FALCON_MANA, "venom_arrows": VENOM_MANA, "wind_arrow": WIND_MANA,
 			"viper_arrow": VIPER_MANA, "split_arrow": SPLIT_MANA, "caltrops": CALTROPS_MANA,
 			"ballista": BALLISTA_MANA, "frost_lance": LANCE_MANA, "blizzard": BLIZZARD_MANA, "storm_call": STORM_MANA,
-			"ball_lightning": ORB_MANA, "meteor": METEOR_MANA, "blink": BLINK_MANA, "mana_shield": SHIELD_MANA, "rune_stone": RUNE_MANA}.get(id, 0.0)
+			"ball_lightning": ORB_MANA, "meteor": METEOR_MANA, "blink": BLINK_MANA, "mana_shield": SHIELD_MANA, "rune_stone": RUNE_MANA,
+			"fire_wall": WALL_MANA, "ice_armor": ICE_ARMOR_MANA}.get(id, 0.0)
 
 
 static func mana_cost_text(id: String) -> String:
@@ -1160,6 +1207,12 @@ static func effect_text(id: String, level: int) -> String:
 		"mana_shield":
 			return Lang.t("%d%% obrażeń zabiera mana przez %s s, odnowienie %s s") % [roundi(SHIELD_SHARE * 100), _decimal(SHIELD_TIME, 0),
 					_decimal(SHIELD_COOLDOWN, 0)]
+		"fire_wall":
+			return Lang.t("%d%% obrażeń co %s s przez %s s, pociski przez ścianę +%d%% ognia, odnowienie %s s") % [roundi(wall_damage(level) * 100),
+					_decimal(WALL_TICK, 1), _decimal(WALL_TIME, 0), roundi(WALL_IGNITE * 100), _decimal(WALL_COOLDOWN, 0)]
+		"ice_armor":
+			return Lang.t("Tarcza %d%% zdrowia przez %s s, wybuch %d%% obrażeń, zamrożenie %s s, odnowienie %s s") % [roundi(ice_armor_share(level) * 100),
+					_decimal(ICE_ARMOR_TIME, 0), roundi(ice_armor_damage(level) * 100), _decimal(ICE_ARMOR_FREEZE, 1), _decimal(ICE_ARMOR_COOLDOWN, 0)]
 		"rune_stone":
 			return Lang.t("+%d%% obrażeń magicznych i szybkości rzucania w kręgu, %s s") % [roundi(rune_bonus(level) * 100), _decimal(RUNE_TIME, 0)]
 	return ""

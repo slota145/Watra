@@ -121,7 +121,7 @@ func _check_data() -> void:
 	for id: String in nodes:
 		if nodes[id]["kind"] == "keystone" and not nodes[id].get("soon", false):
 			keystones.append(id)
-	check("obecne węzły kluczowe", keystones.size() == 16 and "last_bastion" in keystones and "shadow_stalker" in keystones and "battle_frenzy" in keystones and "blood_offering" in keystones and "blood_sacrifice" in keystones and "shadow_hunter" in keystones, str(keystones))
+	check("obecne węzły kluczowe", keystones.size() == 17 and "elem_master" in keystones and "last_bastion" in keystones and "shadow_stalker" in keystones and "battle_frenzy" in keystones and "blood_offering" in keystones and "blood_sacrifice" in keystones and "shadow_hunter" in keystones, str(keystones))
 	check("węzeł umiejętności", Tree.node_for_skill("flicker") == "flicker" and Tree.node_for_skill("fireball") == "fireball")
 	check("na pasek", load("res://scripts/hotbar.gd").can_slot_skill("flicker") and load("res://scripts/hotbar.gd").can_slot_skill("smoke_burst"))
 	check("bez regeneracji jako umiejętności", not Skills.DATA.has("warrior_blood") and not Skills.DATA.has("mana_stream"))

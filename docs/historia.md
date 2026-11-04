@@ -878,6 +878,31 @@ odpowiedniej sekcji.
   Ikony: paczka 16 ikon PixelLab (10 generacji, `pixellab_src/shared_tree/`, `tools/tree_step5_icons.py`) - nowe
   umiejętności i węzły obu stron, także zamiast przebarwień strony siły (dawne `tools/strength_icons.py` usunięte).
   Stare zapisy przechodzą przez nowe węzły za darmo (`SkillBook.FORMER_SOON`). Test `tests/test_dex_side.gd`.
+- [x] **Krok 5 wspólnego drzewka, strona inteligencji** (`docs/plan_drzewek.md`, listopad 2026). Autor wybrał: Ściana Ognia
+  pod kursorem, Lodowy Pancerz jako tarcza z lodu, Mistrz Żywiołów jak w opisie, paczka ikon także na zapas (strefy,
+  przywołania). Wszystkie puste miejsca strony inteligencji poza przywołaniami (Błędne Ogniki, Wierne ogniki) działają:
+  - **Ściana Ognia** (`SpellSkills._fire_wall`, klasa `_FireWall`): odcinek długości `WALL_LENGTH` w poprzek drogi od
+    gracza do kursora (`WALL_RANGE`), płomienie z kreatora co `WALL_FLAME_GAP`; co `WALL_TICK` s rani (`Skills.wall_damage`,
+    więcej z Tlącego się ognia) i podpala (`SpellSkills.burn`, `WALL_BURN`), najwyżej `WALL_MAX` ścian naraz; pocisk gracza
+    (grupa `player_projectiles`, `Projectile`) lecący przez ścianę się zapala (`Projectile.ignite`) - każde jego trafienie
+    dokłada `WALL_IGNITE` obrażeń jako ogień, smuga strzały robi się pomarańczowa;
+  - **Lodowy Pancerz** (`_ice_armor`, `absorb_ice` - w `Player.take_damage` przed Tarczą Many): tarcza na `ICE_ARMOR_TIME` s
+    z wytrzymałością `Skills.ice_armor_share` maksymalnego zdrowia (20% + 3% za poziom mocy, do 60%); gdy pęknie,
+    `_ice_burst` rani (`Skills.ice_armor_damage`) i zamraża (`Goblin.freeze`, `ICE_ARMOR_FREEZE` s) wrogów w `ICE_ARMOR_RADIUS`;
+    po czasie znika bez wybuchu; ikona z pozostałą wytrzymałością w efektach;
+  - węzły: **Przelana moc** (`mana_flow` - `SpellSkills.mana_flow` po Tarczy Many: 8% ciosu zabiera mana, póki starcza),
+    **Pełnia umysłu** (`full_mind` - `SpellSkills.full_mind_bonus`: +1% `damage_percent` za każde 5% many ponad połowę,
+    do +10%, w `set_temp("spell")`, ikona w efektach);
+  - **Mistrz Żywiołów** (węzeł kluczowy, z każdą bronią): `SpellSkills.on_hurt` zapamiętuje żywioł ciosu (ogień, lód,
+    piorun; fizyczne i Nawia nie zmieniają), `Player.hit_enemy` zamienia odgłos trafienia na ten żywioł (`master_sound`
+    - odporności, stany i dźwięk) i mnoży obrażenia x`1 + MASTER_BONUS` (`master_factor`); wir w kolorze żywiołu przy
+    zmianie, ikona z bieżącym żywiołem w efektach.
+  Efekty z kreatora (`pixellab_src/vfx/ids.json`): `fire_wall` (płomień, pętla), `ice_armor` (skorupa z heksów, pętla -
+  półprzezroczyste wypełnienie odtworzone z alfą 0x26, bo arkusz z `join` je spłaszcza), `ice_armor_burst`, `elem_shift`
+  (biały, barwiony w grze). Ikony: druga paczka 16 ikon PixelLab (10 generacji, `pixellab_src/shared_tree/icons_step5_int.png`,
+  `tools/tree_step5_icons.py`) - 5 ikon strony inteligencji i na zapas: Ciśnięte Noże, Rozpęd, Otwarte rany, Strzała Gromu,
+  Zwiewność, Zaklęte Ostrze, Żelazna Wola, Błędne Ogniki, Wierne ogniki, Wataha, Przewodnik stada (pliki w `assets/skills/`,
+  jeszcze niepodpięte; Wierny tropiciel nie ma ikony). Stare zapisy - `SkillBook.FORMER_SOON`. Test `tests/test_int_side.gd`.
   Do ustalenia po ograniu: liczby (`VIPER_*`, `SPLIT_*`, `CALTROPS_*`, `STALKER_*`, `FRENZY_*`), czy Szał ma przyspieszać
   też rzucanie czarów, czy Szereg ma dawać towarzyszkę każdej strzale wachlarza.
 

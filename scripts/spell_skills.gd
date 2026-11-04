@@ -9,9 +9,14 @@ extends Node
 ## - Krok przez Mgłę: teleport pod kursor (potem Kula ognia od razu naładowana - Player._process_skill).
 ## - Tarcza Many: część ciosów zabiera mana (absorb); po Kroku przez Mgłę przez chwilę całe ciosy.
 ## - Kamień Runiczny: w jego kręgu czary są mocniejsze i szybsze.
+## - Ściana Ognia: ściana płomieni w poprzek drogi pod kursorem - pali wrogów, a pociski gracza lecące przez nią
+##   dostają dodatkowe obrażenia od ognia (Projectile.ignite).
+## - Lodowy Pancerz: tarcza z lodu przyjmuje ciosy (absorb_ice); gdy pęknie, wybucha lodem i zamraża wrogów wokół.
 ## Węzły kluczowe: Harmonia Żywiołów (czar innego żywiołu niż poprzedni - premia), Krew za Manę (umiejętności kosztują
 ## zdrowie - Player.spend_mana), Pełnia Mocy (pełna mana - mocniejsze czary, droższe umiejętności), Echo Run (nowe czary
-## czasem wybrzmiewają drugi raz). Legendy: Księga Marzanny (Zamieć zawsze zamraża), Korona Peruna (Burza trwa,
+## czasem wybrzmiewają drugi raz), Mistrz Żywiołów (twoje trafienia przyjmują żywioł, który ostatnio trafił
+## ciebie, +40% obrażeń). Węzły: Przelana moc (część ciosów zabiera mana - mana_flow), Pełnia umysłu (obrażenia
+## z many ponad połowę). Legendy: Księga Marzanny (Zamieć zawsze zamraża), Korona Peruna (Burza trwa,
 ## dopóki trzymasz klawisz i starcza many). Chwilowe premie idą do CharacterStats.set_temp("spell", ...).
 
 const FIRE_COLOR := Color(1.0, 0.55, 0.2)
@@ -50,10 +55,26 @@ const SHIELD_FX := preload("res://assets/effects/mana_shield.png")
 const RUNE_FX := preload("res://assets/effects/rune_stone.png")
 const RUNE_CIRCLE_FX := preload("res://assets/effects/rune_circle.png")
 const RUNE_CIRCLE_RADIUS := 70.0
+## Ściana Ognia: zapętlony płomień (z kreatora efektów) stawiany co WALL_FLAME_GAP wzdłuż ściany.
+const WALL_FX := preload("res://assets/effects/fire_wall.png")
+const WALL_FLAME_GAP := 18.0
+## Lodowy Pancerz: zapętlona lodowa skorupa wokół postaci i wybuch przy pęknięciu.
+const ICE_ARMOR_FX := preload("res://assets/effects/ice_armor.png")
+const ICE_ARMOR_BURST_FX := preload("res://assets/effects/ice_armor_burst.png")
+const ICE_ARMOR_BURST_RADIUS := 52.0
+## Mistrz Żywiołów: premia obrażeń, wir żywiołu przy zmianie (biały arkusz barwiony kolorem żywiołu).
+const MASTER_BONUS := 0.4
+const MASTER_FX := preload("res://assets/effects/elem_shift.png")
+## Odgłos trafienia (Player.hit_enemy) dla żywiołu z Elements - Nawia nie zmienia żywiołu Mistrza.
+const MASTER_SOUNDS := {Elements.FIRE: "fire", Elements.COLD: "ice", Elements.LIGHTNING: "lightning"}
+## Pełnia umysłu: +1% obrażeń za każde FULL_MIND_STEP many ponad połowę, najwyżej FULL_MIND_MAX.
+const FULL_MIND_STEP := 0.05
+const FULL_MIND_MAX := 0.1
 const ICONS := {
 	"storm_call": preload("res://assets/skills/storm_call.png"), "mana_shield": preload("res://assets/skills/mana_shield.png"),
 	"rune_stone": preload("res://assets/skills/rune_stone.png"), "harmony": preload("res://assets/skills/ks_harmony.png"),
-	"full_power": preload("res://assets/skills/ks_full_power.png"),
+	"full_power": preload("res://assets/skills/ks_full_power.png"), "ice_armor": preload("res://assets/skills/ice_armor.png"),
+	"elem_master": preload("res://assets/skills/ks_elem_master.png"), "full_mind": preload("res://assets/skills/node_full_mind.png"),
 }
 
 var _player: Player
@@ -76,6 +97,13 @@ var _echoing := false
 var _temp := {}
 ## Podpaleni wrogowie: wróg -> [obrażenia na ranę, zostało sekund, do kolejnej rany]
 var _burning := {}
+var _walls: Array[Node2D] = []
+## Lodowy Pancerz: zostały czas, wytrzymałość tarczy (punkty obrażeń), skorupa wokół postaci.
+var _ice_time := 0.0
+var _ice_hp := 0
+var _ice_shell: FxLoop
+## Mistrz Żywiołów: żywioł ostatniego trafienia (Elements; "" - jeszcze żaden).
+var _master_element := ""
 
 
 func _init(player: Player) -> void:
@@ -138,12 +166,20 @@ func press(id: String) -> void:
 		"rune_stone":
 			_start_cooldown(id, Skills.RUNE_COOLDOWN)
 			_rune_stone()
+		"fire_wall":
+			_start_cooldown(id, Skills.WALL_COOLDOWN)
+			_fire_wall(_aim_point(Skills.WALL_RANGE))
+		"ice_armor":
+			_start_cooldown(id, Skills.ICE_ARMOR_COOLDOWN)
+			_ice_armor()
 	_player.note_skill(id)
 
 
 ## Przerwanie (śmierć, zmiana broni).
 func cancel() -> void:
 	_storm_time = 0.0
+	_ice_time = 0.0
+	_ice_hp = 0
 
 
 func cooldown_of(id: String) -> Vector2:
@@ -201,6 +237,12 @@ func _physics_process(delta: float) -> void:
 			_shield_full = 0.0
 	if _shield_ring != null:
 		_shield_ring.visible = _shield_time > 0.0
+	if _ice_time > 0.0:
+		_ice_time -= delta
+		if _ice_time <= 0.0:
+			_ice_hp = 0
+	if _ice_shell != null:
+		_ice_shell.visible = _ice_time > 0.0
 	_process_burn(delta)
 	_update_temp()
 	if _player.is_dead:
@@ -287,7 +329,10 @@ func _update_temp() -> void:
 			spell += HARMONY_BONUS
 		if _full_power():
 			spell += FULL_POWER_BONUS
+	var any := full_mind_bonus() if not _player.is_dead else 0.0
 	var temp := {}
+	if any > 0.0:
+		temp["damage_percent"] = any
 	if spell > 0.0:
 		temp["spell_damage"] = spell
 	if cast > 0.0:
@@ -295,6 +340,50 @@ func _update_temp() -> void:
 	if temp != _temp:
 		_temp = temp
 		_player.stats.set_temp("spell", temp)
+
+
+## Pełnia umysłu (węzeł): +1% obrażeń za każde 5% many ponad połowę, najwyżej +10%.
+func full_mind_bonus() -> float:
+	if _bonus("full_mind") <= 0.0:
+		return 0.0
+	var share := _player.mana / maxf(float(_player.stats.max_mana()), 1.0)
+	return minf(floorf(maxf(share - 0.5, 0.0) / FULL_MIND_STEP + 0.001) * 0.01, FULL_MIND_MAX)
+
+
+## Mistrz Żywiołów: wołane przy każdym otrzymanym ciosie (Player.take_damage) - ogień, lód i piorun zmieniają żywioł
+## twoich trafień; fizyczne i Nawia go nie zmieniają.
+func on_hurt(element: String) -> void:
+	if not has_keystone("elem_master") or not MASTER_SOUNDS.has(element) or element == _master_element:
+		return
+	_master_element = element
+	var fx := SkillEffects.sheet_once(_player.get_parent(), MASTER_FX, 12, 18.0, _player.body_center(), Vector2(21, 21))
+	if fx != null:
+		fx.modulate = Elements.color_of(element)
+
+
+## Mistrz Żywiołów: odgłos (żywioł) trafienia gracza - żywioł ostatniego ciosu zamiast własnego.
+func master_sound(sound: String) -> String:
+	if not has_keystone("elem_master") or _master_element == "":
+		return sound
+	return MASTER_SOUNDS[_master_element]
+
+
+func master_factor() -> float:
+	return 1.0 + MASTER_BONUS if has_keystone("elem_master") else 1.0
+
+
+## Przelana moc (węzeł): część otrzymanych obrażeń zabiera mana zamiast zdrowia (póki starcza many).
+## Zwraca obrażenia, które zostają dla zdrowia.
+func mana_flow(amount: int) -> int:
+	var share := _bonus("mana_flow")
+	if share <= 0.0 or amount <= 0:
+		return amount
+	var taken := mini(roundi(amount * share), floori(_player.mana))
+	if taken <= 0:
+		return amount
+	_player.mana -= taken
+	_player.mana_changed.emit(int(_player.mana), _player.stats.max_mana())
+	return amount - taken
 
 
 ## Echo Run: czar może wybrzmieć drugi raz za darmo (powtórka nie ma już echa).
@@ -592,6 +681,124 @@ func absorb(amount: int) -> int:
 	return amount - taken
 
 
+# ---------------------------------------------------------------- Ściana Ognia
+func _fire_wall(at: Vector2) -> void:
+	_walls = _walls.filter(func(w: Node2D) -> bool: return is_instance_valid(w))
+	while _walls.size() >= Skills.WALL_MAX:
+		_walls.pop_front().queue_free()
+	var tags := Skills.tags("fire_wall")
+	var wall := _FireWall.new()
+	wall.skills = self
+	wall.position = at
+	var aim := (at - _player.global_position)
+	wall.axis = (aim.orthogonal() if aim.length() > 4.0 else _player._aim_direction().orthogonal()).normalized()
+	wall.half_length = Skills.WALL_LENGTH * 0.5 * _player.stats.area_multiplier(tags)
+	wall.time_left = Skills.WALL_TIME * (1.0 + _player.support("fire_wall", "duration"))
+	wall.damage = Skills.wall_damage(_level("fire_wall")) * (1.0 + _bonus("burn_damage") + _player.support("fire_wall", "dot_damage"))
+	_player.get_parent().add_child(wall)
+	_walls.append(wall)
+	Sfx.play_at("fireball_launch", at, -2.0)
+
+
+## Ściana płomieni: odcinek ±half_length wzdłuż `axis`; co WALL_TICK s rani i podpala wrogów w ogniu, a pociski
+## gracza lecące przez nią zapala (Projectile.ignite - dodatkowe obrażenia od ognia).
+class _FireWall extends Node2D:
+	var skills: SpellSkills
+	var axis := Vector2.RIGHT
+	var half_length := 55.0
+	var time_left := 4.0
+	var damage := 0.35
+	var _tick := 0.0
+
+	func _ready() -> void:
+		y_sort_enabled = true
+		var count := maxi(roundi(half_length * 2.0 / SpellSkills.WALL_FLAME_GAP), 2)
+		for i in count + 1:
+			var flame := FxLoop.make(SpellSkills.WALL_FX, 8, 12.0, Vector2(16, 30))
+			flame.position = axis * lerpf(-half_length, half_length, float(i) / count)
+			flame.frame = (i * 3) % 8
+			flame.scale = Vector2.ONE * (0.8 if i % 2 == 1 else 1.0)
+			add_child(flame)
+
+	func _near(point: Vector2, margin: float) -> bool:
+		var a := global_position - axis * half_length
+		var b := global_position + axis * half_length
+		return point.distance_to(Geometry2D.get_closest_point_to_segment(point, a, b)) <= margin
+
+	func _physics_process(delta: float) -> void:
+		time_left -= delta
+		if time_left <= 0.0 or not is_instance_valid(skills) or not is_instance_valid(skills._player):
+			queue_free()
+			return
+		modulate.a = clampf(time_left / 0.4, 0.0, 1.0)
+		for shot in get_tree().get_nodes_in_group("player_projectiles"):
+			if not shot.ignited and _near(shot.global_position, Skills.WALL_THICKNESS):
+				shot.ignite(Skills.WALL_IGNITE)
+		_tick -= delta
+		if _tick > 0.0:
+			return
+		_tick = Skills.WALL_TICK
+		var player := skills._player
+		var tags := Skills.tags("fire_wall")
+		var amount := player._skill_damage(damage, tags)
+		for enemy: Goblin in Goblin.near(get_tree(), global_position, half_length + 40.0):
+			if enemy.state == Goblin.State.DEAD or not _near(enemy.global_position, Skills.WALL_THICKNESS + enemy.hurt_radius * 0.5):
+				continue
+			player.hit_enemy(enemy, amount, enemy.global_position, 0.0, "fire", tags)
+			skills.burn(enemy, amount * Skills.WALL_BURN)
+
+
+# ---------------------------------------------------------------- Lodowy Pancerz
+func _ice_armor() -> void:
+	_ice_time = Skills.ICE_ARMOR_TIME * (1.0 + _player.support("ice_armor", "duration"))
+	_ice_hp = maxi(roundi(_player.stats.max_health() * Skills.ice_armor_share(_level("ice_armor"))), 1)
+	if _ice_shell == null:
+		_ice_shell = FxLoop.make(ICE_ARMOR_FX, 16, 12.0, Vector2(29, 29))
+		_ice_shell.z_index = 1
+		_player.add_child(_ice_shell)
+		_ice_shell.position = Player.BODY_OFFSET
+	_ice_shell.visible = true
+	shatter_flash(_player.get_parent(), _player.body_center(), 0.8)
+	Sfx.play("magic", 0.0, 0.8)
+
+
+func ice_armor_active() -> bool:
+	return _ice_time > 0.0 and _ice_hp > 0
+
+
+## Wołane przy otrzymaniu ciosu (Player.take_damage) przed Tarczą Many: lodowa tarcza przyjmuje cios; gdy pęknie,
+## wybucha. Zwraca obrażenia, które zostają.
+func absorb_ice(amount: int) -> int:
+	if not ice_armor_active() or amount <= 0:
+		return amount
+	var taken := mini(amount, _ice_hp)
+	_ice_hp -= taken
+	if _ice_hp <= 0:
+		_ice_time = 0.0
+		_ice_burst()
+	else:
+		MiscVfx.spark(_player.get_parent(), _player.body_center(), Color(0.7, 0.9, 1.0), 0.6)
+	return amount - taken
+
+
+## Pęknięcie Lodowego Pancerza: lodowy wybuch rani i zamraża wrogów wokół.
+func _ice_burst() -> void:
+	var tags := Skills.tags("ice_armor")
+	var at := _player.body_center()
+	var radius := Skills.ICE_ARMOR_RADIUS * _player.stats.area_multiplier(tags)
+	SkillEffects.sheet_once(_player.get_parent(), ICE_ARMOR_BURST_FX, 14, 16.0, at, Vector2(67, 59), 0.0, 1.0,
+			radius / ICE_ARMOR_BURST_RADIUS)
+	var damage := _damage(Skills.ice_armor_damage(_level("ice_armor")), "ice_armor")
+	for enemy: Goblin in Goblin.near(_player.get_tree(), at, radius + 40.0):
+		if enemy.state == Goblin.State.DEAD or enemy.hurt_center().distance_to(at) > radius + enemy.hurt_radius:
+			continue
+		_player.hit_enemy(enemy, damage, at, 80.0, "ice", tags)
+		if is_instance_valid(enemy) and enemy.state != Goblin.State.DEAD:
+			enemy.freeze(Skills.ICE_ARMOR_FREEZE)
+	Sfx.play("hit", 0.0, 1.4)
+	_player._shake = maxf(_player._shake, 2.0)
+
+
 # ---------------------------------------------------------------- Kamień Runiczny
 func _rune_stone() -> void:
 	if is_instance_valid(_rune):
@@ -624,6 +831,16 @@ func statuses() -> Array[Dictionary]:
 	if _harmony_time > 0.0:
 		result.append({"name": Lang.t("Harmonia Żywiołów"), "kind": "good", "left": _harmony_time, "total": HARMONY_TIME, "icon": ICONS["harmony"],
 				"description": Lang.t("+%d%% obrażeń magicznych") % roundi(HARMONY_BONUS * 100.0)})
+	if ice_armor_active():
+		result.append({"name": Lang.t("Lodowy Pancerz"), "kind": "good", "left": _ice_time, "total": Skills.ICE_ARMOR_TIME, "icon": ICONS["ice_armor"],
+				"description": Lang.t("Tarcza z lodu przyjmie jeszcze %d obrażeń") % _ice_hp})
+	if has_keystone("elem_master") and _master_element != "":
+		result.append({"name": Lang.t("Mistrz Żywiołów"), "kind": "good", "left": -1.0, "icon": ICONS["elem_master"],
+				"description": Lang.t("Twoje trafienia zadają: %s, +%d%% obrażeń") % [Elements.name_of(_master_element).to_lower(), roundi(MASTER_BONUS * 100.0)]})
+	var mind := full_mind_bonus()
+	if mind > 0.0:
+		result.append({"name": Lang.t("Pełnia umysłu"), "kind": "good", "left": -1.0, "icon": ICONS["full_mind"],
+				"description": Lang.t("+%d%% obrażeń przy wysokiej manie") % roundi(mind * 100.0)})
 	if _full_power():
 		result.append({"name": Lang.t("Pełnia Mocy"), "kind": "good", "left": -1.0, "icon": ICONS["full_power"],
 				"description": Lang.t("+%d%% obrażeń magicznych przy pełnej manie") % roundi(FULL_POWER_BONUS * 100.0)})

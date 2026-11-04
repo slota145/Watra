@@ -53,6 +53,8 @@ var tags: Array = []
 var chain := 0
 ## Zasięg odbicia (Łańcuch: Supports.CHAIN_RANGE; Strzała Żmija ma własny).
 var chain_range := Supports.CHAIN_RANGE
+## Ściana Ognia (SpellSkills): pocisk, który przeleciał przez płomienie, zadaje dodatkowo tę część obrażeń jako ogień.
+var ignited := 0.0
 
 ## Trafienie wroga (bez wybuchu) - np. combo Grotu Swaroga dokłada wtedy wybuch ognia (BowSkills).
 signal enemy_hit(enemy: Goblin)
@@ -74,6 +76,8 @@ func _init() -> void:
 
 
 func _ready() -> void:
+	# pociski gracza (Ściana Ognia je zapala)
+	add_to_group("player_projectiles")
 	sprite.texture = texture
 	sprite.position.y = -HEIGHT
 	sprite.scale = Vector2.ONE * size
@@ -143,6 +147,21 @@ func _physics_process(delta: float) -> void:
 		var tween := create_tween()
 		tween.tween_property(self, "modulate:a", 0.0, 0.1)
 		tween.tween_callback(queue_free)
+
+
+## Ściana Ognia: pocisk zapala się (raz) - dodatkowe obrażenia od ognia i płonąca smuga.
+func ignite(share: float) -> void:
+	if ignited > 0.0 or _done:
+		return
+	ignited = share
+	MiscVfx.spark(get_parent(), global_position + Vector2(0, -HEIGHT), Color(1.0, 0.55, 0.2), 0.7)
+	var old := get_node_or_null("Trail") as CanvasItem
+	if old != null:
+		old.modulate = Color(1.6, 0.85, 0.4)
+	elif not fire:
+		var trail := BowSkills.arrow_trail(BowSkills.POWER_TRAIL_FX, direction)
+		trail.scale = Vector2.ONE * size
+		add_child(trail)
 
 
 ## Pocisk omija tego wroga (np. mniejsze strzały Rozszczepionej Strzały - wroga, na którym się rozpadła).
@@ -264,5 +283,7 @@ func _hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, push: float)
 	if player != null:
 		var sound := "fire" if fire or fx_kind == "fire" else "ice" if fx_kind == "ice" else "magic" if magic else "arrow"
 		player.hit_enemy(enemy, amount, from_position, push, sound, tags)
+		if ignited > 0.0 and is_instance_valid(enemy) and enemy.state != Goblin.State.DEAD:
+			player.hit_enemy(enemy, maxi(1, roundi(amount * ignited)), from_position, 0.0, "fire", tags)
 	else:
 		enemy.take_damage(amount, from_position, push)

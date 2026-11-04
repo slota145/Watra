@@ -43,6 +43,7 @@ const ICONS := {
 	"full_strength": preload("res://assets/skills/node_full_strength.png"), "wounded_wrath": preload("res://assets/skills/node_wounded_wrath.png"),
 	"row_shot": preload("res://assets/skills/node_row_shot.png"), "silent_steps": preload("res://assets/skills/node_silent_steps.png"),
 	"running_breath": preload("res://assets/skills/node_running_breath.png"),
+	"mana_flow": preload("res://assets/skills/node_mana_flow.png"), "full_mind": preload("res://assets/skills/node_full_mind.png"),
 	"tremor_stun": preload("res://assets/skills/ground_slam.png"),
 	"lunge_cooldown": preload("res://assets/skills/lunge.png"), "riposte_damage": preload("res://assets/skills/riposte.png"),
 	"blade_count": preload("res://assets/skills/spectral_blades.png"), "life_on_hit": preload("res://assets/skills/node_physical.png"),
@@ -87,7 +88,8 @@ const KEYSTONE_ICONS := {"cyclone_eye": preload("res://assets/skills/ks_cyclone_
 		"harmony": preload("res://assets/skills/ks_harmony.png"), "blood_sacrifice": preload("res://assets/skills/ks_blood_sacrifice.png"),
 		"full_power": preload("res://assets/skills/ks_full_power.png"), "echo_runes": preload("res://assets/skills/ks_echo_runes.png"),
 		"last_bastion": preload("res://assets/skills/ks_last_bastion.png"),
-		"shadow_stalker": preload("res://assets/skills/ks_shadow_stalker.png"), "battle_frenzy": preload("res://assets/skills/ks_battle_frenzy.png")}
+		"shadow_stalker": preload("res://assets/skills/ks_shadow_stalker.png"), "battle_frenzy": preload("res://assets/skills/ks_battle_frenzy.png"),
+		"elem_master": preload("res://assets/skills/ks_elem_master.png")}
 ## Ikony pustych miejsc: aura i umiejętność wg tagów (tag "aura" albo forma), węzeł - wg rodzaju.
 const SOON_ICONS := {"aura": preload("res://assets/ui/tags/aura.png"), "skill": preload("res://assets/ui/tags/attack.png"),
 		"keystone": preload("res://assets/ui/tags/arcane.png"), "passive": preload("res://assets/ui/tags/arcane.png")}
