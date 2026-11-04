@@ -9,7 +9,8 @@ extends CanvasLayer
 ## dziennik zadań, mapa, pomoc), nad nim powiadomienia o łupie. Pod minimapą lista
 ## śledzonych zadań - kliknięcie pokazuje obszar zadania na mapie.
 ## Ctrl+Shift+C włącza/wyłącza tryb deweloperski: F1 daje złoto, F2 awansuje postać,
-## F3 daje kamienie zaklinające, F4 drewno i kamień, F5 zaczyna wydarzenie w świecie w tej krainie (WorldEvents).
+## F3 daje kamienie zaklinające, F4 drewno i kamień, F5 zaczyna wydarzenie w świecie w tej krainie (WorldEvents),
+## F6 daje kamienie wsparcia i krzesiwa (Supports).
 
 const DEV_GOLD := 1000
 ## Ile kamieni każdego rodzaju daje klawisz F3 w trybie deweloperskim.
@@ -19,6 +20,9 @@ const DEV_BLESSED_STONES := 100
 const DEV_MERCY_STONES := 30
 ## Ile drewna i kamienia daje klawisz F4 w trybie deweloperskim.
 const DEV_RESOURCES := 50
+## Ile krzesiw daje klawisz F6 (wystarczy na 4 gniazda w 1 umiejętności, Supports.SOCKET_COST) i ile wielkich.
+const DEV_FLINTS := 15
+const DEV_GREAT_FLINTS := 2
 const DEV_COLOR := Color(0.55, 0.9, 1.0)
 const INTRO_TEXT := "Hordy potworów zalały świat.\nOstatni ludzie schronili się w osadzie Ostoja.\nPomóż im przetrwać."
 
@@ -237,6 +241,8 @@ func connect_player(player: Player) -> void:
 	player.respawned.connect(func() -> void: death_label.visible = false)
 	player.stats.xp_changed.connect(_on_xp_changed)
 	player.stats.leveled_up.connect(_on_leveled_up)
+	player.skills.supports_leveled.connect(func(names: Array) -> void:
+		_dev_feedback(Lang.t("Kamień wsparcia awansował: %s") % ", ".join(PackedStringArray(names)), Color(0.8, 0.65, 1.0)))
 	player.stats.changed.connect(_update_points)
 	player.stats.gold_changed.connect(_on_gold_changed)
 	character_window.setup(player)
@@ -455,6 +461,8 @@ func _handle_dev_keys(event: InputEvent) -> bool:
 			_give_dev_stones()
 		KEY_F4:
 			_give_dev_resources()
+		KEY_F6:
+			_give_dev_supports()
 		KEY_F5:
 			var world := get_tree().get_first_node_in_group("world")
 			if world != null and world.start_event_here():
@@ -480,6 +488,17 @@ func _give_dev_stones() -> void:
 			DEV_STONES, DEV_PERFECT_STONES, DEV_BLESSED_STONES, DEV_MERCY_STONES], Color(0.8, 0.6, 1.0))
 
 
+## Kamienie wsparcia (po jednym każdego rodzaju, poziom 1) i krzesiwa na gniazda umiejętności (Supports).
+func _give_dev_supports() -> void:
+	var missing := _player.inventory.add_item(Supports.FLINT, DEV_FLINTS) + _player.inventory.add_item(Supports.GREAT_FLINT, DEV_GREAT_FLINTS)
+	for kind: String in Supports.ORDER:
+		missing += _player.inventory.add_item(Supports.roll(kind, 1), 1)
+	if missing > 0:
+		_dev_feedback(Lang.t("Ekwipunek pełny! Brakło %d sztuk") % missing, Color(1, 0.4, 0.4))
+	else:
+		_dev_feedback(Lang.t("Kamienie wsparcia: po jednym każdego rodzaju, +%d krzesiw, +%d wielkie") % [DEV_FLINTS, DEV_GREAT_FLINTS], Color(0.75, 0.6, 1.0))
+
+
 func _give_dev_resources() -> void:
 	var missing := _player.inventory.add_item("wood", DEV_RESOURCES) + _player.inventory.add_item("stone", DEV_RESOURCES)
 	if missing > 0:
@@ -493,7 +512,7 @@ func set_dev_mode(enabled: bool) -> void:
 	Game.dev_mode = enabled
 	dev_badge.visible = enabled
 	if enabled:
-		_show_banner(Lang.t("Tryb deweloperski WŁĄCZONY\n[F1] 1000 złota    [F2] awans    [F3] kamienie zaklinające    [F4] drewno i kamień"), DEV_COLOR)
+		_show_banner(Lang.t("Tryb deweloperski WŁĄCZONY\n[F1] 1000 złota    [F2] awans    [F3] kamienie zaklinające    [F4] drewno i kamień    [F6] kamienie wsparcia"), DEV_COLOR)
 	else:
 		_show_banner(Lang.t("Tryb deweloperski WYŁĄCZONY"), Color(0.85, 0.85, 0.9))
 

@@ -11,6 +11,8 @@ extends Node
 ## Gniazda umiejętności aktywnych (Supports): liczba gniazd i kamienie wsparcia w nich (supports), dorabiane krzesiwami.
 
 signal changed
+## Kamienie wsparcia awansowały (nazwy z nowym poziomem) - HUD pokazuje napis.
+signal supports_leveled(names: Array)
 
 ## id umiejętności -> poziom (kupiony; dla umiejętności drzewka - najwyższy osiągnięty)
 var levels := {}
@@ -419,6 +421,7 @@ func add_support_xp(amount: int) -> Array[String]:
 				leveled.append(Lang.t("%s (poziom %d)") % [Supports.name_of(gem["support"]), int(gem["level"])])
 	if not leveled.is_empty():
 		changed.emit()
+		supports_leveled.emit(leveled)
 	return leveled
 
 

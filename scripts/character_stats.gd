@@ -421,6 +421,9 @@ func xp_to_next_level() -> int:
 
 func add_xp(amount: int) -> void:
 	xp += amount
+	# kamienie wsparcia w gniazdach umiejętności rosną razem z postacią (Supports.XP_SHARE)
+	if skill_book != null and amount > 0:
+		skill_book.add_support_xp(amount)
 	var leveled := false
 	while xp >= xp_to_next_level():
 		xp -= xp_to_next_level()

@@ -306,14 +306,25 @@ func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
 		return false
 	var slot: Dictionary = _player.inventory.slots[data["index"]]
 	var id := node_at(at_position)
-	if slot.is_empty() or id == "" or not _player.skills.can_socket(weapon_type, id):
+	if slot.is_empty() or id == "":
+		return false
+	# kamień wsparcia na umiejętność z gniazdami (Supports)
+	if Supports.is_support(slot["id"]):
+		var node: Dictionary = SkillTree.nodes(weapon_type).get(id, {})
+		return node.get("kind", "") == "skill" and _player.skills.has_node_id(weapon_type, id) \
+				and Supports.fits(Items.get_data(slot["id"])["support"]["kind"], node["skill"])
+	if not _player.skills.can_socket(weapon_type, id):
 		return false
 	return Gems.is_gem(slot["id"]) or (Essences.is_essence(slot["id"]) and _player.skills.is_legendary_socket(weapon_type, id))
 
 
 func _drop_data(at_position: Vector2, data: Variant) -> void:
 	var id := node_at(at_position)
-	var message := _player.skills.socket_from(_player.inventory, weapon_type, id, data["index"])
+	var message := ""
+	if Supports.is_support(_player.inventory.slots[data["index"]].get("id", "")):
+		message = _player.skills.support_socket_from(_player.inventory, SkillTree.nodes(weapon_type)[id]["skill"], data["index"])
+	else:
+		message = _player.skills.socket_from(_player.inventory, weapon_type, id, data["index"])
 	selected_id = id
 	selected.emit(id)
 	Sfx.play("ui_error" if message != "" else "pickup")
