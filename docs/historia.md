@@ -1648,6 +1648,8 @@ odpowiedniej sekcji.
   **Twórcy** (`scripts/ui/credits_window.gd`, przycisk w menu): Krzysztof Słota, Claude (Anthropic), PixelLab, muzyka
   i odgłosy z kodu, dźwięki CC0 (Kenney, qubodup, Ben Jaszczak i Brian Nelson, lentikula), Godot (MIT) z pełnymi
   licencjami silnika (`Engine.get_license_text`, `get_copyright_info`, `get_license_info`), inspiracje, testerzy.
+  Ikona gry z pierwszej klatki Watry (`tools/game_icon.py` - `assets/icon.png` okna, `assets/icon.ico` pliku `.exe`;
+  rozmiary do 48 px z kadrem przybliżonym na ogień), zamiast domyślnej ikony Godota.
 
 ## Zielarstwo (Pomysły i rzeczy do zrobienia)
 - [x] **Zioła i mikstury zielarki** (`scripts/herbs.gd`, roślina `scripts/herb.gd`, grafiki z PixelLab przez `tools/herb_art.py`):
