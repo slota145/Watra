@@ -140,6 +140,21 @@ const DATA := {
 		"icon": preload("res://assets/skills/ballista.png"),
 		"description": "Stawiasz pod kursorem balistę, która sama strzela w najbliższych wrogów. Naraz stoi tylko jedna.",
 	},
+	"viper_arrow": {
+		"name": "Strzała Żmija", "weapon": "bow", "type": "skill",
+		"icon": preload("res://assets/skills/viper_arrow.png"),
+		"description": "Jadowa strzała przeskakuje z wroga na wroga - trafia do 4 wrogów, a każdy przeskok zadaje o 10% więcej obrażeń. Każdy trafiony zostaje zatruty.",
+	},
+	"split_arrow": {
+		"name": "Rozszczepiona Strzała", "weapon": "bow", "type": "skill",
+		"icon": preload("res://assets/skills/split_arrow.png"),
+		"description": "Mocna strzała, która po trafieniu rozpada się na 3 mniejsze lecące dalej wachlarzem - dobra na gęste gromady.",
+	},
+	"caltrops": {
+		"name": "Kolczatka", "weapon": "bow", "type": "skill",
+		"icon": preload("res://assets/skills/caltrops.png"),
+		"description": "Rozsypujesz pod kursorem żelazne kolce. Wrogowie na nich zwalniają i krwawią, dopóki z nich nie zejdą. Naraz leżą najwyżej 3 kolczatki.",
+	},
 	"frost_lance": {
 		"name": "Włócznia Marzanny", "weapon": "spell", "type": "skill",
 		"icon": preload("res://assets/skills/frost_lance.png"),
@@ -411,6 +426,31 @@ const BALLISTA_TIME := 15.0
 const BALLISTA_INTERVAL := 1.1
 const BALLISTA_RANGE := 260.0
 const BALLISTA_PLACE := 120.0
+## Strzała Żmija: mana, odnowienie, ile przeskoków (trafia o 1 wroga więcej), premia obrażeń za przeskok, zasięg
+## przeskoku, jad (ułamek obrażeń trafienia rozłożony na BowSkills.POISON_TIME).
+const VIPER_MANA := 10.0
+const VIPER_COOLDOWN := 2.5
+const VIPER_JUMPS := 3
+const VIPER_GROWTH := 0.1
+const VIPER_RANGE := 120.0
+const VIPER_POISON := 0.4
+## Rozszczepiona Strzała: mana, odnowienie, ile mniejszych strzał, ich rozrzut (stopnie), zasięg i wielkość.
+const SPLIT_MANA := 9.0
+const SPLIT_COOLDOWN := 1.5
+const SPLIT_SHARDS := 3
+const SPLIT_SPREAD_DEGREES := 50.0
+const SPLIT_RANGE := 170.0
+const SPLIT_SIZE := 0.75
+## Kolczatka: mana, odnowienie, zasięg rzutu, promień, czas leżenia, co ile s rani, spowolnienie (mnożnik prędkości),
+## ile kolczatek naraz.
+const CALTROPS_MANA := 12.0
+const CALTROPS_COOLDOWN := 4.0
+const CALTROPS_RANGE := 180.0
+const CALTROPS_RADIUS := 38.0
+const CALTROPS_TIME := 6.0
+const CALTROPS_TICK := 0.5
+const CALTROPS_SLOW := 0.55
+const CALTROPS_MAX := 3
 ## Włócznia Marzanny: mana, odnowienie, prędkość, spowolnienie (mnożnik prędkości wroga i czas), odłamki (combo).
 const LANCE_MANA := 12.0
 const LANCE_COOLDOWN := 1.0
@@ -524,6 +564,9 @@ const TAGS := {
 	"venom_arrows": ["attack", "projectile", "poison", "dot", "dex"],
 	"wind_arrow": ["attack", "spell", "area", "physical", "dex", "int"],
 	"ballista": ["attack", "summon", "projectile", "physical", "dex"],
+	"viper_arrow": ["attack", "projectile", "physical", "poison", "dex"],
+	"split_arrow": ["attack", "projectile", "physical", "dex"],
+	"caltrops": ["attack", "area", "physical", "dot", "dex"],
 	"fireball": ["spell", "projectile", "area", "fire", "int"],
 	"meteor": ["spell", "area", "fire", "dot", "int"],
 	"frost_lance": ["spell", "projectile", "ice", "int"],
@@ -902,6 +945,25 @@ static func ballista_damage(level: int) -> float:
 	return 0.7 + 0.12 * power(level)
 
 
+## Strzała Żmija: procent obrażeń broni pierwszego trafienia (każdy przeskok +VIPER_GROWTH).
+static func viper_damage(level: int) -> float:
+	return 0.9 + 0.12 * power(level)
+
+
+## Rozszczepiona Strzała: procent obrażeń broni strzały i każdej z mniejszych.
+static func split_damage(level: int) -> float:
+	return 1.2 + 0.15 * power(level)
+
+
+static func split_shard_damage(level: int) -> float:
+	return 0.5 + 0.08 * power(level)
+
+
+## Kolczatka: procent obrażeń broni co CALTROPS_TICK s (krwawienie wroga na kolcach).
+static func caltrops_damage(level: int) -> float:
+	return 0.3 + 0.05 * power(level)
+
+
 static func lunge_speed(level: int) -> float:
 	return minf(380.0 + 40.0 * power(level), 640.0)
 
@@ -948,6 +1010,7 @@ static func mana_cost(id: String) -> float:
 			"lunge": LUNGE_MANA, "crescent": CRESCENT_MANA, "seeker": SEEKER_MANA, "rapid_volley": VOLLEY_MANA,
 			"chain_lightning": CHAIN_MANA, "thunder_wave": WAVE_MANA, "power_shot": POWER_MANA, "arrow_rain": RAIN_MANA,
 			"vault": VAULT_MANA, "snare": SNARE_MANA, "falcon": FALCON_MANA, "venom_arrows": VENOM_MANA, "wind_arrow": WIND_MANA,
+			"viper_arrow": VIPER_MANA, "split_arrow": SPLIT_MANA, "caltrops": CALTROPS_MANA,
 			"ballista": BALLISTA_MANA, "frost_lance": LANCE_MANA, "blizzard": BLIZZARD_MANA, "storm_call": STORM_MANA,
 			"ball_lightning": ORB_MANA, "meteor": METEOR_MANA, "blink": BLINK_MANA, "mana_shield": SHIELD_MANA, "rune_stone": RUNE_MANA}.get(id, 0.0)
 
@@ -1069,6 +1132,15 @@ static func effect_text(id: String, level: int) -> String:
 		"ballista":
 			return Lang.t("%d%% obrażeń co %s s przez %s s") % [roundi(ballista_damage(level) * 100), _decimal(BALLISTA_INTERVAL, 1),
 					_decimal(BALLISTA_TIME, 0)]
+		"viper_arrow":
+			return Lang.t("%d%% obrażeń, %d przeskoki po +%d%%, jad %d%% trafienia, odnowienie %s s") % [roundi(viper_damage(level) * 100),
+					VIPER_JUMPS, roundi(VIPER_GROWTH * 100), roundi(VIPER_POISON * 100), _decimal(VIPER_COOLDOWN, 1)]
+		"split_arrow":
+			return Lang.t("%d%% obrażeń, potem %d strzały po %d%%, odnowienie %s s") % [roundi(split_damage(level) * 100), SPLIT_SHARDS,
+					roundi(split_shard_damage(level) * 100), _decimal(SPLIT_COOLDOWN, 1)]
+		"caltrops":
+			return Lang.t("%d%% obrażeń co %s s, spowolnienie %d%%, leży %s s, odnowienie %s s") % [roundi(caltrops_damage(level) * 100),
+					_decimal(CALTROPS_TICK, 1), roundi((1.0 - CALTROPS_SLOW) * 100), _decimal(CALTROPS_TIME, 0), _decimal(CALTROPS_COOLDOWN, 0)]
 		"frost_lance":
 			return Lang.n(lance_pierce(level), "%d%% obrażeń, przebija %d wroga, spowolnienie %d%% na %s s", "%d%% obrażeń, przebija %d wrogów, spowolnienie %d%% na %s s", "%d%% obrażeń, przebija %d wrogów, spowolnienie %d%% na %s s") % [roundi(lance_damage(level) * 100), lance_pierce(level),
 					roundi((1.0 - CHILL_FACTOR) * 100), _decimal(CHILL_TIME, 1)]

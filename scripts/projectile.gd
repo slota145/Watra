@@ -51,6 +51,8 @@ var turret_damage := 0
 var tags: Array = []
 ## Łańcuch (kamień wsparcia): ile razy pocisk po trafieniu odbije się do kolejnego wroga w pobliżu.
 var chain := 0
+## Zasięg odbicia (Łańcuch: Supports.CHAIN_RANGE; Strzała Żmija ma własny).
+var chain_range := Supports.CHAIN_RANGE
 
 ## Trafienie wroga (bez wybuchu) - np. combo Grotu Swaroga dokłada wtedy wybuch ognia (BowSkills).
 signal enemy_hit(enemy: Goblin)
@@ -143,11 +145,17 @@ func _physics_process(delta: float) -> void:
 		tween.tween_callback(queue_free)
 
 
+## Pocisk omija tego wroga (np. mniejsze strzały Rozszczepionej Strzały - wroga, na którym się rozpadła).
+func ignore(enemy: Node) -> void:
+	_hit[enemy] = true
+	pierce += 1
+
+
 ## Odbicie pocisku (Łańcuch): leci od trafionego wroga do najbliższego innego w zasięgu Supports.CHAIN_RANGE,
 ## z pełnym zasięgiem lotu. Odbicie nie zużywa przebicia. Zwraca false, gdy nie ma do kogo.
 func _bounce(from: Goblin) -> bool:
 	var best: Goblin = null
-	var best_distance := Supports.CHAIN_RANGE
+	var best_distance := chain_range
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
 		if _hit.has(enemy) or enemy.state == Goblin.State.DEAD:
 			continue
@@ -166,6 +174,10 @@ func _bounce(from: Goblin) -> bool:
 	var fx := get_node_or_null("Fx") as Node2D
 	if fx != null and FX.has(fx_kind) and FX[fx_kind][4]:
 		fx.rotation = direction.angle()
+	# smuga strzały (BowSkills.arrow_trail) leci za strzałą w nowym kierunku
+	var trail := get_node_or_null("Trail") as Node2D
+	if trail != null:
+		trail.rotation = direction.angle()
 	return true
 
 

@@ -2733,5 +2733,61 @@
       49,
       30
     ]
+  },
+  "viper_bite": {
+    "effect": "8b440ac9-2959-4c04-83a1-60b675120b7d",
+    "name": "Strzała Żmija - ukąszenie",
+    "frame": [
+      34,
+      25
+    ],
+    "frames": 8,
+    "fps": 16,
+    "anchor": [
+      17,
+      14
+    ]
+  },
+  "split_burst": {
+    "effect": "3772eed2-7dc6-4721-ac2f-bc8439b3a3ec",
+    "name": "Rozszczepiona Strzała - rozpad",
+    "frame": [
+      42,
+      35
+    ],
+    "frames": 7,
+    "fps": 16,
+    "anchor": [
+      13,
+      17
+    ]
+  },
+  "caltrops_scatter": {
+    "effect": "7276842e-661d-4d92-9158-3d158e76488c",
+    "name": "Kolczatka - rozsypanie",
+    "frame": [
+      40,
+      34
+    ],
+    "frames": 12,
+    "fps": 14,
+    "anchor": [
+      16,
+      13
+    ]
+  },
+  "battle_frenzy": {
+    "effect": "da155673-8292-4d3b-9e0d-7497e2c674c9",
+    "name": "Szał Bitewny - ładunek",
+    "frame": [
+      40,
+      32
+    ],
+    "frames": 8,
+    "fps": 16,
+    "anchor": [
+      20,
+      17
+    ]
   }
 }

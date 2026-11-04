@@ -655,6 +655,20 @@ static func split_directions(dir: Vector2, extra: int) -> Array[Vector2]:
 	return dirs
 
 
+## Szereg (węzeł drzewka): odstęp w poprzek lotu między strzałami lecącymi równolegle.
+const ROW_GAP := 9.0
+
+
+## Szereg: przesunięcia w poprzek lotu dla strzał umiejętności łuku lecących równolegle obok siebie - [0] bez węzła,
+## z węzłem o 1 strzałę więcej (np. [-4,5, 4,5]). `main` false - strzała poboczna (Rozszczep), zawsze pojedyncza.
+func row_offsets(main := true) -> Array[float]:
+	var extra := roundi(skills.tree_bonus("row_shot")) if main else 0
+	var result: Array[float] = []
+	for i in extra + 1:
+		result.append((i - extra / 2.0) * ROW_GAP)
+	return result
+
+
 ## Pocisk umiejętności z jej kamieniami wsparcia: tagi (trafienia), przebicie i odbicia (Łańcuch).
 func support_projectile(projectile: Node, id: String) -> void:
 	projectile.tags = Skills.tags(id)
@@ -2046,10 +2060,13 @@ func _cast(id: String, charge := 0.0, combo := false) -> void:
 				* (BowSkills.HAIL_DAMAGE if hail else 1.0) * (combo_damage() if combo else 1.0)
 		for i in count:
 			var angle := lerpf(-spread / 2.0, spread / 2.0, float(i) / (count - 1))
-			var arrow := _make_projectile(weapon, dir.rotated(angle), id)
-			arrow.damage_min = roundi(arrow.damage_min * multiplier)
-			arrow.damage_max = roundi(arrow.damage_max * multiplier)
-			get_parent().add_child(arrow)
+			# Szereg: środkowa strzała ma towarzyszki lecące równolegle
+			for side: float in row_offsets(i == count / 2):
+				var arrow := _make_projectile(weapon, dir.rotated(angle), id)
+				arrow.position += dir.rotated(angle).orthogonal() * side
+				arrow.damage_min = roundi(arrow.damage_min * multiplier)
+				arrow.damage_max = roundi(arrow.damage_max * multiplier)
+				get_parent().add_child(arrow)
 		BowSkills.release(get_parent(), body_center() + dir * 6.0, dir.angle(), 1.0 + 0.1 * (count - Skills.MULTISHOT_ARROWS))
 		Sfx.play("bow", 2.0, 0.9)
 	else:
@@ -2616,6 +2633,18 @@ func _cast_seeker(level: int) -> void:
 	Sfx.play("seeker")
 	# Łuk Hydry i Rozszczep: dodatkowe strzały tropiące rozchodzą się wachlarzem
 	var extra := legendary.extra_seekers() + support_count("seeker", "projectiles")
+	# Szereg: strzały tropiące lecące równolegle obok pierwszej
+	var row := row_offsets()
+	for side: float in row.slice(1):
+		var twin := SeekerArrow.new()
+		twin.position = arrow.position + dir.orthogonal() * (side - row[0])
+		twin.velocity = arrow.velocity
+		twin.hits_left = arrow.hits_left
+		twin.split = arrow.split
+		twin.damage_min = arrow.damage_min
+		twin.damage_max = arrow.damage_max
+		twin.tags = arrow.tags
+		get_parent().add_child(twin)
 	for i in extra:
 		var side := (i / 2 + 1) * (1 if i % 2 == 0 else -1)
 		var more := SeekerArrow.new()
@@ -2631,7 +2660,7 @@ func _cast_seeker(level: int) -> void:
 ## Szybka salwa: strzały w stronę kursora jedna po drugiej, co VOLLEY_INTERVAL s (krócej z szybkością, ale nie
 ## krócej niż VOLLEY_MIN_INTERVAL - inaczej strzały lecą jedna w drugiej i wyglądają jak jedna); `multiplier` - combo.
 func _cast_volley(level: int, multiplier := 1.0) -> void:
-	var count := Skills.volley_arrows(level) + support_count("rapid_volley", "projectiles")
+	var count := Skills.volley_arrows(level) + support_count("rapid_volley", "projectiles") + row_offsets().size() - 1
 	var tween := create_tween()
 	var interval := maxf(VOLLEY_INTERVAL / _skill_speed(Skills.tags("rapid_volley")), VOLLEY_MIN_INTERVAL)
 	for i in count:
