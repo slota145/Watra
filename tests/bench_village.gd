@@ -92,14 +92,8 @@ func _gear(p: Node, scene: String) -> void:
 	if scene == "mgnienie":
 		p.equipment.equip_to("necklace", loot.legendary_at_level("legend_endless_amulet", level), 0)
 	var tree: GDScript = load("res://scripts/skill_tree.gd")
-	var skills: GDScript = load("res://scripts/skills.gd")
 	for id in ["whirlwind", "flicker"] + SPELLS:
-		var node: String = tree.node_for_skill(id)
-		var weapon_type: String = skills.get_data(id)["weapon"]
-		for step in tree.path_to(weapon_type, node):
-			if not p.skills.nodes.has(weapon_type):
-				p.skills.nodes[weapon_type] = {}
-			p.skills.nodes[weapon_type][step] = true
+		p.skills.grant_node(tree.node_for_skill(id))
 
 
 func _process(_delta: float) -> bool:

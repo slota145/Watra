@@ -1,7 +1,8 @@
 # Wspólne drzewko umiejętności - układ i węzły (szkic do akceptacji)
 
-Krok 1 z `docs/plan_drzewek.md`. Na razie tylko dane: gra się nie zmienia. Po akceptacji autora krok 2 przebuduje
-`scripts/skill_tree.gd`.
+Krok 1 z `docs/plan_drzewek.md` (szkic), krok 2 - drzewko jest w grze (`scripts/skill_tree.gd`, dane
+`scripts/skill_tree_data.gd` generowane z `tools/shared_tree_draft.py`). Węzły oznaczone ⌛ w liście są w grze pustymi
+miejscami na kolejne kroki.
 
 - Rysunek: `docs/drzewko_wspolne.png`
 - Pełna lista węzłów z premiami: `docs/drzewko_wspolne_wezly.md`

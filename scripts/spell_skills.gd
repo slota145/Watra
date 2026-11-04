@@ -9,7 +9,7 @@ extends Node
 ## - Krok przez Mgłę: teleport pod kursor (potem Kula ognia od razu naładowana - Player._process_skill).
 ## - Tarcza Many: część ciosów zabiera mana (absorb); po Kroku przez Mgłę przez chwilę całe ciosy.
 ## - Kamień Runiczny: w jego kręgu czary są mocniejsze i szybsze.
-## Węzły kluczowe: Harmonia Żywiołów (czar innego żywiołu niż poprzedni - premia), Ofiara Krwi (umiejętności kosztują
+## Węzły kluczowe: Harmonia Żywiołów (czar innego żywiołu niż poprzedni - premia), Krew za Manę (umiejętności kosztują
 ## zdrowie - Player.spend_mana), Pełnia Mocy (pełna mana - mocniejsze czary, droższe umiejętności), Echo Run (nowe czary
 ## czasem wybrzmiewają drugi raz). Legendy: Księga Marzanny (Zamieć zawsze zamraża), Korona Peruna (Burza trwa,
 ## dopóki trzymasz klawisz i starcza many). Chwilowe premie idą do CharacterStats.set_temp("spell", ...).
@@ -152,11 +152,12 @@ func _level(id: String) -> int:
 
 
 func _bonus(stat: String) -> float:
-	return _player.skills.tree_bonus("spell", stat)
+	return _player.skills.tree_bonus(stat)
 
 
+## Węzły kluczowe wspólnego drzewka działają z każdą bronią (tam, gdzie pasują - np. Pełnia Mocy na czary).
 func has_keystone(id: String) -> bool:
-	return _player.skills.has_keystone("spell", id) and _player.stats.weapon_type() == "spell"
+	return _player.skills.has_keystone(id)
 
 
 ## Punkt pod kursorem (tester-bot i testy celują przez Player.aim_override - wektor od środka postaci).
@@ -210,7 +211,7 @@ func on_cast(id: String) -> void:
 	_last_element = element
 
 
-## Ofiara Krwi: umiejętności kosztują zdrowie zamiast many (Player.spend_mana).
+## Krew za Manę (dawna Ofiara Krwi): umiejętności kosztują zdrowie zamiast many (Player.spend_mana).
 func blood_magic() -> bool:
 	return has_keystone("blood_sacrifice")
 
@@ -231,7 +232,7 @@ func in_rune() -> bool:
 func _update_temp() -> void:
 	var spell := 0.0
 	var cast := 0.0
-	if _player.stats.weapon_type() == "spell" and not _player.is_dead:
+	if not _player.is_dead:
 		if in_rune():
 			var rune := Skills.rune_bonus(_level("rune_stone")) * (1.0 + _bonus("rune_bonus"))
 			spell += rune
@@ -570,10 +571,10 @@ func statuses() -> Array[Dictionary]:
 	if _shield_time > 0.0:
 		result.append({"name": Lang.t("Tarcza Many"), "kind": "good", "left": _shield_time, "total": Skills.SHIELD_TIME, "icon": ICONS["mana_shield"],
 				"description": Lang.t("Całe ciosy zabiera mana") if _shield_full > 0.0 else Lang.t("Część ciosów zabiera mana zamiast zdrowia")})
-	if in_rune() and _player.stats.weapon_type() == "spell":
+	if in_rune():
 		result.append({"name": Lang.t("Kamień Runiczny"), "kind": "good", "left": _rune.time_left, "total": _rune_total, "icon": ICONS["rune_stone"],
 				"description": Lang.t("+%d%% obrażeń magicznych i szybkości rzucania") % roundi(_temp.get("cast_speed", 0.0) * 100.0)})
-	if _harmony_time > 0.0 and _player.stats.weapon_type() == "spell":
+	if _harmony_time > 0.0:
 		result.append({"name": Lang.t("Harmonia Żywiołów"), "kind": "good", "left": _harmony_time, "total": HARMONY_TIME, "icon": ICONS["harmony"],
 				"description": Lang.t("+%d%% obrażeń magicznych") % roundi(HARMONY_BONUS * 100.0)})
 	if _full_power():

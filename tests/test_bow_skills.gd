@@ -65,11 +65,14 @@ func _process(_d: float) -> bool:
 			# Grot Swaroga: napinanie
 			_aim_at_enemy(p)
 			p.mana = p.stats.max_mana()
+			# szybsze napinanie (we wspólnym drzewku łuk ma mniej węzłów szybkości ataku niż w dawnym drzewku łuku)
+			p.stats.set_temp("test", {"attack_speed": 0.3})
 			p._held_ids["power_shot"] = true
 			bs.press("power_shot")
 			check("Grot Swaroga napina", bs.power_charge() >= 0.0)
 		50:
 			check("pełne napięcie", is_equal_approx(bs.power_charge(), 1.0), "%.2f" % bs.power_charge())
+			p.stats.set_temp("test", {})
 			p.aim_override = _enemy.hurt_center() - p.body_center()
 			p._held_ids.erase("power_shot")
 		52:
@@ -168,32 +171,11 @@ func _process(_d: float) -> bool:
 
 func _check_tree(p) -> void:
 	var Tree = load("res://scripts/skill_tree.gd")
-	var nodes: Dictionary = Tree.nodes("bow")
-	var kinds := {}
-	for id: String in nodes:
-		kinds[nodes[id]["kind"]] = kinds.get(nodes[id]["kind"], 0) + 1
-	check("drzewko łuku: rozmiar", kinds.get("passive", 0) >= 30 and kinds.get("skill", 0) == 13 and kinds.get("keystone", 0) == 4, str(kinds))
-	var broken := []
-	for id: String in nodes:
-		for link: String in nodes[id]["links"]:
-			if not nodes.has(link):
-				broken.append(link)
-		if id != "start" and Tree.path_to("bow", id).is_empty():
-			broken.append(id)
-	check("drzewko łuku: połączenia i osiągalność", broken.is_empty(), str(broken))
+	var nodes: Dictionary = Tree.nodes()
 	var view = load("res://scripts/ui/skill_tree_view.gd").new()
-	view.weapon_type = "bow"
-	var no_icon := nodes.keys().filter(func(id: String) -> bool: return view.icon_of(id) == null)
 	var described := nodes.keys().filter(func(id: String) -> bool: return view.describe(id).contains("%"))
 	view.free()
-	check("drzewko łuku: ikony", no_icon.is_empty(), str(no_icon))
-	var close := []
-	for a: String in nodes:
-		for b: String in nodes:
-			if a < b and nodes[a]["pos"].distance_to(nodes[b]["pos"]) < 1.2:
-				close.append(a + "/" + b)
-	check("drzewko łuku: węzły nie nachodzą", close.is_empty(), str(close))
-	check("opisy węzłów", described.size() > 30)
+	check("opisy węzłów", described.size() > 80, "%d" % described.size())
 	var Skills = load("res://scripts/skills.gd")
 	var no_text := []
 	for id in ["power_shot", "arrow_rain", "vault", "snare", "falcon", "venom_arrows", "wind_arrow", "ballista"]:
@@ -203,25 +185,30 @@ func _check_tree(p) -> void:
 	p.stats.level = 60
 	p.skills.character_level = 60
 	# punkty umiejętności daje pasek umiejętności, nie poziom postaci
-	p.skills.bonus_points += 60
-	for i in 5:
-		for id: String in nodes:
-			p.skills.take("bow", id)
-	check("całe drzewko łuku do wybrania", p.skills.nodes["bow"].size() == nodes.size() - 1)
+	p.skills.bonus_points += 300
+	# cała strona zręczności (łuk) i Myśliwy z Cienia ze strefy zręczność / inteligencja
+	var wanted: Array = nodes.keys().filter(func(id: String) -> bool: return nodes[id]["region"] == "dex" and not Tree.is_soon(id))
+	wanted.append_array(["shadow_hunter", "wind_arrow"])
+	for id: String in wanted:
+		for step: String in Tree.path_to(id):
+			p.skills.take(step)
+	var lacking := wanted.filter(func(id: String) -> bool: return not p.skills.has_node_id(id))
+	check("cała strona łuku do wybrania", lacking.is_empty(), str(lacking))
 	check("przebicie i zasięg z węzłów", p._make_projectile(p.equipment.weapon(), Vector2.RIGHT).pierce == 1)
 	p.mana = p.stats.max_mana()
 
 
-## Starsze zapisy: umiejętności łuku kupione za złoto dostają węzły; po zapomnieniu drzewka nie wracają.
+## Starsze zapisy (osobne drzewka broni): wszystkie punkty wracają; zapomniane drzewko nie wraca po wczytaniu.
 func _check_migration() -> void:
 	var Book = load("res://scripts/skill_book.gd")
 	var book = Book.new()
-	book.load_save_data({"levels": {"multishot": 2, "seeker": 1, "whirlwind": 1}, "nodes": {"melee": ["whirlwind"]}})
-	check("łuk ze starszego zapisu", book.has_node_id("bow", "multishot") and book.has_node_id("bow", "seeker") and book.level_of("multishot") == 2)
-	book.reset_tree("bow")
+	book.load_save_data({"skill_xp": 0, "levels": {"multishot": 2, "seeker": 1, "whirlwind": 1}, "nodes": {"bow": ["multishot", "seeker"]}})
+	check("łuk ze starszego zapisu - punkty wracają", book.tree_reset and not book.has_node_id("multishot") and book.level_of("multishot") == 0)
+	book.grant_node("seeker")
+	book.reset_tree()
 	var copy = Book.new()
 	copy.load_save_data(JSON.parse_string(JSON.stringify(book.get_save_data())))
-	check("zapomniane drzewko łuku nie wraca", copy.level_of("multishot") == 0 and copy.levels.get("multishot", 0) == 0)
+	check("zapomniane drzewko nie wraca", copy.level_of("multishot") == 0 and copy.nodes.is_empty() and not copy.tree_reset)
 	book.free()
 	copy.free()
 

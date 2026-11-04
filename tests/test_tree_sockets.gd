@@ -39,81 +39,79 @@ func _process(_d: float) -> bool:
 	var Items = load("res://scripts/items.gd")
 	var Tree = load("res://scripts/skill_tree.gd")
 	var book = p.skills
-	for weapon in ["melee", "bow", "spell"]:
-		var sockets: Array = Tree.nodes(weapon).keys().filter(func(id: String) -> bool: return Tree.nodes(weapon)[id]["kind"] == "socket")
-		var legend: Array = sockets.filter(func(id: String) -> bool: return Tree.nodes(weapon)[id].get("legendary", false))
-		var by_keystone: bool = legend.size() == 1 and Tree.nodes(weapon)[legend[0]]["links"].any(
-				func(link: String) -> bool: return Tree.nodes(weapon)[link]["kind"] == "keystone")
-		check("3 gniazda w drzewku: " + weapon, sockets.size() == 3 and by_keystone, str(sockets))
+	var sockets: Array = Tree.nodes().keys().filter(func(id: String) -> bool: return Tree.nodes()[id]["kind"] == "socket")
+	var legend: Array = sockets.filter(func(id: String) -> bool: return Tree.nodes()[id].get("legendary", false))
+	var by_keystone: bool = legend.all(func(id: String) -> bool: return Tree.neighbors(id).any(
+			func(link: String) -> bool: return Tree.nodes()[link]["kind"] == "keystone"))
+	check("9 gniazd i 3 legendarne za węzłami kluczowymi", sockets.size() == 12 and legend.size() == 3 and by_keystone, str(sockets))
 	book.character_level = 60
 	# punkty umiejętności daje pasek umiejętności, nie poziom postaci
 	book.bonus_points += 60
 	check("broń: miecz", p.stats.weapon_type() == "melee", p.stats.weapon_type())
-	for step in Tree.path_to("melee", "socket_1"):
-		book.take("melee", step)
-	check("gniazdo wybrane za punkty", book.can_socket("melee", "socket_1") and not book.can_socket("melee", "socket_2"))
+	for step in Tree.path_to("socket_s_bastion"):
+		book.take(step)
+	check("gniazdo wybrane za punkty", book.can_socket("socket_s_bastion") and not book.can_socket("socket_d_szal"))
 	# osadzenie z plecaka (okno umiejętności)
 	var gem := _gem_with(p, Gems, "health")
 	var value: float = Items.get_data(gem)["stats"]["health"]
 	var health_before: int = p.stats.max_health()
 	var window = _world.find_child("HUD", true, false).skill_window
 	window.toggle()
-	window._trees["melee"]["view"].selected_id = "socket_1"
+	window._tree["view"].selected_id = "socket_s_bastion"
 	window._refresh()
-	check("kamienie z plecaka w szczegółach", window._trees["melee"]["gems"].get_child_count() >= 1 and not window._trees["melee"]["unsocket"].visible)
-	window._socket("melee", _index_of(p, gem))
-	check("kamień w gnieździe drzewka", not book.gem_in("melee", "socket_1").is_empty() and p.inventory.count_of(gem) == 0
+	check("kamienie z plecaka w szczegółach", window._tree["gems"].get_child_count() >= 1 and not window._tree["unsocket"].visible)
+	window._socket(_index_of(p, gem))
+	check("kamień w gnieździe drzewka", not book.gem_in("socket_s_bastion").is_empty() and p.inventory.count_of(gem) == 0
 			and not Items.generated.has(gem))
-	check("premia +50%", is_equal_approx(book.tree_bonus("melee", "health"), value * 1.5) and p.stats.max_health() > health_before,
-			"%s vs %s" % [book.tree_bonus("melee", "health"), value * 1.5])
-	check("tylko z bronią drzewka", book.tree_bonus("bow", "health") == 0.0)
-	check("wyjmowanie widoczne", window._trees["melee"]["unsocket"].visible)
+	check("premia +50%", is_equal_approx(book.tree_bonus("health"), value * 1.5) and p.stats.max_health() > health_before,
+			"%s vs %s" % [book.tree_bonus("health"), value * 1.5])
+	check("wyjmowanie widoczne", window._tree["unsocket"].visible)
 	# zamiana przeciąganiem z plecaka na drzewko
-	var view = window._trees["melee"]["view"]
+	var view = window._tree["view"]
 	var second: String = Gems.roll("sapphire", 1)
 	p.inventory.add_item(second, 1)
 	var drag := {"inventory": p.inventory, "index": _index_of(p, second)}
-	var at: Vector2 = view.node_position("socket_1")
-	check("przeciąganie na gniazdo", view._can_drop_data(at, drag) and not view._can_drop_data(view.node_position("socket_2"), drag))
+	var at: Vector2 = view.node_position("socket_s_bastion")
+	check("przeciąganie na gniazdo", view._can_drop_data(at, drag) and not view._can_drop_data(view.node_position("socket_d_szal"), drag))
 	view._drop_data(at, drag)
-	check("zamiana kamieni", book.gem_in("melee", "socket_1")["kind"] == "sapphire" and _count_kind(p, Items, "ruby") == 1
-			and is_equal_approx(book.tree_bonus("melee", "health"), 0.0))
-	window._unsocket("melee")
-	check("wyjęcie kamienia", book.gem_in("melee", "socket_1").is_empty() and _count_kind(p, Items, "sapphire") == 1)
+	check("zamiana kamieni", book.gem_in("socket_s_bastion")["kind"] == "sapphire" and _count_kind(p, Items, "ruby") == 1
+			and is_equal_approx(book.tree_bonus("health"), 0.0))
+	window._unsocket()
+	check("wyjęcie kamienia", book.gem_in("socket_s_bastion").is_empty() and _count_kind(p, Items, "sapphire") == 1)
 	# kamień promienia: wzmacnia wybrane węzły pasywne w zasięgu
-	var tree: Dictionary = Tree.nodes("melee")
+	var tree: Dictionary = Tree.nodes()
 	var near := ""
 	for id: String in tree:
-		if tree[id]["kind"] == "passive" and book.has_node_id("melee", id) and tree[id]["pos"].distance_to(tree["socket_1"]["pos"]) <= book.RADIUS_RANGE:
+		if tree[id]["kind"] == "passive" and book.has_node_id(id) and tree[id]["pos"].distance_to(tree["socket_s_bastion"]["pos"]) <= book.RADIUS_RANGE:
 			near = id
 	if near == "":
 		for id: String in tree:
-			if near == "" and tree[id]["kind"] == "passive" and tree[id]["pos"].distance_to(tree["socket_1"]["pos"]) <= book.RADIUS_RANGE:
-				for step in Tree.path_to("melee", id):
-					book.take("melee", step)
+			if near == "" and tree[id]["kind"] == "passive" and tree[id]["pos"].distance_to(tree["socket_s_bastion"]["pos"]) <= book.RADIUS_RANGE:
+				for step in Tree.path_to(id):
+					book.take(step)
 				near = id
 	var stat: String = tree[near]["stats"].keys()[0]
-	var plain: float = book.tree_bonus("melee", stat)
+	var plain: float = book.tree_bonus(stat)
 	var radius: String = Gems.roll_radius(5)
 	var power: float = Items.get_data(radius)["recipe"]["affixes"]["radius_power"]
 	check("kamień promienia nie u jubilera", Gems.is_radius(radius) and Items.describe(radius).contains("promieniu"))
 	p.inventory.add_item(radius, 1)
-	window._socket("melee", _index_of(p, radius))
-	var boosted: float = book.tree_bonus("melee", stat)
-	check("promień wzmacnia węzeł " + near, boosted > plain and book.radius_factor("melee", near) > 1.0
-			and is_equal_approx(book.radius_factor("melee", near), 1.0 + power), "%s -> %s" % [plain, boosted])
+	window._socket(_index_of(p, radius))
+	var boosted: float = book.tree_bonus(stat)
+	check("promień wzmacnia węzeł " + near, boosted > plain and book.radius_factor(near) > 1.0
+			and is_equal_approx(book.radius_factor(near), 1.0 + power), "%s -> %s" % [plain, boosted])
 	var far := ""
 	for id: String in tree:
-		if tree[id]["kind"] == "passive" and tree[id]["pos"].distance_to(tree["socket_1"]["pos"]) > book.RADIUS_RANGE:
+		if tree[id]["kind"] == "passive" and tree[id]["pos"].distance_to(tree["socket_s_bastion"]["pos"]) > book.RADIUS_RANGE:
 			far = id
-	check("daleki węzeł bez wzmocnienia", book.radius_factor("melee", far) == 1.0)
+	check("daleki węzeł bez wzmocnienia", book.radius_factor(far) == 1.0)
 	check("opis węzła w promieniu", view.describe(near).contains("promienia"))
 	# zapis i wczytanie
 	var saved: Dictionary = JSON.parse_string(JSON.stringify(book.get_save_data()))
 	var copy = load("res://scripts/skill_book.gd").new()
 	copy.load_save_data(saved)
-	check("zapis kamieni drzewka", copy.gem_in("melee", "socket_1").get("kind", "") == "radius"
-			and is_equal_approx(copy.tree_bonus("melee", stat), boosted))
+	check("zapis kamieni drzewka", copy.gem_in("socket_s_bastion").get("kind", "") == "radius"
+			and is_equal_approx(copy.tree_bonus(stat), boosted))
 	copy.free()
 	# zapomnienie drzewka u mędrca - kamienie wracają
 	var npc_script := GDScript.new()
@@ -123,11 +121,9 @@ func _process(_d: float) -> bool:
 	npc.set_script(npc_script)
 	p.stats.add_gold(100000)
 	var rows: Array = load("res://scripts/village_services.gd")._respec(p, npc)["rows"]
-	for row: Dictionary in rows:
-		if row["name"].contains(load("res://scripts/skills.gd").WEAPON_NAMES["melee"]):
-			row["action"].call()
+	rows[0]["action"].call()
 	var radius_back: bool = p.inventory.slots.any(func(s: Dictionary) -> bool: return not s.is_empty() and Gems.is_radius(s["id"]))
-	check("zapomnienie zwraca kamienie", book.gem_in("melee", "socket_1").is_empty() and radius_back and book.tree_bonus("melee", stat) == 0.0)
+	check("zapomnienie zwraca kamienie", book.gem_in("socket_s_bastion").is_empty() and radius_back and book.tree_bonus(stat) == 0.0)
 	npc.free()
 	# kamienie promienia w nagrodzie Kryształu Watry
 	var found := 0

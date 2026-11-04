@@ -1,36 +1,24 @@
 class_name SkillWindow
 extends PanelContainer
-## Okno umiejętności (klawisz K) z zakładkami broni: broń biała, łuk i księga magii.
-## Każda broń ma zwykły atak, aktywną umiejętność, uderzenie, dodatkowy cios (atak zaraz po uderzeniu -
-## wymaga uderzenia) i dwie regeneracje. Odblokowanie i ulepszenia za złoto. Atak, umiejętność aktywną
-## i uderzenie przeciąga się na pasek umiejętności na dole ekranu (Hotbar); przy nazwie widać, pod jakim są klawiszem.
-## Broń z drzewkiem (SkillTree: miecz, łuk i księga magii) zamiast kart pokazuje sieć węzłów (SkillTreeView): punkty umiejętności,
-## szczegóły zaznaczonego węzła z przyciskami "Wybierz" (1 punkt) i "Ulepsz" (punkty umiejętności, umiejętności z wybranym węzłem) i "Cofnij poziom" (złoto).
-## Okno otwiera się na zakładce założonej broni.
+## Okno umiejętności (klawisz K): wspólne drzewko umiejętności wszystkich broni (SkillTree, widok SkillTreeView),
+## punkty umiejętności i obok szczegóły zaznaczonego węzła z przyciskami "Wybierz" (1 punkt), "Ulepsz" (punkty
+## umiejętności, umiejętności z wybranym węzłem) i "Cofnij poziom" (złoto). Umiejętności działają tylko ze swoją
+## bronią (widać to w opisie), premie z węzłów - z każdą. Umiejętność z wybranego węzła (start - zwykły atak)
+## przeciąga się na pasek umiejętności na dole ekranu (Hotbar); w opisie widać, pod jakim jest klawiszem.
 ## Umiejętność aktywna z wybranym węzłem ma gniazda na kamienie wsparcia (Supports): rząd gniazd (klik - wyjmij kamień),
 ## pasujące kamienie z plecaka (klik - osadź), dorabianie gniazda krzesiwem i łączenie 3 takich samych kamieni.
 
-const CARD_WIDTH := 150.0
 ## Miejsce na paski szybkiego wyboru na dole ekranu, którego okno nie zasłania.
 const BOTTOM_RESERVE := 52.0
 ## Wielkość widoku drzewka i szerokość kolumny szczegółów obok.
-const TREE_SIZE := Vector2(400, 204)
+const TREE_SIZE := Vector2(416, 236)
 const DETAILS_WIDTH := 150.0
 
 var _player: Player
-## id umiejętności -> {"title": Label, "level": Label, "effect": Label, "button": Button, "down": Button, "card": PanelContainer}
-var _cards := {}
-## rodzaj broni -> nazwa na karcie zwykłego ataku (z klawiszem z paska)
-var _attack_titles := {}
-## rodzaj broni -> siatka kart / przycisk zakładki
-var _pages := {}
-var _tabs := {}
-var _tab := "melee"
 var _gold_label: Label
 var _status: Label
-## rodzaj broni -> {"view": SkillTreeView, "points": Label, "info": RichTextLabel, "take": Button, "upgrade": Button,
-## "downgrade": Button, ...}
-var _trees := {}
+## {"view": SkillTreeView, "points": Label, "info": RichTextLabel, "take": Button, "upgrade": Button, "downgrade": Button, ...}
+var _tree := {}
 
 
 func _ready() -> void:
@@ -42,37 +30,12 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 4)
 	add_child(box)
 	box.add_child(UiStyle.title(tr("Umiejętności")))
-	var hint := UiStyle.label(tr("Działają tylko z bronią swojego rodzaju. Przeciągnij umiejętność (start drzewka - zwykły atak) na pasek. Combo: umiejętność zaraz po innej działa mocniej."), 7, UiStyle.DIM_COLOR)
+	var hint := UiStyle.label(tr("Jedno drzewko dla wszystkich broni: umiejętności działają ze swoją bronią, premie z węzłów - z każdą. Przeciągnij umiejętność (start - zwykły atak) na pasek."), 7, UiStyle.DIM_COLOR)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.custom_minimum_size.x = TREE_SIZE.x + DETAILS_WIDTH
 	box.add_child(hint)
-
-	var tabs := HBoxContainer.new()
-	tabs.alignment = BoxContainer.ALIGNMENT_CENTER
-	tabs.add_theme_constant_override("separation", 4)
-	box.add_child(tabs)
-	for weapon_type in Skills.WEAPON_TYPES:
-		var tab := Button.new()
-		tab.toggle_mode = true
-		tab.focus_mode = Control.FOCUS_NONE
-		tab.add_theme_font_size_override("font_size", 8)
-		tab.pressed.connect(_show_tab.bind(weapon_type))
-		tabs.add_child(tab)
-		_tabs[weapon_type] = tab
-
-		if SkillTree.has_tree(weapon_type):
-			var tree_page := _make_tree_page(weapon_type)
-			box.add_child(tree_page)
-			_pages[weapon_type] = tree_page
-			continue
-		var page := GridContainer.new()
-		page.columns = 3
-		page.add_theme_constant_override("h_separation", 4)
-		page.add_theme_constant_override("v_separation", 4)
-		box.add_child(page)
-		_pages[weapon_type] = page
-		page.add_child(_make_attack_card(weapon_type))
-		for id in Skills.for_weapon(weapon_type):
-			page.add_child(_make_card(id))
+	box.add_child(_make_tree_page())
 
 	var bottom := HBoxContainer.new()
 	var coin := TextureRect.new()
@@ -85,13 +48,11 @@ func _ready() -> void:
 	_status = UiStyle.label("", 8, UiStyle.DIM_COLOR)
 	bottom.add_child(_status)
 	box.add_child(bottom)
-	_show_tab("melee")
 
 
 func setup(player: Player) -> void:
 	_player = player
-	for weapon_type: String in _trees:
-		_trees[weapon_type]["view"].setup(player, weapon_type)
+	_tree["view"].setup(player)
 	player.hotbar.changed.connect(_refresh)
 	player.skills.changed.connect(_refresh)
 	player.inventory.changed.connect(func() -> void: if visible: _refresh())
@@ -104,16 +65,8 @@ func toggle() -> void:
 	visible = not visible
 	if visible:
 		_status.text = ""
-		_show_tab(_player.stats.weapon_type())
-
-
-func _show_tab(weapon_type: String) -> void:
-	_tab = weapon_type
-	for other: String in _pages:
-		_pages[other].visible = other == weapon_type
-		_tabs[other].set_pressed_no_signal(other == weapon_type)
-	_refresh()
-	_place()
+		_refresh()
+		_place()
 
 
 ## Na środku ekranu, ale nad paskami szybkiego wyboru - żeby dało się na nie przeciągać umiejętności.
@@ -124,8 +77,8 @@ func _place() -> void:
 	position.y = maxf(2.0, minf(position.y, screen.y - size.y - BOTTOM_RESERVE))
 
 
-## Strona drzewka: punkty, a pod nimi sieć węzłów i obok kolumna ze szczegółami zaznaczonego węzła i przyciskami.
-func _make_tree_page(weapon_type: String) -> VBoxContainer:
+## Drzewko: punkty, a pod nimi sieć węzłów i obok kolumna ze szczegółami zaznaczonego węzła i przyciskami.
+func _make_tree_page() -> VBoxContainer:
 	var page := VBoxContainer.new()
 	page.add_theme_constant_override("separation", 3)
 	var points := UiStyle.label("", 8, UiStyle.TITLE_COLOR)
@@ -162,19 +115,19 @@ func _make_tree_page(weapon_type: String) -> VBoxContainer:
 	var take := Button.new()
 	take.focus_mode = Control.FOCUS_NONE
 	take.add_theme_font_size_override("font_size", 8)
-	take.pressed.connect(_take_node.bind(weapon_type))
+	take.pressed.connect(_take_node)
 	column.add_child(take)
 	var upgrade := Button.new()
 	upgrade.focus_mode = Control.FOCUS_NONE
 	upgrade.add_theme_font_size_override("font_size", 8)
-	upgrade.pressed.connect(_upgrade_node.bind(weapon_type))
+	upgrade.pressed.connect(_upgrade_node)
 	column.add_child(upgrade)
 	var downgrade := Button.new()
 	downgrade.focus_mode = Control.FOCUS_NONE
 	downgrade.add_theme_font_size_override("font_size", 8)
 	downgrade.pressed.connect(func() -> void:
-		var node: Dictionary = SkillTree.nodes(weapon_type).get(_trees[weapon_type]["view"].selected_id, {})
-		if node.get("kind", "") == "skill":
+		var node: Dictionary = SkillTree.node(_tree["view"].selected_id)
+		if node.has("skill"):
 			_downgrade(node["skill"]))
 	column.add_child(downgrade)
 	# gniazdo: kamienie z plecaka do osadzenia i wyjmowanie
@@ -187,14 +140,14 @@ func _make_tree_page(weapon_type: String) -> VBoxContainer:
 	unsocket.focus_mode = Control.FOCUS_NONE
 	unsocket.add_theme_font_size_override("font_size", 8)
 	unsocket.text = tr("Wyjmij kamień")
-	unsocket.pressed.connect(_unsocket.bind(weapon_type))
+	unsocket.pressed.connect(_unsocket)
 	column.add_child(unsocket)
 	var destroy := Button.new()
 	destroy.focus_mode = Control.FOCUS_NONE
 	destroy.add_theme_font_size_override("font_size", 8)
 	destroy.text = tr("Zniszcz esencję")
 	destroy.pressed.connect(func() -> void:
-		_player.skills.destroy_essence(weapon_type, _trees[weapon_type]["view"].selected_id)
+		_player.skills.destroy_essence(_tree["view"].selected_id)
 		Sfx.play("ui_click")
 		_show_socket_result("", tr("Esencja rozwiała się.")))
 	column.add_child(destroy)
@@ -213,37 +166,37 @@ func _make_tree_page(weapon_type: String) -> VBoxContainer:
 	var add_socket := Button.new()
 	add_socket.focus_mode = Control.FOCUS_NONE
 	add_socket.add_theme_font_size_override("font_size", 8)
-	add_socket.pressed.connect(_add_support_socket.bind(weapon_type))
+	add_socket.pressed.connect(_add_support_socket)
 	support_box.add_child(add_socket)
 	var combine := Button.new()
 	combine.focus_mode = Control.FOCUS_NONE
 	combine.add_theme_font_size_override("font_size", 8)
 	support_box.add_child(combine)
 	view.selected.connect(func(_id: String) -> void: _refresh())
-	view.refund_requested.connect(func(id: String) -> void: _refund_node(weapon_type, id))
+	view.refund_requested.connect(_refund_node)
 	view.gem_dropped.connect(_show_socket_result)
-	_trees[weapon_type] = {"view": view, "points": points, "info": info, "take": take, "upgrade": upgrade, "downgrade": downgrade,
+	_tree = {"view": view, "points": points, "info": info, "take": take, "upgrade": upgrade, "downgrade": downgrade,
 			"gems": gems, "unsocket": unsocket, "destroy": destroy, "supports": support_box, "socket_row": socket_row,
 			"support_list": support_list, "add_socket": add_socket, "combine": combine}
 	return page
 
 
-func _take_node(weapon_type: String) -> void:
-	var view: SkillTreeView = _trees[weapon_type]["view"]
-	if _player.skills.take(weapon_type, view.selected_id):
+func _take_node() -> void:
+	var view: SkillTreeView = _tree["view"]
+	if _player.skills.take(view.selected_id):
 		Sfx.play("ui_confirm")
-		_status.text = tr("Wybrano: %s") % SkillTree.node_name(weapon_type, view.selected_id)
+		_status.text = tr("Wybrano: %s") % SkillTree.node_name(view.selected_id)
 		_status.add_theme_color_override("font_color", Color(0.6, 1, 0.55))
 
 
 ## Cofa węzeł kliknięty prawym przyciskiem (albo mówi, czemu się nie da).
-func _refund_node(weapon_type: String, id: String) -> void:
-	var reason := _player.skills.refund_reason(weapon_type, id, _player.stats.gold)
+func _refund_node(id: String) -> void:
+	var reason := _player.skills.refund_reason(id, _player.stats.gold)
 	if reason == "":
 		var gold := _player.skills.refund_gold()
-		_player.skills.refund(weapon_type, id, _player.stats)
+		_player.skills.refund(id, _player.stats)
 		Sfx.play("ui_click")
-		_status.text = tr("Cofnięto: %s (-%d zł)") % [SkillTree.node_name(weapon_type, id), gold]
+		_status.text = tr("Cofnięto: %s (-%d zł)") % [SkillTree.node_name(id), gold]
 		_status.add_theme_color_override("font_color", Color(0.6, 1, 0.55))
 	else:
 		Sfx.play("ui_error")
@@ -253,17 +206,17 @@ func _refund_node(weapon_type: String, id: String) -> void:
 
 
 ## Osadza kamień z pola `index` plecaka w zaznaczonym gnieździe (kamień, który tam był, wraca do plecaka).
-func _socket(weapon_type: String, index: int) -> void:
-	var view: SkillTreeView = _trees[weapon_type]["view"]
-	var message := _player.skills.socket_from(_player.inventory, weapon_type, view.selected_id, index)
+func _socket(index: int) -> void:
+	var view: SkillTreeView = _tree["view"]
+	var message := _player.skills.socket_from(_player.inventory, view.selected_id, index)
 	Sfx.play("ui_error" if message != "" else "pickup")
 	_show_socket_result(message)
 
 
-func _unsocket(weapon_type: String) -> void:
-	var view: SkillTreeView = _trees[weapon_type]["view"]
-	var essence := _player.skills.gem_in(weapon_type, view.selected_id).has("essence")
-	var message := _player.skills.unsocket_to(_player.inventory, weapon_type, view.selected_id, _player.stats)
+func _unsocket() -> void:
+	var view: SkillTreeView = _tree["view"]
+	var essence := _player.skills.gem_in(view.selected_id).has("essence")
+	var message := _player.skills.unsocket_to(_player.inventory, view.selected_id, _player.stats)
 	Sfx.play("ui_error" if message != "" else "pickup")
 	_show_socket_result(message, tr("Esencja wróciła do plecaka.") if essence else tr("Kamień wrócił do plecaka."))
 
@@ -275,25 +228,24 @@ func _show_socket_result(message: String, done := "Kamień osadzony w gnieździe
 
 
 ## Umiejętność zaznaczonego węzła ("" - węzeł nie jest umiejętnością).
-func _selected_skill(weapon_type: String) -> String:
-	var node: Dictionary = SkillTree.nodes(weapon_type).get(_trees[weapon_type]["view"].selected_id, {})
-	return node.get("skill", "") if node.get("kind", "") == "skill" else ""
+func _selected_skill() -> String:
+	return SkillTree.node(_tree["view"].selected_id).get("skill", "")
 
 
-func _add_support_socket(weapon_type: String) -> void:
-	var message := _player.skills.add_socket(_selected_skill(weapon_type), _player.inventory)
+func _add_support_socket() -> void:
+	var message := _player.skills.add_socket(_selected_skill(), _player.inventory)
 	Sfx.play("ui_error" if message != "" else "ui_confirm")
 	_show_socket_result(message, tr("Gniazdo dorobione."))
 
 
-func _support_socket(weapon_type: String, index: int) -> void:
-	var message := _player.skills.support_socket_from(_player.inventory, _selected_skill(weapon_type), index)
+func _support_socket(index: int) -> void:
+	var message := _player.skills.support_socket_from(_player.inventory, _selected_skill(), index)
 	Sfx.play("ui_error" if message != "" else "pickup")
 	_show_socket_result(message, tr("Kamień wsparcia osadzony."))
 
 
-func _support_unsocket(weapon_type: String, slot: int) -> void:
-	var message := _player.skills.support_unsocket_to(_player.inventory, _selected_skill(weapon_type), slot)
+func _support_unsocket(slot: int) -> void:
+	var message := _player.skills.support_unsocket_to(_player.inventory, _selected_skill(), slot)
 	Sfx.play("ui_error" if message != "" else "pickup")
 	_show_socket_result(message, tr("Kamień wrócił do plecaka."))
 
@@ -306,10 +258,10 @@ func _support_combine(kind: String) -> void:
 
 ## Gniazda umiejętności zaznaczonego węzła: rząd gniazd, pasujące kamienie z plecaka, dorabianie gniazda, łączenie.
 ## Zwraca linię do opisu ("" - umiejętność bez gniazd).
-func _refresh_supports(weapon_type: String) -> String:
-	var parts: Dictionary = _trees[weapon_type]
+func _refresh_supports() -> String:
+	var parts: Dictionary = _tree
 	var box: VBoxContainer = parts["supports"]
-	var skill := _selected_skill(weapon_type)
+	var skill := _selected_skill()
 	var book := _player.skills
 	box.visible = skill != "" and Supports.has_sockets(skill) and book.level_of(skill) > 0
 	if not box.visible:
@@ -330,7 +282,7 @@ func _refresh_supports(weapon_type: String) -> String:
 				else Supports.describe(gem) + "\n" + tr("Kliknij, żeby wyjąć kamień.")
 		UiStyle.rich_tooltip(button)
 		if not gem.is_empty():
-			button.pressed.connect(_support_unsocket.bind(weapon_type, slot))
+			button.pressed.connect(_support_unsocket.bind(slot))
 		parts["socket_row"].add_child(button)
 	# pasujące kamienie z plecaka i rodzaje, których są co najmniej 3 (łączenie)
 	var counts := {}
@@ -349,7 +301,7 @@ func _refresh_supports(weapon_type: String) -> String:
 		put.expand_icon = true
 		put.tooltip_text = tr("Osadź: %s") % Items.describe(slot["id"])
 		UiStyle.rich_tooltip(put)
-		put.pressed.connect(_support_socket.bind(weapon_type, index))
+		put.pressed.connect(_support_socket.bind(index))
 		parts["support_list"].add_child(put)
 	var add: Button = parts["add_socket"]
 	var cost := Supports.socket_cost(book.sockets_of(skill))
@@ -379,20 +331,21 @@ func _refresh_supports(weapon_type: String) -> String:
 	return line
 
 
-func _upgrade_node(weapon_type: String) -> void:
-	var view: SkillTreeView = _trees[weapon_type]["view"]
-	var node: Dictionary = SkillTree.nodes(weapon_type).get(view.selected_id, {})
-	if node.get("kind", "") == "skill":
-		_upgrade(node["skill"])
+func _upgrade_node() -> void:
+	var skill := _selected_skill()
+	if skill != "":
+		_upgrade(skill)
 
 
-func _refresh_tree(weapon_type: String) -> void:
-	var parts: Dictionary = _trees[weapon_type]
+func _refresh_tree() -> void:
+	var parts: Dictionary = _tree
 	var view: SkillTreeView = parts["view"]
 	var book := _player.skills
 	var progress := book.skill_xp_progress()
 	parts["points"].text = tr("Punkty umiejętności: %d   Pasek umiejętności: %d / %d exp   (cofnięcie punktu: %d zł)") % [
 			book.points_left(), progress[0], progress[1], book.refund_gold()]
+	if book.tree_reset:
+		parts["points"].text += "\n" + tr("Nowe wspólne drzewko: wszystkie punkty umiejętności wróciły do rozdania, a kamienie z gniazd - do plecaka.")
 	if book.migrated_gold >= 0:
 		parts["points"].text += "\n" + tr("Nowe zasady umiejętności: wszystkie punkty wróciły do rozdania, a złoto za kupione poziomy (%d zł) do sakwy.") % book.migrated_gold
 	view.queue_redraw()
@@ -406,14 +359,14 @@ func _refresh_tree(weapon_type: String) -> void:
 		gems.remove_child(child)
 		child.queue_free()
 	var id := view.selected_id
-	var held := book.gem_in(weapon_type, id) if id != "" else {}
+	var held := book.gem_in(id) if id != "" else {}
 	unsocket.visible = not held.is_empty()
 	destroy.visible = held.has("essence")
 	if held.has("essence"):
 		unsocket.text = tr("Wyjmij esencję (%d zł)") % Essences.save_gold(book.character_level)
 	else:
 		unsocket.text = tr("Wyjmij kamień")
-	gems.visible = id != "" and book.can_socket(weapon_type, id)
+	gems.visible = id != "" and book.can_socket(id)
 	if id == "":
 		take.visible = false
 		upgrade.visible = false
@@ -424,7 +377,7 @@ func _refresh_tree(weapon_type: String) -> void:
 		for index in _player.inventory.slots.size():
 			var slot: Dictionary = _player.inventory.slots[index]
 			var essence := not slot.is_empty() and Essences.is_essence(slot["id"])
-			if slot.is_empty() or not (Gems.is_gem(slot["id"]) or (essence and book.is_legendary_socket(weapon_type, id))):
+			if slot.is_empty() or not (Gems.is_gem(slot["id"]) or (essence and book.is_legendary_socket(id))):
 				continue
 			var put := Button.new()
 			put.focus_mode = Control.FOCUS_NONE
@@ -433,14 +386,14 @@ func _refresh_tree(weapon_type: String) -> void:
 			put.expand_icon = true
 			put.tooltip_text = tr("Osadź: %s") % Items.describe(slot["id"])
 			UiStyle.rich_tooltip(put)
-			put.pressed.connect(_socket.bind(weapon_type, index))
+			put.pressed.connect(_socket.bind(index))
 			gems.add_child(put)
 	var text := view.describe(id)
-	var node: Dictionary = SkillTree.nodes(weapon_type)[id]
-	take.visible = not book.has_node_id(weapon_type, id)
+	var node := SkillTree.node(id)
+	take.visible = not book.has_node_id(id) and not SkillTree.is_soon(id)
 	take.text = tr("Wybierz (1 pkt)")
-	take.disabled = not book.can_take(weapon_type, id)
-	upgrade.visible = node["kind"] == "skill" and book.has_node_id(weapon_type, id)
+	take.disabled = not book.can_take(id)
+	upgrade.visible = node.has("skill") and book.has_node_id(id)
 	downgrade.visible = false
 	if upgrade.visible:
 		var skill: String = node["skill"]
@@ -455,102 +408,15 @@ func _refresh_tree(weapon_type: String) -> void:
 		downgrade.visible = back >= 0
 		downgrade.text = tr("Cofnij poziom - %d zł") % back
 		downgrade.disabled = _player.stats.gold < back
-		var key := _key_of(skill, weapon_type) if Hotbar.can_slot_skill(skill) else ""
+		var key := _key_of(skill, Skills.get_data(skill)["weapon"]) if Hotbar.can_slot_skill(skill) else ""
 		if key != "":
 			text += "\n" + tr("Na pasku:") + key
-	var supports_line := _refresh_supports(weapon_type)
+	var supports_line := _refresh_supports()
 	if supports_line != "":
 		text += "\n" + supports_line
 	if gems.visible:
 		text += "\n" + (tr("Kliknij kamień z plecaka, żeby go osadzić:") if gems.get_child_count() > 0 else tr("Nie masz kamieni szlachetnych w plecaku."))
 	parts["info"].text = text
-
-
-func _make_card(id: String) -> PanelContainer:
-	var data := Skills.get_data(id)
-	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.SLOT_BG, UiStyle.SLOT_BORDER, 3))
-	card.mouse_filter = Control.MOUSE_FILTER_PASS
-	card.custom_minimum_size.x = CARD_WIDTH
-
-	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 2)
-	card.add_child(content)
-
-	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 4)
-	content.add_child(header)
-	var icon := TextureRect.new()
-	icon.texture = data["icon"]
-	UiStyle.fit_icon(icon)
-	header.add_child(icon)
-	var names := VBoxContainer.new()
-	names.add_theme_constant_override("separation", 0)
-	header.add_child(names)
-	var title := UiStyle.label(Skills.name_of(id), 8, UiStyle.TEXT_COLOR)
-	names.add_child(title)
-	var level := UiStyle.label("", 7, UiStyle.DIM_COLOR)
-	names.add_child(level)
-
-	var effect := UiStyle.label("", 7, UiStyle.DIM_COLOR)
-	effect.custom_minimum_size.x = CARD_WIDTH - 8.0
-	effect.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	content.add_child(effect)
-
-	var button := Button.new()
-	button.focus_mode = Control.FOCUS_NONE
-	button.add_theme_font_size_override("font_size", 8)
-	button.pressed.connect(_upgrade.bind(id))
-	content.add_child(button)
-	var down := Button.new()
-	down.focus_mode = Control.FOCUS_NONE
-	down.add_theme_font_size_override("font_size", 7)
-	down.pressed.connect(_downgrade.bind(id))
-	content.add_child(down)
-
-	_cards[id] = {"title": title, "level": level, "effect": effect, "button": button, "down": down, "card": card}
-	if Hotbar.can_slot_skill(id):
-		card.set_drag_forwarding(_drag_skill.bind(id, card), Callable(), Callable())
-	return card
-
-
-## Karta zwykłego ataku bronią - zawsze dostępny, da się go przełożyć na dowolny slot paska.
-func _make_attack_card(weapon_type: String) -> PanelContainer:
-	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", UiStyle.panel(UiStyle.SLOT_BG, UiStyle.SLOT_BORDER, 3))
-	card.mouse_filter = Control.MOUSE_FILTER_PASS
-	card.custom_minimum_size.x = CARD_WIDTH
-	card.tooltip_text = tr("%s\nZwykły atak założoną bronią w stronę kursora. Przeciągnij na pasek umiejętności.") % Hotbar.attack_name()
-	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 2)
-	card.add_child(content)
-	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 4)
-	content.add_child(header)
-	var icon := TextureRect.new()
-	icon.texture = Hotbar.ATTACK_ICON
-	UiStyle.fit_icon(icon)
-	header.add_child(icon)
-	var names := VBoxContainer.new()
-	names.add_theme_constant_override("separation", 0)
-	header.add_child(names)
-	var title := UiStyle.label(Hotbar.attack_name(), 8, UiStyle.TEXT_COLOR)
-	names.add_child(title)
-	names.add_child(UiStyle.label(tr("Zawsze dostępny"), 7, UiStyle.DIM_COLOR))
-	var effect := UiStyle.label(tr("Zwykły atak bronią. Zaraz po uderzeniu wyprowadza dodatkowy cios (combo)."), 7, UiStyle.DIM_COLOR)
-	effect.custom_minimum_size.x = CARD_WIDTH - 8.0
-	effect.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	content.add_child(effect)
-	_attack_titles[weapon_type] = title
-	card.set_drag_forwarding(_drag_skill.bind(Hotbar.ATTACK, card), Callable(), Callable())
-	return card
-
-
-## Przeciąganie karty na pasek umiejętności (dane jak w ActionBars: {"skill": id}).
-func _drag_skill(_at: Vector2, id: String, card: Control) -> Variant:
-	card.set_drag_preview(UiStyle.drag_preview(Hotbar.skill_icon(id)))
-	Sfx.play("ui_click")
-	return {"skill": id}
 
 
 ## " [Q]" - pod jakim klawiszem paska leży umiejętność dla danej broni ("" - nie ma jej na pasku).
@@ -590,46 +456,5 @@ func _downgrade(id: String) -> void:
 func _refresh() -> void:
 	if _player == null:
 		return
-	var current_type := _player.stats.weapon_type()
-	for weapon_type: String in _tabs:
-		_tabs[weapon_type].text = tr("%s (założona)") % Skills.weapon_name(weapon_type) if weapon_type == current_type else Skills.weapon_name(weapon_type)
-
-	for weapon_type: String in _attack_titles:
-		_attack_titles[weapon_type].text = Hotbar.attack_name() + _key_of(Hotbar.ATTACK, weapon_type)
-	for weapon_type: String in _trees:
-		_refresh_tree(weapon_type)
-	var gold := _player.stats.gold
-	for id: String in _cards:
-		var parts: Dictionary = _cards[id]
-		var data := Skills.get_data(id)
-		var suffix := tr("  [po uderzeniu]") if data["type"] == "combo" else _key_of(id, data["weapon"])
-		parts["title"].text = Skills.name_of(id) + suffix
-		var level := _player.skills.level_of(id)
-		var cost := _player.skills.next_cost(id)
-		var mana := Skills.mana_cost_text(id)
-		parts["level"].text = (tr("Poz. %d/%d") % [level, Skills.MAX_LEVEL]) + ("  •  " + mana if mana != "" else "")
-
-		var effect := tr("Teraz: %s") % Skills.effect_text(id, level) if level > 0 else tr("Nie odblokowano")
-		if cost >= 0:
-			effect += "\n" + tr("Następny: %s") % Skills.effect_text(id, level + 1)
-		parts["effect"].text = effect
-
-		var button: Button = parts["button"]
-		var learnable := _player.skills.can_learn(id)
-		if cost < 0:
-			button.text = tr("Poziom maksymalny")
-			button.disabled = true
-		elif not learnable:
-			button.text = tr("Wymaga: %s") % Skills.name_of(data["requires"])
-			button.disabled = true
-		else:
-			button.text = (tr("Odblokuj - %d pkt") if level == 0 else tr("Ulepsz - %d pkt")) % cost
-			button.disabled = _player.skills.points_left() < cost
-		var down: Button = parts["down"]
-		var back := _player.skills.downgrade_gold(id)
-		down.visible = back >= 0
-		down.text = tr("Cofnij poziom - %d zł") % back
-		down.disabled = gold < back
-		parts["card"].tooltip_text = "%s\n%s" % [Skills.name_of(id), Skills.description_of(id)]
-		parts["card"].modulate = Color.WHITE if level > 0 else Color(0.85, 0.85, 0.85)
-	_gold_label.text = tr("%d złota") % gold
+	_refresh_tree()
+	_gold_label.text = tr("%d złota") % _player.stats.gold

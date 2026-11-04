@@ -1,7 +1,7 @@
 extends SceneTree
-## Drzewko miecza: poprawne dane (połączenia, każdy węzeł osiągalny), punkty z poziomów, wybieranie tylko obok
-## wybranych, umiejętność odblokowana węzłem, premie pasywne, starsze zapisy (umiejętności kupione za złoto dostają
-## węzły), zapomnienie u mędrca, ataki i czary (szybkość, obrażenia), combo po umiejętności, Mgnienie (skok do wroga,
+## Wspólne drzewko: poprawne dane (połączenia, każdy węzeł osiągalny, każda umiejętność ma węzeł), punkty z paska,
+## wybieranie tylko obok wybranych (puste miejsca drzewko przechodzi samo), umiejętność odblokowana węzłem, premie
+## pasywne z każdą bronią, starsze zapisy (zwrot wszystkich punktów, kamienie z gniazd), zapomnienie u mędrca, ataki i czary (szybkość, obrażenia), combo po umiejętności, Mgnienie (skok do wroga,
 ## mana za skok, trzymanie), wirujące Mgnienie z odnowieniem i Dymne Wybuchy (ładowanie i combo bez ładowania).
 
 var _world: Node
@@ -95,35 +95,75 @@ func _process(_d: float) -> bool:
 
 func _check_data() -> void:
 	var Tree = load("res://scripts/skill_tree.gd")
-	var nodes: Dictionary = Tree.nodes("melee")
+	var nodes: Dictionary = Tree.nodes()
 	var broken := []
 	for id: String in nodes:
 		for link: String in nodes[id]["links"]:
 			if not nodes.has(link):
 				broken.append(link)
-		if id != "start" and Tree.path_to("melee", id).is_empty():
-			broken.append(id)
-	check("drzewko: połączenia i osiągalność", broken.is_empty(), str(broken))
+	# każdy węzeł osiągalny od startu (przez wybrane i puste miejsca)
+	var reached := {"start": true}
+	var queue: Array = ["start"]
+	while not queue.is_empty():
+		for other: String in Tree.neighbors(queue.pop_back()):
+			if not reached.has(other):
+				reached[other] = true
+				queue.append(other)
+	check("drzewko: połączenia i osiągalność", broken.is_empty() and reached.size() == nodes.size(), "%s %d/%d" % [broken, reached.size(), nodes.size()])
+	check("wspólne drzewko: 235 węzłów", nodes.size() == 235, "%d" % nodes.size())
+	var missing := []
+	for skill: String in Skills.DATA:
+		var node: String = Tree.node_for_skill(skill)
+		if node == "" or Tree.is_soon(node):
+			missing.append(skill)
+	check("każda umiejętność ma węzeł", missing.is_empty(), str(missing))
+	var keystones := []
+	for id: String in nodes:
+		if nodes[id]["kind"] == "keystone" and not nodes[id].get("soon", false):
+			keystones.append(id)
+	check("obecne węzły kluczowe", keystones.size() == 12 and "blood_sacrifice" in keystones and "shadow_hunter" in keystones, str(keystones))
 	check("węzeł umiejętności", Tree.node_for_skill("flicker") == "flicker" and Tree.node_for_skill("fireball") == "fireball")
 	check("na pasek", load("res://scripts/hotbar.gd").can_slot_skill("flicker") and load("res://scripts/hotbar.gd").can_slot_skill("smoke_burst"))
+	check("bez regeneracji jako umiejętności", not Skills.DATA.has("warrior_blood") and not Skills.DATA.has("mana_stream"))
+
+
+## Bierze węzły po kolei drogą od startu (puste miejsca drzewko przechodzi samo).
+func _take_path(book, target: String) -> bool:
+	for step: String in load("res://scripts/skill_tree.gd").path_to(target):
+		if not book.has_node_id(step) and not book.take(step):
+			print("  nie da się wziąć: ", step)
+			return false
+	return true
 
 
 func _check_points(p) -> void:
 	var book = p.skills
 	check("punkty na start", book.points_total() == 2 and book.points_left() == 2, "%d" % book.points_left())
-	check("tylko obok wybranego", book.can_take("melee", "whirlwind") and not book.can_take("melee", "flicker"))
+	check("tylko obok wybranego", book.can_take("whirlwind") and book.can_take("multishot") and not book.can_take("flicker"))
 	check("bez węzła nie ma umiejętności", book.level_of("flicker") == 0 and book.next_cost("flicker") < 0)
-	book.take("melee", "whirlwind")
+	book.take("whirlwind")
 	check("węzeł odblokowuje umiejętność", book.level_of("whirlwind") == 1 and book.points_left() == 1)
-	# starszy zapis: umiejętności kupione za złoto dostają węzły (z drogą od startu)
+	check("pustego miejsca nie da się wybrać", not book.can_take("vigor") and not book.take("vigor"))
+	# bardzo stary zapis (sam słownik poziomów): złoto za poziomy 2+ wraca (300 + 600 + 300 + 300)
 	book.load_save_data({"whirlwind": 3, "lunge": 1, "crescent": 2, "fireball": 2})
-	check("starszy zapis", book.level_of("whirlwind") == 3 and book.level_of("crescent") == 2 and book.level_of("fireball") == 2
-			and book.has_node_id("melee", "lunge") and book.needs_migration)
-	# przeliczenie: złoto za poziomy 2+ wraca (300 + 600 + 300 + 300), węzły i poziomy wracają, pasek z całego expa
+	check("starszy zapis", book.needs_migration and book.tree_reset and book.nodes.is_empty())
 	var migrated: Dictionary = book.migrate_old(10000)
-	check("przeliczenie starego zapisu", migrated["gold"] == 1500 and book.levels.is_empty() and book.nodes["melee"].is_empty()
+	check("przeliczenie starego zapisu", migrated["gold"] == 1500 and book.levels.is_empty() and book.nodes.is_empty()
 			and book.earned_points() == 5 and book.points_left() == 7 and not book.needs_migration, str(migrated))
 	check("drugi raz nie przelicza", book.migrate_old(10000).is_empty())
+	# zapis z osobnymi drzewkami broni: wszystkie punkty wracają, kamienie z gniazd do plecaka
+	var ruby := {"kind": "ruby", "cut": 1, "affixes": {"health": 20.0}}
+	book.load_save_data({"skill_xp": 4000, "levels": {"whirlwind": 4, "fireball": 2}, "bonus_points": 1,
+			"nodes": {"melee": ["whirlwind", "phys_1", "socket_1"], "spell": ["fireball"]}, "gems": {"melee": {"socket_1": ruby}}})
+	check("dawne drzewka broni - zwrot punktów", book.tree_reset and not book.needs_migration and book.nodes.is_empty()
+			and book.levels.is_empty() and book.points_left() == 5 and book.reset_gems.size() == 1)
+	var gems: Array = book.take_reset_gems()
+	check("kamienie z dawnych gniazd", gems.size() == 1 and gems[0]["kind"] == "ruby" and book.reset_gems.is_empty())
+	var fresh = load("res://scripts/skill_book.gd").new()
+	fresh.load_save_data(JSON.parse_string(JSON.stringify(book.get_save_data())))
+	check("nowy zapis bez ponownego zwrotu", not fresh.tree_reset and fresh.points_left() == 5)
+	fresh.free()
+	book.load_save_data({"skill_xp": 10000, "tree": 2})
 	# pasek umiejętności: progi ceny punktu
 	var bar = load("res://scripts/skill_book.gd").new()
 	bar.skill_xp = 20 * 2000 + 15000 * 3 + 100
@@ -132,75 +172,82 @@ func _check_points(p) -> void:
 	var gained := [0]
 	book.skill_points_gained.connect(func(count: int) -> void: gained[0] += count)
 	p.stats.add_xp(4100)
-	check("exp napełnia pasek umiejętności", book.skill_xp == 14100 and gained[0] == 2 and book.earned_points() == 7)
+	# awanse postaci też dają punkty (1 co 2 poziomy) - sygnał liczy oba źródła
+	check("exp napełnia pasek umiejętności", book.skill_xp == 14100 and gained[0] == 2 + book.level_points() and book.earned_points() == 7,
+			"%d" % gained[0])
 	# więcej punktów na resztę testu
 	p.stats.level = 20
 	book.character_level = 20
 	book.skill_xp = 19 * 2000
-	book.take("melee", "whirlwind")
-	for id in ["phys_1", "flicker", "smoke_burst", "whirl_reach", "whirl_dmg", "cyclone_eye"]:
-		book.take("melee", id)
-	check("drzewko za punkty z paska", book.has_node_id("melee", "flicker") and book.has_node_id("melee", "smoke_burst")
-			and book.points_left() == 21 - book.points_spent() and book.points_spent() == 7)
+	check("droga przez puste miejsca", _take_path(book, "cyclone_eye") and _take_path(book, "smoke_burst")
+			and _take_path(book, "whirl_dmg") and book.has_node_id("flicker")
+			and not book.has_node_id("vigor"), str(book.nodes.keys()))
+	var spent: int = book.points_spent()
+	check("drzewko za punkty z paska", spent == book.nodes.size() and book.points_left() == 31 - spent, "%d" % spent)
+	check("punkty za poziom postaci", book.level_points() == 10)
+	var gained_level := [0]
+	book.skill_points_gained.connect(func(count: int) -> void: gained_level[0] += count)
+	book.set_character_level(21)
+	book.set_character_level(22)
+	check("awans daje punkt co 2 poziomy", gained_level[0] == 1 and book.level_points() == 11)
+	book.set_character_level(20)
 	# poziomy umiejętności za punkty: 1-5 po 1, 6-10 po 2, 11-15 po 3, 16-20 po 5
 	check("koszty poziomów", Skills.cost("whirlwind", 5) == 1 and Skills.cost("whirlwind", 6) == 2
 			and Skills.cost("whirlwind", 15) == 3 and Skills.cost("whirlwind", 20) == 5 and Skills.MAX_LEVEL == 20)
 	check("ulepszenie za punkty", book.upgrade("whirlwind") and book.upgrade("whirlwind") and book.level_of("whirlwind") == 3
-			and book.points_spent() == 9)
+			and book.points_spent() == spent + 2)
 	check("siła poziomu", Skills.power(5) == 5.0 and Skills.power(20) == 12.5 and Skills.count(20) == 10 and Skills.count(4) == 4)
-	check("węzła z poziomami nie cofa", book.refund_reason("melee", "whirlwind") != "")
+	check("węzła z poziomami nie cofa", book.refund_reason("whirlwind") != "")
 	p.stats.gold = 0
 	check("cofnięcie poziomu wymaga złota", book.downgrade_gold("whirlwind") == 160 and not book.downgrade("whirlwind", p.stats))
 	p.stats.gold = 1000
 	check("cofnięcie poziomu za złoto", book.downgrade("whirlwind", p.stats) and book.level_of("whirlwind") == 2
-			and p.stats.gold == 840 and book.points_spent() == 8)
+			and p.stats.gold == 840 and book.points_spent() == spent + 1)
 	check("poziomu 1 z węzła nie cofa", book.downgrade("whirlwind", p.stats) and book.downgrade_gold("whirlwind") == -1)
 	book.upgrade("whirlwind")
 	book.upgrade("whirlwind")
-	check("premia z węzła", is_equal_approx(p.stats.kind_multiplier(["attack"]), 1.08) and is_equal_approx(p.stats.kind_multiplier(["spell"]), 1.0))
+	# premie z węzłów działają z każdą bronią: Wirujące ostrze (+20% Młynka), Twarda skóra (+8% zdrowia)
+	check("premia z węzła", is_equal_approx(book.tree_bonus("whirl_damage"), 0.2) and is_equal_approx(book.tree_bonus("health_percent"), 0.08)
+			and is_equal_approx(p.stats._bonus("health_percent") - p.stats.equipment.bonus("health_percent") - p.boons.bonus("health_percent"), 0.08))
 	check("ataki i czary", is_equal_approx(p.stats.skill_speed(["attack", "spell"]), (p.stats.attack_speed() + p.stats.cast_speed()) / 2.0))
-	check("węzeł kluczowy", book.has_keystone("melee", "cyclone_eye") and p.whirl_mana_factor() == 2.0)
+	check("węzeł kluczowy", book.has_keystone("cyclone_eye") and p.whirl_mana_factor() == 2.0)
 	p._whirl_time = 2.0
 	check("Oko Cyklonu rozkręca Młynek", is_equal_approx(p.whirl_spin_up(), 1.5))
 	p._whirl_time = 30.0
 	check("Oko Cyklonu - górna granica", is_equal_approx(p.whirl_spin_up(), 2.0))
-	var old_save = load("res://scripts/skill_book.gd").new()
-	old_save.load_save_data({"levels": {}, "nodes": {"melee": ["whirlwind", "phys_1", "whirl_reach", "whirl_dmg", "endless_whirl"]}})
-	check("dawny Nieustający Wir -> Oko Cyklonu", old_save.has_keystone("melee", "cyclone_eye"))
-	old_save.free()
-	book.nodes["melee"].erase("cyclone_eye")
+	book.nodes.erase("cyclone_eye")
 	check("bez węzła Młynek się nie rozkręca", p.whirl_spin_up() == 1.0)
 	# cofanie prawym przyciskiem: liść tak, węzeł, od którego zależą inne - nie
-	var spent: int = book.points_spent()
-	check("nie cofa węzła, od którego zależą inne", not book.refund("melee", "phys_1") and book.refund_reason("melee", "phys_1") != "")
-	check("cofa liść", book.refund("melee", "whirl_dmg") and book.points_spent() == spent - 1 and not book.has_node_id("melee", "whirl_dmg"))
-	book.take("melee", "whirl_dmg")
+	spent = book.points_spent()
+	check("nie cofa węzła, od którego zależą inne", not book.refund("hp_1") and book.refund_reason("hp_1") != "")
+	check("cofa liść", book.refund("smoke_burst") and book.points_spent() == spent - 1 and not book.has_node_id("smoke_burst"))
+	book.take("smoke_burst")
 	p.stats.gold = 100
-	check("cofnięcie węzła wymaga złota", not book.refund("melee", "whirl_dmg", p.stats) and book.has_node_id("melee", "whirl_dmg"))
+	check("cofnięcie węzła wymaga złota", not book.refund("smoke_burst", p.stats) and book.has_node_id("smoke_burst"))
 	p.stats.gold = 1000
-	check("cofnięcie węzła za złoto", book.refund("melee", "whirl_dmg", p.stats) and p.stats.gold == 840)
-	book.take("melee", "whirl_dmg")
+	check("cofnięcie węzła za złoto", book.refund("smoke_burst", p.stats) and p.stats.gold == 840)
+	book.take("smoke_burst")
 	p.stats.unspent_points = 1
 	p.stats.spend_point("strength")
 	var strength: int = p.stats.attributes["strength"]
 	check("cofnięcie punktu atrybutu", p.stats.refund_point("strength") and p.stats.attributes["strength"] == strength - 1 and p.stats.unspent_points == 1)
 	var copy = load("res://scripts/skill_book.gd").new()
 	copy.load_save_data(JSON.parse_string(JSON.stringify(book.get_save_data())))
-	check("zapis drzewka", copy.nodes["melee"].size() == book.nodes["melee"].size() and copy.level_of("whirlwind") == 3)
+	check("zapis drzewka", copy.nodes.size() == book.nodes.size() and copy.level_of("whirlwind") == 3 and not copy.tree_reset)
 	copy.free()
 
 
 func _check_respec(p) -> void:
 	p.stats.add_gold(5000)
 	var gold: int = p.stats.gold
-	var price: int = p.skills.points_in("melee") * p.skills.refund_gold()
+	var price: int = p.skills.points_spent() * p.skills.refund_gold()
 	var offers: Dictionary = load("res://scripts/village_services.gd").offers("respec", p, _FakeNpc.new())
 	var row: Dictionary = offers["rows"][0]
 	check("zapomnienie u mędrca dostępne", row["enabled"] and price > 0)
 	row["action"].call()
-	check("zapomnienie drzewka", p.skills.nodes["melee"].is_empty() and p.skills.level_of("whirlwind") == 0
-			and p.stats.gold == gold - price and p.skills.points_in("melee") == 0)
-	p.skills.take("melee", "whirlwind")
+	check("zapomnienie drzewka", p.skills.nodes.is_empty() and p.skills.level_of("whirlwind") == 0
+			and p.stats.gold == gold - price and p.skills.points_spent() == 0)
+	p.skills.take("whirlwind")
 	check("poziomy też wracają jako punkty", p.skills.level_of("whirlwind") == 1)
 
 

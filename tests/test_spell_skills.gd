@@ -156,31 +156,12 @@ func _process(_d: float) -> bool:
 
 func _check_tree(p) -> void:
 	var Tree = load("res://scripts/skill_tree.gd")
-	var nodes: Dictionary = Tree.nodes("spell")
-	var kinds := {}
-	for id: String in nodes:
-		kinds[nodes[id]["kind"]] = kinds.get(nodes[id]["kind"], 0) + 1
-	check("drzewko księgi: rozmiar", kinds.get("passive", 0) >= 30 and kinds.get("skill", 0) == 13 and kinds.get("keystone", 0) == 4, str(kinds))
-	var broken := []
-	for id: String in nodes:
-		for link: String in nodes[id]["links"]:
-			if not nodes.has(link):
-				broken.append(link)
-		if id != "start" and Tree.path_to("spell", id).is_empty():
-			broken.append(id)
-	check("drzewko księgi: połączenia i osiągalność", broken.is_empty(), str(broken))
+	var nodes: Dictionary = Tree.nodes()
 	var view = load("res://scripts/ui/skill_tree_view.gd").new()
-	view.weapon_type = "spell"
 	var no_icon := nodes.keys().filter(func(id: String) -> bool: return view.icon_of(id) == null)
 	var no_text := nodes.keys().filter(func(id: String) -> bool: return view.describe(id).split("\n").size() < 2)
 	view.free()
-	check("drzewko księgi: ikony i opisy", no_icon.is_empty() and no_text.is_empty(), str(no_icon + no_text))
-	var close := []
-	for a: String in nodes:
-		for b: String in nodes:
-			if a < b and nodes[a]["pos"].distance_to(nodes[b]["pos"]) < 1.2:
-				close.append(a + "/" + b)
-	check("drzewko księgi: węzły nie nachodzą", close.is_empty(), str(close))
+	check("drzewko: ikony i opisy", no_icon.is_empty() and no_text.is_empty(), str(no_icon + no_text))
 	var Skills = load("res://scripts/skills.gd")
 	var missing := []
 	for id in ["frost_lance", "blizzard", "storm_call", "ball_lightning", "meteor", "blink", "mana_shield", "rune_stone"]:
@@ -190,19 +171,20 @@ func _check_tree(p) -> void:
 	p.stats.level = 60
 	p.skills.character_level = 60
 	# punkty umiejętności daje pasek umiejętności, nie poziom postaci
-	p.skills.bonus_points += 60
-	for i in 5:
-		for id: String in nodes:
-			p.skills.take("spell", id)
-	check("całe drzewko księgi do wybrania", p.skills.nodes["spell"].size() == nodes.size() - 1)
+	p.skills.bonus_points += 300
+	for id: String in ["fireball", "chain_lightning", "thunder_wave", "frost_lance", "blizzard", "storm_call", "ball_lightning", "meteor",
+			"blink", "mana_shield", "rune_stone", "harmony", "full_power", "echo_runes", "fire_dmg", "chain_more", "lance_pierce",
+			"blizzard_time", "storm_time", "rune_power", "fire_charge", "burn_dmg", "blood_sacrifice"]:
+		for step: String in Tree.path_to(id):
+			p.skills.take(step)
+	var lacking := ["fireball", "harmony", "full_power", "echo_runes", "rune_stone"].filter(func(id: String) -> bool: return not p.skills.has_node_id(id))
+	check("czary księgi do wybrania", lacking.is_empty(), str(lacking))
 
 
-## Starsze zapisy: czary kupione za złoto dostają węzły.
 ## Łańcuch błyskawic: bez odnowienia, tylko czas rzucania skracany szybkością rzucania; trzymany klawisz rzuca dalej.
 func _check_chain(p) -> void:
 	var Sk = load("res://scripts/skills.gd")
-	if not p.skills.nodes["spell"].has("chain_lightning"):
-		p.skills.nodes["spell"].append("chain_lightning")
+	p.skills.grant_node("chain_lightning")
 	check("łańcuch jako uderzenie księgi", p.skills.strike_for("spell") == "chain_lightning")
 	_ready_to_cast(p)
 	p._strike_cooldown = 0.0
@@ -233,9 +215,9 @@ func _check_chain(p) -> void:
 
 func _check_migration() -> void:
 	var book = load("res://scripts/skill_book.gd").new()
-	book.load_save_data({"levels": {"fireball": 3, "chain_lightning": 1, "thunder_wave": 1}, "nodes": {"melee": []}})
-	check("czary ze starszego zapisu", book.has_node_id("spell", "fireball") and book.has_node_id("spell", "thunder_wave")
-			and book.level_of("fireball") == 3)
+	book.load_save_data({"skill_xp": 0, "levels": {"fireball": 3, "chain_lightning": 1, "thunder_wave": 1}, "nodes": {"spell": ["fireball"]}})
+	check("czary ze starszego zapisu - punkty wracają", book.tree_reset and not book.has_node_id("fireball") and book.level_of("fireball") == 0
+			and book.points_left() == book.points_total())
 	book.free()
 
 

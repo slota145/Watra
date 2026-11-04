@@ -66,7 +66,8 @@ func _process(_d: float) -> bool:
 		# punkty umiejętności daje pasek umiejętności, nie poziom postaci
 		p.skills.bonus_points += 5
 		for node in ["lunge", "crescent", "whirlwind"]:
-			p.skills.take("melee", node)
+			for step in load("res://scripts/skill_tree.gd").path_to(node):
+				p.skills.take(step)
 		p.mana = 100.0
 		p._unhandled_input(_action("skill_q", true))
 		p._input(_action("skill_q", false))

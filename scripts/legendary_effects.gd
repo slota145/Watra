@@ -299,9 +299,9 @@ func _effect_icon(kind: String) -> Texture2D:
 		var essence: Variant = Items.get_data(_player.equipment.get_item(slot)).get("essence_socket")
 		if essence is Dictionary and essence.get("kind", "") == kind:
 			return Essences.ICONS[essence["group"]]
-	var tree := _player.skills.essence_in(_player.stats.weapon_type())
-	if tree.get("kind", "") == kind:
-		return Essences.ICONS[tree["group"]]
+	for tree: Dictionary in _player.skills.essences():
+		if tree.get("kind", "") == kind:
+			return Essences.ICONS[tree["group"]]
 	return null
 
 

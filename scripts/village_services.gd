@@ -134,31 +134,27 @@ static func _marks(player: Player, npc: Node) -> Dictionary:
 			"hint": Lang.t("Znaki dostajesz za udział w wydarzeniach w świecie (najazdy, czempioni, meteoryty, polowania) - więcej za wyższe miejsce w rankingu. Masz: %d.") % have}
 
 
-## Zapomnienie drzewka umiejętności u mędrca: wybrane węzły i poziomy umiejętności broni wracają jako punkty
-## za złoto (SkillBook.refund_gold za każdy punkt).
+## Zapomnienie wspólnego drzewka umiejętności u mędrca: wszystkie wybrane węzły i poziomy umiejętności wracają
+## jako punkty za złoto (SkillBook.refund_gold za każdy punkt).
 static func _respec(player: Player, npc: Node) -> Dictionary:
-	var rows: Array = []
-	for weapon_type in Skills.WEAPON_TYPES:
-		if not SkillTree.has_tree(weapon_type):
-			continue
-		var spent: int = player.skills.points_in(weapon_type)
-		var gold: int = spent * player.skills.refund_gold()
-		rows.append({
-			"name": Lang.t("Drzewko: %s") % Lang.t(Skills.WEAPON_NAMES[weapon_type]), "icon": Hotbar.ATTACK_ICON,
-			"text": Lang.t("Mędrzec pomoże zapomnieć wybrane węzły i poziomy umiejętności tej broni - wrócą jako punkty umiejętności, a kamienie z gniazd wrócą do plecaka."),
-			"cost": Lang.t("Wydane punkty: %d   Złoto: %d") % [spent, gold],
-			"enabled": spent > 0 and player.stats.gold >= gold, "state": "", "button": Lang.t("Zapomnij"),
-			"action": func() -> String:
-				player.stats.add_gold(-gold)
-				# kamienie z gniazd drzewka wracają do plecaka (gdy pełny - do magazynu)
-				for recipe: Dictionary in player.skills.reset_tree(weapon_type):
-					var gem_id := Essences.register(recipe.duplicate(true)) if recipe.has("essence") else Gems.register(recipe.duplicate(true))
-					if player.inventory.add_item(gem_id, 1) > 0:
-						player.storage.add_item(gem_id, 1)
-				Sfx.play("magic")
-				npc.say([Lang.t("Pamięć ciała jest krótsza, niż myślisz."), Lang.t("Zacznij ścieżkę od nowa."), Lang.t("Niech ostrze znajdzie nową drogę.")].pick_random())
-				return Lang.t("Zapomniano drzewko: %s") % Lang.t(Skills.WEAPON_NAMES[weapon_type]),
-		})
+	var spent: int = player.skills.points_spent()
+	var gold: int = spent * player.skills.refund_gold()
+	var rows: Array = [{
+		"name": Lang.t("Drzewko umiejętności"), "icon": Hotbar.ATTACK_ICON,
+		"text": Lang.t("Mędrzec pomoże zapomnieć wszystkie wybrane węzły i poziomy umiejętności - wrócą jako punkty umiejętności, a kamienie z gniazd wrócą do plecaka."),
+		"cost": Lang.t("Wydane punkty: %d   Złoto: %d") % [spent, gold],
+		"enabled": spent > 0 and player.stats.gold >= gold, "state": "", "button": Lang.t("Zapomnij"),
+		"action": func() -> String:
+			player.stats.add_gold(-gold)
+			# kamienie z gniazd drzewka wracają do plecaka (gdy pełny - do magazynu)
+			for recipe: Dictionary in player.skills.reset_tree():
+				var gem_id := Essences.register(recipe.duplicate(true)) if recipe.has("essence") else Gems.register(recipe.duplicate(true))
+				if player.inventory.add_item(gem_id, 1) > 0:
+					player.storage.add_item(gem_id, 1)
+			Sfx.play("magic")
+			npc.say([Lang.t("Pamięć ciała jest krótsza, niż myślisz."), Lang.t("Zacznij ścieżkę od nowa."), Lang.t("Niech ostrze znajdzie nową drogę.")].pick_random())
+			return Lang.t("Zapomniano drzewko umiejętności"),
+	}]
 	return {"title": Lang.t("Zapomnienie umiejętności"), "rows": rows,
 			"hint": Lang.t("Punkty umiejętności daje pasek umiejętności (napełnia się doświadczeniem). Węzły i poziomy wybierasz w oknie umiejętności (K).")}
 

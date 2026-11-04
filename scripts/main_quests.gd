@@ -318,7 +318,6 @@ static func _has_essence(player: Player) -> bool:
 		var socket: Variant = Items.get_data(player.equipment.get_item(slot)).get("essence_socket")
 		if socket is Dictionary and not socket.is_empty():
 			return true
-	for weapon_type: String in player.skills.tree_gems:
-		if not player.skills.essence_in(weapon_type).is_empty():
-			return true
+	if not player.skills.essences().is_empty():
+		return true
 	return false

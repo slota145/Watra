@@ -44,12 +44,7 @@ func _give(p, skill: String, gems: Array) -> void:
 
 
 func _unlock(p, skill: String) -> void:
-	var weapon: String = Skills.get_data(skill)["weapon"]
-	var node: String = SkillTree.node_for_skill(skill)
-	if not p.skills.nodes.has(weapon):
-		p.skills.nodes[weapon] = {}
-	for step in SkillTree.path_to(weapon, node):
-		p.skills.nodes[weapon][step] = true
+	p.skills.grant_node(SkillTree.node_for_skill(skill))
 	p.skills.levels[skill] = maxi(int(p.skills.levels.get(skill, 0)), 1)
 
 
