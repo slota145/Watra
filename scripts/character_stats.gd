@@ -35,6 +35,8 @@ const DAMAGE_PER_ATTRIBUTE := 0.01
 ## Premie do obrażeń umiejętności z tagiem formy (Skills.TAGS) i najwyższa szansa na stan od żywiołu.
 const FORM_DAMAGE := {"projectile": "projectile_damage", "hit": "hit_damage", "area": "area_damage", "dot": "dot_damage"}
 const MAX_AILMENT_CHANCE := 0.5
+## Żywioły, które kamienie wsparcia dodają do trafień (added_<żywioł>).
+const SUPPORT_ELEMENTS: Array[String] = ["fire", "ice", "lightning"]
 ## Mnożnik wszystkich obrażeń według rodzaju broni: łuk i księga trzymają wrogów na dystansie (bezpieczniej), ale bez
 ## tego zabijały o połowę wolniej niż miecz (tests/endgame_probe.gd, tryby bow_kite / spell_kite, listopad 2026).
 const WEAPON_DAMAGE := {"melee": 1.0, "bow": 1.25, "spell": 1.25}
@@ -145,7 +147,7 @@ func skill_speed(tags: Array) -> float:
 		speed = (attack_speed() + cast_speed()) / 2.0
 	elif spell:
 		speed = cast_speed()
-	return speed * weapon_speed()
+	return speed * weapon_speed() * maxf(1.0 + support(tags, "speed"), 0.1)
 
 
 ## Mnożnik obrażeń z premii do rodzaju (obrażenia fizyczne dla ataków, magiczne dla czarów, atak i czar - obie)
@@ -168,17 +170,42 @@ func kind_multiplier(tags: Array) -> float:
 	for tag: String in FORM_DAMAGE:
 		if tag in tags:
 			total += _bonus(FORM_DAMAGE[tag])
-	return total
+	# kamienie wsparcia umiejętności (Supports): obrażenia w czasie, dodane żywioły, mnożnik "more"
+	var skill := Skills.skill_of(tags)
+	if skill == "" or skill_book == null:
+		return total
+	if "dot" in tags:
+		total += skill_book.support_value(skill, "dot_damage")
+	var added := 0.0
+	for element: String in SUPPORT_ELEMENTS:
+		added += skill_book.support_value(skill, "added_" + element)
+	return total * (1.0 + added) * skill_book.support_more(skill)
+
+
+## Premia `stat` kamieni wsparcia umiejętności, do której należą tagi (Skills.skill_of); 0 bez znacznika.
+func support(tags: Array, stat: String) -> float:
+	var skill := Skills.skill_of(tags)
+	return skill_book.support_value(skill, stat) if skill != "" and skill_book != null else 0.0
+
+
+## Żywioły dodane do trafienia przez kamienie wsparcia (Żarowe / Mroźne / Burzowe Ostrze).
+func support_elements(tags: Array) -> Array[String]:
+	var found: Array[String] = []
+	for element: String in SUPPORT_ELEMENTS:
+		if support(tags, "added_" + element) > 0.0:
+			found.append(element)
+	return found
 
 
 ## Szansa na stan od żywiołu (Elements.AILMENTS: ignite / freeze / shock), najwyżej MAX_AILMENT_CHANCE.
-func ailment_chance(ailment: String) -> float:
-	return minf(_bonus(ailment + "_chance"), MAX_AILMENT_CHANCE)
+## Kamienie wsparcia umiejętności (tagi ze znacznikiem) dokładają swoją szansę.
+func ailment_chance(ailment: String, tags: Array = []) -> float:
+	return minf(_bonus(ailment + "_chance") + support(tags, ailment + "_chance"), MAX_AILMENT_CHANCE)
 
 
-## Premia do obrażeń w czasie (także podpalenia).
-func dot_bonus() -> float:
-	return _bonus("dot_damage")
+## Premia do obrażeń w czasie (także podpalenia; z kamieniami wsparcia umiejętności - też ich premie).
+func dot_bonus(tags: Array = []) -> float:
+	return _bonus("dot_damage") + support(tags, "dot_damage") + support(tags, "ignite_damage")
 
 
 ## Przebicie odporności potworów (ułamek odejmowany od ich odporności na żywioły).
@@ -252,8 +279,9 @@ func potion_multiplier() -> float:
 	return 1.0 + _bonus("potion_power")
 
 
-func area_multiplier() -> float:
-	return 1.0 + _bonus("area")
+## Z tagami umiejętności (Skills.tags) - także premie obszaru jej kamieni wsparcia.
+func area_multiplier(tags: Array = []) -> float:
+	return 1.0 + _bonus("area") + support(tags, "area")
 
 
 ## Mnożnik obrażeń ciosu krytycznego (bazowo 1,5).
@@ -393,6 +421,9 @@ func xp_to_next_level() -> int:
 
 func add_xp(amount: int) -> void:
 	xp += amount
+	# kamienie wsparcia w gniazdach umiejętności rosną razem z postacią (Supports.XP_SHARE)
+	if skill_book != null and amount > 0:
+		skill_book.add_support_xp(amount)
 	var leveled := false
 	while xp >= xp_to_next_level():
 		xp -= xp_to_next_level()

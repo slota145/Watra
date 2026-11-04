@@ -1,5 +1,5 @@
 extends SceneTree
-## Drzewko Watry (scripts/watra_tree.gd): układ (12 gałęzi, wszystkie węzły osiągalne, węzły się nie nakładają),
+## Drzewko Watry (scripts/watra_tree.gd): układ (13 gałęzi, wszystkie węzły osiągalne, węzły się nie nakładają),
 ## wybieranie tylko obok wybranych i za wolne punkty, cofanie tylko węzłów z końca ścieżki, 3 zakładki z osobnymi pulami,
 ## premie (wagi, wymuszone mechaniki, moc razem z bożkami, mnożniki lochów, bożki, Błogosławieństwo), zapis zakładek;
 ## potem okno drzewka w HUD: wybieranie, cofanie za złoto, czyszczenie zakładki, zmiana zakładki i dodatkowe sloty
@@ -32,7 +32,7 @@ func check(name: String, ok: bool, info := "") -> void:
 
 func _check_layout() -> void:
 	var nodes: Dictionary = _T.nodes()
-	check("12 gałęzi po 11 węzłów i start", nodes.size() == 12 * 11 + 1, str(nodes.size()))
+	check("13 gałęzi po 11 węzłów i start", nodes.size() == 13 * 11 + 1, str(nodes.size()))
 	check("więcej węzłów niż punktów z całej mapy", nodes.size() - 1 > load("res://scripts/nawia_map.gd").node_count())
 	var all: Array = nodes.keys()
 	all.erase(_T.START)

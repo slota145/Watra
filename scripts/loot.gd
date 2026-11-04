@@ -467,9 +467,11 @@ static func export_used(ids: Array) -> Dictionary:
 static func import(data: Dictionary) -> void:
 	for id: String in data:
 		var recipe: Dictionary = data[id]
-		if recipe.has("gem") or recipe.has("essence") or recipe.has("talisman"):
+		if recipe.has("gem") or recipe.has("essence") or recipe.has("talisman") or recipe.has("support"):
 			if recipe.has("gem"):
 				Gems.register(recipe, id)
+			elif recipe.has("support"):
+				Supports.register(recipe, id)
 			elif recipe.has("talisman"):
 				Talismans.register(recipe, id)
 			else:

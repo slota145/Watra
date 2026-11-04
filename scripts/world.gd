@@ -693,6 +693,8 @@ func enter_dungeon(settings: Dictionary) -> void:
 func open_town_portal(at: Vector2) -> void:
 	if _traveling or _dungeon == null or _dungeon.pinnacle != "":
 		return
+	# Mgła Nawii kończy się przy wyjściu portalem - Skrzynia Mgły zostaje w lochu razem z resztą łupu na ziemi
+	_dungeon.end_mists("portal")
 	var settings := _dungeon_config.duplicate(true)
 	settings.erase("portal")
 	player.town_portal = {"config": settings, "state": _dungeon.portal_state(at)}

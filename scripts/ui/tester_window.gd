@@ -14,6 +14,7 @@ const DEV_KEYS := [
 	["F3", "kamienie zaklinające, uświęcone i miłosierdzia"],
 	["F4", "drewno i kamień na budowy"],
 	["F5", "wydarzenie w świecie w tej krainie"],
+	["F6", "kamienie wsparcia i krzesiwa na gniazda umiejętności"],
 	["L", "encyklopedia - w trybie deweloperskim drugie kliknięcie przedmiotu daje go do plecaka"],
 	["", "w trybie deweloperskim lochy mają wszystkie mechaniki, a bossowie dają lepszy łup"],
 ]

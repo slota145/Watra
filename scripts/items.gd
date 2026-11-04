@@ -696,6 +696,16 @@ const DATA := {
 		"description": "Złoty znak za udział w wydarzeniach w świecie (najazdy, czempioni, meteoryty, polowania). Pisarz gildii Gniewko wymienia znaki na rzadkie rzeczy.",
 		"icon": preload("res://assets/items/victory_mark.png"), "sell_price": 5,
 	},
+	"nawia_flint": {
+		"name": "Krzesiwo Nawii",
+		"description": "Krzemień, który krzesze sine iskry Nawii. W oknie umiejętności (K) dorabia gniazdo na kamień wsparcia (1., 2., 3. i 4. gniazdo kosztuje 1, 2, 4 i 8 krzesiw). Wypada ze Skrzyni Mgły Nawii.",
+		"icon": preload("res://assets/items/nawia_flint.png"), "sell_price": 30,
+	},
+	"great_flint": {
+		"name": "Wielkie Krzesiwo",
+		"description": "Prastary krzemień z płonącą żyłą. Tylko nim da się dorobić umiejętności piąte gniazdo na kamień wsparcia (okno K). Wypada z gęstej Mgły Nawii (od gęstości 8) i ze skarbców bogów.",
+		"icon": preload("res://assets/items/great_flint.png"), "sell_price": 300,
+	},
 	"crystal_heart": {
 		"name": "Serce Kryształu",
 		"description": "Bijące żarem jądro Kryształu Watry (lochy od 3. stopnia). Kowal Bronisław wykuwa nim gniazdo na esencję legendy.",
@@ -881,6 +891,8 @@ static func _retranslate(id: String, item: Dictionary) -> void:
 	var recipe: Dictionary = item.get("recipe", {})
 	if recipe.has("gem"):
 		Gems.register(recipe, id)
+	elif recipe.has("support"):
+		Supports.register(recipe, id)
 	elif recipe.has("essence"):
 		Essences.register(recipe, id)
 	elif recipe.has("talisman"):
@@ -1051,6 +1063,8 @@ static func describe(id: String, enchant := 0, against := {}) -> String:
 		lines.append(Lang.t("%s - Kamień szlachetny") % Lang.t(RARITY_NAMES.get(item.get("rarity", "magic"), "")))
 	if item.has("idol"):
 		lines.append_array(Idols.effect_lines(id))
+	if item.has("support"):
+		lines.append_array(Array(Supports.describe(item["recipe"]).split("\n")).slice(1))
 	if item.has("talisman"):
 		var size: Vector2i = Talismans.size_of(id)
 		lines.append(Lang.t("%s - Talizman %dx%d") % [Lang.t(RARITY_NAMES.get(item.get("rarity", "magic"), "")), size.x, size.y])

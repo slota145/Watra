@@ -7,6 +7,8 @@ extends PanelContainer
 ## Broń z drzewkiem (SkillTree: miecz, łuk i księga magii) zamiast kart pokazuje sieć węzłów (SkillTreeView): punkty umiejętności,
 ## szczegóły zaznaczonego węzła z przyciskami "Wybierz" (1 punkt) i "Ulepsz" (złoto, umiejętności z wybranym węzłem).
 ## Okno otwiera się na zakładce założonej broni.
+## Umiejętność aktywna z wybranym węzłem ma gniazda na kamienie wsparcia (Supports): rząd gniazd (klik - wyjmij kamień),
+## pasujące kamienie z plecaka (klik - osadź), dorabianie gniazda krzesiwem i łączenie 3 takich samych kamieni.
 
 const CARD_WIDTH := 150.0
 ## Miejsce na paski szybkiego wyboru na dole ekranu, którego okno nie zasłania.
@@ -187,11 +189,33 @@ func _make_tree_page(weapon_type: String) -> VBoxContainer:
 		Sfx.play("ui_click")
 		_show_socket_result("", tr("Esencja rozwiała się.")))
 	column.add_child(destroy)
+	# gniazda umiejętności na kamienie wsparcia (Supports)
+	var support_box := VBoxContainer.new()
+	support_box.add_theme_constant_override("separation", 2)
+	column.add_child(support_box)
+	var socket_row := HBoxContainer.new()
+	socket_row.add_theme_constant_override("separation", 2)
+	support_box.add_child(socket_row)
+	var support_list := GridContainer.new()
+	support_list.columns = 6
+	support_list.add_theme_constant_override("h_separation", 2)
+	support_list.add_theme_constant_override("v_separation", 2)
+	support_box.add_child(support_list)
+	var add_socket := Button.new()
+	add_socket.focus_mode = Control.FOCUS_NONE
+	add_socket.add_theme_font_size_override("font_size", 8)
+	add_socket.pressed.connect(_add_support_socket.bind(weapon_type))
+	support_box.add_child(add_socket)
+	var combine := Button.new()
+	combine.focus_mode = Control.FOCUS_NONE
+	combine.add_theme_font_size_override("font_size", 8)
+	support_box.add_child(combine)
 	view.selected.connect(func(_id: String) -> void: _refresh())
 	view.refund_requested.connect(func(id: String) -> void: _refund_node(weapon_type, id))
 	view.gem_dropped.connect(_show_socket_result)
 	_trees[weapon_type] = {"view": view, "points": points, "info": info, "take": take, "upgrade": upgrade,
-			"gems": gems, "unsocket": unsocket, "destroy": destroy}
+			"gems": gems, "unsocket": unsocket, "destroy": destroy, "supports": support_box, "socket_row": socket_row,
+			"support_list": support_list, "add_socket": add_socket, "combine": combine}
 	return page
 
 
@@ -240,6 +264,111 @@ func _show_socket_result(message: String, done := "Kamień osadzony w gnieździe
 	_refresh()
 
 
+## Umiejętność zaznaczonego węzła ("" - węzeł nie jest umiejętnością).
+func _selected_skill(weapon_type: String) -> String:
+	var node: Dictionary = SkillTree.nodes(weapon_type).get(_trees[weapon_type]["view"].selected_id, {})
+	return node.get("skill", "") if node.get("kind", "") == "skill" else ""
+
+
+func _add_support_socket(weapon_type: String) -> void:
+	var message := _player.skills.add_socket(_selected_skill(weapon_type), _player.inventory)
+	Sfx.play("ui_error" if message != "" else "ui_confirm")
+	_show_socket_result(message, tr("Gniazdo dorobione."))
+
+
+func _support_socket(weapon_type: String, index: int) -> void:
+	var message := _player.skills.support_socket_from(_player.inventory, _selected_skill(weapon_type), index)
+	Sfx.play("ui_error" if message != "" else "pickup")
+	_show_socket_result(message, tr("Kamień wsparcia osadzony."))
+
+
+func _support_unsocket(weapon_type: String, slot: int) -> void:
+	var message := _player.skills.support_unsocket_to(_player.inventory, _selected_skill(weapon_type), slot)
+	Sfx.play("ui_error" if message != "" else "pickup")
+	_show_socket_result(message, tr("Kamień wrócił do plecaka."))
+
+
+func _support_combine(kind: String) -> void:
+	var message := Supports.combine(_player.inventory, kind)
+	Sfx.play("ui_error" if message != "" else "ui_confirm")
+	_show_socket_result(message, tr("Kamienie połączone w jeden, silniejszy."))
+
+
+## Gniazda umiejętności zaznaczonego węzła: rząd gniazd, pasujące kamienie z plecaka, dorabianie gniazda, łączenie.
+## Zwraca linię do opisu ("" - umiejętność bez gniazd).
+func _refresh_supports(weapon_type: String) -> String:
+	var parts: Dictionary = _trees[weapon_type]
+	var box: VBoxContainer = parts["supports"]
+	var skill := _selected_skill(weapon_type)
+	var book := _player.skills
+	box.visible = skill != "" and Supports.has_sockets(skill) and book.level_of(skill) > 0
+	if not box.visible:
+		return ""
+	for key in ["socket_row", "support_list"]:
+		for child in (parts[key] as Node).get_children():
+			child.get_parent().remove_child(child)
+			child.queue_free()
+	var gems := book.support_gems(skill)
+	for slot in gems.size():
+		var gem: Dictionary = gems[slot]
+		var button := Button.new()
+		button.focus_mode = Control.FOCUS_NONE
+		button.custom_minimum_size = Vector2(20, 20)
+		button.expand_icon = true
+		button.icon = Gems.SOCKET_ICON if gem.is_empty() else Supports.icon(gem["support"])
+		button.tooltip_text = tr("Puste gniazdo - kliknij pasujący kamień poniżej albo upuść go na umiejętność w drzewku.") if gem.is_empty() \
+				else Supports.describe(gem) + "\n" + tr("Kliknij, żeby wyjąć kamień.")
+		UiStyle.rich_tooltip(button)
+		if not gem.is_empty():
+			button.pressed.connect(_support_unsocket.bind(weapon_type, slot))
+		parts["socket_row"].add_child(button)
+	# pasujące kamienie z plecaka i rodzaje, których są co najmniej 3 (łączenie)
+	var counts := {}
+	for index in _player.inventory.slots.size():
+		var slot: Dictionary = _player.inventory.slots[index]
+		if slot.is_empty() or not Supports.is_support(slot["id"]):
+			continue
+		var kind: String = Items.get_data(slot["id"])["support"]["kind"]
+		counts[kind] = int(counts.get(kind, 0)) + 1
+		if not Supports.fits(kind, skill) or gems.is_empty():
+			continue
+		var put := Button.new()
+		put.focus_mode = Control.FOCUS_NONE
+		put.custom_minimum_size = Vector2(20, 20)
+		put.icon = Items.get_data(slot["id"])["icon"]
+		put.expand_icon = true
+		put.tooltip_text = tr("Osadź: %s") % Items.describe(slot["id"])
+		UiStyle.rich_tooltip(put)
+		put.pressed.connect(_support_socket.bind(weapon_type, index))
+		parts["support_list"].add_child(put)
+	var add: Button = parts["add_socket"]
+	var cost := Supports.socket_cost(book.sockets_of(skill))
+	add.visible = not cost.is_empty()
+	if add.visible:
+		var have := _player.inventory.count_of(cost[0])
+		add.text = tr("Dorób gniazdo: %s x%d (masz %d)") % [Items.short_name(cost[0]), cost[1], have]
+		add.disabled = have < int(cost[1])
+	var combine: Button = parts["combine"]
+	combine.visible = false
+	for connection in combine.pressed.get_connections():
+		combine.pressed.disconnect(connection["callable"])
+	for kind: String in Supports.ORDER:
+		if int(counts.get(kind, 0)) >= Supports.COMBINE_COUNT:
+			combine.visible = true
+			combine.text = tr("Połącz 3: %s (+%d poz.)") % [Supports.name_of(kind), Supports.COMBINE_LEVELS]
+			combine.pressed.connect(_support_combine.bind(kind))
+			break
+	var line := tr("Gniazda: %d/%d") % [gems.size(), Supports.MAX_SOCKETS]
+	var mana := book.support_mana(skill)
+	if mana > 1.0:
+		line += "  " + tr("koszt many x%s") % Skills.decimal(mana, 2)
+	if gems.is_empty():
+		line += "\n" + tr("Dorób gniazdo krzesiwem, żeby osadzić kamień wsparcia.")
+	elif parts["support_list"].get_child_count() == 0:
+		line += "\n" + tr("Nie masz pasujących kamieni wsparcia.")
+	return line
+
+
 func _upgrade_node(weapon_type: String) -> void:
 	var view: SkillTreeView = _trees[weapon_type]["view"]
 	var node: Dictionary = SkillTree.nodes(weapon_type).get(view.selected_id, {})
@@ -273,6 +402,7 @@ func _refresh_tree(weapon_type: String) -> void:
 	if id == "":
 		take.visible = false
 		upgrade.visible = false
+		parts["supports"].visible = false
 		return
 	if gems.visible:
 		for index in _player.inventory.slots.size():
@@ -307,6 +437,9 @@ func _refresh_tree(weapon_type: String) -> void:
 		var key := _key_of(skill, weapon_type) if Hotbar.can_slot_skill(skill) else ""
 		if key != "":
 			text += "\n" + tr("Na pasku:") + key
+	var supports_line := _refresh_supports(weapon_type)
+	if supports_line != "":
+		text += "\n" + supports_line
 	if gems.visible:
 		text += "\n" + (tr("Kliknij kamień z plecaka, żeby go osadzić:") if gems.get_child_count() > 0 else tr("Nie masz kamieni szlachetnych w plecaku."))
 	parts["info"].text = text

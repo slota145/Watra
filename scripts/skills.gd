@@ -485,10 +485,30 @@ const TAG_COLORS := {
 }
 ## Tag atrybutu -> atrybut postaci (CharacterStats.attributes).
 const ATTRIBUTE_TAGS := {"str": "strength", "dex": "dexterity", "int": "intelligence"}
+## Znacznik umiejętności na końcu listy tagów (tags, skill_of).
+const SKILL_MARK := "@"
+static var _marked := {}
 
 
+## Tagi umiejętności z jej znacznikiem na końcu (SKILL_MARK + id): po nim CharacterStats i Player.hit_enemy rozpoznają,
+## czyje kamienie wsparcia (Supports) liczyć. Znacznik nie jest tagiem - opisy biorą tylko tagi z TAG_GROUPS.
 static func tags(id: String) -> Array:
-	return TAGS.get(id, [])
+	if not TAGS.has(id):
+		return []
+	if not _marked.has(id):
+		var list: Array = TAGS[id].duplicate()
+		list.append(SKILL_MARK + id)
+		list.make_read_only()
+		_marked[id] = list
+	return _marked[id]
+
+
+## Umiejętność, do której należą tagi (znacznik z tags); "" - zwykły atak albo tagi bez znacznika.
+static func skill_of(list: Array) -> String:
+	if list.is_empty():
+		return ""
+	var last = list[list.size() - 1]
+	return (last as String).substr(1) if last is String and (last as String).begins_with(SKILL_MARK) else ""
 
 
 static func basic_tags(weapon_type: String) -> Array:

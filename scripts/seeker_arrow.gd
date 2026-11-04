@@ -23,6 +23,8 @@ var damage_min := 1
 var damage_max := 1
 ## Na ile nowych strzał rozszczepi się przy pierwszym trafieniu (0 - wcale).
 var split := 0
+## Tagi umiejętności ze znacznikiem (Skills.tags) - trafienia liczą jej kamienie wsparcia (Player.hit_enemy).
+var tags: Array = []
 
 var _target: Goblin
 var _last_hit: Goblin
@@ -113,6 +115,7 @@ func _split(enemy: Goblin) -> void:
 		child.hits_left = maxi(hits_left, 1)
 		child.damage_min = damage_min
 		child.damage_max = damage_max
+		child.tags = tags
 		child._last_hit = enemy
 		get_parent().add_child.call_deferred(child)
 	split = 0
@@ -154,6 +157,6 @@ func _finish() -> void:
 func _hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, push: float) -> void:
 	var player: Player = get_tree().get_first_node_in_group("player")
 	if player != null:
-		player.hit_enemy(enemy, amount, from_position, push, "arrow")
+		player.hit_enemy(enemy, amount, from_position, push, "arrow", tags)
 	else:
 		enemy.take_damage(amount, from_position, push)

@@ -46,6 +46,7 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
   - `settlement.gd`: Ostoja,
   - `player.gd`, `character_stats.gd`, `items.gd`, `item_bases.gd`, `loot.gd`, `legends.gd`, `legendary_effects.gd`, `skills.gd`, `skill_effects.gd`, `levels.gd`, `quests.gd`, `bounties.gd`,
   - `hotbar.gd`: paski szybkiego wyboru (dane), `status_effects.gd`: lista efektów działających na gracza,
+  - `supports.gd`: kamienie wsparcia i gniazda umiejętności (dane; gniazda trzyma `skill_book.gd`),
   - `skill_tree.gd`: drzewka umiejętności broni (dane), `sword_skills.gd`, `bow_skills.gd` i `spell_skills.gd`: umiejętności drzewek miecza, łuku i księgi,
   - `nawia_map.gd`: Mapa Nawii (endgame - węzły-lochy stopni 8-17), okno `scripts/ui/nawia_window.gd`,
     Błogosławieństwo Watry przy kapliczkach `scripts/ui/blessing_window.gd`, drzewko Watry `watra_tree.gd`
@@ -58,7 +59,7 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
 - Sterowanie: WASD, spacja (zryw), F (interakcja), B (portal do miasta w lochu), paski szybkiego wyboru na dole ekranu: umiejętności pod LPM, PPM, Q, E, R, Z, X
   (osobny układ dla każdej broni) i przedmioty pod 1-0 (`scripts/ui/action_bars.gd`, `scripts/ui/hotbar_slot.gd`).
   Pod paskami zdrowia i many ikony efektów (`scripts/ui/status_row.gd`). Tryb deweloperski: Ctrl+Shift+C, potem F1 złoto,
-  F2 awans, F3 kamienie, F4 drewno i kamień, F5 wydarzenie w świecie w tej krainie.
+  F2 awans, F3 kamienie, F4 drewno i kamień, F5 wydarzenie w świecie w tej krainie, F6 kamienie wsparcia i krzesiwa.
 - `scenes/`: sceny (`main_menu.tscn` startowa, `world.tscn` rozgrywka, potwory, `hud.tscn`).
 - `assets/`: grafiki, muzyka, dźwięki.
 - `pixellab_src/`: surowe grafiki z PixelLab, `sfx_src/`: surowe nagrania dźwięków (Godot je pomija).
@@ -157,7 +158,8 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
   w modyfikatorach lochów, bożkach i elitach (`Elements.apply_dungeon`, `Elements.added`).
 - **Walka i postać:** drzewka broni - miecz, łuk, księga magii (`skill_tree.gd`, `sword_skills.gd`, `bow_skills.gd`,
   `spell_skills.gd`, okno K), tagi umiejętności (`Skills.TAGS`) i atrybuty dające % obrażeń umiejętnościom z ich tagiem
-  (`CharacterStats.attribute_damage`), combo (`Skills.COMBOS`), paski szybkiego wyboru (`hotbar.gd`), ikony efektów (`status_effects.gd`);
+  (`CharacterStats.attribute_damage`), kamienie wsparcia w gniazdach umiejętności (`supports.gd`, znacznik umiejętności
+  w `Skills.tags` - `Skills.skill_of`), combo (`Skills.COMBOS`), paski szybkiego wyboru (`hotbar.gd`), ikony efektów (`status_effects.gd`);
   zryw, Mgnienie i teleport przeskakują przeszkody, zatrzymuje je tylko granica (`BOUNDS_LAYER`, `Player.free_landing`).
 - **Efekty:** animacje z kreatora efektów PixelLab (`pixellab_src/vfx/ids.json`, `tools/vfx_art.py`; pomocnicy `SkillEffects`,
   `FxLoop`, `BossFx`, `LegendVfx`, `WorldVfx`, `MonsterFx`, `MiscVfx`).
@@ -173,7 +175,7 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
 - **Watra i Ostoja:** Watra z ofiarami, żarem i Darami (`boons.gd`, `ui/watra_window.gd`), budowy osady (`settlement.gd`),
   lochy Watry (`dungeon.gd`, `dungeons.gd`) z mechanikami (`Dungeons.MECHANICS`: skrzynie `dungeon_chest.gd`, kapliczki
   `dungeon_shrine.gd`, Kryształ Watry `watra_crystal.gd`, elity `dungeon_elite.gd`, Uroczysko `uroczysko.gd`, Krąg Żertwy
-  `zertwa.gd`, Skarbnik `skarbnik.gd`) i Ołtarzem Welesa, bożki zmieniające loch (`idols.gd`), portal do miasta (klawisz B, `town_portal.gd`, `Dungeon.portal_state`), zielarstwo (`herbs.gd`).
+  `zertwa.gd`, Skarbnik `skarbnik.gd`, Mgła Nawii `nawia_mist.gd`) i Ołtarzem Welesa, bożki zmieniające loch (`idols.gd`), portal do miasta (klawisz B, `town_portal.gd`, `Dungeon.portal_state`), zielarstwo (`herbs.gd`).
 - **Świat jak w MMO** (po zbudowaniu gildii): podróżnicy (`travelers.gd`, `traveler.gd`), drużyny i prośby o pomoc,
   tryby świata i rywale (`world_modes.gd`, `rival.gd`), rynek (`market.gd`), zlecenia (`bounties.gd`), zadania główne
   (`main_quests.gd`), wydarzenia w świecie (`world_events.gd`, `event_site.gd`).
@@ -254,11 +256,13 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
      redukcja, zręczność - unik 0,4% za punkt (malejące zyski, do 35%), inteligencja - mana, witalność - zdrowie;
      szybkość tylko z broni, przedmiotów i drzewek, umiejętności liczą prędkość broni; darmowy reset w starych zapisach.
      Czeka na ocenę autora;
-  4. **gniazda i kamienie wsparcia** (jak w PoE): gniazda tylko w umiejętnościach aktywnych, bazowo umiejętność nie ma
-     żadnego, gniazda dorabia się po jednym rzadkimi przedmiotami (do 4-5), kamienie wsparcia (większy obszar, więcej
-     pocisków itp.) pasują tylko do umiejętności z danym tagiem; łup z nowej mechaniki lochów - autor skłania się ku
-     **Mgle Nawii** (loch coraz trudniejszy i hojniejszy z każdą minutą). Do ustalenia: poziomy kamieni, związek
-     z planem „Punkty umiejętności z osobnego paska doświadczenia”.
+  4. **gniazda i kamienie wsparcia** (jak w PoE) - etapy 1 i 2 zrobione, czekają na ocenę autora (szukaj „Kamienie wsparcia,
+     etap” w `docs/historia.md`): `scripts/supports.gd`, 17 kamieni z poziomami 1-20 (rosną z doświadczeniem postaci
+     w gnieździe, 3 takie same łączą się w 1 o 2 poziomy wyższy), gniazda w `SkillBook.supports` (1-4 Krzesiwem Nawii
+     za 1/2/4/8, 5. Wielkim Krzesiwem), bez zwykłego ataku, bez rynku; okno K, tryb deweloperski F6.
+     Etap 2: **Mgła Nawii** (`scripts/nawia_mist.gd`, stałe `MIST_*` w `Dungeons`) - mechanika lochów, jedyne źródło
+     kamieni i krzesiw (Wielkie Krzesiwo od gęstości 8 i ze skarbców bogów); zwykła gałąź mechaniki w drzewku Watry
+     już jest. Do ustalenia po ograniu: liczby Mgły, własne węzły Mgły w drzewku Watry (etap 3), bożek Mgły.
 - [ ] Nowe bronie: kosa, kostur (nekromanta), młoty, chainblade'y, sztylety, włócznie, rapier, hydrosfera.
   Każda broń to nowy rodzaj z własnym drzewkiem, a nie tylko nowy przedmiot, więc wymaga szczegółów od autora.
   Ustalenia z rozmowy z autorem (pomysły, nie decyzje):
@@ -322,6 +326,8 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     poziomy za kilka punktów (propozycja: 1-5 po 1, 6-10 po 2, 11-15 po 3, 16-20 po 5);
   - awans postaci daje już tylko punkty statystyk - 2 za poziom;
   - cofanie wydanych punktów umiejętności za złoto (zastępuje ujście złota, które dziś dają poziomy umiejętności);
+  - kamienie wsparcia (krok 4 dopieszczenia walki) awansują z własnego doświadczenia, niezależnie od tego planu
+    (decyzja autora, listopad 2026);
   - do zrobienia przy tym: wzory umiejętności rozciągnięte z 5 na 20 poziomów, przeliczenie starych zapisów (poziomy
     kupione złotem i punkty w drzewkach na punkty umiejętności), sprawdzić gospodarkę złota.
 
@@ -345,8 +351,9 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   - **Skarbnik** - nagroda z ryzykiem (jak Ultimatum w PoE): zrobiony (etap 5), szczegóły w `docs/historia.md`;
   - **Kryształ Watry** - jedyne źródło **kamieni zaklinania** w lochach (etap 6; skarbiec daje już tylko kamienie
     uświęcone), rynek i nagroda zadania głównego zostają jako drogie wyjście awaryjne; Kryształ wypada często;
-  - pomysły na później: **Kurhan** (wysadzanie kurhanów prochem, artefakty wymieniane u handlarza w Ostoi), **Mgła
-    Nawii** (loch coraz trudniejszy i hojniejszy z każdą minutą, wyjście w dowolnej chwili), **Łowy** (chwytanie
+  - **Mgła Nawii** - loch coraz trudniejszy i hojniejszy z każdą minutą - łup: **kamienie wsparcia i krzesiwa**
+    (etap 7, szukaj „Kamienie wsparcia, etap 2” w `docs/historia.md`);
+  - pomysły na później: **Kurhan** (wysadzanie kurhanów prochem, artefakty wymieniane u handlarza w Ostoi), **Łowy** (chwytanie
     rzadkich bestii do zagrody w Ostoi - składniki rzemiosła).
   Odrzucone przez autora: zbłąkany wędrowiec, Noc Kupały, Zakład z biesem, Licho, Dziady.
   Etap 1 zrobiony, czeka na ocenę autora (szczegóły w `docs/historia.md`, szukaj „Mechaniki w lochach, etap 1”):
@@ -364,6 +371,8 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   Do ustalenia po ograniu: liczby fal i wrogów, szansa na Kości, czy Skarbnik ma mieć własną grafikę.
   Etap 6 zrobiony, czeka na ocenę autora (szukaj „Mechaniki w lochach, etap 6”): obrona Kryształu zostaje, fale rosną
   ze stopniem lochu (`WatraCrystal.wave_count`), skarbiec strażnika bez kamieni zaklinających.
+  Etap 7 zrobiony, czeka na ocenę autora: Mgła Nawii (`nawia_mist.gd`) - Mglisty Słup, gęstość co minutę do 10,
+  Skrzynia Mgły; Kryształ Watry dostał wagę 7,8 (był 7), żeby po dojściu Mgły trafiał się tak samo często.
 - [ ] **Bożki** (jak skaraby w PoE): zrobione, czekają na ocenę autora (szczegóły w `docs/historia.md`, szukaj „Bożki”):
   `scripts/idols.gd`, 27 rodzajów (3 rzadkości, 2 prastare), sloty w oknie lochów (2, więcej z poziomem Watry), zużywają
   się przy wejściu, bożki potworów i łupu mogą być w kilku slotach. Węzły bożków w drzewku Watry zrobione (gałąź „Bożki”).

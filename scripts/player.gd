@@ -224,6 +224,8 @@ var _attack_angle := 0.0
 var _swing_sign := 1.0
 ## Mnożnik obrażeń bieżącego cięcia (półksiężyc tnie mocniej niż zwykły atak).
 var _attack_multiplier := 1.0
+## Umiejętność, której cięciem jest obecny zamach (Półksiężyc); "" - zwykły atak (basic_tags).
+var _attack_skill := ""
 ## Uderzenia (slot z uderzeniem) i dodatkowe ciosy (atak zaraz po uderzeniu).
 var _strike_request := false
 var _combo_request := false
@@ -277,6 +279,11 @@ var _held_ids := {}
 ## Ostatnio użyta umiejętność i ile jeszcze trwa okno combo po niej (Skills.COMBOS).
 var _chain_skill := ""
 var _chain_time := 0.0
+## Ile jeszcze trwa premia Rozpędu (kamień wsparcia, _support_after_use).
+var _momentum_time := 0.0
+## Trwa powtórka Echa Rusałki (support_echo) - powtórka nie ma już echa.
+var _support_echoing := false
+const SUPPORT_ECHO_DELAY := 0.35
 ## Umiejętności drzewek: miecza (Mgnienie, Dymne Wybuchy...), łuku (Grot Swaroga, Balista...) i księgi (Zamieć...).
 var sword_skills: SwordSkills
 var bow_skills: BowSkills
@@ -558,6 +565,7 @@ func combo_window() -> float:
 
 ## Zapamiętuje użytą umiejętność - przez okno combo kolejne mogą zadziałać inaczej (Skills.COMBOS).
 func note_skill(id: String) -> void:
+	_support_after_use(id)
 	_chain_skill = id
 	_chain_time = combo_window()
 	spell_skills.on_cast(id)
@@ -597,11 +605,69 @@ func combo_fraction() -> float:
 
 ## Zasięg Młynka (poziom umiejętności i premia z drzewka) i mnożnik zużycia many (węzeł kluczowy Oko Cyklonu).
 func whirl_radius() -> float:
-	return Skills.whirlwind_radius(skills.level_of("whirlwind")) * (1.0 + skills.tree_bonus("melee", "whirl_radius")) * stats.area_multiplier()
+	return Skills.whirlwind_radius(skills.level_of("whirlwind")) * (1.0 + skills.tree_bonus("melee", "whirl_radius")) * stats.area_multiplier(Skills.tags("whirlwind"))
 
 
 func whirl_mana_factor() -> float:
-	return 2.0 if skills.has_keystone("melee", "cyclone_eye") else 1.0
+	return (2.0 if skills.has_keystone("melee", "cyclone_eye") else 1.0) * skills.support_mana("whirlwind")
+
+
+# ---------------------------------------------------------------- kamienie wsparcia (Supports)
+## Koszt many umiejętności z mnożnikiem jej kamieni wsparcia (`base` < 0 - Skills.mana_cost).
+func skill_mana(id: String, base := -1.0) -> float:
+	return (Skills.mana_cost(id) if base < 0.0 else base) * skills.support_mana(id)
+
+
+## Premia kamieni wsparcia umiejętności (SkillBook.support_value) - liczby całkowite (pociski, przebicie) zaokrąglone.
+func support(id: String, stat: String) -> float:
+	return skills.support_value(id, stat)
+
+
+func support_count(id: String, stat: String) -> int:
+	return roundi(skills.support_value(id, stat))
+
+
+## Kierunki dla pocisku i `extra` dodatkowych (Rozszczep): na zmianę po obu stronach co Supports.SPLIT_SPREAD stopni.
+static func split_directions(dir: Vector2, extra: int) -> Array[Vector2]:
+	var dirs: Array[Vector2] = [dir]
+	for i in extra:
+		var side := (i / 2 + 1) * (1 if i % 2 == 0 else -1)
+		dirs.append(dir.rotated(deg_to_rad(Supports.SPLIT_SPREAD) * side))
+	return dirs
+
+
+## Pocisk umiejętności z jej kamieniami wsparcia: tagi (trafienia), przebicie i odbicia (Łańcuch).
+func support_projectile(projectile: Node, id: String) -> void:
+	projectile.tags = Skills.tags(id)
+	if projectile is Projectile:
+		projectile.pierce += support_count(id, "pierce")
+		projectile.chain += support_count(id, "chain")
+
+
+## Echo Rusałki (kamień wsparcia czarów): `again` (rzut czaru bez many i odnowienia) powtarza się raz po
+## SUPPORT_ECHO_DELAY s; powtórka nie ma już własnego echa.
+func support_echo(id: String, again: Callable) -> void:
+	if _support_echoing or support_count(id, "echo") <= 0:
+		return
+	get_tree().create_timer(SUPPORT_ECHO_DELAY, false).timeout.connect(func() -> void:
+		if not is_instance_valid(self) or is_dead or Skills.get_data(id)["weapon"] != stats.weapon_type():
+			return
+		_support_echoing = true
+		MiscVfx.spark(get_parent(), body_center(), Color(0.75, 0.5, 1.0), 1.0)
+		again.call()
+		_support_echoing = false)
+
+
+func support_echoing() -> bool:
+	return _support_echoing
+
+
+## Rozpęd (kamień wsparcia umiejętności ruchu): po użyciu premia do ruchu i obrażeń przez Supports.MOMENTUM_TIME.
+func _support_after_use(id: String) -> void:
+	var momentum := support(id, "momentum")
+	if momentum > 0.0:
+		_momentum_time = Supports.MOMENTUM_TIME
+		stats.set_temp("support_momentum", {"move_speed": Supports.MOMENTUM_MOVE, "damage_percent": momentum})
 
 
 ## Mnożnik obrażeń rozkręconego Młynka (Oko Cyklonu): +25% za sekundę kręcenia, najwyżej +100%.
@@ -706,6 +772,10 @@ func _physics_process(delta: float) -> void:
 		quests.update_main(self)
 	_update_shake(delta)
 	_update_poison(delta)
+	if _momentum_time > 0.0:
+		_momentum_time -= delta
+		if _momentum_time <= 0.0:
+			stats.set_temp("support_momentum", {})
 	if _slow_time > 0.0:
 		_slow_time -= delta
 		if _slow_time <= 0.0:
@@ -1606,6 +1676,7 @@ func _start_attack() -> void:
 	_attack_angle = aim.angle()
 	_attack_kind = weapon.get("type", "melee")
 	_attack_multiplier = 1.0
+	_attack_skill = ""
 	var speed: float = stats.skill_speed(basic_tags())
 	_hit_this_swing.clear()
 
@@ -1658,8 +1729,9 @@ func _shoot(weapon: Dictionary, dir: Vector2) -> void:
 	Sfx.play("bow" if weapon["type"] == "bow" else "magic")
 
 
-## Pocisk broni gotowy do wystrzelenia (jeszcze nie dodany do świata).
-func _make_projectile(weapon: Dictionary, dir: Vector2) -> Projectile:
+## Pocisk broni gotowy do wystrzelenia (jeszcze nie dodany do świata). `skill` - umiejętność, która go wystrzeliwuje:
+## obrażenia z jej tagami i jej kamienie wsparcia (support_projectile); "" - zwykły atak.
+func _make_projectile(weapon: Dictionary, dir: Vector2, skill := "") -> Projectile:
 	var config: Dictionary = weapon["projectile"]
 	var projectile: Projectile = PROJECTILE.instantiate()
 	projectile.position = position + dir * 6.0
@@ -1676,9 +1748,11 @@ func _make_projectile(weapon: Dictionary, dir: Vector2) -> Projectile:
 		projectile.add_child(BowSkills.arrow_trail(BowSkills.VENOM_TRAIL_FX if bow_skills.venom_active() else BowSkills.ARROW_TRAIL_FX, dir))
 		projectile.enemy_hit.connect(func(enemy: Goblin) -> void:
 			BowSkills.arrow_hit(projectile.get_parent(), enemy.hurt_center(), dir.angle()))
-	var kind := stats.kind_multiplier(basic_tags())
+	var kind := stats.kind_multiplier(Skills.tags(skill) if skill != "" else basic_tags())
 	projectile.damage_min = maxi(1, roundi(stats.damage_min() * kind))
 	projectile.damage_max = maxi(1, roundi(stats.damage_max() * kind))
+	if skill != "":
+		support_projectile(projectile, skill)
 	return projectile
 
 
@@ -1699,7 +1773,7 @@ func _process_skill(delta: float) -> void:
 		return
 	match id:
 		"whirlwind":
-			if mana >= Skills.WHIRLWIND_MANA_PER_SECOND * 0.3:
+			if mana >= skill_mana("whirlwind", Skills.WHIRLWIND_MANA_PER_SECOND * 0.3):
 				_start_whirl()
 			else:
 				_hint(tr("Za mało many"))
@@ -1708,7 +1782,7 @@ func _process_skill(delta: float) -> void:
 				return
 			# Salwa zaraz po Odskoku: darmowa i z większą liczbą strzał
 			var combo := combo_with("multishot")
-			if combo or spend_mana(Skills.MULTISHOT_MANA):
+			if combo or spend_mana(skill_mana("multishot")):
 				if combo:
 					combo_used()
 				_cast(id, 0.0, combo)
@@ -1717,7 +1791,7 @@ func _process_skill(delta: float) -> void:
 		"fireball":
 			if not skill_ready() or is_attacking():
 				return
-			if spend_mana(Skills.FIREBALL_MANA):
+			if spend_mana(skill_mana("fireball")):
 				# Kula ognia zaraz po Kroku przez Mgłę: od razu w pełni naładowana
 				if combo_with("fireball"):
 					combo_used()
@@ -1757,8 +1831,8 @@ func _update_fireball_charge(delta: float, id: String) -> void:
 		return
 	_fireball_time += delta
 	if not _fireball_full:
-		var step := delta * _skill_speed(["spell"]) * (1.0 + skills.tree_bonus("spell", "fireball_charge")) / Skills.FIREBALL_CHARGE_TIME
-		if spend_mana(Skills.FIREBALL_CHARGE_MANA * step):
+		var step := delta * _skill_speed(Skills.tags("fireball")) * (1.0 + skills.tree_bonus("spell", "fireball_charge")) / Skills.FIREBALL_CHARGE_TIME
+		if spend_mana(skill_mana("fireball", Skills.FIREBALL_CHARGE_MANA * step)):
 			_fireball_charge = minf(_fireball_charge + step, 1.0)
 			_charge_sound.stream_paused = false
 			if _fireball_charge >= 1.0:
@@ -1893,26 +1967,37 @@ func _cast(id: String, charge := 0.0, combo := false) -> void:
 	_attack_cooldown_timer = maxf(_attack_cooldown_timer, 0.25)
 
 	if id == "multishot":
-		_skill_cooldown_timer = _cooldown(Skills.MULTISHOT_COOLDOWN)
+		_skill_cooldown_timer = _cooldown(Skills.MULTISHOT_COOLDOWN, Skills.tags(id))
 		_skill_cooldown_total = _skill_cooldown_timer
 		var hail := bow_skills.has_keystone("hail")
 		var count := (Skills.VAULT_VOLLEY_ARROWS if combo else Skills.MULTISHOT_ARROWS) \
-				+ roundi(skills.tree_bonus("bow", "multishot_arrows")) + (BowSkills.HAIL_ARROWS if hail else 0)
+				+ roundi(skills.tree_bonus("bow", "multishot_arrows")) + (BowSkills.HAIL_ARROWS if hail else 0) \
+				+ support_count(id, "projectiles")
 		var spread := deg_to_rad(Skills.MULTISHOT_SPREAD_DEGREES) * sqrt(count / float(Skills.MULTISHOT_ARROWS))
 		var multiplier := Skills.multishot_damage(level) * (1.0 + skills.tree_bonus("bow", "multishot_damage")) \
 				* (BowSkills.HAIL_DAMAGE if hail else 1.0) * (combo_damage() if combo else 1.0)
 		for i in count:
 			var angle := lerpf(-spread / 2.0, spread / 2.0, float(i) / (count - 1))
-			var arrow := _make_projectile(weapon, dir.rotated(angle))
+			var arrow := _make_projectile(weapon, dir.rotated(angle), id)
 			arrow.damage_min = roundi(arrow.damage_min * multiplier)
 			arrow.damage_max = roundi(arrow.damage_max * multiplier)
 			get_parent().add_child(arrow)
 		BowSkills.release(get_parent(), body_center() + dir * 6.0, dir.angle(), 1.0 + 0.1 * (count - Skills.MULTISHOT_ARROWS))
 		Sfx.play("bow", 2.0, 0.9)
 	else:
-		_skill_cooldown_timer = _cooldown(Skills.FIREBALL_COOLDOWN, ["spell"])
+		_skill_cooldown_timer = _cooldown(Skills.FIREBALL_COOLDOWN, Skills.tags(id))
 		_skill_cooldown_total = _skill_cooldown_timer
-		var fireball := _make_projectile(weapon, dir)
+		_launch_fireballs(dir, level, charge)
+		support_echo(id, _launch_fireballs.bind(dir, level, charge))
+
+
+## Kula ognia (z dodatkowymi kulami Rozszczepu) - bez odnowienia i many (powtarza ją też Echo Rusałki).
+func _launch_fireballs(dir: Vector2, level: int, charge: float) -> void:
+	var weapon := equipment.weapon()
+	if weapon.is_empty() or not weapon.has("projectile"):
+		return
+	for shot: Vector2 in split_directions(dir, support_count("fireball", "projectiles")):
+		var fireball := _make_projectile(weapon, shot, "fireball")
 		var multiplier := Skills.fireball_damage(level) * Skills.fireball_charge_damage(charge) * (1.0 + skills.tree_bonus("spell", "fireball_damage"))
 		fireball.texture = FIREBALL_TEXTURE
 		fireball.magic = false
@@ -1920,14 +2005,14 @@ func _cast(id: String, charge := 0.0, combo := false) -> void:
 		fireball.fx_kind = "fire"
 		fireball.pierce = 0
 		fireball.speed = 210.0
-		fireball.explosion_radius = Skills.fireball_radius(level) * Skills.fireball_charge_radius(charge) * stats.area_multiplier()
+		fireball.explosion_radius = Skills.fireball_radius(level) * Skills.fireball_charge_radius(charge) * stats.area_multiplier(Skills.tags("fireball"))
 		fireball.size = lerpf(0.8, 1.7, charge)
 		multiplier *= stats.kind_multiplier(Skills.tags("fireball"))
 		fireball.explosion_min = roundi(stats.damage_min() * multiplier)
 		fireball.explosion_max = roundi(stats.damage_max() * multiplier)
 		fireball.turret_damage = legendary.fire_turret_damage(multiplier)
 		get_parent().add_child(fireball)
-		Sfx.play("fireball_launch", lerpf(-4.0, 2.0, charge), lerpf(1.15, 0.85, charge))
+	Sfx.play("fireball_launch", lerpf(-4.0, 2.0, charge), lerpf(1.15, 0.85, charge))
 
 
 func _start_whirl() -> void:
@@ -1950,13 +2035,13 @@ func _update_whirl(delta: float) -> void:
 	pivot.rotation += WHIRL_SPIN_SPEED * delta
 	# postać zwraca się tak, żeby prawa (wyciągnięta) ręka wskazywała miecz: twarzą 90 stopni przed nim
 	_face_direction(Vector2.from_angle(pivot.rotation - PI / 2.0))
-	_whirl_fx_time += delta * _skill_speed()
+	_whirl_fx_time += delta * _skill_speed(Skills.tags("whirlwind"))
 	_whirl_time += delta
 	_update_whirl_fx(whirl_radius())
 	_whirl_tick -= delta
 	if _whirl_tick > 0.0:
 		return
-	_whirl_tick = Skills.WHIRLWIND_TICK / _skill_speed()
+	_whirl_tick = Skills.WHIRLWIND_TICK / _skill_speed(Skills.tags("whirlwind"))
 	Sfx.play("whirl")
 	var level := skills.level_of("whirlwind")
 	var radius := whirl_radius()
@@ -1966,7 +2051,7 @@ func _update_whirl(delta: float) -> void:
 	for enemy: Goblin in Goblin.near(get_tree(), body_center(), radius * 1.5 + 40.0):
 		var dist := enemy.hurt_center().distance_to(body_center())
 		if dist <= radius + enemy.hurt_radius:
-			hit_enemy(enemy, _skill_damage(multiplier, Skills.tags("whirlwind")), global_position, -CYCLONE_PULL if cyclone else 70.0)
+			hit_enemy(enemy, _skill_damage(multiplier, Skills.tags("whirlwind")), global_position, -CYCLONE_PULL if cyclone else 70.0, "", Skills.tags("whirlwind"))
 		elif cyclone and dist <= radius * 1.5 + enemy.hurt_radius and enemy.state != Goblin.State.DEAD:
 			enemy._knockback = (global_position - enemy.global_position).normalized() * CYCLONE_PULL
 
@@ -2057,8 +2142,10 @@ func _hit_enemies_in_arc(half_arc: float) -> void:
 		_hit_this_swing[enemy] = true
 		SkillEffects.sheet_once(get_parent(), SWORD_HIT_FX, 5, 16.0, enemy.hurt_center(), Vector2(14, 14), to_enemy.angle(),
 				1.0, 1.0, 0.0, _swing_sign < 0.0)
-		var dmg := _skill_damage(_attack_multiplier, basic_tags())
-		hit_enemy(enemy, dmg, global_position, attack_knockback * (1.6 if _attack_multiplier > 1.0 else 1.0))
+		var swing_tags := Skills.tags(_attack_skill) if _attack_skill != "" else basic_tags()
+		var dmg := _skill_damage(_attack_multiplier, swing_tags)
+		hit_enemy(enemy, dmg, global_position, attack_knockback * (1.6 if _attack_multiplier > 1.0 else 1.0), "",
+				swing_tags if _attack_skill != "" else [])
 
 
 # ---------------------------------------------------------------- uderzenia i dodatkowe ciosy
@@ -2095,7 +2182,7 @@ func _use_strike() -> void:
 		return
 	if _strike_blocked() or not strike_ready():
 		return
-	var cost: float = {"lunge": Skills.LUNGE_MANA, "seeker": Skills.SEEKER_MANA, "chain_lightning": Skills.CHAIN_MANA}[id]
+	var cost: float = skill_mana(id, {"lunge": Skills.LUNGE_MANA, "seeker": Skills.SEEKER_MANA, "chain_lightning": Skills.CHAIN_MANA}[id])
 	# Szarża zaraz po udanej Ripoście: za darmo i bez odnowienia
 	var free := combo_with(id)
 	if free:
@@ -2107,20 +2194,21 @@ func _use_strike() -> void:
 	var level := skills.level_of(id)
 	match id:
 		"lunge":
-			_strike_cooldown = 0.0 if free else _cooldown(Skills.LUNGE_COOLDOWN) * (1.0 + skills.tree_bonus("melee", "lunge_cooldown"))
+			_strike_cooldown = 0.0 if free else _cooldown(Skills.LUNGE_COOLDOWN, Skills.tags(id)) * (1.0 + skills.tree_bonus("melee", "lunge_cooldown"))
 			_strike_cooldown_total = _strike_cooldown
 			_start_lunge(level)
 		"seeker":
-			_strike_cooldown = _cooldown(Skills.SEEKER_COOLDOWN)
+			_strike_cooldown = _cooldown(Skills.SEEKER_COOLDOWN, Skills.tags(id))
 			_strike_cooldown_total = _strike_cooldown
 			_cast_seeker(level)
 			_combo_window = combo_window()
 			note_skill(id)
 		"chain_lightning":
 			# bez odnowienia: tylko czas rzucania, krótszy z szybkością rzucania
-			_strike_cooldown = Skills.CHAIN_CAST_TIME / _skill_speed(["spell"])
+			_strike_cooldown = Skills.CHAIN_CAST_TIME / _skill_speed(Skills.tags(id))
 			_strike_cooldown_total = _strike_cooldown
 			_cast_chain(level)
+			support_echo(id, _cast_chain.bind(level))
 			_combo_window = combo_window()
 			note_skill(id)
 
@@ -2129,7 +2217,7 @@ func _use_combo() -> void:
 	var id := skills.combo_for(stats.weapon_type())
 	if id == "" or _combo_window <= 0.0 or _strike_blocked():
 		return
-	var cost: float = {"crescent": Skills.CRESCENT_MANA, "rapid_volley": Skills.VOLLEY_MANA, "thunder_wave": Skills.WAVE_MANA}[id]
+	var cost: float = skill_mana(id, {"crescent": Skills.CRESCENT_MANA, "rapid_volley": Skills.VOLLEY_MANA, "thunder_wave": Skills.WAVE_MANA}[id])
 	if not spend_mana(cost):
 		_hint(tr("Za mało many"))
 		return
@@ -2144,6 +2232,7 @@ func _use_combo() -> void:
 			_cast_volley(level)
 		"thunder_wave":
 			_cast_wave(level)
+			support_echo(id, _cast_wave.bind(level))
 
 
 ## Kierunek celowania dla testera-bota (tests/playtest_bot.gd) zamiast myszy; zero - mysz.
@@ -2254,7 +2343,9 @@ func basic_tags() -> Array:
 ## zwiększone obrażenia, cios krytyczny i zdrowie za trafienie.
 ## `sound` - rodzaj odgłosu trafienia (HIT_SOUNDS: "fire", "ice", "lightning", "magic", "arrow", "blade");
 ## pusty - według broni w ręku. Cios krytyczny dokłada ciężkie łupnięcie.
-func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: float, sound := "") -> void:
+## `tags` - tagi umiejętności ze znacznikiem (Skills.tags): jej kamienie wsparcia dokładają szanse na stany, dodane
+## żywioły (Supports added_*) i siłę porażenia.
+func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: float, sound := "", tags: Array = []) -> void:
 	if enemy.state == Goblin.State.DEAD:
 		return
 	amount = roundi(amount * legendary.damage_multiplier() * stats.damage_multiplier() * boons.damage_multiplier(enemy))
@@ -2263,7 +2354,7 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 	if element != Elements.PHYSICAL:
 		amount = maxi(1, roundi(amount * Elements.hit_multiplier(float(enemy.resistances.get(element, 0.0)) + Elements.monster_bonus, stats.penetration())))
 	if enemy.is_shocked():
-		amount = roundi(amount * (1.0 + Elements.SHOCK_BONUS))
+		amount = roundi(amount * (1.0 + Elements.SHOCK_BONUS + stats.support(tags, "shock_effect")))
 	amount += legendary.execute_bonus(enemy)
 	var bow := stats.weapon_type() == "bow"
 	if bow:
@@ -2276,7 +2367,18 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 	enemy.take_damage(amount, from_position, knockback)
 	Goblin.hit_sound = "hit"
 	DamageNumber.critical = false
-	_apply_ailment(enemy, element, amount)
+	_apply_ailment(enemy, element, amount, tags)
+	# żywioły dodane przez kamienie wsparcia (Żarowe / Mroźne / Burzowe Ostrze) też mogą wywołać swój stan
+	var added_list := stats.support_elements(tags)
+	for added: String in added_list:
+		var added_element: String = Elements.SOUND_ELEMENTS[added]
+		if added_element != element:
+			_apply_ailment(enemy, added_element, roundi(amount * stats.support(tags, "added_" + added)), tags)
+	# umiejętność z tagiem żywiołu, której trafienie jest fizyczne (np. Grot Swaroga): stan tego żywiołu tylko z szansy
+	# jej kamieni wsparcia (Żar, Szron, Wyładowanie)
+	for tag: String in Elements.SOUND_ELEMENTS:
+		if tag in tags and tag not in added_list and Elements.SOUND_ELEMENTS[tag] != element:
+			_apply_ailment(enemy, Elements.SOUND_ELEMENTS[tag], amount, tags, true)
 	if critical:
 		Sfx.play_at("hit_crit", enemy.global_position)
 	if bow:
@@ -2292,9 +2394,14 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 
 ## Stan od żywiołu trafienia (Elements.AILMENTS): podpalenie, zamrożenie albo porażenie z szansą z premii
 ## "<stan>_chance"; stan, który już trwa, się nie powtarza.
-func _apply_ailment(enemy: Goblin, element: String, amount: int) -> void:
+## `support_only` - szansa tylko z kamieni wsparcia umiejętności (bez premii z przedmiotów).
+func _apply_ailment(enemy: Goblin, element: String, amount: int, tags: Array = [], support_only := false) -> void:
 	var ailment: String = Elements.AILMENTS.get(element, "")
-	if ailment == "" or enemy.state == Goblin.State.DEAD or randf() >= stats.ailment_chance(ailment):
+	if ailment == "" or enemy.state == Goblin.State.DEAD:
+		return
+	var chance := minf(stats.support(tags, ailment + "_chance"), CharacterStats.MAX_AILMENT_CHANCE) if support_only \
+			else stats.ailment_chance(ailment, tags)
+	if chance <= 0.0 or randf() >= chance:
 		return
 	var color := Elements.color_of(element)
 	match ailment:
@@ -2302,11 +2409,11 @@ func _apply_ailment(enemy: Goblin, element: String, amount: int) -> void:
 			if enemy.is_burning():
 				return
 			var ticks := Elements.IGNITE_TIME / Elements.IGNITE_TICK
-			enemy.ignite(maxi(1, roundi(amount * Elements.IGNITE_DAMAGE * (1.0 + stats.dot_bonus()) / ticks)), Elements.IGNITE_TIME)
+			enemy.ignite(maxi(1, roundi(amount * Elements.IGNITE_DAMAGE * (1.0 + stats.dot_bonus(tags)) / ticks)), Elements.IGNITE_TIME)
 		"freeze":
 			if enemy.is_stunned():
 				return
-			enemy.freeze(Elements.FREEZE_TIME)
+			enemy.freeze(Elements.FREEZE_TIME * (1.0 + stats.support(tags, "freeze_time")))
 		"shock":
 			if enemy.is_shocked():
 				return
@@ -2361,7 +2468,7 @@ func _update_lunge(delta: float) -> void:
 			continue
 		if enemy.hurt_center().distance_to(tip) <= enemy.hurt_radius + 14.0:
 			_lunge_hit[enemy] = true
-			hit_enemy(enemy, _skill_damage(_lunge_damage, Skills.tags("lunge")), global_position, 180.0)
+			hit_enemy(enemy, _skill_damage(_lunge_damage, Skills.tags("lunge")), global_position, 180.0, "", Skills.tags("lunge"))
 			SkillEffects.sheet_once(get_parent(), LUNGE_HIT_FX, 5, 18.0, enemy.hurt_center(), Vector2(14, 11), _lunge_dir.angle())
 	var blocked := get_slide_collision_count() > 0 and _lunge_time < Skills.LUNGE_DISTANCE / _lunge_speed - 0.05
 	if _lunge_time <= 0.0 or blocked:
@@ -2379,11 +2486,13 @@ func _start_crescent(level: int) -> void:
 	_attack_angle = aim.angle()
 	_attack_kind = "melee"
 	_hit_this_swing.clear()
-	_attack_length = 0.32 / _skill_speed()
-	_attack_cooldown_timer = 0.45 / _skill_speed()
-	_attack_reach = Skills.crescent_radius(level) * stats.area_multiplier()
+	var tags := Skills.tags("crescent")
+	_attack_length = 0.32 / _skill_speed(tags)
+	_attack_cooldown_timer = 0.45 / _skill_speed(tags)
+	_attack_reach = Skills.crescent_radius(level) * stats.area_multiplier(tags)
 	_attack_arc = deg_to_rad(Skills.CRESCENT_ARC_DEGREES)
 	_attack_multiplier = Skills.CRESCENT_DAMAGE * combo_damage()
+	_attack_skill = "crescent"
 	_swing_sign = -_swing_sign
 	_melee_anim = "rising_cut"
 	pivot.rotation = _attack_angle
@@ -2419,10 +2528,12 @@ func _cast_seeker(level: int) -> void:
 	var kind := stats.kind_multiplier(Skills.tags("seeker"))
 	arrow.damage_min = maxi(1, roundi(stats.damage_min() * Skills.SEEKER_DAMAGE * kind))
 	arrow.damage_max = maxi(1, roundi(stats.damage_max() * Skills.SEEKER_DAMAGE * kind))
+	arrow.hits_left += support_count("seeker", "pierce")
+	arrow.tags = Skills.tags("seeker")
 	get_parent().add_child(arrow)
 	Sfx.play("seeker")
-	# Łuk Hydry: dodatkowe strzały tropiące rozchodzą się wachlarzem
-	var extra := legendary.extra_seekers()
+	# Łuk Hydry i Rozszczep: dodatkowe strzały tropiące rozchodzą się wachlarzem
+	var extra := legendary.extra_seekers() + support_count("seeker", "projectiles")
 	for i in extra:
 		var side := (i / 2 + 1) * (1 if i % 2 == 0 else -1)
 		var more := SeekerArrow.new()
@@ -2431,6 +2542,7 @@ func _cast_seeker(level: int) -> void:
 		more.hits_left = arrow.hits_left
 		more.damage_min = arrow.damage_min
 		more.damage_max = arrow.damage_max
+		more.tags = arrow.tags
 		get_parent().add_child(more)
 
 
@@ -2438,9 +2550,9 @@ func _cast_seeker(level: int) -> void:
 ## Szybka Salwa: strzały jedna po drugiej, co VOLLEY_INTERVAL s (krócej z szybkością, ale nie krócej niż
 ## VOLLEY_MIN_INTERVAL - inaczej strzały lecą jedna w drugiej i wyglądają jak jedna).
 func _cast_volley(level: int) -> void:
-	var count := Skills.volley_arrows(level)
+	var count := Skills.volley_arrows(level) + support_count("rapid_volley", "projectiles")
 	var tween := create_tween()
-	var interval := maxf(VOLLEY_INTERVAL / _skill_speed(), VOLLEY_MIN_INTERVAL)
+	var interval := maxf(VOLLEY_INTERVAL / _skill_speed(Skills.tags("rapid_volley")), VOLLEY_MIN_INTERVAL)
 	for i in count:
 		tween.tween_callback(_volley_arrow.bind(i))
 		tween.tween_interval(interval)
@@ -2461,7 +2573,7 @@ func _volley_arrow(index := 0) -> void:
 	_attack_kind = weapon["type"]
 	_attack_length = RANGED_POSE_TIME
 	_attack_timer = _attack_length
-	var arrow := _make_projectile(weapon, dir)
+	var arrow := _make_projectile(weapon, dir, "rapid_volley")
 	var side := 0.0 if index == 0 else (VOLLEY_SPREAD if index % 2 == 1 else -VOLLEY_SPREAD) * (1.0 + 0.3 * ((index - 1) / 2 % 2))
 	arrow.position += dir.orthogonal() * side
 	arrow.damage_min = maxi(1, roundi(arrow.damage_min * Skills.VOLLEY_DAMAGE))
@@ -2498,7 +2610,10 @@ func _cast_chain(level: int) -> void:
 		Sfx.play("chain_cast")
 		return
 	targets.append(first)
-	while targets.size() < Skills.chain_targets(level) + roundi(skills.tree_bonus("spell", "chain_targets")):
+	# Rozszczep i Łańcuch (kamienie wsparcia): więcej przeskoków
+	var jumps := Skills.chain_targets(level) + roundi(skills.tree_bonus("spell", "chain_targets")) \
+			+ support_count("chain_lightning", "projectiles") + support_count("chain_lightning", "chain")
+	while targets.size() < jumps:
 		var last := targets[-1]
 		var next: Goblin = null
 		var nearest := CHAIN_JUMP_RANGE
@@ -2519,7 +2634,7 @@ func _cast_chain(level: int) -> void:
 	var multiplier := Skills.CHAIN_DAMAGE
 	for target in targets:
 		tween.tween_callback(_zap.bind(from, target, multiplier))
-		tween.tween_interval(0.06 / _skill_speed(["spell"]))
+		tween.tween_interval(0.06 / _skill_speed(Skills.tags("chain_lightning")))
 		from = target.hurt_center()
 		multiplier *= Skills.CHAIN_FALLOFF
 
@@ -2533,7 +2648,7 @@ func _zap(from: Vector2, target: Goblin, multiplier: float) -> void:
 	SpellSkills.zap_flash(get_parent(), to)
 	ShockFx.apply(target, to, target.hurt_radius + 6.0)
 	Sfx.play("chain_zap")
-	hit_enemy(target, _skill_damage(multiplier, Skills.tags("chain_lightning")), from, 40.0, "lightning")
+	hit_enemy(target, _skill_damage(multiplier, Skills.tags("chain_lightning")), from, 40.0, "lightning", Skills.tags("chain_lightning"))
 
 
 ## Fala piorunów: szeroki stożek błyskawic przed postacią.
@@ -2545,7 +2660,7 @@ func _cast_wave(level: int) -> void:
 	_attack_timer = _attack_length
 	var origin := body_center()
 	var half := deg_to_rad(Skills.wave_half_angle(level))
-	var radius := Skills.wave_radius(level) * stats.area_multiplier()
+	var radius := Skills.wave_radius(level) * stats.area_multiplier(Skills.tags("thunder_wave"))
 	SkillEffects.sheet_once(get_parent(), WAVE_FX, 7, 20.0, origin, Vector2(6, 74), dir.angle(), 1.0, radius / WAVE_FX_RADIUS)
 	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
 		var to_enemy := enemy.hurt_center() - origin
@@ -2554,7 +2669,7 @@ func _cast_wave(level: int) -> void:
 		if to_enemy.length() > enemy.hurt_radius and absf(angle_difference(dir.angle(), to_enemy.angle())) > half:
 			continue
 		SpellSkills.zap_flash(get_parent(), enemy.hurt_center())
-		hit_enemy(enemy, _skill_damage(Skills.WAVE_DAMAGE, Skills.tags("thunder_wave")), global_position, 140.0, "lightning")
+		hit_enemy(enemy, _skill_damage(Skills.WAVE_DAMAGE, Skills.tags("thunder_wave")), global_position, 140.0, "lightning", Skills.tags("thunder_wave"))
 	Sfx.play("thunder")
 	_shake = maxf(_shake, 4.0)
 

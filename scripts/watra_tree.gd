@@ -8,7 +8,7 @@ class_name WatraTree
 ## za darmo poza lochem; loch zapamiętuje premie z chwili wejścia (Dungeons.config, klucz "tree").
 ## Wybrane węzły cofa się za złoto: pojedynczy węzeł z końca ścieżki (REFUND_GOLD_PER_LEVEL) albo całą zakładkę
 ## naraz, taniej w przeliczeniu na węzeł (RESET_GOLD_PER_LEVEL).
-## Układ: 12 gałęzi rozchodzących się promieniście od Watry (BRANCHES). Gałąź ma węzeł-korzeń i dwie ścieżki po 4 małe
+## Układ: 13 gałęzi rozchodzących się promieniście od Watry (BRANCHES). Gałąź ma węzeł-korzeń i dwie ścieżki po 4 małe
 ## węzły zakończone węzłem znaczącym albo kluczowym. Gałęzie mechanik (Dungeons.MECHANICS): ścieżka „częściej”
 ## (waga mechaniki w Dungeons.roll_mechanics) z węzłem kluczowym „mechanika zawsze”, i ścieżka „mocniej” (moc mechaniki
 ## jak z legendarnego bożka - Dungeon.mechanic_power: więcej skrzyń, run, talizmanów do wyboru…).
@@ -28,11 +28,11 @@ const MAX_IDOL_SLOTS := 2
 
 ## Gałęzie w kolejności wokół Watry (od góry, zgodnie ze wskazówkami zegara).
 const BRANCH_ORDER: Array[String] = ["chests", "general", "shrine", "elites", "loot", "crystal",
-		"uroczysko", "vault", "zertwa", "skarbnik", "idols", "bless"]
+		"uroczysko", "vault", "zertwa", "skarbnik", "mist", "idols", "bless"]
 const BRANCH_COLORS := {
 	"chests": Color(0.95, 0.75, 0.35), "shrine": Color(0.55, 0.85, 1.0), "elites": Color(0.95, 0.45, 0.4),
 	"crystal": Color(1.0, 0.55, 0.25), "uroczysko": Color(0.6, 0.55, 1.0), "zertwa": Color(0.85, 0.3, 0.35),
-	"skarbnik": Color(0.95, 0.85, 0.3), "general": Color(0.75, 0.75, 0.85), "idols": Color(0.75, 0.6, 0.45),
+	"skarbnik": Color(0.95, 0.85, 0.3), "mist": Color(0.68, 0.7, 1.0), "general": Color(0.75, 0.75, 0.85), "idols": Color(0.75, 0.6, 0.45),
 	"loot": Color(0.5, 0.9, 0.5), "vault": Color(1.0, 0.7, 0.55), "bless": Color(1.0, 0.9, 0.55),
 }
 ## Nazwy gałęzi spoza mechanik (gałęzie mechanik biorą nazwę z Dungeons.MECHANICS).
@@ -42,16 +42,19 @@ const BRANCH_NAMES := {"general": "Splot mechanik", "idols": "Bożki", "loot": "
 const MECHANIC_KEYSTONES := {
 	"chests": "Skarbiec Przodków", "shrine": "Święty Gaj", "elites": "Zew Wybrańców", "crystal": "Serce Kryształu",
 	"uroczysko": "Brama Nawii", "zertwa": "Krwawa Danina", "skarbnik": "Pakt ze Skarbnikiem",
+	"mist": "Wieczna Mgła",
 }
 const MECHANIC_NOTABLES := {
 	"chests": "Okute Wieka", "shrine": "Łaska Bogów", "elites": "Łowy na Wybrańców", "crystal": "Czysty Żar",
 	"uroczysko": "Zimne Runy", "zertwa": "Hojna Żertwa", "skarbnik": "Chciwość Skarbnika",
+	"mist": "Gęsta Mgła",
 }
 ## Co daje moc danej mechaniki (opis w podpowiedzi węzła).
 const POWER_TEXTS := {
 	"chests": "więcej skrzyń", "shrine": "więcej kapliczek", "elites": "więcej elitarnych potworów",
 	"crystal": "hojniejszy Kryształ Watry", "uroczysko": "więcej run z Uroczyska",
 	"zertwa": "więcej talizmanów do wyboru", "skarbnik": "więcej Skarbników",
+	"mist": "bogatsza Skrzynia Mgły",
 }
 ## Gałęzie mechanik: mnożnik wagi z korzenia i ze ścieżki „częściej”, moc ze ścieżki „mocniej” i z węzła znaczącego.
 const MECH_WEIGHT := 1.2
@@ -97,9 +100,9 @@ const BRANCHES := {
 	},
 }
 ## Położenie węzłów gałęzi: [wzdłuż promienia, w bok] w jednostkach drzewka (WatraTreeWindow rysuje je w pikselach).
-const ROOT_POS := Vector2(2.4, 0.0)
-const PATH_POS: Array[Vector2] = [Vector2(3.5, 0.5), Vector2(4.6, 0.7), Vector2(5.7, 0.75), Vector2(6.8, 0.7)]
-const END_POS := Vector2(8.0, 0.55)
+const ROOT_POS := Vector2(2.65, 0.0)
+const PATH_POS: Array[Vector2] = [Vector2(3.85, 0.5), Vector2(5.05, 0.7), Vector2(6.25, 0.75), Vector2(7.45, 0.7)]
+const END_POS := Vector2(8.75, 0.55)
 ## Klucze premii mnożących lochy (Dungeons.mult: 1 + suma) i dodawanych (Dungeons.added).
 const MULT_KEYS: Array[String] = ["loot", "gold", "xp", "gems", "legend", "treasure"]
 const ADD_KEYS: Array[String] = ["item_level", "quality", "vault_runes"]

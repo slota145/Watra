@@ -78,6 +78,8 @@ var _venom_spread := false
 var _poisoned := {}
 var _snares: Array[Node2D] = []
 var _falcon: _Falcon
+## Pełny czas obecnego Sokoła (dłuższy z kamieniem Watażka).
+var _falcon_total := Skills.FALCON_TIME
 var _ballista: _Ballista
 var _shadow_time := 0.0
 var _shadow_shot := false
@@ -95,7 +97,7 @@ func press(id: String) -> void:
 		return
 	if _cooldowns.get(id, [0.0])[0] > 0.0 or _power_charge >= 0.0 or _player.is_dashing():
 		return
-	if not _player.spend_mana(Skills.mana_cost(id)):
+	if not _player.spend_mana(_player.skill_mana(id)):
 		_player._hint(Lang.t("Za mało many"))
 		return
 	match id:
@@ -228,25 +230,27 @@ func _fire_power(charge: float) -> void:
 	_start_cooldown("power_shot", Skills.POWER_COOLDOWN)
 	var multiplier := Skills.power_damage(level) * lerpf(1.0, Skills.POWER_FULL_DAMAGE, charge) * (1.0 + _bonus("power_damage")) \
 			* (_player.combo_damage() if combo else 1.0)
-	var arrow := _player._make_projectile(_player.equipment.weapon(), dir)
-	arrow.damage_min = maxi(1, roundi(arrow.damage_min * multiplier))
-	arrow.damage_max = maxi(1, roundi(arrow.damage_max * multiplier))
-	arrow.pierce += Skills.power_pierce(level)
-	arrow.speed = 520.0
-	arrow.max_range *= 1.4
-	arrow.knockback = 120.0
-	arrow.size = lerpf(1.0, 1.5, charge)
-	arrow.modulate = Color(1.5, 1.05, 0.6)
-	var plain := arrow.get_node_or_null("Trail")
-	if plain != null:
-		arrow.remove_child(plain)
-		plain.queue_free()
-	var fire_trail := arrow_trail(POWER_TRAIL_FX, dir)
-	fire_trail.scale = Vector2.ONE * lerpf(1.0, 1.4, charge)
-	arrow.add_child(fire_trail)
-	if combo:
-		arrow.enemy_hit.connect(func(enemy: Goblin) -> void: _fire_blast(enemy.hurt_center(), multiplier * 0.5))
-	_player.get_parent().add_child(arrow)
+	# Rozszczep (kamień wsparcia): dodatkowe groty wachlarzem
+	for shot: Vector2 in Player.split_directions(dir, _player.support_count("power_shot", "projectiles")):
+		var arrow := _player._make_projectile(_player.equipment.weapon(), shot, "power_shot")
+		arrow.damage_min = maxi(1, roundi(arrow.damage_min * multiplier))
+		arrow.damage_max = maxi(1, roundi(arrow.damage_max * multiplier))
+		arrow.pierce += Skills.power_pierce(level)
+		arrow.speed = 520.0
+		arrow.max_range *= 1.4
+		arrow.knockback = 120.0
+		arrow.size = lerpf(1.0, 1.5, charge)
+		arrow.modulate = Color(1.5, 1.05, 0.6)
+		var plain := arrow.get_node_or_null("Trail")
+		if plain != null:
+			arrow.remove_child(plain)
+			plain.queue_free()
+		var fire_trail := arrow_trail(POWER_TRAIL_FX, shot)
+		fire_trail.scale = Vector2.ONE * lerpf(1.0, 1.4, charge)
+		arrow.add_child(fire_trail)
+		if combo:
+			arrow.enemy_hit.connect(func(enemy: Goblin) -> void: _fire_blast(enemy.hurt_center(), multiplier * 0.5))
+		_player.get_parent().add_child(arrow)
 	Sfx.play("bow", 3.0, lerpf(0.9, 0.7, charge))
 	_player.add_shake(1.0 + 2.0 * charge)
 
@@ -259,7 +263,7 @@ func _fire_blast(at: Vector2, multiplier: float) -> void:
 	Sfx.play_at("explosion", at, -8.0)
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
 		if enemy.hurt_center().distance_to(at) <= Skills.POWER_EXPLOSION + enemy.hurt_radius:
-			_player.hit_enemy(enemy, _player._skill_damage(multiplier), at, 60.0)
+			_player.hit_enemy(enemy, _player._skill_damage(multiplier, Skills.tags("power_shot")), at, 60.0, "fire", Skills.tags("power_shot"))
 
 
 # ---------------------------------------------------------------- Deszcz Strzał
@@ -276,7 +280,7 @@ func _arrow_rain() -> void:
 	var rain := _Rain.new()
 	rain.player = _player
 	rain.position = at
-	rain.radius = Skills.RAIN_RADIUS * (1.0 + _bonus("rain_area")) * _player.stats.area_multiplier()
+	rain.radius = Skills.RAIN_RADIUS * (1.0 + _bonus("rain_area")) * _player.stats.area_multiplier(Skills.tags("arrow_rain"))
 	rain.tick = Skills.RAIN_TICK / (2.0 if combo else 1.0) / (HAIL_DENSITY if hail else 1.0)
 	rain.damage = Skills.rain_damage(level) * (1.0 + _bonus("rain_damage")) * (HAIL_DAMAGE if hail else 1.0) \
 			* (_player.combo_damage() if combo else 1.0)
@@ -296,8 +300,10 @@ func _vault() -> void:
 	var weapon := _player.equipment.weapon()
 	var spread := deg_to_rad(Skills.VAULT_SPREAD_DEGREES)
 	var multiplier := Skills.vault_damage(level)
-	for i in Skills.VAULT_ARROWS:
-		var arrow := _player._make_projectile(weapon, dir.rotated(lerpf(-spread / 2.0, spread / 2.0, float(i) / (Skills.VAULT_ARROWS - 1))))
+	var count := Skills.VAULT_ARROWS + _player.support_count("vault", "projectiles")
+	spread *= sqrt(count / float(Skills.VAULT_ARROWS))
+	for i in count:
+		var arrow := _player._make_projectile(weapon, dir.rotated(lerpf(-spread / 2.0, spread / 2.0, float(i) / (count - 1))), "vault")
 		arrow.damage_min = maxi(1, roundi(arrow.damage_min * multiplier))
 		arrow.damage_max = maxi(1, roundi(arrow.damage_max * multiplier))
 		_player.get_parent().add_child(arrow)
@@ -331,11 +337,13 @@ func spring_snare(at: Vector2) -> void:
 	var hold := Skills.snare_time(level) * (1.0 + _bonus("snare_time"))
 	SkillEffects.sheet_once(_player.get_parent(), SNARE_SNAP_FX, 12, 18.0, at, Vector2(17, 23))
 	Sfx.play_at("hit_heavy", at, -2.0)
+	var tags := Skills.tags("snare")
+	var radius := Skills.SNARE_RADIUS * _player.stats.area_multiplier(tags)
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
-		if enemy.global_position.distance_to(at) > Skills.SNARE_RADIUS + enemy.hurt_radius:
+		if enemy.global_position.distance_to(at) > radius + enemy.hurt_radius:
 			continue
 		enemy.set_meta("snared_until", Time.get_ticks_msec() + roundi(hold * 1000.0))
-		_player.hit_enemy(enemy, _player._skill_damage(Skills.snare_damage(level)), at, 0.0)
+		_player.hit_enemy(enemy, _player._skill_damage(Skills.snare_damage(level), tags), at, 0.0, "", tags)
 		if enemy.state != Goblin.State.DEAD:
 			enemy.stun(hold)
 
@@ -356,7 +364,9 @@ func _summon_falcon() -> void:
 	_falcon = _Falcon.new()
 	_falcon.player = _player
 	_falcon.damage = Skills.falcon_damage(_level("falcon")) * (1.0 + _bonus("falcon_damage"))
-	_falcon.time_left = Skills.FALCON_TIME
+	# Watażka (kamień wsparcia przywołań): dłużej
+	_falcon_total = Skills.FALCON_TIME * (1.0 + _player.support("falcon", "duration"))
+	_falcon.time_left = _falcon_total
 	_falcon.position = _player.global_position + Vector2(0, -60)
 	_player.get_parent().add_child(_falcon)
 	if combo:
@@ -421,22 +431,31 @@ func _wind_arrow() -> void:
 	_player.note_skill("wind_arrow")
 	var dir := _player._aim_direction()
 	_player._ranged_pose(dir)
+	_wind_gust(dir, combo)
+	_player.support_echo("wind_arrow", func() -> void: _wind_gust(_player._aim_direction(), combo))
+
+
+## Podmuch Strzały Wichru (bez many i odnowienia - powtarza go też Echo Rusałki).
+func _wind_gust(dir: Vector2, combo: bool) -> void:
+	_player._ranged_pose(dir)
+	var tags := Skills.tags("wind_arrow")
+	var reach := Skills.WIND_RANGE * _player.stats.area_multiplier(tags)
 	var origin := _player.body_center()
 	var half := deg_to_rad(Skills.WIND_HALF_ANGLE) * (2.0 if combo else 1.0)
 	# podmuch narysowany na stożek 2x28 stopni; w combo (dwa razy szerszy) - trzy podmuchy wachlarzem
 	var gusts := [0.0] if not combo else [-half / 2.0, 0.0, half / 2.0]
 	for turn: float in gusts:
 		SkillEffects.sheet_once(_player.get_parent(), WIND_FX, 9, 18.0, origin, Vector2(4, 53), dir.angle() + turn, 1.0,
-				Skills.WIND_RANGE / 104.0)
+				reach / 104.0)
 	Sfx.play("whirl", 2.0, 1.3)
 	var multiplier := Skills.wind_damage(_level("wind_arrow")) * (1.0 + _bonus("wind_damage")) * (_player.combo_damage() if combo else 1.0)
 	for enemy: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
 		var to_enemy := enemy.hurt_center() - origin
-		if to_enemy.length() > Skills.WIND_RANGE + enemy.hurt_radius:
+		if to_enemy.length() > reach + enemy.hurt_radius:
 			continue
 		if to_enemy.length() > enemy.hurt_radius and absf(angle_difference(dir.angle(), to_enemy.angle())) > half:
 			continue
-		_player.hit_enemy(enemy, _player._skill_damage(multiplier, Skills.tags("wind_arrow")), _player.global_position, Skills.WIND_KNOCKBACK)
+		_player.hit_enemy(enemy, _player._skill_damage(multiplier, tags), _player.global_position, Skills.WIND_KNOCKBACK, "", tags)
 		MiscVfx.spark(_player.get_parent(), enemy.hurt_center(), WIND_COLOR, 0.5)
 
 
@@ -450,7 +469,7 @@ func _place_ballista() -> void:
 	_ballista.player = _player
 	_ballista.weapon = _player.equipment.weapon()
 	_ballista.damage = Skills.ballista_damage(_level("ballista")) * (1.0 + _bonus("ballista_damage"))
-	_ballista.time_left = Skills.BALLISTA_TIME * (1.0 + _bonus("ballista_time"))
+	_ballista.time_left = Skills.BALLISTA_TIME * (1.0 + _bonus("ballista_time") + _player.support("ballista", "duration"))
 	_ballista.total = _ballista.time_left
 	_ballista.interval = Skills.BALLISTA_INTERVAL / _player._skill_speed(Skills.tags("ballista"))
 	_ballista.position = _aim_point(Skills.BALLISTA_PLACE)
@@ -486,7 +505,7 @@ func forced_crit(enemy: Goblin) -> bool:
 func on_hit(enemy: Goblin, amount: int) -> void:
 	if _venom_time <= 0.0:
 		return
-	var total := amount * Skills.venom_damage(_level("venom_arrows")) * (1.0 + _bonus("venom_damage"))
+	var total := amount * Skills.venom_damage(_level("venom_arrows")) * (1.0 + _bonus("venom_damage") + _player.support("venom_arrows", "dot_damage"))
 	poison(enemy, total)
 	if _venom_spread:
 		for other: Goblin in _player.get_tree().get_nodes_in_group("enemies"):
@@ -513,7 +532,7 @@ func statuses() -> Array[Dictionary]:
 		result.append({"name": Lang.t("Jadowe Groty"), "kind": "good", "left": _venom_time, "total": Skills.VENOM_TIME, "icon": ICONS["venom_arrows"],
 				"description": Lang.t("Strzały zatruwają wrogów - jad przeskakuje na wrogów obok") if _venom_spread else Lang.t("Strzały zatruwają wrogów")})
 	if is_instance_valid(_falcon) and not _falcon.leaving:
-		result.append({"name": Lang.t("Sokół"), "kind": "good", "left": _falcon.time_left, "total": Skills.FALCON_TIME, "icon": ICONS["falcon"],
+		result.append({"name": Lang.t("Sokół"), "kind": "good", "left": _falcon.time_left, "total": _falcon_total, "icon": ICONS["falcon"],
 				"description": Lang.t("Sokół krąży nad tobą i atakuje wrogów")})
 	if is_instance_valid(_ballista) and not _ballista.leaving:
 		result.append({"name": Lang.t("Balista"), "kind": "good", "left": _ballista.time_left, "total": _ballista.total, "icon": ICONS["ballista"],
@@ -600,7 +619,8 @@ class _Rain:
 			return
 		for enemy: Goblin in player.get_tree().get_nodes_in_group("enemies"):
 			if enemy.global_position.distance_to(global_position) <= radius + enemy.hurt_radius:
-				player.hit_enemy(enemy, player._skill_damage(damage), enemy.global_position + Vector2(0, -20), 10.0)
+				player.hit_enemy(enemy, player._skill_damage(damage, Skills.tags("arrow_rain")), enemy.global_position + Vector2(0, -20), 10.0,
+						"", Skills.tags("arrow_rain"))
 		Sfx.play_at("hit", global_position, -14.0)
 
 	func _draw() -> void:
@@ -750,7 +770,7 @@ class _Falcon:
 			return
 		var to := _target.hurt_center() - global_position
 		if to.length() <= DIVE_SPEED * delta + 6.0:
-			player.hit_enemy(_target, player._skill_damage(damage * _strength), global_position, 40.0)
+			player.hit_enemy(_target, player._skill_damage(damage * _strength, Skills.tags("falcon")), global_position, 40.0, "", Skills.tags("falcon"))
 			SkillEffects.sheet_once(get_parent(), BowSkills.FALCON_CLAW_FX, 8, 16.0, _target.hurt_center(), Vector2(19, 13),
 					0.0, 1.0, 1.0, 0.0, to.x < 0.0)
 			Sfx.play_at("hit", global_position, -4.0)
@@ -845,7 +865,7 @@ class _Ballista:
 		var high := maxi(1, roundi(player.stats.damage_max() * damage * kind))
 		var seekers := roundi(player.equipment.effect_power("ballista_seeker"))
 		var volley := roundi(player.equipment.effect_power("ballista_volley"))
-		var count := 1 + volley
+		var count := 1 + volley + player.support_count("ballista", "projectiles")
 		shots += 1
 		for i in count:
 			var side := 0.0 if count == 1 else lerpf(-0.25, 0.25, float(i) / (count - 1))
@@ -856,9 +876,10 @@ class _Ballista:
 				arrow.hits_left = seekers
 				arrow.damage_min = low
 				arrow.damage_max = high
+				arrow.tags = Skills.tags("ballista")
 				get_parent().add_child(arrow)
 			elif weapon.has("projectile"):
-				var bolt := player._make_projectile(weapon, dir.rotated(side))
+				var bolt := player._make_projectile(weapon, dir.rotated(side), "ballista")
 				bolt.position = global_position + dir.rotated(side) * 8.0
 				bolt.damage_min = low
 				bolt.damage_max = high
