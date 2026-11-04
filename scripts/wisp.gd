@@ -99,7 +99,7 @@ func _ignite() -> void:
 func _explode() -> void:
 	if is_instance_valid(_telegraph):
 		if _player_alive() and _telegraph.contains(_player.global_position):
-			_player.take_damage(blast_damage, global_position)
+			_player.take_damage(blast_damage, global_position, Elements.FIRE)
 		_telegraph.queue_free()
 	MonsterFx.wisp_burst(get_parent(), hurt_center())
 	Sfx.play_at("wisp_burst", global_position)

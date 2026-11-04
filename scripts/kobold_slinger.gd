@@ -23,6 +23,7 @@ func _process_attack(delta: float) -> void:
 	if not _player_alive():
 		return
 	var stone := EnemySpit.new()
+	stone.element = element
 	stone.style = "stone"
 	stone.position = global_position + Vector2(0, -hurt_height)
 	stone.direction = (_player.body_center() - stone.position).normalized()

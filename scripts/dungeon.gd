@@ -129,6 +129,8 @@ func generate(world, settings: Dictionary) -> void:
 	else:
 		pinnacle = ""
 	Levels.zone_default = level
+	# Mapa Nawii obniża odporności gracza (areny bogów - najbardziej)
+	Elements.penalty = Elements.NAWIA_PENALTY.y if pinnacle != "" else Elements.penalty_for_tier(int(settings["tier"]))
 	Goblin.safe_zone = Rect2()
 	Goblin.dungeon_mods = {}
 	for key in ["health", "damage", "xp", "gold", "loot", "gems", "legend"]:

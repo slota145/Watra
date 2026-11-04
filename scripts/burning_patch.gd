@@ -45,7 +45,7 @@ func _process(delta: float) -> void:
 		return
 	var player: Player = get_tree().get_first_node_in_group("player")
 	if player != null and not player.is_dead and player.global_position.distance_to(global_position) <= radius:
-		player.take_damage(damage, global_position)
+		player.take_damage(damage, global_position, Elements.FIRE)
 
 
 func _draw() -> void:

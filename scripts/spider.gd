@@ -58,6 +58,7 @@ func _process_attack(delta: float) -> void:
 	state = State.CHASE
 	if _player_alive():
 		var ball := EnemySpit.new()
+		ball.element = element
 		ball.style = "web"
 		ball.position = global_position + Vector2(0, -8)
 		ball.direction = (_player.body_center() - ball.position).normalized()

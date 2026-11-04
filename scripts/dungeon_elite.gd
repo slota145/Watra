@@ -228,7 +228,7 @@ func _trait_tick(id: String, now: int) -> float:
 				SkillEffects.shockwave(goblin.get_parent(), goblin.global_position, FROST_RADIUS, Color(0.6, 0.9, 1.0, 0.8))
 				Sfx.play_at("hit_ice", goblin.global_position)
 				player.apply_slow(0.55, 2.0)
-				player.take_damage(maxi(1, roundi(goblin.damage * power)), goblin.global_position)
+				player.take_damage(maxi(1, roundi(goblin.damage * power)), goblin.global_position, Elements.COLD)
 				return FROST_EVERY
 			return TICK
 		"storm":
@@ -362,7 +362,7 @@ static func _strike(layer: Node, parent: Node, player: Player, at: Vector2, radi
 			if sound != null:
 				sound.play_at("explosion", at)
 		if target != null and not target.is_dead and target.global_position.distance_to(at) <= radius:
-			target.take_damage(amount, at))
+			target.take_damage(amount, at, Elements.LIGHTNING if fx == "storm" else Elements.FIRE))
 
 
 func _burn_patch(at: Vector2, amount: int) -> void:
@@ -442,4 +442,4 @@ class FirePatch extends Node2D:
 		if _burn <= 0.0 and is_instance_valid(player) and not player.is_dead \
 				and player.global_position.distance_to(global_position) < BURN_RADIUS:
 			_burn = 0.5
-			player.take_damage(amount, global_position)
+			player.take_damage(amount, global_position, Elements.FIRE)

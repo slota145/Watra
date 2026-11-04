@@ -127,6 +127,7 @@ func _update_attack(delta: float) -> void:
 				var aim := global_position.direction_to(_player.body_center()).angle()
 				for k in 5:
 					var spear := EnemySpit.new()
+					spear.element = element
 					spear.style = "bone"
 					spear.position = global_position + Vector2(0, -hurt_height)
 					spear.direction = Vector2.from_angle(aim + (k - 2) * 0.2)
@@ -196,7 +197,7 @@ func _grave_spike(spot: Vector2) -> void:
 		_debris(spot, 6, 120.0, Skeleton.BONE_COLOR)
 		SkillEffects.sheet_once(get_parent(), FX_SPIKE, 10, 16.0, spot + Vector2(0, 6), Vector2(25, 34), 0.0, 1.0, 1.1)
 		if _player_alive() and _player.global_position.distance_to(spot) <= SPIKE_RADIUS:
-			_player.take_damage(spike_damage, spot))
+			_player.take_damage(spike_damage, spot, Elements.NAWIA))
 
 
 func _blink() -> void:

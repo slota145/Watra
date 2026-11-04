@@ -53,6 +53,10 @@ const TIER_VALUES := {
 	"life_on_hit": [1.0, 15.0], "health_regen": [0.2, 8.0], "mana_regen": [0.2, 6.0], "dodge_chance": [0.01, 0.10],
 	"cooldown_reduction": [0.01, 0.15], "gold_find": [0.03, 0.40], "xp_gain": [0.02, 0.25], "area": [0.02, 0.25],
 	"potion_power": [0.04, 0.50],
+	# odporności (Elements): pojedyncza do 40% na T1, na wszystkie żywioły do 15%, na Nawię (rzadka - tylko zbroja na
+	# tułów, pas i naszyjnik) do 25%; sufit odporności 75%, a na Mapie Nawii kara do -60%
+	"fire_resistance": [0.03, 0.40], "cold_resistance": [0.03, 0.40], "lightning_resistance": [0.03, 0.40],
+	"all_resistances": [0.02, 0.15], "nawia_resistance": [0.02, 0.25],
 }
 ## Mnożnik ceny sprzedaży wg jakości.
 ## Cena skupu przedmiotu z łupu: z poziomu przedmiotu i jakości (nie z poziomu bazy - dawniej rzadki
@@ -69,22 +73,30 @@ const POOLS := {
 			"damage_percent", "crit_chance", "crit_damage", "life_on_hit", "mana_regen", "physical_damage", "spell_damage",
 			"cast_speed"],
 	"helmet": ["armor", "health", "vitality", "mana", "strength", "dexterity", "intelligence", "damage",
-			"health_regen", "mana_regen", "cooldown_reduction", "xp_gain"],
+			"health_regen", "mana_regen", "cooldown_reduction", "xp_gain",
+			"fire_resistance", "cold_resistance", "lightning_resistance"],
 	"chest": ["armor", "health", "vitality", "mana", "strength", "dexterity", "intelligence", "damage",
-			"health_regen", "dodge_chance"],
+			"health_regen", "dodge_chance",
+			"fire_resistance", "cold_resistance", "lightning_resistance", "nawia_resistance"],
 	"gloves": ["armor", "health", "attack_speed", "strength", "dexterity", "intelligence", "vitality", "damage",
-			"crit_chance", "crit_damage", "life_on_hit", "cast_speed", "physical_damage", "area"],
+			"crit_chance", "crit_damage", "life_on_hit", "cast_speed", "physical_damage", "area",
+			"fire_resistance", "cold_resistance", "lightning_resistance"],
 	"boots": ["armor", "health", "move_speed", "vitality", "mana", "strength", "dexterity", "intelligence",
-			"dodge_chance", "health_regen", "gold_find"],
+			"dodge_chance", "health_regen", "gold_find",
+			"fire_resistance", "cold_resistance", "lightning_resistance"],
 	"ring": ["health", "mana", "damage", "strength", "dexterity", "intelligence", "vitality", "attack_speed",
 			"damage_percent", "crit_chance", "crit_damage", "life_on_hit", "mana_regen", "gold_find", "xp_gain",
-			"physical_damage", "spell_damage", "cast_speed"],
+			"physical_damage", "spell_damage", "cast_speed",
+			"fire_resistance", "cold_resistance", "lightning_resistance", "all_resistances"],
 	"earring": ["health", "mana", "strength", "dexterity", "intelligence", "vitality", "armor", "move_speed",
-			"health_regen", "mana_regen", "cooldown_reduction", "dodge_chance", "xp_gain"],
+			"health_regen", "mana_regen", "cooldown_reduction", "dodge_chance", "xp_gain",
+			"fire_resistance", "cold_resistance", "lightning_resistance", "all_resistances"],
 	"belt": ["health", "armor", "vitality", "strength", "dexterity", "intelligence", "mana", "health_regen",
-			"mana_regen", "potion_power", "life_on_hit", "dodge_chance"],
+			"mana_regen", "potion_power", "life_on_hit", "dodge_chance",
+			"fire_resistance", "cold_resistance", "lightning_resistance", "nawia_resistance"],
 	"necklace": ["health", "mana", "damage", "strength", "dexterity", "intelligence", "vitality", "armor",
-			"damage_percent", "crit_damage", "cooldown_reduction", "health_regen", "gold_find", "xp_gain", "area"],
+			"damage_percent", "crit_damage", "cooldown_reduction", "health_regen", "gold_find", "xp_gain", "area",
+			"fire_resistance", "cold_resistance", "lightning_resistance", "all_resistances", "nawia_resistance"],
 }
 ## Dopisek do nazwy (dopełniacz - pasuje do każdego rodzaju przedmiotu). Tłumaczenie dopisku zawiera przyimek
 ## ("of the Lynx"), bo nazwa to "<baza> <dopiski>" (compose_name).
@@ -95,6 +107,8 @@ const SUFFIXES := {
 	"crit_damage": "Kata", "life_on_hit": "Wampira", "health_regen": "Trolla", "mana_regen": "Źródła",
 	"dodge_chance": "Cienia", "cooldown_reduction": "Czasu", "gold_find": "Skarbnika", "xp_gain": "Mędrca",
 	"area": "Rozmachu", "potion_power": "Zielarza",
+	"fire_resistance": "Salamandry", "cold_resistance": "Zimy", "lightning_resistance": "Gromu",
+	"all_resistances": "Żywiołów", "nawia_resistance": "Żercy",
 }
 
 

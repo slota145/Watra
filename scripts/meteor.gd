@@ -59,7 +59,7 @@ func _land() -> void:
 		if d < 260.0:
 			player.add_shake(5.0 * (1.0 - d / 260.0) + 1.0)
 		if d < RADIUS and not player.is_dead:
-			player.take_damage(maxi(1, roundi(Levels.damage(level) * 3.0)), global_position)
+			player.take_damage(maxi(1, roundi(Levels.damage(level) * 3.0)), global_position, Elements.FIRE)
 	if is_instance_valid(site):
 		site.on_meteor_landed(global_position)
 	queue_free()

@@ -57,6 +57,7 @@ func _process_attack(delta: float) -> void:
 	state = State.CHASE
 	if _player_alive():
 		var orb := EnemySpit.new()
+		orb.element = element
 		orb.style = "water"
 		orb.position = global_position + Vector2(0, -18)
 		orb.direction = (_player.body_center() - orb.position).normalized()

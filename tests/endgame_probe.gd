@@ -5,7 +5,8 @@ extends SceneTree
 ## otrzymane obrażenia na sekundę i ile razy zszedłby poniżej 25% zdrowia (zdrowie jest wtedy uzupełniane).
 ## Użycie: -s tests/endgame_probe.gd -- <zapis.json> <stopień> <sekundy> [tryb] [poziom postaci] [poziom ekwipunku]
 ## Poziom ekwipunku (np. 90): ekwipunek z zapisu zastąpiony rzadkimi przedmiotami tego poziomu (bez zaklęć) -
-## porównanie z graczem, który zmienia ekwipunek na bieżąco.
+## porównanie z graczem, który zmienia ekwipunek na bieżąco. Siódmy argument: dodatkowa odporność na żywioły (np. 1.35 -
+## gracz zbierający odporności do sufitu mimo kary Nawii; na Nawię 60% tego). Ósmy: klimat lochu (domyślnie catacombs).
 ## Tryby: whirl (sam Młynek), flicker (samo Mgnienie), full (cały pasek miecza + Dymne Wybuchy pod E), idle (stoi),
 ## bow / spell (pasek łuku / księgi z zapisu, broń zastąpiona rzadkim łukiem / księgą poziomu ekwipunku albo 51.,
 ## punkty siły przeniesione do zręczności / inteligencji),
@@ -73,7 +74,7 @@ func _initialize() -> void:
 	var game := root.get_node("Game")
 	game.save_path = "user://test_savegame.json"
 	game._pending_load = {"seed": int(save["seed"]), "zone": "dungeon", "player": p,
-			"dungeon": {"climate": "catacombs", "tier": tier, "mods": [], "seed": 777, "mechanics": ["uroczysko"] if uro else []}}
+			"dungeon": {"climate": _args[7] if _args.size() > 7 else "catacombs", "tier": tier, "mods": [], "seed": 777, "mechanics": ["uroczysko"] if uro else []}}
 	_world = load("res://scenes/world.tscn").instantiate()
 	root.add_child.call_deferred(_world)
 
@@ -134,6 +135,9 @@ func _report_static(pl) -> void:
 			Sk.WHIRLWIND_TICK / pl._skill_speed(), pl.whirl_radius()])
 	var fl: int = pl.skills.level_of("flicker")
 	print("  mgnienie poz. %d: cios %.0f" % [fl, _avg_hit(pl, Sk.flicker_damage(fl), Sk.tags("flicker"))])
+	print("  odporności: ogień %d%%  lód %d%%  pioruny %d%%  Nawia %d%%  (kara %d%%)" % [pl.stats.resistance("fire") * 100,
+			pl.stats.resistance("cold") * 100, pl.stats.resistance("lightning") * 100, pl.stats.resistance("nawia") * 100,
+			load("res://scripts/elements.gd").penalty * 100])
 	print("  legendy/efekty: ", pl.equipment.effects() if pl.equipment.has_method("effects") else "")
 	var enemies := get_nodes_in_group("enemies")
 	var hp := 0.0
@@ -254,6 +258,8 @@ func _process(delta: float) -> bool:
 			_regear(pl, int(_args[5]))
 		elif _mode in ["bow", "spell"]:
 			_regear(pl, 51, true)
+		if _args.size() > 6 and float(_args[6]) > 0.0:
+			pl.stats.set_temp("probe_res", {"all_resistances": float(_args[6]), "nawia_resistance": float(_args[6]) * 0.6})
 		_report_static(pl)
 		pl.health = pl.stats.max_health()
 		pl.mana = pl.stats.max_mana()

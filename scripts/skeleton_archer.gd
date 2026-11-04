@@ -22,6 +22,7 @@ func _process_attack(delta: float) -> void:
 	if not _player_alive():
 		return
 	var arrow := EnemySpit.new()
+	arrow.element = element
 	arrow.style = "arrow"
 	arrow.position = global_position + Vector2(0, -hurt_height)
 	arrow.direction = (_player.body_center() - arrow.position).normalized()

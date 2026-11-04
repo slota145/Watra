@@ -152,6 +152,7 @@ func _update_attack(delta: float) -> void:
 						GUST_RADIUS / WIND_FX_LENGTH)
 				for k in 5:
 					var feather := EnemySpit.new()
+					feather.element = element
 					feather.style = "feather"
 					feather.position = global_position + Vector2(0, -FLY_HEIGHT * 0.5)
 					feather.direction = _dir.rotated((k - 2) * 0.22)

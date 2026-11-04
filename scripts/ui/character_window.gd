@@ -15,6 +15,8 @@ var _points_label: Label
 var _value_labels := {}
 var _plus_buttons := {}
 var _derived_label: Label
+## Odporności na żywioły i Nawię (Elements) - na czerwono, gdy któraś spadła poniżej zera (kara Mapy Nawii).
+var _resist_label: Label
 var _reset_button: Button
 var _reset_confirm_timer := 0.0
 
@@ -96,7 +98,14 @@ func _ready() -> void:
 	columns.add_child(VSeparator.new())
 	_derived_label = UiStyle.label("", 8, UiStyle.DIM_COLOR)
 	_derived_label.custom_minimum_size.x = 110
-	columns.add_child(_derived_label)
+	var derived := VBoxContainer.new()
+	derived.add_theme_constant_override("separation", 2)
+	columns.add_child(derived)
+	derived.add_child(_derived_label)
+	_resist_label = UiStyle.label("", 8, UiStyle.DIM_COLOR)
+	_resist_label.tooltip_text = tr("Odporność zmniejsza obrażenia od żywiołów i Nawii (najwyżej 75%). Na Mapie Nawii odporności spadają: o 20% na pierwszym stopniu, do 60% na najwyższym.")
+	_resist_label.mouse_filter = Control.MOUSE_FILTER_PASS
+	derived.add_child(_resist_label)
 
 
 func _process(delta: float) -> void:
@@ -196,3 +205,13 @@ func _refresh() -> void:
 		extras.append(tr("Więcej doświadczenia: +%d%%") % roundi((s.xp_multiplier() - 1.0) * 100.0))
 	if not extras.is_empty():
 		_derived_label.text += "\n" + "\n".join(extras)
+	var lines: Array[String] = [tr("Odporności:")]
+	var negative := false
+	for element: String in Elements.RESISTED:
+		var value := s.resistance(element)
+		negative = negative or value < 0.0
+		lines.append("  %s: %d%%" % [Elements.name_of(element), roundi(value * 100.0)])
+	if Elements.penalty > 0.0:
+		lines.append(tr("Kara Mapy Nawii: -%d%%") % roundi(Elements.penalty * 100.0))
+	_resist_label.text = "\n".join(lines)
+	_resist_label.add_theme_color_override("font_color", Color(1.0, 0.45, 0.4) if negative else UiStyle.DIM_COLOR)
