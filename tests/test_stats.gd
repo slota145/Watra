@@ -13,7 +13,9 @@ func _check(ok: bool, what: String) -> void:
 func _run() -> void:
 	var loot: GDScript = load("res://scripts/loot.gd")
 	var items: GDScript = load("res://scripts/items.gd")
-	for stat in items.STAT_NAMES:
+	# maksymalna odporność jest tylko z węzłów drzewka (CharacterStats.max_resistance) - nie wypada na przedmiotach
+	var loot_stats: Array = items.STAT_NAMES.keys().filter(func(stat: String) -> bool: return not stat.ends_with("_max_resistance"))
+	for stat in loot_stats:
 		_check(loot.TIER_VALUES.has(stat) and loot.SUFFIXES.has(stat), "%s: tiery i dopisek" % stat)
 		print("    T45 ", loot.tier_range(stat, 45), "  T1 ", loot.tier_range(stat, 1))
 	for slot in loot.POOLS:
@@ -24,7 +26,7 @@ func _run() -> void:
 		var id: String = loot.generate(loot.base_for(load("res://scripts/item_bases.gd").LINES.keys().pick_random(), 80), "rare", 80)
 		for stat in items.get_data(id)["affixes"]:
 			seen[stat] = true
-	_check(seen.size() == items.STAT_NAMES.size(), "wylosowano wszystkie %d statystyki (%d)" % [items.STAT_NAMES.size(), seen.size()])
+	_check(seen.size() == loot_stats.size(), "wylosowano wszystkie %d statystyki (%d)" % [loot_stats.size(), seen.size()])
 	var regen := ""
 	for i in 500:
 		var id: String = loot.generate("leather_cap", "rare", 70)
