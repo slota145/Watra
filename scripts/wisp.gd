@@ -66,7 +66,7 @@ func _physics_process(delta: float) -> void:
 			if randf() < delta * 0.5:
 				_drift = Vector2.from_angle(randf() * TAU) * 18.0
 			velocity = (home + _drift - global_position).limit_length(20.0)
-			if _player_alive() and global_position.distance_to(_player.global_position) < aggro_radius:
+			if _player_alive() and global_position.distance_to(_player.global_position) < aggro_radius * notice_factor:
 				aggro()
 		State.CHASE, State.ATTACK:
 			if not _player_alive() or _player_is_safe() or position.distance_to(home) > leash_radius:

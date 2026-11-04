@@ -98,7 +98,7 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 
 - **[U]** Deszcz Strzał (łuk) - deszcz strzał na obszar; combo po Salwie
 - **[Z]** Wachlarz - +1 strzała Salwy, strzały lecą wachlarzem
-- **[Z]** Szereg ✦ ⌛ - +1 pocisk umiejętności łuku, dodatkowe lecą równolegle obok siebie
+- **[Z]** Szereg ✦ - +1 pocisk umiejętności łuku, dodatkowe lecą równolegle obok siebie
 - **[Z]** Gęsty grad - +25% kręgu Deszczu Strzał
 - **[Z]** Ostre groty - +20% obrażeń Salwy i Deszczu Strzał
 - **[K]** Grad - Salwa +2 strzały, Deszcz o połowę gęstszy, każda strzała -20% obrażeń
@@ -109,7 +109,7 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - **[U]** Strzała tropiąca (łuk) - strzała sama szuka wrogów
 - **[U]** Szybka salwa (łuk) - seria strzał - teraz zwykła umiejętność, po Strzale tropiącej mocniejsza (combo)
 - **[Z]** Wierny tropiciel ✦ ⌛ - Strzała tropiąca krąży przy tobie jak przywołanie i sama strzela, ale rezerwuje 15% many
-- **[U]** Strzała Żmija ✦ ⌛ (łuk; atak, pocisk, fizyczne) - strzała przeskakuje między 4 wrogami, każdy skok +10% obrażeń
+- **[U]** Strzała Żmija ✦ (łuk; atak, pocisk, fizyczne, trucizna) - jadowa strzała przeskakuje między 4 wrogami, każdy skok +10% obrażeń, trafieni zatruci
 - **[Z]** Ostrzejszy trop - +1 trafienie Strzały tropiącej
 - **[K]** Oko Sokoła - trafienia z daleka (ponad 150) zawsze krytyczne, z bliska (do 70) -30% obrażeń
 
@@ -117,7 +117,7 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 
 - **[U]** Grot Swaroga (łuk) - napinany strzał z wybuchem
 - **[Z]** Napięta cięciwa - +25% szybkości napinania Grotu Swaroga
-- **[U]** Rozszczepiona Strzała ✦ ⌛ (łuk; atak, pocisk, fizyczne) - strzała po trafieniu rozpada się na 3 mniejsze lecące dalej
+- **[U]** Rozszczepiona Strzała ✦ (łuk; atak, pocisk, fizyczne) - strzała po trafieniu rozpada się na 3 mniejsze lecące dalej
 - **[Z]** Grot przebijający - strzały przebijają 1 wroga
 - **[Z]** Daleki strzał - +20% zasięgu strzał, +15% obrażeń Grotu Swaroga
 - **[K]** Strzelanie w biegu - strzelanie nie spowalnia, w biegu +15% szybkości ataku
@@ -137,7 +137,7 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - **[Z]** Mocne sidła - +50% unieruchomienia Sideł
 - **[U]** Jadowe Groty (łuk) - trujące strzały; combo po Sidłach
 - **[Z]** Żmijowy jad - +25% obrażeń Jadowych Grotów
-- **[U]** Kolczatka ✦ ⌛ (łuk; atak, obszar, fizyczne, w czasie) - rozsypane kolce spowalniają i ranią (krwawienie) wrogów na nich
+- **[U]** Kolczatka ✦ (łuk; atak, obszar, fizyczne, w czasie) - rozsypane kolce spowalniają i ranią (krwawienie) wrogów na nich
 - [G] Gniazdo - kamień szlachetny (działa o połowę mocniej)
 
 ### Cień (5)
@@ -145,17 +145,17 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - **[U]** Odskok (łuk) - odskok z rozrzutem strzał
 - **[Z]** Lekki krok - -25% odnowienia Odskoku
 - **[Z]** Unik łowcy - +4% uniku
-- **[Z]** Ciche kroki ✦ ⌛ - potwory w spoczynku zauważają cię z połowy odległości
-- **[K]** Łowca w Cieniu ✦ ⌛ - wrogowie, którzy cię jeszcze nie zauważyli, dostają +60% obrażeń i pierwsze trafienie zawsze krytyczne; wrogowie w walce z tobą -10%
+- **[Z]** Ciche kroki ✦ - potwory w spoczynku zauważają cię z połowy odległości
+- **[K]** Łowca w Cieniu ✦ - wrogowie, którzy cię jeszcze nie zauważyli, dostają +60% obrażeń i pierwsze trafienie zawsze krytyczne; wrogowie w walce z tobą -10%
 
 ### Szał (szybkość) (6)
 
 - **[Z]** Szybkie ręce - +6% szybkości ataku
 - **[Z]** Wiatr w nogach - +5% szybkości ruchu
 - **[A]** Wiatr Strzyboga ✦ (każda broń; aura) - aura: +8% szybkości ruchu, ataku i rzucania
-- **[Z]** Oddech w biegu ✦ ⌛ - +3 regeneracji zdrowia/s, gdy biegniesz
+- **[Z]** Oddech w biegu ✦ - +3 regeneracji zdrowia/s, gdy biegniesz
 - [G] Gniazdo - kamień szlachetny (działa o połowę mocniej)
-- **[K]** Szał Bitewny ✦ ⌛ - zabójstwo daje ładunek +4% szybkości (do 10), ładunki znikają po 3 s bez zabójstwa
+- **[K]** Szał Bitewny ✦ - zabójstwo daje ładunek +4% szybkości ataku i +2% ruchu (do 10), ładunki znikają po 3 s bez zabójstwa
 
 Ścieżki: 10 drobnych węzłów (+8 zręczności).
 

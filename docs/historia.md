@@ -853,6 +853,33 @@ odpowiedniej sekcji.
   docelowo paczka ikon z PixelLab. `SkillBook.FORMER_SOON` - nowe węzły przechodzą stare zapisy za darmo jak w kroku 3.
   `SkillEffects.sheet_once` zwraca węzeł efektu. Test `tests/test_strength_side.gd`.
   Do ustalenia po ograniu: liczby (stałe `FANG_*`, `ROAR_*`, `LEAP_*`, `BASTION_*`), czy Wstrząs ma działać z Młynkiem.
+  Ikony tymczasowe zastąpiła paczka PixelLab ze strony zręczności (niżej).
+- [x] **Krok 5 wspólnego drzewka, strona zręczności** (`docs/plan_drzewek.md`, listopad 2026). Autor wybrał: Strzała Żmija
+  jadowa, Kolczatka rzucana pod kursor, Szał Bitewny przyspiesza atak i ruch, jedna paczka ikon na obie strony.
+  Wszystkie puste miejsca strony zręczności poza przywołaniami (Wataha, Wierny tropiciel) działają:
+  - **Strzała Żmija** (`BowSkills._viper_arrow` / `_launch_viper`): strzała przeskakuje `VIPER_JUMPS` razy
+    (`Projectile.chain`, własny zasięg `Projectile.chain_range` = `VIPER_RANGE`), po każdym trafieniu obrażenia
+    +`VIPER_GROWTH`, trafiony zatruty (`BowSkills.poison`, `VIPER_POISON` obrażeń trafienia, więcej z Żmijowym jadem);
+  - **Rozszczepiona Strzała** (`_split_arrow`, `_split_shards`): po pierwszym trafieniu `SPLIT_SHARDS` mniejszych strzał
+    wachlarzem `SPLIT_SPREAD_DEGREES` dalej, omijają trafionego (`Projectile.ignore`);
+  - **Kolczatka** (`_scatter_caltrops`, klasa `_Caltrops` - kolce rysowane w kodzie na warstwie podłogi): pole pod kursorem
+    (`CALTROPS_RANGE`), co `CALTROPS_TICK` s rani (`Skills.caltrops_damage`, więcej z węzłów krwawienia) i spowalnia
+    (`CALTROPS_SLOW`), najwyżej `CALTROPS_MAX` naraz;
+  - węzły: **Szereg** (`row_shot` - `Player.row_offsets`: główna strzała Salwy, Odskoku, Grotu Swaroga, Strzały
+    tropiącej, Żmija i Rozszczepionej ma towarzyszkę obok, w odstępie `Player.ROW_GAP`; Szybka salwa +1 strzała),
+    **Ciche kroki** (`silent_steps` - `Goblin.notice_factor` = `BowSkills.SILENT_NOTICE`, też ogniki i czerwie),
+    **Oddech w biegu** (`running_breath` - premia `health_regen` w `set_temp("running_breath")`, ikona w efektach);
+  - **Łowca w Cieniu** (węzeł kluczowy, z każdą bronią): wróg w spoczynku albo wracający (`BowSkills.unseen`) dostaje
+    x`STALKER_UNSEEN` i zawsze krytyk, walczący x`STALKER_FIGHTING` (`damage_factor`, `forced_crit`);
+  - **Szał Bitewny** (węzeł kluczowy, z każdą bronią): `Goblin._die` woła `BowSkills.on_kill` - ładunek (do `FRENZY_MAX`)
+    +`FRENZY_ATTACK` szybkości ataku i +`FRENZY_MOVE` ruchu (`set_temp("frenzy")`), po `FRENZY_TIME` s bez zabójstwa
+    wszystkie znikają; ikona z licznikiem w efektach.
+  Efekty z kreatora (`pixellab_src/vfx/ids.json`): `viper_bite`, `split_burst`, `caltrops_scatter`, `battle_frenzy`.
+  Ikony: paczka 16 ikon PixelLab (10 generacji, `pixellab_src/shared_tree/`, `tools/tree_step5_icons.py`) - nowe
+  umiejętności i węzły obu stron, także zamiast przebarwień strony siły (dawne `tools/strength_icons.py` usunięte).
+  Stare zapisy przechodzą przez nowe węzły za darmo (`SkillBook.FORMER_SOON`). Test `tests/test_dex_side.gd`.
+  Do ustalenia po ograniu: liczby (`VIPER_*`, `SPLIT_*`, `CALTROPS_*`, `STALKER_*`, `FRENZY_*`), czy Szał ma przyspieszać
+  też rzucanie czarów, czy Szereg ma dawać towarzyszkę każdej strzale wachlarza.
 
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)

@@ -12,6 +12,13 @@ extends Node
 ## - Strzała Wichru: podmuch w stożku rani i odrzuca (po Odskoku - dwa razy szerszy). Atak i czar.
 ## - Balista: wieżyczka pod kursorem strzelająca w najbliższych wrogów; legendarne przedmioty zmieniają jej strzały
 ##   w salwę (ballista_volley) albo w strzały tropiące (ballista_seeker).
+## - Strzała Żmija: jadowa strzała przeskakuje między wrogami (Projectile.chain), każdy przeskok mocniejszy, trafieni
+##   zatruci.
+## - Rozszczepiona Strzała: po pierwszym trafieniu rozpada się na mniejsze strzały lecące dalej wachlarzem.
+## - Kolczatka: pole kolców pod kursorem - wrogowie na nim zwalniają i krwawią.
+## Węzły kluczowe strony zręczności (krok 5): Łowca w Cieniu (wrogowie, którzy cię nie zauważyli, dostają więcej
+## i krytycznie, walczący z tobą mniej), Szał Bitewny (ładunki szybkości za zabójstwa - on_kill). Węzły: Ciche kroki
+## (Goblin.notice_factor), Oddech w biegu (regeneracja w biegu), Szereg (Player.row_offsets).
 ## Węzły kluczowe: Oko Sokoła (dalekie trafienia krytyczne, bliskie słabsze), Grad (więcej strzał Salwy i Deszczu,
 ## słabszych), Myśliwy z Cienia (po Odskoku wrogowie tracą gracza z oczu, pierwsze trafienie podwójne), Strzelanie
 ## w biegu (bez spowolnienia przy strzale, szybciej w biegu). Trafienia z łukiem w ręku przechodzą przez
@@ -30,6 +37,16 @@ const HAIL_ARROWS := 2
 const HAIL_DENSITY := 1.5
 ## Myśliwy z Cienia: ile wrogowie nie widzą gracza; Strzelanie w biegu: premia do szybkości ataku.
 const SHADOW_TIME := 2.0
+## Łowca w Cieniu: mnożnik obrażeń wrogom, którzy cię nie zauważyli (stan IDLE), i tym, którzy z tobą walczą.
+const STALKER_UNSEEN := 1.6
+const STALKER_FIGHTING := 0.9
+## Szał Bitewny: premie za ładunek, najwięcej ładunków, po ilu s bez zabójstwa znikają.
+const FRENZY_ATTACK := 0.04
+const FRENZY_MOVE := 0.02
+const FRENZY_MAX := 10
+const FRENZY_TIME := 3.0
+## Ciche kroki: potwory w spoczynku zauważają postać z takiej części zwykłej odległości.
+const SILENT_NOTICE := 0.5
 const RUN_SPEED := 0.15
 ## Trucizna Jadowych Grotów: ile trwa i co ile rani.
 const POISON_TIME := 3.0
@@ -60,10 +77,17 @@ const VENOM_CAST_FX := preload("res://assets/effects/bow_venom_cast.png")
 const VENOM_TICK_FX := preload("res://assets/effects/bow_venom_tick.png")
 const WIND_FX := preload("res://assets/effects/bow_wind_cone.png")
 const DUST_FX := preload("res://assets/effects/lunge_start.png")
+## Efekty nowych umiejętności z kreatora efektów PixelLab (pixellab_src/vfx/ids.json, tools/vfx_art.py).
+const VIPER_BITE_FX := preload("res://assets/effects/viper_bite.png")
+const SPLIT_BURST_FX := preload("res://assets/effects/split_burst.png")
+const CALTROPS_FX := preload("res://assets/effects/caltrops_scatter.png")
+const FRENZY_FX := preload("res://assets/effects/battle_frenzy.png")
 const ICONS := {
 	"venom_arrows": preload("res://assets/skills/venom_arrows.png"), "falcon": preload("res://assets/skills/falcon.png"),
 	"ballista": preload("res://assets/skills/ballista.png"), "shadow_hunter": preload("res://assets/skills/ks_shadow_hunter.png"),
 	"running_fire": preload("res://assets/skills/ks_running_fire.png"),
+	"battle_frenzy": preload("res://assets/skills/ks_battle_frenzy.png"),
+	"running_breath": preload("res://assets/skills/node_running_breath.png"),
 }
 
 var _player: Player
@@ -84,6 +108,12 @@ var _ballista: _Ballista
 var _shadow_time := 0.0
 var _shadow_shot := false
 var _running := false
+var _caltrops: Array[Node2D] = []
+## Szał Bitewny: ładunki i czas do ich zniknięcia.
+var _frenzy := 0
+var _frenzy_time := 0.0
+## Oddech w biegu: czy premia regeneracji jest włączona.
+var _breathing := false
 
 
 func _init(player: Player) -> void:
@@ -122,6 +152,12 @@ func press(id: String) -> void:
 			_wind_arrow()
 		"ballista":
 			_place_ballista()
+		"viper_arrow":
+			_viper_arrow()
+		"split_arrow":
+			_split_arrow()
+		"caltrops":
+			_scatter_caltrops()
 
 
 ## Przerwanie (śmierć, zmiana broni).
@@ -174,6 +210,9 @@ func _physics_process(delta: float) -> void:
 		_shadow_shot = false
 	_process_poison(delta)
 	_update_running()
+	_update_frenzy(delta)
+	_update_breath()
+	Goblin.notice_factor = SILENT_NOTICE if _bonus("silent_steps") > 0.0 else 1.0
 	if _player.is_dead:
 		cancel()
 		return
@@ -244,8 +283,16 @@ func _fire_power(charge: float) -> void:
 	var multiplier := Skills.power_damage(level) * lerpf(1.0, Skills.POWER_FULL_DAMAGE, charge) * (1.0 + _bonus("power_damage")) \
 			* (_player.combo_damage() if combo else 1.0)
 	# Rozszczep (kamień wsparcia): dodatkowe groty wachlarzem
+	var shots: Array[Vector2] = []
+	var sides: Array[float] = []
 	for shot: Vector2 in Player.split_directions(dir, _player.support_count("power_shot", "projectiles")):
+		for side: float in _player.row_offsets(shot == dir):
+			shots.append(shot)
+			sides.append(side)
+	for n in shots.size():
+		var shot := shots[n]
 		var arrow := _player._make_projectile(_player.equipment.weapon(), shot, "power_shot")
+		arrow.position += shot.orthogonal() * sides[n]
 		arrow.damage_min = maxi(1, roundi(arrow.damage_min * multiplier))
 		arrow.damage_max = maxi(1, roundi(arrow.damage_max * multiplier))
 		arrow.pierce += Skills.power_pierce(level)
@@ -319,10 +366,13 @@ func _vault() -> void:
 	var count := Skills.VAULT_ARROWS + _player.support_count("vault", "projectiles")
 	spread *= sqrt(count / float(Skills.VAULT_ARROWS))
 	for i in count:
-		var arrow := _player._make_projectile(weapon, dir.rotated(lerpf(-spread / 2.0, spread / 2.0, float(i) / (count - 1))), "vault")
-		arrow.damage_min = maxi(1, roundi(arrow.damage_min * multiplier))
-		arrow.damage_max = maxi(1, roundi(arrow.damage_max * multiplier))
-		_player.get_parent().add_child(arrow)
+		var shot := dir.rotated(lerpf(-spread / 2.0, spread / 2.0, float(i) / (count - 1)))
+		for side: float in _player.row_offsets(i == count / 2):
+			var arrow := _player._make_projectile(weapon, shot, "vault")
+			arrow.position += shot.orthogonal() * side
+			arrow.damage_min = maxi(1, roundi(arrow.damage_min * multiplier))
+			arrow.damage_max = maxi(1, roundi(arrow.damage_max * multiplier))
+			_player.get_parent().add_child(arrow)
 	release(_player.get_parent(), _player.body_center() + dir * 6.0, dir.angle(), 0.85)
 	Sfx.play("bow", 0.0, 1.1)
 
@@ -513,6 +563,174 @@ func ballista() -> Node2D:
 	return _ballista if is_instance_valid(_ballista) else null
 
 
+# ---------------------------------------------------------------- Strzała Żmija
+func _viper_arrow() -> void:
+	var level := _level("viper_arrow")
+	_start_cooldown("viper_arrow", Skills.VIPER_COOLDOWN)
+	_player.note_skill("viper_arrow")
+	var dir := _player._aim_direction()
+	_player._ranged_pose(dir)
+	var multiplier := Skills.viper_damage(level)
+	for shot: Vector2 in Player.split_directions(dir, _player.support_count("viper_arrow", "projectiles")):
+		for side: float in _player.row_offsets(shot == dir):
+			_launch_viper(shot, side, multiplier)
+	release(_player.get_parent(), _player.body_center() + dir * 6.0, dir.angle(), 0.8)
+	Sfx.play("bow", 0.0, 1.2)
+
+
+## Jedna Strzała Żmija: przeskakuje (Projectile.chain) do VIPER_JUMPS razy, po każdym trafieniu obrażenia rosną
+## o VIPER_GROWTH, a trafiony zostaje zatruty.
+func _launch_viper(dir: Vector2, side: float, multiplier: float) -> void:
+	var arrow := _player._make_projectile(_player.equipment.weapon(), dir, "viper_arrow")
+	arrow.position += dir.orthogonal() * side
+	var base_min := arrow.damage_min * multiplier
+	var base_max := arrow.damage_max * multiplier
+	arrow.damage_min = maxi(1, roundi(base_min))
+	arrow.damage_max = maxi(1, roundi(base_max))
+	arrow.chain += Skills.VIPER_JUMPS
+	arrow.chain_range = Skills.VIPER_RANGE
+	arrow.speed *= 1.15
+	arrow.modulate = Color(0.8, 1.25, 0.7)
+	var plain := arrow.get_node_or_null("Trail")
+	if plain != null:
+		arrow.remove_child(plain)
+		plain.queue_free()
+	arrow.add_child(arrow_trail(VENOM_TRAIL_FX, dir))
+	var hits: Array[int] = [0]
+	var poison_factor := Skills.VIPER_POISON * (1.0 + _bonus("venom_damage") + _player.support("viper_arrow", "dot_damage"))
+	arrow.enemy_hit.connect(func(enemy: Goblin) -> void:
+		hits[0] += 1
+		var growth: float = 1.0 + Skills.VIPER_GROWTH * hits[0]
+		arrow.damage_min = maxi(1, roundi(base_min * growth))
+		arrow.damage_max = maxi(1, roundi(base_max * growth))
+		poison(enemy, (base_min + base_max) * 0.5 * (growth - Skills.VIPER_GROWTH) * poison_factor)
+		SkillEffects.sheet_once(arrow.get_parent(), VIPER_BITE_FX, 8, 16.0, enemy.hurt_center(), Vector2(17, 14)))
+	_player.get_parent().add_child(arrow)
+
+
+# ---------------------------------------------------------------- Rozszczepiona Strzała
+func _split_arrow() -> void:
+	var level := _level("split_arrow")
+	_start_cooldown("split_arrow", Skills.SPLIT_COOLDOWN)
+	_player.note_skill("split_arrow")
+	var dir := _player._aim_direction()
+	_player._ranged_pose(dir)
+	for shot: Vector2 in Player.split_directions(dir, _player.support_count("split_arrow", "projectiles")):
+		for side: float in _player.row_offsets(shot == dir):
+			var arrow := _player._make_projectile(_player.equipment.weapon(), shot, "split_arrow")
+			arrow.position += shot.orthogonal() * side
+			var multiplier := Skills.split_damage(level)
+			var shard := Skills.split_shard_damage(level)
+			var weapon_min := arrow.damage_min
+			var weapon_max := arrow.damage_max
+			arrow.damage_min = maxi(1, roundi(weapon_min * multiplier))
+			arrow.damage_max = maxi(1, roundi(weapon_max * multiplier))
+			arrow.size = 1.2
+			arrow.speed *= 1.1
+			var split: Array[bool] = [false]
+			arrow.enemy_hit.connect(func(enemy: Goblin) -> void:
+				if split[0]:
+					return
+				split[0] = true
+				_split_shards(enemy, arrow.direction, roundi(weapon_min * shard), roundi(weapon_max * shard)))
+			_player.get_parent().add_child(arrow)
+	release(_player.get_parent(), _player.body_center() + dir * 6.0, dir.angle(), 0.9)
+	Sfx.play("bow", 1.0, 0.95)
+
+
+## Rozpad strzały na trafionym wrogu: SPLIT_SHARDS mniejszych strzał wachlarzem dalej w kierunku lotu (omijają tego wroga).
+func _split_shards(enemy: Goblin, dir: Vector2, damage_min: int, damage_max: int) -> void:
+	if not is_instance_valid(_player) or not is_instance_valid(enemy):
+		return
+	var at := enemy.global_position
+	SkillEffects.sheet_once(_player.get_parent(), SPLIT_BURST_FX, 7, 16.0, enemy.hurt_center(), Vector2(13, 17), dir.angle())
+	Sfx.play_at("hit_arrow", at, -4.0)
+	var spread := deg_to_rad(Skills.SPLIT_SPREAD_DEGREES)
+	var count := Skills.SPLIT_SHARDS
+	for i in count:
+		var shot := dir.rotated(lerpf(-spread / 2.0, spread / 2.0, float(i) / (count - 1)))
+		var arrow := _player._make_projectile(_player.equipment.weapon(), shot, "split_arrow")
+		arrow.position = at + shot * 4.0
+		arrow.damage_min = maxi(1, damage_min)
+		arrow.damage_max = maxi(1, damage_max)
+		arrow.max_range = Skills.SPLIT_RANGE
+		arrow.size = Skills.SPLIT_SIZE
+		arrow.knockback = 30.0
+		arrow.ignore(enemy)
+		_player.get_parent().add_child(arrow)
+
+
+# ---------------------------------------------------------------- Kolczatka
+func _scatter_caltrops() -> void:
+	_start_cooldown("caltrops", Skills.CALTROPS_COOLDOWN)
+	_player.note_skill("caltrops")
+	_caltrops = _caltrops.filter(func(c: Node2D) -> bool: return is_instance_valid(c))
+	while _caltrops.size() >= Skills.CALTROPS_MAX:
+		_caltrops.pop_front().queue_free()
+	var tags := Skills.tags("caltrops")
+	var field := _Caltrops.new()
+	field.player = _player
+	field.radius = Skills.CALTROPS_RADIUS * _player.stats.area_multiplier(tags)
+	field.time_left = Skills.CALTROPS_TIME * (1.0 + _player.support("caltrops", "duration"))
+	field.damage = Skills.caltrops_damage(_level("caltrops")) * (1.0 + _bonus("bleed_damage") + _player.support("caltrops", "dot_damage"))
+	field.position = _aim_point(Skills.CALTROPS_RANGE)
+	var layer := _player.get_tree().get_first_node_in_group("floor_layer")
+	(layer if layer != null else _player.get_parent()).add_child(field)
+	_caltrops.append(field)
+	_player._ranged_pose(_player._aim_direction())
+	SkillEffects.sheet_once(_player.get_parent(), CALTROPS_FX, 12, 14.0, field.position, Vector2(16, 13), 0.0, 1.0,
+			field.radius / Skills.CALTROPS_RADIUS)
+	Sfx.play("swing", -2.0, 1.6)
+
+
+## Pole kolców: rysowane w kodzie kolce w kręgu; co CALTROPS_TICK s rani (krwawienie) i spowalnia wrogów w środku.
+class _Caltrops extends Node2D:
+	var player: Player
+	var radius := 38.0
+	var time_left := 6.0
+	var damage := 0.3
+	var _tick := 0.0
+	var _spikes: Array[Vector3] = []
+
+	func _ready() -> void:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = hash(position)
+		for i in 26:
+			var at := Vector2.from_angle(rng.randf() * TAU) * sqrt(rng.randf()) * radius
+			_spikes.append(Vector3(at.x, at.y * 0.8, rng.randf() * TAU))
+
+	func _physics_process(delta: float) -> void:
+		time_left -= delta
+		if time_left <= 0.0 or not is_instance_valid(player):
+			queue_free()
+			return
+		modulate.a = clampf(time_left / 0.5, 0.0, 1.0)
+		_tick -= delta
+		if _tick > 0.0:
+			return
+		_tick = Skills.CALTROPS_TICK
+		var tags := Skills.tags("caltrops")
+		var amount := player._skill_damage(damage, tags)
+		for enemy: Goblin in Goblin.near(get_tree(), global_position, radius + 30.0):
+			if enemy.state == Goblin.State.DEAD or enemy.global_position.distance_to(global_position) > radius + enemy.hurt_radius * 0.5:
+				continue
+			enemy.chill(Skills.CALTROPS_SLOW, Skills.CALTROPS_TICK + 0.2)
+			player.hit_enemy(enemy, amount, enemy.global_position, 0.0, "", tags)
+			if randf() < 0.35:
+				MiscVfx.spark(get_parent(), enemy.global_position + Vector2(0, -3), Color(0.75, 0.1, 0.1), 0.35)
+
+	## Kolec: trzy ramiona w cieniu na ziemi, czwarte sterczy w górę z jasnym czubkiem.
+	func _draw() -> void:
+		for spike: Vector3 in _spikes:
+			var at := Vector2(spike.x, spike.y)
+			draw_circle(at + Vector2(0.5, 1.0), 2.5, Color(0, 0, 0, 0.25))
+			for k in 3:
+				var tip := at + Vector2.from_angle(spike.z + k * TAU / 3.0) * Vector2(4.0, 2.5)
+				draw_line(at, tip, Color(0.2, 0.2, 0.24), 1.5)
+			draw_line(at, at + Vector2(0, -4), Color(0.45, 0.46, 0.52), 1.5)
+			draw_rect(Rect2(at + Vector2(-0.5, -4.5), Vector2(1, 1)), Color(0.85, 0.86, 0.9))
+
+
 # ---------------------------------------------------------------- trafienia i węzły kluczowe
 ## Mnożnik obrażeń trafienia (z każdą bronią): Myśliwy z Cienia (pierwsze po umiejętności ruchu podwójne), Oko Sokoła (bliskie słabsze).
 func damage_factor(enemy: Goblin) -> float:
@@ -522,12 +740,21 @@ func damage_factor(enemy: Goblin) -> float:
 		factor *= 2.0
 	if has_keystone("falcon_eye") and enemy.global_position.distance_to(_player.global_position) <= FALCON_EYE_NEAR:
 		factor *= FALCON_EYE_WEAK
+	if has_keystone("shadow_stalker"):
+		factor *= STALKER_UNSEEN if unseen(enemy) else STALKER_FIGHTING
 	return factor
+
+
+## Łowca w Cieniu: wróg jeszcze cię nie zauważył (stoi w spoczynku albo wraca na swoje miejsce).
+static func unseen(enemy: Goblin) -> bool:
+	return enemy.state == Goblin.State.IDLE or enemy.state == Goblin.State.RETURN
 
 
 ## Cios musi być krytyczny: wróg w Sidłach albo daleki (Oko Sokoła).
 func forced_crit(enemy: Goblin) -> bool:
 	if is_snared(enemy):
+		return true
+	if has_keystone("shadow_stalker") and unseen(enemy):
 		return true
 	return has_keystone("falcon_eye") and enemy.global_position.distance_to(_player.global_position) >= FALCON_EYE_FAR
 
@@ -556,9 +783,54 @@ func _update_running() -> void:
 		_player.stats.set_temp("bow", {"attack_speed": RUN_SPEED} if running else {})
 
 
+## Szał Bitewny: zabójstwo (Goblin._die - z każdą bronią, także od jadu i krwawienia) dokłada ładunek.
+func on_kill() -> void:
+	if not has_keystone("battle_frenzy") or _player.is_dead:
+		return
+	_frenzy = mini(_frenzy + 1, FRENZY_MAX)
+	_frenzy_time = FRENZY_TIME
+	_apply_frenzy()
+	SkillEffects.sheet_once(_player, FRENZY_FX, 8, 16.0, Vector2(0, -10), Vector2(20, 17), 0.0, 1.0,
+			0.6 + 0.04 * _frenzy).modulate.a = 0.8
+
+
+func frenzy_charges() -> int:
+	return _frenzy
+
+
+func _update_frenzy(delta: float) -> void:
+	if _frenzy <= 0:
+		return
+	_frenzy_time -= delta
+	if _frenzy_time <= 0.0 or not has_keystone("battle_frenzy") or _player.is_dead:
+		_frenzy = 0
+		_apply_frenzy()
+
+
+func _apply_frenzy() -> void:
+	_player.stats.set_temp("frenzy", {} if _frenzy <= 0 else
+			{"attack_speed": FRENZY_ATTACK * _frenzy, "move_speed": FRENZY_MOVE * _frenzy})
+
+
+## Oddech w biegu (węzeł): regeneracja zdrowia, dopóki postać biegnie.
+func _update_breath() -> void:
+	var regen := _bonus("running_breath")
+	var breathing := regen > 0.0 and not _player.is_dead and _player._move_velocity.length() > 20.0
+	if breathing != _breathing:
+		_breathing = breathing
+		_player.stats.set_temp("running_breath", {"health_regen": regen} if breathing else {})
+
+
 ## Efekty do rzędu ikon pod paskami zdrowia i many.
 func statuses() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
+	if _frenzy > 0:
+		result.append({"name": Lang.t("Szał Bitewny"), "kind": "good", "left": _frenzy_time, "total": FRENZY_TIME, "icon": ICONS["battle_frenzy"],
+				"description": Lang.t("%d ładunków: +%d%% szybkości ataku, +%d%% szybkości ruchu") % [_frenzy,
+						roundi(FRENZY_ATTACK * _frenzy * 100.0), roundi(FRENZY_MOVE * _frenzy * 100.0)]})
+	if _breathing:
+		result.append({"name": Lang.t("Oddech w biegu"), "kind": "good", "left": -1.0, "icon": ICONS["running_breath"],
+				"description": Lang.t("+%s regeneracji zdrowia/s w biegu") % str(roundi(_bonus("running_breath")))})
 	if _venom_time > 0.0:
 		result.append({"name": Lang.t("Jadowe Groty"), "kind": "good", "left": _venom_time, "total": Skills.VENOM_TIME, "icon": ICONS["venom_arrows"],
 				"description": Lang.t("Strzały zatruwają wrogów - jad przeskakuje na wrogów obok") if _venom_spread else Lang.t("Strzały zatruwają wrogów")})

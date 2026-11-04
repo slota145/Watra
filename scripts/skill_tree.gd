@@ -45,8 +45,12 @@ const TREE_STATS := {
 	# premie z opisem w węźle (SkillTreeData "description"): Wciągający wir, Pełnia Sił, Gniew rannego, Wstrząs
 	"whirl_pull": "Młynek przyciąga wrogów", "full_strength": "Obrażenia przy pełnym zdrowiu",
 	"wounded_wrath": "Obrażenia przy niskim zdrowiu", "tremor_stun": "Ogłuszenie umiejętności obszarowych miecza",
+	# strona zręczności (krok 5): Szereg, Ciche kroki, Oddech w biegu
+	"row_shot": "Strzały umiejętności łuku lecące równolegle", "silent_steps": "Potwory zauważają cię z bliższa",
+	"running_breath": "Regeneracja zdrowia w biegu",
 }
-const COUNT_STATS := ["blade_count", "multishot_arrows", "seeker_hits", "arrow_pierce", "chain_targets", "lance_pierce"]
+const COUNT_STATS := ["blade_count", "multishot_arrows", "seeker_hits", "arrow_pierce", "chain_targets", "lance_pierce",
+		"row_shot", "silent_steps"]
 
 ## Kolor obwódki umiejętności wg broni (w oknie drzewka).
 const WEAPON_COLORS := {"melee": Color8(225, 85, 70), "bow": Color8(90, 200, 100), "spell": Color8(90, 140, 240),

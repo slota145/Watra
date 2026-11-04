@@ -187,11 +187,13 @@ func _check_tree(p) -> void:
 	# punkty umiejętności daje pasek umiejętności, nie poziom postaci
 	p.skills.bonus_points += 300
 	# cała strona zręczności (łuk) i Myśliwy z Cienia ze strefy zręczność / inteligencja
-	var wanted: Array = nodes.keys().filter(func(id: String) -> bool: return nodes[id]["region"] == "dex" and not Tree.is_soon(id))
+	var wanted: Array = nodes.keys().filter(func(id: String) -> bool: return nodes[id]["region"] == "dex" and not Tree.is_soon(id) and id != "row_shot")
 	wanted.append_array(["shadow_hunter", "wind_arrow"])
 	for id: String in wanted:
 		for step: String in Tree.path_to(id):
 			p.skills.take(step)
+	# Szereg (krok 5) dokłada strzały - ten test liczy strzały bez niego
+	p.skills.nodes.erase("row_shot")
 	var lacking := wanted.filter(func(id: String) -> bool: return not p.skills.has_node_id(id))
 	check("cała strona łuku do wybrania", lacking.is_empty(), str(lacking))
 	check("przebicie i zasięg z węzłów", p._make_projectile(p.equipment.weapon(), Vector2.RIGHT).pierce == 1)

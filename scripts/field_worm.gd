@@ -123,7 +123,7 @@ func _physics_process(delta: float) -> void:
 ## Spokojny czerw nie chodzi - tylko kołysze się nad norą.
 func _process_idle(_delta: float) -> void:
 	velocity = Vector2.ZERO
-	if _player_alive() and global_position.distance_to(_player.global_position) < aggro_radius:
+	if _player_alive() and global_position.distance_to(_player.global_position) < aggro_radius * notice_factor:
 		aggro()
 
 

@@ -65,6 +65,8 @@ const IDOL_RESOURCES := {"res_wood": "wood", "res_stone": "stone", "res_ore": "i
 static var pathing: Object = null
 ## Myśliwy z Cienia (BowSkills): do tej chwili (Time.get_ticks_msec) potwory, poza bossami, nie widzą gracza.
 static var hidden_until := 0
+## Ciche kroki (węzeł drzewka, BowSkills): potwory w spoczynku zauważają gracza z takiej części aggro_radius.
+static var notice_factor := 1.0
 ## Dźwięk najbliższego trafienia (Sfx.SOUNDS) - Player.hit_enemy ustawia go na czas ciosu zależnie od broni
 ## i żywiołu; inne źródła obrażeń (sojusznicy, pułapki) grają zwykłe "hit".
 static var hit_sound := "hit"
@@ -400,7 +402,7 @@ func _process_idle(delta: float) -> void:
 	if distance > DORMANT_DISTANCE:
 		_dormant_check = 8
 		return
-	if _player_alive() and distance < aggro_radius:
+	if _player_alive() and distance < aggro_radius * notice_factor:
 		aggro()
 		return
 	if sitting or drilling:
@@ -582,6 +584,9 @@ func _die() -> void:
 	# Kieł Hydry: każdy padający w pobliżu wróg (także od efektów) może wybuchnąć trucizną
 	if _player != null and is_instance_valid(_player.legendary):
 		_player.legendary.on_enemy_died(self)
+	# Szał Bitewny (węzeł kluczowy): ładunek szybkości za zabójstwo
+	if _player != null and is_instance_valid(_player.bow_skills):
+		_player.bow_skills.on_kill()
 	if _player != null:
 		# drużyna z podróżnikami: +10% za każdego członka (Travelers.party_xp_factor)
 		var xp := roundi(xp_reward * _player.stats.xp_multiplier() * Levels.xp_fraction(_player.stats.level, level)
