@@ -546,16 +546,51 @@ func _dev_feedback(text: String, color: Color) -> void:
 	DamageNumber.spawn_text(_player.get_parent(), _player.body_center() + Vector2(0, -12), text, color)
 
 
+## Paski zdrowia i many liczą od pełnego maksimum, a część zarezerwowaną przez aury (Auras) zasłania ciemny pas
+## z prawej; napis pokazuje maksimum bez rezerwacji.
 func _on_health_changed(current: int, maximum: int) -> void:
-	health_bar.max_value = maximum
+	var reserved := _player.stats.reserved_health() if _player != null else 0
+	health_bar.max_value = maximum + reserved
 	health_bar.value = current
 	health_label.text = "%d / %d" % [current, maximum]
+	_show_reserved(health_bar, reserved, maximum + reserved, Color(0.45, 0.32, 0.36, 0.95), Lang.t("Zdrowie zarezerwowane przez aury: %d"))
 
 
 func _on_mana_changed(current: int, maximum: int) -> void:
-	mana_bar.max_value = maximum
+	var reserved := _player.stats.reserved_mana() if _player != null else 0
+	mana_bar.max_value = maximum + reserved
 	mana_bar.value = current
 	mana_label.text = "%d / %d" % [current, maximum]
+	_show_reserved(mana_bar, reserved, maximum + reserved, Color(0.32, 0.34, 0.5, 0.95), Lang.t("Mana zarezerwowana przez aury: %d"))
+
+
+func _show_reserved(bar: ProgressBar, reserved: int, full: int, color: Color, hint: String) -> void:
+	var cover := bar.get_node_or_null("Reserved") as ColorRect
+	if cover == null:
+		cover = ColorRect.new()
+		cover.name = "Reserved"
+		cover.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		bar.add_child(cover)
+		bar.move_child(cover, 0)
+		var line := ColorRect.new()
+		line.color = Color(0.85, 0.8, 1.0, 0.8)
+		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		line.anchor_bottom = 1.0
+		line.offset_right = 1.0
+		cover.add_child(line)
+	cover.color = color
+	cover.visible = reserved > 0 and full > 0
+	if not cover.visible:
+		return
+	cover.anchor_left = 1.0 - float(reserved) / full
+	cover.anchor_right = 1.0
+	cover.anchor_top = 0.0
+	cover.anchor_bottom = 1.0
+	cover.offset_left = 0.0
+	cover.offset_right = -1.0
+	cover.offset_top = 1.0
+	cover.offset_bottom = -1.0
+	bar.tooltip_text = hint % reserved
 
 
 func _on_xp_changed(xp: int, needed: int, level: int) -> void:

@@ -5,7 +5,7 @@ extends VBoxContainer
 ## - umiejętność: odnowienie (wskazówka zegara i sekundy), brak many (niebieskawy slot), umiejętność innej broni
 ##   (na pasku 1-0) i nieodblokowana - przygaszona; w czasie okna combo świecą sloty umiejętności, które zadziałają
 ##   inaczej (atak - dodatkowy cios, Dymne Wybuchy - od razu 9 wybuchów; kurczący się pierścień pokazuje, ile okna
-##   zostało), Mgnienie świeci w trakcie Młynka,
+##   zostało), Mgnienie świeci w trakcie Młynka, włączona aura - ramka w kolorze aury,
 ## - przedmiot: liczba sztuk w plecaku; gdy się skończą, slot zostaje przygaszony z zerem; LPM na slocie go używa.
 ## Umiejętności przeciąga się z okna umiejętności (K), przedmioty z plecaka; między slotami (także między paskami) -
 ## zamiana miejscami. PPM na slocie albo przeciągnięcie poza pasek opróżnia slot.
@@ -112,12 +112,15 @@ func _skill_tooltip(id: String, key: String, weapon_type: String) -> String:
 			text += "\n" + tr("Zaraz po uderzeniu: %s (%s)") % [Skills.name_of(combo), Skills.mana_cost_text(combo)]
 		return text
 	var data := Skills.get_data(id)
-	if data["weapon"] != weapon_type:
+	if not Skills.works_with(id, weapon_type):
 		return tr("%s [%s] - działa z bronią: %s") % [Skills.name_of(id), key, Skills.weapon_name(data["weapon"]).to_lower()]
 	if _player.skills.level_of(id) <= 0:
 		return tr("%s [%s] - nieodblokowana (K)") % [Skills.name_of(id), key]
-	return "%s [%s]  •  %s\n%s\n%s" % [Skills.name_of(id), key, Skills.mana_cost_text(id), Skills.tags_bbcode(Skills.tags(id)),
+	var text := "%s [%s]  •  %s\n%s\n%s" % [Skills.name_of(id), key, Skills.mana_cost_text(id), Skills.tags_bbcode(Skills.tags(id)),
 			Skills.description_of(id)]
+	if AuraData.is_aura(id):
+		text += "\n" + (tr("Włączona - naciśnij, żeby wyłączyć") if _player.auras.is_on(id) else tr("Wyłączona - naciśnij, żeby włączyć"))
+	return text
 
 
 func _process(_delta: float) -> void:
@@ -128,15 +131,22 @@ func _process(_delta: float) -> void:
 	for i in _slots.size():
 		var slot := _slots[i]
 		var id := _entry(i)
+		# włączona aura świeci ramką w swoim kolorze
+		slot.set_aura(AuraData.COLORS[id] if AuraData.is_aura(id) and _player.auras.is_on(id) else Color.TRANSPARENT)
 		if id == "" or id == Hotbar.ATTACK or Hotbar.is_item(id):
 			slot.set_cooldown(0.0, 0.0)
 			slot.set_highlight(combo and id == Hotbar.ATTACK)
 			slot.icon.modulate = Color.WHITE
 			continue
-		if Skills.get_data(id)["weapon"] != weapon_type:
+		if not Skills.works_with(id, weapon_type):
 			slot.set_cooldown(0.0, 0.0)
 			slot.set_highlight(false)
 			slot.icon.modulate = LOCKED
+			continue
+		if AuraData.is_aura(id):
+			slot.set_cooldown(0.0, 0.0)
+			slot.set_highlight(false)
+			slot.icon.modulate = LOCKED if _player.skills.level_of(id) <= 0 else Color.WHITE
 			continue
 		var cooldown := _player.cooldown_of(id)
 		slot.set_cooldown(cooldown.x, cooldown.y)

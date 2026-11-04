@@ -48,14 +48,14 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - **[Z]** Głos burzy - +10% premii Zewu Peruna
 - **[U]** Ryk Tura ✦ ⌛ (miecz; okrzyk, obszar) - okrzyk: wrogowie wokół rzucają się na ciebie, +30% pancerza na 6 s
 - **[Z]** Donośny głos ✦ ⌛ - +40% zasięgu okrzyków, -20% ich odnowienia
-- **[A]** Postrach ✦ ⌛ (każda broń; aura) - aura: wrogowie wokół zadają 10% mniej obrażeń i wolniej atakują
+- **[A]** Postrach ✦ (każda broń; aura) - aura: wrogowie wokół zadają 10% mniej obrażeń i wolniej atakują
 - [d] +8 siły
 
 ### Krzepa (zdrowie) (6)
 
 - **[Z]** Twarda skóra - +8% zdrowia
 - **[Z]** Szybkie gojenie - +2 regeneracji zdrowia/s
-- **[A]** Krzepa ✦ ⌛ (każda broń; aura) - aura: +12% maksymalnego zdrowia
+- **[A]** Krzepa ✦ (każda broń; aura) - aura: +12% maksymalnego zdrowia
 - **[Z]** Niezłomny - +60 zdrowia
 - **[Z]** Pełnia Sił ✦ ⌛ - +1% obrażeń za każde 5% zdrowia ponad połowę (najwyżej +10%)
 - **[K]** Krew za Manę - umiejętności kosztują zdrowie zamiast many (nie mogą zabić), +25% zdrowia - dawna Ofiara Krwi z księgi, teraz z każdą bronią
@@ -152,7 +152,7 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 
 - **[Z]** Szybkie ręce - +6% szybkości ataku
 - **[Z]** Wiatr w nogach - +5% szybkości ruchu
-- **[A]** Wiatr Strzyboga ✦ ⌛ (każda broń; aura) - aura: +8% szybkości ruchu i ataku
+- **[A]** Wiatr Strzyboga ✦ (każda broń; aura) - aura: +8% szybkości ruchu, ataku i rzucania
 - **[Z]** Oddech w biegu ✦ ⌛ - +3 regeneracji zdrowia/s, gdy biegniesz
 - [G] Gniazdo - kamień szlachetny (działa o połowę mocniej)
 - **[K]** Szał Bitewny ✦ ⌛ - zabójstwo daje ładunek +4% szybkości (do 10), ładunki znikają po 3 s bez zabójstwa
@@ -182,7 +182,7 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - **[Z]** Długa zima - +25% czasu Zamieci i spowolnienia
 - **[U]** Lodowy Pancerz ✦ ⌛ (księga; czar, lód) - na 8 s: +redukcja obrażeń, wrogowie bijący cię z bliska zamarzają
 - **[Z]** Zimna krew ✦ - +15% odporności na lód
-- **[A]** Mroźny Oddech ✦ ⌛ (każda broń; aura) - aura (jak Righteous Fire): lodowy wir rani co sekundę wrogów wokół i ciebie; więcej obrażeń lodu
+- **[A]** Mroźny Oddech ✦ (każda broń; aura) - aura (jak Righteous Fire): lodowy wir rani co sekundę wrogów wokół i ciebie; więcej obrażeń lodu
 - **[Z]** Mroźne serce - +15% obrażeń od lodu
 
 ### Piorun (7)
@@ -193,7 +193,7 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 - **[U]** Burza Peruna (księga) - burza bijąca piorunami
 - **[Z]** Długa burza - +25% czasu Burzy Peruna
 - **[U]** Kula Piorunów (księga) - wolna kula rażąca wrogów
-- **[A]** Gniew Peruna ✦ ⌛ (każda broń; aura) - aura: co 3 s piorun bije losowego wroga w pobliżu
+- **[A]** Gniew Peruna ✦ (każda broń; aura) - aura: co 3 s piorun bije losowego wroga w pobliżu
 
 ### Runy (6)
 
@@ -231,10 +231,10 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 
 ### Wola (rezerwacja) (4)
 
-- **[Z]** Skupiona wola ✦ ⌛ - aury rezerwują 10% many mniej
+- **[Z]** Skupiona wola ✦ - aury rezerwują 10% many mniej
 - [d] +5% many
 - **[Z]** Żelazny umysł - +10% many, +1 regeneracji many/s
-- **[K]** Krwawa Ofiara ✦ ⌛ - aury rezerwują zdrowie zamiast many
+- **[K]** Krwawa Ofiara ✦ - aury rezerwują zdrowie zamiast many
 
 Ścieżki: 12 drobnych węzłów (+4% many, +8 inteligencji).
 
@@ -282,12 +282,12 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 
 ### Aury (6)
 
-- **[A]** Źródło Życia ✦ ⌛ (każda broń; aura) - aura: +regeneracja zdrowia (zastępuje Krew wojownika, Oddech łowcy, Mistyczną odnowę)
-- **[A]** Żar Swaroga ✦ ⌛ (każda broń; aura) - aura: ataki i czary dostają obrażenia od ognia i szansę na podpalenie
-- **[A]** Szron Marzanny ✦ ⌛ (każda broń; aura) - aura: obrażenia od lodu i szansa na zamrożenie
-- **[Z]** Oszczędne aury ✦ ⌛ - aury rezerwują 8% many mniej
-- **[A]** Iskry Peruna ✦ ⌛ (każda broń; aura) - aura: obrażenia od piorunów i szansa na porażenie
-- **[A]** Źródło Many ✦ ⌛ (każda broń; aura) - aura: +regeneracja many (zastępuje Skupienie bitewne, Cierpliwość łowcy, Strumień many)
+- **[A]** Źródło Życia ✦ (każda broń; aura) - aura: +regeneracja zdrowia (zastępuje Krew wojownika, Oddech łowcy, Mistyczną odnowę)
+- **[A]** Żar Swaroga ✦ (każda broń; aura) - aura: ataki i czary dostają obrażenia od ognia i szansę na podpalenie
+- **[A]** Szron Marzanny ✦ (każda broń; aura) - aura: obrażenia od lodu i szansa na zamrożenie
+- **[Z]** Oszczędne aury ✦ - aury rezerwują 8% many mniej
+- **[A]** Iskry Peruna ✦ (każda broń; aura) - aura: obrażenia od piorunów i szansa na porażenie
+- **[A]** Źródło Many ✦ (każda broń; aura) - aura: +regeneracja many (zastępuje Skupienie bitewne, Cierpliwość łowcy, Strumień many)
 
 ### Zaklęte ostrza (5)
 

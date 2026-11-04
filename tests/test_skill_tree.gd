@@ -121,7 +121,7 @@ func _check_data() -> void:
 	for id: String in nodes:
 		if nodes[id]["kind"] == "keystone" and not nodes[id].get("soon", false):
 			keystones.append(id)
-	check("obecne węzły kluczowe", keystones.size() == 12 and "blood_sacrifice" in keystones and "shadow_hunter" in keystones, str(keystones))
+	check("obecne węzły kluczowe", keystones.size() == 13 and "blood_offering" in keystones and "blood_sacrifice" in keystones and "shadow_hunter" in keystones, str(keystones))
 	check("węzeł umiejętności", Tree.node_for_skill("flicker") == "flicker" and Tree.node_for_skill("fireball") == "fireball")
 	check("na pasek", load("res://scripts/hotbar.gd").can_slot_skill("flicker") and load("res://scripts/hotbar.gd").can_slot_skill("smoke_burst"))
 	check("bez regeneracji jako umiejętności", not Skills.DATA.has("warrior_blood") and not Skills.DATA.has("mana_stream"))
@@ -143,7 +143,7 @@ func _check_points(p) -> void:
 	check("bez węzła nie ma umiejętności", book.level_of("flicker") == 0 and book.next_cost("flicker") < 0)
 	book.take("whirlwind")
 	check("węzeł odblokowuje umiejętność", book.level_of("whirlwind") == 1 and book.points_left() == 1)
-	check("pustego miejsca nie da się wybrać", not book.can_take("vigor") and not book.take("vigor"))
+	check("pustego miejsca nie da się wybrać", not book.can_take("full_strength") and not book.take("full_strength"))
 	# bardzo stary zapis (sam słownik poziomów): złoto za poziomy 2+ wraca (300 + 600 + 300 + 300)
 	book.load_save_data({"whirlwind": 3, "lunge": 1, "crescent": 2, "fireball": 2})
 	check("starszy zapis", book.needs_migration and book.tree_reset and book.nodes.is_empty())
@@ -181,7 +181,7 @@ func _check_points(p) -> void:
 	book.skill_xp = 19 * 2000
 	check("droga przez puste miejsca", _take_path(book, "cyclone_eye") and _take_path(book, "smoke_burst")
 			and _take_path(book, "whirl_dmg") and book.has_node_id("flicker")
-			and not book.has_node_id("vigor"), str(book.nodes.keys()))
+			and not book.has_node_id("full_strength"), str(book.nodes.keys()))
 	var spent: int = book.points_spent()
 	check("drzewko za punkty z paska", spent == book.nodes.size() and book.points_left() == 31 - spent, "%d" % spent)
 	check("punkty za poziom postaci", book.level_points() == 10)

@@ -5,7 +5,7 @@ Węzły są zebrane w skupiska (CLUSTERS: region, środek we współrzędnych bi
 - docs/drzewko_wspolne.png - rysunek układu,
 - docs/drzewko_wspolne_wezly.md - pełna lista węzłów (opis układu i decyzje są w docs/drzewko_wspolne.md).
 - scripts/skill_tree_data.gd - dane dla gry (SkillTreeData: węzły z premiami, skupiska, strony), czyta je SkillTree.
-Węzły z "soon" (nowe umiejętności, aury, nowe węzły kluczowe i znaczące bez premii w grze) są w grze pustymi
+Węzły z "soon" (nowe umiejętności, nowe węzły kluczowe i znaczące bez premii w grze) są w grze pustymi
 miejscami: widać je, ale nie da się ich wybrać, a drzewko można przez nie przejść (SkillBook).
 
 Uruchom: python tools/shared_tree_draft.py
@@ -41,13 +41,14 @@ def S(id, name, weapon, desc, new=False, tags=""):
 
 
 def A(id, name, desc, new=True):
-	"""Aura - na razie puste miejsce (krok 3: aury i rezerwacja many)."""
-	return {"id": id, "kind": "aura", "name": name, "weapon": "any", "desc": desc, "new": new, "tags": "aura", "soon": True}
+	"""Aura (krok 3): id to klucz w Skills.DATA (działa z każdą broń, rezerwuje manę - Auras)."""
+	return {"id": id, "kind": "aura", "name": name, "weapon": "any", "desc": desc, "new": new, "tags": "aura", "soon": False}
 
 
-def K(id, name, desc, new=False, game=None, stats=None):
-	"""Węzeł kluczowy. `game` - opis w grze (gdy inny niż skrót w `desc`); nowe (new=True) - puste miejsce."""
-	return {"id": id, "kind": "key", "name": name, "desc": desc, "new": new, "soon": new, "game": game or desc,
+def K(id, name, desc, new=False, game=None, stats=None, soon=None):
+	"""Węzeł kluczowy. `game` - opis w grze (gdy inny niż skrót w `desc`); nowe (new=True) - puste miejsce,
+	chyba że soon=False (nowy węzeł, który już działa)."""
+	return {"id": id, "kind": "key", "name": name, "desc": desc, "new": new, "soon": new if soon is None else soon, "game": game or desc,
 			"stats": stats or {}}
 
 
@@ -227,7 +228,7 @@ CLUSTERS = [
 	("d_szal", "dex", "Szał (szybkość)", (347, 7.5), [
 		N("speed_1", "Szybkie ręce", "+6% szybkości ataku", {"attack_speed": 0.06}),
 		N("move_1", "Wiatr w nogach", "+5% szybkości ruchu", {"move_speed": 0.05}),
-		A("strzybog_wind", "Wiatr Strzyboga", "aura: +8% szybkości ruchu i ataku"),
+		A("strzybog_wind", "Wiatr Strzyboga", "aura: +8% szybkości ruchu, ataku i rzucania"),
 		N("running_breath", "Oddech w biegu", "+3 regeneracji zdrowia/s, gdy biegniesz", new=True),
 		G(),
 		K("battle_frenzy", "Szał Bitewny", "zabójstwo daje ładunek +4% szybkości (do 10), ładunki znikają po 3 s bez zabójstwa", new=True),
@@ -300,10 +301,11 @@ CLUSTERS = [
 		K("elem_master", "Mistrz Żywiołów", "zadajesz tylko żywioł, który ostatnio cię trafił (zmienia go w ten żywioł), ale +40% obrażeń", new=True),
 	]),
 	("i_wola", "int", "Wola (rezerwacja)", (113, 12.5), [
-		N("focused_will", "Skupiona wola", "aury rezerwują 10% many mniej", new=True),
+		N("focused_will", "Skupiona wola", "aury rezerwują 10% many mniej", {"aura_reservation": -0.1}, new=True),
 		P("+5% many"),
 		N("iron_mind", "Żelazny umysł", "+10% many, +1 regeneracji many/s", {"mana_percent": 0.1, "mana_regen": 1.0}),
-		K("blood_offering", "Krwawa Ofiara", "aury rezerwują zdrowie zamiast many", new=True),
+		K("blood_offering", "Krwawa Ofiara", "aury rezerwują zdrowie zamiast many", new=True, soon=False,
+			game="Aury rezerwują zdrowie zamiast many (ten sam procent maksymalnego zdrowia)."),
 	]),
 	# ======================= STREFA SIŁA / ZRĘCZNOŚĆ (krwawienie, ciosy, szarże)
 	("sz_krew", "sz", "Krwawienie", (256, 10.0), [
@@ -344,7 +346,7 @@ CLUSTERS = [
 		A("life_spring", "Źródło Życia", "aura: +regeneracja zdrowia (zastępuje Krew wojownika, Oddech łowcy, Mistyczną odnowę)"),
 		A("swarog_ember", "Żar Swaroga", "aura: ataki i czary dostają obrażenia od ognia i szansę na podpalenie"),
 		A("marzanna_frost", "Szron Marzanny", "aura: obrażenia od lodu i szansa na zamrożenie"),
-		N("thrifty_auras", "Oszczędne aury", "aury rezerwują 8% many mniej", new=True),
+		N("thrifty_auras", "Oszczędne aury", "aury rezerwują 8% many mniej", {"aura_reservation": -0.08}, new=True),
 		A("perun_sparks", "Iskry Peruna", "aura: obrażenia od piorunów i szansa na porażenie"),
 		A("mana_spring", "Źródło Many", "aura: +regeneracja many (zastępuje Skupienie bitewne, Cierpliwość łowcy, Strumień many)"),
 	]),

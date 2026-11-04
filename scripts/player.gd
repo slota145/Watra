@@ -288,6 +288,8 @@ const SUPPORT_ECHO_DELAY := 0.35
 var sword_skills: SwordSkills
 var bow_skills: BowSkills
 var spell_skills: SpellSkills
+## Aury rezerwujące manę (włączane klawiszem paska, działają z każdą bronią).
+var auras: Auras
 ## Krew za Manę (dawna Ofiara Krwi): ułamek zdrowia do zapłacenia za umiejętności (koszty są ułamkowe, zdrowie - całkowite).
 var _blood_cost := 0.0
 var _whirling := false
@@ -400,6 +402,8 @@ func _ready() -> void:
 	spell_skills = SpellSkills.new(self)
 	spell_skills.name = "SpellSkills"
 	add_child(spell_skills)
+	auras = Auras.new(self)
+	add_child(auras)
 	stats.skill_book = skills
 	equipment.skill_book = skills
 	skills.character_level = stats.level
@@ -483,7 +487,7 @@ func _press_slot(index: int) -> void:
 		if not is_dead:
 			use_item(id)
 		return
-	if id != "" and id != Hotbar.ATTACK and Skills.get_data(id)["weapon"] != stats.weapon_type():
+	if id != "" and id != Hotbar.ATTACK and not Skills.works_with(id, stats.weapon_type()):
 		_hint(tr("%s działa z bronią: %s") % [Skills.name_of(id), Skills.weapon_name(Skills.get_data(id)["weapon"]).to_lower()])
 		return
 	if id == Hotbar.ATTACK:
@@ -493,6 +497,9 @@ func _press_slot(index: int) -> void:
 			_attack_held = true
 	elif id != "":
 		match Skills.get_data(id)["type"]:
+			"aura":
+				if not is_dead:
+					auras.toggle(id)
 			"active":
 				_skill_held = true
 			"strike":
@@ -521,7 +528,7 @@ func _update_held_slots() -> void:
 			continue
 		if id == Hotbar.ATTACK:
 			_attack_held = true
-		elif Skills.get_data(id)["weapon"] != weapon_type:
+		elif not Skills.works_with(id, weapon_type):
 			continue
 		elif Skills.get_data(id)["type"] == "active":
 			_skill_held = true
@@ -652,7 +659,7 @@ func support_echo(id: String, again: Callable) -> void:
 	if _support_echoing or support_count(id, "echo") <= 0:
 		return
 	get_tree().create_timer(SUPPORT_ECHO_DELAY, false).timeout.connect(func() -> void:
-		if not is_instance_valid(self) or is_dead or Skills.get_data(id)["weapon"] != stats.weapon_type():
+		if not is_instance_valid(self) or is_dead or not Skills.works_with(id, stats.weapon_type()):
 			return
 		_support_echoing = true
 		MiscVfx.spark(get_parent(), body_center(), Color(0.75, 0.5, 1.0), 1.0)
@@ -972,6 +979,8 @@ func take_damage(amount: int, from_position: Vector2, element := Elements.PHYSIC
 	# Riposta: zasłona przyjmuje cios i odpowiada kontrą
 	if sword_skills.try_parry(from_position):
 		return
+	# Postrach (aura): wrogowie blisko zadają mniej obrażeń
+	amount = roundi(amount * auras.dread_hit(from_position))
 	# żywioły lochu (Elements.added): cios niesie też dodatkowe obrażenia od żywiołów, każde osłabia jego odporność
 	var raw := amount
 	amount = stats.reduce_damage(amount, element)
@@ -1544,8 +1553,9 @@ func _on_stats_changed() -> void:
 	# zwiększenie maksimum dodaje też tyle samo do bieżącej wartości
 	var max_hp := stats.max_health()
 	var max_mp := stats.max_mana()
+	# (rezerwacja aur - Krwawa Ofiara - nie może zabić: zostaje co najmniej 1 punkt zdrowia)
 	if not is_dead:
-		health = clampi(health + max_hp - _last_max_health, 0, max_hp)
+		health = clampi(health + max_hp - _last_max_health, 1, max_hp)
 	mana = clampf(mana + max_mp - _last_max_mana, 0.0, max_mp)
 	_last_max_health = max_hp
 	_last_max_mana = max_mp
@@ -2380,12 +2390,12 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 	Goblin.hit_sound = "hit"
 	DamageNumber.critical = false
 	_apply_ailment(enemy, element, amount, tags)
-	# żywioły dodane przez kamienie wsparcia (Żarowe / Mroźne / Burzowe Ostrze) też mogą wywołać swój stan
+	# żywioły dodane przez kamienie wsparcia (Żarowe / Mroźne / Burzowe Ostrze) i aury żywiołów też mogą wywołać swój stan
 	var added_list := stats.support_elements(tags)
 	for added: String in added_list:
 		var added_element: String = Elements.SOUND_ELEMENTS[added]
 		if added_element != element:
-			_apply_ailment(enemy, added_element, roundi(amount * stats.support(tags, "added_" + added)), tags)
+			_apply_ailment(enemy, added_element, roundi(amount * stats.added_element(tags, added)), tags)
 	# umiejętność z tagiem żywiołu, której trafienie jest fizyczne (np. Grot Swaroga): stan tego żywiołu tylko z szansy
 	# jej kamieni wsparcia (Żar, Szron, Wyładowanie)
 	for tag: String in Elements.SOUND_ELEMENTS:

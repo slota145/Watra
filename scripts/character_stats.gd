@@ -95,14 +95,37 @@ var skill_book: SkillBook:
 		skill_book.changed.connect(changed.emit)
 
 
+## Maksymalne zdrowie bez części zarezerwowanej przez aury (Krwawa Ofiara - SkillBook.reserved_health).
 func max_health() -> int:
+	return maxi(full_max_health() - reserved_health(), 1)
+
+
+## Maksymalna mana bez części zarezerwowanej przez aury (SkillBook.reserved_mana).
+func max_mana() -> int:
+	return maxi(full_max_mana() - reserved_mana(), 1)
+
+
+## Pełne maksymalne zdrowie (z zarezerwowanym przez aury).
+func full_max_health() -> int:
 	var flat := base_health + (level - 1) * HEALTH_PER_LEVEL + attribute("vitality") * HEALTH_PER_VITALITY + int(_bonus("health"))
 	return roundi(flat * (1.0 + _bonus("health_percent")))
 
 
-func max_mana() -> int:
+## Pełna maksymalna mana (z zarezerwowaną przez aury).
+func full_max_mana() -> int:
 	var flat := base_mana + attribute("intelligence") * MANA_PER_INTELLIGENCE + int(_bonus("mana"))
 	return roundi(flat * (1.0 + _bonus("mana_percent")))
+
+
+## Ile many / zdrowia zarezerwowały aury (punkty).
+func reserved_mana() -> int:
+	var part := skill_book.reserved_mana() if skill_book != null else 0.0
+	return roundi(full_max_mana() * part) if part > 0.0 else 0
+
+
+func reserved_health() -> int:
+	var part := skill_book.reserved_health() if skill_book != null else 0.0
+	return roundi(full_max_health() * part) if part > 0.0 else 0
 
 
 func damage_min() -> int:
@@ -172,13 +195,17 @@ func kind_multiplier(tags: Array) -> float:
 	for tag: String in FORM_DAMAGE:
 		if tag in tags:
 			total += _bonus(FORM_DAMAGE[tag])
+	# aury żywiołów (Auras): dodane żywioły do wszystkich ataków i czarów (poza samymi aurami)
+	var added := 0.0
+	if "aura" not in tags:
+		for element: String in SUPPORT_ELEMENTS:
+			added += _bonus("aura_added_" + element)
 	# kamienie wsparcia umiejętności (Supports): obrażenia w czasie, dodane żywioły, mnożnik "more"
 	var skill := Skills.skill_of(tags)
 	if skill == "" or skill_book == null:
-		return total
+		return total * (1.0 + added)
 	if "dot" in tags:
 		total += skill_book.support_value(skill, "dot_damage")
-	var added := 0.0
 	for element: String in SUPPORT_ELEMENTS:
 		added += skill_book.support_value(skill, "added_" + element)
 	return total * (1.0 + added) * skill_book.support_more(skill)
@@ -190,13 +217,18 @@ func support(tags: Array, stat: String) -> float:
 	return skill_book.support_value(skill, stat) if skill != "" and skill_book != null else 0.0
 
 
-## Żywioły dodane do trafienia przez kamienie wsparcia (Żarowe / Mroźne / Burzowe Ostrze).
+## Żywioły dodane do trafienia przez kamienie wsparcia (Żarowe / Mroźne / Burzowe Ostrze) i aury żywiołów.
 func support_elements(tags: Array) -> Array[String]:
 	var found: Array[String] = []
 	for element: String in SUPPORT_ELEMENTS:
-		if support(tags, "added_" + element) > 0.0:
+		if added_element(tags, element) > 0.0:
 			found.append(element)
 	return found
+
+
+## Część obrażeń dodana jako żywioł: kamienie wsparcia umiejętności i aury żywiołów (bez trafień samych aur).
+func added_element(tags: Array, element: String) -> float:
+	return support(tags, "added_" + element) + (0.0 if "aura" in tags else _bonus("aura_added_" + element))
 
 
 ## Szansa na stan od żywiołu (Elements.AILMENTS: ignite / freeze / shock), najwyżej MAX_AILMENT_CHANCE.
@@ -298,11 +330,11 @@ func life_on_hit() -> int:
 
 ## Regeneracja zdrowia i many z przedmiotów (punkty na sekundę).
 func health_regen() -> float:
-	return _bonus("health_regen")
+	return _bonus("health_regen") + max_health() * _bonus("health_regen_percent")
 
 
 func mana_regen() -> float:
-	return _bonus("mana_regen")
+	return _bonus("mana_regen") + full_max_mana() * _bonus("mana_regen_percent")
 
 
 func dodge_chance() -> float:
@@ -383,7 +415,7 @@ func set_temp(source: String, bonus: Dictionary) -> void:
 func _bonus(stat: String) -> float:
 	var total := equipment.bonus(stat) if equipment != null else 0.0
 	if skill_book != null:
-		total += skill_book.tree_bonus(stat)
+		total += skill_book.tree_bonus(stat) + skill_book.aura_bonus(stat)
 	total += float(temp_bonus.get(stat, 0.0))
 	return total + (boons.bonus(stat) if boons != null else 0.0)
 

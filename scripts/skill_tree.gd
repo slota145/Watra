@@ -13,7 +13,7 @@ class_name SkillTree
 ##   gniazdo "legendary" stoi za węzłem kluczowym i przyjmuje też esencję legendy, a kamień promienia wzmacnia
 ##   wybrane węzły pasywne w swoim promieniu.
 ## Węzeł z "soon" to puste miejsce na później (nowe umiejętności, aury, nowe węzły kluczowe): widać go, ale nie da się
-## go wybrać, a drzewko można przez niego przejść za darmo (SkillBook.reachable). Węzeł "aura" - przyszła aura.
+## go wybrać, a drzewko można przez niego przejść za darmo (SkillBook.reachable). Węzeł z "aura" - aura (Auras).
 ## Premie z węzłów działają z każdą bronią - na umiejętności, które do nich pasują (tagi Skills.TAGS, np. +% obrażeń
 ## od ognia na umiejętności z ogniem); premie do konkretnej umiejętności działają tylko na nią.
 ## Wybrane węzły cofa się prawym przyciskiem (za złoto) albo całe drzewko u mędrca w Ostoi.
@@ -40,7 +40,7 @@ const TREE_STATS := {
 	"blink_cooldown": "Odnowienie Kroku przez Mgłę", "rune_bonus": "Moc Kamienia Runicznego", "chain_targets": "Cele Łańcucha błyskawic",
 	"storm_time": "Czas Burzy Peruna", "orb_damage": "Obrażenia Kuli Piorunów", "lance_damage": "Obrażenia Włóczni Marzanny",
 	"chill_time": "Czas spowolnienia", "lance_pierce": "Włócznia przebija wrogów", "blizzard_damage": "Obrażenia Zamieci",
-	"blizzard_time": "Czas Zamieci",
+	"blizzard_time": "Czas Zamieci", "aura_reservation": "Rezerwacja many przez aury",
 }
 const COUNT_STATS := ["blade_count", "multishot_arrows", "seeker_hits", "arrow_pierce", "chain_targets", "lance_pierce"]
 

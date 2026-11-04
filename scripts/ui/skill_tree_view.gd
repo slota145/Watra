@@ -368,7 +368,9 @@ func describe(id: String) -> String:
 			lines.append(Skills.tags_bbcode(Skills.tags(skill)))
 			lines.append(Skills.description_of(skill))
 			var weapon: String = Skills.get_data(skill)["weapon"]
-			if _player != null and _player.stats.weapon_type() != weapon:
+			if AuraData.is_aura(skill):
+				lines.append(tr("Aura - działa z każdą bronią. Połóż ją na pasku i naciśnij klawisz, żeby włączyć albo wyłączyć."))
+			elif _player != null and _player.stats.weapon_type() != weapon:
 				lines.append("[color=#ff9a7a]%s[/color]" % (tr("Działa tylko z bronią: %s.") % Skills.weapon_name(weapon)))
 		"passive":
 			if node.has("name"):

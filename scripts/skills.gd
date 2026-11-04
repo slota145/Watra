@@ -27,7 +27,7 @@ const REFUND_GOLD_PER_LEVEL := 8
 const OLD_ACTIVE_GOLD: Array[int] = [150, 300, 600, 1200, 2400]
 
 
-## type: active / strike / combo / skill / health_regen / mana_regen
+## type: active / strike / combo / skill / aura (Auras - włączana klawiszem, rezerwuje manę, działa z każdą bronią)
 const DATA := {
 	"flicker": {
 		"name": "Mgnienie", "weapon": "melee", "type": "skill",
@@ -188,6 +188,56 @@ const DATA := {
 		"name": "Kula ognia", "weapon": "spell", "type": "active",
 		"icon": preload("res://assets/skills/fireball.png"),
 		"description": "Przytrzymaj klawisz, by ładować kulę ognia w dłoniach (zjada manę) - im dłużej, tym mocniejszy i większy wybuch. Puść, by rzucić.",
+	},
+	"dread": {
+		"name": "Postrach", "weapon": "any", "type": "aura",
+		"icon": preload("res://assets/skills/aura_dread.png"),
+		"description": "Aura: wrogowie wokół ciebie zadają mniej obrażeń i wolniej atakują. Klawisz włącza i wyłącza aurę - włączona działa bez końca i rezerwuje część many.",
+	},
+	"vigor": {
+		"name": "Krzepa", "weapon": "any", "type": "aura",
+		"icon": preload("res://assets/skills/aura_vigor.png"),
+		"description": "Aura: więcej maksymalnego zdrowia. Klawisz włącza i wyłącza aurę - włączona działa bez końca i rezerwuje część many.",
+	},
+	"strzybog_wind": {
+		"name": "Wiatr Strzyboga", "weapon": "any", "type": "aura",
+		"icon": preload("res://assets/skills/aura_strzybog_wind.png"),
+		"description": "Aura: szybciej biegasz, atakujesz i rzucasz czary. Klawisz włącza i wyłącza aurę - włączona działa bez końca i rezerwuje część many.",
+	},
+	"life_spring": {
+		"name": "Źródło Życia", "weapon": "any", "type": "aura",
+		"icon": preload("res://assets/skills/aura_life_spring.png"),
+		"description": "Aura: co sekundę odnawia część maksymalnego zdrowia. Klawisz włącza i wyłącza aurę - włączona działa bez końca i rezerwuje część many.",
+	},
+	"mana_spring": {
+		"name": "Źródło Many", "weapon": "any", "type": "aura",
+		"icon": preload("res://assets/skills/aura_mana_spring.png"),
+		"description": "Aura: co sekundę odnawia część maksymalnej many. Klawisz włącza i wyłącza aurę - włączona działa bez końca i rezerwuje część many.",
+	},
+	"swarog_ember": {
+		"name": "Żar Swaroga", "weapon": "any", "type": "aura",
+		"icon": preload("res://assets/skills/aura_swarog_ember.png"),
+		"description": "Aura: twoje ataki i czary zadają dodatkowo obrażenia od ognia i mogą podpalić. Klawisz włącza i wyłącza aurę - włączona działa bez końca i rezerwuje część many.",
+	},
+	"marzanna_frost": {
+		"name": "Szron Marzanny", "weapon": "any", "type": "aura",
+		"icon": preload("res://assets/skills/aura_marzanna_frost.png"),
+		"description": "Aura: twoje ataki i czary zadają dodatkowo obrażenia od lodu i mogą zamrozić. Klawisz włącza i wyłącza aurę - włączona działa bez końca i rezerwuje część many.",
+	},
+	"perun_sparks": {
+		"name": "Iskry Peruna", "weapon": "any", "type": "aura",
+		"icon": preload("res://assets/skills/aura_perun_sparks.png"),
+		"description": "Aura: twoje ataki i czary zadają dodatkowo obrażenia od piorunów i mogą porazić. Klawisz włącza i wyłącza aurę - włączona działa bez końca i rezerwuje część many.",
+	},
+	"perun_wrath": {
+		"name": "Gniew Peruna", "weapon": "any", "type": "aura",
+		"icon": preload("res://assets/skills/aura_perun_wrath.png"),
+		"description": "Aura: co kilka sekund piorun z nieba bije losowego wroga w pobliżu. Klawisz włącza i wyłącza aurę - włączona działa bez końca i rezerwuje część many.",
+	},
+	"frost_breath": {
+		"name": "Mroźny Oddech", "weapon": "any", "type": "aura",
+		"icon": preload("res://assets/skills/aura_frost_breath.png"),
+		"description": "Aura: lodowy wir wokół ciebie co chwilę rani wrogów i wzmacnia obrażenia od lodu, ale rani też ciebie (odporność na lód pomaga; wir nie zabija). Nie rezerwuje many. Klawisz włącza i wyłącza aurę - włączona działa bez końca i rezerwuje część many.",
 	},
 }
 
@@ -440,6 +490,17 @@ const TAGS := {
 	"blink": ["spell", "movement", "int"],
 	"mana_shield": ["spell", "int"],
 	"rune_stone": ["spell", "summon", "int"],
+	# aury (Auras): rodzaj "aura", pioruny i lód aur bojowych to czary
+	"dread": ["aura", "area", "str"],
+	"vigor": ["aura", "str"],
+	"strzybog_wind": ["aura", "dex"],
+	"life_spring": ["aura", "str", "int"],
+	"mana_spring": ["aura", "int"],
+	"swarog_ember": ["aura", "fire", "str", "int"],
+	"marzanna_frost": ["aura", "ice", "int"],
+	"perun_sparks": ["aura", "lightning", "dex", "int"],
+	"perun_wrath": ["aura", "spell", "lightning", "int"],
+	"frost_breath": ["aura", "spell", "area", "ice", "dot", "int"],
 }
 ## Tagi zwykłego ataku bronią danego rodzaju (magiczny pocisk księgi to czar z obrażeniami tajemnymi).
 const BASIC_TAGS := {
@@ -550,6 +611,12 @@ const COMBOS := {"smoke_burst": ["any"], "flicker": ["whirlwind"], "rend": ["fli
 ## Żywioły czarów (węzeł kluczowy Harmonia Żywiołów, SpellSkills).
 const ELEMENTS := {"fireball": "fire", "meteor": "fire", "frost_lance": "ice", "blizzard": "ice",
 		"chain_lightning": "lightning", "thunder_wave": "lightning", "storm_call": "lightning", "ball_lightning": "lightning"}
+
+
+## Czy umiejętność działa z bronią danego rodzaju (aury - z każdą).
+static func works_with(id: String, weapon_type: String) -> bool:
+	var weapon: String = DATA.get(id, {}).get("weapon", "")
+	return weapon == weapon_type or weapon == "any"
 
 
 ## Umiejętności danego rodzaju broni w kolejności: aktywna, uderzenie, dodatkowy cios, umiejętności drzewka.
@@ -800,6 +867,8 @@ static func mana_cost(id: String) -> float:
 
 
 static func mana_cost_text(id: String) -> String:
+	if AuraData.is_aura(id):
+		return AuraData.cost_text(id)
 	match id:
 		"whirlwind":
 			return Lang.t("%d many/s") % WHIRLWIND_MANA_PER_SECOND
@@ -842,6 +911,8 @@ static func mana_cost_text(id: String) -> String:
 static func effect_text(id: String, level: int) -> String:
 	if level <= 0:
 		return "-"
+	if AuraData.is_aura(id):
+		return AuraData.effect_text(id, level)
 	match id:
 		"whirlwind":
 			return Lang.t("%d%% obrażeń co %s s, zasięg %d") % [roundi(whirlwind_damage(level) * 100), _decimal(WHIRLWIND_TICK, 2), whirlwind_radius(level)]

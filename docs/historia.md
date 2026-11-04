@@ -771,6 +771,32 @@ odpowiedniej sekcji.
   drzewko ma 188 węzłów do wybrania (jedna strona ze strefami ok. 80, dawne drzewko broni 55), więc decyzją autora
   dochodzi **1 punkt co 2 poziomy postaci** (`SkillBook.LEVEL_POINT_EVERY`, `level_points`, `set_character_level` -
   napis „+1 punkt umiejętności” przy awansie): +25 na 50. poziomie, +45 na 90.
+- [x] **Aury rezerwujące manę - krok 3 wspólnego drzewka** (`docs/plan_drzewek.md`, listopad 2026): 10 aur działających
+  z każdą bronią (`Skills.DATA` type `"aura"`, weapon `"any"`, `Skills.works_with`). Dane i liczby w `scripts/aura_data.gd`
+  (`AuraData` - bez odwołań do dźwięków, żeby `Skills` i `SkillBook` działały w testach bez okna), działanie w grze
+  w `scripts/auras.gd` (`Player.auras`, dziecko gracza). Klawisz paska włącza i wyłącza aurę (`Auras.toggle`), włączone
+  trzyma `SkillBook.auras` (zapis gry, pole `"auras"`), premie do statystyk `SkillBook.aura_bonus` (w `CharacterStats._bonus`).
+  **Rezerwacja** (decyzja autora - „jak w PoE”, ułamek pełnej many, `AuraData.RESERVE`): Postrach, Krzepa, Wiatr Strzyboga
+  30%, Źródło Życia 20%, Źródło Many 15%, Żar Swaroga / Szron Marzanny / Iskry Peruna po 25%, Gniew Peruna 35%, Mroźny
+  Oddech 0% (zamiast many rani gracza 4% zdrowia/s, mniej z odpornością na lód, nie zabija). `CharacterStats.max_mana`
+  zwraca manę bez rezerwacji (`full_max_mana`, `reserved_mana`), więc włączenie aury zabiera tyle many, a wyłączenie ją
+  oddaje; aura nie włączy się bez wolnej many (`SkillBook.aura_block_reason`), suma rezerwacji najwyżej 100%.
+  Węzły Skupiona wola (-10%) i Oszczędne aury (-8%) - statystyka drzewka `aura_reservation` (mnożnik rezerwacji);
+  węzeł kluczowy **Krwawa Ofiara** (`blood_offering`) - aury rezerwują ten sam procent zdrowia (najwyżej 90%,
+  `reserved_health`). Działanie (siła rośnie z poziomem aury - `Skills.power`): Postrach - wrogowie w promieniu 150 zadają
+  10-21% mniej obrażeń (`Player.take_damage`) i atakują 8-16% wolniej (`Goblin._process_attack`); Krzepa +12-23% zdrowia;
+  Wiatr Strzyboga +8-14% ruchu, ataku i rzucania; Źródło Życia 1-3,3% zdrowia/s i Źródło Many 1,25-4,1% many/s
+  (`health_regen_percent`, `mana_regen_percent`); aury żywiołów +12-35% obrażeń dodanych jako żywioł do wszystkich ataków
+  i czarów (`aura_added_<żywioł>`, `CharacterStats.added_element`) i +6-17% szansy na stan; Gniew Peruna - co 3 s piorun
+  140-370% obrażeń w losowego wroga do 220 (efekt Burzy Peruna); Mroźny Oddech - wir w promieniu 70 co 0,5 s 36-105%
+  obrażeń od lodu i +22-45% obrażeń od lodu. Wygląd rysowany w kodzie: ikony `tools/aura_icons.py`
+  (`assets/skills/aura_<id>.png`), kręgi pod stopami w kolorze aury, zasięg Postrachu i wiru, na pasku włączona aura
+  świeci ramką w swoim kolorze (`HotbarSlot.set_aura`), ikona pod paskami zdrowia i many (`Auras.statuses`), a pasek many
+  (z Krwawą Ofiarą - zdrowia) liczy od pełnego maksimum i szary pas z prawej pokazuje część zarezerwowaną (`HUD._show_reserved`).
+  Stare zapisy: węzły, przez które drzewko dotąd przechodziło za darmo (`SkillBook.FORMER_SOON`), dostaje się za darmo
+  (+1 punkt za każdy), gdy inne wybrane węzły łączą się przez nie ze startem (`SkillBook.repair_paths`). Test `tests/test_auras.gd`.
+  Do ustalenia po ograniu: liczby rezerwacji i siły, czy aury mają mieć gniazda na kamienie wsparcia, animacje ataków
+  aur żywiołów z kreatora efektów PixelLab.
 
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)

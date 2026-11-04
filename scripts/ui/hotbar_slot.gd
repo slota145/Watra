@@ -22,6 +22,8 @@ var cooldown := 0.0
 ## kurczący się pierścień wokół slotu).
 var highlight := false
 var combo_fraction := 0.0
+## Kolor włączonej aury (przezroczysty - slot bez włączonej aury): świecąca ramka i krążąca kropka.
+var aura_color := Color.TRANSPARENT
 var _dragging := false
 var _flash := 0.0
 var _normal_style: StyleBox
@@ -83,6 +85,12 @@ func set_cooldown(left: float, total: float) -> void:
 			else str(ceili(left)) if left > 0.0 else ""
 
 
+func set_aura(color: Color) -> void:
+	if color != aura_color:
+		aura_color = color
+		queue_redraw()
+
+
 func set_highlight(on: bool) -> void:
 	if on != highlight:
 		highlight = on
@@ -93,7 +101,7 @@ func _process(delta: float) -> void:
 	if _flash > 0.0:
 		_flash = maxf(_flash - delta * 3.0, 0.0)
 		queue_redraw()
-	if highlight:
+	if highlight or aura_color.a > 0.0:
 		queue_redraw()
 
 
@@ -103,6 +111,12 @@ func _draw() -> void:
 		_draw_sweep(rect, cooldown, Color(0.0, 0.0, 0.0, 0.62))
 	if _flash > 0.0:
 		draw_rect(rect, Color(1.0, 0.95, 0.7, 0.55 * _flash))
+	if aura_color.a > 0.0:
+		var glow := 0.65 + 0.35 * sin(Time.get_ticks_msec() / 260.0)
+		draw_rect(rect.grow(-0.5), Color(aura_color, glow), false, 1.5)
+		var angle := Time.get_ticks_msec() / 400.0
+		var dot := rect.get_center() + Vector2(cos(angle), sin(angle)) * rect.size.x * 0.42
+		draw_circle(dot, 1.3, Color(aura_color.lightened(0.4), 0.9))
 	if highlight:
 		var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() / 90.0)
 		draw_rect(rect.grow(-0.5), Color(1.0, 0.85, 0.35, 0.5 + 0.5 * pulse), false, 1.0)

@@ -162,7 +162,8 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
   `Skills.LEVEL_POINTS`), tagi umiejętności (`Skills.TAGS`) i atrybuty dające % obrażeń umiejętnościom z ich tagiem
   (`CharacterStats.attribute_damage`), kamienie wsparcia w gniazdach umiejętności (`supports.gd`, znacznik umiejętności
   w `Skills.tags` - `Skills.skill_of`), combo (`Skills.COMBOS`), paski szybkiego wyboru (`hotbar.gd`), ikony efektów (`status_effects.gd`);
-  zryw, Mgnienie i teleport przeskakują przeszkody, zatrzymuje je tylko granica (`BOUNDS_LAYER`, `Player.free_landing`).
+  zryw, Mgnienie i teleport przeskakują przeszkody, zatrzymuje je tylko granica (`BOUNDS_LAYER`, `Player.free_landing`);
+  aury rezerwujące manę z każdą bronią (`aura_data.gd` - liczby, `auras.gd` - działanie, `SkillBook.auras`).
 - **Efekty:** animacje z kreatora efektów PixelLab (`pixellab_src/vfx/ids.json`, `tools/vfx_art.py`; pomocnicy `SkillEffects`,
   `FxLoop`, `BossFx`, `LegendVfx`, `WorldVfx`, `MonsterFx`, `MiscVfx`).
 - **Dźwięki:** `sfx.gd` (`Sfx.SOUNDS`), generatory `tools/sfx_synth.py` i `tools/hit_sfx.py` (trafienia według broni
@@ -289,8 +290,9 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   bojowy mag z glewią / runicznym rapierem; przebudzenie przez zadanie u żercy Wszebora, jedna ulepszana broń
   przebudzenia, broń w ręku zmienia się sama), nekromancja jako gałąź magii, nowe combo, drzewko lochów od nowa.
   Krok 2 zrobiony, czeka na ocenę autora (szukaj „Wspólne drzewko umiejętności, krok 2” w `docs/historia.md`): drzewko
-  w grze z obecnymi umiejętnościami, nowe umiejętności, aury i nowe węzły kluczowe to puste miejsca; stare zapisy -
-  zwrot wszystkich punktów, dodatkowo 1 punkt umiejętności co 2 poziomy postaci. Dalej krok 3 (aury i rezerwacja many).
+  w grze z obecnymi umiejętnościami, nowe umiejętności i nowe węzły kluczowe to puste miejsca; stare zapisy -
+  zwrot wszystkich punktów, dodatkowo 1 punkt umiejętności co 2 poziomy postaci. Krok 3 (aury i rezerwacja many) zrobiony,
+  czeka na ocenę autora (szukaj „Aury rezerwujące manę - krok 3”). Dalej krok 4 (nowe combo).
 - [ ] **Modyfikacja premii tylko runami** (decyzja autora, listopad 2026): wszystkie sposoby zmiany premii
   (afiksów) przedmiotów mają działać przez runy - przedmioty-waluty jak orby w Path of Exile. Zrobione razem
   z Uroczyskiem (szukaj „Mechaniki w lochach, etap 3”): każde działanie warsztatu kowala zużywa swoją runę
@@ -305,10 +307,9 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   cięciwa łuku rysowana w kodzie (`BowString`, `tools/bow_strings.py`) i własne ruchy umiejętności łuku i księgi
   (`Player.SKILL_MOVES`, chwyt ze znaczników stanu „Znacznik” w PixelLab). Etap 4 zrobiony (szukaj „Etap 4 animacji”):
   oddech w spoczynku, chód po 8 klatek, zryw i upadek przy śmierci. Punkt do zamknięcia po ograniu przez autora.
-- [ ] **Aury rezerwujące manę** (pomysł autora, listopad 2026; jak aury w Path of Exile): umiejętności-aury, które
-  po włączeniu działają bez końca i rezerwują część many. Lista aur w `docs/plan_drzewek.md` (regeneracja many
-  i życia, aury żywiołów z własnymi animacjami ataków, max zdrowia, Mroźny Oddech jak Righteous Fire). Do ustalenia:
-  ile procent many, ikona na pasku i pod paskami zdrowia i many.
+- [ ] **Aury rezerwujące manę**: zrobione, czekają na ocenę autora (szukaj „Aury rezerwujące manę - krok 3”
+  w `docs/historia.md`). Do ustalenia po ograniu: liczby (`scripts/aura_data.gd`), gniazda na kamienie wsparcia
+  dla aur, animacje ataków aur żywiołów z kreatora efektów PixelLab.
 - [ ] **Przebudowa rozwoju postaci**: zastąpiona planem wspólnego drzewka (`docs/plan_drzewek.md`). Osobne punkty
   statystyk (2 za awans) i umiejętności (pasek) już są - punkt niżej.
 - [ ] **Punkty umiejętności z osobnego paska doświadczenia** (pomysł autora, listopad 2026; jak w BDO): zrobione,
