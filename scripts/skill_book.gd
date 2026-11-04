@@ -8,6 +8,7 @@ extends Node
 ## mocniej (TREE_GEM_POWER), a kamień promienia wzmacnia wybrane węzły pasywne w promieniu RADIUS_RANGE.
 ## Gniazdo legendarne przyjmuje też esencję legendy (Essences) - jej efekt działa z bronią drzewka
 ## (Equipment.effect_power); wyjęcie esencji kosztuje złoto (Essences.save_gold), inaczej esencja przepada.
+## Gniazda umiejętności aktywnych (Supports): liczba gniazd i kamienie wsparcia w nich (supports), dorabiane krzesiwami.
 
 signal changed
 
@@ -21,6 +22,8 @@ var tree_gems := {}
 var character_level := 1
 ## Dodatkowe punkty umiejętności z zadań głównych (MainQuests - skill_points).
 var bonus_points := 0
+## id umiejętności -> {"sockets": liczba gniazd, "gems": [przepis kamienia wsparcia albo {} - puste gniazdo]}
+var supports := {}
 
 ## Kamień w gnieździe drzewka działa mocniej niż w przedmiocie.
 const TREE_GEM_POWER := 1.5
@@ -304,6 +307,121 @@ func tree_bonus(weapon_type: String, stat: String) -> float:
 	return total
 
 
+# ---------------------------------------------------------------- gniazda umiejętności (kamienie wsparcia)
+func sockets_of(skill: String) -> int:
+	return int(supports.get(skill, {}).get("sockets", 0))
+
+
+## Kamienie wsparcia w gniazdach umiejętności (przepisy; {} - puste gniazdo), zawsze tyle, ile gniazd.
+func support_gems(skill: String) -> Array:
+	return supports.get(skill, {}).get("gems", [])
+
+
+## Dorabia gniazdo umiejętności za krzesiwa z plecaka (Supports.socket_cost). Zwraca "" albo powód.
+func add_socket(skill: String, inventory: Inventory) -> String:
+	if not Supports.has_sockets(skill):
+		return Lang.t("Ta umiejętność nie może mieć gniazd.")
+	if level_of(skill) <= 0:
+		return Lang.t("Najpierw odblokuj umiejętność.")
+	var cost := Supports.socket_cost(sockets_of(skill))
+	if cost.is_empty():
+		return Lang.t("Umiejętność ma już wszystkie gniazda.")
+	if inventory.count_of(cost[0]) < int(cost[1]):
+		return Lang.t("Potrzeba: %s x%d.") % [Items.short_name(cost[0]), cost[1]]
+	inventory.remove_item(cost[0], int(cost[1]))
+	if not supports.has(skill):
+		supports[skill] = {"sockets": 0, "gems": []}
+	supports[skill]["sockets"] = sockets_of(skill) + 1
+	supports[skill]["gems"].append({})
+	changed.emit()
+	return ""
+
+
+## Osadza kamień wsparcia z pola `index` plecaka w gnieździe `slot` umiejętności (-1 - pierwsze wolne);
+## kamień, który tam był, wraca do plecaka. Zwraca "" albo powód.
+func support_socket_from(inventory: Inventory, skill: String, index: int, slot := -1) -> String:
+	if index < 0 or index >= inventory.slots.size() or inventory.slots[index].is_empty() \
+			or not Supports.is_support(inventory.slots[index]["id"]):
+		return Lang.t("To nie jest kamień wsparcia.")
+	var item_id: String = inventory.slots[index]["id"]
+	var recipe: Dictionary = Items.generated[item_id]["recipe"]
+	var kind: String = recipe["support"]
+	if not Supports.fits(kind, skill):
+		return Lang.t("%s nie pasuje do tej umiejętności.") % Supports.name_of(kind)
+	var gems := support_gems(skill)
+	if gems.is_empty():
+		return Lang.t("Umiejętność nie ma gniazd - dorób je krzesiwem.")
+	if slot < 0:
+		slot = gems.find({})
+		if slot < 0:
+			return Lang.t("Wszystkie gniazda są zajęte - wyjmij najpierw któryś kamień.")
+	for i in gems.size():
+		if i != slot and gems[i].get("support", "") == kind:
+			return Lang.t("Ten kamień już jest w tej umiejętności.")
+	inventory.take_one(index)
+	Items.generated.erase(item_id)
+	var old: Dictionary = gems[slot]
+	gems[slot] = recipe.duplicate(true)
+	if not old.is_empty():
+		inventory.put(index, Supports.register(old.duplicate(true)))
+	changed.emit()
+	return ""
+
+
+## Wyjmuje kamień wsparcia z gniazda do plecaka (za darmo). Zwraca "" albo powód.
+func support_unsocket_to(inventory: Inventory, skill: String, slot: int) -> String:
+	var gems := support_gems(skill)
+	if slot < 0 or slot >= gems.size() or gems[slot].is_empty():
+		return Lang.t("Gniazdo jest puste.")
+	if not inventory.slots.any(func(entry: Dictionary) -> bool: return entry.is_empty()):
+		return Lang.t("Plecak jest pełny.")
+	inventory.add_item(Supports.register((gems[slot] as Dictionary).duplicate(true)), 1)
+	gems[slot] = {}
+	changed.emit()
+	return ""
+
+
+## Suma premii `stat` kamieni wsparcia umiejętności (more i mana - patrz support_more i support_mana).
+func support_value(skill: String, stat: String) -> float:
+	var total := 0.0
+	for gem: Dictionary in support_gems(skill):
+		if not gem.is_empty() and Supports.DATA[gem["support"]]["stats"].has(stat):
+			total += Supports.value(gem["support"], stat, int(gem["level"]))
+	return total
+
+
+## Mnożnik obrażeń kamieni wsparcia (premie "more" się mnożą).
+func support_more(skill: String) -> float:
+	var total := 1.0
+	for gem: Dictionary in support_gems(skill):
+		if not gem.is_empty() and Supports.DATA[gem["support"]]["stats"].has("more"):
+			total *= 1.0 + Supports.value(gem["support"], "more", int(gem["level"]))
+	return total
+
+
+## Mnożnik kosztu many umiejętności od kamieni wsparcia.
+func support_mana(skill: String) -> float:
+	var total := 1.0
+	for gem: Dictionary in support_gems(skill):
+		if not gem.is_empty():
+			total *= float(Supports.DATA[gem["support"]]["mana"])
+	return total
+
+
+## Doświadczenie dla kamieni wsparcia we wszystkich gniazdach (Supports.XP_SHARE doświadczenia postaci).
+## Zwraca nazwy kamieni, które awansowały.
+func add_support_xp(amount: int) -> Array[String]:
+	var leveled: Array[String] = []
+	var share := roundi(amount * Supports.XP_SHARE)
+	for skill: String in supports:
+		for gem: Dictionary in supports[skill]["gems"]:
+			if not gem.is_empty() and Supports.add_xp(gem, share):
+				leveled.append(Lang.t("%s (poziom %d)") % [Supports.name_of(gem["support"]), int(gem["level"])])
+	if not leveled.is_empty():
+		changed.emit()
+	return leveled
+
+
 func has_keystone(weapon_type: String, id: String) -> bool:
 	return nodes.get(weapon_type, {}).has(id) and SkillTree.nodes(weapon_type).get(id, {}).get("kind", "") == "keystone"
 
@@ -312,7 +430,8 @@ func get_save_data() -> Dictionary:
 	var taken := {}
 	for weapon_type: String in nodes:
 		taken[weapon_type] = nodes[weapon_type].keys()
-	return {"levels": levels.duplicate(), "nodes": taken, "gems": tree_gems.duplicate(true), "bonus_points": bonus_points}
+	return {"levels": levels.duplicate(), "nodes": taken, "gems": tree_gems.duplicate(true), "bonus_points": bonus_points,
+			"supports": supports.duplicate(true)}
 
 
 ## Starsze zapisy to sam słownik poziomów; umiejętności drzewka kupione wtedy za złoto dostają wybrane węzły
@@ -322,7 +441,27 @@ func load_save_data(data: Dictionary) -> void:
 	levels.clear()
 	nodes.clear()
 	tree_gems.clear()
+	supports.clear()
 	bonus_points = int(data.get("bonus_points", 0))
+	var saved_supports: Dictionary = data.get("supports", {})
+	for skill: String in saved_supports:
+		if not Supports.has_sockets(skill):
+			continue
+		var count := clampi(int(saved_supports[skill].get("sockets", 0)), 0, Supports.MAX_SOCKETS)
+		var gems := []
+		for gem in saved_supports[skill].get("gems", []):
+			if gems.size() >= count:
+				break
+			var recipe: Dictionary = gem if gem is Dictionary else {}
+			if Supports.DATA.has(recipe.get("support", "")):
+				recipe["level"] = clampi(int(recipe.get("level", 1)), 1, Supports.MAX_LEVEL)
+				recipe["xp"] = int(recipe.get("xp", 0))
+				gems.append(recipe)
+			else:
+				gems.append({})
+		while gems.size() < count:
+			gems.append({})
+		supports[skill] = {"sockets": count, "gems": gems}
 	var saved_gems: Dictionary = data.get("gems", {})
 	for weapon_type: String in saved_gems:
 		var tree := SkillTree.nodes(weapon_type)

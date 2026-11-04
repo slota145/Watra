@@ -47,6 +47,11 @@ var explosion_max := 0
 ## (obrażenia jednego płomienia; 0 = zwykły wybuch).
 var turret_damage := 0
 
+## Tagi umiejętności ze znacznikiem (Skills.tags) - trafienia liczą jej kamienie wsparcia (Player.hit_enemy).
+var tags: Array = []
+## Łańcuch (kamień wsparcia): ile razy pocisk po trafieniu odbije się do kolejnego wroga w pobliżu.
+var chain := 0
+
 ## Trafienie wroga (bez wybuchu) - np. combo Grotu Swaroga dokłada wtedy wybuch ognia (BowSkills).
 signal enemy_hit(enemy: Goblin)
 
@@ -120,6 +125,8 @@ func _physics_process(delta: float) -> void:
 			_hit[enemy] = true
 			_hit_enemy(enemy, randi_range(damage_min, damage_max), global_position - direction * 10.0, knockback)
 			enemy_hit.emit(enemy)
+			if chain > 0 and _bounce(enemy):
+				return
 			if _hit.size() > pierce:
 				_impact()
 				return
@@ -132,6 +139,32 @@ func _physics_process(delta: float) -> void:
 		var tween := create_tween()
 		tween.tween_property(self, "modulate:a", 0.0, 0.1)
 		tween.tween_callback(queue_free)
+
+
+## Odbicie pocisku (Łańcuch): leci od trafionego wroga do najbliższego innego w zasięgu Supports.CHAIN_RANGE,
+## z pełnym zasięgiem lotu. Odbicie nie zużywa przebicia. Zwraca false, gdy nie ma do kogo.
+func _bounce(from: Goblin) -> bool:
+	var best: Goblin = null
+	var best_distance := Supports.CHAIN_RANGE
+	for enemy: Goblin in get_tree().get_nodes_in_group("enemies"):
+		if _hit.has(enemy) or enemy.state == Goblin.State.DEAD:
+			continue
+		var distance := enemy.global_position.distance_to(from.global_position)
+		if distance < best_distance:
+			best = enemy
+			best_distance = distance
+	if best == null:
+		return false
+	chain -= 1
+	pierce += 1
+	direction = (best.hurt_center() - (global_position + Vector2(0, -HEIGHT))).normalized()
+	_travelled = 0.0
+	if not (magic or fire) and sprite.visible:
+		sprite.rotation = direction.angle()
+	var fx := get_node_or_null("Fx") as Node2D
+	if fx != null and FX.has(fx_kind) and FX[fx_kind][4]:
+		fx.rotation = direction.angle()
+	return true
 
 
 ## Kula zawisa w miejscu jako wieżyczka ognia; jej wybuch odpala się na końcu (kopia tej kuli bez wieżyczki).
@@ -215,6 +248,6 @@ func _hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, push: float)
 	var player: Player = get_tree().get_first_node_in_group("player")
 	if player != null:
 		var sound := "fire" if fire or fx_kind == "fire" else "ice" if fx_kind == "ice" else "magic" if magic else "arrow"
-		player.hit_enemy(enemy, amount, from_position, push, sound)
+		player.hit_enemy(enemy, amount, from_position, push, sound, tags)
 	else:
 		enemy.take_damage(amount, from_position, push)

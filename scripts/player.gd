@@ -277,6 +277,8 @@ var _held_ids := {}
 ## Ostatnio użyta umiejętność i ile jeszcze trwa okno combo po niej (Skills.COMBOS).
 var _chain_skill := ""
 var _chain_time := 0.0
+## Ile jeszcze trwa premia Rozpędu (kamień wsparcia, _support_after_use).
+var _momentum_time := 0.0
 ## Umiejętności drzewek: miecza (Mgnienie, Dymne Wybuchy...), łuku (Grot Swaroga, Balista...) i księgi (Zamieć...).
 var sword_skills: SwordSkills
 var bow_skills: BowSkills
@@ -558,6 +560,7 @@ func combo_window() -> float:
 
 ## Zapamiętuje użytą umiejętność - przez okno combo kolejne mogą zadziałać inaczej (Skills.COMBOS).
 func note_skill(id: String) -> void:
+	_support_after_use(id)
 	_chain_skill = id
 	_chain_time = combo_window()
 	spell_skills.on_cast(id)
@@ -601,7 +604,47 @@ func whirl_radius() -> float:
 
 
 func whirl_mana_factor() -> float:
-	return 2.0 if skills.has_keystone("melee", "cyclone_eye") else 1.0
+	return (2.0 if skills.has_keystone("melee", "cyclone_eye") else 1.0) * skills.support_mana("whirlwind")
+
+
+# ---------------------------------------------------------------- kamienie wsparcia (Supports)
+## Koszt many umiejętności z mnożnikiem jej kamieni wsparcia (`base` < 0 - Skills.mana_cost).
+func skill_mana(id: String, base := -1.0) -> float:
+	return (Skills.mana_cost(id) if base < 0.0 else base) * skills.support_mana(id)
+
+
+## Premia kamieni wsparcia umiejętności (SkillBook.support_value) - liczby całkowite (pociski, przebicie) zaokrąglone.
+func support(id: String, stat: String) -> float:
+	return skills.support_value(id, stat)
+
+
+func support_count(id: String, stat: String) -> int:
+	return roundi(skills.support_value(id, stat))
+
+
+## Kierunki dla pocisku i `extra` dodatkowych (Rozszczep): na zmianę po obu stronach co Supports.SPLIT_SPREAD stopni.
+static func split_directions(dir: Vector2, extra: int) -> Array[Vector2]:
+	var dirs: Array[Vector2] = [dir]
+	for i in extra:
+		var side := (i / 2 + 1) * (1 if i % 2 == 0 else -1)
+		dirs.append(dir.rotated(deg_to_rad(Supports.SPLIT_SPREAD) * side))
+	return dirs
+
+
+## Pocisk umiejętności z jej kamieniami wsparcia: tagi (trafienia), przebicie i odbicia (Łańcuch).
+func support_projectile(projectile: Node, id: String) -> void:
+	projectile.tags = Skills.tags(id)
+	if projectile is Projectile:
+		projectile.pierce += support_count(id, "pierce")
+		projectile.chain += support_count(id, "chain")
+
+
+## Rozpęd (kamień wsparcia umiejętności ruchu): po użyciu premia do ruchu i obrażeń przez Supports.MOMENTUM_TIME.
+func _support_after_use(id: String) -> void:
+	var momentum := support(id, "momentum")
+	if momentum > 0.0:
+		_momentum_time = Supports.MOMENTUM_TIME
+		stats.set_temp("support_momentum", {"move_speed": Supports.MOMENTUM_MOVE, "damage_percent": momentum})
 
 
 ## Mnożnik obrażeń rozkręconego Młynka (Oko Cyklonu): +25% za sekundę kręcenia, najwyżej +100%.
@@ -706,6 +749,10 @@ func _physics_process(delta: float) -> void:
 		quests.update_main(self)
 	_update_shake(delta)
 	_update_poison(delta)
+	if _momentum_time > 0.0:
+		_momentum_time -= delta
+		if _momentum_time <= 0.0:
+			stats.set_temp("support_momentum", {})
 	if _slow_time > 0.0:
 		_slow_time -= delta
 		if _slow_time <= 0.0:
@@ -2254,7 +2301,9 @@ func basic_tags() -> Array:
 ## zwiększone obrażenia, cios krytyczny i zdrowie za trafienie.
 ## `sound` - rodzaj odgłosu trafienia (HIT_SOUNDS: "fire", "ice", "lightning", "magic", "arrow", "blade");
 ## pusty - według broni w ręku. Cios krytyczny dokłada ciężkie łupnięcie.
-func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: float, sound := "") -> void:
+## `tags` - tagi umiejętności ze znacznikiem (Skills.tags): jej kamienie wsparcia dokładają szanse na stany, dodane
+## żywioły (Supports added_*) i siłę porażenia.
+func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: float, sound := "", tags: Array = []) -> void:
 	if enemy.state == Goblin.State.DEAD:
 		return
 	amount = roundi(amount * legendary.damage_multiplier() * stats.damage_multiplier() * boons.damage_multiplier(enemy))
@@ -2263,7 +2312,7 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 	if element != Elements.PHYSICAL:
 		amount = maxi(1, roundi(amount * Elements.hit_multiplier(float(enemy.resistances.get(element, 0.0)) + Elements.monster_bonus, stats.penetration())))
 	if enemy.is_shocked():
-		amount = roundi(amount * (1.0 + Elements.SHOCK_BONUS))
+		amount = roundi(amount * (1.0 + Elements.SHOCK_BONUS + stats.support(tags, "shock_effect")))
 	amount += legendary.execute_bonus(enemy)
 	var bow := stats.weapon_type() == "bow"
 	if bow:
@@ -2276,7 +2325,12 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 	enemy.take_damage(amount, from_position, knockback)
 	Goblin.hit_sound = "hit"
 	DamageNumber.critical = false
-	_apply_ailment(enemy, element, amount)
+	_apply_ailment(enemy, element, amount, tags)
+	# żywioły dodane przez kamienie wsparcia (Żarowe / Mroźne / Burzowe Ostrze) też mogą wywołać swój stan
+	for added: String in stats.support_elements(tags):
+		var added_element: String = Elements.SOUND_ELEMENTS[added]
+		if added_element != element:
+			_apply_ailment(enemy, added_element, roundi(amount * stats.support(tags, "added_" + added)), tags)
 	if critical:
 		Sfx.play_at("hit_crit", enemy.global_position)
 	if bow:
@@ -2292,9 +2346,9 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 
 ## Stan od żywiołu trafienia (Elements.AILMENTS): podpalenie, zamrożenie albo porażenie z szansą z premii
 ## "<stan>_chance"; stan, który już trwa, się nie powtarza.
-func _apply_ailment(enemy: Goblin, element: String, amount: int) -> void:
+func _apply_ailment(enemy: Goblin, element: String, amount: int, tags: Array = []) -> void:
 	var ailment: String = Elements.AILMENTS.get(element, "")
-	if ailment == "" or enemy.state == Goblin.State.DEAD or randf() >= stats.ailment_chance(ailment):
+	if ailment == "" or enemy.state == Goblin.State.DEAD or randf() >= stats.ailment_chance(ailment, tags):
 		return
 	var color := Elements.color_of(element)
 	match ailment:
@@ -2302,11 +2356,11 @@ func _apply_ailment(enemy: Goblin, element: String, amount: int) -> void:
 			if enemy.is_burning():
 				return
 			var ticks := Elements.IGNITE_TIME / Elements.IGNITE_TICK
-			enemy.ignite(maxi(1, roundi(amount * Elements.IGNITE_DAMAGE * (1.0 + stats.dot_bonus()) / ticks)), Elements.IGNITE_TIME)
+			enemy.ignite(maxi(1, roundi(amount * Elements.IGNITE_DAMAGE * (1.0 + stats.dot_bonus(tags)) / ticks)), Elements.IGNITE_TIME)
 		"freeze":
 			if enemy.is_stunned():
 				return
-			enemy.freeze(Elements.FREEZE_TIME)
+			enemy.freeze(Elements.FREEZE_TIME * (1.0 + stats.support(tags, "freeze_time")))
 		"shock":
 			if enemy.is_shocked():
 				return
