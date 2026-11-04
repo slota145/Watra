@@ -2262,6 +2262,8 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 	var element: String = Elements.SOUND_ELEMENTS.get(sound, Elements.PHYSICAL)
 	if element != Elements.PHYSICAL:
 		amount = maxi(1, roundi(amount * Elements.hit_multiplier(float(enemy.resistances.get(element, 0.0)) + Elements.monster_bonus, stats.penetration())))
+	if enemy.is_shocked():
+		amount = roundi(amount * (1.0 + Elements.SHOCK_BONUS))
 	amount += legendary.execute_bonus(enemy)
 	var bow := stats.weapon_type() == "bow"
 	if bow:
@@ -2274,6 +2276,7 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 	enemy.take_damage(amount, from_position, knockback)
 	Goblin.hit_sound = "hit"
 	DamageNumber.critical = false
+	_apply_ailment(enemy, element, amount)
 	if critical:
 		Sfx.play_at("hit_crit", enemy.global_position)
 	if bow:
@@ -2285,6 +2288,30 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 		legendary.count_hit(enemy)
 		legendary.leech(amount)
 		heal(stats.life_on_hit())
+
+
+## Stan od żywiołu trafienia (Elements.AILMENTS): podpalenie, zamrożenie albo porażenie z szansą z premii
+## "<stan>_chance"; stan, który już trwa, się nie powtarza.
+func _apply_ailment(enemy: Goblin, element: String, amount: int) -> void:
+	var ailment: String = Elements.AILMENTS.get(element, "")
+	if ailment == "" or enemy.state == Goblin.State.DEAD or randf() >= stats.ailment_chance(ailment):
+		return
+	var color := Elements.color_of(element)
+	match ailment:
+		"ignite":
+			if enemy.is_burning():
+				return
+			var ticks := Elements.IGNITE_TIME / Elements.IGNITE_TICK
+			enemy.ignite(maxi(1, roundi(amount * Elements.IGNITE_DAMAGE * (1.0 + stats.dot_bonus()) / ticks)), Elements.IGNITE_TIME)
+		"freeze":
+			if enemy.is_stunned():
+				return
+			enemy.freeze(Elements.FREEZE_TIME)
+		"shock":
+			if enemy.is_shocked():
+				return
+			enemy.shock(Elements.SHOCK_TIME)
+	DamageNumber.spawn_text(get_parent(), enemy.hurt_center() + Vector2(0, -10), Lang.t(Elements.AILMENT_NAMES[ailment]), color, 7)
 
 
 ## Szarża: błyskawiczne pchnięcie w stronę kursora - postać pędzi z mieczem przed sobą

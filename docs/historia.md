@@ -278,6 +278,20 @@ odpowiedniej sekcji.
   (-15/20/30% odporności za poziom łupu). Elity Mroźny / Płonący / Wybuchowy / Burzowy biją swoim żywiołem i mają +50%
   odporności na niego (`DungeonElite.TRAIT_ELEMENTS`). Pomiar (Zatopione podziemia, stopień 17, rzadki ekwipunek
   z odpornościami na sufit, miecz): bez modyfikatorów otrzymuje 104/s, z Pożogą 136/s, z Pożogą, Mrozem i Burzą 207/s.
+- [x] **Krok 3 dopieszczenia walki** (nowe premie na tagach; obrażenia żywiołów i przebicie odporności były już
+  w „Żywioły, etap 2”): obrażenia pocisków / ciosów / obszarowe (3-35%) i w czasie (3-40%) dla umiejętności z tagiem
+  `projectile` / `hit` / `area` / `dot` (`CharacterStats.FORM_DAMAGE` w `kind_multiplier`); szanse na stany od
+  żywiołów (`ignite_chance` 1-15%, `freeze_chance` 1-12%, `shock_chance` 1-15%, razem najwyżej 50% -
+  `CharacterStats.ailment_chance`). Stany (`Elements.AILMENTS`, `Player._apply_ailment` po trafieniu swoim żywiołem):
+  **podpalenie** - 80% obrażeń trafienia w 3 s co 0,5 s (`Goblin.ignite`, premia obrażeń w czasie je zwiększa),
+  **zamrożenie** - wróg stoi 0,8 s i sinieje (`Goblin.freeze`: ogłuszenie + spowolnienie, bossowie krócej),
+  **porażenie** - przez 4 s wróg dostaje od gracza +20% obrażeń (`Goblin.shock`, w `Player.hit_enemy`); stan, który
+  już trwa, nie odpala się drugi raz, nad wrogiem napis stanu. Miejsca premii: broń (wszystkie), rękawice (pociski,
+  ciosy, szanse), pierścienie (pociski, obszar, w czasie), naszyjnik (obszar, w czasie), talizmany (cztery premie
+  formy). `tests/endgame_probe.gd`: dziewiąty argument "-" - bez modyfikatorów, dziesiąty - dodatkowe premie postaci
+  ("shock_chance=0.3,..."). Pomiar (stopień 17, Zatopione podziemia, księga na dystansie): +30% szans na porażenie
+  i zamrożenie - otrzymane obrażenia 186/s -> 113/s (zamrożeni wrogowie nie biją), zabójstw tyle samo.
+  `tests/test_town_portal.gd`: krok 3 w lochu zbudowanym przez podróż z kroku 2 (wcześniej dwa światy naraz).
 
 ## Gobliński Las i Prastary Las (`scripts/world.gd`, `scripts/ancient_forest.gd`) (Do poprawy)
 - [x] Gobliński Las: więcej grupek goblinów w lesie i większe siedlisko wilków - około 450 potworów (było około 340);

@@ -45,6 +45,10 @@ var level := 0
 var element := Elements.PHYSICAL
 ## Odporności i wrażliwości na obrażenia gracza {żywioł: ułamek} (Elements.MONSTER_RESIST wg sceny).
 var resistances := {}
+## Stany od żywiołów gracza (Elements): podpalenie (obrażenia co tik, koniec - msec), porażenie (koniec - msec).
+var _burn_tick := 0
+var _burn_until := 0
+var _shock_until := 0
 
 ## Ładowane przy użyciu, nie przez preload - unika cyklicznych zależności (Wolf dziedziczy po Goblin).
 const PICKUP_PATH := "res://scenes/pickup.tscn"
@@ -260,6 +264,47 @@ func chill(factor: float, seconds: float) -> void:
 	sprite.modulate = CHILL_COLOR
 	# koniec sprawdzany zegarem - działa też u potworów z własnym _physics_process
 	get_tree().create_timer(seconds + 0.05, false).timeout.connect(_end_chill)
+
+
+## Podpalenie (Elements): `per_tick` obrażeń co Elements.IGNITE_TICK przez `seconds` (silniejsze zastępuje słabsze).
+func ignite(per_tick: int, seconds: float) -> void:
+	if state == State.DEAD or per_tick <= 0:
+		return
+	var burning := is_burning()
+	_burn_tick = maxi(_burn_tick, per_tick) if burning else per_tick
+	_burn_until = maxi(_burn_until, Time.get_ticks_msec() + roundi(seconds * 1000.0))
+	if not burning:
+		get_tree().create_timer(Elements.IGNITE_TICK, false).timeout.connect(_burn)
+
+
+func is_burning() -> bool:
+	return Time.get_ticks_msec() < _burn_until
+
+
+func _burn() -> void:
+	if state == State.DEAD or not is_inside_tree():
+		return
+	take_damage(_burn_tick, global_position, 0.0)
+	if state != State.DEAD and is_burning():
+		get_tree().create_timer(Elements.IGNITE_TICK, false).timeout.connect(_burn)
+
+
+## Porażenie (Elements): przez `seconds` gracz zadaje mu więcej obrażeń (Player.hit_enemy).
+func shock(seconds: float) -> void:
+	if state != State.DEAD:
+		_shock_until = maxi(_shock_until, Time.get_ticks_msec() + roundi(seconds * 1000.0))
+
+
+func is_shocked() -> bool:
+	return Time.get_ticks_msec() < _shock_until
+
+
+## Zamrożenie (Elements): wróg stoi (ogłuszenie) i sinieje.
+func freeze(seconds: float) -> void:
+	if state == State.DEAD:
+		return
+	stun(seconds)
+	chill(0.5, seconds)
 
 
 func is_chilled() -> bool:

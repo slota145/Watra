@@ -46,6 +46,12 @@ func _initialize() -> void:
 	check("opis bożka żywiołu", idols.effect_lines(idols.id_of("blaze", "common")).size() >= 3)
 	el.clear_dungeon()
 	check("poza lochem bez żywiołów lochu", el.added.is_empty() and is_zero_approx(el.curse))
+	# krok 3 dopieszczenia walki: premie formy i szanse na stany
+	stats.set_temp("t", {"projectile_damage": 0.2, "dot_damage": 0.3, "ignite_chance": 0.9})
+	check("obrażenia pocisków dla tagu pocisku", is_equal_approx(stats.kind_multiplier(["spell", "projectile"]) - stats.kind_multiplier(["spell"]), 0.2))
+	check("obrażenia w czasie dla tagu dot", is_equal_approx(stats.kind_multiplier(["attack", "dot"]) - stats.kind_multiplier(["attack"]), 0.3))
+	check("szansa na stan ma sufit", is_equal_approx(stats.ailment_chance("ignite"), 0.5) and is_zero_approx(stats.ailment_chance("shock")))
+	check("każdy żywioł ma stan", el.AILMENTS.size() == 3)
 	stats.free()
 	print("WYNIK: ", "OK" if _fails == 0 else "%d bledow" % _fails)
 	quit()

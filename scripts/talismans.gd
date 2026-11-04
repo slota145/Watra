@@ -23,7 +23,8 @@ const SHAPE_ORDER: Array[String] = ["small", "long", "wide", "large"]
 const POOL: Array[String] = ["health", "mana", "strength", "dexterity", "intelligence", "vitality", "attack_speed",
 		"cast_speed", "move_speed", "physical_damage", "spell_damage", "damage_percent", "crit_chance", "crit_damage",
 		"life_on_hit", "health_regen", "mana_regen", "dodge_chance", "cooldown_reduction", "gold_find", "xp_gain",
-		"area", "potion_power", "all_resistances", "nawia_resistance", "elemental_damage"]
+		"area", "potion_power", "all_resistances", "nawia_resistance", "elemental_damage",
+		"projectile_damage", "hit_damage", "area_damage", "dot_damage"]
 ## Wartość premii talizmanu względem premii przedmiotu z tego samego tieru (przed mocą kształtu).
 const VALUE_SCALE := 0.8
 ## Efekty warunkowe rzadkich talizmanów: rodzaj efektu legendy (Items.EFFECT_TEXTS) -> [najmniej, najwięcej]

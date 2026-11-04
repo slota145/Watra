@@ -48,6 +48,13 @@ func _live_count() -> int:
 
 
 func _process(_d: float) -> bool:
+	# krok 3: świat lochu, który zbudowała podróż z kroku 2 (nowa wyprawa przez Watrę)
+	if _step == 3 and _world == null:
+		for next in get_nodes_in_group("world"):
+			if next.is_inside_tree() and next.zone == "dungeon" and next._dungeon != null:
+				_world = next
+				_frame = 0
+		return false
 	if _world == null or not _world.is_inside_tree():
 		return false
 	_frame += 1
@@ -146,6 +153,7 @@ func _town_visit() -> void:
 	# nowa wyprawa przez Watrę gasi portal (podróż przerwana zaraz po wywołaniu)
 	_world.enter_dungeon(_config.duplicate(true))
 	check("nowa wyprawa gasi portal", _world.player.town_portal.is_empty())
+	# podróż do lochu trwa (Game.travel) - krok 3 dzieje się w lochu, który ona zbuduje
 	_world.queue_free()
+	_world = null
 	_step = 3
-	_open({"seed": 12345, "zone": "dungeon", "dungeon": _config.duplicate(true), "arrive": "start", "player": {}})

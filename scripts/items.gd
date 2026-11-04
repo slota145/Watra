@@ -141,13 +141,17 @@ const STAT_NAMES := {
 	"nawia_resistance": "Odporność na Nawię",
 	"fire_damage": "Obrażenia od ognia", "cold_damage": "Obrażenia od lodu", "lightning_damage": "Obrażenia od piorunów",
 	"elemental_damage": "Obrażenia od żywiołów", "resistance_penetration": "Przebicie odporności",
+	"projectile_damage": "Obrażenia pocisków", "hit_damage": "Obrażenia ciosów", "area_damage": "Obrażenia obszarowe",
+	"dot_damage": "Obrażenia w czasie", "ignite_chance": "Szansa na podpalenie", "freeze_chance": "Szansa na zamrożenie",
+	"shock_chance": "Szansa na porażenie",
 }
 ## Statystyki podawane w procentach.
 const PERCENT_STATS: Array[String] = ["potion_power", "attack_speed", "move_speed", "damage_percent", "crit_chance", "crit_damage",
 		"cast_speed", "physical_damage", "spell_damage",
 		"dodge_chance", "cooldown_reduction", "gold_find", "xp_gain", "area",
 		"fire_resistance", "cold_resistance", "lightning_resistance", "all_resistances", "nawia_resistance",
-		"fire_damage", "cold_damage", "lightning_damage", "elemental_damage", "resistance_penetration"]
+		"fire_damage", "cold_damage", "lightning_damage", "elemental_damage", "resistance_penetration",
+		"projectile_damage", "hit_damage", "area_damage", "dot_damage", "ignite_chance", "freeze_chance", "shock_chance"]
 ## Statystyki z częścią ułamkową (regeneracja na sekundę) - pokazywane z jednym miejscem po przecinku.
 const DECIMAL_STATS: Array[String] = ["health_regen", "mana_regen"]
 ## Porównanie z założonym przedmiotem: lepsze / gorsze wartości, tier premii i nagłówek panelu założonego.

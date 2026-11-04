@@ -60,6 +60,9 @@ const TIER_VALUES := {
 	# obrażenia umiejętności z tagiem żywiołu (jak obrażenia fizyczne / magiczne) i przebicie odporności potworów
 	"fire_damage": [0.03, 0.40], "cold_damage": [0.03, 0.40], "lightning_damage": [0.03, 0.40],
 	"elemental_damage": [0.02, 0.25], "resistance_penetration": [0.01, 0.15],
+	# forma umiejętności (tagi pocisk / cios / obszar / w czasie) i szanse na stany od żywiołów (Elements.AILMENTS)
+	"projectile_damage": [0.03, 0.35], "hit_damage": [0.03, 0.35], "area_damage": [0.03, 0.35], "dot_damage": [0.03, 0.40],
+	"ignite_chance": [0.01, 0.15], "freeze_chance": [0.01, 0.12], "shock_chance": [0.01, 0.15],
 }
 ## Mnożnik ceny sprzedaży wg jakości.
 ## Cena skupu przedmiotu z łupu: z poziomu przedmiotu i jakości (nie z poziomu bazy - dawniej rzadki
@@ -74,7 +77,8 @@ const SELL_QUALITY := {COMMON: 1.0, MAGIC: 1.6, RARE: 2.5, LEGENDARY: 6.0}
 const POOLS := {
 	"weapon": ["damage", "attack_speed", "strength", "dexterity", "intelligence", "vitality", "health", "mana",
 			"damage_percent", "crit_chance", "crit_damage", "life_on_hit", "mana_regen", "physical_damage", "spell_damage",
-			"cast_speed", "fire_damage", "cold_damage", "lightning_damage", "resistance_penetration"],
+			"cast_speed", "fire_damage", "cold_damage", "lightning_damage", "resistance_penetration",
+			"projectile_damage", "hit_damage", "area_damage", "dot_damage", "ignite_chance", "freeze_chance", "shock_chance"],
 	"helmet": ["armor", "health", "vitality", "mana", "strength", "dexterity", "intelligence", "damage",
 			"health_regen", "mana_regen", "cooldown_reduction", "xp_gain",
 			"fire_resistance", "cold_resistance", "lightning_resistance"],
@@ -83,7 +87,8 @@ const POOLS := {
 			"fire_resistance", "cold_resistance", "lightning_resistance", "nawia_resistance"],
 	"gloves": ["armor", "health", "attack_speed", "strength", "dexterity", "intelligence", "vitality", "damage",
 			"crit_chance", "crit_damage", "life_on_hit", "cast_speed", "physical_damage", "area",
-			"fire_resistance", "cold_resistance", "lightning_resistance", "fire_damage", "cold_damage", "lightning_damage"],
+			"fire_resistance", "cold_resistance", "lightning_resistance", "fire_damage", "cold_damage", "lightning_damage",
+			"projectile_damage", "hit_damage", "ignite_chance", "freeze_chance", "shock_chance"],
 	"boots": ["armor", "health", "move_speed", "vitality", "mana", "strength", "dexterity", "intelligence",
 			"dodge_chance", "health_regen", "gold_find",
 			"fire_resistance", "cold_resistance", "lightning_resistance"],
@@ -91,7 +96,8 @@ const POOLS := {
 			"damage_percent", "crit_chance", "crit_damage", "life_on_hit", "mana_regen", "gold_find", "xp_gain",
 			"physical_damage", "spell_damage", "cast_speed",
 			"fire_resistance", "cold_resistance", "lightning_resistance", "all_resistances",
-			"fire_damage", "cold_damage", "lightning_damage", "resistance_penetration"],
+			"fire_damage", "cold_damage", "lightning_damage", "resistance_penetration",
+			"projectile_damage", "area_damage", "dot_damage"],
 	"earring": ["health", "mana", "strength", "dexterity", "intelligence", "vitality", "armor", "move_speed",
 			"health_regen", "mana_regen", "cooldown_reduction", "dodge_chance", "xp_gain",
 			"fire_resistance", "cold_resistance", "lightning_resistance", "all_resistances"],
@@ -101,7 +107,7 @@ const POOLS := {
 	"necklace": ["health", "mana", "damage", "strength", "dexterity", "intelligence", "vitality", "armor",
 			"damage_percent", "crit_damage", "cooldown_reduction", "health_regen", "gold_find", "xp_gain", "area",
 			"fire_resistance", "cold_resistance", "lightning_resistance", "all_resistances", "nawia_resistance",
-			"elemental_damage", "resistance_penetration"],
+			"elemental_damage", "resistance_penetration", "area_damage", "dot_damage"],
 }
 ## Dopisek do nazwy (dopełniacz - pasuje do każdego rodzaju przedmiotu). Tłumaczenie dopisku zawiera przyimek
 ## ("of the Lynx"), bo nazwa to "<baza> <dopiski>" (compose_name).
@@ -116,6 +122,8 @@ const SUFFIXES := {
 	"all_resistances": "Żywiołów", "nawia_resistance": "Żercy",
 	"fire_damage": "Pożogi", "cold_damage": "Szronu", "lightning_damage": "Peruna", "elemental_damage": "Żmija",
 	"resistance_penetration": "Grotu",
+	"projectile_damage": "Strzelca", "hit_damage": "Topora", "area_damage": "Nawałnicy", "dot_damage": "Zarazy",
+	"ignite_chance": "Żaru", "freeze_chance": "Lodu", "shock_chance": "Iskry",
 }
 
 

@@ -6,7 +6,7 @@ extends SceneTree
 ## Użycie: -s tests/endgame_probe.gd -- <zapis.json> <stopień> <sekundy> [tryb] [poziom postaci] [poziom ekwipunku]
 ## Poziom ekwipunku (np. 90): ekwipunek z zapisu zastąpiony rzadkimi przedmiotami tego poziomu (bez zaklęć) -
 ## porównanie z graczem, który zmienia ekwipunek na bieżąco. Siódmy argument: dodatkowa odporność na żywioły (np. 1.35 -
-## gracz zbierający odporności do sufitu mimo kary Nawii; na Nawię 60% tego). Ósmy: klimat lochu (domyślnie catacombs), dziewiąty: modyfikatory za żar po przecinku (np. scorch,curse).
+## gracz zbierający odporności do sufitu mimo kary Nawii; na Nawię 60% tego). Ósmy: klimat lochu (domyślnie catacombs), dziewiąty: modyfikatory za żar po przecinku (np. scorch,curse; "-" - bez), dziesiąty: dodatkowe premie postaci.
 ## Tryby: whirl (sam Młynek), flicker (samo Mgnienie), full (cały pasek miecza + Dymne Wybuchy pod E), idle (stoi),
 ## bow / spell (pasek łuku / księgi z zapisu, broń zastąpiona rzadkim łukiem / księgą poziomu ekwipunku albo 51.,
 ## punkty siły przeniesione do zręczności / inteligencji),
@@ -74,7 +74,7 @@ func _initialize() -> void:
 	var game := root.get_node("Game")
 	game.save_path = "user://test_savegame.json"
 	game._pending_load = {"seed": int(save["seed"]), "zone": "dungeon", "player": p,
-			"dungeon": {"climate": _args[7] if _args.size() > 7 else "catacombs", "tier": tier, "mods": Array(_args[8].split(",")) if _args.size() > 8 else [], "seed": 777, "mechanics": ["uroczysko"] if uro else []}}
+			"dungeon": {"climate": _args[7] if _args.size() > 7 else "catacombs", "tier": tier, "mods": Array(_args[8].split(",")) if _args.size() > 8 and _args[8] != "-" else [], "seed": 777, "mechanics": ["uroczysko"] if uro else []}}
 	_world = load("res://scenes/world.tscn").instantiate()
 	root.add_child.call_deferred(_world)
 
@@ -258,6 +258,14 @@ func _process(delta: float) -> bool:
 			_regear(pl, int(_args[5]))
 		elif _mode in ["bow", "spell"]:
 			_regear(pl, 51, true)
+		# dziesiąty argument: dodatkowe premie postaci "premia=wartość,..." (np. shock_chance=0.3,freeze_chance=0.3)
+		if _args.size() > 9:
+			var extra := {}
+			for pair in _args[9].split(","):
+				var kv := pair.split("=")
+				if kv.size() == 2:
+					extra[kv[0]] = float(kv[1])
+			pl.stats.set_temp("probe_extra", extra)
 		if _args.size() > 6 and float(_args[6]) > 0.0:
 			pl.stats.set_temp("probe_res", {"all_resistances": float(_args[6]), "nawia_resistance": float(_args[6]) * 0.6})
 		_report_static(pl)
