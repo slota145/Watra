@@ -479,6 +479,7 @@ func _ready() -> void:
 	_rng.seed = _seed if zone == "forest" else hash([_seed, zone])
 	Goblin.dungeon_mods = {}
 	Goblin.pathing = null
+	Elements.penalty = 0.0
 	_apply_blessing(save)
 	seed(_rng.seed)
 	_noise.seed = _rng.randi()

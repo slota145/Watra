@@ -41,6 +41,8 @@ const DRILL_PERIOD := 1.6
 @export_range(0.0, 1.0) var equipment_drop_chance := 0.04
 ## Poziom potwora (Levels) - ustawia świat przed dodaniem do sceny; 0 = domyślny poziom krainy.
 var level := 0
+## Żywioł ataków potwora (Elements.MONSTERS wg sceny; ustawiany w _apply_level).
+var element := Elements.PHYSICAL
 
 ## Ładowane przy użyciu, nie przez preload - unika cyklicznych zależności (Wolf dziedziczy po Goblin).
 const PICKUP_PATH := "res://scenes/pickup.tscn"
@@ -157,6 +159,7 @@ func _ready() -> void:
 func _apply_level() -> void:
 	if level <= 0:
 		level = Levels.zone_default
+	element = Elements.of_monster(scene_file_path.get_file().get_basename())
 	var ref := Levels.reference_of(scene_file_path)
 	var strength: float = max_health / ref[0]
 	if self is Boss:
@@ -417,7 +420,7 @@ func _process_attack(delta: float) -> void:
 	_cooldown = attack_cooldown
 	state = State.CHASE
 	if _player_alive() and global_position.distance_to(_player.global_position) <= attack_range + 6.0:
-		_player.take_damage(damage, global_position)
+		_player.take_damage(damage, global_position, element)
 
 
 func _process_return() -> void:

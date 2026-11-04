@@ -13,6 +13,8 @@ const HIT_RADIUS := 10.0
 
 var direction := Vector2.RIGHT
 var damage := 12
+## Żywioł pocisku (Elements) - od strzelającego potwora.
+var element := Elements.PHYSICAL
 var style := "spit"
 const STYLE_SPEED := {"spit": SPEED, "javelin": 230.0, "feather": 200.0, "water": 150.0, "web": 160.0, "arrow": 260.0, "note": 175.0, "stone": 220.0, "bone": 210.0}
 ## Odmiany rysowane animacją z kreatora efektów i odmiany ze smugą za grotem.
@@ -62,7 +64,7 @@ func _physics_process(delta: float) -> void:
 			MonsterFx.hit(get_parent(), global_position)
 			queue_free()
 			return
-		_player.take_damage(damage, global_position - direction * 10.0)
+		_player.take_damage(damage, global_position - direction * 10.0, element)
 		if slow > 0.0:
 			_player.apply_slow(slow, 2.0)
 		if poison > 0.0:

@@ -18,11 +18,12 @@ const SHAPES := {
 	"large": {"size": Vector2i(2, 2), "affixes": 3, "power": 1.35, "weight": 1.5, "name": "Wielki talizman"},
 }
 const SHAPE_ORDER: Array[String] = ["small", "long", "wide", "large"]
-## Premie talizmanów (wszystkie premie łupu poza obrażeniami płaskimi i pancerzem - to zostaje przedmiotom).
+## Premie talizmanów (wszystkie premie łupu poza obrażeniami płaskimi, pancerzem i pojedynczymi odpornościami - to
+## zostaje przedmiotom; odporności na wszystkie żywioły i na Nawię - tak).
 const POOL: Array[String] = ["health", "mana", "strength", "dexterity", "intelligence", "vitality", "attack_speed",
 		"cast_speed", "move_speed", "physical_damage", "spell_damage", "damage_percent", "crit_chance", "crit_damage",
 		"life_on_hit", "health_regen", "mana_regen", "dodge_chance", "cooldown_reduction", "gold_find", "xp_gain",
-		"area", "potion_power"]
+		"area", "potion_power", "all_resistances", "nawia_resistance"]
 ## Wartość premii talizmanu względem premii przedmiotu z tego samego tieru (przed mocą kształtu).
 const VALUE_SCALE := 0.8
 ## Efekty warunkowe rzadkich talizmanów: rodzaj efektu legendy (Items.EFFECT_TEXTS) -> [najmniej, najwięcej]

@@ -136,11 +136,15 @@ const STAT_NAMES := {
 	"health_regen": "Regeneracja zdrowia/s", "mana_regen": "Regeneracja many/s", "dodge_chance": "Szansa na unik",
 	"cooldown_reduction": "Skrócenie odnowienia", "gold_find": "Więcej złota", "xp_gain": "Więcej doświadczenia",
 	"area": "Obszar umiejętności", "potion_power": "Siła mikstur",
+	"fire_resistance": "Odporność na ogień", "cold_resistance": "Odporność na lód",
+	"lightning_resistance": "Odporność na pioruny", "all_resistances": "Odporność na żywioły",
+	"nawia_resistance": "Odporność na Nawię",
 }
 ## Statystyki podawane w procentach.
 const PERCENT_STATS: Array[String] = ["potion_power", "attack_speed", "move_speed", "damage_percent", "crit_chance", "crit_damage",
 		"cast_speed", "physical_damage", "spell_damage",
-		"dodge_chance", "cooldown_reduction", "gold_find", "xp_gain", "area"]
+		"dodge_chance", "cooldown_reduction", "gold_find", "xp_gain", "area",
+		"fire_resistance", "cold_resistance", "lightning_resistance", "all_resistances", "nawia_resistance"]
 ## Statystyki z częścią ułamkową (regeneracja na sekundę) - pokazywane z jednym miejscem po przecinku.
 const DECIMAL_STATS: Array[String] = ["health_regen", "mana_regen"]
 ## Porównanie z założonym przedmiotem: lepsze / gorsze wartości, tier premii i nagłówek panelu założonego.

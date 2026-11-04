@@ -258,7 +258,7 @@ func _hurt_player(amount: int, push := 0.0) -> void:
 	if _hit_player or not _player_alive():
 		return
 	_hit_player = true
-	_player.take_damage(amount, global_position)
+	_player.take_damage(amount, global_position, element)
 	if push > 0.0:
 		_player._knockback = (_player.global_position - global_position).normalized() * push
 

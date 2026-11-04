@@ -21,6 +21,7 @@ func _process_attack(delta: float) -> void:
 func _shoot() -> void:
 	var side := -1.0 if _player.global_position.x < global_position.x else 1.0
 	var arrow := EnemySpit.new()
+	arrow.element = element
 	arrow.style = "arrow"
 	arrow.position = global_position + Vector2(6.0 * side, -hurt_height)
 	arrow.direction = (_player.body_center() - arrow.position).normalized()

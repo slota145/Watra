@@ -238,6 +238,21 @@ odpowiedniej sekcji.
   `damage_multiplier`). Pomiar po zmianie (zabójstwa/s, ekwipunek autora | rzadki): stopień 12 - łuk 2,1 | 2,8,
   księga 2,2 | 3,4; stopień 17 - łuk 2,6 | 3,5, księga 1,8 | 3,8 (miecz 3,4 | 4,9 i 2,7 | 6,4) - łuk i księga
   zabijają w 55-95% tempa miecza (średnio ok. 2/3), z dobrym ekwipunkiem nadal bez utraty zdrowia.
+- [x] **Żywioły, etap 1** (pomysł autora, listopad 2026: odporności i ich spadek w końcówce jak w PoE): rodzaje obrażeń
+  zadawanych graczowi - fizyczne, ogień, lód, pioruny i Nawia (jak chaos) w `scripts/elements.gd`. Fizyczne osłabia
+  pancerz, pozostałe odporność (`CharacterStats.resistance`, `taken_multiplier`; sufit 75%, dół -100%), siła wszystkie,
+  a pancerz tylko w połowie (`Elements.ARMOR_SHARE`). Premie na przedmiotach (`Loot.TIER_VALUES`, `POOLS`): odporność na
+  ogień / lód / pioruny (3-40%, zbroja i biżuteria), na żywioły (2-15%, pierścienie, kolczyki, naszyjnik), na Nawię
+  (2-25%, tylko zbroja na tułów, pas i naszyjnik); talizmany - na żywioły i na Nawię. **Kara na Mapie Nawii**
+  (`Elements.penalty`, ustawia `Dungeon.generate`): stopień 8 -20%, liniowo do -60% na stopniu 17 i w arenach bogów.
+  Potwory biją swoim żywiołem (`Elements.MONSTERS` wg sceny -> `Goblin.element`, pociski `EnemySpit.element`,
+  szczególne ataki podają żywioł same: bomby i meteory - ogień, wir wodnika i mroźne elity - lód, pioruny orła i burzowe
+  elity - pioruny, kolce nekromanty - Nawia); liczby obrażeń w kolorze żywiołu. Okno postaci pokazuje odporności
+  (na czerwono poniżej zera) i karę. `Levels.ENDGAME_DAMAGE` 0,16 -> 0,12. Pomiar (`tests/endgame_probe.gd`, nowe argumenty:
+  siódmy - dodatkowa odporność, ósmy - klimat; Zatopione podziemia, stopień 17, gromada 8 wrogów, miecz): ekwipunek
+  autora - otrzymuje 738/s przy leczeniu 68/s (pada co ~2 s); rzadki z 90. poziomu bez odporności 392/227; ten sam
+  z odpornościami na sufit 95/95 (bez utraty zdrowia). Etap 2 (odporności i wrażliwości potworów, przebicie
+  odporności) i 3 (żywioły w modyfikatorach lochów, bożkach, elitach) - do zrobienia.
 
 ## Gobliński Las i Prastary Las (`scripts/world.gd`, `scripts/ancient_forest.gd`) (Do poprawy)
 - [x] Gobliński Las: więcej grupek goblinów w lesie i większe siedlisko wilków - około 450 potworów (było około 340);

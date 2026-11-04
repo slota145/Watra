@@ -150,6 +150,10 @@ Zanim wydasz generacje (autor ma ograniczony limit miesięczny):
 
 Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `docs/historia.md` - szukaj w nim grepem.
 
+- **Żywioły:** rodzaje obrażeń zadawanych graczowi (fizyczne, ogień, lód, pioruny, Nawia - `scripts/elements.gd`),
+  odporności gracza z przedmiotów (`CharacterStats.resistance`, sufit 75%), kara odporności na Mapie Nawii (`Elements.penalty`),
+  żywioł ataku potwora wg sceny (`Elements.MONSTERS`, `Goblin.element`). Etap 2 (odporności potworów, przebicie) i 3
+  (żywioły w modyfikatorach lochów, bożkach i elitach) - do zrobienia.
 - **Walka i postać:** drzewka broni - miecz, łuk, księga magii (`skill_tree.gd`, `sword_skills.gd`, `bow_skills.gd`,
   `spell_skills.gd`, okno K), tagi umiejętności (`Skills.TAGS`) i atrybuty dające % obrażeń umiejętnościom z ich tagiem
   (`CharacterStats.attribute_damage`), combo (`Skills.COMBOS`), paski szybkiego wyboru (`hotbar.gd`), ikony efektów (`status_effects.gd`);

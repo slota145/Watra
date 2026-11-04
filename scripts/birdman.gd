@@ -109,6 +109,7 @@ func _process_attack(delta: float) -> void:
 func _throw() -> void:
 	var side := -1.0 if _player.global_position.x < global_position.x else 1.0
 	var javelin := EnemySpit.new()
+	javelin.element = element
 	javelin.style = "javelin"
 	javelin.position = global_position + Vector2(8.0 * side, -14.0)
 	javelin.direction = (_player.body_center() - javelin.position).normalized()

@@ -179,7 +179,7 @@ func _call_bolt(target: Vector2) -> void:
 func _bolt(telegraph: Telegraph, target: Vector2) -> void:
 	if is_instance_valid(telegraph):
 		if state != State.DEAD and _player_alive() and telegraph.contains(_player.global_position):
-			_player.take_damage(bolt_damage, target)
+			_player.take_damage(bolt_damage, target, Elements.LIGHTNING)
 		telegraph.queue_free()
 	if not is_inside_tree():
 		return

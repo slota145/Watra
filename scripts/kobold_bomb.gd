@@ -99,7 +99,7 @@ func _explode() -> void:
 			if enemy.global_position.distance_to(target) <= radius:
 				enemy.take_damage(damage, target, 160.0)
 	elif player != null and not player.is_dead and player.global_position.distance_to(target) <= radius:
-		player.take_damage(damage, target)
+		player.take_damage(damage, target, Elements.FIRE)
 		player._knockback = (player.global_position - target).normalized() * 200.0
 	if player != null and player.global_position.distance_to(target) < 260.0:
 		player.add_shake(5.0 if style == "barrel" else 2.5)

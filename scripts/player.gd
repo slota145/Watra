@@ -887,7 +887,8 @@ func set_camera_limits(rect: Rect2i) -> void:
 	camera.reset_smoothing()
 
 
-func take_damage(amount: int, from_position: Vector2) -> void:
+## `element` - rodzaj obrażeń (Elements): fizyczne osłabia pancerz, żywioły i Nawię - odporności.
+func take_damage(amount: int, from_position: Vector2, element := Elements.PHYSICAL) -> void:
 	# podczas zrywu i tuż po trafieniu gracz jest nietykalny
 	if is_dead or is_dashing() or _lunge_time > 0.0 or _invulnerable_timer > 0.0:
 		return
@@ -899,7 +900,7 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 	# Riposta: zasłona przyjmuje cios i odpowiada kontrą
 	if sword_skills.try_parry(from_position):
 		return
-	amount = stats.reduce_damage(amount)
+	amount = stats.reduce_damage(amount, element)
 	# Tarcza Many: część ciosu (albo cały) zabiera mana
 	amount = spell_skills.absorb(amount)
 	if amount <= 0:
@@ -912,7 +913,7 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 	health = maxi(health - amount, 0)
 	health_changed.emit(health, stats.max_health())
 	cancel_portal()
-	DamageNumber.spawn(get_parent(), body_center(), amount, HURT_COLOR)
+	DamageNumber.spawn(get_parent(), body_center(), amount, HURT_COLOR if element == Elements.PHYSICAL else Elements.color_of(element))
 	_knockback = (global_position - from_position).normalized() * 120.0
 	_invulnerable_timer = hurt_invulnerability()
 	_shake = 3.0

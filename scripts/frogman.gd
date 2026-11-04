@@ -57,6 +57,7 @@ func _process_attack(delta: float) -> void:
 func _spit() -> void:
 	var side := -1.0 if _player.global_position.x < global_position.x else 1.0
 	var spit := EnemySpit.new()
+	spit.element = element
 	spit.position = global_position + Vector2(8.0 * side, -10.0)
 	spit.direction = (_player.body_center() - spit.position).normalized()
 	spit.damage = spit_damage

@@ -22,6 +22,7 @@ func _process_attack(delta: float) -> void:
 func _play_note() -> void:
 	var side := -1.0 if _player.global_position.x < global_position.x else 1.0
 	var note := EnemySpit.new()
+	note.element = element
 	note.style = "note"
 	note.position = global_position + Vector2(5.0 * side, -hurt_height)
 	note.direction = (_player.body_center() - note.position).normalized()

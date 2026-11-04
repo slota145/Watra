@@ -105,7 +105,7 @@ func _update_attack(delta: float) -> void:
 					_player._knockback = to_center.normalized() * WHIRL_PULL
 					if _whirl_tick <= 0.0:
 						_whirl_tick = 0.5
-						_player.take_damage(whirl_damage, _whirl_center)
+						_player.take_damage(whirl_damage, _whirl_center, Elements.COLD)
 			if _stage_timer <= 0.0:
 				if is_instance_valid(_whirl_fx):
 					_whirl_fx.queue_free()

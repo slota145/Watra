@@ -67,7 +67,7 @@ const ITEM_LEVEL_SPREAD := Vector2i(-1, 2)
 ## ma tam więcej zdrowia z przedmiotów i potrzebuje coraz więcej doświadczenia na poziom (tests/balance_sim.gd).
 ## Krainy (do 42. poziomu) zostają bez zmian.
 const ENDGAME_LEVEL := 41
-const ENDGAME_DAMAGE := 0.16
+const ENDGAME_DAMAGE := 0.12
 const ENDGAME_XP := 0.016
 ## Zdrowie w końcówce: +7% na poziom ponad ENDGAME_LEVEL (przy 90. poziomie około 4,4 raza więcej) - obrażenia gracza
 ## rosną tam głównie z atrybutów, drzewek i umiejętności, a nie z poziomu łupu (pomiar: tests/endgame_probe.gd).

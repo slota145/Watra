@@ -181,8 +181,33 @@ func damage_reduction() -> float:
 	return 1.0 - (1.0 - armor_reduction()) * (1.0 - strength_reduction())
 
 
-func reduce_damage(amount: int) -> int:
-	return maxi(1, roundi(amount * (1.0 - damage_reduction())))
+## Obrażenia po obronie: fizyczne - pancerz i siła; żywioły i Nawia - odporność (Elements), siła i część pancerza.
+func reduce_damage(amount: int, element := Elements.PHYSICAL) -> int:
+	return maxi(1, roundi(amount * taken_multiplier(element)))
+
+
+## Jaka część obrażeń danego rodzaju dociera do gracza (po pancerzu, sile i odporności).
+func taken_multiplier(element := Elements.PHYSICAL) -> float:
+	if element == Elements.PHYSICAL or not element in Elements.RESISTED:
+		return 1.0 - damage_reduction()
+	return (1.0 - armor_reduction() * Elements.ARMOR_SHARE) * (1.0 - strength_reduction()) * (1.0 - resistance(element))
+
+
+## Odporność na żywioł albo Nawię: premie z przedmiotów (żywioły także "all_resistances") minus kara w lochach Nawii,
+## w granicach Elements.MIN_RESISTANCE - MAX_RESISTANCE.
+func resistance(element: String) -> float:
+	var total := _bonus(element + "_resistance") - Elements.penalty
+	if element in Elements.ELEMENTAL:
+		total += _bonus("all_resistances")
+	return clampf(total, Elements.MIN_RESISTANCE, Elements.MAX_RESISTANCE)
+
+
+## Odporność przed przycięciem do sufitu (do okna postaci - ile ponad sufit).
+func raw_resistance(element: String) -> float:
+	var total := _bonus(element + "_resistance") - Elements.penalty
+	if element in Elements.ELEMENTAL:
+		total += _bonus("all_resistances")
+	return total
 
 
 ## Mnożnik wszystkich zadawanych obrażeń z premii "zwiększone obrażenia".
