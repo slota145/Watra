@@ -8,7 +8,7 @@ extends PanelContainer
 
 const FIRE := Color(1.0, 0.6, 0.25)
 const GOLD := Color(1.0, 0.82, 0.35)
-const VIEW_SIZE := Vector2(320, 270)
+const VIEW_SIZE := Vector2(360, 270)
 const SIDE := 140.0
 ## Wysokość pola z opisem węzła (dłuższy opis się przewija).
 const INFO_HEIGHT := 70.0
@@ -253,7 +253,8 @@ class WatraTreeView extends Control:
 	const LINK := Color(0.4, 0.3, 0.25)
 	var window: WatraTreeWindow
 	var _hover := ""
-	var _offset := Vector2.ZERO
+	## Drzewko lekko w prawo, żeby przedłużenie gałęzi Mgły (z lewej) mieściło się w widoku.
+	var _offset := Vector2(20, 0)
 	var _zoom := 1.0
 	var _press := Vector2.ZERO
 	var _dragged := false
@@ -316,12 +317,17 @@ class WatraTreeView extends Control:
 		var font := get_theme_default_font()
 		var center := _point(WatraTree.START)
 		draw_circle(center, 9.0 * UNIT * _zoom, Color(0.12, 0.06, 0.03))
+		# tło pod przedłużeniami gałęzi (węzły dalej niż koło drzewka)
+		for id: String in nodes:
+			if (nodes[id]["pos"] as Vector2).length() > 8.9:
+				draw_circle(_point(id), 1.0 * UNIT * _zoom, Color(0.12, 0.06, 0.03))
 		# nazwy gałęzi za końcami ścieżek, odsunięte na zewnątrz (z prawej od punktu, z lewej przed nim)
 		var sector := TAU / WatraTree.BRANCH_ORDER.size()
 		for i in WatraTree.BRANCH_ORDER.size():
 			var branch := WatraTree.BRANCH_ORDER[i]
 			var direction := Vector2.from_angle(-PI / 2.0 + i * sector)
-			var at := center + direction * (8.6 * UNIT * _zoom + 4.0)
+			var reach := maxf(WatraTree.branch_reach(branch) - WatraTree.END_POS.length(), 0.0)
+			var at := center + direction * ((8.6 + reach) * UNIT * _zoom + 4.0)
 			var lines := _wrap(font, WatraTree.branch_name(branch))
 			var top := at.y - 7.0 * lines.size() * (0.5 - 0.5 * direction.y) + 5.0
 			for line in lines:

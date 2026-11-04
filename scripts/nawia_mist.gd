@@ -9,7 +9,8 @@ extends Harvestable
 ## Każdy wróg zabity w Mgle dokłada do puli (przedmioty, złoto, kamienie wsparcia - Supports, Krzesiwa Nawii,
 ## od gęstości MIST_GREAT_FROM Wielkie Krzesiwa). Mgła kończy się przy Słupie (F), portalem do miasta (B,
 ## World.open_town_portal -> Dungeon.end_mists) albo śmiercią gracza (przepada połowa puli) - Słup wysypuje
-## wtedy Skrzynię Mgły. Budowany w kodzie (NawiaMist.create), bez sceny.
+## wtedy Skrzynię Mgły. Węzły Mgły w drzewku Watry zmieniają tempo, sufit gęstości, stratę po śmierci i kamienie
+## (Dungeons.mist_rules, zmienna `rules`). Budowany w kodzie (NawiaMist.create), bez sceny.
 
 const TEXTURE := preload("res://assets/cemetery/obelisk.png")
 const CHEST_TEXTURE := preload("res://assets/village/chest.png")
@@ -33,6 +34,8 @@ var density := 0
 ## Cechy elit, które Mgła już zyskała (co MIST_TRAIT_EVERY stopni).
 var traits: Array[String] = []
 var kills := 0
+## Zasady Mgły z premiami drzewka Watry (Dungeons.mist_rules) - ustawiane przy dotknięciu Słupa.
+var rules := Dungeons.mist_rules({})
 ## Pula nagród (ułamki - Skrzynia Mgły zaokrągla losowo): items, gold, supports, flints, great.
 var pool := {"items": 0.0, "gold": 0.0, "supports": 0.0, "flints": 0.0, "great": 0.0}
 ## Żywe zjawy: [Goblin, id miejsca w świecie].
@@ -117,6 +120,7 @@ func harvest(_from: Vector2) -> void:
 func open() -> void:
 	state = "open"
 	density = 1
+	rules = Dungeons.mist_rules(dungeon.config.get("tree", {}))
 	_elapsed = 0.0
 	action_name = Lang.t("Rozwiej Mgłę")
 	harvest_time = END_TIME
@@ -184,10 +188,10 @@ func _update_overlay() -> void:
 		return
 	var size := get_viewport().get_visible_rect().size
 	_fog_mat.set_shader_parameter("aspect", size.x / maxf(size.y, 1.0))
-	_fog_mat.set_shader_parameter("density", FOG_MAX * density / float(Dungeons.MIST_MAX))
-	_bar_title.text = Lang.t("Mgła Nawii: gęstość %d/%d  (potwory +%d%%)") % [density, Dungeons.MIST_MAX,
+	_fog_mat.set_shader_parameter("density", FOG_MAX * minf(density / float(Dungeons.MIST_MAX), 1.0))
+	_bar_title.text = Lang.t("Mgła Nawii: gęstość %d/%d  (potwory +%d%%)") % [density, int(rules["max"]),
 			roundi(Dungeons.MIST_POWER * density * 100.0)]
-	_bar_step.value = 1.0 if density >= Dungeons.MIST_MAX else fposmod(_elapsed, Dungeons.MIST_STEP) / Dungeons.MIST_STEP
+	_bar_step.value = 1.0 if density >= int(rules["max"]) else fposmod(_elapsed, float(rules["step"])) / float(rules["step"])
 	_bar_pool.text = Lang.t("Pula: %d przedm., %d zł, kamienie wsparcia %d, krzesiwa %d, wielkie %d  (łup +%d%%)") % [
 			int(pool["items"]), int(pool["gold"]), int(pool["supports"]), int(pool["flints"]), int(pool["great"]),
 			roundi(Dungeons.MIST_LOOT * density * 100.0)]
@@ -214,7 +218,7 @@ func _process(delta: float) -> void:
 	if state != "open":
 		return
 	_elapsed += delta
-	var wanted := mini(Dungeons.MIST_MAX, 1 + int(_elapsed / Dungeons.MIST_STEP))
+	var wanted := mini(int(rules["max"]), 1 + int(_elapsed / float(rules["step"])))
 	while density < wanted:
 		_thicken()
 	_sweep_timer -= delta
@@ -233,7 +237,7 @@ func _process(delta: float) -> void:
 ## Kolejny stopień gęstości (co trzeci - nowa cecha elit).
 func _thicken() -> void:
 	density += 1
-	var text := Lang.t("Mgła gęstnieje: %d/%d") % [density, Dungeons.MIST_MAX]
+	var text := Lang.t("Mgła gęstnieje: %d/%d") % [density, int(rules["max"])]
 	if density % Dungeons.MIST_TRAIT_EVERY == 0:
 		var options: Array = Dungeons.ELITE_TRAITS.keys().filter(func(t: String) -> bool: return not traits.has(t))
 		if not options.is_empty():
@@ -375,19 +379,21 @@ func _on_enemy_died(_enemy: Goblin) -> void:
 	if state != "open":
 		return
 	kills += 1
-	add_kill(pool, density, dungeon.level)
+	add_kill(pool, density, dungeon.level, rules)
 
 
-## Pula za jednego zabitego przy gęstości `density` (poziom lochu - złoto).
-static func add_kill(target: Dictionary, at_density: int, level: int) -> void:
+## Pula za jednego zabitego przy gęstości `density` (poziom lochu - złoto, `with_rules` - Dungeons.mist_rules).
+static func add_kill(target: Dictionary, at_density: int, level: int, with_rules := {}) -> void:
+	if with_rules.is_empty():
+		with_rules = Dungeons.mist_rules({})
 	var loot := Dungeons.mist_loot(at_density)
-	var rate := Dungeons.mist_rate(at_density)
+	var rate := Dungeons.mist_rate(at_density) * float(with_rules["rate"])
 	target["items"] += Dungeons.MIST_ITEMS_PER_KILL * loot
 	target["gold"] += Dungeons.MIST_GOLD_PER_KILL * Levels.gold(level) * loot
 	target["supports"] += Dungeons.MIST_SUPPORT_RATE * rate
 	target["flints"] += Dungeons.MIST_FLINT_RATE * rate
-	if at_density >= Dungeons.MIST_GREAT_FROM:
-		target["great"] += Dungeons.MIST_GREAT_RATE
+	if at_density >= int(with_rules["great_from"]):
+		target["great"] += Dungeons.MIST_GREAT_RATE * float(with_rules["rate"])
 
 
 func _on_player_died() -> void:
@@ -415,7 +421,7 @@ func close(reason: String) -> void:
 	sprite.modulate = TINT.darkened(0.3)
 	if glow != null:
 		glow.visible = false
-	var keep := Dungeons.MIST_DEATH_KEEP if reason == "death" else 1.0
+	var keep := float(rules["keep"]) if reason == "death" else 1.0
 	var counts := spill(keep * dungeon.mechanic_power("mist"))
 	MiscVfx.spark(get_parent(), global_position + Vector2(0, -40), COLOR, 1.4)
 	Sfx.play("quest_ready")
@@ -423,7 +429,7 @@ func close(reason: String) -> void:
 	var text := Lang.t("Mgła się rozwiewa - Skrzynia Mgły przy Słupie\nGęstość %d, pokonani: %d, przedmioty: %d, kamienie wsparcia: %d, krzesiwa: %d") \
 			% [density, kills, counts["items"], counts["supports"], counts["flints"] + counts["great"]]
 	if reason == "death":
-		text = Lang.t("Śmierć w Mgle - połowa puli przepada") + "\n" + text
+		text = Lang.t("Śmierć w Mgle - przepada %d%% puli") % roundi((1.0 - keep) * 100.0) + "\n" + text
 	dungeon.w.hud.show_banner(text, COLOR)
 
 
@@ -444,7 +450,7 @@ func spill(scale: float) -> Dictionary:
 	for i in counts["items"]:
 		dungeon._drop(at, Loot.drop_at_level(dungeon.level, 0.15 + 0.03 * density, Loot.MAGIC), 1)
 	for i in counts["supports"]:
-		dungeon._drop(at, Supports.roll("", Dungeons.mist_support_level(tier, density, _rng)), 1)
+		dungeon._drop(at, Supports.roll("", Dungeons.mist_support_level(tier, density, _rng, int(rules["level"]))), 1)
 	dungeon._drop(at, Supports.FLINT, counts["flints"])
 	dungeon._drop(at, Supports.GREAT_FLINT, counts["great"])
 	dungeon._drop(at, "gold", roundi(float(pool["gold"]) * scale))

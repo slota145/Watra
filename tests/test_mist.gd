@@ -51,6 +51,26 @@ func _check_data() -> void:
 		_M.add_kill(dense, 10, 40)
 	check("gęstsza Mgła - większa pula", dense["items"] > pool["items"] and dense["supports"] > pool["supports"]
 			and dense["great"] > 0.0)
+	# węzły Mgły w drzewku Watry
+	var chosen: Array = ["mist_root", "mist_a1", "mist_a2", "mist_a3", "mist_a4", "mist_a_end", "mist_a_x1", "mist_a_x2",
+			"mist_a_x3", "mist_a_x4", "mist_b1", "mist_b2", "mist_b3", "mist_b4", "mist_b_end", "mist_b_x1", "mist_b_x2",
+			"mist_b_x3", "mist_b_x4"]
+	var rules: Dictionary = _D.mist_rules(load("res://scripts/watra_tree.gd").effects(chosen))
+	var plain: Dictionary = _D.mist_rules({})
+	check("bez drzewka zasady jak dotąd", plain["step"] == _D.MIST_STEP and plain["max"] == _D.MIST_MAX
+			and plain["keep"] == _D.MIST_DEATH_KEEP and plain["great_from"] == _D.MIST_GREAT_FROM and plain["level"] == 0)
+	check("drzewko: wolniej, gęściej, mniej straty po śmierci", rules["step"] == _D.MIST_STEP + 15.0 and rules["max"] == 15
+			and is_equal_approx(rules["keep"], 0.75) and rules["great_from"] == 6 and rules["level"] == 2
+			and is_equal_approx(rules["rate"], 1.4), str(rules))
+	var rich := {"items": 0.0, "gold": 0.0, "supports": 0.0, "flints": 0.0, "great": 0.0}
+	for i in 100:
+		_M.add_kill(rich, 7, 40, rules)
+	check("drzewko: więcej kamieni, Wielkie Krzesiwa wcześniej", rich["supports"] > pool["supports"] * 1.3
+			and rich["great"] > 0.0)
+	high = 0
+	for i in 50:
+		high = maxi(high, _D.mist_support_level(17, 15, rng, 2))
+	check("drzewko: wyższy sufit poziomu kamieni", high == _D.MIST_LEVEL_MAX + 2, str(high))
 
 
 func _process(_d: float) -> bool:

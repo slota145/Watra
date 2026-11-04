@@ -61,6 +61,8 @@ const KINDS := {
 			"description": "Na jego dłoniach zaschła dawna danina."},
 	"skarbnik": {"group": "mechanic", "mechanic": "skarbnik", "name": "Bożek Skarbnika", "weight": 0.8,
 			"description": "Chichocze cicho, gdy brzęczy złoto."},
+	"mist": {"group": "mechanic", "mechanic": "mist", "name": "Bożek Mgły", "weight": 0.8,
+			"description": "Owiany sinym oparem, zimny jak mgła nad mogiłą."},
 	"horde": {"group": "monsters", "name": "Bożek Hordy", "weight": 1.2,
 			"description": "Woła potwory z całej okolicy.",
 			"mult": {"count": [1.2, 1.4, 1.7]}},
@@ -138,7 +140,7 @@ const KINDS := {
 			"description": "Zamiast gromad w komnatach czekają bossowie krain. Wysokie ryzyko, wielka nagroda.",
 			"add": {"lords": [1]}},
 }
-const KIND_ORDER: Array[String] = ["chests", "shrine", "crystal", "elites", "uroczysko", "zertwa", "skarbnik",
+const KIND_ORDER: Array[String] = ["chests", "shrine", "crystal", "elites", "uroczysko", "zertwa", "skarbnik", "mist",
 		"horde", "fury", "packs", "nawia", "gold", "items", "runes", "gems", "cutter", "legends", "herbs", "wood", "stone",
 		"ore", "pride", "gloom", "blaze", "rime", "thunder", "bane", "guardian", "echo", "ember", "hosts", "lords"]
 ## Grupy w kolejności pokazywania i ich nazwy.

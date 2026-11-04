@@ -32,7 +32,15 @@ func check(name: String, ok: bool, info := "") -> void:
 
 func _check_layout() -> void:
 	var nodes: Dictionary = _T.nodes()
-	check("13 gałęzi po 11 węzłów i start", nodes.size() == 13 * 11 + 1, str(nodes.size()))
+	var extended := 0
+	for branch: String in _T.EXTENSIONS:
+		for side: String in _T.EXTENSIONS[branch]:
+			extended += (_T.EXTENSIONS[branch][side] as Array).size()
+	check("13 gałęzi po 11 węzłów, przedłużenia i start", nodes.size() == 13 * 11 + extended + 1 and extended == 8,
+			str(nodes.size()))
+	check("przedłużenie Mgły za Wieczną Mgłą i Gęstą Mgłą", nodes["mist_a_x1"]["links"].has("mist_a_end")
+			and nodes["mist_b_x1"]["links"].has("mist_b_end") and nodes["mist_b_x4"]["kind"] == "keystone")
+	check("nazwa Mgły odsunięta za przedłużenie", _T.branch_reach("mist") > _T.branch_reach("uroczysko") + 3.5)
 	check("więcej węzłów niż punktów z całej mapy", nodes.size() - 1 > load("res://scripts/nawia_map.gd").node_count())
 	var all: Array = nodes.keys()
 	all.erase(_T.START)
@@ -49,7 +57,7 @@ func _check_layout() -> void:
 			keystones += 1
 		if _T.node_name(id) == "" or (id != _T.START and _T.node_lines(id).is_empty()):
 			check("węzeł %s ma nazwę i opis" % id, false)
-	check("węzeł kluczowy dla każdej mechaniki", keystones == _D.MECHANICS.size(), str(keystones))
+	check("węzeł kluczowy dla każdej mechaniki i Bezdenna Mgła", keystones == _D.MECHANICS.size() + 1, str(keystones))
 	check("nazwa ścieżki z mechaniką", _T.node_name("uroczysko_a1") == "Uroczysko - częściej", _T.node_name("uroczysko_a1"))
 
 
