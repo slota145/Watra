@@ -87,28 +87,30 @@ func _process(_d: float) -> bool:
 	check("następny krok u sołtysa", Main.current(p.quests) == "main_village" and dialog._shown_quest == "main_village")
 	dialog._accept()
 	check("krok przyjmuje zadanie poboczne", p.quests.state_of("village_help") == "active")
-	check("postęp kroku: surowce", Main.progress_text(p, "main_village").contains("0/30"), Main.progress_text(p, "main_village"))
-	p.inventory.add_item("wood", 30)
-	p.inventory.add_item("stone", 20)
-	p._update_gather_quests()
+	check("postęp kroku: gobliny", Main.progress_text(p, "main_village").contains("0/20"), Main.progress_text(p, "main_village"))
+	for i in 20:
+		p.quests.on_enemy_killed("goblin")
 	p.quests.update_main(p)
 	check("postęp kroku po zebraniu", p.quests.state_of("village_help") == "ready"
 			and p.quests.state_of("main_village") == "active" and dialog._shown_quest == "village_help", dialog._shown_quest)
 	soltys._update_quest_marker(0.0)
-	check("jasny złoty ? przy surowcach do oddania", soltys._quest_marker.text == "?"
+	check("jasny złoty ? przy zadaniu do oddania", soltys._quest_marker.text == "?"
 			and soltys._quest_marker.get_theme_color("font_color") == Main.COLOR)
 	dialog._turn_in()
 	p.quests.update_main(p)
 	check("warunek: inne zadanie", p.quests.state_of("village_help") == "done" and p.quests.state_of("main_village") == "ready"
-			and dialog._shown_quest == "main_village" and p.inventory.count_of("wood") == 0)
+			and dialog._shown_quest == "main_village")
 	var potions: int = p.inventory.count_of("health_potion")
+	var points: int = p.skills.points_total()
+	check("przed oddaniem lecznicy nie ma", _world._settlement.project_state("infirmary") == "none")
 	dialog._turn_in()
 	check("nagroda: przedmioty", p.inventory.count_of("health_potion") == potions + 5)
-	# punkty umiejętności
-	var points: int = p.skills.points_total()
-	p.quests.states["main_build"] = "ready"
-	p.quests.turn_in("main_build", p.stats)
 	check("nagroda: punkt umiejętności", p.skills.points_total() == points + 1 and p.skills.bonus_points == 1)
+	check("nagroda: cieśle stawiają lecznicę", _world._settlement.project_state("infirmary") == "building")
+	_world._settlement.on_rest()
+	_world._settlement._process(0.1)
+	check("lecznica stoi po odpoczynku", _world._settlement.project_state("infirmary") == "built")
+	check("w nagrodzie napis o budowie", load("res://scripts/quests.gd").reward_text("main_dungeon").contains("Gildia"))
 	# zdarzenie: encyklopedia
 	p.quests.states["main_herbs"] = "done"
 	p.quests.states["main_tree"] = "done"
@@ -132,6 +134,11 @@ func _process(_d: float) -> bool:
 	log.catch_up_main(p)
 	check("starszy zapis: lochy otwarte", Main.dungeons_unlocked(log) and log.state_of("main_watra") == "done"
 			and Main.current(log) == "main_dungeon", Main.current(log))
+	# zapis, w którym krok z budową jest już oddany, a budowli nie ma (np. sprzed zmiany) - stoi od razu
+	p.quests.states["main_dungeon"] = "done"
+	_world._settlement.sync_story(false)
+	check("budowla z fabuły po wczytaniu stoi", _world._settlement.project_state("guild") == "built"
+			and _world.village_built("guild"))
 	log.free()
 	book.free()
 	print("WYNIK: ", "OK" if _fails == 0 else "%d bledow" % _fails)

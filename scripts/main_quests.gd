@@ -7,6 +7,8 @@ class_name MainQuests
 ## ["herb"], ["project", id] (budowla Ostoi), ["nodes", n] (węzły drzewek), ["boss", nazwa sceny] (Codex.kills), ["watra", poziom], ["shrine", id],
 ## ["event", nazwa, n] (QuestLog.note_event: dungeon_clear, crystal_done, codex), ["enchant", n], ["essence"].
 ## Nagrody: złoto, doświadczenie, przedmioty (reward_items) i punkty umiejętności (skill_points - SkillBook).
+## `builds` - budowle Ostoi (Settlement.PROJECTS), które po oddaniu kroku stawiają cieśle (budowy idą za fabułą,
+## gracz nie zbiera na nie surowców; Settlement.sync_story).
 ## Lochy Watry odblokowuje krok DUNGEON_STEP. Starsze zapisy (bez zadań głównych) zaliczają po wczytaniu kroki,
 ## których warunek już spełniły (catch_up - bez nagród).
 
@@ -17,7 +19,7 @@ const COLOR_DIM := Color(0.62, 0.55, 0.36)
 const DUNGEON_STEP := "main_watra"
 
 const CHAIN: Array[String] = [
-	"main_ember", "main_village", "main_build", "main_herbs", "main_tree", "main_codex", "main_gruzlog", "main_wolves",
+	"main_ember", "main_village", "main_herbs", "main_tree", "main_codex", "main_gruzlog", "main_wolves",
 	"main_watra", "main_dungeon", "main_fields", "main_bombardier", "main_swamp", "main_hydra", "main_pass",
 	"main_gem", "main_eagle", "main_ancient", "main_crystal", "main_enchant", "main_cemetery", "main_essence", "main_finale",
 ]
@@ -31,19 +33,12 @@ const DATA := {
 		"complete_text": "Wszebor cię przysłał? To dobrze, bardzo dobrze. Ostoja potrzebuje rąk do pracy i miecza do obrony.",
 		"done_text": "Ogień płonie, póki ktoś go pilnuje."},
 	"main_village": {"title": "Ręce do pracy", "giver": "Sołtys Mirosław", "check": ["quest", "village_help"],
-		"target_name": "Zadanie „Ostoja prosi o pomoc”", "area_name": "las wokół Ostoi", "gold": 120, "xp": 60,
-		"reward_items": {"health_potion": 5},
-		"description": "Zanim pomyślimy o walce, musimy przetrwać. Palisada się sypie, a cieśle siedzą bezczynnie. Pomóż mi z drewnem i kamieniem - przyjmij moją prośbę i zbierz, co trzeba.",
-		"progress_text": "Trzydzieści kłód i dwadzieścia kamieni. Przyjmij ode mnie zadanie „Ostoja prosi o pomoc”, jeśli jeszcze go nie masz.",
-		"complete_text": "Cieśle już ostrzą siekiery! Masz tu mikstury na drogę - las nie jest łaskawy.",
+		"target_name": "Zadanie „Ostoja prosi o pomoc”", "area_name": "obozy goblinów (północny zachód)", "gold": 200, "xp": 180,
+		"reward_items": {"health_potion": 5}, "skill_points": 1, "builds": ["infirmary"],
+		"description": "Zanim pomyślimy o walce z hordą, musimy przetrwać. Cieśle chcą iść do lasu po drewno na nowe chaty, ale gobliny z obozów na północnym zachodzie napadają każdego, kto oddali się od palisady. Przegoń je - przyjmij moją prośbę.",
+		"progress_text": "Dwadzieścia goblinów z obozów na północnym zachodzie. Przyjmij ode mnie zadanie „Ostoja prosi o pomoc”, jeśli jeszcze go nie masz.",
+		"complete_text": "Drwale już wyszli do lasu! Pierwsze kłody pójdą na lecznicę dla zielarki Jadwigi - cieśle postawią ją sami, a ty masz ważniejsze sprawy. Weź mikstury na drogę. Wszebor chciał cię widzieć - wróć do Watry.",
 		"done_text": "Ostoja rośnie dzięki tobie."},
-	"main_build": {"title": "Pierwsza budowla", "giver": "Sołtys Mirosław", "check": ["project", "infirmary"],
-		"target_name": "Lecznica", "area_name": "Ostoja - plany budowy u sołtysa", "gold": 200, "xp": 120,
-		"skill_points": 1,
-		"description": "Mamy surowce, mamy ludzi. Najpierw postawmy lecznicę - ranni nie mają gdzie się podziać, a zielarka Jadwiga od dawna prosi o własny kąt. Z ziół uwarzy mikstury, jakich nie zrobi nikt inny.",
-		"progress_text": "Lecznicę wybierzesz z planów budowy - przycisk „Budowa” w rozmowie ze mną. Odpoczynek w karczmie kończy budowę od razu.",
-		"complete_text": "Lecznica stoi, a Jadwiga już rozkłada zioła! Ludzie patrzą na to z nadzieją, jakiej dawno nie widziałem. Wszebor chciał cię widzieć - wróć do Watry.",
-		"done_text": "Każda nowa budowla to jeden powód więcej, by nie uciekać."},
 	"main_herbs": {"title": "Zioła na rany", "giver": ZERCA, "check": ["herb"],
 		"target_name": "Zerwane zioło", "area_name": "każda kraina - świecące rośliny (klawisz F)", "gold": 100, "xp": 80,
 		"reward_items": {"herb_wort": 3},
@@ -51,12 +46,12 @@ const DATA := {
 		"progress_text": "Szukaj roślin z iskierkami nad liśćmi i zerwij je klawiszem F.",
 		"complete_text": "Dziurawiec... dobry początek. Zanieś zioła Jadwidze do lecznicy - z trzech ziół uwarzy miksturę.",
 		"done_text": "Las daje, gdy umiesz brać."},
-	"main_tree": {"title": "Ścieżka oręża", "giver": ZERCA, "check": ["nodes", 3],
+	"main_tree": {"title": "Ścieżka oręża", "giver": ZERCA, "check": ["nodes", 3], "builds": ["sage_hut"],
 		"target_name": "Wybrane węzły drzewka", "area_name": "okno umiejętności (klawisz K)", "gold": 150, "xp": 100,
 		"skill_points": 1,
 		"description": "Każda broń ma swoją ścieżkę - miecz, łuk i księga. Za każdy zdobyty poziom dostajesz punkt, którym otwierasz kolejne węzły. Wybierz trzy węzły na ścieżce swojego oręża.",
 		"progress_text": "Klawisz K - drzewko umiejętności. Węzeł wybierasz obok już wybranego.",
-		"complete_text": "Czuję to w tobie - oręż słucha twojej ręki. Masz, jeszcze jeden punkt ode mnie.",
+		"complete_text": "Czuję to w tobie - oręż słucha twojej ręki. Masz, jeszcze jeden punkt ode mnie. I wiedz, że do Ostoi zmierza mędrzec Teodor - cieśle stawiają mu chatę za palisadą. U niego cofniesz źle wybrane ścieżki.",
 		"done_text": "Ścieżka oręża nie ma końca."},
 	"main_codex": {"title": "Księga świata", "giver": ZERCA, "check": ["event", "codex", 1],
 		"target_name": "Otwarta encyklopedia", "area_name": "encyklopedia (klawisz L)", "gold": 60, "xp": 40,
@@ -64,49 +59,49 @@ const DATA := {
 		"progress_text": "Encyklopedię otwiera klawisz L.",
 		"complete_text": "Pusta jeszcze, co? Zapełnisz ją. Każdy wpis to dowód, że ktoś tu przeszedł i przeżył.",
 		"done_text": "Wiedza to też broń."},
-	"main_gruzlog": {"title": "Wódz goblinów", "giver": "Kupiec Bogdan", "check": ["boss", "goblin_chief"],
+	"main_gruzlog": {"title": "Wódz goblinów", "giver": "Kupiec Bogdan", "check": ["boss", "goblin_chief"], "builds": ["market"],
 		"target_name": "Gruzłog, Wódz Goblinów", "area_name": "obóz wodza goblinów (Gobliński Las)", "gold": 300, "xp": 1500,
 		"reward_items": {"greater_health_potion": 3},
 		"description": "Żerca mówi, że horda ma przewodników. U goblinów to Gruzłog - ich wódz siedzi w sercu obozu, otoczony strażą. Dopóki żyje, gobliny będą napadać na moje wozy. Pokonaj go.",
 		"progress_text": "Gruzłog siedzi w największym obozie goblinów. Uważaj na jego straż.",
 		"complete_text": "Gruzłog padł? Ha! Wozy znów dojadą całe. Należy ci się porządna nagroda - a myśliwy Radek pytał o ciebie, wilki nie dają mu spokoju.",
 		"done_text": "Gobliński Las znów należy do ludzi."},
-	"main_wolves": {"title": "Wilcze wycie", "giver": "Myśliwy Radek", "receiver": ZERCA, "check": ["boss", "alpha_wolf"],
+	"main_wolves": {"title": "Wilcze wycie", "giver": "Myśliwy Radek", "receiver": ZERCA, "check": ["boss", "alpha_wolf"], "builds": ["lodge"],
 		"target_name": "Szarokieł, Wilk Alfa", "area_name": "siedlisko wilków (południowy wschód Goblińskiego Lasu)", "gold": 350, "xp": 1800,
 		"skill_points": 1,
 		"description": "Gobliny bez wodza się rozpierzchły, ale wilki nie. Prowadzi je Szarokieł - wielki basior z siedliska na południowym wschodzie. Ubij go, a potem powiedz o tym Wszeborowi. Coś mi mówi, że on już wie więcej.",
 		"progress_text": "Szarokieł prowadzi watahę z serca siedliska. Uważaj na jego wycie - zwołuje resztę. Po zwycięstwie idź prosto do Watry.",
 		"complete_text": "Szarokieł padł... A jednak horda nie słabnie. Bo to nie wodzowie ją ślą - coś się budzi głębiej. Płomień musi być silniejszy.",
 		"done_text": "W lesie wreszcie cicho po nocach."},
-	"main_watra": {"title": "Płomień Watry", "giver": ZERCA, "check": ["watra", 2],
+	"main_watra": {"title": "Płomień Watry", "giver": ZERCA, "check": ["watra", 2], "builds": ["chapel"],
 		"target_name": "Poziom Watry", "area_name": "Watra na placu Ostoi - ofiary ze złota i przedmiotów", "gold": 250, "xp": 1500,
 		"reward_items": {"blessed_stone": 5},
 		"description": "Watra karmi się ofiarą. Złóż w niej złoto albo przedmioty, których nie potrzebujesz - żar podniesie płomień. Gdy Watra urośnie, otworzę przed tobą jej najgłębszy sekret: lochy w samym ogniu.",
 		"progress_text": "Podejdź do Watry (F) i złóż ofiarę. Drugi poziom Watry otworzy lochy.",
 		"complete_text": "Słyszysz, jak huczy? Teraz możesz wejść w płomienie - Watra zaprowadzi cię do lochów, gdzie horda gnieździ się w ciemności. Przycisk „Lochy” w oknie Watry.",
 		"done_text": "Każda ofiara to rok życia dla Ostoi."},
-	"main_dungeon": {"title": "W płomienie", "giver": ZERCA, "check": ["event", "dungeon_clear", 1],
+	"main_dungeon": {"title": "W płomienie", "giver": ZERCA, "check": ["event", "dungeon_clear", 1], "builds": ["guild"],
 		"target_name": "Pokonani strażnicy lochów", "area_name": "lochy w płomieniach Watry (okno Watry - „Lochy”)", "gold": 400, "xp": 2500,
 		"reward_items": {"weapon_stone": 3, "armor_stone": 3},
 		"description": "W każdym lochu czeka strażnik, a za nim skarbiec. Zejdź w płomienie, pokonaj strażnika i wróć żywy. Pamiętaj: płomienie powrotu pojawią się dopiero po jego śmierci - albo przy wejściu.",
 		"progress_text": "Okno Watry - przycisk „Lochy”. Strażnik czeka w najdalszej komnacie.",
-		"complete_text": "Wróciłeś z ognia. Mało kto może to o sobie powiedzieć. Kowal Bronisław wbije ci te kamienie w oręż - spróbuj szczęścia.",
+		"complete_text": "Wróciłeś z ognia. Mało kto może to o sobie powiedzieć. Wieść o lochach już się niesie - poszukiwacze przygód ciągną do Ostoi, a cieśle stawiają im gildię. Kowal Bronisław wbije ci te kamienie w oręż - spróbuj szczęścia.",
 		"done_text": "Lochy Watry nigdy nie są takie same."},
 	# ---------------------------------------------------------------- Akt II: krainy
-	"main_fields": {"title": "Stary Młyn", "giver": ZERCA, "check": ["shrine", "old_mill"],
+	"main_fields": {"title": "Stary Młyn", "giver": ZERCA, "check": ["shrine", "old_mill"], "builds": ["houses"],
 		"target_name": "Kapliczka Stary Młyn", "area_name": "Pola Zbożowe (zachód, za drogą z Goblińskiego Lasu)", "gold": 200, "xp": 1200,
 		"description": "Horda przyszła z zachodu, przez pola. Idź drogą na zachód, do Pól Zbożowych, i odnajdź kapliczkę przy Starym Młynie. Z kapliczek możesz potem wracać przez wielką mapę.",
 		"progress_text": "Droga na zachód z Goblińskiego Lasu prowadzi do Pól Zbożowych. Kapliczkę odkrywasz, podchodząc do niej.",
 		"complete_text": "Młyn jeszcze stoi? To dobrze. Ludzie z pól mówią o koboldach i ich szalonym wodzu z beczkami prochu.",
 		"done_text": "Kapliczki to latarnie w ciemności."},
-	"main_bombardier": {"title": "Barykada Bombardiera", "giver": ZERCA, "check": ["boss", "kobold_bombardier"],
+	"main_bombardier": {"title": "Barykada Bombardiera", "giver": ZERCA, "check": ["boss", "kobold_bombardier"], "builds": ["armory"],
 		"target_name": "Bombardier Kaszlak", "area_name": "wielki obóz koboldów (północ Pól Zbożowych)", "gold": 500, "xp": 3000,
 		"skill_points": 1,
 		"description": "Koboldy z pól mają wodza - Bombardiera Kaszlaka, który siedzi za barykadą w wielkim obozie na północy. Jego beczki prochu podpalają łany. Skończ z nim.",
 		"progress_text": "Barykada Bombardiera jest w północnej części obozu koboldów. Uważaj na beczki.",
 		"complete_text": "Kaszlak wyleciał w powietrze? Pola odetchną. Ale wieści z rozlewisk są gorsze.",
 		"done_text": "Łany znów falują spokojnie."},
-	"main_swamp": {"title": "Bagienny Bród", "giver": ZERCA, "check": ["boss", "frog_chief"],
+	"main_swamp": {"title": "Bagienny Bród", "giver": ZERCA, "check": ["boss", "frog_chief"], "builds": ["bathhouse"],
 		"target_name": "Bulgor, Wódz Żaboludzi", "area_name": "Rozlewiska - wioska żabołaków", "gold": 550, "xp": 3500,
 		"reward_items": {"greater_mana_potion": 5},
 		"description": "Na rozlewiskach żabołaki zbierają się w wiosce wokół Bulgora, swojego wodza. Odnajdź Bagienny Bród, a potem rozpędź jego wioskę.",
@@ -114,7 +109,7 @@ const DATA := {
 		"complete_text": "Bulgor pokonany... Ale żabołaki mówiły coś o panu topielców. Siedzi w sercu Topielczego Uroczyska.",
 		"done_text": "Rozlewiska są mniej groźne niż wczoraj."},
 	# id zostaje po dawnym celu (Hydrze), żeby zapisy w trakcie tego kroku działały; Hydra (poz. 32-40) była za trudna
-	"main_hydra": {"title": "Pan topielców", "giver": ZERCA, "check": ["boss", "wodnik"],
+	"main_hydra": {"title": "Pan topielców", "giver": ZERCA, "check": ["boss", "wodnik"], "builds": ["barracks"],
 		"target_name": "Wodnik", "area_name": "Topielcze Uroczysko (Rozlewiska, lewy dolny róg)", "gold": 650, "xp": 4500,
 		"skill_points": 1,
 		"description": "Na rozlewiskach topielce wychodzą z sadzawek coraz śmielej. Prowadzi je Wodnik z najgłębszej sadzawki Topielczego Uroczyska - to jeden z tych, które budzą hordę. Zatop go we własnym bagnie.",
@@ -127,7 +122,7 @@ const DATA := {
 		"progress_text": "Wietrzne Turnie leżą na wschód od Rozlewisk. Kapliczka stoi na przełęczy.",
 		"complete_text": "Wszebor cię przysłał? Stary lis! Siadaj. Mam dla ciebie coś, co wzmocni twój oręż bardziej niż kowalski młot.",
 		"done_text": "Góry mają swoje tajemnice."},
-	"main_gem": {"title": "Szlachetny kamień", "giver": "Jubiler Dobromir", "check": ["quest", "jeweler_gem"],
+	"main_gem": {"title": "Szlachetny kamień", "giver": "Jubiler Dobromir", "check": ["quest", "jeweler_gem"], "builds": ["jeweler"],
 		"target_name": "Zadanie „Pierwszy klejnot”", "area_name": "złoża rudy żelaza w Wietrznych Turniach", "gold": 300, "xp": 2500,
 		"description": "Przyjmij ode mnie zadanie „Pierwszy klejnot” - przynieś surowy klejnot z rudy żelaza. Pokażę ci, co potrafią kamienie szlachetne w gniazdach.",
 		"progress_text": "Rozbij kilofem złoże rudy żelaza w Turniach.",
@@ -222,6 +217,16 @@ static func step_for(log: QuestLog, npc_name: String) -> String:
 	if state in [Quests.STATE_ACTIVE, Quests.STATE_READY] and (receiver_of(id) == npc_name or DATA[id]["giver"] == npc_name):
 		return id
 	return ""
+
+
+## Budowle Ostoi, które dały już wykonane kroki łańcucha (`builds`).
+static func story_projects(log: QuestLog) -> Array[String]:
+	var result: Array[String] = []
+	for id in CHAIN:
+		if log.state_of(id) == Quests.STATE_DONE:
+			for project: String in DATA[id].get("builds", []):
+				result.append(project)
+	return result
 
 
 ## Lochy Watry: po kroku DUNGEON_STEP (wykonany albo czeka na odbiór).

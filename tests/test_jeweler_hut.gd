@@ -59,15 +59,10 @@ func _ostoja() -> void:
 	var s = _world._settlement
 	var Gems = load("res://scripts/gems.gd")
 	var Items = load("res://scripts/items.gd")
-	p.quests.states["village_help"] = "done"
-	for id in ["wood", "stone", "iron_ore"]:
-		p.inventory.add_item(id, 200)
-	check("przed zadaniem zablokowana", s.project_locked("jeweler", p) != "" and not s.start_project("jeweler", p))
-	p.quests.states["jeweler_gem"] = "done"
-	var wood: int = p.count_owned("wood")
-	check("budowa po zadaniu", s.project_locked("jeweler", p) == "" and s.start_project("jeweler", p)
-			and p.count_owned("wood") == wood - int(s.PROJECTS["jeweler"]["cost"]["wood"])
-			and p.count_owned("iron_ore") == 200 - int(s.PROJECTS["jeweler"]["cost"]["iron_ore"]))
+	check("przed zadaniem chaty nie ma", s.project_state("jeweler") == "none")
+	p.quests.states["main_gem"] = "done"
+	p.quests.quest_done.emit("main_gem")
+	check("budowa po kroku zadania głównego", s.project_state("jeweler") == "building")
 	s._finish_construction("jeweler")
 	check("chata zbudowana", s.project_state("jeweler") == "built" and _world.village_built("jeweler"))
 	var jeweler = null

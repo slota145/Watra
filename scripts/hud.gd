@@ -33,7 +33,6 @@ var _banner_tween: Tween
 ## Okno rzemiosła - budowane w kodzie, otwierane przyciskiem pod "Zaklinaniem".
 var crafting_window: CraftingWindow
 ## Okno budowy u sołtysa - też budowane w kodzie.
-var build_window: BuildWindow
 ## Tablica ogłoszeń (zlecenia gildii) i odczarowanie u mędrca.
 var board_window: BoardWindow
 var sage_window: SageWindow
@@ -120,14 +119,10 @@ func _ready() -> void:
 	crafting_window.name = "CraftingWindow"
 	add_child(crafting_window)
 	move_child(crafting_window, enchant_window.get_index() + 1)
-	build_window = BuildWindow.new()
-	build_window.name = "BuildWindow"
-	add_child(build_window)
-	move_child(build_window, crafting_window.get_index() + 1)
 	board_window = BoardWindow.new()
 	board_window.name = "BoardWindow"
 	add_child(board_window)
-	move_child(board_window, build_window.get_index() + 1)
+	move_child(board_window, crafting_window.get_index() + 1)
 	sage_window = SageWindow.new()
 	sage_window.name = "SageWindow"
 	add_child(sage_window)
@@ -290,8 +285,6 @@ func connect_player(player: Player) -> void:
 	npc_dialog.essence_requested.connect(essence_window.open)
 	npc_dialog.rest_requested.connect(_on_rest)
 	npc_dialog.storage_requested.connect(storage_window.open)
-	build_window.setup(player)
-	npc_dialog.build_requested.connect(build_window.open)
 	board_window.setup(player)
 	npc_dialog.board_requested.connect(board_window.open)
 	sage_window.setup(player)
@@ -384,7 +377,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_window(codex_window, "ui_book")
 	elif event.is_action_pressed("ui_cancel"):
 		# Esc najpierw zamyka otwarte okna, a dopiero potem otwiera menu pauzy
-		var windows: Array[Control] = [character_window, inventory_window, big_map, shop_window, skill_window, enchant_window, crafting_window, build_window, board_window, sage_window, forge_window, watra_window, dungeon_window, nawia_window, watra_tree_window, help_window, quest_journal, npc_dialog, storage_window, codex_window, jeweler_window, essence_window, market_window, travelers_window, workshop_window, talisman_window, talisman_offer, skarbnik_window, blessing_window]
+		var windows: Array[Control] = [character_window, inventory_window, big_map, shop_window, skill_window, enchant_window, crafting_window, board_window, sage_window, forge_window, watra_window, dungeon_window, nawia_window, watra_tree_window, help_window, quest_journal, npc_dialog, storage_window, codex_window, jeweler_window, essence_window, market_window, travelers_window, workshop_window, talisman_window, talisman_offer, skarbnik_window, blessing_window]
 		if windows.any(func(w: Control) -> bool: return w.visible):
 			Sfx.play("ui_close")
 			for w in windows:
