@@ -105,10 +105,10 @@ func _process(_d: float) -> bool:
 	dialog._turn_in()
 	check("nagroda: przedmioty", p.inventory.count_of("health_potion") == potions + 5)
 	# punkty umiejętności
-	var points: int = p.skills.points_total() - p.skills.character_level
+	var points: int = p.skills.points_total()
 	p.quests.states["main_build"] = "ready"
 	p.quests.turn_in("main_build", p.stats)
-	check("nagroda: punkt umiejętności", p.skills.points_total() - p.skills.character_level == points + 1 and p.skills.bonus_points == 1)
+	check("nagroda: punkt umiejętności", p.skills.points_total() == points + 1 and p.skills.bonus_points == 1)
 	# zdarzenie: encyklopedia
 	p.quests.states["main_herbs"] = "done"
 	p.quests.states["main_tree"] = "done"

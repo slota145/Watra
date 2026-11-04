@@ -189,6 +189,8 @@ func _check_tree(p) -> void:
 	check("czary: opisy i pasek", missing.is_empty(), str(missing))
 	p.stats.level = 60
 	p.skills.character_level = 60
+	# punkty umiejętności daje pasek umiejętności, nie poziom postaci
+	p.skills.bonus_points += 60
 	for i in 5:
 		for id: String in nodes:
 			p.skills.take("spell", id)

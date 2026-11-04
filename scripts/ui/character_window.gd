@@ -155,8 +155,8 @@ func _refresh() -> void:
 	_xp_label.text = tr("Exp: %d / %d") % [s.xp, s.xp_to_next_level()]
 	_points_label.text = tr("Punkty do rozdania: %d") % s.unspent_points
 	if s.attributes_reset:
-		# stary zapis: atrybuty działają teraz inaczej, więc wszystkie punkty wróciły do rozdania
-		_points_label.text += "\n" + tr("Atrybuty działają teraz inaczej - punkty wróciły do rozdania.")
+		# stary zapis: zasady atrybutów się zmieniły, więc wszystkie punkty wróciły do rozdania
+		_points_label.text += "\n" + tr("Zasady atrybutów się zmieniły (teraz 2 punkty za poziom) - punkty wróciły do rozdania.")
 	_points_label.visible = s.unspent_points > 0
 	for id: String in _value_labels:
 		var from_items := s.attribute(id) - int(s.attributes[id])

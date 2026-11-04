@@ -134,6 +134,8 @@ func _check_tree(p) -> void:
 	check("drzewko: węzły nie nachodzą", close.is_empty(), str(close))
 	p.stats.level = 60
 	p.skills.character_level = 60
+	# punkty umiejętności daje pasek umiejętności, nie poziom postaci
+	p.skills.bonus_points += 60
 	# cała reszta testu na pełnym drzewku
 	var taken := 0
 	for i in 5:

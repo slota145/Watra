@@ -87,6 +87,8 @@ func _gear(p: Node, scene: String) -> void:
 	for id in ["whirlwind", "flicker"] + SPELLS:
 		p.skills.levels[id] = 5
 	p.skills.character_level = 99
+	# punkty umiejętności daje pasek umiejętności, nie poziom postaci
+	p.skills.bonus_points += 99
 	if scene == "mgnienie":
 		p.equipment.equip_to("necklace", loot.legendary_at_level("legend_endless_amulet", level), 0)
 	var tree: GDScript = load("res://scripts/skill_tree.gd")

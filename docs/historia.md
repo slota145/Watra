@@ -722,6 +722,33 @@ odpowiedniej sekcji.
   tier 1 (jedna premia rzadkiego): poziom 60 - 0,13%, 70 - 0,4%, 80 - 1,2%, 90 - 19%. Wzorem PoE najwyższe tiery są
   dostępne przed maksymalnym poziomem, a najsłabsze przedmioty nie dostaną najwyższych tierów. Test: `tests/test_loot.gd`.
 
+- [x] **Pasek umiejętności - punkty umiejętności z osobnego paska doświadczenia** (listopad 2026, jak w BDO;
+  odpowiedzi autora: 4 progi paska, koszty 1/2/3/5, stare zapisy - reset ze zwrotem, cofanie - złoto za punkt):
+  - pasek (`SkillBook.skill_xp`, `earned_points`, `skill_xp_progress`) napełnia się całym zwykłym expem
+    (`CharacterStats.add_xp` -> `SkillBook.add_skill_xp`, sygnał `skill_points_gained` - napis w HUD), bez końca;
+    cena punktu stała między progami `Skills.SKILL_XP_BANDS`: punkty 1-20 po 2000 exp, 21-60 po 15 000, 61-120 po
+    60 000, dalej po 200 000 (ok. 20 punktów na 14. poziomie, 60 na 43.); fioletowy pasek pod paskiem expa w HUD
+    (`HUD.skill_xp_bar`, tworzony w kodzie), napis „+N pkt [K]” obok „+N pkt [C]”;
+  - punkty umiejętności = pasek + `SkillTree.START_POINTS` (teraz 2, dawniej 1 + 1 za 1. poziom) + nagrody zadań;
+    wydaje się je na węzły i poziomy umiejętności (`SkillBook.points_in` - węzły broni i poziomy jej umiejętności);
+  - poziomy umiejętności 1-20 (`Skills.MAX_LEVEL`), koszt `Skills.LEVEL_POINTS`: 1-5 po 1, 6-10 po 2, 11-15 po 3,
+    16-20 po 5 (poziom 1 umiejętności drzewka daje sam węzeł); wzory rozciągnięte przez `Skills.power` (1-5 pełny
+    przyrost, dalej po pół - poziom 20 działa jak dawny 12,5) i `Skills.count` (skoki, przebicia, strzały: +1 co
+    3 poziomy ponad 5. - poziom 20 daje +10); górne granice: stożek Fali piorunów 180°, prędkość Szarży 640;
+  - cofanie za złoto `Skills.REFUND_GOLD_PER_LEVEL` (8) x poziom postaci za punkt: węzeł prawym przyciskiem
+    (węzła umiejętności z poziomami ponad 1 nie da się cofnąć - najpierw poziomy), poziom przyciskiem „Cofnij poziom”
+    (`SkillBook.downgrade`, `downgrade_gold` - za tyle punktów, ile kosztował poziom), całe drzewko u mędrca
+    (`VillageServices._respec` - wszystkie punkty broni, także poziomy umiejętności);
+  - awans daje 2 punkty statystyk (`CharacterStats.POINTS_PER_LEVEL`), `ATTRIBUTE_RULES` 3: stary zapis dostaje
+    darmowy reset atrybutów i brakujące punkty;
+  - stare zapisy (bez `skill_xp`): `SkillBook.migrate_old` po wczytaniu statystyk - złoto za poziomy 2+ (dawne ceny
+    `Skills.OLD_*_GOLD`) wraca do sakwy, węzły i poziomy wracają jako punkty, kamienie z gniazd drzewek do plecaka,
+    pasek dostaje cały exp postaci (`CharacterStats.total_xp`); okno K pokazuje informację o zwrocie;
+  - testy w `tests/test_skill_tree.gd` (progi, koszty, cofanie, przeliczenie); testy, które dawały punkty poziomem
+    postaci, dostają je w `bonus_points`;
+  - do ustalenia po ograniu: progi paska, cena cofania, siła poziomów 6-20 (`Skills.power`), czy 2 punkty na start
+    wystarczą (pierwszy punkt z paska ok. 5. poziomu postaci).
+
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)
   i 7 slotów umiejętności (LPM, PPM, Q, E, R, Z, X) z osobnym układem dla każdej broni. Każdy slot przyjmuje

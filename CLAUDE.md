@@ -158,7 +158,8 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
   (`Elements.MONSTER_RESIST`, `Goblin.resistances`), premie obrażeń żywiołów i przebicie odporności, żywioły
   w modyfikatorach lochów, bożkach i elitach (`Elements.apply_dungeon`, `Elements.added`).
 - **Walka i postać:** drzewka broni - miecz, łuk, księga magii (`skill_tree.gd`, `sword_skills.gd`, `bow_skills.gd`,
-  `spell_skills.gd`, okno K), tagi umiejętności (`Skills.TAGS`) i atrybuty dające % obrażeń umiejętnościom z ich tagiem
+  `spell_skills.gd`, okno K), punkty umiejętności z paska umiejętności i poziomy 1-20 (`SkillBook.skill_xp`,
+  `Skills.LEVEL_POINTS`), tagi umiejętności (`Skills.TAGS`) i atrybuty dające % obrażeń umiejętnościom z ich tagiem
   (`CharacterStats.attribute_damage`), kamienie wsparcia w gniazdach umiejętności (`supports.gd`, znacznik umiejętności
   w `Skills.tags` - `Skills.skill_of`), combo (`Skills.COMBOS`), paski szybkiego wyboru (`hotbar.gd`), ikony efektów (`status_effects.gd`);
   zryw, Mgnienie i teleport przeskakują przeszkody, zatrzymuje je tylko granica (`BOUNDS_LAYER`, `Player.free_landing`).
@@ -317,22 +318,14 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   maksymalnej many jest niedostępny, póki aura działa). Do ustalenia z autorem: jakie aury (premie dla gracza,
   osłabianie wrogów wokół), ile procent many, w których drzewkach, ikona na pasku i pod paskami zdrowia i many.
 - [ ] **Przebudowa rozwoju postaci** (do ustalenia z autorem): po dodaniu nekromancji do drzewka księgi - nowe węzły
-  także w drzewkach miecza i łuku; może oddzielić umiejętności od drzewka (inny sposób odblokowania); więcej punktów
-  za awans albo osobne punkty statystyk i drzewka, albo statystyki tylko w drzewku (trudniejszy balans).
-- [ ] **Punkty umiejętności z osobnego paska doświadczenia** (pomysł autora, listopad 2026; jak w BDO, poziomy
-  umiejętności jak kamienie w PoE). Dziś: 1 punkt za awans na statystyki albo węzeł drzewka, poziomy umiejętności
-  (najwyżej 5, `Skills.MAX_LEVEL`) za złoto (`Skills.ACTIVE_COSTS`). Nowy plan:
-  - osobny pasek doświadczenia umiejętności (napełnia się zwykłym doświadczeniem), po wypełnieniu punkt umiejętności;
-    nie liczy poziomu, płynie bez końca (gracz może stać się absurdalnie silny), a przy kilku progach (liczba
-    zdobytych punktów) zwalnia; koszt punktu między progami prawie stały, nie rośnie jak poziom postaci;
-  - punktami umiejętności: odblokowanie umiejętności, węzły drzewek i poziomy umiejętności - do 20 poziomów, wyższe
-    poziomy za kilka punktów (propozycja: 1-5 po 1, 6-10 po 2, 11-15 po 3, 16-20 po 5);
-  - awans postaci daje już tylko punkty statystyk - 2 za poziom;
-  - cofanie wydanych punktów umiejętności za złoto (zastępuje ujście złota, które dziś dają poziomy umiejętności);
-  - kamienie wsparcia (krok 4 dopieszczenia walki) awansują z własnego doświadczenia, niezależnie od tego planu
-    (decyzja autora, listopad 2026);
-  - do zrobienia przy tym: wzory umiejętności rozciągnięte z 5 na 20 poziomów, przeliczenie starych zapisów (poziomy
-    kupione złotem i punkty w drzewkach na punkty umiejętności), sprawdzić gospodarkę złota.
+  także w drzewkach miecza i łuku; może oddzielić umiejętności od drzewka (inny sposób odblokowania). Osobne punkty
+  statystyk (2 za awans) i umiejętności (pasek) już są - punkt niżej.
+- [ ] **Punkty umiejętności z osobnego paska doświadczenia** (pomysł autora, listopad 2026; jak w BDO): zrobione,
+  czeka na ocenę autora (szukaj „Pasek umiejętności” w `docs/historia.md`): pasek `SkillBook.skill_xp` z progami
+  `Skills.SKILL_XP_BANDS`, poziomy umiejętności 1-20 za punkty (`Skills.LEVEL_POINTS` 1/2/3/5, wzory przez
+  `Skills.power` i `Skills.count`), 2 punkty statystyk za awans, cofanie za złoto (`Skills.REFUND_GOLD_PER_LEVEL`),
+  stare zapisy przelicza `SkillBook.migrate_old` (zwrot złota i punktów). Do ustalenia po ograniu: progi paska,
+  cena cofania, siła poziomów 6-20, punkty na start.
 
 ### Watra i Ostoja
 

@@ -77,6 +77,8 @@ var _icon_buttons: Array[Array] = []
 @onready var mana_bar: ProgressBar = $Bars/ManaBar
 @onready var mana_label: Label = $Bars/ManaBar/Value
 @onready var xp_bar: ProgressBar = $Bars/XpBar
+## Pasek doświadczenia umiejętności (SkillBook.skill_xp) - cienki, fioletowy, pod paskiem expa; tworzony w kodzie.
+var skill_xp_bar: ProgressBar
 @onready var xp_value: Label = $Bars/XpValue
 @onready var level_label: Label = $Level
 @onready var points_label: Label = $Points
@@ -244,7 +246,12 @@ func connect_player(player: Player) -> void:
 	player.skills.supports_leveled.connect(func(names: Array) -> void:
 		_dev_feedback(Lang.t("Kamień wsparcia awansował: %s") % ", ".join(PackedStringArray(names)), Color(0.8, 0.65, 1.0)))
 	player.stats.changed.connect(_update_points)
+	player.skills.changed.connect(_update_points)
+	player.skills.skill_points_gained.connect(func(count: int) -> void:
+		_dev_feedback(Lang.n(count, "+%d punkt umiejętności [K]", "+%d punkty umiejętności [K]", "+%d punktów umiejętności [K]") % count,
+				Color(0.8, 0.65, 1.0)))
 	player.stats.gold_changed.connect(_on_gold_changed)
+	_make_skill_xp_bar()
 	character_window.setup(player)
 	inventory_window.setup(player)
 	shop_window.setup(player)
@@ -573,10 +580,43 @@ func _on_gold_changed(gold: int) -> void:
 	gold_label.text = Lang.t("Złoto: %d") % gold
 
 
+func _make_skill_xp_bar() -> void:
+	if skill_xp_bar != null:
+		return
+	skill_xp_bar = ProgressBar.new()
+	skill_xp_bar.custom_minimum_size = Vector2(110, 3)
+	skill_xp_bar.show_percentage = false
+	skill_xp_bar.add_theme_stylebox_override("background", xp_bar.get_theme_stylebox("background"))
+	var fill := (xp_bar.get_theme_stylebox("fill") as StyleBoxFlat).duplicate() as StyleBoxFlat
+	fill.bg_color = Color(0.7, 0.5, 1.0)
+	fill.set_border_width_all(0)
+	skill_xp_bar.add_theme_stylebox_override("fill", fill)
+	xp_bar.get_parent().add_child(skill_xp_bar)
+	xp_bar.get_parent().move_child(skill_xp_bar, xp_bar.get_index() + 1)
+	_player.stats.xp_changed.connect(func(_xp: int, _needed: int, _level: int) -> void: _update_skill_xp())
+	_player.skills.changed.connect(_update_skill_xp)
+	_update_skill_xp()
+
+
+func _update_skill_xp() -> void:
+	if skill_xp_bar == null or _player == null:
+		return
+	var progress := _player.skills.skill_xp_progress()
+	skill_xp_bar.max_value = progress[1]
+	skill_xp_bar.value = progress[0]
+	skill_xp_bar.tooltip_text = Lang.t("Pasek umiejętności: %d / %d exp (punkt umiejętności, okno K)") % [progress[0], progress[1]]
+
+
 func _update_points() -> void:
 	var points := _player.stats.unspent_points
-	points_label.visible = points > 0
-	points_label.text = Lang.t("+%d pkt [C]") % points
+	var skill_points := _player.skills.points_left()
+	var parts: Array[String] = []
+	if points > 0:
+		parts.append(Lang.t("+%d pkt [C]") % points)
+	if skill_points > 0:
+		parts.append(Lang.t("+%d pkt [K]") % skill_points)
+	points_label.visible = not parts.is_empty()
+	points_label.text = "  ".join(PackedStringArray(parts))
 
 
 func setup_quest_areas(areas: Dictionary) -> void:

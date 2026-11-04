@@ -61,6 +61,8 @@ func _gear(p: Node) -> void:
 	p.stats.level = 30
 	_arm(p, "sword")
 	p.skills.character_level = 99
+	# punkty umiejętności daje pasek umiejętności, nie poziom postaci
+	p.skills.bonus_points += 99
 	for id in ["rend", "ground_slam", "lunge", "crescent", "whirlwind"]:
 		p.skills.levels[id] = 5
 	# drzewko: ścieżka do każdej umiejętności (Młynek, Szarża i Półksiężyc wymagają węzłów)

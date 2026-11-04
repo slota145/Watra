@@ -1,8 +1,8 @@
 class_name SkillTree
 ## Drzewka umiejętności broni - sieć węzłów jak drzewko pasywne w Path of Exile, tylko mniejsza. Węzeł kupuje się za
-## punkt umiejętności (1 za każdy poziom postaci, plus START_POINTS), ale tylko obok węzła już wybranego (start jest
+## punkt umiejętności (z paska umiejętności - SkillBook.skill_xp, plus START_POINTS), ale tylko obok węzła już wybranego (start jest
 ## wybrany zawsze). Rodzaje węzłów:
-## - "skill": odblokowuje umiejętność (poziom 1; dalsze poziomy 2-5 za złoto jak dotąd),
+## - "skill": odblokowuje umiejętność (poziom 1; dalsze poziomy do 20 za punkty umiejętności - Skills.cost),
 ## - "passive": stałe premie (statystyki jak na przedmiotach albo premie do umiejętności - TREE_STATS),
 ## - "keystone": węzeł kluczowy - zmienia sposób gry (np. Oko Cyklonu),
 ## - "socket": gniazdo na kamień szlachetny (Gems) - kamień działa w drzewku o połowę mocniej (SkillBook.tree_bonus);
@@ -11,9 +11,8 @@ class_name SkillTree
 ## Premie działają tylko z założoną bronią swojego rodzaju. Wybrane węzły cofa za złoto mędrzec w Ostoi.
 ## Drzewka mają wszystkie rodzaje broni: miecz (broń biała), łuk i księga magii.
 
-const START_POINTS := 1
-## Ile złota kosztuje zapomnienie drzewka u mędrca (za każdy poziom postaci).
-const RESPEC_GOLD_PER_LEVEL := 25
+## Punkty umiejętności na start (dawniej 1 + 1 za 1. poziom postaci).
+const START_POINTS := 2
 
 ## Premie z węzłów, które nie są statystykami postaci, tylko zmieniają umiejętności (czytane przez SkillBook.tree_bonus).
 ## Wartości to ułamki (+0.2 = +20%), poza combo_window (sekundy) i COUNT_STATS (sztuki).

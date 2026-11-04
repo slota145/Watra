@@ -88,6 +88,8 @@ func _process(_d: float) -> bool:
 	# ---- gniazdo legendarne drzewka
 	var book = p.skills
 	book.character_level = 60
+	# punkty umiejętności daje pasek umiejętności, nie poziom postaci
+	book.bonus_points += 60
 	for step in Tree.path_to("melee", "socket_legend"):
 		book.take("melee", step)
 	for step in Tree.path_to("melee", "socket_1"):
