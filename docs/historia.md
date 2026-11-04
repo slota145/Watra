@@ -292,6 +292,27 @@ odpowiedniej sekcji.
   ("shock_chance=0.3,..."). Pomiar (stopień 17, Zatopione podziemia, księga na dystansie): +30% szans na porażenie
   i zamrożenie - otrzymane obrażenia 186/s -> 113/s (zamrożeni wrogowie nie biją), zabójstw tyle samo.
   `tests/test_town_portal.gd`: krok 3 w lochu zbudowanym przez podróż z kroku 2 (wcześniej dwa światy naraz).
+- [x] **Kamienie wsparcia, etap 1** (krok 4 dopieszczenia walki, jak w PoE; ustalenia z autorem: poziomy kamieni
+  z własnego doświadczenia, 4 gniazda + 5. Wielkim Krzesiwem, bez rynku, bez zwykłego ataku, w Mgle po śmierci
+  przepada połowa puli): `scripts/supports.gd` - 17 kamieni (`Supports.DATA`, `ORDER`): Rozległość (obszar +20-45%),
+  Rozszczep (+2 pociski, -30..-15% obrażeń), Przeszycie (+2-4 przebicia), Łańcuch (1-2 odbicia, -15%), Żarowe / Mroźne
+  / Burzowe Ostrze (fizyczne: 20-40% obrażeń dodane jako żywioł, +5% szansy na jego stan), Żar, Szron, Wyładowanie
+  (szanse na stany i ich siła), Jad (w czasie +25-55%), Okrutny Cios (cios: +25-50%, -10% szybkości), Furia (atak:
+  +15-30% szybkości, -10%), Echo Rusałki (czar powtarza się raz, -35..-20%), Rozpęd (ruch: przez 3 s +15% ruchu
+  i +15-30% obrażeń), Watażka (przywołanie: +20-40%, +25-50% czasu), Donośny Głos (okrzyk: obszar i czas +25-50%).
+  Każdy kamień mnoży koszt many (x1,1-1,4). Poziomy 1-20 (wartości liniowo), kamień w gnieździe dostaje całe
+  doświadczenie postaci (`XP_SHARE`, próg `400 * poziom^1,6`, napis w HUD przy awansie), 3 takie same łączą się
+  w 1 o 2 poziomy wyżej (`Supports.combine`, przycisk w oknie K). Kamień pasuje do umiejętności z jednym z jego
+  tagów; `Supports.EXCEPT` wyklucza połączenia bez działania (np. Rozszczep w Deszczu Strzał, Echo w Teleporcie).
+  Gniazda w `SkillBook.supports` (zapis przy umiejętności): 1.-4. Krzesiwem Nawii (1/2/4/8 szt., `nawia_flint`),
+  5. Wielkim Krzesiwem (`great_flint`). Działanie: `Skills.tags(id)` ma na końcu znacznik umiejętności
+  (`SKILL_MARK`, `Skills.skill_of`), więc `CharacterStats.kind_multiplier / skill_speed / area_multiplier /
+  ailment_chance / dot_bonus` i `Player.hit_enemy(..., tags)` liczą kamienie tej umiejętności; pociski
+  (`Projectile.tags / chain`, `Player.support_projectile`, `split_directions`), Echo (`Player.support_echo`),
+  koszt many (`Player.skill_mana`), Rozpęd (`note_skill`). Okno K: rząd gniazd pod opisem umiejętności, pasujące
+  kamienie z plecaka, dorabianie gniazda; przeciąganie kamienia na umiejętność w drzewku. Ikony z istniejących
+  grafik (`tools/support_art.py`). Tryb deweloperski F6. Na razie kamienie i krzesiwa są tylko w trybie
+  deweloperskim - źródłem będzie Mgła Nawii (etap 2). Testy: `tests/test_supports.gd`, `tests/test_supports_skills.gd`.
 
 ## Gobliński Las i Prastary Las (`scripts/world.gd`, `scripts/ancient_forest.gd`) (Do poprawy)
 - [x] Gobliński Las: więcej grupek goblinów w lesie i większe siedlisko wilków - około 450 potworów (było około 340);
