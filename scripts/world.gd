@@ -748,7 +748,8 @@ func village_built(project: String) -> bool:
 	if zone == "forest" and _settlement != null and _settlement.is_inside_tree():
 		return _settlement.project_state(project) == "built"
 	var saved: Dictionary = (_zone_states.get("forest", {}) as Dictionary).get("settlement", {}).get("projects", {})
-	return saved.has(project) and str(saved[project][0]) == "built"
+	# budowla z fabuły (krok oddany poza Ostoją) stanie przy następnej wizycie - liczy się już teraz
+	return saved.has(project) and str(saved[project][0]) == "built" or project in MainQuests.story_projects(player.quests)
 
 
 func _apply_save(save: Dictionary) -> void:

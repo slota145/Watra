@@ -18,18 +18,17 @@ const DATA := {
 	"village_help": {
 		"title": "Ostoja prosi o pomoc",
 		"giver": "Sołtys Mirosław",
-		"type": "gather",
-		"items": {"wood": 30, "stone": 20},
-		"target_name": "Drewno i kamień",
-		"count": 50,
-		"area": "village",
-		"area_name": "las wokół Ostoi - liczy się to, co masz w plecaku i w magazynie",
+		"target": "goblin",
+		"target_name": "Gobliny",
+		"count": 20,
+		"area": "goblins",
+		"area_name": "obozy goblinów (północny zachód)",
 		"gold": 150,
 		"xp": 400,
-		"description": "Wędrowcze, Ostoja ledwo się trzyma. Palisada się sypie, a ludzi przybywa z każdym dniem. Cieśle są gotowi do pracy, ale nie mają z czego budować. Pomóż nam - zetnij w lesie drzewa i rozbij kilofem kilka głazów. Przynieś 30 drewna i 20 kamienia, a ruszymy z budową osady.",
-		"progress_text": "Trzydzieści kłód i dwadzieścia kamieni - tyle, żeby cieśle mogli zacząć. Możesz je też złożyć w magazynie u Zenona.",
-		"complete_text": "Jest drewno, jest kamień! Teraz możemy budować. Przychodź do mnie, gdy zechcesz postawić coś nowego - pokażę ci plany.",
-		"done_text": "Dzięki tobie Ostoja znów rośnie! Gdy uzbierasz surowce, zajrzyj do planów budowy.",
+		"description": "Wędrowcze, Ostoja ledwo się trzyma. Palisada się sypie, a ludzi przybywa z każdym dniem. Cieśle i drwale są gotowi do pracy, ale gobliny z obozów na północnym zachodzie czyhają na każdego, kto wyjdzie do lasu. Przegoń je - pokonaj dwadzieścia goblinów.",
+		"progress_text": "Drwale boją się wyjść za palisadę. Wróć, gdy pokonasz dwadzieścia goblinów.",
+		"complete_text": "Gobliny uciekły w głąb lasu! Drwale już ostrzą siekiery - odtąd sami przyniosą drewno i kamień, a cieśle postawią, co trzeba.",
+		"done_text": "Dzięki tobie Ostoja znów rośnie! Cieśle budują, a ty idź tam, gdzie jesteś potrzebny.",
 	},
 	"wolf_hunt": {
 		"title": "Wilcza plaga",
@@ -120,6 +119,8 @@ static func reward_text(id: String) -> String:
 		parts.append("%s x%d" % [Lang.t(Items.get_data(item)["name"]), items[item]])
 	if int(quest.get("skill_points", 0)) > 0:
 		parts.append(Lang.t("+%d pkt umiejętności") % int(quest["skill_points"]))
+	for project: String in quest.get("builds", []):
+		parts.append(Lang.t("budowa: %s") % Lang.t(Settlement.BUILDING_NAMES[project]))
 	return ", ".join(parts)
 
 

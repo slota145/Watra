@@ -6,7 +6,6 @@ extends PanelContainer
 
 signal rest_requested
 signal storage_requested(npc: Npc)
-signal build_requested
 signal board_requested
 signal sage_requested
 signal forge_requested
@@ -165,11 +164,6 @@ func _refresh() -> void:
 				_buttons.add_child(workshop)
 			"meals", "blessing", "bestiary", "elixirs", "respec", "marks":
 				_buttons.add_child(_button(tr(OFFER_SERVICES[service]), _offers.bind(service)))
-			"build":
-				# plany budowy dopiero po zadaniu sołtysa z prośbą o pomoc
-				var settlement := get_tree().get_first_node_in_group("settlement") as Settlement
-				if settlement != null and settlement.building_unlocked(_player):
-					_buttons.add_child(_button(tr("Budowa"), _build))
 			"storage":
 				_buttons.add_child(_button(tr("Magazyn"), _storage))
 				if StorageWindow.can_upgrade(_player.storage):
@@ -311,11 +305,6 @@ func _jeweler() -> void:
 func _sage() -> void:
 	close()
 	sage_requested.emit()
-
-
-func _build() -> void:
-	close()
-	build_requested.emit()
 
 
 func _storage() -> void:

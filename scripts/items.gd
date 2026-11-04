@@ -166,7 +166,9 @@ const HEADER_COLOR := "#d8c890"
 ## rysuje je obok siebie).
 const COMPARE_SPLIT := "\u001f"
 ## Znacznik ikony w opisie: ICON_MARK + id + ICON_MARK na początku opisu - RichTooltip rysuje tam ikonę przedmiotu.
-const ICON_MARK := "\u001e"
+## Znak z prywatnego zakresu Unicode, a nie sterujący: Godot przed pokazaniem dymka obcina z brzegów tekstu
+## znaki o kodach do 32 (strip_edges), więc „\u001e” na początku opisu znikał i w dymku zostawało samo id.
+const ICON_MARK := "\ue000"
 
 const DATA := {
 	# ---------------------------------------------------------------- łupy i mikstury

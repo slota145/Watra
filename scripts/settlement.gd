@@ -102,78 +102,77 @@ const CONSTRUCTION_STAGES := 4
 const INFIRMARY_REGEN := 0.03
 ## Wysokość platformy wieży palisady nad jej podstawą (piksele) - tam stoi łucznik.
 const TOWER_PLATFORM := -44.0
-## Zadanie sołtysa, po którym można u niego zlecać budowy.
+## Pierwsze zadanie sołtysa (prośba o pomoc przeciw goblinom).
 const UNLOCK_QUEST := "village_help"
-## Budowy zlecane u sołtysa (okno budowy): miejsce, koszt w surowcach (z plecaka i magazynu),
-## czas budowy (odpoczynek w karczmie kończy ją od razu).
+## Budowle Ostoi: miejsce i czas budowy (odpoczynek w karczmie kończy ją od razu). Nie zleca się ich za surowce -
+## stawiają je cieśle, gdy gracz odda krok zadania głównego z `builds` (MainQuests, sync_story).
 const PROJECTS := {
 	"barracks": {"pos": BARRACKS_POS, "size": BARRACKS_SIZE, "color": BARRACKS_COLOR,
-			"time": 180.0, "art": "construction", "cost": {"wood": 80, "stone": 80},
+			"time": 180.0, "art": "construction",
 			"description": "Za południową bramą. Ostoja dostanie własnych żołnierzy - ćwiczą na placu, a łucznicy obsadzą wieże palisady i strzelają do potworów pod osadą.",
 			"start_line": "Zaczynamy budowę koszar! Zajrzyj za południową bramę.",
 			"done_line": "Koszary gotowe! Ostoja ma wreszcie własne wojsko!",
 			"banner": "Koszary zbudowane!
 Ostoja ma własne wojsko"},
 	"lodge": {"pos": LODGE_POS, "size": LODGE_SIZE, "color": LODGE_COLOR,
-			"time": 150.0, "art": "construction_lodge", "cost": {"wood": 50, "stone": 20},
+			"time": 150.0, "art": "construction_lodge",
 			"description": "Za palisadą na północnym wschodzie. Trzech myśliwych poluje i znosi do magazynu skóry i mięso.",
 			"start_line": "Budujemy chatkę myśliwych! Za palisadą, na północnym wschodzie.",
 			"done_line": "Chatka myśliwych gotowa! Będzie co jeść i czym handlować.",
 			"banner": "Chatka myśliwych zbudowana!
 Trzech myśliwych rusza na łowy"},
 	"sage_hut": {"pos": SAGE_POS, "size": SAGE_SIZE, "color": SAGE_COLOR,
-			"time": 160.0, "art": "construction_sage", "cost": {"wood": 60, "stone": 30},
+			"time": 160.0, "art": "construction_sage",
 			"description": "Na uboczu za palisadą, na północnym zachodzie. Zamieszka w niej mędrzec ze swoimi księgami.",
 			"start_line": "Stawiamy chatę dla mędrca! Na uboczu, za palisadą od północnego zachodu.",
 			"done_line": "Chata mędrca gotowa. Ponoć już ślęczy nad księgami.",
 			"banner": "Chata mędrca zbudowana!\nMędrzec zgłębia swoje księgi"},
 	"guild": {"pos": GUILD_POS, "size": GUILD_SIZE, "color": GUILD_COLOR,
-			"time": 220.0, "art": "construction_guild", "cost": {"wood": 100, "stone": 100},
+			"time": 220.0, "art": "construction_guild",
 			"description": "Przy drodze od południowej bramy. Siedziba poszukiwaczy przygód z tablicą ogłoszeń przed wejściem.",
 			"start_line": "Budujemy gildię poszukiwaczy przygód! Przy drodze od południowej bramy.",
 			"done_line": "Gildia otwarta! Poszukiwacze przygód już oblegają tablicę ogłoszeń.",
 			"banner": "Gildia poszukiwaczy przygód zbudowana!\nTablica ogłoszeń czeka na zlecenia"},
 	# budowle bez wnętrza (grafika z zewnątrz) - "fit": plac budowy dopasowany do ich rozmiaru
 	"infirmary": {"pos": Vector2i(19, 35), "size": Vector2i(5, 4), "color": Color("4f8a4a"), "fit": true,
-			"time": 150.0, "art": "construction_lodge", "cost": {"wood": 60, "stone": 40},
+			"time": 150.0, "art": "construction_lodge",
 			"description": "W południowo-zachodnim kącie osady, za kuźnią. Za palisadą szybciej odzyskasz zdrowie i manę (3% na sekundę), a zielarka sprzeda wielkie mikstury i uwarzy z dzikich ziół mikstury wzmacniające.",
 			"start_line": "Budujemy lecznicę! W kącie za kuźnią.",
 			"done_line": "Lecznica gotowa. Ranni wreszcie mają gdzie leżeć.",
 			"banner": "Lecznica zielarki zbudowana!\nW osadzie szybciej wracasz do sił"},
 	"chapel": {"pos": Vector2i(35, 27), "size": Vector2i(5, 4), "color": Color("b8a46a"), "fit": true,
-			"time": 180.0, "art": "construction_lodge", "cost": {"wood": 50, "stone": 80},
+			"time": 180.0, "art": "construction_lodge",
 			"description": "Przy drodze do bramy południowej, obok sklepu. Kapłan za datek udzieli błogosławieństwa: +10% doświadczenia albo +5% obrażeń na 20 minut.",
 			"start_line": "Stawiamy kaplicę! Przy drodze do południowej bramy.",
 			"done_line": "Kaplica stoi. Ludzie znów mają gdzie się modlić.",
 			"banner": "Kaplica zbudowana!\nKapłan udziela błogosławieństw"},
 	"houses": {"pos": Vector2i(38, 34), "size": Vector2i(8, 4), "color": Color("9a7a4a"), "fit": true,
-			"time": 200.0, "art": "construction_lodge", "cost": {"wood": 100, "stone": 50},
+			"time": 200.0, "art": "construction_lodge",
 			"description": "W obozie uchodźców. Namioty zamienią się w chaty, a wdzięczni osadnicy co 5 minut wpłacą trochę złota.",
 			"start_line": "Budujemy chaty dla uchodźców! Koniec spania pod płótnem.",
 			"done_line": "Chaty gotowe! Uchodźcy mają wreszcie dach nad głową.",
 			"banner": "Chaty osadników zbudowane!\nOsadnicy dzielą się zarobkiem"},
 	"market": {"pos": Vector2i(45, 17), "size": Vector2i(5, 4), "color": Color("c28a3a"), "fit": true,
-			"time": 140.0, "art": "construction_lodge", "cost": {"wood": 80, "stone": 20},
+			"time": 140.0, "art": "construction_lodge",
 			"description": "Przy rynku, obok magazynu. Zjedzie się wędrowny kupiec z rzadkim towarem - doskonałymi kamieniami, wielkimi miksturami - zmienianym co 10 minut.",
 			"start_line": "Szykujemy miejsce na targowisko! Przy rynku, obok magazynu.",
 			"done_line": "Targowisko gotowe! Już ktoś zajechał wozem.",
 			"banner": "Targowisko zbudowane!\nWędrowny kupiec rozłożył towar"},
 	"bathhouse": {"pos": Vector2i(49, 29), "size": Vector2i(5, 4), "color": Color("6a8aa8"), "fit": true,
-			"time": 140.0, "art": "construction_lodge", "cost": {"wood": 60, "stone": 30},
+			"time": 140.0, "art": "construction_lodge",
 			"description": "Na wschodzie osady, obok sklepu. Po odpoczynku w karczmie będziesz Wypoczęty: +2 zdrowia i +1 many na sekundę, +5% szybkości ruchu przez 10 minut.",
 			"start_line": "Budujemy łaźnię! Na wschodzie, obok sklepu.",
 			"done_line": "Łaźnia gotowa. Gorąca woda czeka!",
 			"banner": "Łaźnia zbudowana!\nPo odpoczynku jesteś Wypoczęty"},
 	"armory": {"pos": Vector2i(23, 25), "size": Vector2i(4, 3), "color": Color("5a5f75"), "fit": true,
-			"time": 160.0, "art": "construction_lodge", "cost": {"wood": 40, "stone": 60, "iron_ore": 10},
+			"time": 160.0, "art": "construction_lodge",
 			"description": "Obok kuźni. Kowal otworzy warsztat rzemiosła premii: przerzut wartości, przekucie, usuwanie i dodawanie premii, ulepszanie rzadkości (za złoto i trofea potworów) oraz runy z lochów.",
 			"start_line": "Rozbudowujemy kuźnię o warsztat płatnerza!",
 			"done_line": "Warsztat gotowy. Kowal już ostrzy narzędzia.",
 			"banner": "Warsztat płatnerza zbudowany!\nKowal przekuwa przedmioty"},
 	# po zadaniu "Pierwszy klejnot" (Gems) jubiler Dobromir przeprowadza się z Orlej Przełęczy
 	"jeweler": {"pos": Vector2i(26, 31), "size": Vector2i(5, 4), "color": Color("3f8f9a"), "fit": true,
-			"time": 170.0, "art": "construction_lodge", "cost": {"wood": 60, "stone": 80, "iron_ore": 15},
-			"requires_quest": "jeweler_gem",
+			"time": 170.0, "art": "construction_lodge",
 			"description": "Między kuźnią a drogą do bramy południowej. Jubiler Dobromir przeprowadzi się tu z Orlej Przełęczy - osadzi i połączy kamienie, a w nowym warsztacie także przeszlifuje kamień (nowe premie za złoto).",
 			"start_line": "Stawiamy chatę dla jubilera! Dobromir już pakuje narzędzia.",
 			"done_line": "Chata jubilera gotowa! Dobromir zjechał z gór z całym warsztatem.",
@@ -542,6 +541,8 @@ func build(origin: Vector2i, ground: TileMapLayer, floors: Node2D, entities: Nod
 	_build_decorations()
 	_build_npcs()
 	set_process(true)
+	player.quests.quest_done.connect(_on_quest_done)
+	sync_story.call_deferred(false)
 	if Engine.has_meta("celebrate"):
 		Engine.remove_meta("celebrate")
 		celebrate.call_deferred()
@@ -1685,14 +1686,13 @@ func _build_npcs() -> void:
 	storekeeper.looks_around = false
 	storekeeper.display_name = "Magazynier Zenon"
 	storekeeper.services.assign(["storage"])
-	storekeeper.dialog_greeting = Lang.t("Magazyn osady do twoich usług. Zostaw, co chcesz - przypilnuję. Drewno i kamień zawsze się przydadzą!")
+	storekeeper.dialog_greeting = Lang.t("Magazyn osady do twoich usług. Zostaw, co chcesz - przypilnuję. Drewno i kamień z lasu też tu trzymamy.")
 	_entities.add_child(storekeeper)
 
 	_chief = _npc("chief", Vector2(34.4, 13.6), Npc.Role.IDLE, LINES_CHIEF)
 	_chief.display_name = "Sołtys Mirosław"
 	_chief.quest_chain.assign([UNLOCK_QUEST])
-	_chief.services.assign(["build"])
-	_chief.dialog_greeting = Lang.t("Ostoja rośnie dzięki tobie! Przynieś drewno i kamień - z plecaka albo z magazynu - a cieśle postawią, co zechcesz.")
+	_chief.dialog_greeting = Lang.t("Ostoja rośnie dzięki tobie! Każda twoja wyprawa ściąga do nas nowych ludzi, a cieśle stawiają dla nich kolejne budowle.")
 
 	_entities.add_child(_chief)
 	map_markers.append({"position": _chief.position, "color": MAP_CHIEF, "size": 2.0})
@@ -1773,39 +1773,25 @@ func _use_planks() -> void:
 
 
 # ---------------------------------------------------------------- budowy (koszary, chatka myśliwych)
-## Zlecenie budowy u sołtysa: zabiera surowce (najpierw z plecaka, potem z magazynu)
-## i w wyznaczonym miejscu rusza plac budowy. Zwraca false, gdy czegoś brakuje.
-func start_project(project: String, player: Player) -> bool:
-	if project_state(project) != "none" or not building_unlocked(player) or not can_afford(project, player) \
-			or project_locked(project, player) != "":
-		return false
-	var cost: Dictionary = PROJECTS[project]["cost"]
-	for id: String in cost:
-		player.take_owned(id, cost[id])
-	set_project(project, "building", PROJECTS[project]["time"])
-	_chief.say(Lang.t(PROJECTS[project]["start_line"]))
-	return true
+## Budowle z fabuły: każda z `builds` wykonanych kroków zadania głównego, której jeszcze nie ma, powstaje.
+## `announce` - krok oddany przed chwilą w Ostoi: rusza plac budowy, a sołtys to ogłasza; inaczej (wczytanie zapisu,
+## krok oddany w innej krainie) budowla od razu stoi.
+func sync_story(announce: bool) -> void:
+	if _player == null or not is_inside_tree():
+		return
+	for project: String in MainQuests.story_projects(_player.quests):
+		if project_state(project) != "none":
+			continue
+		if announce:
+			set_project(project, "building", PROJECTS[project]["time"])
+			_chief.say(Lang.t(PROJECTS[project]["start_line"]))
+		else:
+			set_project(project, "built")
 
 
-## Budowanie odblokowuje zadanie sołtysa (w starszych zapisach - już rozpoczęta budowa).
-func building_unlocked(player: Player) -> bool:
-	return player.quests.state_of(UNLOCK_QUEST) == Quests.STATE_DONE or not _projects.is_empty()
-
-
-## Powód, dla którego budowy nie da się jeszcze zlecić ("" - można), np. zadanie, które trzeba najpierw wykonać.
-func project_locked(project: String, player: Player) -> String:
-	var quest: String = PROJECTS[project].get("requires_quest", "")
-	if quest != "" and player.quests.state_of(quest) != Quests.STATE_DONE:
-		return Lang.t("Najpierw zadanie: %s") % Quests.get_data(quest)["title"]
-	return ""
-
-
-func can_afford(project: String, player: Player) -> bool:
-	var cost: Dictionary = PROJECTS[project]["cost"]
-	for id: String in cost:
-		if player.count_owned(id) < int(cost[id]):
-			return false
-	return true
+func _on_quest_done(id: String) -> void:
+	if MainQuests.is_main(id) and not MainQuests.DATA[id].get("builds", []).is_empty():
+		sync_story(true)
 
 
 ## Postęp trwającej budowy (0..1).
@@ -1848,6 +1834,7 @@ func load_save_data(data: Dictionary) -> void:
 	if not _projects.is_empty() and _player.quests.state_of(UNLOCK_QUEST) != Quests.STATE_DONE:
 		_player.quests.states[UNLOCK_QUEST] = Quests.STATE_DONE
 		_player.quests.changed.emit()
+	sync_story(false)
 	update_trophies()
 
 

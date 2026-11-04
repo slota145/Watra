@@ -21,13 +21,14 @@ const RANK_ACTIVE: Array[int] = [4, 14, 21, 27, 32, 36, 40]
 const MAX_RANK := 6
 ## Najwyższy poziom podróżników wg rangi gildii (wyższa ranga ściąga silniejszych).
 const RANK_LEVEL_CAP: Array[int] = [12, 18, 24, 30, 36, 42, 45]
-## Ulepszenia gildii (u pisarza gildii): potrzebna sława gildii (ze zleceń z tablicy - nie ubywa) oraz złoto i surowce.
+## Ulepszenia gildii (u pisarza gildii): potrzebna sława gildii (ze zleceń z tablicy - nie ubywa) oraz złoto
+## (dawniej też drewno, kamień i ruda - gracz nie musi już zbierać surowców; ich wartość doliczona do złota).
 const RANK_COSTS := [{}, {},
-	{"fame": 60, "gold": 1000, "wood": 100, "stone": 100},
-	{"fame": 180, "gold": 3000, "wood": 200, "stone": 200},
-	{"fame": 400, "gold": 6000, "wood": 300, "stone": 300, "iron_ore": 30},
-	{"fame": 800, "gold": 12000, "wood": 400, "stone": 400, "iron_ore": 60},
-	{"fame": 1500, "gold": 20000, "wood": 500, "stone": 500, "iron_ore": 100},
+	{"fame": 60, "gold": 2000},
+	{"fame": 180, "gold": 5000},
+	{"fame": 400, "gold": 9000},
+	{"fame": 800, "gold": 16000},
+	{"fame": 1500, "gold": 26000},
 ]
 const MALE := ["Bogumił", "Radomir", "Wojsław", "Ziemowit", "Lubomir", "Gniewko", "Mścisław", "Dobrosław", "Sobiesław",
 		"Jaromir", "Czcibor", "Świętosław", "Wszemir", "Racibor", "Bożydar", "Stanimir", "Witosław", "Krzesimir", "Dalibor", "Unisław"]

@@ -177,7 +177,8 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
   jubiler Dobromir), esencje legend (`essences.gd`), rzemiosło premii runami (`item_craft.gd`, `ItemCraft.RUNES`), torby (`bags.gd`), pas,
   przedmioty niezidentyfikowane (`unidentified.gd`), filtr łupu w ustawieniach (`Loot.filtered_gold`), encyklopedia (`codex.gd`, klawisz L), talizmany w siatce 4x3
   (`talismans.gd`, `Equipment.talismans`, okno `ui/talisman_window.gd`, wybór nagrody `ui/talisman_offer.gd`).
-- **Watra i Ostoja:** Watra z ofiarami, żarem i Darami (`boons.gd`, `ui/watra_window.gd`), budowy osady (`settlement.gd`),
+- **Watra i Ostoja:** Watra z ofiarami, żarem i Darami (`boons.gd`, `ui/watra_window.gd`), budowle osady stawiane za kroki
+  zadania głównego (`builds` w `main_quests.gd`, `Settlement.sync_story` - bez okna budowy i kosztów),
   lochy Watry (`dungeon.gd`, `dungeons.gd`) z mechanikami (`Dungeons.MECHANICS`: skrzynie `dungeon_chest.gd`, kapliczki
   `dungeon_shrine.gd`, Kryształ Watry `watra_crystal.gd`, elity `dungeon_elite.gd`, Uroczysko `uroczysko.gd`, Krąg Żertwy
   `zertwa.gd`, Skarbnik `skarbnik.gd`, Mgła Nawii `nawia_mist.gd`) i Ołtarzem Welesa, bożki zmieniające loch (`idols.gd`), portal do miasta (klawisz B, `town_portal.gd`, `Dungeon.portal_state`), zielarstwo (`herbs.gd`).
@@ -479,7 +480,9 @@ Oba systemy zależą od gildii poszukiwaczy przygód w Ostoi (budowla `guild` w 
 
 ### Świat
 
-- [ ] Budowa i rozbudowa obozów w innych krainach, które pasywnie dają surowce albo inne korzyści.
+- [ ] Budowa i rozbudowa obozów w innych krainach, które pasywnie dają surowce albo inne korzyści. Decyzja autora
+  (4.11.2026): drewna i kamienia gracz nie musi już zbierać ręcznie - mają je zbierać robotnicy w obozach (jak w BDO),
+  a ich ujściem będą np. rangi gildii i Druga Watra.
 - [ ] Wydarzenia w świecie - dalsze pomysły: kolejni world bossi (np. Baba Jaga w chacie na kurzych nogach), kolejni
   bossowie polowań, zawody na święcie (strzelanie do tarcz, manekiny na czas).
 - [ ] Uzupełnienie siatki mapy świata (dziś krainy stoją w kształcie krzyża) o 6 krain:

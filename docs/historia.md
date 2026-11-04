@@ -1627,6 +1627,22 @@ odpowiedniej sekcji.
     pod nimi Wzmocnij (przed ostatnim - „Przemień w legendy”, w dymku fale i poziom potworów), Przelosuj (za Kości),
     Później. Testy: `tests/test_skarbnik.gd`.
 
+- [x] **Budowle Ostoi z fabuły zamiast zbierania drewna** (autor, 4.11.2026 - zbieranie drewna i kamienia na początku
+  psuło tempo i nie pasowało do gry): okno budowy u sołtysa usunięte (`build_window.gd`), budowle nie mają kosztu.
+  Kroki zadania głównego mają `builds` (`MainQuests.DATA`), po oddaniu kroku cieśle stawiają budowlę
+  (`Settlement.sync_story` - w Ostoi plac budowy i zapowiedź sołtysa, przy wczytaniu albo kroku oddanym w innej krainie
+  od razu stoi; `World.village_built` liczy też budowle z fabuły). Kolejność: Ręce do pracy - lecznica, Ścieżka oręża -
+  chata mędrca (cofanie umiejętności wcześnie), Wódz goblinów - targowisko, Wilcze wycie - chatka myśliwych, Płomień
+  Watry - kaplica, W płomienie - gildia, Stary Młyn - chaty osadników, Barykada Bombardiera - warsztat płatnerza,
+  Bagienny Bród - łaźnia, Pan topielców - koszary, Szlachetny kamień - chata jubilera. Prośba sołtysa
+  („Ostoja prosi o pomoc”) to teraz 20 goblinów z obozów (drwale boją się wyjść), krok „Pierwsza budowla” usunięty
+  (jego punkt umiejętności przeszedł na „Ręce do pracy”). Ulepszenia gildii tylko za sławę i złoto
+  (`Travelers.RANK_COSTS`, wartość surowców doliczona). Drewno i kamień zostają (zlecenia, bożki, rynek) - docelowo
+  dla obozów z robotnikami. Testy: `test_main_quests`, `test_jeweler_hut`.
+- [x] Ikona w dymku przedmiotu znikała (zamiast niej id, np. `gen_1366`): Godot obcina brzegi tekstu dymka
+  (`strip_edges`), a znacznik `Items.ICON_MARK` był znakiem sterującym `\u001e`; teraz znak z prywatnego zakresu
+  Unicode (`\ue000`), sprawdza to `test_loot`.
+
 ## Zielarstwo (Pomysły i rzeczy do zrobienia)
 - [x] **Zioła i mikstury zielarki** (`scripts/herbs.gd`, roślina `scripts/herb.gd`, grafiki z PixelLab przez `tools/herb_art.py`):
   w każdej krainie rośnie jej zioło (dziurawiec, rumianek, tatarak, arnika, kwiat paproci - rzadki, bieluń), zrywane klawiszem F

@@ -75,4 +75,6 @@ func _run() -> void:
 	_check(loot.WORLD_LEGEND_CHANCE * 700.0 < 0.1, "legenda z potwora bardzo rzadka (cała kraina < 10%)")
 	print("\n--- opis z porównaniem ---")
 	print(items.describe(high, 0, {"id": low, "enchant": 5}))
+	# Godot obcina brzegi tekstu dymka (strip_edges) - znacznik ikony musi to przetrwać
+	_check(items.describe(high).strip_edges().count(items.ICON_MARK) == 2, "znacznik ikony przetrwa obcięcie brzegów dymka")
 	quit()
