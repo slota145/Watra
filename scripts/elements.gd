@@ -38,6 +38,53 @@ const MONSTERS := {
 	"pinnacle_weles": NAWIA, "pinnacle_marzanna": COLD, "pinnacle_czarnobog": NAWIA, "pinnacle_horde": NAWIA,
 }
 
+## Odporności potworów (etap 2): ułamek zmniejszający obrażenia od żywiołu i Nawii zadawane przez gracza; ujemny -
+## wrażliwość. Umiarkowane (najwyżej +50%), żeby mag jednego żywiołu nie był bezradny w żadnej krainie; przebicie
+## odporności z przedmiotów (CharacterStats.penetration) je zmniejsza. Brak wpisu - bez odporności.
+const UNDEAD := {COLD: 0.3, NAWIA: 0.4, FIRE: -0.25}
+const ROTTEN := {NAWIA: 0.4, FIRE: -0.3}
+const WOOD := {FIRE: -0.4, COLD: 0.2}
+const SPIDER := {NAWIA: 0.3, FIRE: -0.25}
+const WATER := {COLD: 0.3, LIGHTNING: -0.3}
+const STORM := {LIGHTNING: 0.3, COLD: -0.2}
+const KOBOLD := {FIRE: 0.2, COLD: -0.2}
+const MONSTER_RESIST := {
+	"skeleton": UNDEAD, "skeleton_archer": UNDEAD, "skeleton_knight": UNDEAD, "necromancer": UNDEAD,
+	"zombie": ROTTEN, "ghoul": ROTTEN, "colossal_ghoul": ROTTEN,
+	"treant": WOOD, "ancient_tree": WOOD, "cocoon": WOOD, "leshy": {NAWIA: 0.3, FIRE: -0.3},
+	"spider": SPIDER, "web_spider": SPIDER, "spiderling": SPIDER, "spider_queen": SPIDER,
+	"beast_bear": {COLD: 0.2}, "beast_werewolf": {COLD: 0.2, NAWIA: 0.2},
+	"frogman": WATER, "frog_spitter": WATER, "frog_chief": WATER, "rusalka": WATER,
+	"drowner": {COLD: 0.4, LIGHTNING: -0.3}, "wodnik": {COLD: 0.5, LIGHTNING: -0.3},
+	"wisp": {FIRE: 0.5, COLD: -0.3},
+	"birdman": STORM, "birdman_thrower": STORM, "birdman_shaman": {LIGHTNING: 0.4, COLD: -0.2},
+	"storm_eagle": {LIGHTNING: 0.5, COLD: -0.2}, "gryf": {LIGHTNING: 0.4, COLD: -0.2},
+	"satyr": {COLD: -0.2}, "satyr_piper": {COLD: -0.2, LIGHTNING: 0.2}, "satyr_brute": {COLD: -0.2}, "satyr_king": {COLD: -0.2, NAWIA: 0.2},
+	"kobold": KOBOLD, "kobold_slinger": KOBOLD, "kobold_bomber": {FIRE: 0.4, COLD: -0.2}, "kobold_bombardier": {FIRE: 0.4, COLD: -0.2},
+	"field_worm": {FIRE: -0.2, LIGHTNING: 0.2}, "giant_worm": {FIRE: -0.2, LIGHTNING: 0.2},
+	"bies": {FIRE: 0.5, COLD: -0.3}, "hydra": {NAWIA: 0.4, FIRE: -0.2},
+	"world_boss_zmij": {FIRE: 0.5, COLD: -0.25}, "world_boss_wij": {NAWIA: 0.4, FIRE: -0.25},
+	"pinnacle_weles": {NAWIA: 0.4, LIGHTNING: 0.2}, "pinnacle_marzanna": {COLD: 0.5, FIRE: -0.25},
+	"pinnacle_czarnobog": {NAWIA: 0.5, FIRE: -0.15}, "pinnacle_horde": {FIRE: 0.2, COLD: 0.2, LIGHTNING: 0.2, NAWIA: 0.2},
+}
+## Żywioł trafienia gracza wg rodzaju odgłosu (Player.hit_enemy, sound) - reszta to obrażenia fizyczne / tajemne.
+const SOUND_ELEMENTS := {"fire": FIRE, "ice": COLD, "lightning": LIGHTNING}
+## Premia do obrażeń umiejętności z tagiem żywiołu (Skills.TAGS) - "elemental_damage" działa na wszystkie trzy.
+const TAG_DAMAGE := {"fire": "fire_damage", "ice": "cold_damage", "lightning": "lightning_damage"}
+## Najwyższa odporność potwora po przebiciu (ułamek) - pełnej odporności nie ma nigdy.
+const MAX_MONSTER_RESISTANCE := 0.9
+
+
+## Odporności potwora danej sceny {żywioł: ułamek}.
+static func monster_resistances(scene_id: String) -> Dictionary:
+	return MONSTER_RESIST.get(scene_id, {})
+
+
+## Mnożnik obrażeń gracza od żywiołu przy odporności potwora `resist` i przebiciu `penetration`.
+static func hit_multiplier(resist: float, penetration: float) -> float:
+	return 1.0 - clampf(resist - penetration, MIN_RESISTANCE, MAX_MONSTER_RESISTANCE)
+
+
 ## Kara do odporności w bieżącym miejscu (ustawia świat przy wejściu: 0 w krainach i zwykłych lochach).
 static var penalty := 0.0
 

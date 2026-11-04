@@ -43,6 +43,8 @@ const DRILL_PERIOD := 1.6
 var level := 0
 ## Żywioł ataków potwora (Elements.MONSTERS wg sceny; ustawiany w _apply_level).
 var element := Elements.PHYSICAL
+## Odporności i wrażliwości na obrażenia gracza {żywioł: ułamek} (Elements.MONSTER_RESIST wg sceny).
+var resistances := {}
 
 ## Ładowane przy użyciu, nie przez preload - unika cyklicznych zależności (Wolf dziedziczy po Goblin).
 const PICKUP_PATH := "res://scenes/pickup.tscn"
@@ -160,6 +162,7 @@ func _apply_level() -> void:
 	if level <= 0:
 		level = Levels.zone_default
 	element = Elements.of_monster(scene_file_path.get_file().get_basename())
+	resistances = Elements.monster_resistances(scene_file_path.get_file().get_basename())
 	var ref := Levels.reference_of(scene_file_path)
 	var strength: float = max_health / ref[0]
 	if self is Boss:

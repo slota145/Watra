@@ -187,6 +187,11 @@ func _refresh() -> void:
 		extras.append(tr("Obrażenia fizyczne (ataki): +%d%%") % roundi(physical * 100.0))
 	if magic > 0.005:
 		extras.append(tr("Obrażenia magiczne (czary): +%d%%") % roundi(magic * 100.0))
+	# premie żywiołów (Elements.TAG_DAMAGE) i przebicie odporności potworów
+	for stat: String in ["fire_damage", "cold_damage", "lightning_damage", "elemental_damage", "resistance_penetration"]:
+		var value := s._bonus(stat)
+		if value > 0.005:
+			extras.append("%s: +%d%%" % [Lang.t(Items.STAT_NAMES[stat]), roundi(value * 100.0)])
 	if s.crit_chance() > 0.0:
 		extras.append(tr("Cios krytyczny: %d%% szans, %d%% obrażeń") % [roundi(s.crit_chance() * 100.0), roundi(s.crit_multiplier() * 100.0)])
 	if s.life_on_hit() > 0:
