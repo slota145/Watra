@@ -322,6 +322,20 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
 - [ ] **Aury rezerwujące manę**: zrobione, czekają na ocenę autora (szukaj „Aury rezerwujące manę - krok 3”
   w `docs/historia.md`). Do ustalenia po ograniu: liczby (`scripts/aura_data.gd`), gniazda na kamienie wsparcia
   dla aur, animacje ataków aur żywiołów z kreatora efektów PixelLab.
+- [ ] **Bogatsze strefy pośrednie i „autostrady” we wspólnym drzewku** (pomysł autora, listopad 2026): strefy
+  siła/zręczność, zręczność/inteligencja i siła/inteligencja wyglądają biednie. Plan: drobne węzły z premiami pasującymi
+  do strefy (krwawienie, pioruny, ogień i aury, +atrybuty) i po 2-3 węzły znaczące na strefę, później więcej umiejętności
+  łączonych. Do tego 2 „autostrady” - pierścienie tanich węzłów (+atrybut) po zewnętrznej krawędzi, łączące końce stron,
+  z wejściami z dala od węzłów kluczowych. Zamiast pustych miejsc („soon”, przez które drzewko przechodzi za darmo)
+  prawdziwe drobne węzły; puste miejsca tylko pod przyszłe umiejętności łączone. Do dopytania: ile węzłów na strefę,
+  jakie premie, gdzie wejścia na autostrady, jeden pierścień czy dwa.
+  **Odporności w drzewku** (ustalenia z autorem): dziś są tylko 4 węzły znaczące po +15% (Ognioodporny, Zimna krew,
+  Uziemienie, Hart ducha) i 3 drobne +6% wszystkich przy środku, a sufit 75% jest stały (`Elements.MAX_RESISTANCE`).
+  Plan jak w PoE: główne źródło odporności zostaje na przedmiotach; odporność na wszystkie żywioły dostępna dla każdego
+  (drobne węzły przy środku i na autostradach); pojedyncze żywioły tematycznie (ogień - siła, lód - inteligencja, pioruny -
+  strefa zręczność/inteligencja, Nawia - siła) w małych skupiskach; maksymalna odporność bardzo rzadko - po jednym drogim
+  węźle znaczącym na żywioł (+1-2%) na końcu skupiska, do tego legendy albo talizmany; sufit liczony z premii zamiast
+  stałego, z górnym limitem (np. 85%).
 - [ ] **Przebudowa rozwoju postaci**: zastąpiona planem wspólnego drzewka (`docs/plan_drzewek.md`). Osobne punkty
   statystyk (2 za awans) i umiejętności (pasek) już są - punkt niżej.
 - [ ] **Punkty umiejętności z osobnego paska doświadczenia** (pomysł autora, listopad 2026; jak w BDO): zrobione,
