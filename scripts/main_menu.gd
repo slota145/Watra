@@ -65,6 +65,15 @@ func _ready() -> void:
 	subtitle.size = Vector2(300, 14)
 	logo.add_child(subtitle)
 	_subtitle = subtitle
+	# numer wersji w prawym dolnym rogu (project.godot - application/config/version), żeby testerzy wiedzieli, w co grają
+	var version := UiStyle.label(Lang.t("Wersja %s") % str(ProjectSettings.get_setting("application/config/version", "?")),
+			7, Color(1.0, 0.92, 0.78, 0.6))
+	version.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	version.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	version.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	version.position += Vector2(-4, -2)
+	version.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(version)
 
 	# przyciski po lewej, na ciemnym lesie - osada w środku zostaje odsłonięta
 	var side := PanelContainer.new()
