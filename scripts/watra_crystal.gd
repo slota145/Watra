@@ -9,6 +9,9 @@ extends Node2D
 ## - "miners": dwaj krasnoludzcy górnicy kują kryształ kilofami, a potwory polują na nich; im więcej górników
 ##   przeżyje, tym więcej kamieni wykują.
 ## Fale i nagroda rosną ze stopniem lochu (wave_count) (doskonałe kamienie od stopnia 3, kamienie miłosierdzia od stopnia 2).
+## Drzewko Watry (Dungeon.tree_value): "crystal_waves" - dodatkowe fale (nagroda +EXTRA_WAVE_REWARD za każdą),
+## "crystal_stones" - więcej kamieni zaklinania, "crystal_heal" - kryształ leczy gracza w pobliżu (HEAL_*),
+## "crystal_health" - więcej zdrowia kryształu i górników.
 
 signal finished(success: bool)
 
@@ -33,6 +36,10 @@ const MINER_HITS := 14.0
 const MINERS := 2
 ## Nagroda po porażce (kryształ rozbity przez potwory) i najmniejsza po ocaleniu choćby jednego górnika.
 const FAIL_REWARD := 0.35
+## Drzewko Watry: nagroda za każdą dodatkową falę, leczenie gracza (część zdrowia na sekundę) w promieniu.
+const EXTRA_WAVE_REWARD := 0.25
+const HEAL_RADIUS := 130.0
+const HEAL_PER_SECOND := 0.02
 const NAMES := {"crystal": "Kryształ Watry", "miners": "Górnicy przy Krysztale Watry"}
 
 var dungeon: Node
@@ -47,6 +54,8 @@ var health := 100.0
 ## dormant (czeka na gracza), waves, done
 var state := "dormant"
 var wave := 0
+## Ile fal (WAVES plus drzewko Watry).
+var waves := WAVES
 var miners: Array[Node2D] = []
 var _sprite: Sprite2D
 var _alive: Array = []
@@ -60,14 +69,17 @@ func _ready() -> void:
 	_set_texture(TEXTURE)
 	_sprite.scale = Vector2.ONE * (0.65 if variant == "crystal" else 0.5)
 	add_child(_sprite)
-	max_health = Levels.damage(level) * CRYSTAL_HITS
+	var sturdy: float = 1.0 + (dungeon.tree_value("crystal_health") if dungeon != null else 0.0)
+	if dungeon != null:
+		waves = WAVES + roundi(dungeon.tree_value("crystal_waves"))
+	max_health = Levels.damage(level) * CRYSTAL_HITS * sturdy
 	health = max_health
 	if variant == "miners":
 		for i in MINERS:
 			var miner := Miner.new()
 			miner.side = -1.0 if i == 0 else 1.0
 			miner.position = Vector2(miner.side * 26.0, 8.0)
-			miner.max_health = Levels.damage(level) * MINER_HITS
+			miner.max_health = Levels.damage(level) * MINER_HITS * sturdy
 			miner.health = miner.max_health
 			add_child(miner)
 			miners.append(miner)
@@ -111,6 +123,8 @@ func _process(delta: float) -> void:
 			if player.global_position.distance_to(global_position) <= WAKE_RADIUS:
 				_wake()
 		"waves":
+			if dungeon.tree_value("crystal_heal") > 0.0 and player.global_position.distance_to(global_position) <= HEAL_RADIUS:
+				player.heal(player.stats.max_health() * HEAL_PER_SECOND * delta)
 			_alive = _alive.filter(func(g) -> bool: return is_instance_valid(g) and g.state != Goblin.State.DEAD)
 			if variant == "miners" and targets().is_empty():
 				_finish(false)
@@ -118,11 +132,11 @@ func _process(delta: float) -> void:
 			# następna fala chwilę po pokonaniu poprzedniej albo po WAVE_TIMEOUT; po ostatniej - koniec
 			_wave_timer -= delta
 			if _alive.is_empty():
-				if wave >= WAVES:
+				if wave >= waves:
 					_finish(true)
 					return
 				_wave_timer = minf(_wave_timer, WAVE_DELAY)
-			if _wave_timer <= 0.0 and wave < WAVES:
+			if _wave_timer <= 0.0 and wave < waves:
 				_spawn_wave()
 
 
@@ -153,7 +167,7 @@ func _spawn_wave() -> void:
 		goblin.sitting = false
 		_alive.append(goblin)
 	Sfx.play("telegraph", -2.0)
-	dungeon.w.hud.show_banner(tr("Fala %d z %d") % [wave, WAVES], Color(1.0, 0.75, 0.45))
+	dungeon.w.hud.show_banner(tr("Fala %d z %d") % [wave, waves], Color(1.0, 0.75, 0.45))
 
 
 ## Liczba potworów w fali `wave_number` (od 1) na stopniu lochu `dungeon_tier`; `mult` - modyfikator Hordy itp.
@@ -206,8 +220,11 @@ func _finish(success: bool) -> void:
 	MiscVfx.crystal_shatter(get_parent(), global_position, 70.0)
 	Sfx.play("rock_break", 2.0)
 	Sfx.play("quest_ready" if success else "ui_error")
+	factor *= 1.0 + EXTRA_WAVE_REWARD * (waves - WAVES)
+	var stones: float = 1.0 + dungeon.tree_value("crystal_stones")
 	for entry: Array in reward(tier, factor * dungeon.mechanic_power("crystal")):
-		dungeon._drop(global_position + Vector2(0, 18), entry[0], entry[1])
+		var amount: int = roundi(entry[1] * stones) if "stone" in str(entry[0]) else entry[1]
+		dungeon._drop(global_position + Vector2(0, 18), entry[0], amount)
 	var text := ""
 	if variant == "crystal":
 		text = tr("Kryształ Watry rozpada się w kamienie!") if success else tr("Potwory roztrzaskały Kryształ Watry - zostały tylko odłamki")

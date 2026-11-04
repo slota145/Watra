@@ -1116,6 +1116,11 @@ static func describe(id: String, enchant := 0, against := {}) -> String:
 		lines.append(Lang.t("Przedmiot przyzwania - PPM w leżu bossa"))
 	if item.has("effect"):
 		lines.append(Lang.t("Efekt: %s") % effect_text(item["effect"]["kind"], _effect_value_text(id, enchant)))
+	if item.has("effect2"):
+		# drugi efekt talizmanu (drzewko Watry, „Dwoisty Talizman”)
+		var second: Dictionary = item["effect2"]
+		lines.append(Lang.t("Efekt: %s") % effect_text(second["kind"], str(roundi(second["chance"])) if second["kind"] in COUNT_EFFECTS
+				else "%d%%" % roundi(float(second["chance"]) * 100.0)))
 	lines.append(Lang.t(item["description"]))
 	if other != "":
 		lines.append_array(_changes(id, enchant, other, other_enchant))

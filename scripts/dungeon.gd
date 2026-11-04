@@ -1006,35 +1006,44 @@ func power_extra(id: String, extra: int) -> int:
 	return roundi((mechanic_power(id) - 1.0) * 2.0 * extra)
 
 
+## Premia drzewka Watry zmieniająca mechanikę (WatraTree.value, np. "uro_elites"; 0 - brak).
+func tree_value(key: String) -> float:
+	return WatraTree.value(config.get("tree", {}), key)
+
+
+## Podwójna mechanika z drzewka Watry ("dup:<mechanika>"): `extra` dodatkowych sztuk z szansą z premii, inaczej 0.
+func dup_extra(id: String, extra := 1) -> int:
+	var chance := float(Dungeons.mechanic_bonus(config).get("dup", {}).get(id, 0.0))
+	return extra if chance > 0.0 and _rng.randf() < chance else 0
+
+
 ## Buduje wylosowane mechaniki (po potworach - strażnicy skrzyń i fale Kryształu dochodzą później).
 func _build_mechanics() -> void:
 	if mechanics.has("crystal"):
 		_build_crystal()
 	if mechanics.has("uroczysko"):
 		# największa z kilku wolnych komnat - krąg potrzebuje miejsca
-		var best := Rect2i()
-		for room in _mechanic_rooms(3):
-			if room.get_area() > best.get_area():
-				best = room
-		if best.get_area() > 0:
-			_add_uroczysko(best)
+		# druga sztuka (drzewko Watry) - w drugiej co do wielkości komnacie
+		var candidates := _mechanic_rooms(4)
+		candidates.sort_custom(func(a: Rect2i, b: Rect2i) -> bool: return a.get_area() > b.get_area())
+		for room: Rect2i in candidates.slice(0, 1 + dup_extra("uroczysko")):
+			_add_uroczysko(room)
 	if mechanics.has("zertwa"):
 		# największa z kilku wolnych komnat (bez Uroczyska) - fale potrzebują miejsca wokół kręgu
 		var taken: Array[Rect2i] = []
 		for stone in uroczyska:
 			taken.append(_room_of(stone.position))
-		var best := Rect2i()
-		for room in _mechanic_rooms(4):
-			if not taken.has(room) and room.get_area() > best.get_area():
-				best = room
-		if best.get_area() > 0:
-			_add_zertwa(best)
+		var candidates := _mechanic_rooms(5).filter(func(room: Rect2i) -> bool: return not taken.has(room))
+		candidates.sort_custom(func(a: Rect2i, b: Rect2i) -> bool: return a.get_area() > b.get_area())
+		for room: Rect2i in candidates.slice(0, 1 + dup_extra("zertwa")):
+			_add_zertwa(room)
 	if mechanics.has("skarbnik"):
 		# komnaty bez Uroczyska i Kręgu Żertwy (fale potrzebują miejsca); więcej Skarbników - premie mechanik
 		var taken: Array[Rect2i] = []
 		for other: Node2D in uroczyska + zertwy:
 			taken.append(_room_of(other.position))
-		var count := int(config.get("mechanic_bonus", {}).get("skarbnik_count", Dungeons.SKA_COUNT)) + power_extra("skarbnik", 1)
+		var count := int(config.get("mechanic_bonus", {}).get("skarbnik_count", Dungeons.SKA_COUNT)) + power_extra("skarbnik", 1) \
+				+ dup_extra("skarbnik")
 		var spare := _mechanic_rooms(rooms.size()).filter(func(room: Rect2i) -> bool: return not taken.has(room))
 		for room: Rect2i in spare.slice(0, count):
 			_add_skarbnik(room)
@@ -1049,22 +1058,36 @@ func _build_mechanics() -> void:
 				break
 	if mechanics.has("chests"):
 		var kinds := {}
+		# drzewko Watry: nowe rodzaje skrzyń, częstsze cechy, mimiki
+		var special := tree_value("chest_special") > 0.0
+		var trait_mult := 1.0 + tree_value("chest_traits")
 		for kind: String in Dungeons.CHEST_KINDS:
-			kinds[kind] = Dungeons.CHEST_KINDS[kind]["weight"]
-		for room in _mechanic_rooms(_rng.randi_range(Dungeons.CHESTS.x, Dungeons.CHESTS.y) + power_extra("chests", 2)):
+			if special or not Dungeons.CHEST_KINDS[kind].get("special", false):
+				kinds[kind] = Dungeons.CHEST_KINDS[kind]["weight"]
+		for room in _mechanic_rooms(_rng.randi_range(Dungeons.CHESTS.x, Dungeons.CHESTS.y) + power_extra("chests", 2) + dup_extra("chests", 2)):
 			var traits: Array[String] = []
 			for id: String in Dungeons.CHEST_TRAITS:
-				if _rng.randf() < Dungeons.CHEST_TRAITS[id]["chance"]:
+				var chance: float = tree_value("chest_mimic") if id == "mimic" else Dungeons.CHEST_TRAITS[id]["chance"] * trait_mult
+				if chance > 0.0 and _rng.randf() < chance:
 					traits.append(id)
 			_add_chest(Dungeons.weighted(_rng, kinds), traits, room)
 	if mechanics.has("shrine"):
 		var gifts := Dungeons.SHRINES.duplicate()
 		_shuffle(gifts)
-		for room in _mechanic_rooms(mini(gifts.size(), _rng.randi_range(Dungeons.SHRINE_COUNT.x, Dungeons.SHRINE_COUNT.y) + power_extra("shrine", 1))):
+		for room in _mechanic_rooms(mini(gifts.size(), _rng.randi_range(Dungeons.SHRINE_COUNT.x, Dungeons.SHRINE_COUNT.y) + power_extra("shrine", 1) + dup_extra("shrine"))):
 			_add_shrine(gifts.pop_back(), room)
 	if mechanics.has("elites"):
-		for room in _mechanic_rooms(_rng.randi_range(Dungeons.ELITES.x, Dungeons.ELITES.y) + power_extra("elites", 2)):
-			_add_elite(Dungeons.roll_elite_traits(_rng), room)
+		# drzewko Watry: „Bożkowe Piętno” (+1 cecha, pewny bożek) i Czempion (pierwsza elita: wszystkie grupy cech)
+		var marked := tree_value("elite_idol") > 0.0
+		var champion := tree_value("elite_champion") > 0.0
+		for room in _mechanic_rooms(_rng.randi_range(Dungeons.ELITES.x, Dungeons.ELITES.y) + power_extra("elites", 2) + dup_extra("elites", 2)):
+			var elite := _add_elite(Dungeons.roll_elite_traits(_rng, 9 if champion else (1 if marked else 0)), room)
+			if elite != null:
+				if marked:
+					elite.idol = true
+				if champion:
+					elite.make_champion()
+			champion = false
 
 
 ## Elita w komnacie: jeden z potworów gromady (nie strażnik, nie nieruchomy jak kokon) dostaje cechy
@@ -1210,6 +1233,18 @@ func _add_skarbnik(room: Rect2i) -> Skarbnik:
 	spirit.glow = _glow(spirit.position + Vector2(0, -16), Color(Skarbnik.COLOR, 0.45), Vector2(130, 100))
 	w._map_markers.append({"position": spirit.position, "color": Skarbnik.COLOR, "size": 2.5})
 	return spirit
+
+
+## Kolejny Skarbnik po wygranej (drzewko Watry, „Chciwość Skarbnika”) w komnacie bez innej dużej mechaniki;
+## null - brak wolnej komnaty.
+func add_extra_skarbnik() -> Skarbnik:
+	var taken: Array[Rect2i] = []
+	for other: Node2D in uroczyska + zertwy + skarbniki + mists:
+		taken.append(_room_of(other.position))
+	for room in _mechanic_rooms(rooms.size()):
+		if not taken.has(room):
+			return _add_skarbnik(room)
+	return null
 
 
 ## Komnata, w której leży punkt (pusty prostokąt - w korytarzu).

@@ -176,9 +176,11 @@ func _effect_power(kind: String) -> float:
 		if essence is Dictionary and essence.get("kind", "") == kind:
 			values.append([float(essence["value"]), essence.get("inverse", false)])
 	for entry: Dictionary in talismans:
-		var effect: Dictionary = Items.get_data(entry["id"]).get("effect", {})
-		if effect.get("kind", "") == kind:
-			values.append([float(effect["chance"]), false])
+		var data := Items.get_data(entry["id"])
+		for key in ["effect", "effect2"]:
+			var effect: Dictionary = data.get(key, {})
+			if effect.get("kind", "") == kind:
+				values.append([float(effect["chance"]), false])
 	if skill_book != null:
 		for essence: Dictionary in skill_book.essences():
 			if essence.get("kind", "") == kind:

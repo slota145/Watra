@@ -45,9 +45,11 @@ static func list(player: Player) -> Array[Dictionary]:
 	for group: String in player.boons.active:
 		var entry: Dictionary = player.boons.active[group]
 		var data: Dictionary = Boons.DEFS[entry["id"]]
-		result.append({"name": Lang.t(data["name"]), "kind": "good", "left": float(entry["left"]), "total": float(data["time"]),
-				"icon": _boon_icon(entry["id"]),
-				"description": "%s: %s" % [Lang.t(Boons.GROUP_NAMES[group]), Lang.t(data["description"])]})
+		var long_gift: bool = entry.get("dungeon", false)
+		result.append({"name": Lang.t(data["name"]), "kind": "good", "left": -1.0 if long_gift else float(entry["left"]),
+				"total": float(data["time"]), "icon": _boon_icon(entry["id"]),
+				"description": "%s: %s" % [Lang.t(Boons.GROUP_NAMES[data["group"]]), Lang.t(data["description"])]
+						+ ("\n" + Lang.t("Działa do końca lochu") if long_gift else "")})
 	var level := player.boons.watra_level()
 	if level > 1:
 		var steps := level - 1

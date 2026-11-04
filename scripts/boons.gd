@@ -123,6 +123,9 @@ var nawia_blessed: Array[String] = []
 var watra_tabs: Array = [[], [], []]
 var watra_tab := 0
 var watra_tab_names: Array = ["", "", ""]
+## Zapis miał stary układ drzewka Watry (WatraTree.VERSION): wybrane węzły przepadły, punkty wróciły do rozdania -
+## okno drzewka pokazuje o tym komunikat.
+var tree_refunded := false
 ## Bossowie szczytowi (Pinnacles): bóg -> liczba zwycięstw (pierwsze daje punkty Watry).
 var pinnacle_kills := {}
 ## Pomrok (Pinnacles.POMROK_*): najwyższy odblokowany stopień (0 - Władca Hordy jeszcze niepokonany; każde zwycięstwo
@@ -165,7 +168,10 @@ func _process(delta: float) -> void:
 		changed.emit()
 
 
-func grant(id: String) -> void:
+## Kapliczki w lochu z drzewkiem Watry (DungeonShrine): `time` - czas daru (-1 - z DEFS), `power` - mnożnik premii,
+## `stack` - dar w osobnym miejscu obok poprzednich (grupa "shrine_2"…), `dungeon_only` - gaśnie po wyjściu z lochu
+## (end_dungeon_gifts).
+func grant(id: String, time := -1.0, power := 1.0, stack := false, dungeon_only := false) -> void:
 	var data: Dictionary = DEFS[id]
 	# Pas Wiecznych Ziół: mikstura zielarki zostaje na stałe obok innych (do eternal_herbs różnych naraz)
 	if data["group"] == "elixir" and eternal_herbs > 0:
@@ -176,8 +182,38 @@ func grant(id: String) -> void:
 		active.erase("elixir")
 		changed.emit()
 		return
-	active[data["group"]] = {"id": id, "left": float(data["time"])}
+	var group: String = data["group"]
+	if stack:
+		# ten sam dar odnawia swoje miejsce, nowy zajmuje kolejne wolne
+		var index := 1
+		while active.has(_slot_group(group, index)) and active[_slot_group(group, index)]["id"] != id:
+			index += 1
+		group = _slot_group(group, index)
+	var entry := {"id": id, "left": float(data["time"]) if time < 0.0 else time}
+	if power != 1.0:
+		entry["power"] = power
+	if dungeon_only:
+		entry["dungeon"] = true
+	active[group] = entry
 	changed.emit()
+
+
+static func _slot_group(group: String, index: int) -> String:
+	return group if index <= 1 else "%s_%d" % [group, index]
+
+
+## Grupa premii (bez numeru miejsca dodatkowych kapliczek - "shrine_2" -> "shrine").
+static func group_of(key: String) -> String:
+	return str(DEFS[key]["group"]) if DEFS.has(key) else key
+
+
+## Wyjście z lochu: gasną dary kapliczek, które miały działać do końca lochu.
+func end_dungeon_gifts() -> void:
+	var ended := active.keys().filter(func(group: String) -> bool: return active[group].get("dungeon", false))
+	for group: String in ended:
+		active.erase(group)
+	if not ended.is_empty():
+		changed.emit()
 
 
 ## Pas Łowcy Dusz: cecha zabitej elity działa na gracza przez `time` sekund (odnawia się).
@@ -200,7 +236,7 @@ func has_group(group: String) -> bool:
 func bonus(stat: String) -> float:
 	var total := float(WATRA_PERKS.get(stat, 0.0)) * (watra_level() - 1)
 	for group: String in active:
-		total += float(DEFS[active[group]["id"]]["stats"].get(stat, 0.0))
+		total += float(DEFS[active[group]["id"]]["stats"].get(stat, 0.0)) * float(active[group].get("power", 1.0))
 	if eternal_herbs > 0:
 		for id in eternal:
 			total += float(DEFS[id]["stats"].get(stat, 0.0))
@@ -428,10 +464,11 @@ func tree_effects() -> Dictionary:
 func get_save_data() -> Dictionary:
 	var timed := {}
 	for group: String in active:
-		timed[group] = [active[group]["id"], active[group]["left"]]
+		timed[group] = [active[group]["id"], active[group]["left"], float(active[group].get("power", 1.0)),
+				active[group].get("dungeon", false)]
 	return {"active": timed, "bestiary": bestiary.duplicate(), "ember": ember, "ember_spent": ember_spent,
 			"nawia": nawia_cleared.duplicate(), "blessed": nawia_blessed.duplicate(),
-			"watra_tabs": watra_tabs.duplicate(true), "watra_tab": watra_tab, "watra_tab_names": watra_tab_names.duplicate(),
+			"watra_tabs": watra_tabs.duplicate(true), "watra_tab": watra_tab, "watra_tab_names": watra_tab_names.duplicate(), "watra_tree": WatraTree.VERSION,
 			"pinnacles": pinnacle_kills.duplicate(), "eternal": eternal.duplicate(),
 			"pomrok_unlocked": pomrok_unlocked, "pomrok": pomrok}
 
@@ -443,6 +480,11 @@ func load_save_data(data: Dictionary) -> void:
 		var entry: Array = timed[group]
 		if DEFS.has(str(entry[0])):
 			active[group] = {"id": str(entry[0]), "left": float(entry[1])}
+			if entry.size() >= 4:
+				if float(entry[2]) != 1.0:
+					active[group]["power"] = float(entry[2])
+				if bool(entry[3]):
+					active[group]["dungeon"] = true
 	ember = int(data.get("ember", 0))
 	ember_spent = int(data.get("ember_spent", 0))
 	nawia_cleared.clear()
@@ -456,6 +498,11 @@ func load_save_data(data: Dictionary) -> void:
 	watra_tabs = []
 	watra_tab_names = []
 	var saved_tabs: Array = data.get("watra_tabs", [])
+	# stary układ drzewka (przed nowym drzewkiem lochów): wszystkie punkty wracają do rozdania
+	tree_refunded = int(data.get("watra_tree", 1)) < WatraTree.VERSION and saved_tabs.any(
+			func(tab: Variant) -> bool: return tab is Array and not (tab as Array).is_empty())
+	if int(data.get("watra_tree", 1)) < WatraTree.VERSION:
+		saved_tabs = []
 	var saved_names: Array = data.get("watra_tab_names", [])
 	for tab in WatraTree.TABS:
 		var chosen: Array = []

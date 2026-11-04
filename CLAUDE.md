@@ -51,8 +51,8 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
   - `skill_tree.gd`: wspólne drzewko umiejętności (dane w `skill_tree_data.gd` generuje `python tools/shared_tree_draft.py`), `sword_skills.gd`, `bow_skills.gd` i `spell_skills.gd`: umiejętności miecza, łuku i księgi,
     `zone_skills.gd`: umiejętności i węzły stref pośrednich (z dwiema broniami, np. `"melee/bow"`, tagi odmiany - `Skills.HYBRID_TAGS`),
   - `nawia_map.gd`: Mapa Nawii (endgame - węzły-lochy stopni 8-17), okno `scripts/ui/nawia_window.gd`,
-    Błogosławieństwo Watry przy kapliczkach `scripts/ui/blessing_window.gd`, drzewko Watry `watra_tree.gd`
-    (3 zakładki, okno `scripts/ui/watra_tree_window.gd`), bossowie szczytowi `pinnacles.gd` i `pinnacle_boss.gd`,
+    Błogosławieństwo Watry przy kapliczkach `scripts/ui/blessing_window.gd`, drzewko Watry (lochów) `watra_tree.gd`
+    (skupiska mechanik porozrzucane po drzewku, 3 zakładki, okno `scripts/ui/watra_tree_window.gd`), bossowie szczytowi `pinnacles.gd` i `pinnacle_boss.gd`,
     Władca Hordy `horde_lord.gd` (Pomrok - stopnie aren),
   - `dungeons.gd`: dane lochów (klimaty, stopnie, modyfikatory, mechaniki), `dungeon.gd`: generator lochu (też lochy na zewnątrz), wystrój `dungeon_decor.gd`
     i `decor_<klimat>.gd`, okno `scripts/ui/dungeon_window.gd`,
@@ -303,7 +303,8 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   Mistrz Żywiołów, umiejętności z dwiema broniami (Ciśnięte Noże, Strzała Gromu, Zaklęte Ostrze - `scripts/zone_skills.gd`),
   Żelazna Wola i węzły znaczące; ikony z PixelLab (`tools/tree_step5_icons.py`). Przywołania (Wataha, Błędne Ogniki,
   Wierny tropiciel, Przewodnik stada, Wierne ogniki) też zrobione, czekają na ocenę autora (szukaj „…, przywołania”) -
-  krok 5 skończony, w drzewku nie ma już pustych miejsc. Dalej krok 6 (nowe drzewko lochów).
+  krok 5 skończony, w drzewku nie ma już pustych miejsc. Krok 6 (nowe drzewko lochów) zrobiony, czeka na ocenę autora
+  (szukaj „Nowe drzewko lochów” w `docs/historia.md`). Dalej krok 7 (przebudzenia).
 - [ ] **Modyfikacja premii tylko runami** (decyzja autora, listopad 2026): wszystkie sposoby zmiany premii
   (afiksów) przedmiotów mają działać przez runy - przedmioty-waluty jak orby w Path of Exile. Zrobione razem
   z Uroczyskiem (szukaj „Mechaniki w lochach, etap 3”): każde działanie warsztatu kowala zużywa swoją runę
@@ -413,19 +414,20 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     - F przy kapliczce krainy (od 1. oczyszczonego węzła jej obszaru) podnosi potwory do poziomu najtrudniejszego
     oczyszczonego węzła, łup i doświadczenie +2% za węzeł (`NawiaMap.blessing_*`, `Boons.nawia_blessed`,
     `ui/blessing_window.gd`, `Levels.zone_range`); miejsce na obóz odłożone do punktu o obozach;
-  - etap 3 zrobiony, czeka na ocenę autora (szukaj „Mapa Nawii, etap 3”): **drzewko Watry** (`scripts/watra_tree.gd`,
-    okno `ui/watra_tree_window.gd`) - 152 węzły w 13 gałęziach (mechaniki z Mgłą Nawii, bożki, łup, skarbiec, Błogosławieństwo),
-    3 zakładki z osobnymi pulami punktów, cofanie za złoto; premie idą do lochu w `config["tree"]`;
+  - etap 3 zrobiony (szukaj „Mapa Nawii, etap 3”): **drzewko Watry** (`scripts/watra_tree.gd`, okno
+    `ui/watra_tree_window.gd`), 3 zakładki z osobnymi pulami punktów, cofanie za złoto; premie idą do lochu
+    w `config["tree"]`;
   - etap 4 zrobiony, czeka na ocenę autora (szukaj „Mapa Nawii, etap 4”): **bossowie szczytowi** Weles, Marzanna,
     Czarnobóg (`scripts/pinnacles.gd`, `scripts/pinnacle_boss.gd`) - areny za 4 fragmenty kluczy z węzłów, serca
     na legendy, pasy w stylu Mageblooda i Headhuntera (Pas Wiecznych Ziół, Pas Łowcy Dusz, 10 serc);
   - etap 5 zrobiony, czeka na ocenę autora (szukaj „Mapa Nawii, etap 5”): **Władca Hordy** (`scripts/horde_lord.gd`) -
     wejście za serce każdego boga, 4 fazy z cieniami bogów i falami Hordy, legendy Władcy, Pas Zimowego Oddechu
     (Marzanna), tytuł „Pogromca Hordy”, posąg w Ostoi i stopnie **Pomroku** I-X dla wszystkich aren;
-  - **drzewko Watry do zrobienia od nowa** (decyzja autora, listopad 2026): skupiska węzłów dla każdej mechaniki
-    połączone neutralnymi węzłami, węzły zmieniające mechaniki - plan w `docs/plan_drzewek.md`;
+  - **drzewko Watry od nowa** zrobione, czeka na ocenę autora (szukaj „Nowe drzewko lochów” w `docs/historia.md`):
+    ok. 500 węzłów, 4 skupiska każdej mechaniki porozrzucane po drzewku, ścieżki neutralnych węzłów, węzły zmieniające
+    mechaniki (`Dungeon.tree_value`), podwójne mechaniki, węzły kluczowe z ceną, zwrot punktów Watry;
   - do zrobienia: obce bogi; do ustalenia po ograniu: siła bogów i Władcy, szanse na fragmenty i pasy, liczby
-    Pomroku, liczby w drzewku Watry, ewentualne ikony węzłów drzewka z PixelLab.
+    Pomroku, liczby w drzewku Watry (i czy punktów Watry wystarcza na ~500 węzłów), ewentualne ikony węzłów z PixelLab.
 - [ ] **Obce mitologie jako odległe królestwa** (luźny pomysł autora): świat zostaje słowiański, a królestwa grecki,
   nordycki, egipski tylko w końcówce gry (np. wrota w atlasie, najeźdźcy przez płomienie Watry), każde jako mały
   obszar z bossem szczytowym - obcym bogiem; tłumaczy hydrę i satyry. Na pinnacle nadają się też słowiańscy bogowie.
