@@ -82,7 +82,7 @@ func _check_map() -> void:
 	check("oczyszczony węzeł odsłania sąsiadów", (nodes[first]["links"] as Array).all(func(n: int) -> bool: return after.has(n))
 			and after.size() > start.size())
 	check("zamknięty węzeł", not _N.is_open(nodes, [], 89))
-	check("punkty Watry za węzły", _N.points([1, 2, 3]) == 3)
+	check("punkty Watry za węzły", _N.points([1, 2, 3]) == 3 * _N.POINTS_PER_NODE)
 	var area: String = nodes[0]["area"]
 	var all_ids := []
 	for node in nodes:
@@ -95,7 +95,7 @@ func _check_map() -> void:
 ## Zapis postępu (Boons) - dopiero po starcie gry (autoloady).
 func _check_boons() -> void:
 	var boons = load("res://scripts/boons.gd").new()
-	check("nowy węzeł daje punkt, powtórzony nie", boons.clear_nawia_node(5) and not boons.clear_nawia_node(5) and boons.watra_points() == 1)
+	check("nowy węzeł daje punkty, powtórzony nie", boons.clear_nawia_node(5) and not boons.clear_nawia_node(5) and boons.watra_points() == _N.POINTS_PER_NODE)
 	var data: Dictionary = JSON.parse_string(JSON.stringify(boons.get_save_data()))
 	var loaded = load("res://scripts/boons.gd").new()
 	loaded.load_save_data(data)
@@ -123,7 +123,7 @@ func _process(_d: float) -> bool:
 		check("okno mapy w HUD", hud.nawia_window != null)
 		dungeon._on_boss_died()
 		var boons = _world.player.boons
-		check("pokonany strażnik oczyszcza węzeł", boons.nawia_cleared.has(7) and boons.watra_points() == 1)
+		check("pokonany strażnik oczyszcza węzeł", boons.nawia_cleared.has(7) and boons.watra_points() == load("res://scripts/nawia_map.gd").POINTS_PER_NODE)
 		hud.nawia_window.open()
 		check("okno mapy otwiera się z 90 węzłami", hud.nawia_window.visible and hud.nawia_window._nodes.size() == 90)
 		var open_ids: Dictionary = _N.revealed(hud.nawia_window._nodes, boons.nawia_cleared)
