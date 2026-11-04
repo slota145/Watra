@@ -4,7 +4,7 @@ class_name NawiaMap
 ## 8-17 (Dungeons.TIER_LEVELS, potwory 45-90), od środka na zewnątrz. Węzeł ma stały klimat (w obszarze przeważają
 ## klimaty pasujące do krainy) i połączenia z sąsiadami. Na początku widać tylko pierwszy pierścień; pokonanie
 ## strażnika lochu z węzła (Dungeon._on_boss_died) oczyszcza węzeł i odsłania sąsiednie. Każdy nowy oczyszczony węzeł
-## daje punkt Watry (do przyszłego drzewka Watry). Układ losuje się z ziarna zapisu (ta sama mapa w jednym zapisie),
+## daje POINTS_PER_NODE punkty Watry (do drzewka Watry). Układ losuje się z ziarna zapisu (ta sama mapa w jednym zapisie),
 ## postęp (oczyszczone węzły) trzyma Boons.nawia_cleared. Okno: scripts/ui/nawia_window.gd.
 ## Błogosławieństwo Watry: oczyszczone węzły obszaru pozwalają przy kapliczce krainy podnieść jej potwory do poziomu
 ## najtrudniejszego oczyszczonego węzła (blessing_*), z premią do łupu i doświadczenia rosnącą z liczbą węzłów.
@@ -30,8 +30,9 @@ const LINK_RING := 0.5
 const LINK_CROSS := 0.3
 ## Mapa otwiera się od tego poziomu postaci (po Leśnym Cmentarzu).
 const UNLOCK_LEVEL := 40
-## Punkty Watry za każdy nowy oczyszczony węzeł.
-const POINTS_PER_NODE := 1
+## Punkty Watry za każdy nowy oczyszczony węzeł (90 węzłów - 180 punktów; z bogami i Władcą ok. 205 na ~500 węzłów
+## drzewka Watry, czyli ok. 40% drzewka).
+const POINTS_PER_NODE := 2
 ## Błogosławieństwo Watry: premia do łupu i doświadczenia za każdy oczyszczony węzeł obszaru (15 węzłów - +30%)
 ## i rozrzut poziomów krainy wokół poziomu węzła: [przy wejściu, w najdalszym zakątku, bossowie].
 const BLESS_BONUS_PER_NODE := 0.02
@@ -158,7 +159,7 @@ static func is_open(list: Array[Dictionary], cleared: Array, id: int) -> bool:
 	return revealed(list, cleared).has(id)
 
 
-## Punkty Watry z mapy (do przyszłego drzewka Watry).
+## Punkty Watry z mapy (do drzewka Watry).
 static func points(cleared: Array) -> int:
 	return cleared.size() * POINTS_PER_NODE
 

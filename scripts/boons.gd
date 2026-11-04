@@ -114,7 +114,7 @@ var bestiary := {}
 var ember := 0
 ## Żar wydany na modyfikatory lochów - zmniejsza żar do wydania, ale nie poziom Watry.
 var ember_spent := 0
-## Oczyszczone węzły Mapy Nawii (NawiaMap) - kolejne odsłaniają sąsiednie, każdy daje punkt Watry.
+## Oczyszczone węzły Mapy Nawii (NawiaMap) - kolejne odsłaniają sąsiednie, każdy daje punkty Watry.
 var nawia_cleared: Array[int] = []
 ## Krainy z włączonym Błogosławieństwem Watry (przełącznik przy kapliczce; NawiaMap.blessing_level).
 var nawia_blessed: Array[String] = []

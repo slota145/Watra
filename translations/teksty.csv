@@ -401,9 +401,9 @@ Gold: %d","character_window.gd"
 "Strażnik pokonany! Skarbiec otwarty
 Płomienie Watry zabiorą cię do Ostoi","Guardian defeated! The vault is open
 Watra's flames will take you to Ostoja","dungeon.gd"
-"Węzeł Nawii oczyszczony! Zdobywasz punkt Watry
-Płomienie Watry zabiorą cię do Ostoi","Nawia node cleansed! You gain a Watra point
-The flames of the Watra will take you back to Ostoja","dungeon.gd"
+"Węzeł Nawii oczyszczony! Punkty Watry: +%d
+Płomienie Watry zabiorą cię do Ostoi","Nawia node cleansed! Watra points: +%d
+The Watra flames will take you to Ostoja","dungeon.gd"
 "Zdobywasz tytuł: Pogromca Hordy","You earn the title: Horde Slayer","dungeon.gd"
 "[F] Ołtarz Welesa","[F] Altar of Weles","dungeon.gd"
 "Ołtarz Welesa","Altar of Weles","dungeon.gd, essence_window.gd"
@@ -1952,7 +1952,7 @@ Density %d, slain: %d, items: %d, support gems: %d, flints: %d","nawia_mist.gd"
 "Arena boga - poziom %d. Zużywa %d fragmenty.","","nawia_window.gd"
 "Bogowie","","nawia_window.gd"
 "Fragmenty: %d / %d   Serca: %d   Zwycięstwa: %d","","nawia_window.gd"
-"Horda wylała zaświaty na świat. Oczyszczaj węzły - każdy pokonany strażnik odsłania kolejne i daje punkt Watry.","The Horde has spilled the underworld onto the land. Cleanse the nodes - every defeated guardian reveals more and grants a Watra point.","nawia_window.gd"
+"Horda wylała zaświaty na świat. Oczyszczaj węzły - każdy pokonany strażnik odsłania kolejne i daje punkty Watry.","The Horde has spilled the underworld onto the land. Cleanse the nodes - every defeated guardian reveals more and grants Watra points.","nawia_window.gd"
 "Legenda","","nawia_window.gd"
 "Mapa Nawii","Map of Nawia","nawia_window.gd"
 "Obszar: %s (oczyszczono %d / %d)","Region: %s (cleansed %d / %d)","nawia_window.gd"
@@ -3504,7 +3504,7 @@ The blacksmith in Ostoja will set them in your gear","watra_crystal.gd"
 "Nazwa zakładki","","watra_tree_window.gd"
 "Nowe drzewko lochów: wszystkie punkty Watry wróciły do rozdania.","New dungeon tree: all Watra points have been refunded.","watra_tree_window.gd"
 "Premie zakładki:","","watra_tree_window.gd"
-"Punkt Watry za każdy oczyszczony węzeł Nawii. Każda zakładka ma własną, pełną pulę - działa wybrana.","","watra_tree_window.gd"
+"Punkty Watry za oczyszczone węzły Nawii i bogów. Każda zakładka ma własną, pełną pulę - działa wybrana.","Watra points for cleansed Nawia nodes and defeated gods. Each tab has its own full pool - the selected one is active.","watra_tree_window.gd"
 "W lochu działa zakładka z chwili wejścia.","","watra_tree_window.gd"
 "Wolne punkty: %d z %d","","watra_tree_window.gd"
 "Wybierz węzeł na drzewku.","","watra_tree_window.gd"
@@ -3708,6 +3708,10 @@ Kill enemies inside the circle to offer tribute","zertwa.gd"
 "Stary Dąb","Old Oak","zones.gd"
 "Wietrzne Turnie","Windy Crags","zones.gd"
 "cały świat (wydarzenie)","the whole world (event)","zones.gd"
+"Węzeł Nawii oczyszczony! Zdobywasz punkt Watry
+Płomienie Watry zabiorą cię do Ostoi","Nawia node cleansed! You gain a Watra point
+The flames of the Watra will take you back to Ostoja","(nieużywany)"
+"Horda wylała zaświaty na świat. Oczyszczaj węzły - każdy pokonany strażnik odsłania kolejne i daje punkt Watry.","The Horde has spilled the underworld onto the land. Cleanse the nodes - every defeated guardian reveals more and grants a Watra point.","(nieużywany)"
 "Gęsta Mgła","Thick Mist","(nieużywany)"
 "Leniwa Mgła","Sluggish Mist","(nieużywany)"
 "Pamięć Mgły","Memory of the Mist","(nieużywany)"

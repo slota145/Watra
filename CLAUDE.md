@@ -427,7 +427,8 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
     ok. 500 węzłów, 4 skupiska każdej mechaniki porozrzucane po drzewku, ścieżki neutralnych węzłów, węzły zmieniające
     mechaniki (`Dungeon.tree_value`), podwójne mechaniki, węzły kluczowe z ceną, zwrot punktów Watry;
   - do zrobienia: obce bogi; do ustalenia po ograniu: siła bogów i Władcy, szanse na fragmenty i pasy, liczby
-    Pomroku, liczby w drzewku Watry (i czy punktów Watry wystarcza na ~500 węzłów), ewentualne ikony węzłów z PixelLab.
+    Pomroku, liczby w drzewku Watry, ewentualne ikony węzłów z PixelLab. Punkty Watry podniesione (szukaj „Więcej punktów
+    Watry” w `docs/historia.md`): 2 za węzeł, 5 za boga, 10 za Władcę - ok. 205 na ~500 węzłów drzewka.
 - [ ] **Obce mitologie jako odległe królestwa** (luźny pomysł autora): świat zostaje słowiański, a królestwa grecki,
   nordycki, egipski tylko w końcówce gry (np. wrota w atlasie, najeźdźcy przez płomienie Watry), każde jako mały
   obszar z bossem szczytowym - obcym bogiem; tłumaczy hydrę i satyry. Na pinnacle nadają się też słowiańscy bogowie.
