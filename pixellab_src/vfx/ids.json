@@ -2848,5 +2848,47 @@
       21,
       21
     ]
+  },
+  "thrown_knife": {
+    "effect": "70fa6248-6b47-4ddd-bdd2-c88a5ae6088c",
+    "name": "Ciśnięte Noże - wirujący nóż (pętla, 4 pierwsze klatki obrotu)",
+    "frame": [
+      22,
+      22
+    ],
+    "frames": 4,
+    "fps": 16,
+    "anchor": [
+      11,
+      11
+    ]
+  },
+  "flame_wave": {
+    "effect": "d27a9ce6-65dd-4208-9538-5ddbbbc63cac",
+    "name": "Zaklęte Ostrze - płonąca fala (klatki 6-11 sierpa, wyśrodkowane na nim, pętla)",
+    "frame": [
+      48,
+      34
+    ],
+    "frames": 6,
+    "fps": 16,
+    "anchor": [
+      24,
+      17
+    ]
+  },
+  "thunder_arrow": {
+    "effect": "76c832dc-1c63-4ca8-966c-eef741fb2493",
+    "name": "Strzała Gromu - strzała z piorunową smugą (pętla, lot w prawo)",
+    "frame": [
+      48,
+      20
+    ],
+    "frames": 8,
+    "fps": 16,
+    "anchor": [
+      24,
+      10
+    ]
   }
 }

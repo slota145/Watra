@@ -244,15 +244,15 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 
 - **[U]** Rozpłatanie (miecz) - cięcie z krwawieniem; combo po Mgnieniu
 - **[Z]** Głębokie rany - +25% obrażeń krwawienia
-- **[Z]** Otwarte rany ✦ ⌛ - trafienia ciosami i strzałami mają 10% szansy na krwawienie (z każdą bronią)
+- **[Z]** Otwarte rany ✦ - trafienia ciosami i pociskami mają 10% szansy na krwawienie (z każdą bronią)
 - [d] +4 siły, +4 zręczności
 - **[K]** Krwawy Szał - krwawienie wrogów leczy cię o 30% zadanych nim obrażeń - teraz z każdą bronią
 
 ### Ciosy i szarże (5)
 
-- **[U]** Ciśnięte Noże ✦ ⌛ (miecz albo łuk; atak, pocisk, fizyczne, w czasie) - rzut 3 nożami wachlarzem, krwawienie (miecz albo łuk)
+- **[U]** Ciśnięte Noże ✦ (miecz albo łuk; atak, pocisk, fizyczne, w czasie) - rzut 3 nożami wachlarzem z krwawieniem; z mieczem noże wracają do ręki, z łukiem lecą dalej
 - **[Z]** Celny cios - +12% obrażeń ciosów
-- **[Z]** Rozpęd ✦ ⌛ - po umiejętności ruchu następny atak +30% obrażeń
+- **[Z]** Impet ✦ - po umiejętności ruchu następne trafienie +30% obrażeń
 - **[Z]** Krew za krew - +3 zdrowia za trafienie
 - [G] Gniazdo - kamień szlachetny (działa o połowę mocniej)
 
@@ -264,14 +264,14 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 
 - **[U]** Strzała Wichru (łuk) - podmuch odpychający (zręczność i inteligencja)
 - **[Z]** Gromowładny - +15% obrażeń od piorunów
-- **[U]** Strzała Gromu ✦ ⌛ (łuk albo księga; atak, czar, pocisk, piorun) - piorunowy pocisk przeskakujący na 2 wrogów (łuk albo księga)
+- **[U]** Strzała Gromu ✦ (łuk albo księga; atak, czar, pocisk, obszar, piorun) - piorunowy pocisk; z łuku przeskakuje na 2 wrogów, z księgi piorun z nieba uderza w obszar
 - **[Z]** Porażenie - +8% szansy na porażenie
 - **[Z]** Uziemienie ✦ - +15% odporności na pioruny
 
 ### Uniki (5)
 
 - **[Z]** Unik tancerza - +4% uniku
-- **[Z]** Zwiewność ✦ ⌛ - po uniku +10% szybkości na 2 s
+- **[Z]** Zwiewność ✦ - po uniku +10% szybkości ruchu, ataku i rzucania na 2 s
 - [d] +4 zręczności, +4 inteligencji
 - [G] Gniazdo - kamień szlachetny (działa o połowę mocniej)
 - **[K]** Myśliwy z Cienia - po umiejętności ruchu (każdej, nie tylko Odskoku) wrogowie tracą cię z oczu na 2 s, pierwsze trafienie podwójne
@@ -291,11 +291,11 @@ Legenda: **[U]** umiejętność, **[A]** aura, **[K]** węzeł kluczowy, **[Z]**
 
 ### Zaklęte ostrza (5)
 
-- **[U]** Zaklęte Ostrze ✦ ⌛ (miecz albo księga; atak, czar, obszar, ogień) - ostrze z płomienia: cios mieczem albo czar z księgi wysyła płonącą falę
+- **[U]** Zaklęte Ostrze ✦ (miecz albo księga; atak, czar, cios, obszar, ogień) - z mieczem cięcie i krótka płonąca fala, z księgą dłuższa i szersza fala ognia
 - **[Z]** Płonąca stal - +12% obrażeń od ognia
 - **[Z]** Ognioodporny ✦ - +15% odporności na ogień
 - [G] Gniazdo - kamień szlachetny (działa o połowę mocniej)
-- **[K]** Żelazna Wola ✦ ⌛ - obrażenia czarów rosną z siły zamiast z inteligencji
+- **[K]** Żelazna Wola ✦ - obrażenia czarów rosną z siły zamiast z inteligencji
 
 Ścieżki: 6 drobnych węzłów (+4 siły, +4 inteligencji, +4% obrażeń od ognia).
 

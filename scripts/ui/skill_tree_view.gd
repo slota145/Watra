@@ -44,6 +44,8 @@ const ICONS := {
 	"row_shot": preload("res://assets/skills/node_row_shot.png"), "silent_steps": preload("res://assets/skills/node_silent_steps.png"),
 	"running_breath": preload("res://assets/skills/node_running_breath.png"),
 	"mana_flow": preload("res://assets/skills/node_mana_flow.png"), "full_mind": preload("res://assets/skills/node_full_mind.png"),
+	"open_wounds": preload("res://assets/skills/node_open_wounds.png"), "impetus": preload("res://assets/skills/node_momentum.png"),
+	"lightness": preload("res://assets/skills/node_lightness.png"),
 	"tremor_stun": preload("res://assets/skills/ground_slam.png"),
 	"lunge_cooldown": preload("res://assets/skills/lunge.png"), "riposte_damage": preload("res://assets/skills/riposte.png"),
 	"blade_count": preload("res://assets/skills/spectral_blades.png"), "life_on_hit": preload("res://assets/skills/node_physical.png"),
@@ -89,7 +91,7 @@ const KEYSTONE_ICONS := {"cyclone_eye": preload("res://assets/skills/ks_cyclone_
 		"full_power": preload("res://assets/skills/ks_full_power.png"), "echo_runes": preload("res://assets/skills/ks_echo_runes.png"),
 		"last_bastion": preload("res://assets/skills/ks_last_bastion.png"),
 		"shadow_stalker": preload("res://assets/skills/ks_shadow_stalker.png"), "battle_frenzy": preload("res://assets/skills/ks_battle_frenzy.png"),
-		"elem_master": preload("res://assets/skills/ks_elem_master.png")}
+		"elem_master": preload("res://assets/skills/ks_elem_master.png"), "iron_will": preload("res://assets/skills/ks_iron_will.png")}
 ## Ikony pustych miejsc: aura i umiejętność wg tagów (tag "aura" albo forma), węzeł - wg rodzaju.
 const SOON_ICONS := {"aura": preload("res://assets/ui/tags/aura.png"), "skill": preload("res://assets/ui/tags/attack.png"),
 		"keystone": preload("res://assets/ui/tags/arcane.png"), "passive": preload("res://assets/ui/tags/arcane.png")}
@@ -379,7 +381,7 @@ func describe(id: String) -> String:
 			var weapon: String = Skills.get_data(skill)["weapon"]
 			if AuraData.is_aura(skill):
 				lines.append(tr("Aura - działa z każdą bronią. Połóż ją na pasku i naciśnij klawisz, żeby włączyć albo wyłączyć."))
-			elif _player != null and _player.stats.weapon_type() != weapon:
+			elif _player != null and not Skills.works_with(skill, _player.stats.weapon_type()):
 				lines.append("[color=#ff9a7a]%s[/color]" % (tr("Działa tylko z bronią: %s.") % Skills.weapon_name(weapon)))
 		"passive":
 			# węzeł znaczący z opisem (premia zmienia działanie, a nie liczbę) - opis zamiast listy premii

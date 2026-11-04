@@ -906,6 +906,34 @@ odpowiedniej sekcji.
   Do ustalenia po ograniu: liczby (`VIPER_*`, `SPLIT_*`, `CALTROPS_*`, `STALKER_*`, `FRENZY_*`), czy Szał ma przyspieszać
   też rzucanie czarów, czy Szereg ma dawać towarzyszkę każdej strzale wachlarza.
 
+- [x] **Krok 5 wspólnego drzewka, strefy pośrednie** (`docs/plan_drzewek.md`, listopad 2026). Autor wybrał: umiejętności
+  działają z obiema broniami strefy i z każdą trochę inaczej, „Rozpęd” przemianowany na **Impet** (nazwa zajęta przez
+  kamień wsparcia), Zwiewność - szybkość ruchu i ataku, Żelazna Wola bez kosztu. Nowy skrypt `scripts/zone_skills.gd`
+  (dziecko gracza `Player.zone_skills`, jak `SwordSkills`); umiejętność z bronią `"a/b"` idzie tam z `Player._press_slot`
+  i `cooldown_of`. `Skills.works_with` rozumie `"melee/bow"`, `Skills.weapon_name` daje „Broń biała albo łuk”,
+  `Skills.tags(id, broń)` - tagi odmiany z `Skills.HYBRID_TAGS` (np. Strzała Gromu z łuku to atak, z księgi czar;
+  `TAGS` trzyma wszystkie razem dla okna drzewka), `Player._make_projectile(..., tags)` przyjmuje tagi odmiany:
+  - **Ciśnięte Noże** (miecz albo łuk; `KNIVES_*`): wachlarz 3 noży z krwawieniem (`SwordSkills.bleed_enemy` z tagami
+    umiejętności). Z mieczem `ZoneSkills._Knife` - leci `KNIVES_MELEE_RANGE` i wraca do gracza, w każdą stronę trafia
+    każdego wroga raz; z łukiem zwykły pocisk (rodzaj `"knife"` w `Projectile.FX`, `Projectile.sound`) na `KNIVES_BOW_RANGE`;
+  - **Strzała Gromu** (łuk albo księga; `THUNDER_*`): pocisk `"thunder"`; z łuku trafienie przeskakuje piorunem
+    (`SpellSkills.lightning`) na `THUNDER_JUMPS` najbliższych wrogów (więcej z kamieniem Łańcuch), z księgi w miejsce
+    trafienia uderza piorun z nieba (`STORM_FX`) i rani wrogów w `THUNDER_STRIKE_RADIUS`;
+  - **Zaklęte Ostrze** (miecz albo księga; `BLADE_*`): płonąca fala `ZoneSkills._FlameWave` podpala (`SpellSkills.burn`,
+    `BLADE_BURN`); z mieczem najpierw cięcie przed sobą (`Traveler.SLASH_FX` w kolorze ognia) i krótka fala
+    (`BLADE_WAVE_MELEE`), z księgą dłuższa i szersza (`BLADE_WAVE_SPELL`, mocniejsza);
+  - węzły: **Otwarte rany** (`open_wounds` - `ZoneSkills.on_hit` z `Player.hit_enemy`: trafienie z tagiem cios / pocisk
+    z szansą wywołuje krwawienie `OPEN_WOUNDS_BLEED` obrażeń - `SwordSkills.bleed_total`), **Impet** (id węzła `momentum`,
+    premia `impetus` - po umiejętności ruchu następne trafienie w `IMPETUS_TIME` s +30%, `ZoneSkills.damage_factor`),
+    **Zwiewność** (`lightness` - `ZoneSkills.on_dodge` z uniku w `Player.take_damage`: na 2 s szybkość ruchu, ataku
+    i rzucania w `set_temp("lightness")`); Impet i Zwiewność mają ikony w efektach;
+  - **Żelazna Wola** (węzeł kluczowy): `CharacterStats.attribute_damage` - czar liczy siłę zamiast inteligencji.
+  Myśliwy z Cienia działał już wcześniej (po każdej umiejętności ruchu). Ikony z paczki `icons_step5_int` podpięte.
+  Efekty z kreatora (`pixellab_src/vfx/ids.json`): `thrown_knife` (wirujący nóż, 4 klatki - kreator obraca tylko
+  o ćwiartki), `flame_wave` (ognisty sierp), `thunder_arrow` (strzała-błyskawica). Stare zapisy - `SkillBook.FORMER_SOON`.
+  Test `tests/test_zone_skills.gd`. Do ustalenia po ograniu: liczby (`KNIVES_*`, `THUNDER_*`, `BLADE_*`, szanse
+  i siła węzłów w szkicu drzewka), czy noże z mieczem mają trafiać w powrocie z pełną siłą.
+
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)
   i 7 slotów umiejętności (LPM, PPM, Q, E, R, Z, X) z osobnym układem dla każdej broni. Każdy slot przyjmuje

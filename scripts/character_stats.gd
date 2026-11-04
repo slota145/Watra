@@ -431,6 +431,11 @@ func attribute_damage(tags: Array) -> float:
 			own.append(Skills.ATTRIBUTE_TAGS[tag])
 	if own.is_empty():
 		own.append(DAMAGE_ATTRIBUTE[weapon_type()])
+	# Żelazna Wola (węzeł kluczowy): czary rosną z siły zamiast z inteligencji
+	if "spell" in tags and "intelligence" in own and skill_book != null and skill_book.has_keystone("iron_will"):
+		own.erase("intelligence")
+		if not "strength" in own:
+			own.append("strength")
 	var points := 0.0
 	for id in own:
 		points += attribute(id)
