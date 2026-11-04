@@ -49,6 +49,7 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
   - `supports.gd`: kamienie wsparcia i gniazda umiejętności (dane; gniazda trzyma `skill_book.gd`), źródło kamieni i krzesiw -
     Mgła Nawii w lochach (`nawia_mist.gd`),
   - `skill_tree.gd`: wspólne drzewko umiejętności (dane w `skill_tree_data.gd` generuje `python tools/shared_tree_draft.py`), `sword_skills.gd`, `bow_skills.gd` i `spell_skills.gd`: umiejętności miecza, łuku i księgi,
+    `zone_skills.gd`: umiejętności i węzły stref pośrednich (z dwiema broniami, np. `"melee/bow"`, tagi odmiany - `Skills.HYBRID_TAGS`),
   - `nawia_map.gd`: Mapa Nawii (endgame - węzły-lochy stopni 8-17), okno `scripts/ui/nawia_window.gd`,
     Błogosławieństwo Watry przy kapliczkach `scripts/ui/blessing_window.gd`, drzewko Watry `watra_tree.gd`
     (3 zakładki, okno `scripts/ui/watra_tree_window.gd`), bossowie szczytowi `pinnacles.gd` i `pinnacle_boss.gd`,
@@ -295,11 +296,12 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   czeka na ocenę autora (szukaj „Aury rezerwujące manę - krok 3”). Krok 4 (nowe combo; Półksiężyc, Szybka salwa
   i Fala piorunów jako zwykłe umiejętności) zrobiony, czeka na ocenę autora (szukaj „Nowe combo - krok 4”).
   Krok 5 (nowe węzły kluczowe i nowe umiejętności) idzie strona po stronie: strony siły, zręczności i inteligencji
-  zrobione, czekają na ocenę autora (szukaj „Krok 5 wspólnego drzewka, strona siły”, „…, strona zręczności”
-  i „…, strona inteligencji”) - Wilczy Kieł, Ryk Tura, Skok Niedźwiedzia, Ostatni Bastion, Strzała Żmija, Rozszczepiona
-  Strzała, Kolczatka, Łowca w Cieniu, Szał Bitewny, Ściana Ognia, Lodowy Pancerz, Mistrz Żywiołów i węzły znaczące;
-  ikony z PixelLab (`tools/tree_step5_icons.py`, ikony stref i przywołań już są w `assets/skills/`). Dalej strefy,
-  na koniec osobno przywołania (Wataha, Błędne Ogniki, Wierny tropiciel).
+  oraz strefy pośrednie zrobione, czekają na ocenę autora (szukaj „Krok 5 wspólnego drzewka, strona siły”, „…, strona
+  zręczności”, „…, strona inteligencji” i „…, strefy pośrednie”) - Wilczy Kieł, Ryk Tura, Skok Niedźwiedzia, Ostatni
+  Bastion, Strzała Żmija, Rozszczepiona Strzała, Kolczatka, Łowca w Cieniu, Szał Bitewny, Ściana Ognia, Lodowy Pancerz,
+  Mistrz Żywiołów, umiejętności z dwiema broniami (Ciśnięte Noże, Strzała Gromu, Zaklęte Ostrze - `scripts/zone_skills.gd`),
+  Żelazna Wola i węzły znaczące; ikony z PixelLab (`tools/tree_step5_icons.py`, ikony przywołań już są w `assets/skills/`).
+  Na koniec osobno przywołania (Wataha, Błędne Ogniki, Wierny tropiciel).
 - [ ] **Modyfikacja premii tylko runami** (decyzja autora, listopad 2026): wszystkie sposoby zmiany premii
   (afiksów) przedmiotów mają działać przez runy - przedmioty-waluty jak orby w Path of Exile. Zrobione razem
   z Uroczyskiem (szukaj „Mechaniki w lochach, etap 3”): każde działanie warsztatu kowala zużywa swoją runę

@@ -21,6 +21,10 @@ const FX := {
 	"fire": [preload("res://assets/effects/fireball.png"), 8, 16.0, Vector2(18, 18), false, null, 0, 0.0, Vector2.ZERO, 0.0, 0.5],
 	"ice": [preload("res://assets/effects/frost_lance.png"), 6, 16.0, Vector2(35, 8), true,
 			preload("res://assets/effects/ice_shatter.png"), 8, 16.0, Vector2(27, 19), 0.6, 0.85],
+	# Ciśnięte Noże z łuku i Strzała Gromu (ZoneSkills)
+	"knife": [preload("res://assets/effects/thrown_knife.png"), 4, 16.0, Vector2(11, 11), true, null, 0, 0.0, Vector2.ZERO, 0.0, 0.7],
+	"thunder": [preload("res://assets/effects/thunder_arrow.png"), 8, 16.0, Vector2(24, 10), true,
+			preload("res://assets/effects/spell_zap.png"), 5, 20.0, Vector2(22, 22), 0.7, 0.6],
 }
 
 var direction := Vector2.RIGHT
@@ -49,6 +53,8 @@ var turret_damage := 0
 
 ## Tagi umiejętności ze znacznikiem (Skills.tags) - trafienia liczą jej kamienie wsparcia (Player.hit_enemy).
 var tags: Array = []
+## Odgłos trafienia (Player.hit_enemy: "blade", "lightning"...); "" - według rodzaju pocisku.
+var sound := ""
 ## Łańcuch (kamień wsparcia): ile razy pocisk po trafieniu odbije się do kolejnego wroga w pobliżu.
 var chain := 0
 ## Zasięg odbicia (Łańcuch: Supports.CHAIN_RANGE; Strzała Żmija ma własny).
@@ -281,8 +287,8 @@ func _impact() -> void:
 func _hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, push: float) -> void:
 	var player: Player = get_tree().get_first_node_in_group("player")
 	if player != null:
-		var sound := "fire" if fire or fx_kind == "fire" else "ice" if fx_kind == "ice" else "magic" if magic else "arrow"
-		player.hit_enemy(enemy, amount, from_position, push, sound, tags)
+		var kind := sound if sound != "" else "fire" if fire or fx_kind == "fire" else "ice" if fx_kind == "ice" else "magic" if magic else "arrow"
+		player.hit_enemy(enemy, amount, from_position, push, kind, tags)
 		if ignited > 0.0 and is_instance_valid(enemy) and enemy.state != Goblin.State.DEAD:
 			player.hit_enemy(enemy, maxi(1, roundi(amount * ignited)), from_position, 0.0, "fire", tags)
 	else:

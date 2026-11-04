@@ -50,6 +50,9 @@ const TREE_STATS := {
 	"running_breath": "Regeneracja zdrowia w biegu",
 	# strona inteligencji (krok 5): Przelana moc, Pełnia umysłu
 	"mana_flow": "Obrażenia przyjmowane przez manę", "full_mind": "Obrażenia przy wysokiej manie",
+	# strefy pośrednie (krok 5): Otwarte rany, Impet, Zwiewność
+	"open_wounds": "Szansa na krwawienie od ciosów i pocisków", "impetus": "Obrażenia trafienia po umiejętności ruchu",
+	"lightness": "Szybkość po uniku",
 }
 const COUNT_STATS := ["blade_count", "multishot_arrows", "seeker_hits", "arrow_pierce", "chain_targets", "lance_pierce",
 		"row_shot", "silent_steps", "full_mind"]

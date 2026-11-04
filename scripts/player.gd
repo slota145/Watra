@@ -295,6 +295,8 @@ const SUPPORT_ECHO_DELAY := 0.35
 var sword_skills: SwordSkills
 var bow_skills: BowSkills
 var spell_skills: SpellSkills
+## Umiejętności i węzły stref pośrednich drzewka (umiejętności z dwiema broniami, np. "melee/bow").
+var zone_skills: ZoneSkills
 ## Aury rezerwujące manę (włączane klawiszem paska, działają z każdą bronią).
 var auras: Auras
 ## Krew za Manę (dawna Ofiara Krwi): ułamek zdrowia do zapłacenia za umiejętności (koszty są ułamkowe, zdrowie - całkowite).
@@ -409,6 +411,9 @@ func _ready() -> void:
 	spell_skills = SpellSkills.new(self)
 	spell_skills.name = "SpellSkills"
 	add_child(spell_skills)
+	zone_skills = ZoneSkills.new(self)
+	zone_skills.name = "ZoneSkills"
+	add_child(zone_skills)
 	auras = Auras.new(self)
 	add_child(auras)
 	stats.skill_book = skills
@@ -511,7 +516,11 @@ func _press_slot(index: int) -> void:
 				_held_ids[id] = true
 			"skill":
 				_held_ids[id] = true
-				match Skills.get_data(id)["weapon"]:
+				var weapon: String = Skills.get_data(id)["weapon"]
+				if "/" in weapon:
+					zone_skills.press(id)
+					return
+				match weapon:
 					"bow":
 						bow_skills.press(id)
 					"spell":
@@ -554,6 +563,8 @@ func cooldown_of(id: String) -> Vector2:
 		"strike":
 			return Vector2(_strike_cooldown, maxf(_strike_cooldown_total, _strike_cooldown))
 		"skill":
+			if "/" in str(Skills.get_data(id)["weapon"]):
+				return zone_skills.cooldown_of(id)
 			match Skills.get_data(id)["weapon"]:
 				"bow":
 					return bow_skills.cooldown_of(id)
@@ -582,6 +593,7 @@ func note_skill(id: String) -> void:
 	spell_skills.on_cast(id)
 	if "movement" in Skills.TAGS.get(id, []):
 		bow_skills.on_movement()
+		zone_skills.on_movement()
 	if SKILL_MOVES.has(id):
 		var move: Array = SKILL_MOVES[id]
 		# postać zwrócona w stronę celu, a łuk celuje tam, gdzie kursor
@@ -1027,6 +1039,7 @@ func take_damage(amount: int, from_position: Vector2, element := Elements.PHYSIC
 	if randf() < stats.dodge_chance():
 		DamageNumber.spawn_text(get_parent(), body_center(), tr("Unik"), DODGE_COLOR, 9)
 		_invulnerable_timer = hurt_invulnerability()
+		zone_skills.on_dodge()
 		return
 	# Riposta: zasłona przyjmuje cios i odpowiada kontrą
 	if sword_skills.try_parry(from_position):
@@ -1812,8 +1825,9 @@ func _shoot(weapon: Dictionary, dir: Vector2) -> void:
 
 
 ## Pocisk broni gotowy do wystrzelenia (jeszcze nie dodany do świata). `skill` - umiejętność, która go wystrzeliwuje:
-## obrażenia z jej tagami i jej kamienie wsparcia (support_projectile); "" - zwykły atak.
-func _make_projectile(weapon: Dictionary, dir: Vector2, skill := "") -> Projectile:
+## obrażenia z jej tagami i jej kamienie wsparcia (support_projectile); "" - zwykły atak. `tags` - tagi odmiany
+## umiejętności z dwiema broniami (Skills.tags z bronią); puste - Skills.tags(skill).
+func _make_projectile(weapon: Dictionary, dir: Vector2, skill := "", tags: Array = []) -> Projectile:
 	var config: Dictionary = weapon["projectile"]
 	var projectile: Projectile = PROJECTILE.instantiate()
 	projectile.position = position + dir * 6.0
@@ -1830,11 +1844,13 @@ func _make_projectile(weapon: Dictionary, dir: Vector2, skill := "") -> Projecti
 		projectile.add_child(BowSkills.arrow_trail(BowSkills.VENOM_TRAIL_FX if bow_skills.venom_active() else BowSkills.ARROW_TRAIL_FX, dir))
 		projectile.enemy_hit.connect(func(enemy: Goblin) -> void:
 			BowSkills.arrow_hit(projectile.get_parent(), enemy.hurt_center(), dir.angle()))
-	var kind := stats.kind_multiplier(Skills.tags(skill) if skill != "" else basic_tags())
+	var kind := stats.kind_multiplier(tags if not tags.is_empty() else Skills.tags(skill) if skill != "" else basic_tags())
 	projectile.damage_min = maxi(1, roundi(stats.damage_min() * kind))
 	projectile.damage_max = maxi(1, roundi(stats.damage_max() * kind))
 	if skill != "":
 		support_projectile(projectile, skill)
+		if not tags.is_empty():
+			projectile.tags = tags
 	return projectile
 
 
@@ -2464,7 +2480,7 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 		amount = roundi(amount * (1.0 + Elements.SHOCK_BONUS + stats.support(tags, "shock_effect")))
 	amount += legendary.execute_bonus(enemy)
 	# Myśliwy z Cienia i Oko Sokoła (węzły kluczowe drzewka - z każdą bronią)
-	amount = roundi(amount * bow_skills.damage_factor(enemy))
+	amount = roundi(amount * bow_skills.damage_factor(enemy) * zone_skills.damage_factor())
 	var critical := randf() < stats.crit_chance() or sword_skills.take_forced_crit() or bow_skills.forced_crit(enemy)
 	if critical:
 		amount = roundi(amount * stats.crit_multiplier())
@@ -2473,6 +2489,8 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 	enemy.take_damage(amount, from_position, knockback)
 	Goblin.hit_sound = "hit"
 	sword_skills.tremor(enemy, tags)
+	# Otwarte rany (węzeł strefy siła / zręczność): ciosy i pociski czasem wywołują krwawienie
+	zone_skills.on_hit(enemy, amount, tags)
 	DamageNumber.critical = false
 	_apply_ailment(enemy, element, amount, tags)
 	# żywioły dodane przez kamienie wsparcia (Żarowe / Mroźne / Burzowe Ostrze) i aury żywiołów też mogą wywołać swój stan
@@ -2824,6 +2842,7 @@ func _die() -> void:
 		sword_skills.cancel()
 		bow_skills.cancel()
 		spell_skills.cancel()
+		zone_skills.cancel()
 	_lunge_time = 0.0
 	_leap_time = 0.0
 	_leap_landed = Callable()

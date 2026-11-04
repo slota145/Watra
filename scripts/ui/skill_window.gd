@@ -409,7 +409,7 @@ func _refresh_tree() -> void:
 		downgrade.text = tr("Cofnij poziom - %d zł") % back
 		downgrade.disabled = _player.stats.gold < back
 		var key := _key_of(skill, _player.stats.weapon_type() if Skills.works_with(skill, _player.stats.weapon_type())
-				else str(Skills.get_data(skill)["weapon"])) if Hotbar.can_slot_skill(skill) else ""
+				else str(Skills.get_data(skill)["weapon"]).split("/")[0]) if Hotbar.can_slot_skill(skill) else ""
 		if key != "":
 			text += "\n" + tr("Na pasku:") + key
 	var supports_line := _refresh_supports()

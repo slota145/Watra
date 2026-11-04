@@ -113,7 +113,7 @@ func _skill_tooltip(id: String, key: String, weapon_type: String) -> String:
 		return tr("%s [%s] - działa z bronią: %s") % [Skills.name_of(id), key, Skills.weapon_name(data["weapon"]).to_lower()]
 	if _player.skills.level_of(id) <= 0:
 		return tr("%s [%s] - nieodblokowana (K)") % [Skills.name_of(id), key]
-	var text := "%s [%s]  •  %s\n%s\n%s" % [Skills.name_of(id), key, Skills.mana_cost_text(id), Skills.tags_bbcode(Skills.tags(id)),
+	var text := "%s [%s]  •  %s\n%s\n%s" % [Skills.name_of(id), key, Skills.mana_cost_text(id), Skills.tags_bbcode(Skills.tags(id, weapon_type)),
 			Skills.description_of(id)]
 	if AuraData.is_aura(id):
 		text += "\n" + (tr("Włączona - naciśnij, żeby wyłączyć") if _player.auras.is_on(id) else tr("Wyłączona - naciśnij, żeby włączyć"))

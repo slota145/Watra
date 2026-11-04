@@ -200,6 +200,22 @@ const DATA := {
 		"icon": preload("res://assets/skills/ice_armor.png"),
 		"description": "Okrywasz się tarczą z lodu, która przez 8 s przyjmuje ciosy zamiast zdrowia. Gdy pęknie, wybucha lodem i zamraża wrogów wokół.",
 	},
+	# strefy pośrednie drzewka (krok 5): umiejętności działające z jedną z dwóch broni (ZoneSkills)
+	"thrown_knives": {
+		"name": "Ciśnięte Noże", "weapon": "melee/bow", "type": "skill",
+		"icon": preload("res://assets/skills/thrown_knives.png"),
+		"description": "Rzucasz wachlarzem 3 noże, które ranią i wywołują krwawienie. Z mieczem noże wracają do ręki i trafiają drugi raz, z łukiem lecą prosto i dalej.",
+	},
+	"thunder_arrow": {
+		"name": "Strzała Gromu", "weapon": "bow/spell", "type": "skill",
+		"icon": preload("res://assets/skills/thunder_arrow.png"),
+		"description": "Piorunowy pocisk. Z łuku po trafieniu piorun przeskakuje na 2 wrogów obok, z księgi w miejsce trafienia uderza piorun z nieba i rani wrogów wokół.",
+	},
+	"enchanted_blade": {
+		"name": "Zaklęte Ostrze", "weapon": "melee/spell", "type": "skill",
+		"icon": preload("res://assets/skills/enchanted_blade.png"),
+		"description": "Ostrze z płomienia wysyła płonącą falę, która rani i podpala wrogów. Z mieczem najpierw tniesz przed sobą, a fala jest krótka; z księgą fala jest dłuższa i szersza.",
+	},
 	"rune_stone": {
 		"name": "Kamień Runiczny", "weapon": "spell", "type": "skill",
 		"icon": preload("res://assets/skills/rune_stone.png"),
@@ -531,6 +547,36 @@ const ICE_ARMOR_COOLDOWN := 14.0
 const ICE_ARMOR_TIME := 8.0
 const ICE_ARMOR_RADIUS := 70.0
 const ICE_ARMOR_FREEZE := 1.5
+## Ciśnięte Noże: mana, odnowienie, ile noży, rozrzut wachlarza (stopnie), zasięg z mieczem (potem nóż wraca)
+## i z łukiem, prędkość lotu, krwawienie (część obrażeń broni na każde trafienie).
+const KNIVES_MANA := 10.0
+const KNIVES_COOLDOWN := 3.0
+const KNIVES_COUNT := 3
+const KNIVES_SPREAD := 14.0
+const KNIVES_MELEE_RANGE := 130.0
+const KNIVES_BOW_RANGE := 280.0
+const KNIVES_SPEED := 300.0
+const KNIVES_BLEED := 0.3
+## Strzała Gromu: mana, odnowienie, przeskoki z łuku (ilu wrogów, zasięg, siła przeskoku), piorun z nieba z księgi
+## (promień), prędkość pocisku z łuku i z księgi.
+const THUNDER_MANA := 11.0
+const THUNDER_COOLDOWN := 2.0
+const THUNDER_JUMPS := 2
+const THUNDER_JUMP_RANGE := 110.0
+const THUNDER_JUMP_DAMAGE := 0.7
+const THUNDER_STRIKE_RADIUS := 48.0
+const THUNDER_BOW_SPEED := 420.0
+const THUNDER_SPELL_SPEED := 240.0
+## Zaklęte Ostrze: mana, odnowienie, zasięg cięcia (miecz) i kąt, fala (zasięg i szerokość z mieczem i z księgą,
+## prędkość), podpalenie (część obrażeń fali przez BURN_TIME s).
+const BLADE_MANA := 13.0
+const BLADE_COOLDOWN := 3.0
+const BLADE_CUT_REACH := 42.0
+const BLADE_CUT_ARC := 150.0
+const BLADE_WAVE_MELEE := Vector2(120.0, 40.0)
+const BLADE_WAVE_SPELL := Vector2(220.0, 64.0)
+const BLADE_WAVE_SPEED := 280.0
+const BLADE_BURN := 0.5
 ## Kamień Runiczny: mana, odnowienie, czas, promień kręgu, zasięg postawienia.
 const RUNE_MANA := 20.0
 const RUNE_COOLDOWN := 14.0
@@ -560,7 +606,11 @@ static func description_of(id: String) -> String:
 
 
 ## Nazwa rodzaju broni w obecnym języku (WEAPON_NAMES).
+## Umiejętność z dwiema broniami ("melee/bow") - obie nazwy.
 static func weapon_name(weapon_type: String) -> String:
+	if "/" in weapon_type:
+		var parts := weapon_type.split("/")
+		return Lang.t("%s albo %s") % [weapon_name(parts[0]), weapon_name(parts[1]).to_lower()]
 	return Lang.t(str(WEAPON_NAMES.get(weapon_type, "")))
 
 
@@ -610,6 +660,10 @@ const TAGS := {
 	"fire_wall": ["spell", "area", "fire", "dot", "int"],
 	"ice_armor": ["spell", "area", "ice", "int"],
 	"rune_stone": ["spell", "summon", "int"],
+	# strefy pośrednie: tagi wszystkich odmian razem (okno drzewka); odmiana dla broni w ręku - HYBRID_TAGS
+	"thrown_knives": ["attack", "projectile", "physical", "dot", "str", "dex"],
+	"thunder_arrow": ["attack", "spell", "projectile", "area", "lightning", "dex", "int"],
+	"enchanted_blade": ["attack", "spell", "hit", "area", "fire", "str", "int"],
 	# aury (Auras): rodzaj "aura", pioruny i lód aur bojowych to czary
 	"dread": ["aura", "area", "str"],
 	"vigor": ["aura", "str"],
@@ -656,15 +710,28 @@ static var _marked := {}
 
 ## Tagi umiejętności z jej znacznikiem na końcu (SKILL_MARK + id): po nim CharacterStats i Player.hit_enemy rozpoznają,
 ## czyje kamienie wsparcia (Supports) liczyć. Znacznik nie jest tagiem - opisy biorą tylko tagi z TAG_GROUPS.
-static func tags(id: String) -> Array:
+## `weapon` - broń w ręku: umiejętność z dwiema broniami (HYBRID_TAGS) dostaje tagi swojej odmiany; "" - wszystkie razem.
+static func tags(id: String, weapon := "") -> Array:
 	if not TAGS.has(id):
 		return []
-	if not _marked.has(id):
-		var list: Array = TAGS[id].duplicate()
+	var key := id
+	if weapon != "" and HYBRID_TAGS.has(id) and HYBRID_TAGS[id].has(weapon):
+		key = id + "/" + weapon
+	if not _marked.has(key):
+		var list: Array = (TAGS[id] if key == id else HYBRID_TAGS[id][weapon]).duplicate()
 		list.append(SKILL_MARK + id)
 		list.make_read_only()
-		_marked[id] = list
-	return _marked[id]
+		_marked[key] = list
+	return _marked[key]
+
+
+## Tagi umiejętności działających z dwiema broniami (strefy pośrednie drzewka) - osobno dla broni w ręku.
+const HYBRID_TAGS := {
+	"thunder_arrow": {"bow": ["attack", "projectile", "lightning", "dex", "int"],
+			"spell": ["spell", "projectile", "area", "lightning", "dex", "int"]},
+	"enchanted_blade": {"melee": ["attack", "hit", "area", "fire", "str", "int"],
+			"spell": ["spell", "area", "fire", "str", "int"]},
+}
 
 
 ## Umiejętność, do której należą tagi (znacznik z tags); "" - zwykły atak albo tagi bez znacznika.
@@ -754,14 +821,14 @@ const RUNE_CHAIN_JUMPS := 2
 const SHATTER_BLAST_RADIUS := 30.0
 const SHATTER_BLAST_DAMAGE := 0.5
 ## Żywioły czarów (węzeł kluczowy Harmonia Żywiołów, SpellSkills).
-const ELEMENTS := {"fireball": "fire", "meteor": "fire", "fire_wall": "fire", "ice_armor": "ice", "frost_lance": "ice", "blizzard": "ice",
+const ELEMENTS := {"fireball": "fire", "meteor": "fire", "fire_wall": "fire", "enchanted_blade": "fire", "thunder_arrow": "lightning", "ice_armor": "ice", "frost_lance": "ice", "blizzard": "ice",
 		"chain_lightning": "lightning", "thunder_wave": "lightning", "storm_call": "lightning", "ball_lightning": "lightning"}
 
 
-## Czy umiejętność działa z bronią danego rodzaju (aury - z każdą).
+## Czy umiejętność działa z bronią danego rodzaju (aury - z każdą, strefy pośrednie - z jedną z dwóch, np. "melee/bow").
 static func works_with(id: String, weapon_type: String) -> bool:
 	var weapon: String = DATA.get(id, {}).get("weapon", "")
-	return weapon == weapon_type or weapon == "any"
+	return weapon == weapon_type or weapon == "any" or (weapon_type != "" and weapon_type in weapon.split("/"))
 
 
 ## Umiejętności danego rodzaju broni w kolejności: aktywna, uderzenie, umiejętności drzewka.
@@ -977,6 +1044,29 @@ static func ice_armor_damage(level: int) -> float:
 	return 1.5 + 0.2 * power(level)
 
 
+## Ciśnięte Noże: procent obrażeń broni każdego noża (z mieczem trafia też w drodze powrotnej).
+static func knives_damage(level: int) -> float:
+	return 0.55 + 0.07 * power(level)
+
+
+## Strzała Gromu: procent obrażeń broni pocisku i pioruna z nieba (księga).
+static func thunder_damage(level: int) -> float:
+	return 0.9 + 0.1 * power(level)
+
+
+static func thunder_strike_damage(level: int) -> float:
+	return 0.7 + 0.09 * power(level)
+
+
+## Zaklęte Ostrze: procent obrażeń broni cięcia (miecz) i fali (z księgą mocniejszej).
+static func blade_cut_damage(level: int) -> float:
+	return 0.8 + 0.1 * power(level)
+
+
+static func blade_wave_damage(level: int, spell: bool) -> float:
+	return (1.0 if spell else 0.6) + (0.12 if spell else 0.08) * power(level)
+
+
 static func meteor_damage(level: int) -> float:
 	return 2.6 + 0.35 * power(level)
 
@@ -1059,7 +1149,8 @@ static func mana_cost(id: String) -> float:
 			"viper_arrow": VIPER_MANA, "split_arrow": SPLIT_MANA, "caltrops": CALTROPS_MANA,
 			"ballista": BALLISTA_MANA, "frost_lance": LANCE_MANA, "blizzard": BLIZZARD_MANA, "storm_call": STORM_MANA,
 			"ball_lightning": ORB_MANA, "meteor": METEOR_MANA, "blink": BLINK_MANA, "mana_shield": SHIELD_MANA, "rune_stone": RUNE_MANA,
-			"fire_wall": WALL_MANA, "ice_armor": ICE_ARMOR_MANA}.get(id, 0.0)
+			"fire_wall": WALL_MANA, "ice_armor": ICE_ARMOR_MANA,
+			"thrown_knives": KNIVES_MANA, "thunder_arrow": THUNDER_MANA, "enchanted_blade": BLADE_MANA}.get(id, 0.0)
 
 
 static func mana_cost_text(id: String) -> String:
@@ -1213,6 +1304,16 @@ static func effect_text(id: String, level: int) -> String:
 		"ice_armor":
 			return Lang.t("Tarcza %d%% zdrowia przez %s s, wybuch %d%% obrażeń, zamrożenie %s s, odnowienie %s s") % [roundi(ice_armor_share(level) * 100),
 					_decimal(ICE_ARMOR_TIME, 0), roundi(ice_armor_damage(level) * 100), _decimal(ICE_ARMOR_FREEZE, 1), _decimal(ICE_ARMOR_COOLDOWN, 0)]
+		"thrown_knives":
+			return Lang.t("%d noże po %d%% obrażeń, krwawienie %d%%, odnowienie %s s") % [KNIVES_COUNT, roundi(knives_damage(level) * 100),
+					roundi(KNIVES_BLEED * 100), _decimal(KNIVES_COOLDOWN, 0)]
+		"thunder_arrow":
+			return Lang.t("%d%% obrażeń, z łuku przeskok na %d wrogów (%d%%), z księgi piorun %d%%, odnowienie %s s") % [
+					roundi(thunder_damage(level) * 100), THUNDER_JUMPS, roundi(THUNDER_JUMP_DAMAGE * 100),
+					roundi(thunder_strike_damage(level) * 100), _decimal(THUNDER_COOLDOWN, 0)]
+		"enchanted_blade":
+			return Lang.t("Cięcie %d%%, fala %d%% (z księgą %d%%), podpalenie, odnowienie %s s") % [roundi(blade_cut_damage(level) * 100),
+					roundi(blade_wave_damage(level, false) * 100), roundi(blade_wave_damage(level, true) * 100), _decimal(BLADE_COOLDOWN, 0)]
 		"rune_stone":
 			return Lang.t("+%d%% obrażeń magicznych i szybkości rzucania w kręgu, %s s") % [roundi(rune_bonus(level) * 100), _decimal(RUNE_TIME, 0)]
 	return ""

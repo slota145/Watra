@@ -519,11 +519,18 @@ func _rend() -> void:
 
 
 ## Krwawienie: `multiplier` obrażeń broni rozłożone na BLEED_TICKS ran co pół sekundy (więcej z węzłów drzewka).
-## Z Krwawym Szałem rany leczą gracza.
-func bleed_enemy(enemy: Goblin, multiplier: float) -> void:
+## Z Krwawym Szałem rany leczą gracza. `tags` - umiejętność, która wywołuje krwawienie (domyślnie Rozpłatanie).
+func bleed_enemy(enemy: Goblin, multiplier: float, tags: Array = []) -> void:
 	if not is_instance_valid(enemy) or enemy.state == Goblin.State.DEAD:
 		return
-	var total := _player._skill_damage(multiplier * (1.0 + _player.skills.tree_bonus("bleed_damage")), Skills.tags("rend"))
+	bleed_total(enemy, _player._skill_damage(multiplier, tags if not tags.is_empty() else Skills.tags("rend")))
+
+
+## Krwawienie z gotowej sumy obrażeń `total` (np. część trafienia - Otwarte rany), z premią z węzłów drzewka.
+func bleed_total(enemy: Goblin, total: int) -> void:
+	if not is_instance_valid(enemy) or enemy.state == Goblin.State.DEAD or total <= 0:
+		return
+	total = roundi(total * (1.0 + _player.skills.tree_bonus("bleed_damage")))
 	var per_tick := maxi(1, roundi(float(total) / Skills.BLEED_TICKS))
 	var frenzy := _player.skills.has_keystone("blood_frenzy")
 	SkillEffects.sheet_once(_player.get_parent(), REND_WOUND_FX, 9, 15.0, enemy.hurt_center(), REND_WOUND_ANCHOR)
