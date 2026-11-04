@@ -90,17 +90,17 @@ func _process(_d: float) -> bool:
 	book.character_level = 60
 	# punkty umiejętności daje pasek umiejętności, nie poziom postaci
 	book.bonus_points += 60
-	for step in Tree.path_to("melee", "socket_legend"):
-		book.take("melee", step)
-	for step in Tree.path_to("melee", "socket_1"):
-		book.take("melee", step)
-	check("esencja nie w zwykłym gnieździe", book.socket_from(p.inventory, "melee", "socket_1", _index_of(p, essence)) != "")
+	for step in Tree.path_to("legend_s_wir"):
+		book.take(step)
+	for step in Tree.path_to("socket_s_bastion"):
+		book.take(step)
+	check("esencja nie w zwykłym gnieździe", book.socket_from(p.inventory, "socket_s_bastion", _index_of(p, essence)) != "")
 	var before: float = p.equipment.effect_power("pack_call")
 	check("bez esencji brak efektu", before == 0.0)
-	check("esencja w gnieździe legendarnym", book.socket_from(p.inventory, "melee", "socket_legend", _index_of(p, essence)) == "")
+	check("esencja w gnieździe legendarnym", book.socket_from(p.inventory, "legend_s_wir", _index_of(p, essence)) == "")
 	check("efekt z drzewka", is_equal_approx(p.equipment.effect_power("pack_call"), recipe["value"]) and p.stats.weapon_type() == "melee")
-	check("tylko z bronią drzewka", book.essence_in("bow").is_empty())
-	check("kamień nie wypiera esencji", book.socket_from(p.inventory, "melee", "socket_legend", 0) != "")
+	check("esencja z drzewka z każdą bronią", book.essences().size() == 1)
+	check("kamień nie wypiera esencji", book.socket_from(p.inventory, "legend_s_wir", 0) != "")
 	# ---- kowal: gniazdo esencji w rzadkim przedmiocie
 	var armor: String = Loot.generate("leather_armor", "rare", 20)
 	p.inventory.add_item(armor, 1)
@@ -134,7 +134,7 @@ func _process(_d: float) -> bool:
 	var tree_saved: Dictionary = JSON.parse_string(JSON.stringify(book.get_save_data()))
 	var copy = load("res://scripts/skill_book.gd").new()
 	copy.load_save_data(tree_saved)
-	check("zapis esencji w drzewku", is_equal_approx(copy.essence_in("melee").get("value", 0.0), a))
+	check("zapis esencji w drzewku", is_equal_approx(copy.essences()[0].get("value", 0.0) if not copy.essences().is_empty() else 0.0, a))
 	copy.free()
 	# wyjęcie u kowala za złoto i zniszczenie
 	p.equipment.items["chest"] = {}
@@ -144,8 +144,8 @@ func _process(_d: float) -> bool:
 	window._remove(true, Ess.save_gold(p.stats.level))
 	check("wyjęcie za złoto", (Ess.socket_of(armor) as Dictionary).is_empty() and p.stats.gold < gold and _count_essences(p, Ess) >= 2)
 	var gold_before: int = p.stats.gold
-	check("wyjęcie z drzewka za złoto", book.unsocket_to(p.inventory, "melee", "socket_legend", p.stats) == "" and p.stats.gold < gold_before
-			and book.essence_in("melee").is_empty())
+	check("wyjęcie z drzewka za złoto", book.unsocket_to(p.inventory, "legend_s_wir", p.stats) == "" and p.stats.gold < gold_before
+			and book.essences().is_empty())
 	# ---- Serce Kryształu z Kryształu Watry od 3. stopnia
 	var hearts := 0
 	var low := 0

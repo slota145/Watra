@@ -1,12 +1,12 @@
 class_name Skills
-## Baza umiejętności. Każdy rodzaj broni (melee / bow / spell) ma swoje drzewko:
+## Baza umiejętności. Każdy rodzaj broni (melee / bow / spell) ma swoje umiejętności we wspólnym drzewku (SkillTree):
 ## aktywną umiejętność (domyślnie pod PPM), uderzenie (type "strike", domyślnie pod Q), dodatkowy cios
-## - atak zaraz po uderzeniu (type "combo", wymaga uderzenia) - i dwie pasywne regeneracje.
+## - atak zaraz po uderzeniu (type "combo", wymaga uderzenia) - i umiejętności drzewka (type "skill").
 ## Aktywną umiejętność i uderzenie gracz kładzie na dowolny slot paska (Hotbar).
-## Wszystkie działają tylko z założoną bronią swojego rodzaju.
+## Wszystkie działają tylko z założoną bronią swojego rodzaju (premie z węzłów drzewka - z każdą).
 ## Umiejętności odblokowuje się i ulepsza za punkty umiejętności (LEVEL_POINTS - wyższe poziomy kosztują więcej).
 ## Punkty daje osobny pasek doświadczenia umiejętności (SKILL_XP_BANDS, SkillBook.skill_xp), a nie awans postaci.
-## Broń, która ma drzewko (SkillTree, miecz, łuk i księga magii), odblokowuje umiejętność węzłem (poziom 1).
+## Umiejętność odblokowuje węzeł wspólnego drzewka (poziom 1).
 ## Cofnięcie wydanego punktu kosztuje złoto (REFUND_GOLD_PER_LEVEL).
 ## Umiejętności drzewka (type "skill") mają własną obsługę (SwordSkills - miecz, BowSkills - łuk, SpellSkills - księga) i własne combo (COMBOS).
 ## Każda umiejętność ma tagi (TAGS): rodzaj, forma, obrażenia i atrybut - ataki przyspiesza szybkość ataku,
@@ -25,10 +25,7 @@ const SKILL_XP_BANDS := [[20, 2000], [60, 15000], [120, 60000], [0, 200000]]
 const REFUND_GOLD_PER_LEVEL := 8
 ## Dawne ceny poziomów 1-5 w złocie - tylko do zwrotu złota przy przeliczaniu starych zapisów (SkillBook.migrate_old).
 const OLD_ACTIVE_GOLD: Array[int] = [150, 300, 600, 1200, 2400]
-const OLD_PASSIVE_GOLD: Array[int] = [80, 160, 320, 640, 1280]
 
-const ICON_HEALTH := preload("res://assets/skills/health_regen.png")
-const ICON_MANA := preload("res://assets/skills/mana_regen.png")
 
 ## type: active / strike / combo / skill / health_regen / mana_regen
 const DATA := {
@@ -182,39 +179,15 @@ const DATA := {
 		"icon": preload("res://assets/skills/whirlwind.png"),
 		"description": "Przytrzymaj klawisz - wirujesz z bronią, raniąc wszystkich wokół. Zużywa manę co sekundę.",
 	},
-	"warrior_blood": {
-		"name": "Krew wojownika", "weapon": "melee", "type": "health_regen", "icon": ICON_HEALTH,
-		"description": "Rany goją się same, póki trzymasz broń białą.",
-	},
-	"battle_focus": {
-		"name": "Skupienie bitewne", "weapon": "melee", "type": "mana_regen", "icon": ICON_MANA,
-		"description": "Szybsza odnowa many z bronią białą.",
-	},
 	"multishot": {
 		"name": "Salwa", "weapon": "bow", "type": "active",
 		"icon": preload("res://assets/skills/multishot.png"),
 		"description": "Wystrzeliwujesz 3 strzały naraz w wąskim stożku.",
 	},
-	"hunter_breath": {
-		"name": "Oddech łowcy", "weapon": "bow", "type": "health_regen", "icon": ICON_HEALTH,
-		"description": "Rany goją się same, póki trzymasz łuk.",
-	},
-	"hunter_patience": {
-		"name": "Cierpliwość łowcy", "weapon": "bow", "type": "mana_regen", "icon": ICON_MANA,
-		"description": "Szybsza odnowa many z łukiem.",
-	},
 	"fireball": {
 		"name": "Kula ognia", "weapon": "spell", "type": "active",
 		"icon": preload("res://assets/skills/fireball.png"),
 		"description": "Przytrzymaj klawisz, by ładować kulę ognia w dłoniach (zjada manę) - im dłużej, tym mocniejszy i większy wybuch. Puść, by rzucić.",
-	},
-	"mystic_renewal": {
-		"name": "Mistyczna odnowa", "weapon": "spell", "type": "health_regen", "icon": ICON_HEALTH,
-		"description": "Rany goją się same, póki trzymasz księgę.",
-	},
-	"mana_stream": {
-		"name": "Strumień many", "weapon": "spell", "type": "mana_regen", "icon": ICON_MANA,
-		"description": "Szybsza odnowa many z księgą.",
 	},
 }
 
@@ -579,10 +552,10 @@ const ELEMENTS := {"fireball": "fire", "meteor": "fire", "frost_lance": "ice", "
 		"chain_lightning": "lightning", "thunder_wave": "lightning", "storm_call": "lightning", "ball_lightning": "lightning"}
 
 
-## Umiejętności danego rodzaju broni w kolejności: aktywna, uderzenie, dodatkowy cios, życie, mana.
+## Umiejętności danego rodzaju broni w kolejności: aktywna, uderzenie, dodatkowy cios, umiejętności drzewka.
 static func for_weapon(weapon_type: String) -> Array[String]:
 	var result: Array[String] = []
-	for kind in ["active", "strike", "combo", "skill", "health_regen", "mana_regen"]:
+	for kind in ["active", "strike", "combo", "skill"]:
 		for id: String in DATA:
 			if DATA[id]["weapon"] == weapon_type and DATA[id]["type"] == kind:
 				result.append(id)
@@ -599,8 +572,7 @@ static func cost(_id: String, level: int) -> int:
 
 ## Dawna cena poziomu w złocie (zwrot przy przeliczaniu starych zapisów).
 static func old_gold_cost(id: String, level: int) -> int:
-	var costs := OLD_PASSIVE_GOLD if DATA[id]["type"] in ["health_regen", "mana_regen"] else OLD_ACTIVE_GOLD
-	return costs[clampi(level, 1, costs.size()) - 1]
+	return OLD_ACTIVE_GOLD[clampi(level, 1, OLD_ACTIVE_GOLD.size()) - 1]
 
 
 ## Ile exp kosztuje punkt umiejętności numer `point` (od 1) na pasku.
@@ -815,14 +787,6 @@ static func wave_radius(level: int) -> float:
 	return 120.0 + 12.0 * power(level)
 
 
-static func health_regen(level: int, maximum := 0.0) -> float:
-	return 0.4 * power(level) + 0.003 * power(level) * maximum
-
-
-static func mana_regen(level: int, maximum := 0.0) -> float:
-	return 0.5 * power(level) + 0.004 * power(level) * maximum
-
-
 ## Ile many trzeba, żeby użyć umiejętności (młynek: na ułamek sekundy, jak przy starcie).
 static func mana_cost(id: String) -> float:
 	return {"whirlwind": WHIRLWIND_MANA_PER_SECOND * 0.3, "multishot": MULTISHOT_MANA, "fireball": FIREBALL_MANA,
@@ -960,11 +924,6 @@ static func effect_text(id: String, level: int) -> String:
 					_decimal(SHIELD_COOLDOWN, 0)]
 		"rune_stone":
 			return Lang.t("+%d%% obrażeń magicznych i szybkości rzucania w kręgu, %s s") % [roundi(rune_bonus(level) * 100), _decimal(RUNE_TIME, 0)]
-	match DATA[id]["type"]:
-		"health_regen":
-			return Lang.t("+%s zdrowia/s i %s%% maks. zdrowia/s") % [_decimal(0.4 * level, 1), _decimal(0.3 * level, 1)]
-		"mana_regen":
-			return Lang.t("+%s many/s i %s%% maks. many/s") % [_decimal(0.5 * level, 1), _decimal(0.4 * level, 1)]
 	return ""
 
 

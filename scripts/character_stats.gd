@@ -101,7 +101,8 @@ func max_health() -> int:
 
 
 func max_mana() -> int:
-	return base_mana + attribute("intelligence") * MANA_PER_INTELLIGENCE + int(_bonus("mana"))
+	var flat := base_mana + attribute("intelligence") * MANA_PER_INTELLIGENCE + int(_bonus("mana"))
+	return roundi(flat * (1.0 + _bonus("mana_percent")))
 
 
 func damage_min() -> int:
@@ -219,7 +220,7 @@ func move_speed() -> float:
 
 
 func armor() -> int:
-	return int(_bonus("armor"))
+	return int(_bonus("armor") * (1.0 + _bonus("armor_percent")))
 
 
 ## Ile procent obrażeń pochłania pancerz przy potworach poziomu `level` (domyślnie - poziom potworów w okolicy);
@@ -382,7 +383,7 @@ func set_temp(source: String, bonus: Dictionary) -> void:
 func _bonus(stat: String) -> float:
 	var total := equipment.bonus(stat) if equipment != null else 0.0
 	if skill_book != null:
-		total += skill_book.tree_bonus(weapon_type(), stat)
+		total += skill_book.tree_bonus(stat)
 	total += float(temp_bonus.get(stat, 0.0))
 	return total + (boons.bonus(stat) if boons != null else 0.0)
 

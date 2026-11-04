@@ -114,7 +114,10 @@ Wspólne okno: drzewko umiejętności i drzewko lochów mogą używać tego same
    `docs/drzewko_wspolne.md` (układ, decyzje), rysunek `docs/drzewko_wspolne.png`, lista `docs/drzewko_wspolne_wezly.md`,
    dane w `tools/shared_tree_draft.py`. Ustalone po szkicu: aury i premie z węzłów działają z każdą bronią na pasujące
    umiejętności (tagi); strefy wspólne dostaną więcej węzłów i umiejętności w osobnym etapie.
-2. Wspólne drzewko z obecnymi umiejętnościami zamiast 3 drzewek; stare zapisy - zwrot punktów.
+2. Wspólne drzewko z obecnymi umiejętnościami zamiast 3 drzewek; stare zapisy - zwrot punktów. **Zrobione**
+   (szukaj „Wspólne drzewko umiejętności, krok 2” w `docs/historia.md`): nowe umiejętności, aury, nowe węzły kluczowe
+   i węzły znaczące bez premii w grze są pustymi miejscami (`"soon"` w `tools/shared_tree_draft.py`) - kolejne kroki
+   dają im działanie (usuń `new=True` / dopisz `stats`, uruchom `python tools/shared_tree_draft.py`).
 3. Aury i rezerwacja many.
 4. Nowe combo; Półksiężyc, Szybka Salwa i Fala piorunów jako zwykłe umiejętności.
 5. Nowe węzły kluczowe i nowe umiejętności.

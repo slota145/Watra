@@ -130,7 +130,7 @@ func _report_static(pl) -> void:
 			s.kind_multiplier(Sk.tags("whirlwind")), pl.legendary.damage_multiplier(), s.damage_multiplier(),
 			s.attribute("strength"), s.attribute("dexterity"), s.attribute("intelligence")])
 	var wl: int = pl.skills.level_of("whirlwind")
-	var whirl: float = Sk.whirlwind_damage(wl) * (1.0 + pl.skills.tree_bonus("melee", "whirl_damage"))
+	var whirl: float = Sk.whirlwind_damage(wl) * (1.0 + pl.skills.tree_bonus("whirl_damage"))
 	print("  młynek poz. %d: cios %.0f (średnio z krytem) co %.2f s, promień %.0f" % [wl, _avg_hit(pl, whirl, Sk.tags("whirlwind")),
 			Sk.WHIRLWIND_TICK / pl._skill_speed(), pl.whirl_radius()])
 	var fl: int = pl.skills.level_of("flicker")

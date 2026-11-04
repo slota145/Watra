@@ -68,8 +68,8 @@ func _process(_d: float) -> bool:
 	book.character_level = 60
 	# punkty umiejętności daje pasek umiejętności, nie poziom postaci
 	book.bonus_points += 60
-	for step in SkillTree.path_to("melee", SkillTree.node_for_skill("crescent")):
-		book.take("melee", step)
+	for step in SkillTree.path_to(SkillTree.node_for_skill("crescent")):
+		book.take(step)
 	check("Półksiężyc odblokowany", book.level_of("crescent") > 0)
 	# gniazda za krzesiwa
 	check("bez krzesiwa nie ma gniazda", book.add_socket("crescent", p.inventory) != "" and book.sockets_of("crescent") == 0)
@@ -135,10 +135,10 @@ func _process(_d: float) -> bool:
 	# okno K
 	var window = _world.find_child("HUD", true, false).skill_window
 	window.toggle()
-	var view = window._trees["melee"]["view"]
+	var view = window._tree["view"]
 	view.selected_id = SkillTree.node_for_skill("crescent")
 	window._refresh()
-	check("gniazda w oknie K", window._trees["melee"]["supports"].visible and window._trees["melee"]["socket_row"].get_child_count() == 5)
+	check("gniazda w oknie K", window._tree["supports"].visible and window._tree["socket_row"].get_child_count() == 5)
 	var herald: String = Supports.roll("herald", 1)
 	p.inventory.add_item(herald, 1)
 	var fury: String = Supports.roll("fury", 1)
@@ -148,7 +148,7 @@ func _process(_d: float) -> bool:
 			and not view._can_drop_data(at, {"inventory": p.inventory, "index": _index_of(p, herald)}))
 	view._drop_data(at, {"inventory": p.inventory, "index": _index_of(p, fury)})
 	check("Furia osadzona przeciąganiem", book.support_gems("crescent").any(func(gem: Dictionary) -> bool: return gem.get("support", "") == "fury"))
-	window._support_unsocket("melee", 0)
+	window._support_unsocket(0)
 	check("wyjęcie z okna K", book.support_gems("crescent")[0].is_empty())
 	print("WYNIK: %s" % ("OK" if _fails == 0 else "FAIL (%d)" % _fails))
 	quit(1 if _fails > 0 else 0)

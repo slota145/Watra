@@ -748,6 +748,29 @@ odpowiedniej sekcji.
     postaci, dostają je w `bonus_points`;
   - do ustalenia po ograniu: progi paska, cena cofania, siła poziomów 6-20 (`Skills.power`), czy 2 punkty na start
     wystarczą (pierwszy punkt z paska ok. 5. poziomu postaci).
+- [x] **Wspólne drzewko umiejętności, krok 2** (`docs/plan_drzewek.md`, listopad 2026): jedno drzewko zamiast drzewek
+  miecza, łuku i księgi. Dane generuje `python tools/shared_tree_draft.py` (jedno źródło: rysunek
+  `docs/drzewko_wspolne.png`, lista `docs/drzewko_wspolne_wezly.md` i `scripts/skill_tree_data.gd` - `SkillTreeData.NODES`,
+  `CLUSTERS`, `REGIONS`); identyfikatory węzłów są w zapisach (umiejętności - id z `Skills.DATA`, dawne węzły kluczowe -
+  stare id, gniazda `socket_<skupisko>`, legendarne `legend_<skupisko>`, ścieżki `p_<od>_<do>_<n>`). 235 węzłów, z tego
+  47 **pustych miejsc** (`"soon"` - nowe umiejętności, aury, nowe węzły kluczowe i znaczące bez premii w grze): widać je
+  przygaszone z kreskowaną obwódką, nie da się ich wybrać, a drzewko przechodzi przez nie za darmo
+  (`SkillBook.reachable`). Gdy puste miejsce dostanie działanie, zapisy z węzłami za nim trzeba obsłużyć (np. dać je za darmo).
+  `SkillTree` i `SkillBook` bez rodzaju broni (`take(id)`, `tree_bonus(stat)`, `has_keystone(id)`, `gem_in(id)`,
+  `essences()` - esencje ze wszystkich gniazd legendarnych, `grant_node(id)` dla testów i narzędzi). Premie z węzłów
+  i kamienie w gniazdach działają z każdą bronią (statystyki i tak idą po tagach - `CharacterStats.kind_multiplier`),
+  węzły kluczowe też: Krwawy Szał z każdym krwawieniem, Krew za Manę (dawna Ofiara Krwi) i Pełnia Mocy / Harmonia
+  z każdą bronią, Myśliwy z Cienia po każdej umiejętności ruchu (`Player.note_skill` -> `BowSkills.on_movement`), Oko
+  Sokoła przy każdym trafieniu. Nowe statystyki `mana_percent` i `armor_percent`. 6 umiejętności regeneracji usunięte
+  (zastępują je skupiska Krzepa / Mana i przyszłe aury). Okno K bez zakładek broni (`ui/skill_window.gd`), widok
+  `ui/skill_tree_view.gd` z tłem stron, podpisami skupisk (przy przybliżeniu), obwódką umiejętności w kolorze broni
+  i opisem „Działa tylko z bronią: …”. Mędrzec zapomina całe drzewko. Stare zapisy (bez `"tree": 2` w umiejętnościach):
+  węzły i poziomy umiejętności przepadają - wszystkie punkty wracają (`SkillBook.tree_reset`, napis w oknie K), kamienie
+  i esencje z gniazd wracają do plecaka (`take_reset_gems`). Zrzut okna: `SCRIPT=tools/skill_tree_shot.gd tools/screenshot.sh /tmp/drzewko`.
+  Punkty w końcówce (pasek + 2 na start + ok. 10 z zadań): ok. 60 na 40. poziomie, 75 na 50., 93 na 70., 121 na 90.;
+  drzewko ma 188 węzłów do wybrania (jedna strona ze strefami ok. 80, dawne drzewko broni 55), więc decyzją autora
+  dochodzi **1 punkt co 2 poziomy postaci** (`SkillBook.LEVEL_POINT_EVERY`, `level_points`, `set_character_level` -
+  napis „+1 punkt umiejętności” przy awansie): +25 na 50. poziomie, +45 na 90.
 
 ## Interfejs i walka (Pomysły i rzeczy do zrobienia)
 - [x] Paski szybkiego wyboru: 10 slotów przedmiotów (1-0, nowa postać dostaje po 5 mikstur życia i many pod 1 i 2)

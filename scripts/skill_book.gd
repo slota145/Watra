@@ -1,15 +1,16 @@
 class_name SkillBook
 extends Node
-## Umiejętności gracza: poziomy (0 = nieodblokowana) i wybrane węzły drzewek (SkillTree), jedno i drugie za punkty
-## umiejętności. Umiejętność, która ma węzeł w drzewku, jest dostępna tylko z wybranym węzłem (odblokowanie = poziom 1),
+## Umiejętności gracza: poziomy (0 = nieodblokowana) i wybrane węzły wspólnego drzewka (SkillTree), jedno i drugie
+## za punkty umiejętności. Umiejętność, która ma węzeł w drzewku, jest dostępna tylko z wybranym węzłem (odblokowanie = poziom 1),
 ## a kolejne poziomy kosztują Skills.cost punktów (do Skills.MAX_LEVEL).
 ## Punkty umiejętności daje osobny pasek doświadczenia (skill_xp - napełnia się zwykłym expem, Skills.SKILL_XP_BANDS),
-## plus SkillTree.START_POINTS i nagrody zadań głównych. Cofnięcie wydanego punktu (węzeł, poziom, całe drzewko
+## plus SkillTree.START_POINTS, 1 punkt co LEVEL_POINT_EVERY poziomów postaci i nagrody zadań głównych. Cofnięcie wydanego punktu (węzeł, poziom, całe drzewko
 ## u mędrca) kosztuje złoto (refund_gold). Starsze zapisy (poziomy za złoto) przelicza migrate_old.
-## Gniazda drzewek (węzły "socket") trzymają kamienie szlachetne (przepisy Gems): premie kamienia działają o połowę
+## Gniazda drzewka (węzły "socket") trzymają kamienie szlachetne (przepisy Gems): premie kamienia działają o połowę
 ## mocniej (TREE_GEM_POWER), a kamień promienia wzmacnia wybrane węzły pasywne w promieniu RADIUS_RANGE.
-## Gniazdo legendarne przyjmuje też esencję legendy (Essences) - jej efekt działa z bronią drzewka
+## Gniazdo legendarne przyjmuje też esencję legendy (Essences) - jej efekt działa z każdą bronią
 ## (Equipment.effect_power); wyjęcie esencji kosztuje złoto (Essences.save_gold), inaczej esencja przepada.
+## Zapisy sprzed wspólnego drzewka (osobne drzewka broni) dostają zwrot wszystkich punktów (tree_reset).
 ## Gniazda umiejętności aktywnych (Supports): liczba gniazd i kamienie wsparcia w nich (supports), dorabiane krzesiwami.
 
 signal changed
@@ -20,9 +21,9 @@ signal skill_points_gained(count: int)
 
 ## id umiejętności -> kupiony poziom (umiejętność drzewka ma poziom 1 z samego węzła)
 var levels := {}
-## rodzaj broni -> {id węzła: true} (start się nie liczy - jest wybrany zawsze)
+## {id węzła: true} (start się nie liczy - jest wybrany zawsze)
 var nodes := {}
-## rodzaj broni -> {id gniazda: przepis kamienia} (kamień w gnieździe nie istnieje jako przedmiot)
+## {id gniazda: przepis kamienia} (kamień w gnieździe nie istnieje jako przedmiot)
 var tree_gems := {}
 ## Poziom postaci (do ceny cofania punktów i wyjmowania esencji) - ustawia gracz.
 var character_level := 1
@@ -36,7 +37,19 @@ var skill_xp := 0
 var needs_migration := false
 ## Ostatnie przeliczenie starego zapisu (zwrócone złoto) - okno umiejętności pokazuje informację.
 var migrated_gold := -1
+## Wczytany zapis miał osobne drzewka broni - wszystkie punkty wróciły do rozdania (okno umiejętności pokazuje
+## informację), a kamienie z gniazd czekają w reset_gems, aż gracz odłoży je do plecaka (Player).
+var tree_reset := false
+var reset_gems: Array = []
+## Węzły osiągalne od startu (reachable) i stan wybranych węzłów, z którego je policzono.
+var _reach := {}
+var _reach_key := -1
 
+## Wersja drzewka w zapisie (2 - wspólne drzewko; bez niej - osobne drzewka broni).
+const TREE_VERSION := 2
+
+## Punkty umiejętności za awans postaci: 1 co tyle poziomów (wspólne drzewko ma więcej węzłów niż dawne drzewka broni).
+const LEVEL_POINT_EVERY := 2
 ## Kamień w gnieździe drzewka działa mocniej niż w przedmiocie.
 const TREE_GEM_POWER := 1.5
 ## Promień kamienia promienia (w jednostkach pozycji węzłów drzewka).
@@ -46,7 +59,7 @@ const RADIUS_RANGE := 2.6
 func level_of(id: String) -> int:
 	var node := SkillTree.node_for_skill(id)
 	if node != "":
-		return maxi(levels.get(id, 0), 1) if has_node_id(Skills.get_data(id)["weapon"], node) else 0
+		return maxi(levels.get(id, 0), 1) if has_node_id(node) else 0
 	return levels.get(id, 0)
 
 
@@ -62,7 +75,7 @@ func next_cost(id: String) -> int:
 func can_learn(id: String) -> bool:
 	var node := SkillTree.node_for_skill(id)
 	if node != "":
-		return has_node_id(Skills.get_data(id)["weapon"], node)
+		return has_node_id(node)
 	var required: String = Skills.get_data(id).get("requires", "")
 	return required == "" or level_of(required) > 0
 
@@ -129,41 +142,39 @@ func _learned_of_type(weapon_type: String, kind: String) -> String:
 	return ""
 
 
-## Regeneracja zdrowia/many (na sekundę) z umiejętności danego rodzaju broni.
-func regen(kind: String, weapon_type: String, maximum := 0.0) -> float:
-	var total := 0.0
-	for id in Skills.for_weapon(weapon_type):
-		if Skills.DATA[id]["type"] == kind:
-			var level := level_of(id)
-			total += Skills.health_regen(level, maximum) if kind == "health_regen" else Skills.mana_regen(level, maximum)
-	return total
-
-
 # ---------------------------------------------------------------- drzewko
-func has_node_id(weapon_type: String, id: String) -> bool:
-	return id == "start" or nodes.get(weapon_type, {}).has(id)
+func has_node_id(id: String) -> bool:
+	return id == "start" or nodes.has(id)
 
 
 func points_total() -> int:
-	return earned_points() + SkillTree.START_POINTS + bonus_points
+	return earned_points() + SkillTree.START_POINTS + bonus_points + level_points()
 
 
+## Punkty umiejętności za poziom postaci (1 co LEVEL_POINT_EVERY poziomów).
+func level_points() -> int:
+	return floori(maxi(character_level, 1) / float(LEVEL_POINT_EVERY))
+
+
+## Awans postaci (Player): nowy poziom, a gdy daje punkt umiejętności - sygnał dla HUD.
+func set_character_level(level: int) -> void:
+	var before := level_points()
+	character_level = level
+	var gained := level_points() - before
+	if gained > 0:
+		skill_points_gained.emit(gained)
+	changed.emit()
+
+
+## Punkty wydane: węzły drzewka i poziomy umiejętności.
 func points_spent() -> int:
-	var total := 0
-	for weapon_type: String in Skills.WEAPON_TYPES:
-		total += points_in(weapon_type)
-	return total
-
-
-## Punkty wydane na broń: węzły drzewka i poziomy jej umiejętności.
-func points_in(weapon_type: String) -> int:
-	var total: int = nodes.get(weapon_type, {}).size()
-	for id in Skills.for_weapon(weapon_type):
+	var total: int = nodes.size()
+	for id: String in Skills.DATA:
 		total += _level_points(id, level_of(id))
 	return total
 
 
-## Punkty za poziomy umiejętności ponad to, co daje węzeł drzewka.
+## Punkty umiejętności za poziomy umiejętności ponad to, co daje węzeł drzewka.
 func _level_points(id: String, level: int) -> int:
 	var total := 0
 	for l in range(_min_level(id) + 1, level + 1):
@@ -210,19 +221,42 @@ func points_left() -> int:
 	return maxi(points_total() - points_spent(), 0)
 
 
-## Czy węzeł można teraz wybrać: jeszcze niewybrany, obok wybranego i jest wolny punkt.
-func can_take(weapon_type: String, id: String) -> bool:
-	if has_node_id(weapon_type, id) or points_left() <= 0:
-		return false
-	return SkillTree.neighbors(weapon_type, id).any(func(other: String) -> bool: return has_node_id(weapon_type, other))
+## Węzły osiągalne od startu: wybrane i puste miejsca (SkillTree.is_soon) leżące obok osiągalnych - przez puste
+## miejsca drzewko przechodzi za darmo. `without` - bez tego węzła (sprawdzanie cofania).
+func reachable(without := "") -> Dictionary:
+	var key := nodes.hash()
+	if without == "" and key == _reach_key:
+		return _reach
+	var reached := {"start": true}
+	var queue: Array[String] = ["start"]
+	while not queue.is_empty():
+		for other: String in SkillTree.neighbors(queue.pop_back()):
+			if other != without and not reached.has(other) and (nodes.has(other) or SkillTree.is_soon(other)):
+				reached[other] = true
+				queue.append(other)
+	if without == "":
+		_reach = reached
+		_reach_key = key
+	return reached
 
 
-func take(weapon_type: String, id: String) -> bool:
-	if not can_take(weapon_type, id):
+## Czy węzeł leży obok osiągalnego (da się go wybrać, gdy będzie wolny punkt).
+func is_open(id: String) -> bool:
+	if has_node_id(id) or SkillTree.is_soon(id) or not SkillTree.has_node(id):
 		return false
-	if not nodes.has(weapon_type):
-		nodes[weapon_type] = {}
-	nodes[weapon_type][id] = true
+	var reached := reachable()
+	return SkillTree.neighbors(id).any(func(other: String) -> bool: return reached.has(other))
+
+
+## Czy węzeł można teraz wybrać: jeszcze niewybrany, nie jest pustym miejscem, obok wybranego i jest wolny punkt.
+func can_take(id: String) -> bool:
+	return points_left() > 0 and is_open(id)
+
+
+func take(id: String) -> bool:
+	if not can_take(id):
+		return false
+	nodes[id] = true
 	changed.emit()
 	return true
 
@@ -230,111 +264,110 @@ func take(weapon_type: String, id: String) -> bool:
 ## Dlaczego węzła nie da się cofnąć ("" - da się): start, niewybrany, kamień w gnieździe albo węzeł, przez który
 ## inne wybrane węzły łączą się ze startem.
 ## Z `gold` (>= 0) sprawdza też, czy starczy złota na cofnięcie (refund_gold).
-func refund_reason(weapon_type: String, id: String, gold := -1) -> String:
-	if id == "start" or not nodes.get(weapon_type, {}).has(id):
+func refund_reason(id: String, gold := -1) -> String:
+	if id == "start" or not nodes.has(id):
 		return Lang.t("Ten węzeł nie jest wybrany.")
-	if not gem_in(weapon_type, id).is_empty():
+	if not gem_in(id).is_empty():
 		return Lang.t("Wyjmij najpierw kamień z gniazda.")
-	var skill: String = SkillTree.nodes(weapon_type)[id].get("skill", "")
+	var skill: String = SkillTree.node(id).get("skill", "")
 	if skill != "" and level_of(skill) > 1:
 		return Lang.t("Cofnij najpierw poziomy umiejętności.")
 	if gold >= 0 and gold < refund_gold():
 		return Lang.t("Za mało złota: cofnięcie kosztuje %d zł.") % refund_gold()
-	# przeszukanie od startu po wybranych węzłach bez cofanego - każdy musi zostać osiągalny
-	var reached := {"start": true}
-	var queue: Array[String] = ["start"]
-	while not queue.is_empty():
-		for other in SkillTree.neighbors(weapon_type, queue.pop_back()):
-			if other != id and not reached.has(other) and nodes[weapon_type].has(other):
-				reached[other] = true
-				queue.append(other)
-	if reached.size() - 1 < nodes[weapon_type].size() - 1:
-		return Lang.t("Inne wybrane węzły zależą od tego węzła.")
+	# każdy inny wybrany węzeł musi zostać osiągalny od startu
+	var reached := reachable(id)
+	for other: String in nodes:
+		if other != id and not reached.has(other):
+			return Lang.t("Inne wybrane węzły zależą od tego węzła.")
 	return ""
 
 
+## Wybiera węzeł razem z drogą od startu bez sprawdzania punktów - testy i narzędzia (zrzuty, pomiary).
+func grant_node(id: String) -> void:
+	for step in SkillTree.path_to(id):
+		nodes[step] = true
+	changed.emit()
+
+
 ## Cofa jeden węzeł (prawy przycisk w drzewku) - punkt wraca. Ze `stats` pobiera złoto (refund_gold).
-func refund(weapon_type: String, id: String, stats: CharacterStats = null) -> bool:
-	if refund_reason(weapon_type, id, stats.gold if stats != null else -1) != "":
+func refund(id: String, stats: CharacterStats = null) -> bool:
+	if refund_reason(id, stats.gold if stats != null else -1) != "":
 		return false
 	if stats != null:
 		stats.add_gold(-refund_gold())
-	nodes[weapon_type].erase(id)
+	nodes.erase(id)
 	changed.emit()
 	return true
 
 
-## Zapomnienie drzewka (u mędrca): wszystkie węzły i poziomy umiejętności tej broni wracają jako punkty
-## (złoto liczy VillageServices._respec - points_in * refund_gold).
+## Zapomnienie drzewka (u mędrca): wszystkie węzły i poziomy umiejętności wracają jako punkty
+## (złoto liczy VillageServices._respec - points_spent * refund_gold).
 ## Zwraca przepisy kamieni wyjętych z gniazd (wracają do plecaka - VillageServices._respec).
-func reset_tree(weapon_type: String) -> Array:
-	nodes[weapon_type] = {}
-	for id in Skills.for_weapon(weapon_type):
-		levels.erase(id)
-	var gems: Array = tree_gems.get(weapon_type, {}).values()
-	tree_gems.erase(weapon_type)
+func reset_tree() -> Array:
+	nodes.clear()
+	levels.clear()
+	var gems: Array = tree_gems.values()
+	tree_gems.clear()
 	changed.emit()
 	return gems
 
 
 # ---------------------------------------------------------------- gniazda drzewka
 ## Przepis kamienia w gnieździe drzewka ({} - puste).
-func gem_in(weapon_type: String, id: String) -> Dictionary:
-	return tree_gems.get(weapon_type, {}).get(id, {})
+func gem_in(id: String) -> Dictionary:
+	return tree_gems.get(id, {})
 
 
-## Esencja legendy w wybranym gnieździe legendarnym drzewka ({} - brak).
-func essence_in(weapon_type: String) -> Dictionary:
-	var gems: Dictionary = tree_gems.get(weapon_type, {})
-	for id: String in gems:
-		if gems[id].has("essence") and has_node_id(weapon_type, id):
-			return gems[id]
-	return {}
+## Esencje legend w wybranych gniazdach legendarnych drzewka (działają z każdą bronią).
+func essences() -> Array:
+	var found := []
+	for id: String in tree_gems:
+		if tree_gems[id].has("essence") and has_node_id(id):
+			found.append(tree_gems[id])
+	return found
 
 
-func is_legendary_socket(weapon_type: String, id: String) -> bool:
-	return SkillTree.nodes(weapon_type).get(id, {}).get("legendary", false)
+func is_legendary_socket(id: String) -> bool:
+	return SkillTree.node(id).get("legendary", false)
 
 
 ## Czy w węzeł da się włożyć kamień: wybrane gniazdo.
-func can_socket(weapon_type: String, id: String) -> bool:
-	return SkillTree.nodes(weapon_type).get(id, {}).get("kind", "") == "socket" and has_node_id(weapon_type, id)
+func can_socket(id: String) -> bool:
+	return SkillTree.node(id).get("kind", "") == "socket" and has_node_id(id)
 
 
 ## Wkłada kamień (przepis); zwraca przepis kamienia, który był w gnieździe wcześniej ({} - nie było).
-func set_gem(weapon_type: String, id: String, recipe: Dictionary) -> Dictionary:
-	var old := gem_in(weapon_type, id)
-	if not tree_gems.has(weapon_type):
-		tree_gems[weapon_type] = {}
-	tree_gems[weapon_type][id] = recipe.duplicate(true)
+func set_gem(id: String, recipe: Dictionary) -> Dictionary:
+	var old := gem_in(id)
+	tree_gems[id] = recipe.duplicate(true)
 	changed.emit()
 	return old
 
 
 ## Wyjmuje kamień z gniazda; zwraca jego przepis ({} - gniazdo było puste).
-func take_gem(weapon_type: String, id: String) -> Dictionary:
-	var old := gem_in(weapon_type, id)
+func take_gem(id: String) -> Dictionary:
+	var old := gem_in(id)
 	if not old.is_empty():
-		tree_gems[weapon_type].erase(id)
+		tree_gems.erase(id)
 		changed.emit()
 	return old
 
 
 ## Osadza kamień z pola `index` plecaka w gnieździe drzewka; kamień, który tam był, wraca do plecaka (zamiana).
 ## Zwraca "" albo powód, dla którego się nie da.
-func socket_from(inventory: Inventory, weapon_type: String, id: String, index: int) -> String:
-	if not can_socket(weapon_type, id):
+func socket_from(inventory: Inventory, id: String, index: int) -> String:
+	if not can_socket(id):
 		return Lang.t("Najpierw wybierz gniazdo w drzewku.")
 	if index < 0 or index >= inventory.slots.size() or inventory.slots[index].is_empty() \
 			or not (Gems.is_gem(inventory.slots[index]["id"]) or Essences.is_essence(inventory.slots[index]["id"])):
 		return Lang.t("To nie jest kamień szlachetny ani esencja.")
 	var gem_id: String = inventory.slots[index]["id"]
-	if Essences.is_essence(gem_id) and not is_legendary_socket(weapon_type, id):
+	if Essences.is_essence(gem_id) and not is_legendary_socket(id):
 		return Lang.t("Esencja pasuje tylko do gniazda legendarnego.")
-	if gem_in(weapon_type, id).has("essence"):
+	if gem_in(id).has("essence"):
 		return Lang.t("Najpierw wyjmij esencję z gniazda.")
 	inventory.take_one(index)
-	var old := set_gem(weapon_type, id, Items.generated[gem_id]["recipe"])
+	var old := set_gem(id, Items.generated[gem_id]["recipe"])
 	Items.generated.erase(gem_id)
 	if not old.is_empty():
 		inventory.put(index, Gems.register(old.duplicate(true)))
@@ -343,8 +376,8 @@ func socket_from(inventory: Inventory, weapon_type: String, id: String, index: i
 
 ## Wyjmuje kamień z gniazda drzewka do plecaka (za darmo; esencję - za złoto z `stats`, Essences.save_gold).
 ## Zwraca "" albo powód, dla którego się nie da.
-func unsocket_to(inventory: Inventory, weapon_type: String, id: String, stats: CharacterStats = null) -> String:
-	var gem := gem_in(weapon_type, id)
+func unsocket_to(inventory: Inventory, id: String, stats: CharacterStats = null) -> String:
+	var gem := gem_in(id)
 	if gem.is_empty():
 		return Lang.t("Gniazdo jest puste.")
 	if not inventory.slots.any(func(slot: Dictionary) -> bool: return slot.is_empty()):
@@ -354,60 +387,55 @@ func unsocket_to(inventory: Inventory, weapon_type: String, id: String, stats: C
 		if stats == null or stats.gold < price:
 			return Lang.t("Wyjęcie esencji kosztuje %d zł.") % price
 		stats.add_gold(-price)
-		inventory.add_item(Essences.register(take_gem(weapon_type, id).duplicate(true)), 1)
+		inventory.add_item(Essences.register(take_gem(id).duplicate(true)), 1)
 		return ""
-	inventory.add_item(Gems.register(take_gem(weapon_type, id).duplicate(true)), 1)
+	inventory.add_item(Gems.register(take_gem(id).duplicate(true)), 1)
 	return ""
 
 
 ## Niszczy esencję w gnieździe drzewka (za darmo).
-func destroy_essence(weapon_type: String, id: String) -> void:
-	if gem_in(weapon_type, id).has("essence"):
-		take_gem(weapon_type, id)
+func destroy_essence(id: String) -> void:
+	if gem_in(id).has("essence"):
+		take_gem(id)
 
 
 ## Kamienie promienia w wybranych gniazdach: [pozycja gniazda, moc].
-func _radius_gems(weapon_type: String, tree: Dictionary) -> Array:
+func _radius_gems() -> Array:
 	var found := []
-	var gems: Dictionary = tree_gems.get(weapon_type, {})
-	for id: String in gems:
-		if gems[id].get("kind", "") == "radius" and has_node_id(weapon_type, id) and tree.has(id):
-			found.append([tree[id]["pos"], float(gems[id]["affixes"].get("radius_power", 0.0))])
+	for id: String in tree_gems:
+		if tree_gems[id].get("kind", "") == "radius" and has_node_id(id) and SkillTree.has_node(id):
+			found.append([SkillTree.node(id)["pos"], float(tree_gems[id]["affixes"].get("radius_power", 0.0))])
 	return found
 
 
 ## Mnożnik premii węzła pasywnego od kamieni promienia (1.0 - poza promieniem).
-func radius_factor(weapon_type: String, id: String) -> float:
-	var tree := SkillTree.nodes(weapon_type)
+func radius_factor(id: String) -> float:
 	var factor := 1.0
-	if tree.get(id, {}).get("kind", "") != "passive":
+	if SkillTree.node(id).get("kind", "") != "passive":
 		return factor
-	for gem: Array in _radius_gems(weapon_type, tree):
-		if (gem[0] as Vector2).distance_to(tree[id]["pos"]) <= RADIUS_RANGE:
+	for gem: Array in _radius_gems():
+		if (gem[0] as Vector2).distance_to(SkillTree.node(id)["pos"]) <= RADIUS_RANGE:
 			factor += gem[1]
 	return factor
 
 
-## Suma premii danego rodzaju z wybranych węzłów drzewka broni (statystyki postaci i premie umiejętności).
-func tree_bonus(weapon_type: String, stat: String) -> float:
+## Suma premii danego rodzaju z wybranych węzłów drzewka (statystyki postaci i premie umiejętności) - z każdą bronią.
+func tree_bonus(stat: String) -> float:
 	var total := 0.0
-	var tree := SkillTree.nodes(weapon_type)
-	var radius := _radius_gems(weapon_type, tree)
-	for id: String in nodes.get(weapon_type, {}):
-		if not tree.has(id):
-			continue
-		var value := float(tree[id].get("stats", {}).get(stat, 0.0))
-		if value != 0.0 and not radius.is_empty() and tree[id]["kind"] == "passive" and stat not in SkillTree.COUNT_STATS:
+	var radius := _radius_gems()
+	for id: String in nodes:
+		var data := SkillTree.node(id)
+		var value := float(data.get("stats", {}).get(stat, 0.0))
+		if value != 0.0 and not radius.is_empty() and data["kind"] == "passive" and stat not in SkillTree.COUNT_STATS:
 			var factor := 1.0
 			for gem: Array in radius:
-				if (gem[0] as Vector2).distance_to(tree[id]["pos"]) <= RADIUS_RANGE:
+				if (gem[0] as Vector2).distance_to(data["pos"]) <= RADIUS_RANGE:
 					factor += gem[1]
 			value *= factor
 		total += value
-	var gems: Dictionary = tree_gems.get(weapon_type, {})
-	for id: String in gems:
-		if has_node_id(weapon_type, id):
-			total += float(gems[id].get("affixes", {}).get(stat, 0.0)) * TREE_GEM_POWER
+	for id: String in tree_gems:
+		if has_node_id(id):
+			total += float(tree_gems[id].get("affixes", {}).get(stat, 0.0)) * TREE_GEM_POWER
 	return total
 
 
@@ -527,30 +555,31 @@ func add_support_xp(amount: int) -> Array[String]:
 	return leveled
 
 
-func has_keystone(weapon_type: String, id: String) -> bool:
-	return nodes.get(weapon_type, {}).has(id) and SkillTree.nodes(weapon_type).get(id, {}).get("kind", "") == "keystone"
+## Wybrany węzeł kluczowy (działa z każdą bronią - tam, gdzie pasuje).
+func has_keystone(id: String) -> bool:
+	return nodes.has(id) and SkillTree.node(id).get("kind", "") == "keystone"
 
 
 func get_save_data() -> Dictionary:
-	var taken := {}
-	for weapon_type: String in nodes:
-		taken[weapon_type] = nodes[weapon_type].keys()
-	return {"levels": levels.duplicate(), "nodes": taken, "gems": tree_gems.duplicate(true), "bonus_points": bonus_points,
-			"supports": supports.duplicate(true), "skill_xp": skill_xp}
+	return {"tree": TREE_VERSION, "levels": levels.duplicate(), "nodes": nodes.keys(), "gems": tree_gems.duplicate(true),
+			"bonus_points": bonus_points, "supports": supports.duplicate(true), "skill_xp": skill_xp}
 
 
-## Starsze zapisy to sam słownik poziomów; umiejętności drzewka kupione wtedy za złoto dostają wybrane węzły
-## (z drogą od startu), żeby nic nie przepadło. Tak samo broń, która dostała drzewko później (łuk), a w zapisie nie
-## ma jeszcze żadnych jej węzłów (po zapomnieniu drzewka zapis ma pustą listę, więc węzły nie wracają).
+## Zapis sprzed wspólnego drzewka (bez "tree") miał osobne drzewka broni: węzły i poziomy umiejętności przepadają,
+## czyli wszystkie punkty wracają do rozdania (tree_reset), a kamienie z gniazd czekają w reset_gems na plecak.
+## Jeszcze starsze zapisy (sam słownik poziomów, bez paska umiejętności) przelicza migrate_old.
 func load_save_data(data: Dictionary) -> void:
 	levels.clear()
 	nodes.clear()
 	tree_gems.clear()
 	supports.clear()
+	reset_gems.clear()
 	bonus_points = int(data.get("bonus_points", 0))
 	skill_xp = int(data.get("skill_xp", 0))
 	needs_migration = not data.has("skill_xp")
 	migrated_gold = -1
+	var old_tree := int(data.get("tree", 0)) < TREE_VERSION
+	tree_reset = old_tree and not data.is_empty()
 	var saved_supports: Dictionary = data.get("supports", {})
 	for skill: String in saved_supports:
 		if not Supports.has_sockets(skill):
@@ -571,41 +600,48 @@ func load_save_data(data: Dictionary) -> void:
 			gems.append({})
 		supports[skill] = {"sockets": count, "gems": gems}
 	var saved_gems: Dictionary = data.get("gems", {})
-	for weapon_type: String in saved_gems:
-		var tree := SkillTree.nodes(weapon_type)
-		for id: String in saved_gems[weapon_type]:
-			var recipe: Dictionary = saved_gems[weapon_type][id]
-			if tree.has(id) and recipe.has("kind"):
-				if recipe.has("essence"):
-					recipe["value"] = float(recipe["value"])
-				else:
-					recipe["cut"] = int(recipe.get("cut", 0))
-				if not tree_gems.has(weapon_type):
-					tree_gems[weapon_type] = {}
-				tree_gems[weapon_type][id] = recipe
-	var saved_levels: Dictionary = data.get("levels", {}) if data.has("levels") else data
-	for id: String in saved_levels:
-		if Skills.DATA.has(id):
-			levels[id] = clampi(int(saved_levels[id]), 0, Skills.MAX_LEVEL)
-	var saved_nodes: Dictionary = data.get("nodes", {})
-	for weapon_type: String in saved_nodes:
-		var tree := SkillTree.nodes(weapon_type)
-		nodes[weapon_type] = {}
-		for id in saved_nodes[weapon_type]:
-			# dawny węzeł kluczowy Nieustający Wir zastąpiło Oko Cyklonu w tym samym miejscu
-			var node_id := "cyclone_eye" if str(id) == "endless_whirl" else str(id)
-			if tree.has(node_id) and node_id != "start":
-				nodes[weapon_type][node_id] = true
-	for id: String in levels:
-		var node := SkillTree.node_for_skill(id)
-		var weapon_type: String = Skills.get_data(id)["weapon"]
-		if node == "" or levels[id] <= 0 or saved_nodes.has(weapon_type):
-			continue
-		if not nodes.has(weapon_type):
-			nodes[weapon_type] = {}
-		for step in SkillTree.path_to(weapon_type, node):
-			nodes[weapon_type][step] = true
+	if old_tree:
+		# osobne drzewka broni: {broń: {gniazdo: przepis}} - kamienie wracają do plecaka
+		for weapon_type: String in saved_gems:
+			if saved_gems[weapon_type] is Dictionary:
+				for id: String in saved_gems[weapon_type]:
+					var recipe = saved_gems[weapon_type][id]
+					if recipe is Dictionary and recipe.has("kind"):
+						reset_gems.append(_clean_gem(recipe))
+		# zapis sprzed paska umiejętności: poziomy potrzebne do zwrotu złota (migrate_old)
+		if needs_migration:
+			var old_levels: Dictionary = data.get("levels", {}) if data.has("levels") else data
+			for id: String in old_levels:
+				if Skills.DATA.has(id) and (old_levels[id] is int or old_levels[id] is float):
+					levels[id] = clampi(int(old_levels[id]), 0, Skills.MAX_LEVEL)
+	else:
+		for id: String in saved_gems:
+			var recipe = saved_gems[id]
+			if SkillTree.node(id).get("kind", "") == "socket" and recipe is Dictionary and recipe.has("kind"):
+				tree_gems[id] = _clean_gem(recipe)
+		var saved_levels: Dictionary = data.get("levels", {})
+		for id: String in saved_levels:
+			if Skills.DATA.has(id):
+				levels[id] = clampi(int(saved_levels[id]), 0, Skills.MAX_LEVEL)
+		for id in data.get("nodes", []):
+			if SkillTree.has_node(str(id)) and str(id) != "start" and not SkillTree.is_soon(str(id)):
+				nodes[str(id)] = true
 	changed.emit()
+
+
+func _clean_gem(recipe: Dictionary) -> Dictionary:
+	if recipe.has("essence"):
+		recipe["value"] = float(recipe["value"])
+	else:
+		recipe["cut"] = int(recipe.get("cut", 0))
+	return recipe
+
+
+## Kamienie z gniazd dawnych drzewek broni (zapis sprzed wspólnego drzewka) - gracz odkłada je do plecaka.
+func take_reset_gems() -> Array:
+	var gems := reset_gems.duplicate()
+	reset_gems.clear()
+	return gems
 
 
 ## Przelicza zapis sprzed paska umiejętności: złoto wydane na poziomy umiejętności wraca, węzły i poziomy wracają
@@ -621,12 +657,9 @@ func migrate_old(total_xp: int) -> Dictionary:
 		for level in range(first, mini(levels[id], 5) + 1):
 			gold += Skills.old_gold_cost(id, level)
 	levels.clear()
-	var gems: Array = []
-	for weapon_type: String in tree_gems:
-		gems.append_array(tree_gems[weapon_type].values())
+	var gems: Array = tree_gems.values()
 	tree_gems.clear()
-	for weapon_type: String in nodes:
-		nodes[weapon_type] = {}
+	nodes.clear()
 	skill_xp = maxi(total_xp, 0)
 	migrated_gold = gold
 	changed.emit()

@@ -139,11 +139,12 @@ func _level(id: String) -> int:
 
 
 func _bonus(stat: String) -> float:
-	return _player.skills.tree_bonus("bow", stat)
+	return _player.skills.tree_bonus(stat)
 
 
+## Węzły kluczowe wspólnego drzewka działają z każdą bronią (tam, gdzie pasują).
 func has_keystone(id: String) -> bool:
-	return _player.skills.has_keystone("bow", id) and _player.stats.weapon_type() == "bow"
+	return _player.skills.has_keystone(id)
 
 
 ## Punkt pod kursorem (tester-bot i testy celują przez Player.aim_override - wektor od środka postaci).
@@ -309,6 +310,11 @@ func _vault() -> void:
 		_player.get_parent().add_child(arrow)
 	release(_player.get_parent(), _player.body_center() + dir * 6.0, dir.angle(), 0.85)
 	Sfx.play("bow", 0.0, 1.1)
+
+
+## Myśliwy z Cienia: po każdej umiejętności ruchu (tag "movement" - Szarża, Mgnienie, Odskok, Krok przez Mgłę)
+## wrogowie na chwilę tracą gracza z oczu, a pierwsze trafienie jest podwójne (Player.note_skill).
+func on_movement() -> void:
 	if has_keystone("shadow_hunter"):
 		_shadow_time = SHADOW_TIME
 		_shadow_shot = true
@@ -483,7 +489,7 @@ func ballista() -> Node2D:
 
 
 # ---------------------------------------------------------------- trafienia i węzły kluczowe
-## Mnożnik obrażeń trafienia z łukiem w ręku: Myśliwy z Cienia (pierwsze po Odskoku podwójne), Oko Sokoła (bliskie słabsze).
+## Mnożnik obrażeń trafienia (z każdą bronią): Myśliwy z Cienia (pierwsze po umiejętności ruchu podwójne), Oko Sokoła (bliskie słabsze).
 func damage_factor(enemy: Goblin) -> float:
 	var factor := 1.0
 	if _shadow_shot:

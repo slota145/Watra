@@ -288,7 +288,7 @@ const SUPPORT_ECHO_DELAY := 0.35
 var sword_skills: SwordSkills
 var bow_skills: BowSkills
 var spell_skills: SpellSkills
-## Ofiara Krwi: ułamek zdrowia do zapłacenia za umiejętności (koszty są ułamkowe, zdrowie - całkowite).
+## Krew za Manę (dawna Ofiara Krwi): ułamek zdrowia do zapłacenia za umiejętności (koszty są ułamkowe, zdrowie - całkowite).
 var _blood_cost := 0.0
 var _whirling := false
 ## Ładowanie kuli ognia: postęp 0..1 (-1 = nie ładujemy), kula w dłoniach i jej dźwięki.
@@ -560,7 +560,7 @@ func is_skill_held(id: String) -> bool:
 # ---------------------------------------------------------------- combo
 ## Okno combo (s): bazowe i dłuższe z węzłów drzewka.
 func combo_window() -> float:
-	return Skills.COMBO_WINDOW + skills.tree_bonus(stats.weapon_type(), "combo_window")
+	return Skills.COMBO_WINDOW + skills.tree_bonus("combo_window")
 
 
 ## Zapamiętuje użytą umiejętność - przez okno combo kolejne mogą zadziałać inaczej (Skills.COMBOS).
@@ -569,6 +569,8 @@ func note_skill(id: String) -> void:
 	_chain_skill = id
 	_chain_time = combo_window()
 	spell_skills.on_cast(id)
+	if "movement" in Skills.TAGS.get(id, []):
+		bow_skills.on_movement()
 	if SKILL_MOVES.has(id):
 		var move: Array = SKILL_MOVES[id]
 		# postać zwrócona w stronę celu, a łuk celuje tam, gdzie kursor
@@ -590,7 +592,7 @@ func combo_with(id: String) -> bool:
 
 ## Mnożnik obrażeń ciosów combo (węzły drzewka).
 func combo_damage() -> float:
-	return 1.0 + skills.tree_bonus(stats.weapon_type(), "combo_damage")
+	return 1.0 + skills.tree_bonus("combo_damage")
 
 
 ## Wykonane combo (np. Półksiężyc po Szarży) - Taniec Ostrzy dokłada wtedy szybkości ataku.
@@ -605,11 +607,11 @@ func combo_fraction() -> float:
 
 ## Zasięg Młynka (poziom umiejętności i premia z drzewka) i mnożnik zużycia many (węzeł kluczowy Oko Cyklonu).
 func whirl_radius() -> float:
-	return Skills.whirlwind_radius(skills.level_of("whirlwind")) * (1.0 + skills.tree_bonus("melee", "whirl_radius")) * stats.area_multiplier(Skills.tags("whirlwind"))
+	return Skills.whirlwind_radius(skills.level_of("whirlwind")) * (1.0 + skills.tree_bonus("whirl_radius")) * stats.area_multiplier(Skills.tags("whirlwind"))
 
 
 func whirl_mana_factor() -> float:
-	return (2.0 if skills.has_keystone("melee", "cyclone_eye") else 1.0) * skills.support_mana("whirlwind")
+	return (2.0 if skills.has_keystone("cyclone_eye") else 1.0) * skills.support_mana("whirlwind")
 
 
 # ---------------------------------------------------------------- kamienie wsparcia (Supports)
@@ -672,7 +674,7 @@ func _support_after_use(id: String) -> void:
 
 ## Mnożnik obrażeń rozkręconego Młynka (Oko Cyklonu): +25% za sekundę kręcenia, najwyżej +100%.
 func whirl_spin_up() -> float:
-	if not skills.has_keystone("melee", "cyclone_eye"):
+	if not skills.has_keystone("cyclone_eye"):
 		return 1.0
 	return 1.0 + minf(_whirl_time * CYCLONE_SPIN_UP, CYCLONE_SPIN_MAX)
 
@@ -1509,9 +1511,13 @@ func load_save_data(data: Dictionary) -> void:
 	inventory.load_save_data(data.get("inventory", []))
 	# zapis sprzed paska umiejętności: złoto za kupione poziomy wraca, punkty z całego zdobytego expa
 	var migrated := skills.migrate_old(stats.total_xp())
+	var returned: Array = skills.take_reset_gems()
 	if not migrated.is_empty():
 		stats.add_gold(int(migrated["gold"]))
-		for recipe: Dictionary in migrated["gems"]:
+		returned.append_array(migrated["gems"])
+	# kamienie z gniazd dawnych drzewek broni wracają do plecaka (gdy pełny - do magazynu)
+	if not returned.is_empty():
+		for recipe: Dictionary in returned:
 			var gem_id := Essences.register(recipe.duplicate(true)) if recipe.has("essence") else Gems.register(recipe.duplicate(true))
 			if inventory.add_item(gem_id, 1) > 0:
 				storage.add_item(gem_id, 1)
@@ -1547,8 +1553,7 @@ func _on_stats_changed() -> void:
 
 
 func _on_leveled_up(new_level: int) -> void:
-	skills.character_level = new_level
-	skills.changed.emit()
+	skills.set_character_level(new_level)
 	if not is_dead:
 		health = stats.max_health()
 		mana = stats.max_mana()
@@ -1563,16 +1568,16 @@ func _regenerate_mana(delta: float) -> void:
 	if mana >= max_mp:
 		return
 	var before := int(mana)
-	var rate := mana_regen + skills.regen("mana_regen", stats.weapon_type(), max_mp) + stats.mana_regen() \
+	var rate := mana_regen + stats.mana_regen() \
 			+ max_mp * _village_regen()
 	mana = minf(mana + rate * delta, max_mp)
 	if int(mana) != before:
 		mana_changed.emit(int(mana), max_mp)
 
 
-## Regeneracja zdrowia z umiejętności pasywnych założonej broni i z przedmiotów.
+## Regeneracja zdrowia z przedmiotów, drzewka i premii.
 func _regenerate_health(delta: float) -> void:
-	var rate := skills.regen("health_regen", stats.weapon_type(), stats.max_health()) + stats.health_regen() \
+	var rate := stats.health_regen() \
 			+ stats.max_health() * _village_regen()
 	if rate <= 0.0 or health >= stats.max_health():
 		_health_regen_progress = 0.0
@@ -1750,8 +1755,8 @@ func _make_projectile(weapon: Dictionary, dir: Vector2, skill := "") -> Projecti
 	projectile.magic = config["magic"]
 	projectile.texture = config["texture"]
 	if weapon["type"] == "bow":
-		projectile.pierce += roundi(skills.tree_bonus("bow", "arrow_pierce"))
-		projectile.max_range *= 1.0 + skills.tree_bonus("bow", "arrow_range")
+		projectile.pierce += roundi(skills.tree_bonus("arrow_pierce"))
+		projectile.max_range *= 1.0 + skills.tree_bonus("arrow_range")
 		# smuga strzały (jadowa w czasie Jadowych Grotów) i błysk trafienia (BowSkills)
 		projectile.add_child(BowSkills.arrow_trail(BowSkills.VENOM_TRAIL_FX if bow_skills.venom_active() else BowSkills.ARROW_TRAIL_FX, dir))
 		projectile.enemy_hit.connect(func(enemy: Goblin) -> void:
@@ -1839,7 +1844,7 @@ func _update_fireball_charge(delta: float, id: String) -> void:
 		return
 	_fireball_time += delta
 	if not _fireball_full:
-		var step := delta * _skill_speed(Skills.tags("fireball")) * (1.0 + skills.tree_bonus("spell", "fireball_charge")) / Skills.FIREBALL_CHARGE_TIME
+		var step := delta * _skill_speed(Skills.tags("fireball")) * (1.0 + skills.tree_bonus("fireball_charge")) / Skills.FIREBALL_CHARGE_TIME
 		if spend_mana(skill_mana("fireball", Skills.FIREBALL_CHARGE_MANA * step)):
 			_fireball_charge = minf(_fireball_charge + step, 1.0)
 			_charge_sound.stream_paused = false
@@ -1979,10 +1984,10 @@ func _cast(id: String, charge := 0.0, combo := false) -> void:
 		_skill_cooldown_total = _skill_cooldown_timer
 		var hail := bow_skills.has_keystone("hail")
 		var count := (Skills.VAULT_VOLLEY_ARROWS if combo else Skills.MULTISHOT_ARROWS) \
-				+ roundi(skills.tree_bonus("bow", "multishot_arrows")) + (BowSkills.HAIL_ARROWS if hail else 0) \
+				+ roundi(skills.tree_bonus("multishot_arrows")) + (BowSkills.HAIL_ARROWS if hail else 0) \
 				+ support_count(id, "projectiles")
 		var spread := deg_to_rad(Skills.MULTISHOT_SPREAD_DEGREES) * sqrt(count / float(Skills.MULTISHOT_ARROWS))
-		var multiplier := Skills.multishot_damage(level) * (1.0 + skills.tree_bonus("bow", "multishot_damage")) \
+		var multiplier := Skills.multishot_damage(level) * (1.0 + skills.tree_bonus("multishot_damage")) \
 				* (BowSkills.HAIL_DAMAGE if hail else 1.0) * (combo_damage() if combo else 1.0)
 		for i in count:
 			var angle := lerpf(-spread / 2.0, spread / 2.0, float(i) / (count - 1))
@@ -2006,7 +2011,7 @@ func _launch_fireballs(dir: Vector2, level: int, charge: float) -> void:
 		return
 	for shot: Vector2 in split_directions(dir, support_count("fireball", "projectiles")):
 		var fireball := _make_projectile(weapon, shot, "fireball")
-		var multiplier := Skills.fireball_damage(level) * Skills.fireball_charge_damage(charge) * (1.0 + skills.tree_bonus("spell", "fireball_damage"))
+		var multiplier := Skills.fireball_damage(level) * Skills.fireball_charge_damage(charge) * (1.0 + skills.tree_bonus("fireball_damage"))
 		fireball.texture = FIREBALL_TEXTURE
 		fireball.magic = false
 		fireball.fire = true
@@ -2053,9 +2058,9 @@ func _update_whirl(delta: float) -> void:
 	Sfx.play("whirl")
 	var level := skills.level_of("whirlwind")
 	var radius := whirl_radius()
-	var multiplier := Skills.whirlwind_damage(level) * (1.0 + skills.tree_bonus("melee", "whirl_damage")) * whirl_spin_up()
+	var multiplier := Skills.whirlwind_damage(level) * (1.0 + skills.tree_bonus("whirl_damage")) * whirl_spin_up()
 	# Oko Cyklonu wciąga trafionych (ujemny odrzut) i sięga połowę dalej po wrogów do wciągnięcia
-	var cyclone := skills.has_keystone("melee", "cyclone_eye")
+	var cyclone := skills.has_keystone("cyclone_eye")
 	for enemy: Goblin in Goblin.near(get_tree(), body_center(), radius * 1.5 + 40.0):
 		var dist := enemy.hurt_center().distance_to(body_center())
 		if dist <= radius + enemy.hurt_radius:
@@ -2202,7 +2207,7 @@ func _use_strike() -> void:
 	var level := skills.level_of(id)
 	match id:
 		"lunge":
-			_strike_cooldown = 0.0 if free else _cooldown(Skills.LUNGE_COOLDOWN, Skills.tags(id)) * (1.0 + skills.tree_bonus("melee", "lunge_cooldown"))
+			_strike_cooldown = 0.0 if free else _cooldown(Skills.LUNGE_COOLDOWN, Skills.tags(id)) * (1.0 + skills.tree_bonus("lunge_cooldown"))
 			_strike_cooldown_total = _strike_cooldown
 			_start_lunge(level)
 		"seeker":
@@ -2364,10 +2369,9 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 	if enemy.is_shocked():
 		amount = roundi(amount * (1.0 + Elements.SHOCK_BONUS + stats.support(tags, "shock_effect")))
 	amount += legendary.execute_bonus(enemy)
-	var bow := stats.weapon_type() == "bow"
-	if bow:
-		amount = roundi(amount * bow_skills.damage_factor(enemy))
-	var critical := randf() < stats.crit_chance() or sword_skills.take_forced_crit() or (bow and bow_skills.forced_crit(enemy))
+	# Myśliwy z Cienia i Oko Sokoła (węzły kluczowe drzewka - z każdą bronią)
+	amount = roundi(amount * bow_skills.damage_factor(enemy))
+	var critical := randf() < stats.crit_chance() or sword_skills.take_forced_crit() or bow_skills.forced_crit(enemy)
 	if critical:
 		amount = roundi(amount * stats.crit_multiplier())
 	DamageNumber.critical = critical
@@ -2389,7 +2393,7 @@ func hit_enemy(enemy: Goblin, amount: int, from_position: Vector2, knockback: fl
 			_apply_ailment(enemy, Elements.SOUND_ELEMENTS[tag], amount, tags, true)
 	if critical:
 		Sfx.play_at("hit_crit", enemy.global_position)
-	if bow:
+	if stats.weapon_type() == "bow":
 		bow_skills.on_hit(enemy, amount)
 	if not is_dead:
 		if enemy.state == Goblin.State.DEAD:
@@ -2531,7 +2535,7 @@ func _cast_seeker(level: int) -> void:
 	var arrow := SeekerArrow.new()
 	arrow.position = position + dir * 6.0
 	arrow.velocity = dir * SeekerArrow.SPEED
-	arrow.hits_left = Skills.seeker_hits(level) + roundi(skills.tree_bonus("bow", "seeker_hits"))
+	arrow.hits_left = Skills.seeker_hits(level) + roundi(skills.tree_bonus("seeker_hits"))
 	arrow.split = roundi(equipment.effect_power("seeker_split"))
 	var kind := stats.kind_multiplier(Skills.tags("seeker"))
 	arrow.damage_min = maxi(1, roundi(stats.damage_min() * Skills.SEEKER_DAMAGE * kind))
@@ -2619,7 +2623,7 @@ func _cast_chain(level: int) -> void:
 		return
 	targets.append(first)
 	# Rozszczep i Łańcuch (kamienie wsparcia): więcej przeskoków
-	var jumps := Skills.chain_targets(level) + roundi(skills.tree_bonus("spell", "chain_targets")) \
+	var jumps := Skills.chain_targets(level) + roundi(skills.tree_bonus("chain_targets")) \
 			+ support_count("chain_lightning", "projectiles") + support_count("chain_lightning", "chain")
 	while targets.size() < jumps:
 		var last := targets[-1]

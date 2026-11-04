@@ -48,7 +48,7 @@ przy każdym wejściu, nie zapisują się (wczytana gra wraca przed Watrę).
   - `hotbar.gd`: paski szybkiego wyboru (dane), `status_effects.gd`: lista efektów działających na gracza,
   - `supports.gd`: kamienie wsparcia i gniazda umiejętności (dane; gniazda trzyma `skill_book.gd`), źródło kamieni i krzesiw -
     Mgła Nawii w lochach (`nawia_mist.gd`),
-  - `skill_tree.gd`: drzewka umiejętności broni (dane), `sword_skills.gd`, `bow_skills.gd` i `spell_skills.gd`: umiejętności drzewek miecza, łuku i księgi,
+  - `skill_tree.gd`: wspólne drzewko umiejętności (dane w `skill_tree_data.gd` generuje `python tools/shared_tree_draft.py`), `sword_skills.gd`, `bow_skills.gd` i `spell_skills.gd`: umiejętności miecza, łuku i księgi,
   - `nawia_map.gd`: Mapa Nawii (endgame - węzły-lochy stopni 8-17), okno `scripts/ui/nawia_window.gd`,
     Błogosławieństwo Watry przy kapliczkach `scripts/ui/blessing_window.gd`, drzewko Watry `watra_tree.gd`
     (3 zakładki, okno `scripts/ui/watra_tree_window.gd`), bossowie szczytowi `pinnacles.gd` i `pinnacle_boss.gd`,
@@ -157,8 +157,8 @@ Skrót; szczegóły każdego zrobionego punktu (pliki, funkcje, liczby) są w `d
   żywioł ataku potwora wg sceny (`Elements.MONSTERS`, `Goblin.element`), odporności i wrażliwości potworów
   (`Elements.MONSTER_RESIST`, `Goblin.resistances`), premie obrażeń żywiołów i przebicie odporności, żywioły
   w modyfikatorach lochów, bożkach i elitach (`Elements.apply_dungeon`, `Elements.added`).
-- **Walka i postać:** drzewka broni - miecz, łuk, księga magii (`skill_tree.gd`, `sword_skills.gd`, `bow_skills.gd`,
-  `spell_skills.gd`, okno K), punkty umiejętności z paska umiejętności i poziomy 1-20 (`SkillBook.skill_xp`,
+- **Walka i postać:** wspólne drzewko umiejętności wszystkich broni z pustymi miejscami na przyszłe umiejętności i aury
+  (`skill_tree.gd`, `skill_tree_data.gd`, `sword_skills.gd`, `bow_skills.gd`, `spell_skills.gd`, okno K), punkty umiejętności z paska umiejętności i poziomy 1-20 (`SkillBook.skill_xp`,
   `Skills.LEVEL_POINTS`), tagi umiejętności (`Skills.TAGS`) i atrybuty dające % obrażeń umiejętnościom z ich tagiem
   (`CharacterStats.attribute_damage`), kamienie wsparcia w gniazdach umiejętności (`supports.gd`, znacznik umiejętności
   w `Skills.tags` - `Skills.skill_of`), combo (`Skills.COMBOS`), paski szybkiego wyboru (`hotbar.gd`), ikony efektów (`status_effects.gd`);
@@ -288,6 +288,9 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   swojej broni, klas nie ma - gracz wybiera konkretne przebudzenie (pomysły: magia cieni z kosą, chainblade'y,
   bojowy mag z glewią / runicznym rapierem; przebudzenie przez zadanie u żercy Wszebora, jedna ulepszana broń
   przebudzenia, broń w ręku zmienia się sama), nekromancja jako gałąź magii, nowe combo, drzewko lochów od nowa.
+  Krok 2 zrobiony, czeka na ocenę autora (szukaj „Wspólne drzewko umiejętności, krok 2” w `docs/historia.md`): drzewko
+  w grze z obecnymi umiejętnościami, nowe umiejętności, aury i nowe węzły kluczowe to puste miejsca; stare zapisy -
+  zwrot wszystkich punktów, dodatkowo 1 punkt umiejętności co 2 poziomy postaci. Dalej krok 3 (aury i rezerwacja many).
 - [ ] **Modyfikacja premii tylko runami** (decyzja autora, listopad 2026): wszystkie sposoby zmiany premii
   (afiksów) przedmiotów mają działać przez runy - przedmioty-waluty jak orby w Path of Exile. Zrobione razem
   z Uroczyskiem (szukaj „Mechaniki w lochach, etap 3”): każde działanie warsztatu kowala zużywa swoją runę

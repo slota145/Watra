@@ -245,7 +245,7 @@ func _process_flicker(delta: float) -> void:
 		return
 	if _player.is_dashing() or _player.is_charging_fireball() or _player.is_chopping():
 		return
-	var cost := _player.skill_mana("flicker", Skills.FLICKER_MANA * (1.0 + _player.skills.tree_bonus("melee", "flicker_mana")))
+	var cost := _player.skill_mana("flicker", Skills.FLICKER_MANA * (1.0 + _player.skills.tree_bonus("flicker_mana")))
 	if _in_cloud():
 		cost = 0.0
 	if _player.mana < cost:
@@ -313,7 +313,7 @@ func _jump(reach: float, level: int, spinning: bool) -> bool:
 	SkillEffects.sheet_once(_player.get_parent(), FLICKER_SLASH, 8, fps, best.hurt_center(), FLICKER_SLASH_ANCHOR,
 			travel.angle() + FLICKER_SLASH_TILT * (1.0 if randf() < 0.5 else -1.0))
 	Sfx.play("dash" if spinning else "swing", 0.0, 1.2)
-	var multiplier := Skills.flicker_damage(level) * (1.0 + _player.skills.tree_bonus("melee", "flicker_damage")
+	var multiplier := Skills.flicker_damage(level) * (1.0 + _player.skills.tree_bonus("flicker_damage")
 			+ _player.equipment.effect_power("endless_whirl"))
 	# cięcie wokół celu i wzdłuż drogi skoku (odrzut od postaci, która już stoi za celem)
 	var path_from := from + Player.BODY_OFFSET
@@ -373,7 +373,7 @@ func _press_smoke() -> void:
 
 ## Czas ładowania jednego rzędu: szybszy z szybkością ataku i rzucania oraz z węzłem drzewka.
 func _smoke_row_time() -> float:
-	return Skills.SMOKE_CHARGE_TIME / (_player.stats.skill_speed(_smoke_tags) * (1.0 + _player.skills.tree_bonus("melee", "smoke_charge")))
+	return Skills.SMOKE_CHARGE_TIME / (_player.stats.skill_speed(_smoke_tags) * (1.0 + _player.skills.tree_bonus("smoke_charge")))
 
 
 func _process_smoke(delta: float) -> void:
@@ -414,7 +414,7 @@ func _fire_smoke(rows: int, combo: bool) -> void:
 	var level := _player.skills.level_of("smoke_burst")
 	_player._ranged_pose(aim)
 	_player.note_skill("smoke_burst")
-	if _player.skills.has_keystone("melee", "smoke_shadow"):
+	if _player.skills.has_keystone("smoke_shadow"):
 		_start_cloud(origin + aim * Skills.SMOKE_DISTANCE[rows - 1] * 0.6)
 	if combo:
 		MiscVfx.spark(_player.get_parent(), _player.body_center(), Color(1.0, 0.9, 0.6), 1.4)
@@ -424,7 +424,7 @@ func _fire_smoke(rows: int, combo: bool) -> void:
 		for k in 3:
 			var at := origin + aim.rotated((k - 1) * spread) * Skills.SMOKE_DISTANCE[ring]
 			var timer := _player.get_tree().create_timer(ring * SMOKE_RING_DELAY + k * 0.02, false)
-			var bonus := (1.0 + _player.skills.tree_bonus("melee", "smoke_damage")) * (_player.combo_damage() if combo else 1.0)
+			var bonus := (1.0 + _player.skills.tree_bonus("smoke_damage")) * (_player.combo_damage() if combo else 1.0)
 			timer.timeout.connect(_burst.bind(at, aim.rotated((k - 1) * spread + SMOKE_FX_ZIGZAG * (1.0 if ring % 2 == 0 else -1.0)), Skills.SMOKE_RADIUS[ring] * _player.stats.area_multiplier(_smoke_tags),
 					Skills.smoke_damage(level, ring) * bonus))
 
@@ -477,9 +477,9 @@ func _rend() -> void:
 func bleed_enemy(enemy: Goblin, multiplier: float) -> void:
 	if not is_instance_valid(enemy) or enemy.state == Goblin.State.DEAD:
 		return
-	var total := _player._skill_damage(multiplier * (1.0 + _player.skills.tree_bonus("melee", "bleed_damage")), Skills.tags("rend"))
+	var total := _player._skill_damage(multiplier * (1.0 + _player.skills.tree_bonus("bleed_damage")), Skills.tags("rend"))
 	var per_tick := maxi(1, roundi(float(total) / Skills.BLEED_TICKS))
-	var frenzy := _player.skills.has_keystone("melee", "blood_frenzy")
+	var frenzy := _player.skills.has_keystone("blood_frenzy")
 	SkillEffects.sheet_once(_player.get_parent(), REND_WOUND_FX, 9, 15.0, enemy.hurt_center(), REND_WOUND_ANCHOR)
 	for i in Skills.BLEED_TICKS:
 		_player.get_tree().create_timer(0.5 * (i + 1), false).timeout.connect(func() -> void:
@@ -506,7 +506,7 @@ func _ground_slam() -> void:
 	var origin := _player.global_position
 	var area := _player.stats.area_multiplier(Skills.tags("ground_slam"))
 	var damage := Skills.slam_damage(level) * (_player.combo_damage() if combo else 1.0)
-	var stun := Skills.slam_stun(level) * (1.0 + _player.skills.tree_bonus("melee", "slam_stun"))
+	var stun := Skills.slam_stun(level) * (1.0 + _player.skills.tree_bonus("slam_stun"))
 	var layer := _player.get_tree().get_first_node_in_group("floor_layer")
 	var parent: Node = layer if layer != null else _player.get_parent()
 	var hit := {}
@@ -570,7 +570,7 @@ func try_parry(from: Vector2) -> bool:
 	if _parry_ring != null:
 		_parry_ring.visible = false
 	var level := _player.skills.level_of("riposte")
-	var damage := Skills.riposte_damage(level) * (1.0 + _player.skills.tree_bonus("melee", "riposte_damage"))
+	var damage := Skills.riposte_damage(level) * (1.0 + _player.skills.tree_bonus("riposte_damage"))
 	var origin := _player.body_center()
 	_player._invulnerable_timer = maxf(_player._invulnerable_timer, 0.4)
 	_player._face_direction(from - _player.global_position)
@@ -640,7 +640,7 @@ func _spectral_blades() -> void:
 		_blades.queue_free()
 	_blades = SpectralBlades.new()
 	_blades.player = _player
-	_blades.count = Skills.BLADES_COUNT + roundi(_player.skills.tree_bonus("melee", "blade_count"))
+	_blades.count = Skills.BLADES_COUNT + roundi(_player.skills.tree_bonus("blade_count"))
 	_blades.damage = Skills.blades_damage(level) * (_player.combo_damage() if combo else 1.0)
 	_blades.time_left = Skills.BLADES_TIME
 	_blades.orbit = Skills.BLADES_ORBIT * _player.stats.area_multiplier(Skills.tags("spectral_blades"))
@@ -653,7 +653,7 @@ func _spectral_blades() -> void:
 # ---------------------------------------------------------------- premie czasowe i węzły kluczowe
 ## Wykonane combo: Taniec Ostrzy dokłada ładunek szybkości ataku.
 func on_combo() -> void:
-	if not _player.skills.has_keystone("melee", "blade_dance"):
+	if not _player.skills.has_keystone("blade_dance"):
 		return
 	_dance_stacks = mini(_dance_stacks + 1, DANCE_STACKS)
 	_dance_time = DANCE_TIME
@@ -705,7 +705,7 @@ func _process_timed(delta: float) -> void:
 func _update_temp_bonus() -> void:
 	var bonus := {}
 	if _cry_time > 0.0:
-		bonus["damage_percent"] = Skills.cry_bonus(_player.skills.level_of("war_cry")) + _player.skills.tree_bonus("melee", "cry_power")
+		bonus["damage_percent"] = Skills.cry_bonus(_player.skills.level_of("war_cry")) + _player.skills.tree_bonus("cry_power")
 	if _dance_stacks > 0:
 		bonus["attack_speed"] = DANCE_STEP * _dance_stacks
 	if _in_cloud():

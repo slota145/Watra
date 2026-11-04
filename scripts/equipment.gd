@@ -180,9 +180,9 @@ func _effect_power(kind: String) -> float:
 		if effect.get("kind", "") == kind:
 			values.append([float(effect["chance"]), false])
 	if skill_book != null:
-		var essence := skill_book.essence_in(weapon().get("type", "melee"))
-		if essence.get("kind", "") == kind:
-			values.append([float(essence["value"]), essence.get("inverse", false)])
+		for essence: Dictionary in skill_book.essences():
+			if essence.get("kind", "") == kind:
+				values.append([float(essence["value"]), essence.get("inverse", false)])
 	return Essences.combine(kind, values)
 
 

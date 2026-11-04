@@ -71,10 +71,7 @@ func _gear(p: Node) -> void:
 		var node: String = tree.node_for_skill(id)
 		if node == "":
 			continue
-		if not p.skills.nodes.has("melee"):
-			p.skills.nodes["melee"] = {}
-		for step in tree.path_to("melee", node):
-			p.skills.nodes["melee"][step] = true
+		p.skills.grant_node(node)
 
 
 ## Broń w ręku: sword, bow albo book.
@@ -136,10 +133,7 @@ func _begin(p: Node, move: String) -> void:
 		"power":
 			p.skills.levels["power_shot"] = 5
 			var tree: GDScript = load("res://scripts/skill_tree.gd")
-			if not p.skills.nodes.has("bow"):
-				p.skills.nodes["bow"] = {}
-			for step in tree.path_to("bow", tree.node_for_skill("power_shot")):
-				p.skills.nodes["bow"][step] = true
+			p.skills.grant_node(tree.node_for_skill("power_shot"))
 			p._held_ids["power_shot"] = true
 			p.bow_skills.press("power_shot")
 		_:

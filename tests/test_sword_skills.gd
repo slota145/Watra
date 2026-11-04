@@ -105,7 +105,7 @@ func _process(_d: float) -> bool:
 			# Amulet Wiecznego Wiru
 			var amulet: String = load("res://scripts/loot.gd").legendary_at_level("legend_endless_amulet", 20)
 			p.equipment.equip(amulet, 0)
-			p.skills.nodes["melee"].erase("cyclone_eye")
+			p.skills.nodes.erase("cyclone_eye")
 			check("Amulet Wiecznego Wiru", ss._endless_whirl() and p.equipment.effect_power("endless_whirl") > 0.0)
 			check("opis amuletu", load("res://scripts/items.gd").describe(amulet).contains("odnowienia"))
 			print("WYNIK: ", "OK" if _fails == 0 else "%d bledow" % _fails)
@@ -115,13 +115,14 @@ func _process(_d: float) -> bool:
 
 func _check_tree(p) -> void:
 	var Tree = load("res://scripts/skill_tree.gd")
-	var nodes: Dictionary = Tree.nodes("melee")
+	var nodes: Dictionary = Tree.nodes()
 	var kinds := {}
+	var soon := 0
 	for id: String in nodes:
 		kinds[nodes[id]["kind"]] = kinds.get(nodes[id]["kind"], 0) + 1
-	check("drzewko: rozmiar", kinds.get("passive", 0) >= 30 and kinds.get("skill", 0) == 12 and kinds.get("keystone", 0) == 4, str(kinds))
-	var unreachable := nodes.keys().filter(func(id: String) -> bool: return id != "start" and Tree.path_to("melee", id).is_empty())
-	check("drzewko: każdy węzeł osiągalny", unreachable.is_empty(), str(unreachable))
+		if nodes[id].get("soon", false):
+			soon += 1
+	check("drzewko: rozmiar", kinds.get("passive", 0) >= 140 and kinds.get("skill", 0) == 55 and kinds.get("keystone", 0) == 18, str(kinds))
 	var view = load("res://scripts/ui/skill_tree_view.gd").new()
 	var no_icon := nodes.keys().filter(func(id: String) -> bool: return view.icon_of(id) == null)
 	view.free()
@@ -129,20 +130,23 @@ func _check_tree(p) -> void:
 	var close := []
 	for a: String in nodes:
 		for b: String in nodes:
-			if a < b and nodes[a]["pos"].distance_to(nodes[b]["pos"]) < 1.2:
+			if a < b and nodes[a]["pos"].distance_to(nodes[b]["pos"]) < 1.0:
 				close.append(a + "/" + b)
 	check("drzewko: węzły nie nachodzą", close.is_empty(), str(close))
 	p.stats.level = 60
 	p.skills.character_level = 60
 	# punkty umiejętności daje pasek umiejętności, nie poziom postaci
-	p.skills.bonus_points += 60
-	# cała reszta testu na pełnym drzewku
-	var taken := 0
-	for i in 5:
-		for id: String in nodes:
-			if p.skills.take("melee", id):
-				taken += 1
-	check("całe drzewko do wybrania", p.skills.nodes["melee"].size() == nodes.size() - 1, "%d/%d" % [p.skills.nodes["melee"].size(), nodes.size() - 1])
+	p.skills.bonus_points += 300
+	# cała reszta testu na stronie siły (miecz) i strefie siła / zręczność (Krwawy Szał), bez pustych miejsc
+	var wanted: Array = []
+	for id: String in nodes:
+		if nodes[id]["region"] in ["str", "sz"] and not Tree.is_soon(id) and id != "blood_sacrifice":
+			wanted.append(id)
+	for id: String in wanted:
+		for step: String in Tree.path_to(id):
+			p.skills.take(step)
+	var lacking := wanted.filter(func(id: String) -> bool: return not p.skills.has_node_id(id))
+	check("cała strona miecza do wybrania", lacking.is_empty() and soon > 0, str(lacking))
 	p.mana = p.stats.max_mana()
 
 
