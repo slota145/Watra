@@ -13,6 +13,10 @@ Krok 1 z `docs/plan_drzewek.md`. Na razie tylko dane: gra się nie zmienia. Po a
 - **Węzły kluczowe:** **5 na każdą stronę + 1 w każdej strefie pośredniej**, razem 18.
 - **Wszystkie 7 propozycji węzłów kluczowych wchodzi.** „Krew za Manę” to dawna Ofiara Krwi z księgi, teraz z każdą
   bronią, więc nowych jest 6.
+- **Aury i premie z węzłów działają z każdą bronią** (decyzja autora po szkicu): premia działa na każdą
+  umiejętność, która do niej pasuje (tagi `Skills.TAGS`), np. +% obrażeń od ognia - na umiejętności z ogniem,
+  +% obrażeń pocisków - na pociski, premia do Młynka - tylko na Młynek. Same umiejętności nadal wymagają swojej broni.
+- **Strefy wspólne do wzbogacenia w osobnym etapie** (autor): więcej węzłów i umiejętności w strefach pośrednich.
 - **Regeneracje:** 6 dzisiejszych umiejętności regeneracji (po 2 na broń) znika. Na ich miejsce wchodzą:
   - **skupiska premii** po każdej stronie, każde z innym podejściem, żeby gracz mógł mocno podbić te statystyki:
     - Siła, „Krzepa”: zdrowie, regeneracja zdrowia, aura +% zdrowia,
@@ -50,8 +54,8 @@ Krok 1 z `docs/plan_drzewek.md`. Na razie tylko dane: gra się nie zmienia. Po a
   - 3 nowe **umiejętności mieszane** w strefach działają z jedną z dwóch broni: Ciśnięte Noże (miecz albo łuk),
     Strzała Gromu (łuk albo księga), Zaklęte Ostrze (miecz albo księga);
   - **aury** działają z każdą bronią.
-- **Premie z węzłów pasywnych działają z każdą bronią.** Premie do konkretnej umiejętności i tak działają tylko
-  z nią, więc gracz z łukiem nie ma po co brać węzłów Młynka.
+- **Premie z węzłów pasywnych działają z każdą bronią** na umiejętności, które pasują do premii (tagi). Premie do
+  konkretnej umiejętności i tak działają tylko z nią, więc gracz z łukiem nie ma po co brać węzłów Młynka.
 
 ## Liczby
 
@@ -116,6 +120,7 @@ Pogrubione - nowe. Pomysły autora z planu są w drzewku: obrażenia od % zdrowi
 1. Czy taki układ (rysunek) jest dobry: strony, strefy, pierścień przy starcie?
 2. Nowe umiejętności i aury: które zostają, które wymienić (pełne opisy w liście węzłów)?
 3. Czy umiejętności mieszane w strefach (z jedną z dwóch broni) wchodzą, czy zostajemy przy samym wariancie A?
-4. Czy aury mają działać z każdą bronią?
-5. Czy premie z węzłów pasywnych mają działać z każdą bronią (dziś tylko z bronią swojego drzewka)?
-6. Liczby w premiach to propozycje. Ustalimy je w kroku 2 symulacją (`tests/endgame_probe.gd`, `tests/balance_sim.gd`).
+4. Liczby w premiach to propozycje. Ustalimy je w kroku 2 symulacją (`tests/endgame_probe.gd`, `tests/balance_sim.gd`).
+
+Ustalone: aury i premie z węzłów działają z każdą bronią (na pasujące umiejętności); strefy wspólne wzbogacimy
+w osobnym etapie.
