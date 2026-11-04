@@ -82,7 +82,7 @@ func next_cost(id: String) -> int:
 	return -1 if level >= Skills.MAX_LEVEL else Skills.cost(id, level + 1)
 
 
-## Czy umiejętność da się już odblokować (dodatkowy cios wymaga najpierw uderzenia; umiejętność drzewka - węzła).
+## Czy umiejętność da się już odblokować (umiejętność drzewka - węzła, inna - umiejętności z "requires").
 func can_learn(id: String) -> bool:
 	var node := SkillTree.node_for_skill(id)
 	if node != "":
@@ -139,13 +139,9 @@ func active_for(weapon_type: String) -> String:
 	return id if level_of(id) > 0 else ""
 
 
-## Odblokowane uderzenie i dodatkowy cios dla rodzaju broni ("" jeśli brak).
+## Odblokowane uderzenie dla rodzaju broni ("" jeśli brak).
 func strike_for(weapon_type: String) -> String:
 	return _learned_of_type(weapon_type, "strike")
-
-
-func combo_for(weapon_type: String) -> String:
-	return _learned_of_type(weapon_type, "combo")
 
 
 func _learned_of_type(weapon_type: String, kind: String) -> String:

@@ -69,6 +69,9 @@ Mroźny Oddech 0% - rani gracza), ikony i kręgi rysowane w kodzie. Własne anim
 
 ## 3. Combo
 
+**[ustalone]** Wszystkie poniższe combo weszły w kroku 4. Półksiężyc, Szybka Salwa i Fala piorunów mają własny slot,
+a zaraz po swoim uderzeniu są darmowe i zadają 1,5x obrażeń.
+
 Autor:
 - **Mgnienie -> Riposta**: 3-4 ostatnio trafieni przez Mgnienie wrogowie aktywują na sobie uderzenie Riposty
   i ranią wszystkich wokół;
@@ -121,7 +124,8 @@ Wspólne okno: drzewko umiejętności i drzewko lochów mogą używać tego same
    i węzły znaczące bez premii w grze są pustymi miejscami (`"soon"` w `tools/shared_tree_draft.py`) - kolejne kroki
    dają im działanie (usuń `new=True` / dopisz `stats`, uruchom `python tools/shared_tree_draft.py`).
 3. Aury i rezerwacja many. **Zrobione** (szukaj „Aury rezerwujące manę - krok 3” w `docs/historia.md`).
-4. Nowe combo; Półksiężyc, Szybka Salwa i Fala piorunów jako zwykłe umiejętności.
+4. Nowe combo; Półksiężyc, Szybka Salwa i Fala piorunów jako zwykłe umiejętności. **Zrobione** - weszło wszystkie
+   10 combo z tabeli niżej (szukaj „Nowe combo - krok 4” w `docs/historia.md`).
 5. Nowe węzły kluczowe i nowe umiejętności.
 6. Nowe drzewko lochów (od nowa, zwrot punktów Watry).
 7. Przebudzenia do wyboru (bez klas).
@@ -132,4 +136,4 @@ Wspólne okno: drzewko umiejętności i drzewko lochów mogą używać tego same
   wszystkie 7 propozycji węzłów kluczowych wchodzi, regeneracje jako skupiska i 2 aury) - szczegóły w `docs/drzewko_wspolne.md`;
 - czy wybór przebudzenia jest jednorazowy, czy można go zmienić (i za ile);
 - liczby rezerwacji i siły aur po ograniu (`scripts/aura_data.gd`);
-- które pomysły z tabel aur i combo (propozycje) wchodzą, a które odpadają.
+- które pomysły z tabeli aur (propozycje) wchodzą, a które odpadają (combo - wszystkie weszły).

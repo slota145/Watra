@@ -210,7 +210,6 @@ func _check_chain(p) -> void:
 	check("łańcuch: puszczony klawisz nie rzuca", p._strike_cooldown == 0.0)
 	p._held_ids.erase("chain_lightning")
 	p._strike_cooldown = 0.0
-	p._combo_window = 0.0
 
 
 func _check_migration() -> void:

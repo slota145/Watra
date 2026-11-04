@@ -18,7 +18,7 @@ var count_label: Label
 var cooldown_label: Label
 ## 0..1 - jaka część odnowienia jeszcze została (0 - gotowa).
 var cooldown := 0.0
-## Podświetlenie (np. slot, którego atak teraz wyprowadzi dodatkowy cios) i ile okna combo zostało (0..1 -
+## Podświetlenie (np. slot umiejętności, która teraz zadziała jako combo) i ile okna combo zostało (0..1 -
 ## kurczący się pierścień wokół slotu).
 var highlight := false
 var combo_fraction := 0.0

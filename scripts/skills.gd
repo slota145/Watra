@@ -1,7 +1,8 @@
 class_name Skills
 ## Baza umiejętności. Każdy rodzaj broni (melee / bow / spell) ma swoje umiejętności we wspólnym drzewku (SkillTree):
-## aktywną umiejętność (domyślnie pod PPM), uderzenie (type "strike", domyślnie pod Q), dodatkowy cios
-## - atak zaraz po uderzeniu (type "combo", wymaga uderzenia) - i umiejętności drzewka (type "skill").
+## aktywną umiejętność (domyślnie pod PPM), uderzenie (type "strike", domyślnie pod Q) i umiejętności drzewka
+## (type "skill"). Półksiężyc, Szybka salwa i Fala piorunów (dawne dodatkowe ciosy) są zwykłymi umiejętnościami -
+## zaraz po swoim uderzeniu są mocniejsze i darmowe (COMBOS, FOLLOWUP_COMBO_DAMAGE).
 ## Aktywną umiejętność i uderzenie gracz kładzie na dowolny slot paska (Hotbar).
 ## Wszystkie działają tylko z założoną bronią swojego rodzaju (premie z węzłów drzewka - z każdą).
 ## Umiejętności odblokowuje się i ulepsza za punkty umiejętności (LEVEL_POINTS - wyższe poziomy kosztują więcej).
@@ -47,7 +48,7 @@ const DATA := {
 	"riposte": {
 		"name": "Riposta", "weapon": "melee", "type": "skill",
 		"icon": preload("res://assets/skills/riposte.png"),
-		"description": "Na chwilę unosisz ostrze w zasłonie. Gdy ktoś cię wtedy uderzy, nie zrani cię, a ty kontratakujesz wszystkich wokół. Combo: Szarża zaraz po udanej Ripoście nic nie kosztuje i nie ma odnowienia.",
+		"description": "Na chwilę unosisz ostrze w zasłonie. Gdy ktoś cię wtedy uderzy, nie zrani cię, a ty kontratakujesz wszystkich wokół. Combo: Szarża zaraz po udanej Ripoście nic nie kosztuje i nie ma odnowienia, a Riposta zaraz po Mgnieniu - ostatni wrogowie trafieni Mgnieniem wybuchają kontrą, raniąc wszystkich wokół.",
 	},
 	"war_cry": {
 		"name": "Zew Peruna", "weapon": "melee", "type": "skill",
@@ -57,7 +58,7 @@ const DATA := {
 	"spectral_blades": {
 		"name": "Widmowe Ostrza", "weapon": "melee", "type": "skill",
 		"icon": preload("res://assets/skills/spectral_blades.png"),
-		"description": "Czar: wokół ciebie krążą widmowe miecze, raniąc wrogów, których dotkną. Combo: zaraz po Młynku ostrza od razu wylatują we wrogów.",
+		"description": "Czar: wokół ciebie krążą widmowe miecze, raniąc wrogów, których dotkną. Combo: zaraz po Młynku ostrza od razu wylatują we wrogów, a zaraz po Rozpłataniu wylatują każde do innego wroga i rozpłatują go.",
 	},
 	"smoke_burst": {
 		"name": "Dymne Wybuchy", "weapon": "melee", "type": "skill",
@@ -67,32 +68,32 @@ const DATA := {
 	"lunge": {
 		"name": "Szarża", "weapon": "melee", "type": "strike",
 		"icon": preload("res://assets/skills/lunge.png"),
-		"description": "Błyskawiczne pchnięcie mieczem w stronę kursora, raniące wszystkich na drodze. Combo: atak zaraz potem to Półksiężyc.",
+		"description": "Błyskawiczne pchnięcie mieczem w stronę kursora, raniące wszystkich na drodze. Combo: zaraz po udanej Ripoście nic nie kosztuje i nie ma odnowienia, a zaraz po Rozłupaniu Ziemi kolce z pęknięć wybuchają.",
 	},
 	"crescent": {
-		"name": "Półksiężyc", "weapon": "melee", "type": "combo", "requires": "lunge",
+		"name": "Półksiężyc", "weapon": "melee", "type": "skill",
 		"icon": preload("res://assets/skills/crescent.png"),
-		"description": "Combo: atak zaraz po Szarży - potężne cięcie po półksiężycu, dużo szersze niż zwykły atak.",
+		"description": "Potężne cięcie po półksiężycu, dużo szersze niż zwykły atak. Combo: zaraz po Szarży zadaje o połowę więcej obrażeń i nic nie kosztuje.",
 	},
 	"seeker": {
 		"name": "Strzała tropiąca", "weapon": "bow", "type": "strike",
 		"icon": preload("res://assets/skills/seeker.png"),
-		"description": "Strzała sama szuka wrogów: przebija ich na wylot i nawraca po łuku do kolejnego celu. Combo: atak zaraz potem to Szybka salwa.",
+		"description": "Strzała sama szuka wrogów: przebija ich na wylot i nawraca po łuku do kolejnego celu.",
 	},
 	"rapid_volley": {
-		"name": "Szybka salwa", "weapon": "bow", "type": "combo", "requires": "seeker",
+		"name": "Szybka salwa", "weapon": "bow", "type": "skill",
 		"icon": preload("res://assets/skills/rapid_volley.png"),
-		"description": "Combo: atak zaraz po Strzale tropiącej - seria szybkich strzał w stronę kursora.",
+		"description": "Seria szybkich strzał w stronę kursora. Combo: zaraz po Strzale tropiącej zadaje o połowę więcej obrażeń i nic nie kosztuje.",
 	},
 	"power_shot": {
 		"name": "Grot Swaroga", "weapon": "bow", "type": "skill",
 		"icon": preload("res://assets/skills/power_shot.png"),
-		"description": "Przytrzymaj klawisz, by napiąć łuk - puść, a płonąca strzała przebija wszystkich na drodze. Im dłużej napinasz, tym mocniej. Combo: zaraz po Strzale tropiącej grot wybucha ogniem przy każdym trafieniu.",
+		"description": "Przytrzymaj klawisz, by napiąć łuk - puść, a płonąca strzała przebija wszystkich na drodze. Im dłużej napinasz, tym mocniej. Combo: zaraz po Strzale tropiącej grot wybucha ogniem przy każdym trafieniu, a zaraz po Odskoku jest od razu w pełni napięty.",
 	},
 	"arrow_rain": {
 		"name": "Deszcz Strzał", "weapon": "bow", "type": "skill",
 		"icon": preload("res://assets/skills/arrow_rain.png"),
-		"description": "Strzały spadają z nieba na miejsce pod kursorem przez 2 s, raniąc wszystkich w kręgu. Combo: zaraz po Salwie pada dwa razy gęściej.",
+		"description": "Strzały spadają z nieba na miejsce pod kursorem przez 2 s, raniąc wszystkich w kręgu. Combo: zaraz po Salwie pada dwa razy gęściej, a zaraz po Sidłach strzały spadają też na unieruchomionych wrogów wokół.",
 	},
 	"vault": {
 		"name": "Odskok", "weapon": "bow", "type": "skill",
@@ -117,7 +118,7 @@ const DATA := {
 	"wind_arrow": {
 		"name": "Strzała Wichru", "weapon": "bow", "type": "skill",
 		"icon": preload("res://assets/skills/wind_arrow.png"),
-		"description": "Podmuch wichru w stożku przed tobą rani i odrzuca wrogów. Atak i czar. Combo: zaraz po Odskoku stożek jest dwa razy szerszy.",
+		"description": "Podmuch wichru w stożku przed tobą rani i odrzuca wrogów. Atak i czar. Combo: zaraz po Odskoku stożek jest dwa razy szerszy, a zaraz po przywołaniu Sokoła ptak też rzuca podmuch ze swojego miejsca.",
 	},
 	"ballista": {
 		"name": "Balista", "weapon": "bow", "type": "skill",
@@ -147,7 +148,7 @@ const DATA := {
 	"meteor": {
 		"name": "Spadająca Gwiazda", "weapon": "spell", "type": "skill",
 		"icon": preload("res://assets/skills/meteor.png"),
-		"description": "Po chwili w miejsce pod kursorem spada płonąca gwiazda - wielki wybuch podpala wrogów. Combo: zaraz po Zamieci zadaje podwójne obrażenia.",
+		"description": "Po chwili w miejsce pod kursorem spada płonąca gwiazda - wielki wybuch podpala wrogów. Combo: zaraz po Zamieci zadaje podwójne obrażenia, a zaraz po Kroku przez Mgłę spada tam, skąd zniknęła postać.",
 	},
 	"blink": {
 		"name": "Krok przez Mgłę", "weapon": "spell", "type": "skill",
@@ -167,17 +168,17 @@ const DATA := {
 	"chain_lightning": {
 		"name": "Łańcuch błyskawic", "weapon": "spell", "type": "strike",
 		"icon": preload("res://assets/skills/chain_lightning.png"),
-		"description": "Błyskawica przeskakuje błyskawicznie od wroga do wroga. Bez odnowienia: przytrzymaj klawisz, a rzucasz raz za razem, tym szybciej, im większa szybkość rzucania. Combo: atak zaraz potem to Fala piorunów.",
+		"description": "Błyskawica przeskakuje błyskawicznie od wroga do wroga. Bez odnowienia: przytrzymaj klawisz, a rzucasz raz za razem, tym szybciej, im większa szybkość rzucania. Combo: zaraz po Kamieniu Runicznym błyskawica odbija się też od kamienia i rośnie w siłę.",
 	},
 	"thunder_wave": {
-		"name": "Fala piorunów", "weapon": "spell", "type": "combo", "requires": "chain_lightning",
+		"name": "Fala piorunów", "weapon": "spell", "type": "skill",
 		"icon": preload("res://assets/skills/thunder_wave.png"),
-		"description": "LPM zaraz po łańcuchu błyskawic - fala piorunów w szerokim stożku przed tobą.",
+		"description": "Fala piorunów w szerokim stożku przed tobą. Combo: zaraz po Łańcuchu błyskawic zadaje o połowę więcej obrażeń i nic nie kosztuje.",
 	},
 	"whirlwind": {
 		"name": "Młynek", "weapon": "melee", "type": "active",
 		"icon": preload("res://assets/skills/whirlwind.png"),
-		"description": "Przytrzymaj klawisz - wirujesz z bronią, raniąc wszystkich wokół. Zużywa manę co sekundę.",
+		"description": "Przytrzymaj klawisz - wirujesz z bronią, raniąc wszystkich wokół. Zużywa manę co sekundę. Combo: zaraz po Widmowych Ostrzach wokół ciebie przez chwilę krąży burza widmowych ostrzy.",
 	},
 	"multishot": {
 		"name": "Salwa", "weapon": "bow", "type": "active",
@@ -187,7 +188,7 @@ const DATA := {
 	"fireball": {
 		"name": "Kula ognia", "weapon": "spell", "type": "active",
 		"icon": preload("res://assets/skills/fireball.png"),
-		"description": "Przytrzymaj klawisz, by ładować kulę ognia w dłoniach (zjada manę) - im dłużej, tym mocniejszy i większy wybuch. Puść, by rzucić.",
+		"description": "Przytrzymaj klawisz, by ładować kulę ognia w dłoniach (zjada manę) - im dłużej, tym mocniejszy i większy wybuch. Puść, by rzucić. Combo: zaraz po Zamieci wrogowie spowolnieni lodem w wybuchu pękają, rozsypując lód i ogień.",
 	},
 	"dread": {
 		"name": "Postrach", "weapon": "any", "type": "aura",
@@ -250,7 +251,7 @@ const MULTISHOT_ARROWS := 3
 const MULTISHOT_SPREAD_DEGREES := 16.0
 const FIREBALL_MANA := 14.0
 const FIREBALL_COOLDOWN := 0.9
-## Uderzenia i dodatkowe ciosy (atak w ciągu COMBO_WINDOW s po uderzeniu).
+## Okno combo (s): tyle po umiejętności następna może zadziałać jako combo (COMBOS).
 const COMBO_WINDOW := 1.2
 const LUNGE_MANA := 10.0
 const LUNGE_COOLDOWN := 2.5
@@ -258,11 +259,13 @@ const LUNGE_DISTANCE := 120.0
 const CRESCENT_MANA := 6.0
 const CRESCENT_ARC_DEGREES := 300.0
 const CRESCENT_DAMAGE := 1.5
+const CRESCENT_COOLDOWN := 2.0
 const SEEKER_MANA := 12.0
 const SEEKER_COOLDOWN := 2.2
 const SEEKER_DAMAGE := 0.9
 const VOLLEY_MANA := 6.0
 const VOLLEY_DAMAGE := 0.7
+const VOLLEY_COOLDOWN := 2.0
 const CHAIN_MANA := 14.0
 ## Czas rzucania łańcucha (s) - bez odnowienia, krótszy z szybkością rzucania.
 const CHAIN_CAST_TIME := 0.6
@@ -271,6 +274,7 @@ const CHAIN_DAMAGE := 1.6
 const CHAIN_FALLOFF := 0.9
 const WAVE_MANA := 8.0
 const WAVE_DAMAGE := 1.4
+const WAVE_COOLDOWN := 1.5
 ## Mgnienie: mana za skok, odstęp między skokami (s, krótszy z szybkością ataku), zasięg szukania wroga,
 ## wirujące Mgnienie (combo z Młynkiem): odnowienie i odstęp skoków.
 const FLICKER_MANA := 7.0
@@ -599,15 +603,40 @@ static func tags_bbcode(list: Array) -> String:
 	return "  ".join(parts)
 
 
-## Combo umiejętności drzewka: po jakich umiejętnościach (użytych w oknie COMBO_WINDOW) zachowują się inaczej;
-## "any" - po każdej innej. Mgnienie w trakcie Młynka obsługuje SwordSkills osobno (wirujące Mgnienie).
+## Combo umiejętności: po jakich umiejętnościach (użytych w oknie COMBO_WINDOW) zachowują się inaczej;
+## "any" - po każdej innej. Gdy poprzedników jest kilku, każdy daje inne combo (Player.combo_after mówi, który).
+## Mgnienie w trakcie Młynka obsługuje SwordSkills osobno (wirujące Mgnienie).
 ## Łuk (BowSkills): Salwa po Odskoku jest darmowa i ma więcej strzał.
 const COMBOS := {"smoke_burst": ["any"], "flicker": ["whirlwind"], "rend": ["flicker"], "ground_slam": ["crescent"],
-		"lunge": ["riposte"], "spectral_blades": ["whirlwind"],
-		"power_shot": ["seeker"], "arrow_rain": ["multishot"], "multishot": ["vault"], "falcon": ["seeker"],
-		"venom_arrows": ["snare"], "wind_arrow": ["vault"],
+		"lunge": ["riposte", "ground_slam"], "spectral_blades": ["whirlwind", "rend"], "riposte": ["flicker"],
+		"whirlwind": ["spectral_blades"], "crescent": ["lunge"],
+		"power_shot": ["seeker", "vault"], "arrow_rain": ["multishot", "snare"], "multishot": ["vault"], "falcon": ["seeker"],
+		"venom_arrows": ["snare"], "wind_arrow": ["vault", "falcon"], "rapid_volley": ["seeker"],
 		"frost_lance": ["fireball"], "blizzard": ["frost_lance"], "storm_call": ["chain_lightning"], "ball_lightning": ["thunder_wave"],
-		"meteor": ["blizzard"], "fireball": ["blink"], "mana_shield": ["blink"]}
+		"meteor": ["blizzard", "blink"], "fireball": ["blink", "blizzard"], "mana_shield": ["blink"],
+		"chain_lightning": ["rune_stone"], "thunder_wave": ["chain_lightning"]}
+## Półksiężyc, Szybka salwa i Fala piorunów zaraz po swoim uderzeniu: mnożnik obrażeń (bez kosztu many).
+const FOLLOWUP_COMBO_DAMAGE := 1.5
+## Riposta po Mgnieniu: kontra wybucha na tylu ostatnio trafionych przez Mgnienie wrogach.
+const FLICKER_MARKS := 4
+## Młynek po Widmowych Ostrzach: burza ostrzy - czas (s), ile razy więcej ostrzy, szybsze krążenie i większa orbita.
+const BLADE_STORM_TIME := 3.0
+const BLADE_STORM_COUNT := 2
+const BLADE_STORM_SPIN := 2.2
+const BLADE_STORM_ORBIT := 1.6
+## Szarża po Rozłupaniu Ziemi: wybuch każdego kolca z pęknięć - promień, mnożnik obrażeń Rozłupania (każdy wróg
+## raz, choćby stał przy kilku kolcach), ile s kolce czekają.
+const SPIKE_BLAST_RADIUS := 26.0
+const SPIKE_BLAST_DAMAGE := 1.0
+const SPIKE_TIME := 3.0
+## Deszcz Strzał po Sidłach: strzały spadają też na unieruchomionych wrogów do tylu promieni deszczu od środka.
+const RAIN_FOCUS_REACH := 2.5
+## Łańcuch błyskawic po Kamieniu Runicznym: przeskok przez kamień - mnożnik obrażeń i dodatkowe przeskoki.
+const RUNE_CHAIN_BOOST := 1.5
+const RUNE_CHAIN_JUMPS := 2
+## Kula ognia po Zamieci: spowolnieni lodem wrogowie w wybuchu pękają - promień i mnożnik obrażeń kuli.
+const SHATTER_BLAST_RADIUS := 30.0
+const SHATTER_BLAST_DAMAGE := 0.5
 ## Żywioły czarów (węzeł kluczowy Harmonia Żywiołów, SpellSkills).
 const ELEMENTS := {"fireball": "fire", "meteor": "fire", "frost_lance": "ice", "blizzard": "ice",
 		"chain_lightning": "lightning", "thunder_wave": "lightning", "storm_call": "lightning", "ball_lightning": "lightning"}
@@ -619,10 +648,10 @@ static func works_with(id: String, weapon_type: String) -> bool:
 	return weapon == weapon_type or weapon == "any"
 
 
-## Umiejętności danego rodzaju broni w kolejności: aktywna, uderzenie, dodatkowy cios, umiejętności drzewka.
+## Umiejętności danego rodzaju broni w kolejności: aktywna, uderzenie, umiejętności drzewka.
 static func for_weapon(weapon_type: String) -> Array[String]:
 	var result: Array[String] = []
-	for kind in ["active", "strike", "combo", "skill"]:
+	for kind in ["active", "strike", "skill"]:
 		for id: String in DATA:
 			if DATA[id]["weapon"] == weapon_type and DATA[id]["type"] == kind:
 				result.append(id)

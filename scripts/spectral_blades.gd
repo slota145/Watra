@@ -2,7 +2,8 @@ class_name SpectralBlades
 extends Node2D
 ## Widmowe Ostrza (umiejętność drzewka miecza, SwordSkills): miecze z bladego światła krążą wokół gracza i ranią
 ## wrogów, których dotkną (każdego co chwilę). launch() wystrzeliwuje je we wrogów - każde leci do innego, zadaje
-## mocniejszy cios i znika (combo z Młynkiem). Grafiki z kreatora efektów PixelLab (tools/vfx_art.py): migoczący
+## mocniejszy cios i znika (combo z Młynkiem; po Rozpłataniu każde ostrze rozpłatuje swój cel - on_hit).
+## Burza ostrzy (Młynek po Widmowych Ostrzach) to więcej ostrzy, szybsze krążenie i większa orbita. Grafiki z kreatora efektów PixelLab (tools/vfx_art.py): migoczący
 ## widmowy miecz ze smugą drobinek (rysowany w prawo, obracany w kierunku lotu) i rozbłysk przy przywołaniu i trafieniu.
 
 const SPIN_SPEED := 3.2
@@ -24,6 +25,11 @@ var damage := 0.5
 var time_left := 8.0
 ## Promień krążenia ostrzy (większy z premią obszaru - kamień wsparcia Rozległość).
 var orbit := Skills.BLADES_ORBIT
+## Szybkość krążenia (rad/s) i odstęp między trafieniami tego samego wroga (s).
+var spin_speed := SPIN_SPEED
+var hit_interval := HIT_INTERVAL
+## Wołane, gdy wystrzelone ostrze dotrze do celu (combo po Rozpłataniu); puste - nic.
+var on_hit: Callable
 var _angle := 0.0
 var _time := 0.0
 ## wróg -> sekundy do kolejnego trafienia tym samym wrogiem
@@ -81,7 +87,7 @@ func _process(delta: float) -> void:
 		_process_flying(delta)
 		return
 	global_position = player.body_center()
-	_angle += SPIN_SPEED * delta
+	_angle += spin_speed * delta
 	time_left -= delta
 	if time_left <= 0.0 or player.is_dead:
 		queue_free()
@@ -100,7 +106,7 @@ func _process(delta: float) -> void:
 			if _recent.has(enemy):
 				continue
 			if enemy.hurt_center().distance_to(at) <= HIT_RADIUS + enemy.hurt_radius:
-				_recent[enemy] = HIT_INTERVAL
+				_recent[enemy] = hit_interval
 				player.hit_enemy(enemy, player._skill_damage(damage, _tags), at, 30.0, "blade", _tags)
 				_burst(enemy.hurt_center(), 0.6)
 
@@ -117,6 +123,8 @@ func _process_flying(delta: float) -> void:
 		if to.length() <= LAUNCH_SPEED * delta + 4.0:
 			player.hit_enemy(target, player._skill_damage(damage * Skills.BLADES_LAUNCH, _tags), at, 120.0, "blade", _tags)
 			_burst(target.hurt_center(), 1.3)
+			if on_hit.is_valid() and is_instance_valid(target):
+				on_hit.call(target)
 			_flying.remove_at(i)
 			continue
 		blade[0] = at + to.normalized() * LAUNCH_SPEED * delta

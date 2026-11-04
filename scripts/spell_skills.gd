@@ -66,6 +66,8 @@ var _shield_time := 0.0
 var _shield_full := 0.0
 var _shield_ring: Node2D
 var _rune: _Rune
+## Skąd postać zniknęła przy ostatnim Kroku przez Mgłę (Spadająca Gwiazda po nim spada tam - combo).
+var _blink_from := Vector2.ZERO
 ## Pełny czas obecnego Kamienia Runicznego (dłuższy z kamieniem Watażka).
 var _rune_total := Skills.RUNE_TIME
 var _last_element := ""
@@ -87,10 +89,16 @@ func press(id: String) -> void:
 		return
 	if _cooldowns.get(id, [0.0])[0] > 0.0 or _player.is_dashing():
 		return
+	# Fala piorunów: manę (albo combo po Łańcuchu błyskawic) liczy Player.use_followup
+	if id == "thunder_wave":
+		if _player.use_followup(id):
+			_start_cooldown(id, Skills.WAVE_COOLDOWN)
+		return
 	if not _player.spend_mana(_player.skill_mana(id)):
 		_player._hint(Lang.t("Za mało many") if not blood_magic() else Lang.t("Za mało zdrowia"))
 		return
-	var combo := _player.combo_with(id)
+	var after := _player.combo_after(id)
+	var combo := after != ""
 	if combo:
 		_player.combo_used()
 	_player._ranged_pose(_player._aim_direction())
@@ -116,10 +124,11 @@ func press(id: String) -> void:
 			_player.support_echo(id, _ball_lightning.bind(combo))
 		"meteor":
 			_start_cooldown(id, Skills.METEOR_COOLDOWN)
-			var at := _aim_point(Skills.METEOR_RANGE)
-			_meteor(at, combo)
-			_echo(_meteor.bind(at, combo))
-			_player.support_echo(id, _meteor.bind(at, combo))
+			# zaraz po Kroku przez Mgłę gwiazda spada tam, skąd zniknęła postać; zaraz po Zamieci - podwójne obrażenia
+			var at := _blink_from if after == "blink" else _aim_point(Skills.METEOR_RANGE)
+			_meteor(at, after == "blizzard")
+			_echo(_meteor.bind(at, after == "blizzard"))
+			_player.support_echo(id, _meteor.bind(at, after == "blizzard"))
 		"blink":
 			_start_cooldown(id, Skills.BLINK_COOLDOWN * (1.0 + _bonus("blink_cooldown")))
 			_blink()
@@ -223,6 +232,43 @@ func mana_cost_factor() -> float:
 
 func _full_power() -> bool:
 	return has_keystone("full_power") and _player.mana >= _player.stats.max_mana() * FULL_POWER_AT
+
+
+## Gdzie stoi Kamień Runiczny (INF - nie stoi) - Łańcuch błyskawic po nim przeskakuje przez kamień (combo).
+func rune_at() -> Vector2:
+	if not is_instance_valid(_rune) or _rune.leaving:
+		return Vector2.INF
+	return _rune.global_position + Vector2(0, -12)
+
+
+## Kula ognia po Zamieci (combo): spowolnieni lodem wrogowie w wybuchu (i tuż za nim) pękają - lód i ogień
+## ranią wszystkich wokół każdego z nich (każdego wroga raz). `multiplier` - procent obrażeń broni kuli.
+func fire_shatter(at: Vector2, radius: float, multiplier: float) -> void:
+	if not is_instance_valid(_player):
+		return
+	var tags := Skills.tags("fireball")
+	var blast := Skills.SHATTER_BLAST_RADIUS * _player.stats.area_multiplier(tags)
+	var damage := _damage(multiplier * Skills.SHATTER_BLAST_DAMAGE * _player.combo_damage(), "fireball")
+	var frozen: Array[Goblin] = []
+	for enemy: Goblin in Goblin.near(_player.get_tree(), at, radius * 1.5 + 40.0):
+		if enemy.state != Goblin.State.DEAD and enemy.is_chilled() and enemy.global_position.distance_to(at) <= radius * 1.5 + enemy.hurt_radius:
+			frozen.append(enemy)
+	var hit := {}
+	for victim in frozen:
+		if not is_instance_valid(victim):
+			continue
+		var spot := victim.hurt_center()
+		shatter_flash(_player.get_parent(), spot, 1.3)
+		MiscVfx.spark(_player.get_parent(), spot, FIRE_COLOR, 1.0)
+		for enemy: Goblin in Goblin.near(_player.get_tree(), spot, blast + 40.0):
+			if hit.has(enemy):
+				continue
+			if enemy.state != Goblin.State.DEAD and enemy.hurt_center().distance_to(spot) <= blast + enemy.hurt_radius:
+				hit[enemy] = true
+				_player.hit_enemy(enemy, damage, spot, 60.0, "ice", tags)
+				_player.hit_enemy(enemy, damage, spot, 0.0, "fire", tags)
+	if not frozen.is_empty():
+		Sfx.play_at("hit", at, 0.0)
 
 
 func in_rune() -> bool:
@@ -497,6 +543,7 @@ func meteor_impact(at: Vector2, radius: float, multiplier: float) -> void:
 # ---------------------------------------------------------------- Krok przez Mgłę
 func _blink() -> void:
 	var from := _player.global_position
+	_blink_from = from
 	var target := _aim_point(Skills.BLINK_RANGE)
 	# teleport przenosi nad przeszkodami (płoty, klify, drzewa) - zatrzymuje go tylko granica mapy i ściany
 	# podziemi, a w przeszkodzie postać ląduje obok, na linii teleportu
