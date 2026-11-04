@@ -328,6 +328,13 @@ Przed rozpoczęciem większego punktu dopytaj autora o szczegóły, bo to luźne
   z wejściami z dala od węzłów kluczowych. Zamiast pustych miejsc („soon”, przez które drzewko przechodzi za darmo)
   prawdziwe drobne węzły; puste miejsca tylko pod przyszłe umiejętności łączone. Do dopytania: ile węzłów na strefę,
   jakie premie, gdzie wejścia na autostrady, jeden pierścień czy dwa.
+  **Odporności w drzewku** (ustalenia z autorem): dziś są tylko 4 węzły znaczące po +15% (Ognioodporny, Zimna krew,
+  Uziemienie, Hart ducha) i 3 drobne +6% wszystkich przy środku, a sufit 75% jest stały (`Elements.MAX_RESISTANCE`).
+  Plan jak w PoE: główne źródło odporności zostaje na przedmiotach; odporność na wszystkie żywioły dostępna dla każdego
+  (drobne węzły przy środku i na autostradach); pojedyncze żywioły tematycznie (ogień - siła, lód - inteligencja, pioruny -
+  strefa zręczność/inteligencja, Nawia - siła) w małych skupiskach; maksymalna odporność bardzo rzadko - po jednym drogim
+  węźle znaczącym na żywioł (+1-2%) na końcu skupiska, do tego legendy albo talizmany; sufit liczony z premii zamiast
+  stałego, z górnym limitem (np. 85%).
 - [ ] **Przebudowa rozwoju postaci**: zastąpiona planem wspólnego drzewka (`docs/plan_drzewek.md`). Osobne punkty
   statystyk (2 za awans) i umiejętności (pasek) już są - punkt niżej.
 - [ ] **Punkty umiejętności z osobnego paska doświadczenia** (pomysł autora, listopad 2026; jak w BDO): zrobione,
